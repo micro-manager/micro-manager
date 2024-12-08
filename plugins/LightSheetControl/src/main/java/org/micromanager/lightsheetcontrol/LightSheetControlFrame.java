@@ -1,8 +1,3 @@
-/**
- *
- * @author kthorn
- */
-
 package org.micromanager.lightsheetcontrol;
 
 import java.awt.event.ActionEvent;
@@ -35,6 +30,10 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.WindowPositioning;
 
 
+/**
+ * UI part of the LightSheetControlFrame.  ALso does the fitting,
+ * and sets the slope and intercept of stage 2 based on data.
+ */
 public class LightSheetControlFrame extends JFrame {
 
    private final Studio studio_;
@@ -43,6 +42,7 @@ public class LightSheetControlFrame extends JFrame {
    private String multiStageName_ = "";
    private final RPModel rpm_;
    private JList<ReferencePoint> rpList_;
+   private XYChartPlotter plotter_;
 
    /**
     * Creates new form LightSheetControlForm.
@@ -52,13 +52,10 @@ public class LightSheetControlFrame extends JFrame {
    public LightSheetControlFrame(Studio studio) {
       studio_ = studio;
       rpm_ = new RPModel();
-      Iterator<String> stageIter;
 
-      initComponents();
-      this.setTitle("Light Sheet Control");
       //Find multi stage device
       StrVector stages = studio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
-      stageIter = stages.iterator();
+      final Iterator<String> stageIter = stages.iterator();
       while (stageIter.hasNext()) {
          String devName = "";
          String devLabel = stageIter.next();
@@ -87,6 +84,71 @@ public class LightSheetControlFrame extends JFrame {
       } catch (Exception ex) {
          studio_.logs().logError(ex, "Error when requesting Stage2 name");
       }
+
+      plotter_ = new XYChartPlotter(stage1_ + "/" + stage2_ + " positions", stage1_, stage2_);
+      super.setBounds(100, 100, 362, 595);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      this.setLayout(new MigLayout());
+
+      rpList_ = new JList<>();
+      rpList_.setModel(rpm_);
+      rpList_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+
+      final JPanel buttonPanel = new JPanel();
+      buttonPanel.setLayout(new MigLayout());
+
+      final String buttonConstraints = "growx 1, wrap";
+
+      final JButton addRPButton = new JButton("Add Reference Point");
+      addRPButton.addActionListener(this::addRPButtonActionPerformed);
+      buttonPanel.add(addRPButton, buttonConstraints);
+
+      final JButton delRPButton = new JButton("Delete Reference Point");
+      delRPButton.addActionListener(this::delRPButtonActionPerformed);
+      buttonPanel.add(delRPButton, buttonConstraints);
+
+      final JButton updRPButton = new JButton("Update Reference Point");
+      updRPButton.addActionListener(this::updRPButtonActionPerformed);
+      buttonPanel.add(updRPButton, buttonConstraints);
+
+      final JButton delAllButton = new JButton("Delete All");
+      delAllButton.addActionListener(this::delAllButtonActionPerformed);
+      buttonPanel.add(delAllButton, buttonConstraints);
+
+      final JButton goToPosButton = new JButton("Go to Position");
+      goToPosButton.addActionListener(this::goToPosButtonActionPerformed);
+      buttonPanel.add(goToPosButton, buttonConstraints);
+
+      final JButton loadButton = new JButton("Load from File");
+      loadButton.addActionListener(this::loadButtonActionPerformed);
+      buttonPanel.add(loadButton, buttonConstraints);
+
+      final JButton saveButton = new JButton("Save to File");
+      saveButton.addActionListener(this::saveButtonActionPerformed);
+      buttonPanel.add(saveButton, buttonConstraints);
+
+      final JButton helpButton = new JButton("Help");
+      helpButton.addActionListener(this::helpButtonActionPerformed);
+      buttonPanel.add(helpButton, buttonConstraints);
+
+      final JPanel pointsPanel = new JPanel();
+      pointsPanel.setLayout(new MigLayout());
+      final JLabel refPointLabel = new JLabel("Reference Points (" + stage1_ + " / + " + stage2_
+            + ")");
+      pointsPanel.add(refPointLabel, "wrap");
+      final JScrollPane jScrollPane1 = new JScrollPane();
+      jScrollPane1.setViewportView(rpList_);
+      pointsPanel.add(jScrollPane1, "grow, pushy 1, wrap");
+
+      this.add(buttonPanel);
+      this.add(pointsPanel, "pushy 1, growy, growx 100, wrap");
+      pack();
+      this.add(plotter_.getChartPanel(), "width " + this.getWidth()
+            + ", height " + this.getHeight() + ", push 100, grow, span 2");
+
+      pack();
+      this.setTitle("Light Sheet Control");
    }
 
 
@@ -139,6 +201,7 @@ public class LightSheetControlFrame extends JFrame {
    }
     
    private void updateStageRelation() {
+      plotter_.addSeries("Data", rpm_.rpList);
       //updates slope and offset parameters for the two stages
       if (rpm_.getSize() > 1) { // need at least two points for linear fit
          // Least Squares regression
@@ -155,67 +218,8 @@ public class LightSheetControlFrame extends JFrame {
             studio_.logs().logError(ex,
                   "LightSheetControl: Error when setting scaling and translation");
          }
+         plotter_.addFittedLine(sr.getIntercept(), sr.getSlope());
       }
-   }
-
-
-   /**
-    * This method is called from within the constructor to initialize the form.
-    */
-
-   private void initComponents() {
-      super.setBounds(100, 100, 362, 595);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
-      this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-      this.setLayout(new MigLayout());
-
-      rpList_ = new JList<>();
-      rpList_.setModel(rpm_);
-      rpList_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-
-      final JPanel buttonPanel = new JPanel();
-      buttonPanel.setLayout(new MigLayout());
-
-      final JButton addRPButton = new JButton("Add Reference Point");
-      addRPButton.addActionListener(this::addRPButtonActionPerformed);
-      buttonPanel.add(addRPButton, "grow x, wrap");
-
-      final JButton delRPButton = new JButton("Delete Reference Point");
-      delRPButton.addActionListener(this::delRPButtonActionPerformed);
-      buttonPanel.add(delRPButton, "grow x, wrap");
-
-      final JButton updRPButton = new JButton("Update Reference Point");
-      updRPButton.addActionListener(this::updRPButtonActionPerformed);
-      buttonPanel.add(updRPButton, "grow x, wrap");
-
-      final JButton delAllButton = new JButton("Delete All");
-      delAllButton.addActionListener(this::delAllButtonActionPerformed);
-      buttonPanel.add(delAllButton, "grow x, wrap");
-
-      final JButton goToPosButton = new JButton("Go to Position");
-      goToPosButton.addActionListener(this::goToPosButtonActionPerformed);
-      buttonPanel.add(goToPosButton, "grow x, wrap");
-
-      final JButton loadButton = new JButton("Load from File");
-      loadButton.addActionListener(this::loadButtonActionPerformed);
-      buttonPanel.add(loadButton, "grow x, wrap");
-
-      final JButton saveButton = new JButton("Save to File");
-      saveButton.addActionListener(this::saveButtonActionPerformed);
-      buttonPanel.add(saveButton, "grow x, wrap");
-
-      final JPanel pointsPanel = new JPanel();
-      pointsPanel.setLayout(new MigLayout());
-      final JLabel refPointLabel = new JLabel("Reference Points (1st Stage / 2nd Stage)");
-      pointsPanel.add(refPointLabel, "wrap");
-      final JScrollPane jScrollPane1 = new JScrollPane();
-      jScrollPane1.setViewportView(rpList_);
-      pointsPanel.add(jScrollPane1, "grow, wrap");
-
-      this.add(buttonPanel);
-      this.add(pointsPanel, "wrap");
-
-      pack();
    }
 
    private void addRPButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -251,6 +255,7 @@ public class LightSheetControlFrame extends JFrame {
 
    private void delAllButtonActionPerformed(ActionEvent evt) {
       rpm_.clearRegions();
+      updateStageRelation();
    }
 
    private void goToPosButtonActionPerformed(ActionEvent evt) {
@@ -310,6 +315,32 @@ public class LightSheetControlFrame extends JFrame {
             studio_.logs().showError(ioe, "Error while writing data to: " + fileName, this);
          }
       }
+   }
+
+   private void helpButtonActionPerformed(ActionEvent evt) {
+
+      Helper h = new Helper();
+      h.start();
+   }
+
+   /**
+    * There may be easier ways to start a non-blocking thread.
+    */
+   private class Helper extends Thread {
+      Helper() {
+         super("Helper");
+      }
+
+      @Override
+      public void run() {
+         try {
+            ij.plugin.BrowserLauncher.openURL(
+                  "http://micro-manager.org/wiki/LightSheetControl");
+         } catch (IOException e1) {
+            studio_.logs().showError(e1);
+         }
+      }
+
    }
 
 }

@@ -20,7 +20,7 @@ public class LightSheetControl implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getSubMenu() {
-      return "";
+      return "Device Control";
    }
 
    @Override
