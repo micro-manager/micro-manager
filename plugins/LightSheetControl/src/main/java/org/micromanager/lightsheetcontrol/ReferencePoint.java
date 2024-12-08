@@ -14,7 +14,8 @@ class ReferencePoint {
       this.stage2Position = position2;
    }
 
-   public String name() {
+   @Override
+   public String toString() {
       return stage1Position + " / " + stage2Position;
    }
 

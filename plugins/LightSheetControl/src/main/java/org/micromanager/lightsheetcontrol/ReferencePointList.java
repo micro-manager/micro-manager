@@ -12,7 +12,7 @@ class ReferencePointList {
    private final ArrayList<ReferencePoint> referencePoints_;
     
    public ReferencePointList() {
-      referencePoints_ = new ArrayList<ReferencePoint>();
+      referencePoints_ = new ArrayList<>();
    }
 
    /**

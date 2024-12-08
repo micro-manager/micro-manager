@@ -5,7 +5,6 @@
 
 package org.micromanager.lightsheetcontrol;
 
-import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.scijava.plugin.Plugin;
@@ -17,7 +16,7 @@ public class LightSheetControl implements MenuPlugin, SciJavaPlugin {
    public static final String tooltipDescription =
          "Controls AZ100-based light sheet microscope at the Nikon Imaging Center";
    private Studio studio_;
-   private LightSheetControlForm myFrame_;
+   private LightSheetControlFrame myFrame_;
 
    @Override
    public String getSubMenu() {
@@ -27,7 +26,7 @@ public class LightSheetControl implements MenuPlugin, SciJavaPlugin {
    @Override
    public void onPluginSelected() {
       if (myFrame_ == null) {
-         myFrame_ = new LightSheetControlForm(studio_);
+         myFrame_ = new LightSheetControlFrame(studio_);
       }
       myFrame_.setVisible(true);
    }

@@ -20,32 +20,24 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.WindowPositioning;
 
 
-public class LightSheetControlForm extends JFrame {
+public class LightSheetControlFrame extends JFrame {
 
    private final Studio studio_;
    private String stage1_ = "";
    private String stage2_ = "";
    private String multiStageName_ = "";
    private final RPModel rpm_;
-
-   private JButton addRPButton;
-   private JButton delAllButton;
-   private JButton delRPButton;
-   private JButton goToPosButton;
-   private JList<ReferencePoint> rpList;
-   private JButton updRPButton;
-   private JFrame jFrame1;
-   private JLabel jLabel1;
-   private JScrollPane jScrollPane1;
+   private JList<ReferencePoint> rpList_;
 
    /**
     * Creates new form LightSheetControlForm.
     *
     * @param studio - what do we do without it?
     */
-   public LightSheetControlForm(Studio studio) {
+   public LightSheetControlFrame(Studio studio) {
       studio_ = studio;
       rpm_ = new RPModel();
       Iterator<String> stageIter;
@@ -67,8 +59,11 @@ public class LightSheetControlForm extends JFrame {
             multiStageName_ = devLabel;
          }
       }
-      if (multiStageName_.equals("")) {
-         studio_.logs().logError("Cannot find multi stage device");
+      if (multiStageName_.isEmpty()) {
+         studio_.logs().showError("Cannot find multi stage device. "
+               + "This plugin does not work without one. <br>"
+               + "Use the Hardware Configuration wizard and select Utilities > MultiStage");
+         return;
       }
       try {
          stage1_ = studio_.core().getProperty(multiStageName_, "PhysicalStage-1");
@@ -153,47 +148,42 @@ public class LightSheetControlForm extends JFrame {
     */
 
    private void initComponents() {
-      jFrame1 = new JFrame();
-      jScrollPane1 = new JScrollPane();
-      rpList = new JList<ReferencePoint>();
-      goToPosButton = new JButton();
-      delAllButton = new JButton();
-      delRPButton = new JButton();
-      updRPButton = new JButton();
-      addRPButton = new JButton();
-      jLabel1 = new JLabel();
+      rpList_ = new JList<>();
+      JScrollPane jScrollPane1 = new JScrollPane();
+      final JButton goToPosButton = new JButton();
+      final JButton delAllButton = new JButton();
+      final JButton delRPButton = new JButton();
+      final JButton updRPButton = new JButton();
+      final JButton addRPButton = new JButton();
+      final JLabel jLabel1 = new JLabel();
 
-      GroupLayout jFrame1Layout = new GroupLayout(jFrame1.getContentPane());
-      jFrame1.getContentPane().setLayout(jFrame1Layout);
-      jFrame1Layout.setHorizontalGroup(
-            jFrame1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-      );
-      jFrame1Layout.setVerticalGroup(
-             jFrame1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-             .addGap(0, 300, Short.MAX_VALUE)
-      );
+      setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      rpList_.setModel(rpm_);
+      jScrollPane1.setViewportView(rpList_);
+      rpList_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
-      rpList.setModel(rpm_);
-      jScrollPane1.setViewportView(rpList);
-      rpList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+      //setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", "[top]"));
+      //setMinimumSize(new Dimension(275, 365));
+      //super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+      //      getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setBounds(100, 100, 362, 595);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       goToPosButton.setText("Go to Position");
-      goToPosButton.addActionListener(evt -> goToPosButtonActionPerformed(evt));
+      goToPosButton.addActionListener(this::goToPosButtonActionPerformed);
 
       delAllButton.setText("Delete All");
-      delAllButton.addActionListener(evt -> delAllButtonActionPerformed(evt));
+      delAllButton.addActionListener(this::delAllButtonActionPerformed);
 
       delRPButton.setText("Delete Reference Point");
-      delRPButton.addActionListener(evt -> delRPButtonActionPerformed(evt));
+      delRPButton.addActionListener(this::delRPButtonActionPerformed);
 
       updRPButton.setText("Update Reference Point");
-      updRPButton.addActionListener(evt -> updRPButtonActionPerformed(evt));
+      updRPButton.addActionListener(this::updRPButtonActionPerformed);
 
       addRPButton.setText("Add Reference Point");
-      addRPButton.addActionListener(evt -> addRPButtonActionPerformed(evt));
+      addRPButton.addActionListener(this::addRPButtonActionPerformed);
 
       jLabel1.setText("Reference Points (1st Stage / 2nd Stage)");
 
@@ -258,11 +248,11 @@ public class LightSheetControlForm extends JFrame {
    }
 
    private void delRPButtonActionPerformed(ActionEvent evt) {
-      rpm_.deletePoint(rpList.getSelectedIndex());
+      rpm_.deletePoint(rpList_.getSelectedIndex());
       updateStageRelation();
    }
 
-   private void updRPButtonActionPerformed(java.awt.event.ActionEvent evt) {
+   private void updRPButtonActionPerformed(ActionEvent evt) {
       ReferencePoint rp = null;
       try {
          rp = new ReferencePoint(studio_.core().getPosition(stage1_),
@@ -271,16 +261,16 @@ public class LightSheetControlForm extends JFrame {
          studio_.logs().logError(ex,
                "Error when requesting stage positions. Stage 1 / 2 = " + stage1_ + stage2_);
       }
-      rpm_.updatePoint(rpList.getSelectedIndex(), rp);
+      rpm_.updatePoint(rpList_.getSelectedIndex(), rp);
       updateStageRelation();
    }
 
-   private void delAllButtonActionPerformed(java.awt.event.ActionEvent evt) {
+   private void delAllButtonActionPerformed(ActionEvent evt) {
       rpm_.clearRegions();
    }
 
-   private void goToPosButtonActionPerformed(java.awt.event.ActionEvent evt) {
-      ReferencePoint rp = rpm_.getReferencePoint(rpList.getSelectedIndex());
+   private void goToPosButtonActionPerformed(ActionEvent evt) {
+      ReferencePoint rp = rpm_.getReferencePoint(rpList_.getSelectedIndex());
       try {
          studio_.core().setPosition(stage1_, rp.stage1Position);
          studio_.core().setPosition(stage2_, rp.stage2Position);
