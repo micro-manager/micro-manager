@@ -74,6 +74,7 @@ public final class TileCreatorDlg extends JDialog {
    private static int numericPrefix_ = 0;
 
    private static final String OVERLAP_PREF = "overlap";
+   private static final String OVERLAP_UNIT_PREF = "overlap_unit";
    private static final String PREFIX_PREF = "prefix";
    private static final String GRID_SELECTED = "grid_selected";
 
@@ -317,10 +318,11 @@ public final class TileCreatorDlg extends JDialog {
 
       String[] unitStrings = {"um", "px", "%"};
       JComboBox<String> overlapUnitsCombo = new JComboBox<>(unitStrings);
-      overlapUnitsCombo.setSelectedIndex(0);
+      overlapUnitsCombo.setSelectedItem(settings.getString(OVERLAP_UNIT_PREF, unitStrings[0]));
       overlapUnitsCombo.addActionListener(arg0 -> {
          JComboBox<String> cb = (JComboBox<String>) arg0.getSource();
          overlapUnit_ = TileCreator.OverlapUnitEnum.values()[cb.getSelectedIndex()];
+         settings.putString(OVERLAP_UNIT_PREF, unitStrings[cb.getSelectedIndex()]);
          updateCenteredSizeLabel();
       });
       overlapUnitsCombo.setBounds(90, 186, 40, 20);
