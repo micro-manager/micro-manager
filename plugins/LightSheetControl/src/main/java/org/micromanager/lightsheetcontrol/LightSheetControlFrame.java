@@ -134,7 +134,7 @@ public class LightSheetControlFrame extends JFrame {
 
       final JPanel pointsPanel = new JPanel();
       pointsPanel.setLayout(new MigLayout());
-      final JLabel refPointLabel = new JLabel("Reference Points (" + stage1_ + " / + " + stage2_
+      final JLabel refPointLabel = new JLabel("Reference Points (" + stage1_ + " / " + stage2_
             + ")");
       pointsPanel.add(refPointLabel, "wrap");
       final JScrollPane jScrollPane1 = new JScrollPane();
