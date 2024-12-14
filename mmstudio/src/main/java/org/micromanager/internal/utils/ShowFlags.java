@@ -67,12 +67,14 @@ public final class ShowFlags {
 
    public void save(Class<?> c) {
       UserProfile profile = studio_.getUserProfile();
-      profile.getSettings(c).putBoolean(SHOW_CAMERAS, cameras_);
-      profile.getSettings(c).putBoolean(SHOW_SHUTTERS, shutters_);
-      profile.getSettings(c).putBoolean(SHOW_STAGES, stages_);
-      profile.getSettings(c).putBoolean(SHOW_STATE, state_);
-      profile.getSettings(c).putBoolean(SHOW_OTHER, other_);
-      profile.getSettings(c).putBoolean(SHOW_READONLY, readonly_);
-      profile.getSettings(c).putString(SEARCH_FILTER, searchFilter_);
+      if (profile != null) {
+         profile.getSettings(c).putBoolean(SHOW_CAMERAS, cameras_);
+         profile.getSettings(c).putBoolean(SHOW_SHUTTERS, shutters_);
+         profile.getSettings(c).putBoolean(SHOW_STAGES, stages_);
+         profile.getSettings(c).putBoolean(SHOW_STATE, state_);
+         profile.getSettings(c).putBoolean(SHOW_OTHER, other_);
+         profile.getSettings(c).putBoolean(SHOW_READONLY, readonly_);
+         profile.getSettings(c).putString(SEARCH_FILTER, searchFilter_);
+      }
    }
 }
