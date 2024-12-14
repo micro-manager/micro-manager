@@ -1,8 +1,11 @@
 package com.asiimaging.plogic.model.devices;
 
+import com.asiimaging.plogic.PLogicControlFrame;
 import com.asiimaging.plogic.PLogicControlModel;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import java.awt.EventQueue;
 
 /**
  * An internal representation of the current PLogic device state.
@@ -69,7 +72,12 @@ public class PLogicState {
     *
     * @param model the {@code PLogicControlModel} model
     */
-   public void updateCells(final PLogicControlModel model) {
+   public void updateCells(final PLogicControlModel model, final PLogicControlFrame frame) {
+      EventQueue.invokeLater(() -> {
+         frame.getProgressBar().setValue(0);
+         frame.getProgressBar().setVisible(true);
+      });
+      int progress = 0;
       final ASIPLogic plc = model.plc();
       triggerSource_ = plc.triggerSource();
       for (int i = 0; i < plc.numCells(); i++) {
@@ -82,6 +90,10 @@ public class PLogicState {
          for (int input = 1; input <= 4; input++) {
             cells_[i].input(input, plc.cellInput(input));
          }
+         // inc progress bar
+         progress++;
+         final int currentProgress = progress;
+         EventQueue.invokeLater(() -> frame.getProgressBar().setValue(currentProgress));
       }
       for (int i = 0; i < NUM_IO_CELLS; i++) {
          if (!model.isUpdating()) {
@@ -90,7 +102,12 @@ public class PLogicState {
          plc.pointerPosition(io_[i].address());
          io_[i].type(plc.ioType());
          io_[i].sourceAddress(plc.sourceAddress());
+         // inc progress bar
+         progress++;
+         final int currentProgress = progress;
+         EventQueue.invokeLater(() -> frame.getProgressBar().setValue(currentProgress));
       }
+      EventQueue.invokeLater(() -> frame.getProgressBar().setVisible(false));
    }
 
    /**
@@ -98,19 +115,36 @@ public class PLogicState {
     *
     * @param model the {@code PLogicControlModel} model
     */
-   public void updateDevice(final PLogicControlModel model) {
+   public void updateDevice(final PLogicControlModel model, final PLogicControlFrame frame) {
+      EventQueue.invokeLater(() -> {
+         frame.getProgressBar().setValue(0);
+         frame.getProgressBar().setVisible(true);
+      });
+      int progress = 0;
       final ASIPLogic plc = model.plc();
       plc.triggerSource(triggerSource_);
       for (int i = 0; i < plc.numCells(); i++) {
          if (!model.isUpdating()) {
             return; // early exit => stop sending serial commands
          }
-         plc.pointerPosition(i + 1);
-         plc.cellType(cells_[i].type());
-         plc.cellConfig(cells_[i].config());
+         // plc.cellType() will zero config and inputs,
+         // so get values before they are cleared
+         final ASIPLogic.CellType cellType = cells_[i].type();
+         final int config = cells_[i].config();
+         int[] inputs = new int[4];
          for (int input = 1; input <= 4; input++) {
-            plc.cellInput(input, cells_[i].input(input));
+            inputs[input - 1] = cells_[i].input(input);
          }
+         plc.pointerPosition(i + 1);
+         plc.cellType(cellType);
+         plc.cellConfig(config);
+         for (int input = 1; input <= 4; input++) {
+            plc.cellInput(input, inputs[input - 1]);
+         }
+         // inc progress bar
+         progress++;
+         final int currentProgress = progress;
+         EventQueue.invokeLater(() -> frame.getProgressBar().setValue(currentProgress));
       }
       for (int i = 0; i < NUM_IO_CELLS; i++) {
          if (!model.isUpdating()) {
@@ -119,7 +153,12 @@ public class PLogicState {
          plc.pointerPosition(io_[i].address());
          plc.ioType(io_[i].type());
          plc.sourceAddress(io_[i].sourceAddress());
+         // inc progress bar
+         progress++;
+         final int currentProgress = progress;
+         EventQueue.invokeLater(() -> frame.getProgressBar().setValue(currentProgress));
       }
+      EventQueue.invokeLater(() -> frame.getProgressBar().setVisible(false));
    }
 
    /**

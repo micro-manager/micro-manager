@@ -59,6 +59,8 @@ public class PLogicControlModel {
    /**
     * Return if any PLogic devices are found. Add all devices to the device list.
     *
+    * <p>Note: the first device found will be used when the plugin starts.
+    *
     * @return {@code true} if a device is found
     */
    public boolean findDevices() {
@@ -90,6 +92,17 @@ public class PLogicControlModel {
          description = ""; // return empty String if error
       }
       return description;
+   }
+
+   /**
+    * Return {@code true} if both PLogic devices have the same number of logic cells.
+    *
+    * @param index1 the first device
+    * @param index2 the second device
+    * @return {@code true} if the number of cells is equal
+    */
+   public boolean numCellsEqual(final int index1, final int index2) {
+      return devices_.get(index1).numCells() == devices_.get(index2).numCells();
    }
 
    /**

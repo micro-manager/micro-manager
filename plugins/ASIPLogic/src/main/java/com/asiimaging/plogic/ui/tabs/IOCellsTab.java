@@ -35,7 +35,7 @@ public class IOCellsTab extends Panel {
 
       cells_ = new IOCell[16];
       for (int i = 0; i < 16; i++) {
-         cells_[i] = new IOCell(model_.plc(), i + 1);
+         cells_[i] = new IOCell(model_, i + 1);
          add(cells_[i], ((i + 1) % 4 == 0) ? "wrap" : "");
       }
    }

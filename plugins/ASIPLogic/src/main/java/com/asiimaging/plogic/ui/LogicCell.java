@@ -147,7 +147,7 @@ public class LogicCell extends Panel {
       // always at least 16 types for even the oldest firmware
       int maxIndex = 15;
       final String[] cellTypes = ASIPLogic.CellType.toArray();
-      if (model_.plc().firmwareVersion() >= 3.5) {
+      if (model_.plc().firmwareVersion() >= 3.50) {
          maxIndex = 17;
       }
       // array used for all logic cells
@@ -185,12 +185,10 @@ public class LogicCell extends Panel {
          add(lblTitle, "");
          add(cmbCellType_, "span 3, align left, wrap");
 
-         // set the input labels
+         // set the input labels and enable/disable check boxes
          for (int i = 0; i < cellType.numInputs(); i++) {
-            final String inputName = cellType.inputName(i + 1);
-            inputs_[i].setEdgeSensitive(
-                  inputName.startsWith("Trigger") || inputName.equals("Clock"));
-            inputs_[i].setInputLabel(inputName);
+            inputs_[i].setEdgeSensitive(cellType.isEdgeSensitive(i + 1));
+            inputs_[i].setInputLabel(cellType.inputName(i + 1));
          }
 
          add(lblConfig, "");
