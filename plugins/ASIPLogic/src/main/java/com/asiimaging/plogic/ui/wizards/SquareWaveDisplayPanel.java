@@ -146,7 +146,8 @@ public class SquareWaveDisplayPanel extends Panel {
 
    /**
     * Return the number of logic cells used for this square wave pattern.
-    * <p> Note: set by update()
+    *
+    * <p>Note: set by update()
     *
     * @return the number of logic cells used
     */
@@ -156,7 +157,8 @@ public class SquareWaveDisplayPanel extends Panel {
 
    /**
     * Return the output logic cell for this square wave pattern.
-    * <p> Note: set by update()
+    *
+    * <p>Note: set by update()
     *
     * @return the output logic cell
     */
@@ -290,7 +292,8 @@ public class SquareWaveDisplayPanel extends Panel {
          plc.cellType(ASIPLogic.CellType.DELAY_NRT);
          plc.cellConfig(startDelay_); // duration
          plc.cellInput(1, triggerAddress_ + addrEdge); // trigger
-         plc.cellInput(2, useDefaultClockSource_ ? (addrInvert + addrEdge) : (clockSource_ + addrEdge)); // clock
+         plc.cellInput(2, useDefaultClockSource_
+               ? (addrInvert + addrEdge) : (clockSource_ + addrEdge)); // clock
          cellAddr++;
       }
       if (numPulses_ > 1) {
@@ -301,7 +304,8 @@ public class SquareWaveDisplayPanel extends Panel {
          plc.cellType(ASIPLogic.CellType.ONE_SHOT_OR2_NRT);
          plc.cellConfig(pulseDuration_); // duration
          plc.cellInput(1, triggerSource + addrEdge); // trigger A
-         plc.cellInput(2, useDefaultClockSource_ ? (addrInvert + addrEdge) : (clockSource_ + addrEdge)); // clock
+         plc.cellInput(2, useDefaultClockSource_
+               ? (addrInvert + addrEdge) : (clockSource_ + addrEdge)); // clock
          plc.cellInput(3, (cellAddr + 2) + (addrInvert + addrEdge)); // reset
          plc.cellInput(4, (cellAddr + 1) + addrEdge); // trigger B
          cellAddr++;
@@ -310,7 +314,8 @@ public class SquareWaveDisplayPanel extends Panel {
          plc.cellType(ASIPLogic.CellType.DELAY_NRT);
          plc.cellConfig(pulseDelay_); // duration
          plc.cellInput(1, (cellAddr - 1) + addrInvert + addrEdge); // trigger
-         plc.cellInput(2, useDefaultClockSource_ ? (addrInvert + addrEdge) : (clockSource_ + addrEdge)); // clock
+         plc.cellInput(2, useDefaultClockSource_
+               ? (addrInvert + addrEdge) : (clockSource_ + addrEdge)); // clock
          plc.cellInput(3, (cellAddr + 1) + (addrInvert + addrEdge)); // reset
          cellAddr++;
       }

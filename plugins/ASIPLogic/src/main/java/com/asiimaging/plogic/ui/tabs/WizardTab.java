@@ -6,7 +6,6 @@ import com.asiimaging.plogic.ui.asigui.Panel;
 import com.asiimaging.plogic.ui.utils.DialogUtils;
 import com.asiimaging.plogic.ui.wizards.SquareWaveConfigPanel;
 import com.asiimaging.plogic.ui.wizards.SquareWaveDisplayPanel;
-
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -163,6 +162,7 @@ public class WizardTab extends Panel {
 
    /**
     * Create the PLogic program on its own thread.
+    *
     * <p>Note: only need to update the Logic Cells tab.
     */
    private void createProgramThread() {

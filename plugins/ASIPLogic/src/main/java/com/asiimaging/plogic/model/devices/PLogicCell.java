@@ -22,10 +22,6 @@ public class PLogicCell {
       return type_;
    }
 
-   public void typeDirect(ASIPLogic.CellType type) {
-      type_ = type;
-   }
-
    // Note: clear state when switching cell types
    public void type(ASIPLogic.CellType type) {
       type_ = type;

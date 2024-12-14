@@ -214,7 +214,7 @@ public class DeviceTab extends Panel {
       btnClearLogicCells_.registerListener(e -> {
          if (model_.isUpdating()) {
             DialogUtils.showMessage(btnClearLogicCells_,
-               "Updating", "Wait for updates to finish.");
+                  "Updating", "Wait for updates to finish.");
          } else {
             final boolean result = DialogUtils.showConfirmDialog(btnClearLogicCells_,
                   "Clear Cells", "Clear all logic cells?");
@@ -242,7 +242,7 @@ public class DeviceTab extends Panel {
             final boolean result = DialogUtils.showConfirmDialog(btnClearLogicCells_,
                   "Save Settings", "Save settings to the controller?");
             if (result) {
-            model_.plc().saveSettings();
+               model_.plc().saveSettings();
             }
          }
       });
@@ -297,8 +297,8 @@ public class DeviceTab extends Panel {
          // ask to stop updates from controller
          if (model_.isUpdating()) {
             final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
-                    "PLogic Device", "The controller is currently updating.\n" +
-                            "Please wait for updates to finish.\nStop updates?");
+                    "PLogic Device", "The controller is currently updating.\n"
+                        + "Please wait for updates to finish.\nStop updates?");
             if (clickedYes) {
                model_.isUpdating(false);
                model_.studio().logs().logMessage("Stop Updates From Device Selection ComboBox");

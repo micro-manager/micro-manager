@@ -14,12 +14,10 @@ import com.asiimaging.plogic.ui.tabs.TabPanel;
 import com.asiimaging.plogic.ui.utils.BrowserUtils;
 import com.asiimaging.plogic.ui.utils.DialogUtils;
 import com.asiimaging.plogic.ui.utils.WindowUtils;
-
 import java.awt.Font;
 import java.util.Objects;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
