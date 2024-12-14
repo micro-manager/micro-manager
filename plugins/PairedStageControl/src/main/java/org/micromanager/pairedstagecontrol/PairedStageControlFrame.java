@@ -309,7 +309,7 @@ public class PairedStageControlFrame extends JFrame {
       public void run() {
          try {
             ij.plugin.BrowserLauncher.openURL(
-                  "http://micro-manager.org/wiki/LightSheetControl");
+                  "http://micro-manager.org/wiki/PairedStageControl");
          } catch (IOException e1) {
             studio_.logs().showError(e1);
          }
