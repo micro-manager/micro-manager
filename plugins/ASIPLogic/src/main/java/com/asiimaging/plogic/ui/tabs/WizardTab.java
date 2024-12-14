@@ -6,12 +6,23 @@ import com.asiimaging.plogic.ui.asigui.Panel;
 import com.asiimaging.plogic.ui.utils.DialogUtils;
 import com.asiimaging.plogic.ui.wizards.SquareWaveConfigPanel;
 import com.asiimaging.plogic.ui.wizards.SquareWaveDisplayPanel;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
 
 public class WizardTab extends Panel {
+
+   /** Display debug output for internal PLogic state. */
+   private static final boolean DEBUG = false;
+
+   private Button btnDebug_;
+   private JTextArea txtDebug_;
+   private JScrollPane scrollPane_;
 
    private Button btnAddPattern_;
    private Button btnRemovePattern_;
@@ -32,6 +43,7 @@ public class WizardTab extends Panel {
       displayPanels_ = new ArrayList<>();
       createUserInterface();
       createEventHandlers();
+      hideWizards();
    }
 
    /**
@@ -43,7 +55,17 @@ public class WizardTab extends Panel {
       btnRemovePattern_ = new Button("Remove", 120, 30);
       btnCreateProgram_ = new Button("Create PLogic Program", 160, 30);
       btnRemovePattern_.setEnabled(false);
-      refreshComponents();
+      btnCreateProgram_.setEnabled(false);
+      // debug output for internal PLogic state
+      if (DEBUG) {
+         btnDebug_ = new Button("Refresh Debug", 120, 30);
+         txtDebug_ = new JTextArea();
+         txtDebug_.setEditable(false);
+         scrollPane_ = new JScrollPane(txtDebug_);
+         scrollPane_.setMinimumSize(new Dimension(600, 620));
+         scrollPane_.setMaximumSize(new Dimension(600, 620));
+      }
+      refreshUserInterface();
    }
 
    /**
@@ -56,11 +78,12 @@ public class WizardTab extends Panel {
          if (configPanels_.isEmpty()) {
             btnAddPattern_.setEnabled(false);
             btnRemovePattern_.setEnabled(true);
+            btnCreateProgram_.setEnabled(true);
          }
          final SquareWaveDisplayPanel displayPanel = new SquareWaveDisplayPanel();
          configPanels_.add(new SquareWaveConfigPanel(displayPanel));
          displayPanels_.add(displayPanel);
-         refreshComponents();
+         refreshUserInterface();
       });
 
       // remove last item
@@ -75,20 +98,15 @@ public class WizardTab extends Panel {
          if (configPanels_.isEmpty()) {
             btnAddPattern_.setEnabled(true);
             btnRemovePattern_.setEnabled(false);
+            btnCreateProgram_.setEnabled(false);
          }
-         refreshComponents();
+         refreshUserInterface();
       });
 
       btnCreateProgram_.registerListener(e -> {
-         if (displayPanels_.isEmpty()) {
-            DialogUtils.showMessage(btnCreateProgram_,
-                  "Add Pattern", "No square wave signal generator.\n"
-                        + "Click Add to the left.");
-            return; // early exit => no signal generator
-         }
          if (model_.isUpdating()) {
             DialogUtils.showMessage(btnCreateProgram_,
-                  "Updating", "Please wait for updates to complete.");
+                  "Updating", "Please wait for updates to finish.");
             return; // early exit => wait for serial traffic to end
          }
          final SquareWaveDisplayPanel panel = configPanels_.get(0).getSquareWavePanel();
@@ -100,12 +118,19 @@ public class WizardTab extends Panel {
          }
          createProgramThread();
       });
+
+      if (DEBUG) {
+         btnDebug_.registerListener(e -> {
+            txtDebug_.setText(model_.plc().state().toPrettyJson());
+            txtDebug_.setCaretPosition(0);
+         });
+      }
    }
 
    /**
     * Refresh the user interface with the current number of panels.
     */
-   private void refreshComponents() {
+   private void refreshUserInterface() {
       removeAll();
       add(btnAddPattern_, "split 3");
       add(btnRemovePattern_, "");
@@ -114,6 +139,10 @@ public class WizardTab extends Panel {
          add(panel, "wrap");
       }
       addSquareWavePanels();
+      if (DEBUG) {
+         add(btnDebug_, "wrap");
+         add(scrollPane_, "");
+      }
       revalidate();
       repaint();
    }
@@ -133,6 +162,8 @@ public class WizardTab extends Panel {
 
    /**
     * Create the PLogic program on its own thread.
+    *
+    * <p>Note: only need to update the Logic Cells tab.
     */
    private void createProgramThread() {
       SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
@@ -144,7 +175,6 @@ public class WizardTab extends Panel {
 
             // clear ui
             tab_.getLogicCellsTab().clearLogicCells();
-            //tab_.getIOCellsTab().clearIOCells();
 
             // TODO: only works on first panel for now
             // send serial commands to controller (updates plc state)
@@ -154,7 +184,6 @@ public class WizardTab extends Panel {
 
             // update ui from plc state
             tab_.getLogicCellsTab().initLogicCells();
-            //tab_.getIOCellsTab().initIOCells();
 
             model_.isUpdating(false);
             model_.studio().logs().logMessage("Finished Sending PLogic Program");
@@ -176,6 +205,23 @@ public class WizardTab extends Panel {
       };
 
       worker.execute();
+   }
+
+   /**
+    * This method is used to disable the Wizards tab when the PLogic device does
+    * not meet the minimum firmware requirements.
+    */
+   public void hideWizards() {
+      if (model_.plc().firmwareVersion() >= 3.50) {
+         refreshUserInterface();
+      } else {
+         // no wizards ui
+         removeAll();
+         add(new JLabel("This feature requires firmware version 3.50 or greater."), "wrap");
+         add(new JLabel("Please contact ASI if you would like to update."), "");
+         revalidate();
+         repaint();
+      }
    }
 
 }

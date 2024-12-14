@@ -80,7 +80,7 @@ public class TabPanel extends Panel {
             }
 
             // update plc state from controller
-            model_.plc().updateState(model_);
+            model_.plc().updateState(model_, frame_);
 
             // update ui from plc state
             logicCellsTab_.initLogicCells();
@@ -159,10 +159,29 @@ public class TabPanel extends Panel {
    }
 
    /**
+    * Return Wizards tab.
+    *
+    * @return the {@code WizardTab} tab
+    */
+   public WizardTab getWizardsTab() {
+      return wizardTab_;
+   }
+
+   /**
     * Used to resize the frame when a PLogic device
     * with a different number of cells is selected.
     */
    public void packFrame() {
       frame_.pack();
    }
+
+   /**
+    * Return the main plugin frame.
+    *
+    * @return the main plugin frame
+    */
+   public PLogicControlFrame getFrame() {
+      return frame_;
+   }
+
 }

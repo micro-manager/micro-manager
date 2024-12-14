@@ -22,8 +22,14 @@ public class PLogicCell {
       return type_;
    }
 
+   // Note: clear state when switching cell types
    public void type(ASIPLogic.CellType type) {
       type_ = type;
+      config_ = 0;
+      inputs_[0] = type.isEdgeSensitive(1) ? 128 : 0;
+      inputs_[1] = type.isEdgeSensitive(2) ? 128 : 0;
+      inputs_[2] = type.isEdgeSensitive(3) ? 128 : 0;
+      inputs_[3] = type.isEdgeSensitive(4) ? 128 : 0;
    }
 
    public int config() {
@@ -34,7 +40,7 @@ public class PLogicCell {
       config_ = value;
    }
 
-   public void input(final int input, final int value) {
+   public void input(final int input, int value) {
       if (input < 1 || input > 4) {
          throw new IllegalArgumentException("Each cell only has inputs 1-4.");
       }

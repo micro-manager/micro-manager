@@ -26,6 +26,7 @@ import javax.swing.JLabel;
 import javax.swing.SwingWorker;
 import org.micromanager.internal.utils.FileDialogs;
 
+// TODO: prevent user from changing TriggerSource and RefreshPropertyUpdates during updates
 public class DeviceTab extends Panel {
 
    private JLabel lblAxisLetter_;
@@ -97,17 +98,11 @@ public class DeviceTab extends Panel {
 
       // device selection
       final String[] devices = model_.getPLogicDevices();
-      cmbSelectDevice_ = new ComboBox(
-            devices,
-            devices[0],
-            130, 24);
+      cmbSelectDevice_ = new ComboBox(devices, devices[0], 130, 24);
 
       // trigger source
       final String[] triggerSources = ASIPLogic.TriggerSource.toArray();
-      cmbTriggerSource_ = new ComboBox(
-            triggerSources,
-            triggerSources[0],
-            130, 24);
+      cmbTriggerSource_ = new ComboBox(triggerSources, triggerSources[0], 130, 24);
 
       // check boxes
       cbxEditCellUpdateAuto_ = new CheckBox("Update Cells Automatically", true);
@@ -217,12 +212,40 @@ public class DeviceTab extends Panel {
 
       // clear all cells and ui
       btnClearLogicCells_.registerListener(e -> {
-         model_.plc().preset(ASIPLogic.Preset.ALL_CELLS_ZERO);
-         tab_.getLogicCellsTab().clearLogicCellsFromButton();
+         if (model_.isUpdating()) {
+            DialogUtils.showMessage(btnClearLogicCells_,
+                  "Updating", "Wait for updates to finish.");
+         } else {
+            final boolean result = DialogUtils.showConfirmDialog(btnClearLogicCells_,
+                  "Clear Cells", "Clear all logic cells?");
+            if (result) {
+               model_.plc().preset(ASIPLogic.Preset.ALL_CELLS_ZERO);
+               tab_.getLogicCellsTab().clearLogicCellsFromButton();
+            }
+         }
       });
 
-      btnClearCellStates_.registerListener(e -> model_.plc().clearAllCellStates());
-      btnSaveSettings_.registerListener(e -> model_.plc().saveSettings());
+      btnClearCellStates_.registerListener(e -> {
+         if (model_.isUpdating()) {
+            DialogUtils.showMessage(btnClearCellStates_,
+                  "Updating", "Wait for updates to finish.");
+         } else {
+            model_.plc().clearAllCellStates();
+         }
+      });
+
+      btnSaveSettings_.registerListener(e -> {
+         if (model_.isUpdating()) {
+            DialogUtils.showMessage(btnSaveSettings_,
+                  "Updating", "Wait for updates to finish.");
+         } else {
+            final boolean result = DialogUtils.showConfirmDialog(btnClearLogicCells_,
+                  "Save Settings", "Save settings to the controller?");
+            if (result) {
+               model_.plc().saveSettings();
+            }
+         }
+      });
 
       // open the default web browser
       btnOpenManual_.registerListener(e -> openBrowserToManual());
@@ -246,49 +269,66 @@ public class DeviceTab extends Panel {
       });
 
       // update plc cells
-      btnRefresh_.registerListener(e -> refreshCells());
-
+      btnRefresh_.registerListener(e -> {
+         if (model_.isUpdating()) {
+            DialogUtils.showMessage(btnRefresh_, "Updating",
+                  "Wait for updates to finish.");
+         } else {
+            tab_.updateTabsFromController();
+         }
+      });
    }
 
    /**
     * Select the device.
     */
    private void selectDevice() {
-      // use invokeLater to prevent having to click the dialog twice
+      // Note: invokeLater is used to prevent having to click the dialogs twice (focus related)
       EventQueue.invokeLater(() -> {
-         // ask to stop updates or prevent from switching devices
+         // check if the device is already selected
+         final String deviceName = model_.plc().deviceName();
+         final String deviceSelected = cmbSelectDevice_.getSelected();
+         // Note: we can use setSelected(deviceName) to come back
+         // here and do nothing, useful if the user clicks No.
+         if (deviceName.equals(deviceSelected)) {
+            return; // early exit => device currently selected
+         }
+
+         // ask to stop updates from controller
          if (model_.isUpdating()) {
             final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
-                  "Updating", "Wait for updates to stop and try again. "
-                        + "Stop updates?");
+                    "PLogic Device", "The controller is currently updating.\n"
+                        + "Please wait for updates to finish.\nStop updates?");
             if (clickedYes) {
                model_.isUpdating(false);
                model_.studio().logs().logMessage("Stop Updates From Device Selection ComboBox");
             }
-            return; // early exit => need to stop updates
+            cmbSelectDevice_.setSelected(deviceName);
+            return; // early exit => stop updates
          }
-         // ask to reload the plc state for this device
-         final String deviceName = model_.plc().deviceName();
-         if (deviceName.equals(cmbSelectDevice_.getSelected())) {
-            final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
-                  "Reload Settings", "Would you like to reload the data for "
-                        + deviceName + "?");
-            if (!clickedYes) {
-               return; // early exit => clicked "No" to avoid reloading the cells
-            }
+
+         // ask to switch devices
+         final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
+                 "PLogic Device", "Change device to " + deviceSelected + " and update the UI?");
+         if (!clickedYes) {
+            cmbSelectDevice_.setSelected(deviceName);
+            return; // early exit => clicked No
          }
+
          // compare the number of cells, so we can change the ui if necessary
-         final int numCellsA = model_.plc().numCells();
-         model_.selectedIndex(cmbSelectDevice_.getSelectedIndex());
-         final int numCellsB = model_.plc().numCells();
+         final int prevIndex = model_.selectedIndex();
+         final int nextIndex = cmbSelectDevice_.getSelectedIndex();
+         model_.selectedIndex(nextIndex);
+         tab_.getFrame().setDeviceLabel(cmbSelectDevice_.getSelected()); // update ui
          // update the logic cells tab based on the number of cells only
          // if the number of cells has changed, PLOGIC_16 => PLOGIC_24
-         if (numCellsA != numCellsB) {
+         if (model_.numCellsEqual(prevIndex, nextIndex)) {
             tab_.getLogicCellsTab().refreshTab();
             tab_.packFrame();
          }
          // available cells types will match the selected firmware
          tab_.getLogicCellsTab().updateCellTypeComboBoxes();
+         tab_.getWizardsTab().hideWizards();
          // update tabs by sending serial commands to the controller
          updateTabFromController();
          tab_.updateTabsFromController();
@@ -364,8 +404,8 @@ public class DeviceTab extends Panel {
          final String json = FileUtils.readFile(file.toString(), "json");
          // ask to overwrite settings
          final boolean result = DialogUtils.showConfirmDialog(btnLoadJson_,
-               "Load Settings", "This will update the current PLogic settings, "
-                     + "do you want to continue?");
+               "Load Settings", "This will overwrite the current settings for "
+                     + model_.plc().deviceName() + ", do you want to continue?");
          if (result) {
             loadJsonThread(json);
          }
@@ -398,7 +438,7 @@ public class DeviceTab extends Panel {
             tab_.getIOCellsTab().clearIOCells();
 
             // send serial commands to plc (updates plc state)
-            model_.plc().state().updateDevice(model_);
+            model_.plc().state().updateDevice(model_, tab_.getFrame());
 
             // update ui from plc state
             cmbTriggerSource_.setSelected(
@@ -438,18 +478,6 @@ public class DeviceTab extends Panel {
       if (result) {
          BrowserUtils.openWebsite(model_.studio(),
                "https://asiimaging.com/docs/tiger_programmable_logic_card");
-      }
-   }
-
-   /**
-    * Refresh the Logic Cells and Physical I/O tabs.
-    */
-   private void refreshCells() {
-      if (model_.isUpdating()) {
-         DialogUtils.showMessage(btnRefresh_, "Warning",
-               "The cells are currently being updated.");
-      } else {
-         tab_.updateTabsFromController();
       }
    }
 

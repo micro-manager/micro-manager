@@ -7,6 +7,7 @@
 
 package com.asiimaging.plogic.ui;
 
+import com.asiimaging.plogic.PLogicControlModel;
 import com.asiimaging.plogic.model.devices.ASIPLogic;
 import com.asiimaging.plogic.ui.asigui.CheckBox;
 import com.asiimaging.plogic.ui.asigui.ComboBox;
@@ -35,10 +36,10 @@ public class IOCell extends Panel {
    private final int cellAddr_;
    private final String title_;
 
-   private final ASIPLogic plc_;
+   private final PLogicControlModel model_;
 
-   public IOCell(final ASIPLogic plc, final int cellNum) {
-      plc_ = Objects.requireNonNull(plc);
+   public IOCell(final PLogicControlModel model, final int cellNum) {
+      model_ = Objects.requireNonNull(model);
       // I/O cell data
       cellAddr_ = cellNum + 32; // BNC1 starts at address 33
       if (cellNum <= 8) {
@@ -98,8 +99,8 @@ public class IOCell extends Panel {
          final ASIPLogic.IOType ioType = ASIPLogic.IOType.fromString(cmbIOType_.getSelected());
          refreshUserInterface(ioType); // needed during update
          if (UPDATE) {
-            plc_.pointerPosition(cellAddr_);
-            plc_.ioType(ioType);
+            model_.plc().pointerPosition(cellAddr_);
+            model_.plc().ioType(ioType);
          }
       });
 
@@ -169,9 +170,8 @@ public class IOCell extends Panel {
       final boolean isInverted = cbxInvert_.isSelected();
       final boolean isEdge = cbxEdge_.isSelected();
       final int value = spnSourceAddr_.getInt() + (isInverted ? 64 : 0) + (isEdge ? 128 : 0);
-      plc_.pointerPosition(cellAddr_);
-      plc_.sourceAddress(value);
-      //plc_.cellConfig(value);
+      model_.plc().pointerPosition(cellAddr_);
+      model_.plc().sourceAddress(value);
       lblValue_.setText(String.valueOf(value));
    }
 
@@ -191,11 +191,11 @@ public class IOCell extends Panel {
       //plc_.pointerPosition(cellAddr_);
       // I/O type
       //final ASIPLogic.IOType ioType = plc_.ioType();
-      final ASIPLogic.IOType ioType = plc_.state().io(cellAddr_).type();
+      final ASIPLogic.IOType ioType = model_.plc().state().io(cellAddr_).type();
       cmbIOType_.setSelected(ioType.toString());
       // source address
       //final int sourceAddr = plc_.cellConfig();
-      final int sourceAddr = plc_.state().io(cellAddr_).sourceAddress();
+      final int sourceAddr = model_.plc().state().io(cellAddr_).sourceAddress();
       int sourceAddrTemp = sourceAddr;
       if (sourceAddrTemp >= 128) {
          sourceAddrTemp -= 128;

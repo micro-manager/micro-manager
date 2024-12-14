@@ -8,6 +8,7 @@
 package com.asiimaging.plogic;
 
 import com.asiimaging.plogic.ui.asigui.Button;
+import com.asiimaging.plogic.ui.asigui.ProgressBar;
 import com.asiimaging.plogic.ui.data.Icons;
 import com.asiimaging.plogic.ui.tabs.TabPanel;
 import com.asiimaging.plogic.ui.utils.BrowserUtils;
@@ -29,11 +30,15 @@ public class PLogicControlFrame extends JFrame {
    private final Studio studio_;
 
    private TabPanel tabPanel_;
+   private JLabel currentDevice_;
+   private final ProgressBar progressBar_;
+
    private final PLogicControlModel model_;
 
    public PLogicControlFrame(final PLogicControlModel model, final boolean isDeviceFound) {
       model_ = Objects.requireNonNull(model);
       studio_ = model_.studio();
+      progressBar_ = new ProgressBar();
 
       // save window position
       WindowPositioning.setUpBoundsMemory(
@@ -113,12 +118,20 @@ public class PLogicControlFrame extends JFrame {
       final JLabel lblTitle = new JLabel(PLogicControlPlugin.menuName);
       lblTitle.setFont(new Font(Font.MONOSPACED, Font.BOLD, 20));
 
+      // display currently selected device
+      currentDevice_ = new JLabel(model_.plc().deviceName());
+      currentDevice_.setFont(new Font(Font.MONOSPACED, Font.BOLD, 16));
+
       // main control area
       tabPanel_ = new TabPanel(model_, this);
+      progressBar_.setAbsoluteSize(400, 10);
+      progressBar_.setRange(0, model_.plc().numCells() + 16);
 
       // add ui elements to the panel
-      add(lblTitle, "wrap");
-      add(tabPanel_, "");
+      add(lblTitle, "split 2");
+      add(currentDevice_, "gapleft 50, wrap");
+      add(tabPanel_, "wrap");
+      add(progressBar_, "gapleft 6");
 
       pack(); // fit window size to layout
       setIconImage(Icons.MICROSCOPE.getImage());
@@ -133,6 +146,14 @@ public class PLogicControlFrame extends JFrame {
          model_.isUpdating(false);
          studio_.logs().logMessage("window closed");
       });
+   }
+
+   public void setDeviceLabel(final String text) {
+      currentDevice_.setText(text);
+   }
+
+   public ProgressBar getProgressBar() {
+      return progressBar_;
    }
 
 }

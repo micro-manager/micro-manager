@@ -7,6 +7,7 @@
 
 package com.asiimaging.plogic.model.devices;
 
+import com.asiimaging.plogic.PLogicControlFrame;
 import com.asiimaging.plogic.PLogicControlModel;
 import com.asiimaging.plogic.ui.utils.DialogUtils;
 import java.util.Arrays;
@@ -78,8 +79,8 @@ public class ASIPLogic extends ASITigerBase {
     * the PLogic device. The {@code isRefreshed()} method queries if this method has been run
     * at least once for this device.
     */
-   public void updateState(final PLogicControlModel model) {
-      state_.updateCells(model);
+   public void updateState(final PLogicControlModel model, final PLogicControlFrame frame) {
+      state_.updateCells(model, frame);
       isRefreshed_ = true;
    }
 
@@ -224,6 +225,12 @@ public class ASIPLogic extends ASITigerBase {
       state_.cell(pointerPosition_).input(num, address);
    }
 
+   /**
+    * Return the value of the input.
+    *
+    * @param input input 1-4
+    * @return input value
+    */
    public int cellInput(final int input) {
       if (input < 1 || input > 4) {
          throw new IllegalArgumentException("Each cell only has inputs 1-4.");
@@ -444,6 +451,12 @@ public class ASIPLogic extends ASITigerBase {
             default:
                return "";
          }
+      }
+
+      // TODO: make this faster and more robust, for example do not rely on startsWith
+      public boolean isEdgeSensitive(final int inputNum) {
+         final String inputName = inputName(inputNum);
+         return inputName.startsWith("Trigger") || inputName.startsWith("Clock");
       }
 
       public boolean hasState() {
