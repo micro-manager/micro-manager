@@ -1,4 +1,4 @@
-package org.micromanager.lightsheetcontrol;
+package org.micromanager.pairedstagecontrol;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -8,10 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
 import javax.swing.AbstractListModel;
-import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -19,10 +16,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
-import mmcorej.DeviceType;
-import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.micromanager.Studio;
@@ -34,7 +28,7 @@ import org.micromanager.internal.utils.WindowPositioning;
  * UI part of the LightSheetControlFrame.  ALso does the fitting,
  * and sets the slope and intercept of stage 2 based on data.
  */
-public class LightSheetControlFrame extends JFrame {
+public class PairedStageControlFrame extends JFrame {
 
    private final Studio studio_;
    private String stage1_ = "";
@@ -49,31 +43,11 @@ public class LightSheetControlFrame extends JFrame {
     *
     * @param studio - what do we do without it?
     */
-   public LightSheetControlFrame(Studio studio) {
+   public PairedStageControlFrame(Studio studio, String multiStageName) {
       studio_ = studio;
       rpm_ = new RPModel();
+      multiStageName_ = multiStageName;
 
-      //Find multi stage device
-      StrVector stages = studio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
-      final Iterator<String> stageIter = stages.iterator();
-      while (stageIter.hasNext()) {
-         String devName = "";
-         String devLabel = stageIter.next();
-         try {
-            devName = studio_.core().getDeviceName(devLabel);
-         } catch (Exception ex) {
-            studio_.logs().logError(ex, "Error when requesting stage name");
-         }
-         if (devName.equals("Multi Stage")) {
-            multiStageName_ = devLabel;
-         }
-      }
-      if (multiStageName_.isEmpty()) {
-         studio_.logs().showError("Cannot find multi stage device. "
-               + "This plugin does not work without one. <br>"
-               + "Use the Hardware Configuration wizard and select Utilities > MultiStage");
-         return;
-      }
       try {
          stage1_ = studio_.core().getProperty(multiStageName_, "PhysicalStage-1");
       } catch (Exception ex) {
