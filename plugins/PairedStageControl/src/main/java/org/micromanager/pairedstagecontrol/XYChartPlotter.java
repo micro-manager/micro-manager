@@ -1,4 +1,4 @@
-package org.micromanager.lightsheetcontrol;
+package org.micromanager.pairedstagecontrol;
 
 import java.awt.Color;
 import java.awt.geom.Ellipse2D;

@@ -3,7 +3,7 @@
  * @author kthorn
  */
 
-package org.micromanager.lightsheetcontrol;
+package org.micromanager.pairedstagecontrol;
 
 import java.io.Serializable;
 import java.util.ArrayList;
