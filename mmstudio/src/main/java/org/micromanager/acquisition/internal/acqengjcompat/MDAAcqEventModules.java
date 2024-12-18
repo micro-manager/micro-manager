@@ -231,8 +231,8 @@ public class MDAAcqEventModules {
                      // we will run into trouble when there is more than 1 XY stage.
                      // for now, assume it is always the core XY stage
                      if (sp.getStageDeviceLabel().equals(core.getXYStageDevice())) {
-                        posEvent.setX(msp.getX());
-                        posEvent.setY(msp.getY());
+                        posEvent.setX(sp.get2DPositionX());
+                        posEvent.setY(sp.get2DPositionY());
                      } else {
                         // API does not handle non-default XY stages
                      }
