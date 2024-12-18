@@ -1,7 +1,6 @@
 package com.asiimaging.plogic.ui.asigui;
 
 import java.awt.Dimension;
-
 import javax.swing.JProgressBar;
 
 public class ProgressBar extends JProgressBar {
