@@ -318,4 +318,9 @@ public final class ChannelSpec {
       Gson gson = new Gson();
       return gson.fromJson(stream, ChannelSpec.class);
    }
+
+   @Override
+   public String toString() {
+      return toJSONStream(this);
+   }
 }
