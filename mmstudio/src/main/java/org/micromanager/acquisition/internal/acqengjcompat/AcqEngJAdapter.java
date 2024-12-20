@@ -233,6 +233,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
 
+         studio_.logs().logMessage("Running acquisition with AcqEngJ");
+         studio_.logs().logMessage(acquisitionSettings.toString());
+
          AcqEngJMDADataSink sink = new AcqEngJMDADataSink(studio_.events(), this);
          currentAcquisition_ = new Acquisition(sink);
          currentAcquisition_.setDebugMode(core_.debugLogEnabled());

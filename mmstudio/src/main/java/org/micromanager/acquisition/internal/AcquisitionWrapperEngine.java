@@ -199,6 +199,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
       try {
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
+         studio_.logs().logMessage("Running acquisition with Clojure AcqEng");
+         if (!studio_.core().debugLogEnabled()) {
+            studio_.logs().logMessage(acquisitionSettings.toString());
+         }
          final BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
                acquisitionSettings, true, posListToUse,
                studio_.getAutofocusManager().getAutofocusMethod());

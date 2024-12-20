@@ -861,4 +861,10 @@ public final class SequenceSettings {
       }
       return null;
    }
+
+   @Override
+   public String toString() {
+      return "MDA Settings: \r\n" + toJSONStream(this);
+   }
+
 }

@@ -215,9 +215,11 @@ public final class ImageJBridge {
       MMImageCanvas oldCanvas = canvas_;
       canvas_ = null; // Suppress canvas size changed events
       MMImageCanvas newCanvas = MMImageCanvas.create(this);
-      newCanvas.setSize(oldCanvas.getSize());
-      newCanvas.setMagnification(oldCanvas.getMagnification());
-      newCanvas.setSourceRect(oldCanvas.getSrcRect());
+      if (oldCanvas != null) {
+         newCanvas.setSize(oldCanvas.getSize());
+         newCanvas.setMagnification(oldCanvas.getMagnification());
+         newCanvas.setSourceRect(oldCanvas.getSrcRect());
+      }
       canvas_ = newCanvas;
 
       imagePlus_.setWindow(proxyWindow_);
