@@ -389,6 +389,7 @@ public class Properties {
       PLOGIC_PRESET_COUNT_1("22 - no counter"),
       PLOGIC_PRESET_COUNT_2("21 - mod2 counter"),
       PLOGIC_PRESET_COUNT_3("16 - mod3 counter"),
+      PLOGIC_PRESET_COUNT_3_NEW("60 - mod3 counter"),
       PLOGIC_PRESET_COUNT_4("15 - mod4 counter"),
       PLOGIC_PRESET_CLOCK_LASER("17 - counter clock = falling TTL1"),
       PLOGIC_PRESET_CLOCK_SIDE_AFIRST("18 - counter clock = falling TTL3"),

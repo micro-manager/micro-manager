@@ -1128,8 +1128,13 @@ public class ControllerUtils {
                Properties.Values.PLOGIC_PRESET_COUNT_2);
          break;
       case 3:
-         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
-               Properties.Values.PLOGIC_PRESET_COUNT_3);
+         if (props_.getPropValueFloat(Devices.Keys.PLOGIC_LASER, Properties.Keys.FIRMWARE_VERSION) > 3.501) {
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
+                  Properties.Values.PLOGIC_PRESET_COUNT_3_NEW);
+         } else {
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
+                  Properties.Values.PLOGIC_PRESET_COUNT_3);
+         }
          break;
       case 4:
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
@@ -1147,9 +1152,9 @@ public class ControllerUtils {
       }
       
       // make sure the counters get reset on the acquisition start flag
-      // turns out we can only do this for 2-counter and 4-counter implemented with D-flops
-      // TODO figure out alternative for 3-position counter
-      if (settings.numChannels != 3) {
+      // with pre 3.51 firmware it turns out we can only do this for 2-counter and 4-counter not with 3-counter 
+      if ((props_.getPropValueFloat(Devices.Keys.PLOGIC_LASER, Properties.Keys.FIRMWARE_VERSION) > 3.501) ||
+            (settings.numChannels != 3)) {
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterLSBAddr);
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterMSBAddr);
