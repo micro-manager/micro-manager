@@ -37,12 +37,21 @@ import org.micromanager.utils.ReportingUtils;
 
 public class ASIdiSPIM implements MMPlugin {
    
+   // to create a duplicate plugin that uses different preferences (and has 2 menu entries):
+   // - create a copy of this file under a different name and change the class name to match the file name
+   // - add a distinguishing strung to the menuName, e.g. + " 2"
+   // - change the second parameter in the call to new ASIdiSPIMFrame() to true to use a different preference node
+   
    public static final boolean oSPIM = false;  // mostly just means "single-view" but a few exceptions, set true for SCOPE too
    public static final boolean doubleXYZ = false;
    public static final boolean SCOPE = false;
-   public final static String versionString = "";
+   public final static String versionString = " 20241224";
    
-   public final static String menuName = "ASI " + (SCOPE ? "SCOPE" : (oSPIM ? "oSPIM" : "diSPIM") ) + (doubleXYZ ? " double" : "") + versionString;
+   public final static String menuName = "ASI " 
+         + (SCOPE ? "SCOPE" : (oSPIM ? "oSPIM" : "diSPIM") ) 
+         + (doubleXYZ ? " double" : "") 
+         + (SCOPE ? versionString : "")
+         ;
    public final static String rmiName = "ASIdiSPIM_API";
    public final static String tooltipDescription = "Control the " + menuName;
    public final static Color borderColor = Color.gray;
@@ -62,7 +71,7 @@ public class ASIdiSPIM implements MMPlugin {
       }
       // create brand new instance of plugin frame every time
       try {
-         myFrame_ = new ASIdiSPIMFrame(gui_);
+         myFrame_ = new ASIdiSPIMFrame(gui_, false);  // make 2nd parameter true to save preferences in alternate location
          myFrame_.setBackground(gui_.getBackgroundColor());
          gui_.addMMListener(myFrame_);
          gui_.addMMBackgroundListener(myFrame_);
@@ -91,8 +100,8 @@ public class ASIdiSPIM implements MMPlugin {
    }
    
    /**
-    * The main app calls this method to remove the module window
-    */
+   * The main app calls this method to remove the module window
+   */
    @Override
    public void dispose() {
       if (myFrame_ != null)
@@ -125,3 +134,4 @@ public class ASIdiSPIM implements MMPlugin {
       return "University of California and Applied Scientific Instrumentation (ASI), 2013-2016";
    }
 }
+

@@ -146,11 +146,15 @@ public class ASIdiSPIMFrame extends MMFrame
     * @param gui - Micro-Manager script interface
     * @throws ASIdiSPIMException
     */
-   public ASIdiSPIMFrame(ScriptInterface gui) throws ASIdiSPIMException {
+   public ASIdiSPIMFrame(ScriptInterface gui, boolean separatePrefs) throws ASIdiSPIMException {
 
       // create interface objects used by panels
       gui_ = gui;
-      prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
+      if (separatePrefs) {
+         prefs_ = new Prefs(Preferences.userRoot().node("org/micromanager/asidispim2"));
+      } else {
+         prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
+      }
       devices_ = new Devices(gui_, prefs_);
       props_ = new Properties(gui_, devices_, prefs_);
       positions_ = new Positions(gui_, devices_);
