@@ -244,6 +244,9 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode58, 58);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode59, 59);
    }
+   if (FirmwareVersionAtLeast(3.51)) {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode60, 60);
+   }
    UpdateProperty(g_SetCardPresetPropertyName);
 
 
@@ -293,6 +296,9 @@ int CPLogic::Initialize()
    if (FirmwareVersionAtLeast(3.50)) {
        AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode16, 16);
        AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode17, 17);
+   }
+   if (FirmwareVersionAtLeast(3.51)) {
+       AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode18, 18);
    }
    AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode0, 100);
    AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode1, 101);
@@ -1012,6 +1018,7 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          case 15:success = pProp->Set(g_CellTypeCode15); break;
          case 16:success = pProp->Set(g_CellTypeCode16); break;
          case 17:success = pProp->Set(g_CellTypeCode17); break;
+         case 18:success = pProp->Set(g_CellTypeCode18); break;
          default: break;
          }
       }
