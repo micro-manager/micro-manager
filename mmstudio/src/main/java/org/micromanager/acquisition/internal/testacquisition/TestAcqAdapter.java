@@ -153,6 +153,14 @@ public class TestAcqAdapter extends DataViewerListener implements
    }
 
    // this is where the work happens
+
+   /**
+    * Runs a "standard" acquisition as desired by the user, however, time-lapse
+    * is disabled, positionlist is disabled, and data will not be saved to disk.
+    *
+    * @param sequenceSettings Describe the desired acquisition
+    * @return Datastore with result of acquisition
+    */
    private Datastore runAcquisition(SequenceSettings sequenceSettings) {
       SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
       sb.useFrames(false).usePositionList(false).save(false);
