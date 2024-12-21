@@ -170,6 +170,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JButton setEndButton_;
    private JButton goToStartButton_;
    private JButton goToEndButton_;
+   private JButton setZStepButton_;
    JLabel proposedZStepLabel_;
    JLabel zDriveLabel_;
    JLabel zDrivePositionLabel_;
@@ -568,7 +569,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                      "push[][][][][]push", ""));
 
       //final String labelConstraint = "pushx 5, alignx label";
-      final String labelConstraint = "alignx left";
+      final String labelConstraint = "alignx left, gapleft 4";
 
       stackKeepShutterOpenCheckBox_ = new JCheckBox("Keep Shutter Open");
       stackKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
@@ -582,30 +583,29 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       zDriveLabel_ = new JLabel("Use ZStage: ");
       zDriveLabel_.setFont(DEFAULT_FONT);
       zDriveLabel_.setVisible(false);
-      slicesPanel_.add(zDriveLabel_, "span 5, split 5, alignx left");
+      slicesPanel_.add(zDriveLabel_, "span 4, split 4, alignx left, gapleft 4");
       zDriveCombo_ = new JComboBox<>();
       zDriveCombo_.setFont(DEFAULT_FONT);
       zDriveCombo_.addActionListener((final ActionEvent e) -> updateZDrive());
       zDriveCombo_.setVisible(false);
       slicesPanel_.add(zDriveCombo_, "push x, width 70!, gapright 30");
-      zDrivePositionLabel_ = new JLabel();
+      zDrivePositionLabel_ = new JLabel("", javax.swing.SwingConstants.RIGHT);
       zDrivePositionLabel_.setFont(DEFAULT_FONT);
       zDrivePositionLabel_.setVisible(false);
-      slicesPanel_.add(zDrivePositionLabel_, "width 40!, gapright 0, alignx right");
+      slicesPanel_.add(zDrivePositionLabel_, "split 2, width 40!, gapright 0, alignx right");
       zDrivePositionUmLabel_ = new JLabel("\u00b5m");
       zDrivePositionUmLabel_.setFont(DEFAULT_FONT);
       zDrivePositionUmLabel_.setVisible(false);
-      slicesPanel_.add(zDrivePositionUmLabel_, "gapleft 0, alignx left");
-      slicesPanel_.add(new JLabel(" "), "gapleft 20, push x, width 10:50:200, wrap");
+      slicesPanel_.add(zDrivePositionUmLabel_, "gapleft 4, gapright 50, push x, alignx left, wrap");
 
       // Simplify inserting unit labels slightly.
       final Runnable addUnits = () -> {
          JLabel label = new JLabel("\u00b5m"); // Micro Sign
          label.setFont(DEFAULT_FONT);
-         slicesPanel_.add(label, "gapleft 0, gapright 4, align left");
+         slicesPanel_.add(label, "gapleft 4, gapright 4, align left");
       };
 
-      final String textFieldConstraint = "gapleft 0, gapright 0";
+      final String textFieldConstraint = "split 2, gapleft 0, gapright 4";
 
       final JLabel zStartLabel = new JLabel("Start Z:");
       zStartLabel.setFont(DEFAULT_FONT);
@@ -661,7 +661,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       goToEndButton_.setFont(new Font("", Font.PLAIN, 10));
       goToEndButton_.setToolTipText("Go to end Z position");
       goToEndButton_.addActionListener((final ActionEvent e) -> goToEndPosition());
-      slicesPanel_.add(goToEndButton_, buttonSize + ",wrap");
+      slicesPanel_.add(goToEndButton_, buttonSize + ",gapright 4, wrap");
 
       final JLabel zStepLabel = new JLabel("Step size:");
       zStepLabel.setFont(DEFAULT_FONT);
@@ -675,19 +675,19 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       slicesPanel_.add(zStep_, textFieldConstraint);
       addUnits.run();
 
-      proposedZStepLabel_ = new JLabel("0.643");
-      proposedZStepLabel_.setFont(DEFAULT_FONT);
-      slicesPanel_.add(proposedZStepLabel_, "split 2, alignx right");
-      JLabel label = new JLabel("\u00b5m"); // Micro Sign
-      label.setFont(DEFAULT_FONT);
-      slicesPanel_.add(label, "gapleft 0, gapright 4");
-
-      final JButton setZStepButton_ = new JButton("Set");
+      setZStepButton_ = new JButton("Use:");
       setZStepButton_.setMargin(new Insets(-5, -5, -5, -5));
       setZStepButton_.setFont(new Font("", Font.PLAIN, 10));
       setZStepButton_.setToolTipText("Use proposed Z Step");
       setZStepButton_.addActionListener((final ActionEvent e) -> useProposedZStep());
-      slicesPanel_.add(setZStepButton_, buttonSize + ",wrap");
+      slicesPanel_.add(setZStepButton_, buttonSize);
+
+      proposedZStepLabel_ = new JLabel("0.643");
+      proposedZStepLabel_.setFont(DEFAULT_FONT);
+      slicesPanel_.add(proposedZStepLabel_, "split 2, alignx center");
+      JLabel label = new JLabel("\u00b5m"); // Micro Sign
+      label.setFont(DEFAULT_FONT);
+      slicesPanel_.add(label, "gapleft 0, gapright 4, wrap");
 
       zValCombo_ = new JComboBox<>(new String[] {RELATIVE_Z, ABSOLUTE_Z});
       zValCombo_.setFont(DEFAULT_FONT);
@@ -961,6 +961,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
+   /**
+    * Runs a "standard" acquisition as desired by the user, however, time-lapse
+    * is disabled, positionlist is disabled, and data will not be saved to disk.
+    *
+    * @param sequenceSettings SequenceSettings describing the state of the MDA window
+    */
    public void runTestAcquisition(SequenceSettings sequenceSettings) {
       testAcqAdapter_.setSequenceSettings(sequenceSettings);
       try {
@@ -1383,6 +1389,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          goToEndButton_.setEnabled(sequenceSettings.useSlices()
                   && !sequenceSettings.relativeZSlice());
          zStep_.setEnabled(sequenceSettings.useSlices());
+         setZStepButton_.setEnabled(sequenceSettings.useSlices());
          zValCombo_.setEnabled(sequenceSettings.useSlices());
          if (zDriveCombo_ != null) {
             zDriveCombo_.setEnabled(sequenceSettings.useSlices());
@@ -1490,10 +1497,16 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
+   /**
+    * Rebuild the UI based on the just loaded Configuration.
+    *
+    * @param sle Event signaling that configuration was just loaded
+    */
    @Subscribe
    public void onConfigurationLoaded(SystemConfigurationLoadedEvent sle) {
       final StrVector zDrives = mmStudio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
       if (!zDrives.isEmpty()) {
+         slicesPanel_.setEnabled(true);
          zDriveLabel_.setVisible(true);
          zDriveCombo_.removeAllItems();
          for (int i = 0; i < zDrives.size(); i++) {
@@ -1513,9 +1526,33 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          }
          zDrivePositionLabel_.setVisible(true);
          zDrivePositionUmLabel_.setVisible(true);
+      } else {
+         zDriveLabel_.setVisible(false);
+         zDriveCombo_.setVisible(false);
+         zDrivePositionLabel_.setVisible(false);
+         zDrivePositionUmLabel_.setVisible(false);
+         slicesPanel_.setSelected(false);
+         getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings()
+               .copyBuilder().useSlices(false).build());
+         slicesPanel_.setEnabled(false);
       }
+      final StrVector xyDrives = mmStudio_.core().getLoadedDevicesOfType(DeviceType.XYStageDevice);
+      if (!xyDrives.isEmpty()) {
+         positionsPanel_.setEnabled(true);
+      } else {
+         positionsPanel_.setSelected(false);
+         positionsPanel_.setEnabled(false);
+         getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings()
+               .copyBuilder().usePositionList(false).build());
+      }
+      updateGUIContents();
    }
 
+   /**
+    * Update zDrivePositionLabel when the Z drive moves.
+    *
+    * @param spce event signaling StagePositionChange
+    */
    @Subscribe
    public void onStagePositionChangedEvent(StagePositionChangedEvent spce) {
       if (spce.getDeviceName().equals(mmStudio_.core().getFocusDevice())) {
@@ -1523,6 +1560,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
+   /**
+    * Used to get hold of the current Z drive.
+    *
+    * @param pce OnPropertiesChangedEvent inspect to see if Core-Focus was changed
+    */
    @Subscribe
    public void onPropertyChangedEvent(PropertyChangedEvent pce) {
       if ("Core".equals(pce.getDevice()) && ("Focus".equals(pce.getProperty()))) {
@@ -2187,6 +2229,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                throw new MMException("Do not serialize this class");
             }
          });
+      }
+
+      @Override
+      public void setEnabled(boolean enable) {
+         super.setEnabled(enable);
+         checkBox.setEnabled(enable);
       }
 
       /**
