@@ -6,6 +6,7 @@
 
 package org.micromanager.internal.dialogs.introdialogparts;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.HierarchyEvent;
@@ -16,6 +17,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -27,6 +29,9 @@ import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 
 /**
+ * Controller for a UI that allows the user to select a hardware configuration.
+ * The UI consists of a combo box with a "..." button to browse for a file.
+ *
  * @author Mark A. Tsuchida
  */
 public class ConfigSelectionUIController {
@@ -39,6 +44,12 @@ public class ConfigSelectionUIController {
 
    private static final String NO_HARDWARE_CONFIG_ITEM = "(none)";
 
+   /**
+    * Create a new controller.
+    *
+    * @param admin   User profile admin to use
+    * @return a new controller
+    */
    public static ConfigSelectionUIController create(UserProfileAdmin admin) {
       final ConfigSelectionUIController ret =
             new ConfigSelectionUIController(admin);
@@ -60,11 +71,22 @@ public class ConfigSelectionUIController {
       return ret;
    }
 
+   /**
+    * private constructor.
+    *
+    * @param admin admin UserProfile
+    */
    private ConfigSelectionUIController(UserProfileAdmin admin) {
       admin_ = admin;
 
       configComboBox_.setPrototypeDisplayValue("");
       configComboBox_.setMaximumRowCount(12);
+      // On Windows, right align using custom renderer
+      if (UIManager.getLookAndFeel().getClass().getName().equals(
+             "com.sun.java.swing.plaf.windows.WindowsLookAndFeel")) {
+         configComboBox_.setRenderer(new ComboBoxCellRenderer());
+         configComboBox_.setBackground(Color.WHITE);
+      }
 
       browseButton_.setText("...");
       browseButton_.setPreferredSize(new Dimension(24, 22));
@@ -84,6 +106,11 @@ public class ConfigSelectionUIController {
       return panel_;
    }
 
+   /**
+    * Get the path of the selected hardware configuration file.
+    *
+    * @return path of the selected configuration file, or null if none selected
+    */
    public String getSelectedConfigFilePath() {
       String item = (String) configComboBox_.getSelectedItem();
       if (NO_HARDWARE_CONFIG_ITEM.equals(item)) {
@@ -92,6 +119,11 @@ public class ConfigSelectionUIController {
       return item;
    }
 
+   /**
+    * Set the selected hardware configuration file path.
+    *
+    * @param path path of the configuration file to select, or null to select none
+    */
    public void setSelectedConfigFilePath(String path) {
       if (path == null) {
          path = NO_HARDWARE_CONFIG_ITEM;
@@ -146,6 +178,11 @@ public class ConfigSelectionUIController {
       configComboBox_.setSelectedIndex(0);
    }
 
+   /**
+    * Test main.
+    *
+    * @param args ignored
+    */
    public static void main(String[] args) {
       ConfigSelectionUIController c = ConfigSelectionUIController.create(
             UserProfileAdmin.create());
@@ -155,4 +192,6 @@ public class ConfigSelectionUIController {
       f.pack();
       f.setVisible(true);
    }
+
+
 }

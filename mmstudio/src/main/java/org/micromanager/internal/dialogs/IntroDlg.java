@@ -236,6 +236,11 @@ public final class IntroDlg extends JDialog {
       return okFlag_;
    }
 
+   /**
+    * Get the UUID of the selected profile.
+    *
+    * @return UUID of the selected profile.
+    */
    public UUID getSelectedProfileUUID() {
       if (skipProfileSelection_) {
          return admin_.getUUIDOfDefaultProfile();
@@ -247,6 +252,11 @@ public final class IntroDlg extends JDialog {
       return configController_.getSelectedConfigFilePath();
    }
 
+   /**
+    * Main method for testing.
+    *
+    * @param args command line arguments
+    */
    public static void main(String[] args) {
       IntroDlg d = new IntroDlg(null, "VERSION HERE");
       System.out.println("OK = " + d.okChosen());
