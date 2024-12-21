@@ -153,7 +153,7 @@ public class MMUIManager {
             acqControlWin_ = new AcqControlDlg(studio_);
          }
          if (acqControlWin_.isActive()) {
-            acqControlWin_.setTopPosition();
+            acqControlWin_.setEndPosition();
          }
 
          acqControlWin_.setVisible(true);
