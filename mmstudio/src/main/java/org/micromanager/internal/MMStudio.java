@@ -992,6 +992,11 @@ public final class MMStudio implements Studio {
       return configChanged_;
    }
 
+   /**
+    * Returns an instance of the AcquisitionEngine object.
+    *
+    * @return instance of the AcquisitionEngine object.
+    */
    public AcquisitionEngine getAcquisitionEngine() {
       if (settings().getShouldUseAcqEngJ()) {
          return acqEngineJava_;
@@ -1247,6 +1252,8 @@ public final class MMStudio implements Studio {
               = "Unlock autofocus during Z stack";
       private static final String SHOW_BACKGROUND_WINDOW
               = "Show background window";
+      private static final String SNAP_AFTER_ROI_BUTTON
+            = "Snap after pressing ROI button";
 
       public boolean getShouldDeleteOldCoreLogs() {
          return profile().getSettings(MMStudio.class).getBoolean(
@@ -1300,6 +1307,11 @@ public final class MMStudio implements Studio {
                  SHOULD_USE_ACQENGJ, false);
       }
 
+      /**
+       * Sets whether to use the new Acquisition Engine.
+       *
+       * @param use True to use the new Acquisition Engine, false otherwise.
+       */
       public void setShouldUseAcqEngJ(boolean use) {
          SequenceSettings acqSettings = acquisitions().getAcquisitionSettings();
          profile().getSettings(MMStudio.class).putBoolean(
@@ -1325,6 +1337,16 @@ public final class MMStudio implements Studio {
       public void setShowBackgroundWindow(boolean show) {
          profile().getSettings(MMStudio.class).putBoolean(
                  SHOW_BACKGROUND_WINDOW, show);
+      }
+
+      public void setSnapAfterRoiButton(boolean snap) {
+         profile().getSettings(MMStudio.class).putBoolean(
+                 SNAP_AFTER_ROI_BUTTON, snap);
+      }
+
+      public boolean getSnapAfterRoiButton() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+                 SNAP_AFTER_ROI_BUTTON, false);
       }
    }
 }

@@ -70,6 +70,9 @@ public class MMROIManager {
          try {
             if (studio_.core().getNumberOfCameraChannels() < 2) {
                studio_.app().setROI(updateROI(studio_.core().getCameraDevice(), roi));
+               if (!studio_.live().isLiveModeOn() && studio_.settings().getSnapAfterRoiButton()) {
+                  studio_.live().snap(true);
+               }
             } else {
                studio_.live().setSuspended(true);
                try {
@@ -83,6 +86,10 @@ public class MMROIManager {
                } finally {
                   studio_.cache().refreshValues();
                   studio_.live().setSuspended(false);
+                  if (!studio_.live().isLiveModeOn()
+                        && studio_.settings().getSnapAfterRoiButton()) {
+                     studio_.live().snap(true);
+                  }
                }
             }
          } catch (Exception e) {
@@ -233,6 +240,9 @@ public class MMROIManager {
       try {
          if (studio_.core().getNumberOfCameraChannels() < 2) {
             studio_.app().setROI(updateROI(studio_.core().getCameraDevice(), roi));
+            if (!studio_.live().isLiveModeOn() && studio_.settings().getSnapAfterRoiButton()) {
+               studio_.live().snap(true);
+            }
          } else {
             for (int c = 0; c < studio_.core().getNumberOfCameraChannels(); c++) {
                studio_.app().setROI(updateROI(studio_.core().getCameraChannelName(c), roi));
@@ -252,11 +262,13 @@ public class MMROIManager {
       try {
          studio_.core().clearROI();
          studio_.cache().refreshValues();
-
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
       studio_.live().setSuspended(false);
+      if (!studio_.live().isLiveModeOn() && studio_.settings().getSnapAfterRoiButton()) {
+         studio_.live().snap(true);
+      }
    }
 
    private void setMultiROI(List<Rectangle> rois) throws Exception {

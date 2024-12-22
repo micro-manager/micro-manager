@@ -253,6 +253,12 @@ public final class OptionsDlg extends JDialog {
       syncExposureMainAndMDA.addActionListener((ActionEvent arg0) ->
             AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected()));
 
+      final JCheckBox snapAfterROICheckBox = new JCheckBox();
+      snapAfterROICheckBox.setText("Snap after ROI button");
+      snapAfterROICheckBox.setSelected(mmStudio.settings().getSnapAfterRoiButton());
+      snapAfterROICheckBox.addActionListener((ActionEvent arg0) ->
+            mmStudio.settings().setSnapAfterRoiButton(snapAfterROICheckBox.isSelected()));
+
       final JCheckBox hideMDAdisplay = new JCheckBox();
       hideMDAdisplay.setText("Hide MDA display");
       hideMDAdisplay.setSelected(AcqControlDlg.getShouldHideMDADisplay());
@@ -340,6 +346,7 @@ public final class OptionsDlg extends JDialog {
       super.add(new JSeparator(), "wrap");
 
       super.add(syncExposureMainAndMDA, "wrap");
+      super.add(snapAfterROICheckBox, "wrap");
       super.add(hideMDAdisplay, "wrap");
       super.add(runServer, "wrap");
       super.add(acqEngJ, "wrap");
