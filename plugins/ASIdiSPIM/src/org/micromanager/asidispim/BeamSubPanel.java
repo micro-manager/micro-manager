@@ -124,7 +124,7 @@ public final class BeamSubPanel extends ListeningJPanel {
             } else {
                add(new JLabel(""), "wrap");
             }
-            if (!ASIdiSPIM.oSPIM) {
+            if (!ASIdiSPIM.singleView) {
                add(new JLabel("Path B:"));
                add(beamBBox_);
                pu.checkboxInitByTwoClicks(beamBBox_);
@@ -143,7 +143,7 @@ public final class BeamSubPanel extends ListeningJPanel {
          }
          if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
                Properties.Keys.PLUGIN_SHOW_EPI_CB, false)) {
-            if (!ASIdiSPIM.oSPIM) {
+            if (!ASIdiSPIM.singleView) {
                add(new JLabel("Epi side:"));
                add(beamBBox_);
                pu.checkboxInitByTwoClicks(beamBBox_);

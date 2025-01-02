@@ -338,8 +338,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
-      if (!ASIdiSPIM.oSPIM) {
-      } else {
+      if (ASIdiSPIM.singleView) {
          props_.setPropValue(Devices.Keys.PLUGIN,
                Properties.Keys.PLUGIN_NUM_SIDES, "1");
       }
@@ -348,24 +347,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       numSides_ = pu.makeDropDownBox(str12, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_NUM_SIDES, str12[1]);
       numSides_.addActionListener(recalculateTimingDisplayAL);
-      if (!ASIdiSPIM.oSPIM) {
-      } else {
+      if (ASIdiSPIM.singleView) {
          numSides_.setEnabled(false);
       }
       volPanel_.add(numSides_, "wrap");
 
       volPanel_.add(new JLabel("First side:"));
       final String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
-      if (!ASIdiSPIM.oSPIM) {
-      } else {
+      if (ASIdiSPIM.singleView) {
          props_.setPropValue(Devices.Keys.PLUGIN,
                Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());
       }
       firstSide_ = pu.makeDropDownBox(ab, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());
       firstSide_.addActionListener(recalculateTimingDisplayAL);
-      if (!ASIdiSPIM.oSPIM) {
-      } else {
+      if (ASIdiSPIM.singleView) {
          firstSide_.setEnabled(false);
       }
       volPanel_.add(firstSide_, "wrap");
@@ -3190,7 +3186,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                return AcquisitionStatus.FATAL_ERROR;
             }
             if (acqSettings.usePathPresets) {
-               MyDialogUtils.showError("Cannot use path presets with interleaved stage scan", hideErrors);
+               MyDialogUtils.showError("Cannot use path group/presets with interleaved stage scan", hideErrors);
                return AcquisitionStatus.FATAL_ERROR;
             }
          }
@@ -3208,6 +3204,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   + "channels every slice. Pester the developer to extend this functionality to single channel and/or volume switching.", hideErrors);
             return AcquisitionStatus.FATAL_ERROR;
          }
+      }
+      
+      if (acqSettings.usePathPresets && acqSettings.numSides < 2) {
+         MyDialogUtils.showError("Cannot use path group/presets with single-sided acquisition", hideErrors);
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       double sliceDuration = acqSettings.sliceTiming.sliceDuration;
@@ -3554,7 +3555,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
-      if (!acqSettings.usePathPresets) {  // special case with path presets handled later
+      if (!acqSettings.usePathPresets) {  // special case with path presets handled later (but wasn't for long time until Jan 2025)
          if (!controller_.prepareControllerForAquisition(acqSettings, extraChannelOffset_)) {
             posUpdater_.pauseUpdates(false);
             return AcquisitionStatus.FATAL_ERROR;

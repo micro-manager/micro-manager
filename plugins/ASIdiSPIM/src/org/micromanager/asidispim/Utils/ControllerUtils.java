@@ -72,6 +72,7 @@ public class ControllerUtils {
    final int counterMSBAddr = 4;
    final int triggerStepEdgeAddr = 6;
    final int triggerStepPulseAddr = 7;
+   
    final int triggerStepOutputAddr = 40;  // BNC #8
    final int triggerInAddr = 35;  // BNC #3
    final int triggerSPIMAddr = 46;  // backplane signal, same as XY card's TTL output for stage scanning
@@ -79,6 +80,10 @@ public class ControllerUtils {
    final int laserTriggerAddress = 10;  // this should be set to (42 || 8) = (TTL1 || manual laser on)
    final String MACRO_NAME_STEP = "STEPTRIG";
    final String MACRO_NAME_SCAN = "SCANTRIG";
+   
+   final int cameraATriggerAddr = 41;
+   final int volumeMilestoneAddr = 6;
+   final int timepointMilestoneAddr = 7;
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
            final Prefs prefs, final Devices devices, final Positions positions, final Cameras cameras) {
@@ -245,6 +250,52 @@ public class ControllerUtils {
    }
    
    /**
+    * returns the number of camera triggers in each volume accounting for overlap mode and interleaved channels 
+    */
+   private int getNumCameraTriggersPerPosition(AcquisitionSettings settings) {
+      int numTriggers = getNumSlicesHW(settings);
+      numTriggers *= settings.numChannels;  // turns out this is true for interleaved channels too (I expected M*N+1 but actually M*(N+1) I think due to the way the firmware works)
+      return numTriggers;
+   }
+   
+   /**
+    * returns the number of positions in each timepoint 
+    */
+   private int getNumPositionsPerTimepoint(AcquisitionSettings settings) {
+      int numPositions = 1;
+      if (settings.useMultiPositions) {
+         try {
+            numPositions = gui_.getPositionList().getNumberOfPositions();
+         } catch (Exception ex) {
+            numPositions = 1; 
+         }
+      }
+      return numPositions;
+   }
+   
+   /**
+    * set up cells 6 and 7 of "main" (camera) PLC to indicate position and timepoints respectively
+    *   cell 6 is high during each position (including stacks and channels) and goes low between them (based on counting camera pulses)
+    *   cell 7 is high during each timepoint and goes low between them (based on counting cell 6)
+    */
+   public void setupMilestoneSignalsPLC(final AcquisitionSettings settings) {
+//      MyDialogUtils.showError(getNumCameraTriggersPerPosition(settings) + " camera triggers per position; and " +
+//            getNumPositionsPerTimepoint(settings) + " position triggers per timepoint");
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, volumeMilestoneAddr);
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_ONESHOT_NRT);
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, getNumCameraTriggersPerPosition(settings));
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, cameraATriggerAddr + edgeAddr);  // trigger on rising edge
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, cameraATriggerAddr + invertAddr + edgeAddr);  // decrement on falling edge
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);  // reset on main acquisition start
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, timepointMilestoneAddr);
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_ONESHOT_NRT);
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, getNumPositionsPerTimepoint(settings));
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, volumeMilestoneAddr + edgeAddr);  // trigger on rising edge
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, volumeMilestoneAddr + invertAddr + edgeAddr);  // decrement on falling edge
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);  // reset on main acquisition start
+   }
+   
+   /**
     * call special version which will only set the slice offset and not refresh everything else
     * @param settings
     * @param channelOffset
@@ -381,6 +432,11 @@ public class ControllerUtils {
                MyDialogUtils.showError("Supplemental stage step not compatible with 7 channel laser trigger");
                return false;
             }
+            
+//            if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), Properties.Keys.PLUGIN_PLC_MILESTONES_67, false)) {
+//               MyDialogUtils.showError("Supplemental stage step not compatible with PLC milestone signals");
+//               return false;
+//            }
             
             // cell 2 will be rising edge whenever laser on goes low
             props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
@@ -582,6 +638,13 @@ public class ControllerUtils {
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerInAddr);
       }
       
+      // configures cells 6 and 7 on "main" PLogic device as volume and timepoint flags
+      // initially had a plugin property/setting to control this, but opted to just do it except in rare "stage stepping" situation where the same cells are used otherwise
+      // NB implementation uses only camera trigger A => should be aware of this for dual-view
+      if (!settings.isStageStepping) {
+         setupMilestoneSignalsPLC(settings);
+      }
+      
       // sets PLogic "acquisition running" flag in the "main" PLOGIC device
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_3, true);
       
@@ -643,6 +706,14 @@ public class ControllerUtils {
       }
       
       return ignoreMissingScanner && haveMissingScanner;
+   }
+   
+   private int getNumSlicesHW(final AcquisitionSettings settings) {
+      if (settings.cameraMode == CameraModes.Keys.OVERLAP) {
+         return settings.numSlices + 1;
+      } else {
+         return settings.numSlices;
+      }
    }
    
     /**
@@ -758,18 +829,20 @@ public class ControllerUtils {
          piezoAmplitude = (settings.numSlices - 1) * settings.stepSizeUm;
       }
 
-      // use this instead of settings.numSlices from here on out because
-      // we modify it if we are taking "extra slice" for synchronous/overlap
-      int numSlicesHW = settings.numSlices;
+      // compute how many slices we ask the hardware for, this is
+      //   settings.numSlices+1 for synchronous/overlap mode or settings.numSlices otherwise
+      int numSlicesHW = getNumSlicesHW(settings);
       
-      // tweak the parameters if we are using synchronous/overlap mode
-      // object is to get exact same piezo/scanner positions in first
-      // N frames (piezo/scanner will move to N+1st position but no image taken)
+      // tweak the piezo parameters if we are using synchronous/overlap mode
+      // object is to get exact same piezo/scanner positions in first N frames (piezo/scanner will move to N+1st position but no image taken)
+      // amplitude is (N-1)*stepSize and artificially make N*stepSize instead => multiply amplitude by (N)/(N-1)
+      // offset shifts by half a step
       final CameraModes.Keys cameraMode = settings.cameraMode;
       if (cameraMode == CameraModes.Keys.OVERLAP) {
-         piezoAmplitude *= ((float)numSlicesHW)/((float)numSlicesHW-1f);
-         piezoCenter += piezoAmplitude/(2*numSlicesHW);
-         numSlicesHW += 1;
+         if (settings.numSlices>1) {
+            piezoAmplitude *= ((float)settings.numSlices)/((float)settings.numSlices-1f);
+         }
+         piezoCenter += settings.stepSizeUm/2;  // was piezoAmplitude/(2*numSlicesHW) which isn't quite the same but close enough that nobody probably noticed
       }
       
       float sliceRate = prefs_.getFloat(
@@ -792,7 +865,7 @@ public class ControllerUtils {
          // if we artificially shifted centers due to extra trigger and only moving piezo
          // then move galvo center back to where it would have been
          if (cameraMode == CameraModes.Keys.OVERLAP) {
-            float actualPiezoCenter = piezoCenter - piezoAmplitude/(2*(numSlicesHW-1));
+            float actualPiezoCenter = piezoCenter - settings.stepSizeUm/2;
             sliceCenter = (actualPiezoCenter - sliceOffset) / sliceRate;
          }
          sliceAmplitude = 0.0f;
@@ -870,7 +943,7 @@ public class ControllerUtils {
                // if we artificially shifted centers due to extra trigger and only moving piezo
                // then move galvo center back to where it would have been
                if (cameraMode == CameraModes.Keys.OVERLAP) {
-                  piezoCenter -= piezoAmplitude/(2*(numSlicesHW-1));
+                  piezoCenter -= settings.stepSizeUm/2;
                }
                piezoAmplitude = 0.0f;
             }

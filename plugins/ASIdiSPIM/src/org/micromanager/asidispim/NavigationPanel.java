@@ -364,7 +364,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                positions_.setPosition(Devices.Keys.LOWERZDRIVE, -upperPosition);
             }
          });
-         if (ASIdiSPIM.oSPIM || !devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+         if (ASIdiSPIM.oSPIM || ASIdiSPIM.SCOPE || !devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
             navPanel.add(new JLabel(""));
          } else {
             navPanel.add(syncZtoF);
@@ -406,7 +406,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                positions_.setPosition(Devices.Keys.UPPERZDRIVE, -lowerPosition);
             }
          });
-         if (ASIdiSPIM.oSPIM || !devices_.isValidMMDevice(Devices.Keys.LOWERZDRIVE)) {
+         if (ASIdiSPIM.oSPIM || ASIdiSPIM.SCOPE || !devices_.isValidMMDevice(Devices.Keys.LOWERZDRIVE)) {
             navPanel.add(new JLabel(""));
          } else {
             navPanel.add(syncFtoZ);
@@ -418,8 +418,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          }
       }
       
-      if (!ASIdiSPIM.oSPIM || ASIdiSPIM.SCOPE) {
-      } else {
+      if (ASIdiSPIM.oSPIM) {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERHDRIVE) + ":"));
          navPanel.add(upperHPositionLabel_);
          navPanel.add(pu.makeSetPositionField(Devices.Keys.UPPERHDRIVE, Directions.NONE, positions_));
@@ -451,7 +450,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       }
       
       piezoBPositionLabel_ = new JLabel("");
-      if (!ASIdiSPIM.oSPIM && devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
+      if (!ASIdiSPIM.singleView && devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOB) + ":"));
          navPanel.add(piezoBPositionLabel_);
          navPanel.add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Directions.NONE, positions_));
@@ -485,7 +484,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.Y, deltaBField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOA, Directions.Y), "wrap");
       
-      if (!ASIdiSPIM.oSPIM && devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
+      if (!ASIdiSPIM.singleView && devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Directions.X) + ":"));
          navPanel.add(galvoBxPositionLabel_);
          navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Directions.X, positions_));

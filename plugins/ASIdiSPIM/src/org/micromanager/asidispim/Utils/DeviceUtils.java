@@ -357,7 +357,7 @@ public class DeviceUtils {
    public double getStageGeometricShiftFactor(boolean pathA) {
       double angle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
       if (angle < 1) {  // case when property not defined
-         angle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
+         angle = ASIdiSPIM.SCOPE ? 50.0 : (ASIdiSPIM.oSPIM ? 60.0 : 45.0); 
       }
       if (!pathA) {
          angle = 90.0 - angle;
@@ -375,7 +375,7 @@ public class DeviceUtils {
    public double getStageTopViewCompressFactor(boolean pathA) {
       double angle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
       if (angle < 1) {  // case when property not defined
-         angle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
+         angle = ASIdiSPIM.SCOPE ? 50.0 : (ASIdiSPIM.oSPIM ? 60.0 : 45.0); 
       }
       if (!pathA) {
          angle = 90.0 - angle;

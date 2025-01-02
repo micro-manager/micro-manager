@@ -178,12 +178,12 @@ public class ASIdiSPIMFrame extends MMFrame
       setupPanelA_ = new SetupPanel(gui_, devices_, props_, joystick_,
             Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
             autofocus_, controller_);
-      if (!ASIdiSPIM.oSPIM) {
+      if (ASIdiSPIM.singleView) {
+         setupPanelB_ = null;
+      } else {
          setupPanelB_ = new SetupPanel(gui_, devices_, props_, joystick_,
                Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
                autofocus_, controller_);
-      } else {
-         setupPanelB_ = null;
       }
       navigationPanel_ = new NavigationPanel(gui_, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
@@ -207,7 +207,7 @@ public class ASIdiSPIMFrame extends MMFrame
       }
       tabbedPane_.addLTab(navigationPanel_);  // tabIndex = 0
       tabbedPane_.addLTab(setupPanelA_);      // tabIndex = 1
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.singleView) {
          tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
       }
       tabbedPane_.addLTab(acquisitionPanel_); // tabIndex = 3
@@ -237,7 +237,7 @@ public class ASIdiSPIMFrame extends MMFrame
 
       // attach position updaters
       stagePosUpdater_.addPanel(setupPanelA_);
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.singleView) {
          stagePosUpdater_.addPanel(setupPanelB_);
       }
       stagePosUpdater_.addPanel(navigationPanel_);
@@ -260,7 +260,7 @@ public class ASIdiSPIMFrame extends MMFrame
       };
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(piezoSleepListener_);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.singleView) {
          MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
       }
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
@@ -493,7 +493,7 @@ public class ASIdiSPIMFrame extends MMFrame
       // save selections as needed
       devices_.saveSettings();
       setupPanelA_.saveSettings();
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.singleView) {
          setupPanelB_.saveSettings();
       }
       navigationPanel_.saveSettings();
@@ -509,7 +509,7 @@ public class ASIdiSPIMFrame extends MMFrame
       // TODO force user to cancel any ongoing acquisition before closing
       acquisitionPanel_.windowClosing();
       setupPanelA_.windowClosing();
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.singleView) {
          setupPanelB_.windowClosing();
       }
    }

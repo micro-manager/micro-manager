@@ -42,10 +42,11 @@ public class ASIdiSPIM implements MMPlugin {
    // - add a distinguishing strung to the menuName, e.g. + " 2"
    // - change the second parameter in the call to new ASIdiSPIMFrame() to true to use a different preference node
    
-   public static final boolean oSPIM = false;  // mostly just means "single-view" but a few exceptions, set true for SCOPE too
-   public static final boolean doubleXYZ = false;
+   public static final boolean oSPIM = false;
    public static final boolean SCOPE = false;
-   public final static String versionString = " 20241224";
+   public static final boolean singleView = (oSPIM || SCOPE);  // true for SCOPE and oSPIM (and possibly other situations?)
+   public static final boolean doubleXYZ = false;
+   public final static String versionString = " 20250101";
    
    public final static String menuName = "ASI " 
          + (SCOPE ? "SCOPE" : (oSPIM ? "oSPIM" : "diSPIM") ) 

@@ -122,9 +122,7 @@ public class DevicesPanel extends ListeningJPanel {
          add(boxUpperZ_, "span 2, center, wrap");
       }
       
-      if (!ASIdiSPIM.oSPIM || ASIdiSPIM.SCOPE) {
-
-      } else {
+      if (ASIdiSPIM.oSPIM) {
          add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERHDRIVE) + ":"));
          final JComboBox boxUpperH_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
                Devices.Keys.UPPERHDRIVE, maxSelectorWidth*2);
@@ -178,7 +176,7 @@ public class DevicesPanel extends ListeningJPanel {
 
       final JComboBox boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
             Devices.Keys.GALVOB, maxSelectorWidth);
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.singleView) {
          add(boxScannerB_, "wrap");
       } else {
          boxScannerB_.setSelectedIndex(0);  // clear setting
@@ -191,7 +189,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(boxPiezoA_);
       final JComboBox boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.PIEZOB, maxSelectorWidth);
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.singleView) {
          add(boxPiezoB_, "wrap");
       } else {
          boxPiezoB_.setSelectedIndex(0);  // clear setting
@@ -204,7 +202,7 @@ public class DevicesPanel extends ListeningJPanel {
       final JComboBox boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, maxSelectorWidth);
       add(boxCameraB_, "wrap");
       // this change a hack to allow two-color in oSPIM by using the option for triggering both cameras simultaneously
-//      if (!ASIdiSPIM.oSPIM) {
+//      if (!ASIdiSPIM.singleView) {
 //         add(boxCameraB_, "wrap");
 //      } else {
 //         boxCameraB_.setSelectedIndex(0);  // clear setting

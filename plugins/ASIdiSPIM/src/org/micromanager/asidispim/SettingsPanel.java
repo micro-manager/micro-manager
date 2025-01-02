@@ -83,6 +83,7 @@ public class SettingsPanel extends ListeningJPanel {
    private final JCheckBox usePathGroupAcquisition_;
    private final JCheckBox acqBothCamerasSimult_;
    private final JCheckBox smoothSliceScan_;
+//   private final JCheckBox plcMilestones67_;
 
    /**
     * 
@@ -241,6 +242,12 @@ public class SettingsPanel extends ListeningJPanel {
          acqusitionPanel.add(smoothSliceScan_, "wrap");
       }
       
+//      plcMilestones67_ = pu.makeCheckBox("Milestone signals in PLC cells 6 and 7",
+//            Properties.Keys.PLUGIN_PLC_MILESTONES_67, panelName_, false);
+//      if (props_.getPropValueFloat(Devices.Keys.PLOGIC_LASER, Properties.Keys.FIRMWARE_VERSION) > 3.501) {
+//         acqusitionPanel.add(plcMilestones67_, "wrap");
+//      }
+      
       // end acquisition panel
       
       
@@ -378,7 +385,7 @@ public class SettingsPanel extends ListeningJPanel {
       presetB_ =  pu.makeDropDownBox(getAvailablePresetsForPathGroup().toArray(), 
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_B, "");
       presetB_.setMaximumSize(new Dimension(150, 30));
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.singleView) {
          setupPanel.add(new JLabel("Path B Preset:"));
          setupPanel.add(presetB_, "wrap");
       } else {

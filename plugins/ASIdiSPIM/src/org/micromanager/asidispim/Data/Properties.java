@@ -75,7 +75,7 @@ public class Properties {
       JOYSTICK_INPUT_X("JoystickInputX", false),
       JOYSTICK_INPUT_Y("JoystickInputY", false),
       SPIM_NUM_SIDES("SPIMNumSides"),
-      SPIM_NUM_SLICES("SPIMNumSlices"),
+      SPIM_NUM_SLICES("SPIMNumSlices"),  // NR Y
       SPIM_NUM_REPEATS("SPIMNumRepeats"),
       SPIM_DELAY_REPEATS("SPIMDelayBeforeRepeat(ms)"),
       SPIM_NUM_SCANSPERSLICE("SPIMNumScansPerSlice"),
@@ -83,7 +83,7 @@ public class Properties {
       SPIM_PIEZO_HOME_DISABLE("SPIMPiezoHomeDisable"),
       SPIM_ALTERTATE_DIRECTIONS("SPIMAlternateDirectionsEnable"),
       SPIM_SMOOTH_SLICE_ENABLE("SPIMSmoothSliceEnable"),
-      SPIM_NUM_SLICES_PER_PIEZO("SPIMNumSlicesPerPiezo"),
+      SPIM_NUM_SLICES_PER_PIEZO("SPIMNumSlicesPerPiezo"),  // NR R
       SPIM_DELAY_SIDE("SPIMDelayBeforeSide(ms)"),
       SPIM_DELAY_SCAN("SPIMDelayBeforeScan(ms)"),
       SPIM_DELAY_LASER("SPIMDelayBeforeLaser(ms)"),
@@ -213,6 +213,7 @@ public class Properties {
       PLUGIN_TESTACQ_SAVE("TestAcquisitionSave"),
       PLUGIN_WRITE_ACQ_SETTINGS_FILE("WriteAcquisitionSettingsFile"),
       PLUGIN_SMOOTH_SLICE_SCAN("SmoothSliceScan"),
+//      PLUGIN_PLC_MILESTONES_67("PLCMilestones67"),
       PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT("AcquireBothCamerasSimult"),
       PLUGIN_ACQUIRE_FAIL_QUIETLY("AcquireFailQuietly"),
       PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS("RaiseSPIMHeadBetweenAcquisitions"),

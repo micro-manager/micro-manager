@@ -564,7 +564,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             "",
             "[" + labelWidth + "px!,right]8[" + positionWidth + "px!,center]8[center]8[center]",
             "[]2[]2[]"));
-      if (!ASIdiSPIM.oSPIM) {  // don't need illum piezo on oSPIM or SCOPE
+      if (!ASIdiSPIM.oSPIM && !ASIdiSPIM.SCOPE) {  // don't need illum piezo on oSPIM or SCOPE
          tmp_lbl = new JLabel("Illum. piezo:", JLabel.RIGHT);
          tmp_lbl.setMaximumSize(new Dimension(labelWidth, 20));
          tmp_lbl.setMinimumSize(new Dimension(labelWidth, 20));

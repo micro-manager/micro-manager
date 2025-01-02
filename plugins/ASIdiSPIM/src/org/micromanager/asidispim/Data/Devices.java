@@ -124,7 +124,7 @@ public class Devices {
          Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
          Devices.Keys.CAMERALOWER);
    public final static Set<Devices.Keys> SPIM_CAMERAS = 
-         ASIdiSPIM.oSPIM ? EnumSet.of(Devices.Keys.CAMERAA) :  
+         ASIdiSPIM.singleView ? EnumSet.of(Devices.Keys.CAMERAA) :  
             EnumSet.of(Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
    public final static Set<Devices.Keys> SPIM_CAMERAS_SIMULT = 
             EnumSet.of(Devices.Keys.CAMERA_A1, Devices.Keys.CAMERA_A2, Devices.Keys.CAMERA_A3, Devices.Keys.CAMERA_A4);
