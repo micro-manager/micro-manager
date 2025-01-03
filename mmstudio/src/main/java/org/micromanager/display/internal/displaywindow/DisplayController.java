@@ -136,9 +136,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          = PerformanceMonitor.createWithTimeConstantMs(1000.0);
 
 
-   //This static counter makes sure that each object has it's own unique id during runtime.
+   //This static counter makes sure that each object has its own unique id during runtime.
    private static final AtomicInteger counter = new AtomicInteger();
    private final Integer uid = counter.getAndIncrement();
+   private boolean showOnceThereAreImages_ = false;
 
    @Override
    public void addListener(DataViewerListener listener, int priority) {
@@ -318,6 +319,17 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       toFront();
    }
 
+   @Override
+   public void showOnceThereAreImages() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(this::showOnceThereAreImages);
+      }
+      if (dataProvider_.getNumImages() > 0) {
+         show();
+         return;
+      }
+      showOnceThereAreImages_ = true;
+   }
 
    //
    // Scheduling images for display
@@ -921,6 +933,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          if (closeCompleted_) {
             return;
          }
+      }
+      if (showOnceThereAreImages_) {
+         showOnceThereAreImages_ = false;
+         show();
       }
 
       // Generally we want to display new images (if not instructed otherwise
