@@ -3792,9 +3792,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   NumberUtils.doubleToCoreString(acqSettings.desiredLightExposure));
             gui_.setAcquisitionProperty(acqName_, "VolumeDuration",
                     actualVolumeDurationLabel_.getText());
-            gui_.setAcquisitionProperty(acqName_, "SPIMmode", spimMode.toString()); 
-            // Multi-page TIFF saving code wants this one (cameras are all 16-bits, so not much reason for anything else)
-            gui_.setAcquisitionProperty(acqName_, "PixelType", "GRAY16");
+            gui_.setAcquisitionProperty(acqName_, "SPIMmode", spimMode.toString());
+            gui_.setAcquisitionProperty(acqName_, "PixelType",
+                  (core_.getImageBitDepth() < 9) ? "GRAY8" : "GRAY16");
             gui_.setAcquisitionProperty(acqName_, "UseAutofocus", 
                   acqSettings.useAutofocus ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName_, "UsePathPresets", 
