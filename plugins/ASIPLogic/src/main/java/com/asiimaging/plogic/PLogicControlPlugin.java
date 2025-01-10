@@ -19,7 +19,7 @@ public class PLogicControlPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String copyright = "Applied Scientific Instrumentation (ASI), 2024";
    public static final String description = "An interface for the Tiger Programmable Logic Card.";
    public static final String menuName = "ASI PLogic Control";
-   public static final String version = "0.3.0";
+   public static final String version = "0.4.0";
 
    private Studio studio_;
    private PLogicControlFrame frame_;

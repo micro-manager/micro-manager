@@ -150,6 +150,9 @@ public class LogicCell extends Panel {
       if (model_.plc().firmwareVersion() >= 3.50) {
          maxIndex = 17;
       }
+      if (model_.plc().firmwareVersion() >= 3.51) {
+         maxIndex = 18;
+      }
       // array used for all logic cells
       cellTypes_ = Arrays.copyOf(cellTypes, maxIndex + 1);
       cmbCellType_.updateItems(cellTypes_); // update ui
