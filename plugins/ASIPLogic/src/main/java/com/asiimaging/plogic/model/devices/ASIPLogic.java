@@ -381,7 +381,7 @@ public class ASIPLogic extends ASITigerBase {
       OR4(
             "11 - 4-input OR", 4, "", "A", "B", "C", "D", false),
       D_FLOP_SYNC(
-            "12 - D flop (sync)", 4, "", "Din", "Clock", "Reset", "Preset", true),
+            "12 - D flop (sync)", 4, "", "Din", "Clock", "Reset (S)", "Preset (S)", true),
       JK_FLOP(
             "13 - JK flop", 3, "", "J", "K", "Clock", "", true),
       ONE_SHOT_NRT(
@@ -393,7 +393,10 @@ public class ASIPLogic extends ASITigerBase {
             4, "Duration", "Trigger A", "Clock", "Reset", "Trigger B", true),
       DELAY_OR2_NRT(
             "17 - delay OR2 (NRT)",
-            4, "Delay", "Trigger A", "Clock", "Reset", "Trigger B", true);
+            4, "Delay", "Trigger A", "Clock", "Reset", "Trigger B", true),
+      D_FLOP_SYNC_ASYNC(
+            "18 - D flop (sync/async)",
+            4, "", "Din", "Clock", "Reset", "Reset (S)", true);
 
       private final String propertyName_;
       private final int numInputs_;
