@@ -81,6 +81,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
+import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
@@ -101,6 +102,10 @@ import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.NewPositionListEvent;
+import org.micromanager.events.PixelSizeChangedEvent;
+import org.micromanager.events.PropertyChangedEvent;
+import org.micromanager.events.StagePositionChangedEvent;
+import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -146,22 +151,30 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JComboBox<String> channelGroupCombo_;
    private final JTextArea commentTextArea_;
    private JComboBox<String> zValCombo_;
+   private JComboBox<String> zDriveCombo_;
    private JTextField nameField_;
    private JTextField rootField_;
    private JTextArea summaryTextArea_;
    private JComboBox<String> timeUnitCombo_;
    private JFormattedTextField interval_;
    private JFormattedTextField zStep_;
-   private JFormattedTextField zTop_;
-   private JFormattedTextField zBottom_;
+   private JFormattedTextField zEnd_;
+   private JFormattedTextField zStart_;
    private final JScrollPane channelTablePane_;
    private final JTable channelTable_;
    private ChannelCellEditor channelCellEditor_;
    private JSpinner numFrames_;
    private ChannelTableModel model_;
    private int zRelativeAbsolute_ = 0;
-   private JButton setBottomButton_;
-   private JButton setTopButton_;
+   private JButton setStartButton_;
+   private JButton setEndButton_;
+   private JButton goToStartButton_;
+   private JButton goToEndButton_;
+   private JButton setZStepButton_;
+   JLabel proposedZStepLabel_;
+   JLabel zDriveLabel_;
+   JLabel zDrivePositionLabel_;
+   JLabel zDrivePositionUmLabel_;
    private final MMStudio mmStudio_;
    private final MutablePropertyMapView settings_;
    private final NumberFormat numberFormat_;
@@ -549,92 +562,144 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return positionsPanel_;
    }
 
+   @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
    private JPanel createZStacks() {
       slicesPanel_ = createCheckBoxPanel("Z-Stacks (Slices)");
       slicesPanel_.setLayout(new MigLayout("fillx, gap 2, insets 2",
-            "push[][][][]push", ""));
+                     "push[][][][][]push", ""));
 
-      String labelConstraint = "pushx 100, alignx label";
+      //final String labelConstraint = "pushx 5, alignx label";
+      final String labelConstraint = "alignx left, gapleft 4";
+
+      stackKeepShutterOpenCheckBox_ = new JCheckBox("Keep Shutter Open");
+      stackKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
+      stackKeepShutterOpenCheckBox_.setSelected(false);
+      stackKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) ->
+               applySettingsFromGUI());
+      slicesPanel_.add(stackKeepShutterOpenCheckBox_,
+               "span 5, gaptop 0, alignx left, wrap");
+
+      // When this dialog gets created there is no config file loaded, hence no ZDrive
+      zDriveLabel_ = new JLabel("Use ZStage: ");
+      zDriveLabel_.setFont(DEFAULT_FONT);
+      zDriveLabel_.setVisible(false);
+      slicesPanel_.add(zDriveLabel_, "span 4, split 4, alignx left, gapleft 4");
+      zDriveCombo_ = new JComboBox<>();
+      zDriveCombo_.setFont(DEFAULT_FONT);
+      zDriveCombo_.addActionListener((final ActionEvent e) -> updateZDrive());
+      zDriveCombo_.setVisible(false);
+      slicesPanel_.add(zDriveCombo_, "push x, width 70!, gapright 30");
+      zDrivePositionLabel_ = new JLabel("", javax.swing.SwingConstants.RIGHT);
+      zDrivePositionLabel_.setFont(DEFAULT_FONT);
+      zDrivePositionLabel_.setVisible(false);
+      slicesPanel_.add(zDrivePositionLabel_, "split 2, width 40!, gapright 0, alignx right");
+      zDrivePositionUmLabel_ = new JLabel("\u00b5m");
+      zDrivePositionUmLabel_.setFont(DEFAULT_FONT);
+      zDrivePositionUmLabel_.setVisible(false);
+      slicesPanel_.add(zDrivePositionUmLabel_, "gapleft 4, gapright 50, push x, alignx left, wrap");
 
       // Simplify inserting unit labels slightly.
       final Runnable addUnits = () -> {
          JLabel label = new JLabel("\u00b5m"); // Micro Sign
          label.setFont(DEFAULT_FONT);
-         slicesPanel_.add(label, "gapleft 0, gapright 4");
+         slicesPanel_.add(label, "gapleft 4, gapright 4, align left");
       };
 
-      final JLabel zbottomLabel = new JLabel("Start Z:");
-      zbottomLabel.setFont(DEFAULT_FONT);
-      slicesPanel_.add(zbottomLabel, labelConstraint);
+      final String textFieldConstraint = "split 2, gapleft 0, gapright 4";
 
-      zBottom_ = new JFormattedTextField(numberFormat_);
-      zBottom_.setColumns(5);
-      zBottom_.setFont(DEFAULT_FONT);
-      zBottom_.setValue(1.0);
-      zBottom_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zBottom_);
+      final JLabel zStartLabel = new JLabel("Start Z:");
+      zStartLabel.setFont(DEFAULT_FONT);
+      slicesPanel_.add(zStartLabel, labelConstraint);
+
+      zStart_ = new JFormattedTextField(numberFormat_);
+      zStart_.setColumns(5);
+      zStart_.setFont(DEFAULT_FONT);
+      zStart_.setValue(1.0);
+      zStart_.addPropertyChangeListener("value", this);
+      slicesPanel_.add(zStart_, textFieldConstraint);
       addUnits.run();
 
       // Slightly smaller than BUTTON_SIZE
       final String buttonSize = "width 50!, height 20!";
 
-      setBottomButton_ = new JButton("Set");
-      setBottomButton_.setMargin(new Insets(-5, -5, -5, -5));
-      setBottomButton_.setFont(new Font("", Font.PLAIN, 10));
-      setBottomButton_.setToolTipText("Set value as microscope's current Z position");
-      setBottomButton_.addActionListener((final ActionEvent e) -> setBottomPosition());
-      slicesPanel_.add(setBottomButton_, buttonSize + ", pushx 100, wrap");
+      setStartButton_ = new JButton("Set");
+      setStartButton_.setMargin(new Insets(-5, -5, -5, -5));
+      setStartButton_.setFont(DEFAULT_FONT);
+      setStartButton_.setToolTipText("Set start Z to the current Z position");
+      setStartButton_.addActionListener((final ActionEvent e) -> setStartPosition());
+      slicesPanel_.add(setStartButton_, buttonSize + ", gapleft 0, gapright 0");
+      // + ", pushx 100");
 
-      final JLabel ztopLabel = new JLabel("End Z:");
-      ztopLabel.setFont(DEFAULT_FONT);
-      slicesPanel_.add(ztopLabel, labelConstraint);
+      goToStartButton_ = new JButton("Goto");
+      goToStartButton_.setMargin(new Insets(-5, -5, -5, -5));
+      goToStartButton_.setFont(new Font("", Font.PLAIN, 10));
+      goToStartButton_.setToolTipText("Go to start Z position");
+      goToStartButton_.addActionListener((final ActionEvent e) -> goToStartPosition());
+      slicesPanel_.add(goToStartButton_, buttonSize + ", wrap");
 
-      zTop_ = new JFormattedTextField(numberFormat_);
-      zTop_.setColumns(5);
-      zTop_.setFont(DEFAULT_FONT);
-      zTop_.setValue(1.0);
-      zTop_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zTop_);
+      final JLabel zEndLabel = new JLabel("End Z:");
+      zEndLabel.setFont(DEFAULT_FONT);
+      slicesPanel_.add(zEndLabel, labelConstraint);
+
+      zEnd_ = new JFormattedTextField(numberFormat_);
+      zEnd_.setColumns(5);
+      zEnd_.setFont(DEFAULT_FONT);
+      zEnd_.setValue(1.0);
+      zEnd_.addPropertyChangeListener("value", this);
+      slicesPanel_.add(zEnd_, textFieldConstraint);
       addUnits.run();
 
-      setTopButton_ = new JButton("Set");
-      setTopButton_.setMargin(new Insets(-5, -5, -5, -5));
-      setTopButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      setTopButton_.setToolTipText("Set value as microscope's current Z position");
-      setTopButton_.addActionListener((final ActionEvent e) -> setTopPosition());
-      slicesPanel_.add(setTopButton_, buttonSize + ", pushx 100, wrap");
+      setEndButton_ = new JButton("Set");
+      setEndButton_.setMargin(new Insets(-5, -5, -5, -5));
+      setEndButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
+      setEndButton_.setToolTipText("Set value as microscope's current Z position");
+      setEndButton_.addActionListener((final ActionEvent e) -> setEndPosition());
+      slicesPanel_.add(setEndButton_, buttonSize); // + ", pushx 100");
 
-      final JLabel zstepLabel = new JLabel("Step size:");
-      zstepLabel.setFont(DEFAULT_FONT);
-      slicesPanel_.add(zstepLabel, labelConstraint);
+      goToEndButton_ = new JButton("Goto");
+      goToEndButton_.setMargin(new Insets(-5, -5, -5, -5));
+      goToEndButton_.setFont(new Font("", Font.PLAIN, 10));
+      goToEndButton_.setToolTipText("Go to end Z position");
+      goToEndButton_.addActionListener((final ActionEvent e) -> goToEndPosition());
+      slicesPanel_.add(goToEndButton_, buttonSize + ",gapright 4, wrap");
+
+      final JLabel zStepLabel = new JLabel("Step size:");
+      zStepLabel.setFont(DEFAULT_FONT);
+      slicesPanel_.add(zStepLabel, labelConstraint);
 
       zStep_ = new JFormattedTextField(numberFormat_);
       zStep_.setColumns(5);
       zStep_.setFont(DEFAULT_FONT);
       zStep_.setValue(1.0);
       zStep_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zStep_);
+      slicesPanel_.add(zStep_, textFieldConstraint);
       addUnits.run();
-      slicesPanel_.add(new JLabel(""), "wrap");
+
+      setZStepButton_ = new JButton("Use:");
+      setZStepButton_.setMargin(new Insets(-5, -5, -5, -5));
+      setZStepButton_.setFont(new Font("", Font.PLAIN, 10));
+      setZStepButton_.setToolTipText("Use proposed Z Step");
+      setZStepButton_.addActionListener((final ActionEvent e) -> useProposedZStep());
+      slicesPanel_.add(setZStepButton_, buttonSize);
+
+      proposedZStepLabel_ = new JLabel("0.643");
+      proposedZStepLabel_.setFont(DEFAULT_FONT);
+      slicesPanel_.add(proposedZStepLabel_, "split 2, alignx center");
+      JLabel label = new JLabel("\u00b5m"); // Micro Sign
+      label.setFont(DEFAULT_FONT);
+      slicesPanel_.add(label, "gapleft 0, gapright 4, wrap");
 
       zValCombo_ = new JComboBox<>(new String[] {RELATIVE_Z, ABSOLUTE_Z});
       zValCombo_.setFont(DEFAULT_FONT);
-      zValCombo_.addActionListener((final ActionEvent e) -> zvalCalcChanged());
+      zValCombo_.addActionListener((final ActionEvent e) -> zValCalcChanged());
       slicesPanel_.add(zValCombo_,
-            "skip 1, spanx, gaptop 4, gapbottom 0, alignx left, wrap");
-
-      stackKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
-      stackKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
-      stackKeepShutterOpenCheckBox_.setSelected(false);
-      stackKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) ->
-            applySettingsFromGUI());
-      slicesPanel_.add(stackKeepShutterOpenCheckBox_,
-            "skip 1, spanx, gaptop 0, alignx left");
+            "skip 1, span 4, push x, gaptop 4, gapbottom 0, alignx left, width 100!, wrap");
 
       slicesPanel_.addActionListener((final ActionEvent e) -> {
          // enable disable all related controls
          applySettingsFromGUI();
       });
+
       return slicesPanel_;
    }
 
@@ -896,6 +961,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
+   /**
+    * Runs a "standard" acquisition as desired by the user, however, time-lapse
+    * is disabled, positionlist is disabled, and data will not be saved to disk.
+    *
+    * @param sequenceSettings SequenceSettings describing the state of the MDA window
+    */
    public void runTestAcquisition(SequenceSettings sequenceSettings) {
       testAcqAdapter_.setSequenceSettings(sequenceSettings);
       try {
@@ -1308,13 +1379,21 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
          positionsPanel_.setSelected(sequenceSettings.usePositionList());
 
-         zBottom_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZBottomUm()));
-         zTop_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZTopUm()));
+         zStart_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZBottomUm()));
+         zEnd_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZTopUm()));
          zStep_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZStepUm()));
-         zBottom_.setEnabled(sequenceSettings.useSlices());
-         zTop_.setEnabled(sequenceSettings.useSlices());
+         zStart_.setEnabled(sequenceSettings.useSlices() && !sequenceSettings.relativeZSlice());
+         zEnd_.setEnabled(sequenceSettings.useSlices() && ! sequenceSettings.relativeZSlice());
+         goToStartButton_.setEnabled(sequenceSettings.useSlices()
+                  && !sequenceSettings.relativeZSlice());
+         goToEndButton_.setEnabled(sequenceSettings.useSlices()
+                  && !sequenceSettings.relativeZSlice());
          zStep_.setEnabled(sequenceSettings.useSlices());
+         setZStepButton_.setEnabled(sequenceSettings.useSlices());
          zValCombo_.setEnabled(sequenceSettings.useSlices());
+         if (zDriveCombo_ != null) {
+            zDriveCombo_.setEnabled(sequenceSettings.useSlices());
+         }
          zRelativeAbsolute_ = sequenceSettings.relativeZSlice() ? 0 : 1;
          zValCombo_.setSelectedIndex(zRelativeAbsolute_);
          stackKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenSlices());
@@ -1419,6 +1498,93 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    /**
+    * Rebuild the UI based on the just loaded Configuration.
+    *
+    * @param sle Event signaling that configuration was just loaded
+    */
+   @Subscribe
+   public void onConfigurationLoaded(SystemConfigurationLoadedEvent sle) {
+      final StrVector zDrives = mmStudio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
+      if (!zDrives.isEmpty()) {
+         slicesPanel_.setEnabled(true);
+         zDriveLabel_.setVisible(true);
+         zDriveCombo_.removeAllItems();
+         for (int i = 0; i < zDrives.size(); i++) {
+            zDriveCombo_.addItem(zDrives.get(i));
+         }
+         zDriveCombo_.setSelectedItem(mmStudio_.core().getFocusDevice());
+         try {
+            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
+                     mmStudio_.core().getPosition()));
+            zDriveCombo_.setVisible(true);
+            double pixelSize = mmStudio_.core().getPixelSizeUm();
+            if (pixelSize != 0.0) {
+               proposedZStepLabel_.setText(NumberUtils.doubleToDisplayString(pixelSize * 5.0));
+            }
+         } catch (Exception ex) {
+            mmStudio_.logs().logError(ex, "Failed to get position from core");
+         }
+         zDrivePositionLabel_.setVisible(true);
+         zDrivePositionUmLabel_.setVisible(true);
+      } else {
+         zDriveLabel_.setVisible(false);
+         zDriveCombo_.setVisible(false);
+         zDrivePositionLabel_.setVisible(false);
+         zDrivePositionUmLabel_.setVisible(false);
+         slicesPanel_.setSelected(false);
+         getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings()
+               .copyBuilder().useSlices(false).build());
+         slicesPanel_.setEnabled(false);
+      }
+      final StrVector xyDrives = mmStudio_.core().getLoadedDevicesOfType(DeviceType.XYStageDevice);
+      if (!xyDrives.isEmpty()) {
+         positionsPanel_.setEnabled(true);
+      } else {
+         positionsPanel_.setSelected(false);
+         positionsPanel_.setEnabled(false);
+         getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings()
+               .copyBuilder().usePositionList(false).build());
+      }
+      updateGUIContents();
+   }
+
+   /**
+    * Update zDrivePositionLabel when the Z drive moves.
+    *
+    * @param spce event signaling StagePositionChange
+    */
+   @Subscribe
+   public void onStagePositionChangedEvent(StagePositionChangedEvent spce) {
+      if (spce.getDeviceName().equals(mmStudio_.core().getFocusDevice())) {
+         zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(spce.getPos()));
+      }
+   }
+
+   /**
+    * Used to get hold of the current Z drive.
+    *
+    * @param pce OnPropertiesChangedEvent inspect to see if Core-Focus was changed
+    */
+   @Subscribe
+   public void onPropertyChangedEvent(PropertyChangedEvent pce) {
+      if ("Core".equals(pce.getDevice()) && ("Focus".equals(pce.getProperty()))) {
+         try {
+            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
+                     mmStudio_.core().getPosition()));
+         } catch (Exception e) {
+            mmStudio_.logs().logError(e, "Failed to get Z drive position from core.");
+         }
+      }
+   }
+
+   @Subscribe
+   public void onPixelSizeChangedEvent(PixelSizeChangedEvent psce) {
+      proposedZStepLabel_.setText(NumberUtils.doubleToDisplayString(
+               psce.getNewPixelSizeUm() * 5.0));
+   }
+
+
+   /**
     * Save acquisition settings to the user profile.
     */
    public synchronized void saveAcqSettingsToProfile() {
@@ -1469,10 +1635,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    /**
     * Sets the z top position based on current value of the z drive.
     */
-   public void setTopPosition() {
+   public void setEndPosition() {
       try {
          double z = mmStudio_.core().getPosition();
-         zTop_.setText(NumberUtils.doubleToDisplayString(z));
+         zEnd_.setText(NumberUtils.doubleToDisplayString(z));
          applySettingsFromGUI();
          summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
       } catch (Exception e) {
@@ -1480,14 +1646,60 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
-   private void setBottomPosition() {
+   private void goToEndPosition() {
+      try {
+         double z = NumberUtils.displayStringToDouble(zEnd_.getText());
+         mmStudio_.core().setPosition(z);
+      } catch (Exception e) {
+         mmStudio_.logs().showError(e, "Error going to bottom Z Position");
+      }
+   }
+
+   private void useProposedZStep() {
+      double proposedZStep = 0;
+      try {
+         proposedZStep = NumberUtils.displayStringToDouble(proposedZStepLabel_.getText());
+         zStep_.setValue(proposedZStep);
+      } catch (ParseException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   private void updateZDrive() {
+      String newZDrive = (String) zDriveCombo_.getSelectedItem();
+      if (newZDrive != null && !newZDrive.equals(mmStudio_.core().getFocusDevice())) {
+         try {
+            mmStudio_.core().setFocusDevice(newZDrive);
+            double position = mmStudio_.core().getPosition();
+            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(position));
+            if (ABSOLUTE_Z.equals(zValCombo_.getSelectedItem())) {
+               // New Z drive: to avoid danger, set start and end to the current position
+               zStart_.setValue(position);
+               zEnd_.setValue(position);
+            } // if relative Z, it should be safe and logical to keep it where it is.
+         } catch (Exception e) {
+            mmStudio_.logs().logError(e, "Failed to set focus device");
+         }
+      }
+   }
+
+   private void setStartPosition() {
       try {
          double z = mmStudio_.core().getPosition();
-         zBottom_.setText(NumberUtils.doubleToDisplayString(z));
+         zStart_.setText(NumberUtils.doubleToDisplayString(z));
          applySettingsFromGUI();
          summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
       } catch (Exception e) {
          mmStudio_.logs().showError(e, "Error getting Z Position");
+      }
+   }
+
+   private void goToStartPosition() {
+      try {
+         double z = NumberUtils.displayStringToDouble(zStart_.getText());
+         mmStudio_.core().setPosition(z);
+      } catch (Exception e) {
+         mmStudio_.logs().showError(e, "Error going to bottom Z Position");
       }
    }
 
@@ -1769,8 +1981,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.useCustomIntervals(getAcquisitionEngine().getSequenceSettings().useCustomIntervals());
          ssb.customIntervalsMs(getAcquisitionEngine().getSequenceSettings().customIntervalsMs());
 
-         ssb.sliceZBottomUm(NumberUtils.displayStringToDouble(zBottom_.getText()));
-         ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zTop_.getText()));
+         ssb.sliceZBottomUm(NumberUtils.displayStringToDouble(zStart_.getText()));
+         ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zEnd_.getText()));
          ssb.sliceZStepUm(NumberUtils.displayStringToDouble(zStep_.getText()));
          ssb.relativeZSlice(zRelativeAbsolute_ == 0);  // 0 == relative, 1 == absolute
          ssb.useSlices(slicesPanel_.isSelected());
@@ -1863,14 +2075,16 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return intervalMs;
    }
 
-   private void zvalCalcChanged() {
+   private void zValCalcChanged() {
       final boolean isEnabled = Objects.equals(zValCombo_.getSelectedItem(), ABSOLUTE_Z);
       // HACK: push this to a later call; even though this method should only
       // be called from the EDT, for some reason if we do this action
       // immediately, then the buttons don't visually become disabled.
       SwingUtilities.invokeLater(() -> {
-         setTopButton_.setEnabled(isEnabled);
-         setBottomButton_.setEnabled(isEnabled);
+         setEndButton_.setEnabled(isEnabled);
+         setStartButton_.setEnabled(isEnabled);
+         goToEndButton_.setEnabled(isEnabled);
+         goToStartButton_.setEnabled(isEnabled);
       });
 
       if (zRelativeAbsolute_ == zValCombo_.getSelectedIndex()) {
@@ -1878,30 +2092,34 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
 
       zRelativeAbsolute_ = zValCombo_.getSelectedIndex();
-      double zBottomUm;
-      double zTopUm;
+      double zStartUm;
+      double zEndUm;
       try {
-         zBottomUm = NumberUtils.displayStringToDouble(zBottom_.getText());
-         zTopUm = NumberUtils.displayStringToDouble(zTop_.getText());
+         zStartUm = NumberUtils.displayStringToDouble(zStart_.getText());
+         zEndUm = NumberUtils.displayStringToDouble(zEnd_.getText());
       } catch (ParseException e) {
          ReportingUtils.logError(e);
          return;
       }
 
-      double curZ = getAcquisitionEngine().getCurrentZPos();
-      double newTop;
-      double newBottom;
-      if (zRelativeAbsolute_ == 0) {
-         // convert from absolute to relative
-         newTop = zTopUm - curZ;
-         newBottom = zBottomUm - curZ;
-      } else {
-         // convert from relative to absolute
-         newTop = zTopUm + curZ;
-         newBottom = zBottomUm + curZ;
+      try {
+         double curZ = mmStudio_.core().getPosition();
+         double newEnd;
+         double newStart;
+         if (zRelativeAbsolute_ == 0) {
+            // convert from absolute to relative
+            newEnd = zEndUm - curZ;
+            newStart = zStartUm - curZ;
+         } else {
+            // convert from relative to absolute
+            newEnd = zEndUm + curZ;
+            newStart = zStartUm + curZ;
+         }
+         zStart_.setText(NumberUtils.doubleToDisplayString(newStart));
+         zEnd_.setText(NumberUtils.doubleToDisplayString(newEnd));
+      } catch (Exception ex) {
+         mmStudio_.logs().logError(ex, "Failed to get Z Position from Core.");
       }
-      zBottom_.setText(NumberUtils.doubleToDisplayString(newBottom));
-      zTop_.setText(NumberUtils.doubleToDisplayString(newTop));
       applySettingsFromGUI();
    }
 
@@ -2011,6 +2229,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                throw new MMException("Do not serialize this class");
             }
          });
+      }
+
+      @Override
+      public void setEnabled(boolean enable) {
+         super.setEnabled(enable);
+         checkBox.setEnabled(enable);
       }
 
       /**
