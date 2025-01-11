@@ -26,6 +26,7 @@ import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Ordering;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -44,6 +45,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -100,6 +102,13 @@ public final class ProfileSelectionUIController
       }
    }
 
+   /**
+    * Create a new controller.
+    *
+    * @param app   Application to use
+    * @param admin User profile admin to use
+    * @return a new controller
+    */
    public static ProfileSelectionUIController create(Application app, UserProfileAdmin admin)
          throws IOException {
       final ProfileSelectionUIController ret =
@@ -133,6 +142,13 @@ public final class ProfileSelectionUIController
       ProfileComboItem blank = new ProfileComboItem(UUID.randomUUID(), "");
       profileComboBox_.setPrototypeDisplayValue(blank);
       profileComboBox_.setMaximumRowCount(32);
+      // On Windows, right align using custom renderer
+      if (UIManager.getLookAndFeel().getClass().getName().equals(
+            "com.sun.java.swing.plaf.windows.WindowsLookAndFeel")) {
+         profileComboBox_.setRenderer(new ComboBoxCellRenderer());
+         profileComboBox_.setBackground(Color.WHITE);
+      }
+
 
       JPopupMenu gearMenu = new JPopupMenu();
       gearMenu.add(gearMenuNewProfileItem_);
@@ -195,6 +211,11 @@ public final class ProfileSelectionUIController
       return panel_;
    }
 
+   /**
+    * Get the UUID of the currently selected profile.
+    *
+    * @return UUID of the selected profile, or null if none selected
+    */
    public UUID getSelectedProfileUUID() {
       ProfileComboItem item = (ProfileComboItem) profileComboBox_.getSelectedItem();
       if (item == null) {
@@ -406,6 +427,11 @@ public final class ProfileSelectionUIController
       profileIndexListener_ = null;
    }
 
+   /**
+    * Test the UI.
+    *
+    * @param args command line arguments
+    */
    public static void main(String[] args) {
       try {
          ProfileSelectionUIController c = ProfileSelectionUIController.create(
