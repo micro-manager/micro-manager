@@ -245,7 +245,6 @@ public final class AutofocusPropertyEditor extends JDialog {
     * Reconstructs the UI.
     */
    public void rebuild() {
-      final String afDevice = afMgr_.getAutofocusMethod().getName();
       ActionListener l = methodCombo_.getActionListeners()[0];
 
       try {
@@ -263,12 +262,8 @@ public final class AutofocusPropertyEditor extends JDialog {
       }
       methodCombo_.addActionListener(arg0 -> changeAFMethod(
             (String) methodCombo_.getSelectedItem()));
-      if (afDevice != null) {
-         methodCombo_.setSelectedItem(afDevice);
-      } else {
-         if (afMgr_.getAutofocusMethod() != null) {
-            methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
-         }
+      if (afMgr_.getAutofocusMethod() != null) {
+         methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
       }
    }
 
