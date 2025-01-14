@@ -168,6 +168,7 @@ jobs:
                                   autoconf-archive pkg-config
           sudo apt-get -y install libboost-all-dev
           sudo apt-get -y install libpcre3-dev  # For SWIG-3
+          sudo apt-get -y install subversion
 
       - name: Cache SWIG-3
         id: cache-swig-3
