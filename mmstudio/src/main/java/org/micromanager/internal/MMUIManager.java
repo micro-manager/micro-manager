@@ -355,7 +355,9 @@ public class MMUIManager {
             configureBinningCombo();
             frame_.updateAutofocusButton(
                   studio_.getAutofocusManager().getAutofocusMethod() != null);
-            updateGUI(true);
+            // Since the load system configuration event already updated the cache,
+            // we do not need to do it again.
+            updateGUI(true, true);
          }
       } catch (Exception e) {
          ReportingUtils.showError(e);
