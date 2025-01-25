@@ -372,7 +372,7 @@ public final class ConfigGroupPad extends JScrollPane {
             ReportingUtils.logMessage("Refreshing config group table");
             for (StateItem item : groupList_) {
                if (item.singleProp) {
-                  item.config = core_.getProperty(item.device, item.name);
+                  item.config = core_.getPropertyFromCache(item.device, item.name);
                } else {
                   item.config = core_.getCurrentConfigFromCache(item.group);
                   // set descr to current situation so that Tooltips get updated
