@@ -51,8 +51,8 @@ public final class ToolsMenu {
 
       GUIUtils.addMenuItem(toolsMenu, "Refresh GUI",
             "Refresh all GUI controls directly from the hardware", () -> {
-               core_.updateSystemStateCache();
-               mmStudio_.uiManager().updateGUI(true);
+               // let updateGUI also update the core cache
+               mmStudio_.uiManager().updateGUI(true, false);
             },
             "arrow_refresh.png");
 
