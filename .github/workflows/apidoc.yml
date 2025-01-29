@@ -101,7 +101,7 @@ jobs:
 
       - name: Cache SWIG-3
         id: cache-swig-3
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: swig-3.0.12
           key: mmstudio-javadoc-swig-3.0.12
@@ -172,7 +172,7 @@ jobs:
 
       - name: Cache SWIG-3
         id: cache-swig-3
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: swig-3.0.12
           key: mmstudio-javadoc-swig-3.0.12
@@ -193,7 +193,7 @@ jobs:
 
       - name: Cache 3rdpartypublic classext
         id: cache-3ppce
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: 3rdpartypublic
           key: mmstudio-javadoc-3ppce-${{ hashFiles('micro-manager/buildscripts/ivy.xml') }}
@@ -211,7 +211,7 @@ jobs:
                  3rdpartypublic/classext
 
       - name: Cache Ivy cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.ivy2
           key: mmstudio-javadoc-ivy-${{ hashFiles('micro-manager/buildscripts/ivy*.xml') }}
