@@ -363,7 +363,7 @@ public final class CalibrationListDlg extends JDialog {
             MMStudio mmStudio = (MMStudio) studio_;
             if (mmStudio.hasConfigChanged()) {
                Object[] options = {"Yes", "No"};
-               int userFeedback = JOptionPane.showOptionDialog(null,
+               int userFeedback = JOptionPane.showOptionDialog(this,
                      "Save Changed Pixel Configuration?", "Micro-Manager",
                      JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
                      null, options, options[0]);
