@@ -37,6 +37,9 @@ public final class ConfigPreset {
    // belongs to the pixelSize group
    private double pixelSizeUm_ = 0.0;
    private DoubleVector affineTransform_;
+   private double dxdz_ = 0.0;
+   private double dydz_ = 0.0;
+   private double optimalZUm_ = 0.0;
 
    public ConfigPreset() {
       name_ = "Undefined";
@@ -118,6 +121,30 @@ public final class ConfigPreset {
 
    public DoubleVector getAffineTransform() {
       return affineTransform_;
+   }
+
+   public void setPixelSizedxdz(double dxdz) {
+      dxdz_ = dxdz;
+   }
+
+   public double getPixelSizedxdz() {
+      return dxdz_;
+   }
+
+   public void setPixelSizedydz(double dydz) {
+      dydz_ = dydz;
+   }
+
+   public double getPixelSizedydz() {
+      return dydz_;
+   }
+
+   public void setPixelSizeOptimalZUm(double z) {
+      optimalZUm_ = z;
+   }
+
+   public double getPixelSizeOptimalZUm() {
+      return optimalZUm_;
    }
 
 }

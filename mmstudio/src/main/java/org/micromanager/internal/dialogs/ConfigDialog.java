@@ -193,6 +193,8 @@ public abstract class ConfigDialog extends JDialog {
    }
 
    protected void initializeWidgets() {
+      final Font plain = new Font("Arial", Font.PLAIN, 12);
+      final Font bold = new Font("Arial", Font.BOLD, 12);
 
       if (showFlagsPanelVisible_) {
          flags_.load(ConfigDialog.class);
@@ -214,7 +216,7 @@ public abstract class ConfigDialog extends JDialog {
             new MigLayout("flowx, insets 0 6 0 0, gap 2"));
 
       instructionsTextArea_ = new JTextArea();
-      instructionsTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));
+      instructionsTextArea_.setFont(plain);
       instructionsTextArea_.setWrapStyleWord(true);
       instructionsTextArea_.setText(instructionsText_);
       instructionsTextArea_.setEditable(false);
@@ -222,11 +224,11 @@ public abstract class ConfigDialog extends JDialog {
       topMidPanel.add(instructionsTextArea_, "gaptop 2, wrap");
 
       nameFieldLabel_ = new JLabel(nameFieldLabelText_);
-      nameFieldLabel_.setFont(new Font("Arial", Font.BOLD, 12));
-      topMidPanel.add(nameFieldLabel_, "split 2, alignx right");
+      nameFieldLabel_.setFont(bold);
+      topMidPanel.add(nameFieldLabel_, "alignx left");
 
       nameField_ = new JTextField();
-      nameField_.setFont(new Font("Arial", Font.PLAIN, 12));
+      nameField_.setFont(plain);
       // nameField_.setFont(new Font("Arial", Font.BOLD, 16));
       // should consider increasing font size for entry field for readability,
       // but would want to do it in multiple places for consistency
@@ -239,11 +241,11 @@ public abstract class ConfigDialog extends JDialog {
 
       if (showPixelSize_) {
          JLabel pixelSizeFieldLabel = new JLabel(pixelSizeFieldLabelText_);
-         pixelSizeFieldLabel.setFont(new Font("Arial", Font.BOLD, 12));
-         topMidPanel.add(pixelSizeFieldLabel, "split 2, alignx right");
+         pixelSizeFieldLabel.setFont(bold);
+         topMidPanel.add(pixelSizeFieldLabel, "alignx left");
 
          pixelSizeField_ = new JTextField();
-         pixelSizeField_.setFont(new Font("Arial", Font.PLAIN, 12));
+         pixelSizeField_.setFont(plain);
          pixelSizeField_.setText(pixelSize_);
          pixelSizeField_.setEditable(true);
          pixelSizeField_.setSelectionStart(0);

@@ -26,6 +26,7 @@ import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.dialogs.introdialogparts.PixelConfigExtraPanel;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
@@ -44,6 +45,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
 
    protected String pixelSize_;
    private final AffineEditorPanel affineEditorPanel_;
+   private final PixelConfigExtraPanel pixelConfigExtraPanel_;
    private final CalibrationListDlg parent_;
 
    /**
@@ -80,6 +82,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       parent_ = parent;
       affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this,
             AffineUtils.noTransform());
+      pixelConfigExtraPanel_ = new PixelConfigExtraPanel(parent.getStudio(), this);
       super.initialize();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -149,6 +152,12 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
          pixelSize_ = pixelSizeField_.getText();
          core_.setPixelSizeUm(newName, NumberUtils.displayStringToDouble(pixelSize_));
          core_.setPixelSizeAffine(newName, affineEditorPanel_.getAffineTransform());
+         core_.setPixelSizedxdz(newName, NumberUtils.displayStringToDouble(
+                  pixelConfigExtraPanel_.getdxdz()));
+         core_.setPixelSizedydz(newName, NumberUtils.displayStringToDouble(
+                  pixelConfigExtraPanel_.getdydz()));
+         core_.setPixelSizeOptimalZUm(newName, NumberUtils.displayStringToDouble(
+                  pixelConfigExtraPanel_.getPreferredZStepUm()));
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -178,6 +187,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    @Override
    protected void initializeBetweenWidgetsAndTable() {
       add(affineEditorPanel_, "growx, center");
+      add(pixelConfigExtraPanel_, "growx, center");
    }
 
    @Override
@@ -194,6 +204,84 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    @Override
    public void setAffineTransform(AffineTransform aft) {
       affineEditorPanel_.setAffineTransform(AffineUtils.affineToDouble(aft));
+   }
+
+   /**
+    * Returns the dx/dy value as currently known by the PixelSizeProvider.
+    *
+    * @return - dx/dy value as currently known by the PixelSizeProvider
+    */
+   @Override
+   public Double getdxdz() {
+      try {
+         NumberUtils.displayStringToDouble(pixelConfigExtraPanel_.getdxdz());
+      } catch (ParseException ex) {
+         studio_.logs().showError("dx/dz is not a valid Number");
+         pixelConfigExtraPanel_.requestFocus();
+      }
+      return 0.0;
+   }
+
+   /**
+    * Sets the dx/dy value as known by the provider.
+    *
+    * @param dxdz angle between camera and Z stage
+    */
+   @Override
+   public void setdxdz(double dxdz) {
+      pixelConfigExtraPanel_.setdxdz(dxdz);
+   }
+
+   /**
+    * Returns the dy/dz value as currently known by the PixelSizeProvider.
+    *
+    * @return - dy/dz value as currently known by the PixelSizeProvider
+    */
+   @Override
+   public Double getdydz() {
+      try {
+         NumberUtils.displayStringToDouble(pixelConfigExtraPanel_.getdydz());
+      } catch (ParseException ex) {
+         studio_.logs().showError("dy/dz is not a valid Number");
+         pixelConfigExtraPanel_.requestFocus();
+      }
+      return 0.0;
+   }
+
+   /**
+    * Sets the dy/dz value as known by the provider.
+    *
+    * @param dydz angle between camera and Z stage
+    */
+   @Override
+   public void setdydz(double dydz) {
+      pixelConfigExtraPanel_.setdydz(dydz);
+   }
+
+   /**
+    * Returns the preferred step size in Z as currently known by the PixelSizeProvider.
+    *
+    * @return - preferred step size in Z as currently known by the PixelSizeProvider
+    */
+   @Override
+   public Double getPreferredZStepUm() {
+      try {
+         NumberUtils.displayStringToDouble(pixelConfigExtraPanel_.getPreferredZStepUm());
+      } catch (ParseException ex) {
+         studio_.logs().showError("Preferred Z step size is not a valid Number");
+         pixelConfigExtraPanel_.requestFocus();
+      }
+      return 0.0;
+   }
+
+   /**
+    * Sets the preferred step size in Z as known by the provider.
+    *
+    * @param stepSizeUm preferred step size in Z
+    */
+   @Override
+   public void setPreferredZStepUm(double stepSizeUm) {
+      pixelConfigExtraPanel_.setPreferredZStepUm(stepSizeUm);
    }
 
 }
