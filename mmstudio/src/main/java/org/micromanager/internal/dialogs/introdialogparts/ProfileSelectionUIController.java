@@ -145,7 +145,7 @@ public final class ProfileSelectionUIController
       // On Windows, right align using custom renderer
       if (UIManager.getLookAndFeel().getClass().getName().equals(
             "com.sun.java.swing.plaf.windows.WindowsLookAndFeel")) {
-         profileComboBox_.setRenderer(new ComboBoxCellRenderer());
+         profileComboBox_.setRenderer(new ComboBoxCellRenderer(340));
          profileComboBox_.setBackground(Color.WHITE);
       }
 
