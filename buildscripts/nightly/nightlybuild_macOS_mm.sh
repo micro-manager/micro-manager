@@ -116,7 +116,7 @@ $EVAL ./configure \
    "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.8 -target 1.8\"" \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
    "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
-   PKG_CONFIG=$MM_DEPS_PREFIX/bin/pkg-config \
+   PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig \
    "LIBUSB_0_1_LDFLAGS=\"-framework IOKit -framework CoreFoundation\"" \
    LIBUSB_0_1_LIBS=$MM_DEPS_PREFIX/lib/libusb.la \
    HIDAPI_LIBS=$MM_DEPS_PREFIX/lib/libhidapi.la
