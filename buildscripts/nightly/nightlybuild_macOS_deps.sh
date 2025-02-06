@@ -65,7 +65,7 @@ export SDKROOT=$MM_MACOSX_SDKROOT
 mkdir -p "$MM_DEPS_PREFIX"/downloads
 cd "$MM_DEPS_PREFIX"/downloads
 if [ "$do_download" = yes ]; then
-   [ -f boost_1_85_0.tar.bz2 ] || curl -LO https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.tar.bz2
+   [ -f boost_1_85_0.tar.bz2 ] || curl -LO https://archives.boost.io/release/1.85.0/source/boost_1_85_0.tar.bz2
    [ -f libusb-1.0.18.tar.bz2 ] || curl -LO http://sourceforge.net/projects/libusb/files/libusb-1.0/libusb-1.0.18/libusb-1.0.18.tar.bz2
    [ -f libusb-compat-0.1.5.tar.bz2 ] || curl -LO http://sourceforge.net/projects/libusb/files/libusb-compat-0.1/libusb-compat-0.1.5/libusb-compat-0.1.5.tar.bz2
    [ -f hidapi-0.8.0-rc1.tar.gz ] || curl -LO https://github.com/signal11/hidapi/archive/hidapi-0.8.0-rc1.tar.gz
