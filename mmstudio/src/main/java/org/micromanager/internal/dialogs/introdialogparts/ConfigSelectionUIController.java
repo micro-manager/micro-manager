@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package org.micromanager.internal.dialogs.introdialogparts;
 
 import java.awt.Color;
@@ -84,7 +78,7 @@ public class ConfigSelectionUIController {
       // On Windows, right align using custom renderer
       if (UIManager.getLookAndFeel().getClass().getName().equals(
              "com.sun.java.swing.plaf.windows.WindowsLookAndFeel")) {
-         configComboBox_.setRenderer(new ComboBoxCellRenderer());
+         configComboBox_.setRenderer(new ComboBoxCellRenderer(340));
          configComboBox_.setBackground(Color.WHITE);
       }
 
