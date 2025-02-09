@@ -204,7 +204,7 @@ public final class MicroscopeModel {
 
          // assign available devices
          availableDevices_ = new Device[0];
-         ArrayList<Device> hubs = new ArrayList<>();
+         final ArrayList<Device> hubs = new ArrayList<>();
          badLibraries_ = new Vector<>();
 
          StrVector libs = core.getDeviceAdapterNames();
@@ -493,6 +493,9 @@ public final class MicroscopeModel {
             ConfigPreset p = new ConfigPreset(pixelSizeConfigs.get(j));
             p.setPixelSizeUm(core.getPixelSizeUmByID(pixelSizeConfigs.get(j)));
             p.setAffineTransform(core.getPixelSizeAffineByID(pixelSizeConfigs.get(j)));
+            p.setPixelSizedxdz(core.getPixelSizedxdz(pixelSizeConfigs.get(j)));
+            p.setPixelSizedydz(core.getPixelSizedydz(pixelSizeConfigs.get(j)));
+            p.setPixelSizeOptimalZUm(core.getPixelSizeOptimalZUm(pixelSizeConfigs.get(j)));
             for (int k = 0; k < pcfg.size(); k++) {
                PropertySetting ps = pcfg.getSetting(k);
                Setting s = new Setting(ps.getDeviceLabel(),
@@ -704,6 +707,50 @@ public final class MicroscopeModel {
                      throw new MMConfigFileException(
                            "Invalid number of parameters (3 or 8 required):\n" + line);
                   }
+               }
+            } else if (tokens[0].contentEquals(new StringBuffer()
+                     .append(MMCoreJ.getG_CFGCommand_PixelSizedxdz()))) {
+               if (tokens.length == 3) {
+                  ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
+                  if (cp != null) {
+                     cp.setPixelSizedxdz(Double.parseDouble(tokens[2]));
+                  }
+               }
+            } else if (tokens[0].contentEquals(new StringBuffer()
+                     .append(MMCoreJ.getG_CFGCommand_PixelSizedydz()))) {
+               if (tokens.length == 3) {
+                  ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
+                  if (cp != null) {
+                     cp.setPixelSizedydz(Double.parseDouble(tokens[2]));
+                  }
+               }
+            } else if (tokens[0].contentEquals(new StringBuffer()
+                     .append(MMCoreJ.getG_CFGCommand_PixelSizeOptimalZUm()))) {
+               if (tokens.length == 3) {
+                  ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
+                  if (cp != null) {
+                     cp.setPixelSizeOptimalZUm(Double.parseDouble(tokens[2]));
+                  }
+               }
+            } else if (tokens[0].contentEquals(new StringBuffer()
+                     .append(MMCoreJ.getG_CFGCommand_ConfigGroup()))) {
+               // -------------------------------------------------------------
+               // "ConfigGroup" commands
+               // -------------------------------------------------------------
+               if (!(tokens.length == 6 || tokens.length == 5)) {
+                  throw new MMConfigFileException(
+                        "Invalid number of parameters (6 required):\n" + line);
+
+               }
+               addConfigGroup(tokens[1]);
+               ConfigGroup cg = findConfigGroup(tokens[1]);
+               if (tokens.length == 6) {
+                  cg.addConfigSetting(tokens[2], tokens[3], tokens[4],
+                        tokens[5]);
+
+               } else {
+                  cg.addConfigSetting(tokens[2], tokens[3], tokens[4], "");
+
                }
             } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_Delay()))) {
@@ -1076,11 +1123,25 @@ public final class MicroscopeModel {
             if (aft != null) {
                out.write(MMCoreJ.getG_CFGCommand_PixelSizeAffine() + ","
                      + preset.getName());
-
                for (int i = 0; i < aft.size(); i++) {
                   out.write("," + aft.get(i));
                }
+               out.newLine();
             }
+            // write dxdz
+            out.write(MMCoreJ.getG_CFGCommand_PixelSizedxdz() + ","
+                     + preset.getName() + ","
+                     + preset.getPixelSizedxdz());
+            out.newLine();
+            // write dydz
+            out.write(MMCoreJ.getG_CFGCommand_PixelSizedydz() + ","
+                     + preset.getName() + ","
+                     + preset.getPixelSizedydz());
+            out.newLine();
+            // write optimal z
+            out.write(MMCoreJ.getG_CFGCommand_PixelSizeOptimalZUm() + ","
+                     + preset.getName() + ","
+                     + preset.getPixelSizeOptimalZUm());
             out.newLine();
          }
          out.newLine();

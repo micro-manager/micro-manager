@@ -150,7 +150,7 @@ public interface Application {
 
    /**
     * Shows a background window, that hides potentially cluttered desktops and
-    * provides a better look for the applictions
+    * provides a better look for the application.
     */
    void showBackgroundWindow(boolean show);
 }

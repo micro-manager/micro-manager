@@ -2,6 +2,7 @@ package org.micromanager.internal.dialogs;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.text.NumberFormat;
@@ -57,6 +58,8 @@ public class AffineEditorPanel extends JPanel {
       final DoubleVector affineTransform_ = affineTransform;
       final DoubleVector originalAffineTransform = copyDoubleVector(affineTransform);
 
+      final Font plain = new Font("Arial", Font.PLAIN, 12);
+
       format_ = NumberFormat.getInstance();
       format_.setMaximumFractionDigits(PRECISION);
       format_.setMinimumFractionDigits(PRECISION);
@@ -79,8 +82,10 @@ public class AffineEditorPanel extends JPanel {
       for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
          table.getColumnModel().getColumn(col).setMaxWidth(75);
       }
-      super.add(new JLabel("<html><center>Affine transforms define the relation between <br> "
-            + "camera and stage movement</center></html>"), " span 2, center, wrap");
+      JLabel affineText = new JLabel("<html>Affine transforms define the relation between <br> "
+            + "camera and stage movement</html>");
+      affineText.setFont(plain);
+      super.add(affineText, "span 2, left, wrap");
       table.setFillsViewportHeight(true);
 
       super.add(table);

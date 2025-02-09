@@ -46,7 +46,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 /**
  * Displays the Pixel Calibrator Dialog.
  *
- * @author arthur, Nico
+ * @author Arthur Edelstein, Nico Stuurman
  */
 public class PixelCalibratorDialog extends JFrame {
 
