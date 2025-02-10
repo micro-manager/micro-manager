@@ -58,7 +58,7 @@ mamba activate micro-manager
 ./autogen.sh
 ./configure
 mkdir ../3rdpartypublic; pushd ../3rdpartypublic
-svn checkout https://valelab4.ucsf.edu/svn/3rdpartypublic/classext
+svn checkout https://svn.micro-manager.org/3rdpartypublic/classext
 popd
 make fetchdeps
 make -j4
