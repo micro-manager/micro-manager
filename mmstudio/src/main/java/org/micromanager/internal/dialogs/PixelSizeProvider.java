@@ -60,4 +60,46 @@ public interface PixelSizeProvider {
     * @param aft - new affine transform
     */
    void setAffineTransform(AffineTransform aft);
+
+   /**
+    * Returns the dx/dy value as currently known by the PixelSizeProvider.
+    *
+    * @return - dx/dy value as currently known by the PixelSizeProvider
+    */
+   Double getdxdz();
+
+   /**
+    * Sets the dx/dy value as known by the provider.
+    *
+    * @param dxdz angle between camera and Z stage
+    */
+   void setdxdz(double dxdz);
+
+   /**
+    * Returns the dy/dz value as currently known by the PixelSizeProvider.
+    *
+    * @return - dy/dz value as currently known by the PixelSizeProvider
+    */
+   Double getdydz();
+
+   /**
+    * Sets the dy/dz value as known by the provider.
+    *
+    * @param dydz angle between camera and Z stage
+    */
+   void setdydz(double dydz);
+
+   /**
+    * Returns the preferred step size in Z as currently known by the PixelSizeProvider.
+    *
+    * @return - preferred step size in Z as currently known by the PixelSizeProvider
+    */
+   Double getPreferredZStepUm();
+
+   /**
+    * Sets the preferred step size in Z as known by the provider.
+    *
+    * @param stepSizeUm preferred step size in Z
+    */
+   void setPreferredZStepUm(double stepSizeUm);
 }

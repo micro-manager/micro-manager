@@ -2,6 +2,7 @@ package org.micromanager.internal.dialogs;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.text.NumberFormat;
@@ -10,8 +11,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import mmcorej.DoubleVector;
@@ -57,6 +56,8 @@ public class AffineEditorPanel extends JPanel {
       final DoubleVector affineTransform_ = affineTransform;
       final DoubleVector originalAffineTransform = copyDoubleVector(affineTransform);
 
+      final Font plain = new Font("Arial", Font.PLAIN, 12);
+
       format_ = NumberFormat.getInstance();
       format_.setMaximumFractionDigits(PRECISION);
       format_.setMinimumFractionDigits(PRECISION);
@@ -79,8 +80,10 @@ public class AffineEditorPanel extends JPanel {
       for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
          table.getColumnModel().getColumn(col).setMaxWidth(75);
       }
-      super.add(new JLabel("<html><center>Affine transforms define the relation between <br> "
-            + "camera and stage movement</center></html>"), " span 2, center, wrap");
+      JLabel affineText = new JLabel("<html>Affine transforms define the relation between <br> "
+            + "camera and stage movement</html>");
+      affineText.setFont(plain);
+      super.add(affineText, "span 2, left, wrap");
       table.setFillsViewportHeight(true);
 
       super.add(table);
@@ -106,9 +109,7 @@ public class AffineEditorPanel extends JPanel {
             atm_.setAffineTransform(originalAffineTransform));
       super.add(resetButton, "center, width 90!");
 
-      Border clbb = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
-      super.setBorder(clbb);
-
+      setBorder(BorderFactory.createTitledBorder("Affine Transform (Rotation and Scaling)"));
    }
 
    public DoubleVector getAffineTransform() {

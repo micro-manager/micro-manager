@@ -682,7 +682,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       setZStepButton_.addActionListener((final ActionEvent e) -> useProposedZStep());
       slicesPanel_.add(setZStepButton_, buttonSize);
 
-      proposedZStepLabel_ = new JLabel("0.643");
+      proposedZStepLabel_ = new JLabel(getOptimalZStep(true));
       proposedZStepLabel_.setFont(DEFAULT_FONT);
       slicesPanel_.add(proposedZStepLabel_, "split 2, alignx center");
       JLabel label = new JLabel("\u00b5m"); // Micro Sign
@@ -1579,8 +1579,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    @Subscribe
    public void onPixelSizeChangedEvent(PixelSizeChangedEvent psce) {
-      proposedZStepLabel_.setText(NumberUtils.doubleToDisplayString(
-               psce.getNewPixelSizeUm() * 5.0));
+      proposedZStepLabel_.setText(getOptimalZStep(true));
    }
 
 
@@ -2277,6 +2276,20 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             checkBox.removeActionListener(l);
          }
       }
+   }
+
+   private String getOptimalZStep(boolean cached) {
+      try {
+         double optimalZ = mmStudio_.core().getPixelSizeOptimalZUm(cached);
+         if (optimalZ == 0.0) {
+            double pixelSize = mmStudio_.core().getPixelSizeUm(cached);
+            optimalZ = 4.0 * pixelSize;
+         }
+         return NumberUtils.doubleToDisplayString(optimalZ);
+      } catch (Exception ex) {
+         mmStudio_.logs().logError(ex, "Failed to get optimalZ step from core");
+      }
+      return "1.0";
    }
 
    public static boolean getShouldSyncExposure() {
