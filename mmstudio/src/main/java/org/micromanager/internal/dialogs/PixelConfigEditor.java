@@ -26,7 +26,6 @@ import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.dialogs.introdialogparts.PixelConfigExtraPanel;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;

@@ -11,8 +11,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import mmcorej.DoubleVector;
@@ -111,9 +109,7 @@ public class AffineEditorPanel extends JPanel {
             atm_.setAffineTransform(originalAffineTransform));
       super.add(resetButton, "center, width 90!");
 
-      Border clbb = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
-      super.setBorder(clbb);
-
+      setBorder(BorderFactory.createTitledBorder("Affine Transform (Rotation and Scaling)"));
    }
 
    public DoubleVector getAffineTransform() {

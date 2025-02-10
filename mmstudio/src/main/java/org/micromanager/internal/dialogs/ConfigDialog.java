@@ -32,6 +32,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -93,7 +94,7 @@ public abstract class ConfigDialog extends JDialog {
    protected String nameFieldLabelText_ = "GroupOrPreset Name";
    protected String initName_ = "";
 
-   // following only used when showPixelSize_ is true
+   // following only used when showPixelSize_ is true (which currently is always true)
    protected boolean showPixelSize_ = false;
    protected String pixelSizeFieldLabelText_ = "Pixel Size (um):";
    protected JTextField pixelSizeField_;
@@ -214,14 +215,7 @@ public abstract class ConfigDialog extends JDialog {
 
       final JPanel topMidPanel = new JPanel(
             new MigLayout("flowx, insets 0 6 0 0, gap 2"));
-
-      instructionsTextArea_ = new JTextArea();
-      instructionsTextArea_.setFont(plain);
-      instructionsTextArea_.setWrapStyleWord(true);
-      instructionsTextArea_.setText(instructionsText_);
-      instructionsTextArea_.setEditable(false);
-      instructionsTextArea_.setOpaque(false);
-      topMidPanel.add(instructionsTextArea_, "gaptop 2, wrap");
+      topMidPanel.setBorder(BorderFactory.createTitledBorder(instructionsText_));
 
       nameFieldLabel_ = new JLabel(nameFieldLabelText_);
       nameFieldLabel_.setFont(bold);
@@ -236,10 +230,10 @@ public abstract class ConfigDialog extends JDialog {
       nameField_.setEditable(true);
       nameField_.setSelectionStart(0);
       nameField_.setSelectionEnd(nameField_.getText().length());
-      int fieldWidth = showPixelSize_ ? 90 : 180;
+      int fieldWidth = 180;
       topMidPanel.add(nameField_, "width " + fieldWidth + "!, gaptop 2, wrap");
 
-      if (showPixelSize_) {
+      if (showPixelSize_) { // always true?
          JLabel pixelSizeFieldLabel = new JLabel(pixelSizeFieldLabelText_);
          pixelSizeFieldLabel.setFont(bold);
          topMidPanel.add(pixelSizeFieldLabel, "alignx left");
@@ -269,8 +263,8 @@ public abstract class ConfigDialog extends JDialog {
       cancelButton_.addActionListener(e -> dispose());
       topRightPanel.add(cancelButton_, "width 90!");
 
-      add(topMidPanel, "flowx, split 2");
-      add(topRightPanel, "gapleft push, flowx");
+      add(topMidPanel, "flowx, split 2, gapright push");
+      add(topRightPanel, "flowx");
 
       // Override x button to make it have same behavior as Cancel button
       this.addWindowListener(new WindowAdapter() {

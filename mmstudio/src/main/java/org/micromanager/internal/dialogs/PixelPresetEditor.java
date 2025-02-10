@@ -30,7 +30,6 @@ import mmcorej.Configuration;
 import mmcorej.DoubleVector;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.dialogs.introdialogparts.PixelConfigExtraPanel;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.CalibrationList;
 import org.micromanager.internal.utils.NumberUtils;

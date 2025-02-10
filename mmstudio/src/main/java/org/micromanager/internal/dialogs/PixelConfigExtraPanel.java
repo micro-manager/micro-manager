@@ -1,4 +1,4 @@
-package org.micromanager.internal.dialogs.introdialogparts;
+package org.micromanager.internal.dialogs;
 
 import java.awt.Font;
 import java.text.NumberFormat;
@@ -6,12 +6,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.internal.dialogs.PixelSizeProvider;
-
 
 
 /**
@@ -74,8 +70,7 @@ public class PixelConfigExtraPanel extends JPanel {
       preferredZStepUmField_.setFont(plain);
       super.add(preferredZStepUmField_, "wrap");
 
-      Border clbb = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
-      super.setBorder(clbb);
+      setBorder(BorderFactory.createTitledBorder("Light Sheet Settings"));
    }
 
    public String getdxdz() {
