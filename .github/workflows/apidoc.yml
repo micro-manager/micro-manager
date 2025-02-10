@@ -201,13 +201,8 @@ jobs:
       - name: Check out 3rdpartypublic classext
         if: steps.cache-3ppce.outputs.cache-hit != 'true'
         run: |
-          # TEMPORARY HACK to accept specific expired TLS certificate
-          mkdir -p ~/.subversion/auth/svn.ssl.server
-          cp micro-manager/.github/accept-expired-valelab4-svn \
-             ~/.subversion/auth/svn.ssl.server/7abd63f9a2ebe9418dc77976036ea792
-          # END TEMPORARY HACK
           mkdir 3rdpartypublic
-          svn co https://valelab4.ucsf.edu/svn/3rdpartypublic/classext \
+          svn co https://svn.micro-manager.org/3rdpartypublic/classext \
                  3rdpartypublic/classext
 
       - name: Cache Ivy cache
