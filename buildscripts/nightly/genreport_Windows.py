@@ -40,7 +40,7 @@ def build_status_report(section_sink, log_filename, build):
 
 
 def cpp_build_report(section_sink, architecture, src_root):
-    log = ("{}/build/Release/{}/msbuild-micromanager.log".
+    log = ("{}/mmCoreAndDevices/build/Release/{}/msbuild-micromanager.log".
            format(src_root, architecture))
     genreport_MSBuild.report(log, "C++ " + architecture + " ",
                              section_sink)
