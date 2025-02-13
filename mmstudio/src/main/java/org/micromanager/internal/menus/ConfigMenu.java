@@ -147,7 +147,9 @@ public final class ConfigMenu {
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
          // re-initialize the system with the new configuration file
-         mmStudio_.setSysConfigFile(cfg.getFileName(), true);
+         if (cfg.getFileName() != null) {
+            mmStudio_.setSysConfigFile(cfg.getFileName(), true);
+         }
 
          GUIUtils.preventDisplayAdapterChangeExceptions();
       } catch (Exception e) {
