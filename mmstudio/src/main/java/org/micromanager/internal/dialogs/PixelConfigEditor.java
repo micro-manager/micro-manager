@@ -44,7 +44,8 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
 
    protected String pixelSize_;
    private final AffineEditorPanel affineEditorPanel_;
-   private final PixelConfigExtraPanel pixelConfigExtraPanel_;
+   private final PixelConfigLighSheetPanel pixelConfigLighSheetPanel_;
+   private final PixelConfigOptimalZPanel pixelConfigOptimalZPanel_;
    private final CalibrationListDlg parent_;
 
    /**
@@ -81,7 +82,8 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       parent_ = parent;
       affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this,
             AffineUtils.noTransform());
-      pixelConfigExtraPanel_ = new PixelConfigExtraPanel(parent.getStudio(), this);
+      pixelConfigLighSheetPanel_ = new PixelConfigLighSheetPanel();
+      pixelConfigOptimalZPanel_ = new PixelConfigOptimalZPanel();
       super.initialize();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -152,11 +154,11 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
          core_.setPixelSizeUm(newName, NumberUtils.displayStringToDouble(pixelSize_));
          core_.setPixelSizeAffine(newName, affineEditorPanel_.getAffineTransform());
          core_.setPixelSizedxdz(newName, NumberUtils.displayStringToDouble(
-                  pixelConfigExtraPanel_.getdxdz()));
+                  pixelConfigLighSheetPanel_.getdxdz()));
          core_.setPixelSizedydz(newName, NumberUtils.displayStringToDouble(
-                  pixelConfigExtraPanel_.getdydz()));
+                  pixelConfigLighSheetPanel_.getdydz()));
          core_.setPixelSizeOptimalZUm(newName, NumberUtils.displayStringToDouble(
-                  pixelConfigExtraPanel_.getPreferredZStepUm()));
+                  pixelConfigOptimalZPanel_.getPreferredZStepUm()));
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -186,7 +188,8 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    @Override
    protected void initializeBetweenWidgetsAndTable() {
       add(affineEditorPanel_, "growx, center");
-      add(pixelConfigExtraPanel_, "growx, center");
+      add(pixelConfigLighSheetPanel_, "growx, center");
+      add(pixelConfigOptimalZPanel_, "growx, center");
    }
 
    @Override
@@ -213,10 +216,10 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    @Override
    public Double getdxdz() {
       try {
-         NumberUtils.displayStringToDouble(pixelConfigExtraPanel_.getdxdz());
+         NumberUtils.displayStringToDouble(pixelConfigLighSheetPanel_.getdxdz());
       } catch (ParseException ex) {
          studio_.logs().showError("dx/dz is not a valid Number");
-         pixelConfigExtraPanel_.requestFocus();
+         pixelConfigLighSheetPanel_.requestFocus();
       }
       return 0.0;
    }
@@ -228,7 +231,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
     */
    @Override
    public void setdxdz(double dxdz) {
-      pixelConfigExtraPanel_.setdxdz(dxdz);
+      pixelConfigLighSheetPanel_.setdxdz(dxdz);
    }
 
    /**
@@ -239,10 +242,10 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    @Override
    public Double getdydz() {
       try {
-         NumberUtils.displayStringToDouble(pixelConfigExtraPanel_.getdydz());
+         NumberUtils.displayStringToDouble(pixelConfigLighSheetPanel_.getdydz());
       } catch (ParseException ex) {
          studio_.logs().showError("dy/dz is not a valid Number");
-         pixelConfigExtraPanel_.requestFocus();
+         pixelConfigLighSheetPanel_.requestFocus();
       }
       return 0.0;
    }
@@ -254,7 +257,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
     */
    @Override
    public void setdydz(double dydz) {
-      pixelConfigExtraPanel_.setdydz(dydz);
+      pixelConfigLighSheetPanel_.setdydz(dydz);
    }
 
    /**
@@ -265,10 +268,10 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    @Override
    public Double getPreferredZStepUm() {
       try {
-         NumberUtils.displayStringToDouble(pixelConfigExtraPanel_.getPreferredZStepUm());
+         NumberUtils.displayStringToDouble(pixelConfigOptimalZPanel_.getPreferredZStepUm());
       } catch (ParseException ex) {
          studio_.logs().showError("Preferred Z step size is not a valid Number");
-         pixelConfigExtraPanel_.requestFocus();
+         pixelConfigLighSheetPanel_.requestFocus();
       }
       return 0.0;
    }
@@ -280,7 +283,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
     */
    @Override
    public void setPreferredZStepUm(double stepSizeUm) {
-      pixelConfigExtraPanel_.setPreferredZStepUm(stepSizeUm);
+      pixelConfigOptimalZPanel_.setPreferredZStepUm(stepSizeUm);
    }
 
 }
