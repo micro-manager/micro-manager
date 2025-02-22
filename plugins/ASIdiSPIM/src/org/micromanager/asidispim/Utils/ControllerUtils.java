@@ -276,6 +276,7 @@ public class ControllerUtils {
    /**
     * set up cells 6 and 7 of "main" (camera) PLC to indicate position and timepoints respectively
     *   cell 6 is high during each position (including stacks and channels) and goes low between them (based on counting camera pulses)
+    *     NB: cell 6 goes low at the start of the last camera trigger so it actually comes a tiny bit early
     *   cell 7 is high during each timepoint and goes low between them (based on counting cell 6)
     */
    public void setupMilestoneSignalsPLC(final AcquisitionSettings settings) {
@@ -1224,14 +1225,16 @@ public class ControllerUtils {
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
       }
       
-      // make sure the counters get reset on the acquisition start flag
+      // make sure the counters get reset at the start of each timepoint (formerly reset at the start of the acquisition)
+      // (cannot do at the end of each timepoint because the milestone signal goes slow slightly before the actual end)
+      // this behavior relies on the camera trigger coming before the laser trigger
       // with pre 3.51 firmware it turns out we can only do this for 2-counter and 4-counter not with 3-counter 
       if ((props_.getPropValueFloat(Devices.Keys.PLOGIC_LASER, Properties.Keys.FIRMWARE_VERSION) > 3.501) ||
             (settings.numChannels != 3)) {
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterLSBAddr);
-         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, volumeMilestoneAddr + edgeAddr);
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterMSBAddr);
-         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, volumeMilestoneAddr + edgeAddr);
       }
 
       
