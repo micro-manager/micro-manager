@@ -366,14 +366,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       volPanel_.add(firstSide_, "wrap");
       
-      volPanel_.add(new JLabel("Delay before side [ms]:"));
+      if (ASIdiSPIM.singleView) {
+         volPanel_.add(new JLabel("Delay before volume [ms]:"));
+      } else {
+         volPanel_.add(new JLabel("Delay before side [ms]:"));
+      }
       // used to read/write directly to galvo/micro-mirror firmware, but want different stage scan behavior
       delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25,
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE, 50);
       pu.addListenerLast(delaySide_, recalculateTimingDisplayCL);
       volPanel_.add(delaySide_, "wrap");
 
-      volPanel_.add(new JLabel("Slices per side:"));
+      if (ASIdiSPIM.singleView) {
+         volPanel_.add(new JLabel("Slices per volume:"));
+      } else {
+         volPanel_.add(new JLabel("Slices per side:"));         
+      }
       numSlices_ = pu.makeSpinnerInteger(1, 65000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_SLICES, 20);
@@ -4629,6 +4637,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         } catch (Exception ex) {
                            MyDialogUtils.showError(ex, hideErrors);
                         } finally {
+                           // if we have interleaved channels with overlap mode then there are some extra camera triggers
+                           //   that the PLogic milestone flags need to catch
+                           //   (at least until we move capability of adding single extra trigger into firmware)
+                           // in this special case add a bit of delay after we got all our images
+                           if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
+                              Thread.sleep(Math.round((acqSettings.numChannels-1)*acqSettings.sliceTiming.sliceDuration));
+                           }
+                           
                            // cleanup at the end of each time we trigger the controller
                            // NB the acquisition is still open
 
