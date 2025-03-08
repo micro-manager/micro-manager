@@ -415,7 +415,7 @@ public class PGFocusFrame extends JFrame {
       }
 
       private boolean updateValues() {
-         String curve = getStringProperty("Calibration curve");
+         String curve = getStringProperty("Calibration Curve");
 
          try {
             if (curve.length() > 0) {
@@ -1054,4 +1054,3 @@ public class PGFocusFrame extends JFrame {
 
 
 }
-
