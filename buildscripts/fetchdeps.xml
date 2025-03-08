@@ -8,7 +8,7 @@
 	<property name="mm.ivy.failonerror" value="false"/>
 
 	<target name="download-ivy" unless="offline">
-		<property name="ivy.install.version" value="2.3.0"/>
+		<property name="ivy.install.version" value="2.5.3"/>
 		<mkdir dir="${mm.basedir}/dependencies/ivy"/>
 		<get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
 			dest="${mm.basedir}/dependencies/ivy"
@@ -18,9 +18,9 @@
 		<fail message="checksum verification failed for ivy-${ivy.install.version}.jar">
 			<condition>
 				<not>
-					<!-- SHA1 checksum for ivy-2.3.0.jar -->
+					<!-- SHA1 checksum for ivy-2.5.3.jar -->
 					<equals arg1="${ivy.install.checksum}"
-						arg2="c5ebf1c253ad4959a29f4acfe696ee48cdd9f473"
+						arg2="163b4d6b330cd4590a05f3e97a6eb8bf5b54665e"
 						forcestring="yes" casesensitive="no"/>
 				</not>
 			</condition>
