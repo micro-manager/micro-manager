@@ -4475,9 +4475,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                        }
                                     }
                                     final int channelIndex = channelIndex_tmp;
-                                    
+
+                                    // checkForSkips is only true for hardware timepoints and overlap camera mode
+                                    // furthermore I think this code only gets called for interleaved channels right now:
+                                    //   "standard" channel switching has extra time so it wouldn't be hardware timepoints
+                                    //   hardware timepoints is not currently compatible with per-volume hardware channel switching
                                     if (checkForSkips && imagesToSkip[channelIndex] != 0) {
                                        imagesToSkip[channelIndex]--;
+                                       cameraImageNr[cameraIndex]++;  // still count as an image from this camera for purposes of determining the channel
                                        continue;  // goes to next iteration of this loop without doing anything else
                                     }
 
