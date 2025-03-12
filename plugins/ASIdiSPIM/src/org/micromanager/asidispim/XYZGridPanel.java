@@ -680,7 +680,7 @@ public class XYZGridPanel extends ListeningJPanel {  // use some of the Listenin
       gridYCount_.setText(count.toString());
       return count;
    }
-   
+
    private int updateGridZCount() {
       double range = ((Double)gridZStartField_.getValue()) - ((Double)gridZStopField_.getValue());
       double delta = ((Double)gridZDeltaField_.getValue());
@@ -693,10 +693,109 @@ public class XYZGridPanel extends ListeningJPanel {  // use some of the Listenin
       gridZCount_.setText(count.toString());
       return count;
    }
+
+   public double getStartY() {
+      return (Double)gridYStartField_.getValue();
+   }
+
+   public double getStopY() {
+      return (Double)gridYStopField_.getValue();
+   }
+
+   public double getDeltaY() {
+      return (Double)gridYDeltaField_.getValue();
+   }
+
+   public boolean getEnableY() {
+      return useYGridCB_.isSelected();
+   }
+
+   public double getStartX() {
+      return (Double)gridXStartField_.getValue();
+   }
+
+   public double getStopX() {
+      return (Double)gridXStopField_.getValue();
+   }
+
+   public double getDeltaX() {
+      return (Double)gridXDeltaField_.getValue();
+   }
+
+   public boolean getEnableX() {
+      return useXGridCB_.isSelected();
+   }
+
+   public double getStartZ() {
+      return (Double)gridZStartField_.getValue();
+   }
+
+   public double getStopZ() {
+      return (Double)gridZStopField_.getValue();
+   }
+
+   public double getDeltaZ() {
+      return (Double)gridZDeltaField_.getValue();
+   }
+
+   public boolean getEnableZ() {
+      return useZGridCB_.isSelected();
+   }
+
+   public void setStartY(double startY) {
+      gridYStartField_.setValue((Double)startY);
+   }
+
+   public void setStopY(double stopY) {
+      gridYStopField_.setValue((Double)stopY);
+   }
+
+   public void setDeltaY(double deltaY) {
+      gridYDeltaField_.setValue((Double)deltaY);
+   }
+
+   public void setEnableY(boolean enableY) {
+      useYGridCB_.setSelected(!enableY);
+      useYGridCB_.doClick();
+   }
+
+   public void setStartX(double startX) {
+      gridXStartField_.setValue((Double)startX);
+   }
+
+   public void setStopX(double stopX) {
+      gridXStopField_.setValue((Double)stopX);
+   }
+
+   public void setDeltaX(double deltaX) {
+      gridXDeltaField_.setValue((Double)deltaX);
+   }
+
+   public void setEnableX(boolean enableX) {
+      useXGridCB_.setSelected(!enableX);
+      useXGridCB_.doClick();
+   }
+
+   public void setStartZ(double startZ) {
+      gridZStartField_.setValue((Double)startZ);
+   }
+
+   public void setStopZ(double stopZ) {
+      gridZStopField_.setValue((Double)stopZ);
+   }
+
+   public void setDeltaZ(double deltaZ) {
+      gridZDeltaField_.setValue((Double)deltaZ);
+   }
+
+   public void setEnableZ(boolean enableZ) {
+      useZGridCB_.setSelected(!enableZ);
+      useZGridCB_.doClick();
+   }
    
    /**
     * Computes grid (position list as well as slices/spacing) based on current settings
-    * @param acqSettings
+    * @param promptOnOverwrite raise dialog box before overwriting position list
     * @param doZgrid
     * @throws Exception
     */

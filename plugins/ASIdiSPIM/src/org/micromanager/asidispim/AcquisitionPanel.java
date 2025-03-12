@@ -5485,6 +5485,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return PanelUtils.getSpinnerFloatValue(positionDelay_);
    }
 
+   public XYZGridPanel getGridPanel() {
+      return gridPanel_;
+   }
+
    public void setMultiplePositionsDelay(double delayMs) throws ASIdiSPIMException {
       if (MyNumberUtils.outsideRange(delayMs, 0d, 10000d)) {
          throw new ASIdiSPIMException("illegal value for post move delay");

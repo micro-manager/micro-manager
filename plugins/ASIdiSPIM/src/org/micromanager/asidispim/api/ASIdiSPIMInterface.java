@@ -27,18 +27,18 @@ import java.rmi.RemoteException;
 import org.micromanager.api.PositionList;
 import org.micromanager.asidispim.Data.Devices;
 
-/**
- * This interface defines an API for interfacing with the ASIdiSPIM plugin.
- * 
- * To avoid depending on the internals restrict yourself to the ASIdiSPIMInterface;
- *  always cast the instance the class to ASIdiSPIMInterface, e.g.: 
- * 
- * import org.micromanager.asidispim.api.ASIdiSPIMInterface;
- * import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
- *
- * ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
- * diSPIM.runAcquisition(); // or other API methods in ASIdiSPIMInterface
- * 
+/*
+  This interface defines an API for interfacing with the ASIdiSPIM plugin.
+
+  To avoid depending on the internals restrict yourself to the ASIdiSPIMInterface;
+   always cast the instance the class to ASIdiSPIMInterface, e.g.:
+
+  import org.micromanager.asidispim.api.ASIdiSPIMInterface;
+  import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
+
+  ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+  diSPIM.runAcquisition(); // or other API methods in ASIdiSPIMInterface
+
  */
 
 /**
@@ -293,8 +293,184 @@ public interface ASIdiSPIMInterface extends Remote {
     *   If delayMs is not between 0 and 10000 then ASIdiSPIMException is thrown.
     */
    public void setMultiplePositionsDelay(double delayMs) throws ASIdiSPIMException, RemoteException;
-   
-   
+
+   /**
+    * @return Y starting coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridStartY() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return Y stopping coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridStopY() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return Y delta in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridDeltaY() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return enable Y grid computation in XYZ grid
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public boolean getXYZGridEnableY() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return  X starting coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridStartX() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return X stopping coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridStopX() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return X delta in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridDeltaX() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return enable X grid computation in XYZ grid
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public boolean getXYZGridEnableX() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return Z starting coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridStartZ() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return Z stopping coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridStopZ() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return Z delta in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public double getXYZGridDeltaZ() throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @return enable Z grid computation in XYZ grid
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public boolean getXYZGridEnableZ() throws ASIdiSPIMException, RemoteException;
+
+
+   /**
+    * @return startY Y starting coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridStartY(double startY) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param stopY Y stopping coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridStopY(double stopY) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param deltaY Y delta in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridDeltaY(double deltaY) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param enableY enable Y grid computation in XYZ grid
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridEnableY(boolean enableY) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param startX X starting coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridStartX(double startX) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param stopX X stopping coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridStopX(double stopX) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param deltaX X delta in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridDeltaX(double deltaX) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param enableX enable X grid computation in XYZ grid
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridEnableX(boolean enableX) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param startZ Z starting coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridStartZ(double startZ) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param stopZ Z stopping coordinate in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridStopZ(double stopZ) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param deltaZ Z delta in XYZ grid in units of microns
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridDeltaZ(double deltaZ) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * @param enableZ enable Z grid computation in XYZ grid
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void setXYZGridEnableZ(boolean enableZ) throws ASIdiSPIMException, RemoteException;
+
+   /**
+    * Computes XYZ grid (or at least the ones that are enabled in the XYZGrid GUI), just like clicking on the "compute grid'.
+    * Will overwrite the position list and acquisition settings without prompting
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public void computeXYZGrid() throws ASIdiSPIMException, RemoteException;
+
    /**
     * Convenience method to get the stage position list
     *   (which belongs to the main MM application).  Its API is at
