@@ -278,7 +278,128 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       // range checking done later
       getAcquisitionPanel().setMultiplePositionsDelay(delayMs);
    }
-   
+
+   @Override
+   public double getXYZGridStartY() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getStartY();
+   }
+
+   @Override
+   public double getXYZGridStopY() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getStopY();
+   }
+
+   @Override
+   public double getXYZGridDeltaY() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getDeltaY();
+   }
+
+   @Override
+   public boolean getXYZGridEnableY() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getEnableY();
+   }
+   @Override
+   public double getXYZGridStartX() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getStartX();
+   }
+
+   @Override
+   public double getXYZGridStopX() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getStopX();
+   }
+
+   @Override
+   public double getXYZGridDeltaX() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getDeltaX();
+   }
+
+   @Override
+   public boolean getXYZGridEnableX() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getEnableX();
+   }
+   @Override
+   public double getXYZGridStartZ() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getStartZ();
+   }
+
+   @Override
+   public double getXYZGridStopZ() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getStopZ();
+   }
+
+   @Override
+   public double getXYZGridDeltaZ() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getDeltaZ();
+   }
+
+   @Override
+   public boolean getXYZGridEnableZ() throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getGridPanel().getEnableZ();
+   }
+
+   @Override
+   public void setXYZGridStartY(double startY) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setStartY(startY);
+   }
+
+   @Override
+   public void setXYZGridStopY(double stopY) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setStopY(stopY);
+   }
+
+   @Override
+   public void setXYZGridDeltaY(double deltaY) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setDeltaY(deltaY);
+   }
+
+   @Override
+   public void setXYZGridEnableY(boolean enableY) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setEnableY(enableY);
+   }
+   @Override
+   public void setXYZGridStartX(double startX) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setStartX(startX);
+   }
+
+   @Override
+   public void setXYZGridStopX(double stopX) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setStopX(stopX);
+   }
+
+   @Override
+   public void setXYZGridDeltaX(double deltaX) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setDeltaX(deltaX);
+   }
+
+   @Override
+   public void setXYZGridEnableX(boolean enableX) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setEnableX(enableX);
+   }
+   @Override
+   public void setXYZGridStartZ(double startZ) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setStartZ(startZ);
+   }
+
+   @Override
+   public void setXYZGridStopZ(double stopZ) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setStopZ(stopZ);
+   }
+
+   @Override
+   public void setXYZGridDeltaZ(double deltaZ) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setDeltaZ(deltaZ);
+   }
+
+   @Override
+   public void setXYZGridEnableZ(boolean enableZ) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().setEnableZ(enableZ);
+   }
+
+   @Override
+   public void computeXYZGrid() throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().getGridPanel().computeGrid(false, true);
+   }
+
    @Override
    public PositionList getPositionList() throws ASIdiSPIMException, RemoteException {
       try {
