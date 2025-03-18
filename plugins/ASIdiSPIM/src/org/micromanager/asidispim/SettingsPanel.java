@@ -312,30 +312,35 @@ public class SettingsPanel extends ListeningJPanel {
       
       // TODO create method to determine this instead of separate code here and in AcquisitionPanel
       if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
-            && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
+            && false) { //props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
          stageScanPanel.add(new JLabel("Relative acceleration time:"));
          final JSpinner stageAccelFactor = pu.makeSpinnerFloat(0.1, 1000, 1,
-               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ACCEL_FACTOR, 1);
+                 Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ACCEL_FACTOR, 1);
          stageScanPanel.add(stageAccelFactor, "wrap");
          if (props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST)) {  // present in 3.17 and above
-            stageScanPanel.add(new JLabel("Scan overshoot distance [" + "\u00B5"+ "m]:"));
+            stageScanPanel.add(new JLabel("Scan overshoot distance [" + "\u00B5" + "m]:"));
             final JSpinner scanOvershootDistance = pu.makeSpinnerInteger(0, 1000,
-                  Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST, 0);
+                    Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST, 0);
             stageScanPanel.add(scanOvershootDistance, "wrap");
          }
          if (props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED)) {  // present in 3.30 and above
             stageScanPanel.add(new JLabel("Scan retrace speed [% of max]:"));
             final JSpinner scanRetraceSpeed = pu.makeSpinnerFloat(0.01, 99.0, 1.0,
-                  Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED, 67.0);
+                    Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED, 67.0);
             stageScanPanel.add(scanRetraceSpeed, "wrap");
          }
-         stageScanPanel.add(new JLabel("Path A stage/objective angle [\u00B0]:"));
-         final JSpinner stageAnglePathA = pu.makeSpinnerFloat(1, 89, 1,
-               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA,
-               ASIdiSPIM.SCOPE ? 50.0 : (ASIdiSPIM.oSPIM ? 60 : 45));
-         stageAnglePathA.setToolTipText("for Path A, e.g. 60 for oSPIM and 45 for symmetric diSPIM");
-         stageScanPanel.add(stageAnglePathA, "wrap");
-         
+      }
+
+      // the stage/objective angle setting is now always present
+      stageScanPanel.add(new JLabel("Path A stage/objective angle [\u00B0]:"));
+      final JSpinner stageAnglePathA = pu.makeSpinnerFloat(1, 89, 1,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA,
+            ASIdiSPIM.SCOPE ? 50.0 : (ASIdiSPIM.oSPIM ? 60 : 45));
+      stageAnglePathA.setToolTipText("for Path A, e.g. 60 for oSPIM and 45 for symmetric diSPIM");
+      stageScanPanel.add(stageAnglePathA, "wrap");
+
+      if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
+              && false) { // props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
          final JCheckBox scanFromStart = pu.makeCheckBox("Scan from current position instead of center",
                Properties.Keys.PLUGIN_SCAN_FROM_START_POSITION, panelName_, false);
          stageScanPanel.add(scanFromStart, "span 2, wrap, alignx left");
