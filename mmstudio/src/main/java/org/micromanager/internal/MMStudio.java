@@ -189,7 +189,17 @@ public final class MMStudio implements Studio {
                ReportingUtils.showError(
                      "Micro-Manager received no value for the `-profile` startup argument.");
             }
-         } else {
+         }
+	 else if (args[i].equals("-zmqport")){
+            if (i < args.length - 1) {
+               i++;
+	       ZMQServer.STARTING_PORT_NUMBER = Integer.parseInt(args[i]);
+            } else {
+               ReportingUtils.showError(
+                     "Micro-Manager received no value for the `-zmqport` startup argument.");
+            }
+	 }
+	 else {
             ReportingUtils.showError("Micro-Manager received unknown startup argument: " + args[i]);
          }
       }
