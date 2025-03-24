@@ -147,7 +147,10 @@ public final class FinishPage extends PagePanel {
             }
          }
          setFilePath(f);
-         model_.removeInvalidConfigurations();
+         // Call model_.removeInvalidConfigurations() to go back to previous behavior.
+         // checkConfigurations() is a new method that keeps everythings that can be kept
+         // rather than remove configurations containing no longer available devices wholesale.
+         model_.checkConfigurations();
          model_.saveToFile(fileNameField_.getText());
       } catch (Exception e) {
          ReportingUtils.showError(e);
