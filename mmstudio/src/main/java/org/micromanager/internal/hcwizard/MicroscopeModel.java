@@ -1461,6 +1461,17 @@ public final class MicroscopeModel {
       modified_ = true;
    }
 
+   public void removePropertyFromGroup(String group, String preset) {
+      ConfigGroup cg = findConfigGroup(group);
+      if (cg != null) {
+         ConfigPreset cp = cg.findConfigPreset(preset);
+         if (cp != null) {
+            cg.removePreset(preset);
+            modified_ = true;
+         }
+      }
+   }
+
    public void removeGroup(String name) {
       configGroups_.remove(name);
       modified_ = true;
@@ -1490,6 +1501,36 @@ public final class MicroscopeModel {
          }
       }
    }
+
+
+   /**
+    * Checks all configurations.  Removes properties that are no longer available from presets.
+    * If no properties are left, the preset is removed.
+    * If no presets are left, the group is removed.
+    */
+   public void checkConfigurations() {
+      Object[] groups = configGroups_.values().toArray();
+      for (Object o : groups) {
+         ConfigGroup group = (ConfigGroup) o;
+         ConfigPreset[] presets = group.getConfigPresets();
+         for (ConfigPreset preset : presets) {
+            for (int k = 0; k < preset.getNumberOfSettings(); k++) {
+               Setting s = preset.getSetting(k);
+               // check if device is available
+               if (null == findDevice(s.deviceName_)) {
+                  preset.removeSetting(s);
+               }
+            }
+            if (preset.getNumberOfSettings() == 0) {
+               group.removePreset(preset.getName());
+            }
+         }
+         if (group.getConfigPresets().length == 0) {
+            removeGroup(group.name_);
+         }
+      }
+   }
+
 
    /**
     * Remove configurations which refer to non existent devices. This situation
