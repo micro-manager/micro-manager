@@ -161,9 +161,24 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       add(gpuComboBox, "wrap");
       add(new JSeparator(), "span 4, growx, wrap");
 
-      add(new JLabel("Sheet angle (_\\) in degrees:"), "alignx left");
+      add(new JLabel("Sheet angle dy/dz (_\\) in degrees:"), "alignx left");
       final JTextField degreeTextField = new JTextField(5);
-      degreeTextField.setText(settings_.getString(DEGREE, "20"));
+      // fetch tan(theta) from settings, convert to degrees and display
+      // if tan(theta) is 0, default to previously set value or 20 degrees if not set.
+      String defaultAngle = "20";
+      String displayAngle = settings_.getString(DEGREE, defaultAngle);
+      try {
+         double tanAngle = studio_.core().getPixelSizedydz(true);
+         double angle = Math.toDegrees(Math.atan(tanAngle));
+         if (angle == 0.0) {
+            throw new Exception("Angle in configuration is 0.0");
+         }
+         displayAngle = NumberUtils.doubleToDisplayString(angle);
+      } catch (Exception ex) {
+         studio_.logs().logError("Error fetching dy/dz from core. Using " + displayAngle
+                  + " degrees.");
+      }
+      degreeTextField.setText(displayAngle);
       degreeTextField.getDocument().addDocumentListener(
               new TextFieldUpdater(degreeTextField, DEGREE, 0.0, settings_));
       settings_.putString(DEGREE, degreeTextField.getText());
@@ -442,7 +457,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       Pipeline pipeline = studio_.data().createPipeline(factories, destination, true);
       try {
          pipeline.insertSummaryMetadata(source.getSummaryMetadata());
-         int i = 0;
          Iterable<Coords> unorderedImageCoords = source.getUnorderedImageCoords();
          List<Coords> orderedImageCoords = new ArrayList<>();
          for (Coords c : unorderedImageCoords) {
@@ -465,6 +479,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
             }
          });
 
+         int i = 0;
          for (Coords c : orderedImageCoords) {
             i++;
             monitor.setProgress(i);
