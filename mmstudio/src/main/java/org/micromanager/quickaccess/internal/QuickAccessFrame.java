@@ -20,7 +20,6 @@
 package org.micromanager.quickaccess.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-import com.google.common.eventbus.Subscribe;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -28,6 +27,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
@@ -54,7 +54,6 @@ import mmcorej.org.json.JSONObject;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
@@ -100,7 +99,7 @@ public final class QuickAccessFrame extends JFrame {
 
    /**
     * Constructs the Quick Access Window that shows buttons for often used controls.
-    * Also let's the user customize the UI.
+    * Also lets the user customize the UI.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public QuickAccessFrame(Studio studio, JSONObject config) {
@@ -145,11 +144,12 @@ public final class QuickAccessFrame extends JFrame {
 
       add(contentsPanel_);
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+               getClass().getResource("/org/micromanager/icons/microscope.gif")));
+
       loadConfig(config);
 
       pack();
-
-      studio_.events().registerForEvents(this);
    }
 
    /**
@@ -836,15 +836,4 @@ public final class QuickAccessFrame extends JFrame {
       return new Divider(new Point(x1, y1), new Point(x2, y2));
    }
 
-   /**
-    * Handles event signalling that shutdown is starting.
-    *
-    * @param event Information about shutdown event.  We only check if it was cancelled.
-    */
-   @Subscribe
-   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.isCanceled()) {
-         dispose();
-      }
-   }
 }
