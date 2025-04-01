@@ -259,7 +259,7 @@ public final class PipelineTableModel extends AbstractTableModel {
       for (String configString : serializedConfigs) {
          ConfiguratorWrapper config = ConfiguratorWrapper.fromString(
                configString, studio);
-         if (config.isEnabled()) {
+         if (config != null && (config.isEnabled() || config.isEnabledInLive())) {
             didUpdate = true;
          }
          pipelineConfigs_.add(config);
