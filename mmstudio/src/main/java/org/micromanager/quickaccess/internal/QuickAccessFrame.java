@@ -150,8 +150,6 @@ public final class QuickAccessFrame extends JFrame {
       loadConfig(config);
 
       pack();
-
-      // studio_.events().registerForEvents(this);
    }
 
    /**
