@@ -71,6 +71,11 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    private final Studio studio_;
    private final ArrayList<QuickAccessFrame> knownPanels_;
 
+   /**
+    * Create a new DefaultQuickAccessManager.
+    *
+    * @param studio Studio instance to which this manager belongs
+    */
    public DefaultQuickAccessManager(Studio studio) {
       studio_ = studio;
       studio.events().registerForEvents(this);
@@ -114,13 +119,20 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    }
 
    /**
-    * Save the current setup to the user's profile.
+    * Save the current setup to the user's profile and dispose the panels.
+    * Note, do not let the panels clean themselves up, as the order in which
+    * onShutdownCommencing is called is not guaranteed.
     */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      String config = getConfig(false);
-      studio_.profile().getSettings(QuickAccessManager.class)
-            .putString(SAVED_CONFIG, config);
+      if (!event.isCanceled()) {
+         String config = getConfig(false);
+         studio_.profile().getSettings(QuickAccessManager.class)
+                  .putString(SAVED_CONFIG, config);
+         for (QuickAccessFrame panel : knownPanels_) {
+            panel.dispose();
+         }
+      }
    }
 
    /**
@@ -129,7 +141,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    private String getConfig(boolean isPretty) {
       try {
          // We store the array in a JSONObject, instead of storing the array
-         // directly, to give us room to expand in future.
+         // directly, to give us room to expand in the future.
          JSONObject config = new JSONObject();
          JSONArray panelConfigs = new JSONArray();
          for (QuickAccessFrame panel : knownPanels_) {
@@ -173,25 +185,28 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
       try {
          JSONObject json = new JSONObject(configString);
          String iconType = json.getString(ICON_TYPE);
-         if (iconType.equals(CUSTOM_FILE)) {
-            // Load the icon from file.
-            String iconPath = json.getString(ICON_PATH);
-            try {
-               Image image = ImageIO.read(new File(iconPath));
-               return new ImageIcon(image);
-            } catch (IOException e) {
-               studio_.logs().showError(e, "Unable to find image at " + iconPath);
-            }
-         } else if (iconType.equals(COLOR_SWATCH)) {
-            // Create a square icon by rendering a JLabel.
-            Color color = new Color(json.getInt(ICON_COLOR));
-            return createSwatch(color, QuickAccessPlugin.CELL_HEIGHT - 16);
-         } else if (iconType.equals(JAR_ICON)) {
-            // Load the icon from our jar.
-            return IconLoader.getIcon("/org/micromanager/icons/"
-                  + json.getString(ICON_PATH) + ".png");
-         } else {
-            studio_.logs().logError("Unsupported icon type " + iconType);
+         switch (iconType) {
+            case CUSTOM_FILE:
+               // Load the icon from file.
+               String iconPath = json.getString(ICON_PATH);
+               try {
+                  Image image = ImageIO.read(new File(iconPath));
+                  return new ImageIcon(image);
+               } catch (IOException e) {
+                  studio_.logs().showError(e, "Unable to find image at " + iconPath);
+               }
+               break;
+            case COLOR_SWATCH:
+               // Create a square icon by rendering a JLabel.
+               Color color = new Color(json.getInt(ICON_COLOR));
+               return createSwatch(color, QuickAccessPlugin.CELL_HEIGHT - 16);
+            case JAR_ICON:
+               // Load the icon from our jar.
+               return IconLoader.getIcon("/org/micromanager/icons/"
+                        + json.getString(ICON_PATH) + ".png");
+            default:
+               studio_.logs().logError("Unsupported icon type " + iconType);
+               break;
          }
       } catch (JSONException e) {
          studio_.logs().logError(e, "Unable to create custom icon");
