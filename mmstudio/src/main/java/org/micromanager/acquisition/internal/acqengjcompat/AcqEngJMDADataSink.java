@@ -112,9 +112,30 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
                   }).collect(Collectors.toList());
 
          Coords.CoordsBuilder cb = image.getCoords().copyBuilder();
-         //for (String axisName : nonStandardAxisNames) {
-         //   cb.index(axisName, (Integer) AcqEngMetadata.getAxes(tagged.tags).get(axisName));
-         // }
+         for (String axisName : nonStandardAxisNames) {
+            if (axisName.equals("camera")) {
+               String chName;
+               if (AcqEngMetadata.getAxes(tagged.tags).get(AcqEngMetadata.CHANNEL_AXIS) != null) {
+                  int channelIndex = (Integer) AcqEngMetadata.getAxes(tagged.tags).get(
+                           AcqEngMetadata.CHANNEL_AXIS);
+                  chName = engine_.getSequenceSettings().channels().get(channelIndex).config()
+                           + "-"
+                           + AcqEngMetadata.getAxes(tagged.tags).get("camera");
+               } else {
+                  chName = (String) AcqEngMetadata.getAxes(tagged.tags).get("camera");
+               }
+               List<String> channelNameList = store_.getSummaryMetadata().getChannelNameList();
+               for (int i = 0; i < channelNameList.size(); i++) {
+                  if (channelNameList.get(i).equals(chName)) {
+                     cb.index(AcqEngMetadata.CHANNEL_AXIS, i);
+                  }
+               }
+            } else {
+               if (AcqEngMetadata.getAxes(tagged.tags).get(axisName) instanceof Integer) {
+                  cb.index(axisName, (Integer) AcqEngMetadata.getAxes(tagged.tags).get(axisName));
+               }
+            }
+         }
          image = (DefaultImage) image.copyAtCoords(cb.build());
 
          try {

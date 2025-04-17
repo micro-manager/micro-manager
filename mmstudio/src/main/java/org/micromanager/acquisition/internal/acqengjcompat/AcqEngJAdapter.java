@@ -426,7 +426,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       summaryMetadata.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
       summaryMetadata.put(PropertyKey.CHANNEL_NAMES.key(), chNames);
       summaryMetadata.put(PropertyKey.CHANNEL_COLORS.key(), chColors);
-      summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels(acqSettings));
+      summaryMetadata.put(PropertyKey.CHANNELS.key(), chNames.length());
       String computerName = "";
       try {
          computerName = InetAddress.getLocalHost().getHostName();
