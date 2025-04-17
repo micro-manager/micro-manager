@@ -112,9 +112,9 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
                   }).collect(Collectors.toList());
 
          Coords.CoordsBuilder cb = image.getCoords().copyBuilder();
-         for (String axisName : nonStandardAxisNames) {
-            cb.index(axisName, (Integer) AcqEngMetadata.getAxes(tagged.tags).get(axisName));
-         }
+         //for (String axisName : nonStandardAxisNames) {
+         //   cb.index(axisName, (Integer) AcqEngMetadata.getAxes(tagged.tags).get(axisName));
+         // }
          image = (DefaultImage) image.copyAtCoords(cb.build());
 
          try {
