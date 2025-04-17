@@ -394,20 +394,39 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
       final JSONArray chNames = new JSONArray();
       final JSONArray chColors = new JSONArray();
-      if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
-         for (ChannelSpec c : acqSettings.channels()) {
-            if (c.useChannel()) {
-               chNames.put(c.config());
-               chColors.put(c.color().getRGB());
+      long nrCameraChannels = studio.core().getNumberOfCameraChannels();
+      if (nrCameraChannels == 1) {
+         if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
+            for (ChannelSpec c : acqSettings.channels()) {
+               if (c.useChannel()) {
+                  chNames.put(c.config());
+                  chColors.put(c.color().getRGB());
+               }
+            }
+         } else {
+            chNames.put("Default");
+         }
+      } else if (nrCameraChannels > 1) {
+         if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
+            for (ChannelSpec c : acqSettings.channels()) {
+               if (c.useChannel()) {
+                  for (long i = 0; i < nrCameraChannels; i++) {
+                     chNames.put(c.config() + "-" + studio.core().getCameraChannelName(i));
+                     chColors.put(c.color().getRGB());
+                  }
+               }
+            }
+         } else {
+            for (long i = 0; i < nrCameraChannels; i++) {
+               chNames.put(studio.core().getCameraChannelName(i));
             }
          }
-      } else {
-         chNames.put("Default");
       }
+
       summaryMetadata.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
       summaryMetadata.put(PropertyKey.CHANNEL_NAMES.key(), chNames);
       summaryMetadata.put(PropertyKey.CHANNEL_COLORS.key(), chColors);
-      summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels(acqSettings));
+      summaryMetadata.put(PropertyKey.CHANNELS.key(), chNames.length());
       String computerName = "";
       try {
          computerName = InetAddress.getLocalHost().getHostName();
