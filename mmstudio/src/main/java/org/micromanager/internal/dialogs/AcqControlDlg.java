@@ -1984,6 +1984,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zEnd_.getText()));
          ssb.sliceZStepUm(NumberUtils.displayStringToDouble(zStep_.getText()));
          ssb.relativeZSlice(zRelativeAbsolute_ == 0);  // 0 == relative, 1 == absolute
+         try {
+            // the default Z stage that will be used in the MDA should be set at this point
+            ssb.zReference(mmStudio_.core().getPosition());
+         } catch (Exception ex) {
+            mmStudio_.logs().logError(ex, "Failed to get Z Position from Core.");
+            // continue, zReference will be set to 0
+         }
          ssb.useSlices(slicesPanel_.isSelected());
 
          ssb.usePositionList(positionsPanel_.isSelected());
