@@ -1519,7 +1519,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             zDriveCombo_.setVisible(true);
             double pixelSize = mmStudio_.core().getPixelSizeUm();
             if (pixelSize != 0.0) {
-               proposedZStepLabel_.setText(NumberUtils.doubleToDisplayString(pixelSize * 5.0));
+               proposedZStepLabel_.setText(getOptimalZStep(true));
             }
          } catch (Exception ex) {
             mmStudio_.logs().logError(ex, "Failed to get position from core");
