@@ -12,7 +12,6 @@ public class PressureControlPanel extends JPanel {
     private PressureControlSubPanel[] panelList;
     private String[] devices_;
 
-
     PressureControlPanel(Studio studio, String[] devices) {
         this.studio_ = studio;
         this.devices_ = devices;

@@ -1,11 +1,13 @@
 package org.micromanager.plugins.FluidControl;
 
+import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 
 public class FluidControlPanel extends JPanel {
     private final int DELAY = 1000; // Delay for requesting new pressure in ms
@@ -23,6 +25,25 @@ public class FluidControlPanel extends JPanel {
 
         this.studio_ = studio;
         this.config_ = config;
+
+        // Initialize all devices
+        try {
+            config_.pressurePumpSelected.addAll(
+                    Arrays.asList(studio_.core()
+                            .getLoadedDevicesOfType(DeviceType.PressurePumpDevice)
+                            .toArray()
+                    )
+            );
+            config_.volumePumpSelected.addAll(
+                    Arrays.asList(studio_.core()
+                                .getLoadedDevicesOfType(DeviceType.VolumetricPumpDevice)
+                                .toArray()
+                    )
+            );
+        } catch (Exception e) {
+            studio_.getLogManager().logError(e);
+            return;
+        }
 
         pressurePanel = new PressureControlPanel(studio_, config_.pressurePumpSelected.toArray(new String[0]));
         this.add(pressurePanel);
