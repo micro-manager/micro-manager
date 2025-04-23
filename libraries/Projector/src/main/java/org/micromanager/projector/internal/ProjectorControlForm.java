@@ -44,8 +44,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -70,7 +70,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
-import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
@@ -84,6 +83,8 @@ import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.SliderPanel;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectionDevice;
@@ -135,36 +136,36 @@ public class ProjectorControlForm extends JFrame {
 
 
    // GUI element variables declaration
-   private javax.swing.JButton allPixelsButton_;
-   private javax.swing.JTabbedPane attachToMdaTabbedPane_;
-   private javax.swing.JButton calibrateButton_;
-   private javax.swing.JComboBox<String> channelComboBox_;
-   private javax.swing.JButton checkerBoardButton_;
-   private javax.swing.JTextField delayField_;
-   private javax.swing.JTextField logDirectoryTextField_;
-   private javax.swing.JSpinner pointAndShootIntervalSpinner_;
-   private javax.swing.JToggleButton pointAndShootOffButton_;
-   private javax.swing.JToggleButton pointAndShootOnButton;
-   private javax.swing.JCheckBox repeatCheckBox_;
-   private javax.swing.JCheckBox repeatCheckBoxTime_;
-   private javax.swing.JSpinner repeatEveryFrameSpinner_;
-   private javax.swing.JLabel repeatEveryFrameUnitLabel_;
-   private javax.swing.JSpinner repeatEveryIntervalSpinner_;
-   private javax.swing.JLabel repeatEveryIntervalUnitLabel_;
-   private javax.swing.JLabel roiLoopLabel_;
-   private javax.swing.JSpinner roiLoopSpinner_;
-   private javax.swing.JLabel roiLoopTimesLabel_;
-   private javax.swing.JLabel roiStatusLabel_;
-   private javax.swing.JButton exposeROIsButton_;
-   private javax.swing.JButton sequencingButton_;
-   private javax.swing.JComboBox<String> shutterComboBox_;
-   private javax.swing.JLabel startFrameLabel_;
-   private javax.swing.JSpinner startFrameSpinner_;
-   private javax.swing.JLabel startTimeLabel_;
-   private javax.swing.JSpinner startTimeSpinner_;
-   private javax.swing.JLabel startTimeUnitLabel_;
-   private javax.swing.JPanel syncRoiPanel_;
-   private javax.swing.JCheckBox useInMDAcheckBox;
+   private JButton allPixelsButton_;
+   private JTabbedPane attachToMdaTabbedPane_;
+   private JButton calibrateButton_;
+   private JComboBox<String> channelComboBox_;
+   private JButton checkerBoardButton_;
+   private JTextField delayField_;
+   private JTextField logDirectoryTextField_;
+   private JSpinner pointAndShootIntervalSpinner_;
+   private JToggleButton pointAndShootOffButton_;
+   private JToggleButton pointAndShootOnButton;
+   private JCheckBox repeatCheckBox_;
+   private JCheckBox repeatCheckBoxTime_;
+   private JSpinner repeatEveryFrameSpinner_;
+   private JLabel repeatEveryFrameUnitLabel_;
+   private JSpinner repeatEveryIntervalSpinner_;
+   private JLabel repeatEveryIntervalUnitLabel_;
+   private JLabel roiLoopLabel_;
+   private JSpinner roiLoopSpinner_;
+   private JLabel roiLoopTimesLabel_;
+   private JLabel roiStatusLabel_;
+   private JButton exposeROIsButton_;
+   private JButton sequencingButton_;
+   private JComboBox<String> shutterComboBox_;
+   private JLabel startFrameLabel_;
+   private JSpinner startFrameSpinner_;
+   private JLabel startTimeLabel_;
+   private JSpinner startTimeSpinner_;
+   private JLabel startTimeUnitLabel_;
+   private JPanel syncRoiPanel_;
+   private JCheckBox useInMDAcheckBox;
 
    /**
     * Constructor. Creates the main window for the Projector plugin.
@@ -1272,9 +1273,22 @@ public class ProjectorControlForm extends JFrame {
 
       centerButton.setText("Center spot");
       centerButton.addActionListener((ActionEvent evt) -> {
-         dev_.turnOff();
          ProjectorActions.displayCenterSpot(dev_);
       });
+      final JLabel xLabel = new JLabel("X ");
+      final SliderPanel xSlider = new SliderPanel();
+      xSlider.setLimits(dev_.getXMinimum(), dev_.getXMinimum() + dev_.getXRange());
+      final JLabel yLabel = new JLabel("Y ");
+      final SliderPanel ySlider = new SliderPanel();
+      ySlider.setLimits(dev_.getYMinimum(), dev_.getYMinimum() + dev_.getYRange());
+      try {
+         xSlider.setText(NumberUtils.doubleToDisplayString(dev_.getXMinimum()
+                  + dev_.getXRange() / 2));
+         ySlider.setText(NumberUtils.doubleToDisplayString(dev_.getYMinimum()
+                  + dev_.getYRange() / 2));
+      } catch (ParseException e) {
+         studio_.logs().logError(e);
+      }
 
       channelComboBox_.setModel(new DefaultComboBoxModel<>(
             new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
@@ -1302,6 +1316,11 @@ public class ProjectorControlForm extends JFrame {
       setupTab.add(centerButton);
       setupTab.add(allPixelsButton_);
       setupTab.add(checkerBoardButton_, "wrap");
+
+      setupTab.add(xLabel, "span 3, split");
+      setupTab.add(xSlider, "wrap");
+      setupTab.add(yLabel, "span 3, split");
+      setupTab.add(ySlider, "wrap");
 
       setupTab.add(calibrateButton_);
       setupTab.add(new JLabel("Delay(ms):"), "span 2, split 2");
