@@ -33,6 +33,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -123,6 +124,8 @@ public class ProjectorControlForm extends JFrame {
    private String logFile_;
    private BufferedWriter mdaLogFileWriter_;
    private String mdaLogFile_;
+   private double xCenter_ = 0.0;
+   private double yCenter_ = 0.0;
 
 
    private static final SimpleDateFormat LOGFILEDATE_FORMATTER =
@@ -175,6 +178,8 @@ public class ProjectorControlForm extends JFrame {
       core_ = app.getCMMCore();
       settings_ = studio_.profile().getSettings(this.getClass());
       dev_ = ProjectorActions.getProjectionDevice(studio_);
+      xCenter_ = settings_.getDouble(Terms.XCENTER, dev_.getXMinimum() + dev_.getXRange() / 2);
+      yCenter_ = settings_.getDouble(Terms.YCENTER, dev_.getYMinimum() + dev_.getYRange() / 2);
       mapping_ = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
       pointAndShootQueue_ = new LinkedBlockingQueue<>();
       projectorControlExecution_ = new ProjectorControlExecution(studio_);
@@ -921,6 +926,25 @@ public class ProjectorControlForm extends JFrame {
       settings_.putDouble(Terms.EXPOSURE, exposureMs);
    }
 
+   private void updateX(String text) {
+      try {
+         xCenter_ = NumberUtils.displayStringToDouble(text);
+         settings_.putDouble(Terms.XCENTER, xCenter_);
+         ProjectorActions.displaySpot(dev_, xCenter_, yCenter_);
+      } catch (ParseException e) {
+         studio_.logs().logError(e);
+      }
+   }
+
+   private void updateY(String text) {
+      try {
+         yCenter_ = NumberUtils.displayStringToDouble(text);
+         settings_.putDouble(Terms.YCENTER, yCenter_);
+         ProjectorActions.displaySpot(dev_, xCenter_, yCenter_);
+      } catch (ParseException e) {
+         studio_.logs().logError(e);
+      }
+   }
 
    /**
     * Show the Mosaic Sequencing window (a JFrame). Should only be called if we already know the
@@ -1271,24 +1295,37 @@ public class ProjectorControlForm extends JFrame {
       allPixelsButton_.setText("All Pixels");
       allPixelsButton_.addActionListener((ActionEvent evt) -> dev_.activateAllPixels());
 
-      centerButton.setText("Center spot");
+      centerButton.setText("Show Center Spot");
       centerButton.addActionListener((ActionEvent evt) -> {
-         ProjectorActions.displayCenterSpot(dev_);
+         ProjectorActions.displaySpot(dev_, xCenter_, yCenter_);
       });
-      final JLabel xLabel = new JLabel("X ");
+      final JLabel xLabel = new JLabel("Center-X ");
       final SliderPanel xSlider = new SliderPanel();
       xSlider.setLimits(dev_.getXMinimum(), dev_.getXMinimum() + dev_.getXRange());
-      final JLabel yLabel = new JLabel("Y ");
+      final JLabel yLabel = new JLabel("Center-Y ");
       final SliderPanel ySlider = new SliderPanel();
       ySlider.setLimits(dev_.getYMinimum(), dev_.getYMinimum() + dev_.getYRange());
       try {
-         xSlider.setText(NumberUtils.doubleToDisplayString(dev_.getXMinimum()
-                  + dev_.getXRange() / 2));
-         ySlider.setText(NumberUtils.doubleToDisplayString(dev_.getYMinimum()
-                  + dev_.getYRange() / 2));
+         xSlider.setText(NumberUtils.doubleToDisplayString(xCenter_));
+         ySlider.setText(NumberUtils.doubleToDisplayString(yCenter_));
       } catch (ParseException e) {
          studio_.logs().logError(e);
       }
+      xSlider.addEditActionListener((evt) -> updateX(xSlider.getText()));
+      xSlider.addSliderMouseListener(new MouseAdapter() {
+         @Override
+         public void mouseReleased(MouseEvent e) {
+            updateX(xSlider.getText());
+         }
+      });
+
+      ySlider.addEditActionListener((evt) -> updateY(ySlider.getText()));
+      ySlider.addSliderMouseListener(new MouseAdapter() {
+         @Override
+         public void mouseReleased(MouseEvent e) {
+            updateY(ySlider.getText());
+         }
+      });
 
       channelComboBox_.setModel(new DefaultComboBoxModel<>(
             new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
@@ -1355,6 +1392,7 @@ public class ProjectorControlForm extends JFrame {
 
       pack();
    }
+
 
    // *****************  Deprecated functions ****************** //
 

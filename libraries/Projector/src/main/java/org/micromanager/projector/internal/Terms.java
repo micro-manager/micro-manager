@@ -11,4 +11,6 @@ public class Terms {
    static final String NRROIREPETITIONS = "NrRoiRepetitions";
    static final String PTCHANNEL = "PTChannel";
    static final String PTSHUTTER = "PTShutter";
+   static final String XCENTER = "XCenter";
+   static final String YCENTER = "YCenter";
 }
