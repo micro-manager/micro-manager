@@ -27,6 +27,8 @@ import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
+import javax.swing.SwingUtilities;
+
 /**
  * Calibration of phototargetting devices (Galvos and SLMs).
  *

@@ -68,6 +68,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
@@ -411,12 +412,12 @@ public class ProjectorControlForm extends JFrame {
                   studio_.logs().logError("Failed to reset shutter in Projector calibration");
                }
             }
-            if (!originalChannel.isEmpty()) {
+            if (originalChannel != null && !originalChannel.isEmpty()) {
                projectorControlExecution_.returnChannel(originalChannel);
             }
             studio_.alerts().postAlert("Projector Calibration", this.getClass(),
                   "Calibration " + (success ? "succeeded." : "failed."));
-            calibrateButton_.setText("Calibrate");
+            SwingUtilities.invokeLater(() -> calibrateButton_.setText("Calibrate"));
             calibrator_ = null;
          }
       };
