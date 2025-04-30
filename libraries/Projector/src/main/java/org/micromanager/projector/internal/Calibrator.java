@@ -172,6 +172,8 @@ public class Calibrator {
    private AffineTransform generateLinearMapping() {
       double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
       double centerY = dev_.getYRange() / 2 + dev_.getYMinimum();
+      centerX = settings_.getDouble(Terms.XCENTER, centerX);
+      centerY = settings_.getDouble(Terms.YCENTER, centerY);
       double spacing =
             Math.min(dev_.getXRange(), dev_.getYRange()) / 30;  // user 3% of galvo/SLM range
       Map<Point2D.Double, Point2D.Double> spotMap = new HashMap<>();
