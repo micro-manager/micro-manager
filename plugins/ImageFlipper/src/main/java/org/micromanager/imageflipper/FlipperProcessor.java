@@ -28,6 +28,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
+import org.micromanager.data.SummaryMetadata;
 
 
 public class FlipperProcessor implements Processor {
@@ -57,6 +58,27 @@ public class FlipperProcessor implements Processor {
       isMirrored_ = isMirrored;
    }
 
+
+   /**
+    * Process the summary metadata.
+    * If we are rotating the image by 90 0r 270 degrees, we need to swap the X and Y
+    * dimensions in the summary metadata.
+    */
+   @Override
+   public SummaryMetadata processSummaryMetadata(SummaryMetadata source) {
+      if (rotation_ == R90 || rotation_ == R270) {
+         // If we are rotating the image, we need to swap the X and Y
+         // dimensions in the summary metadata.
+         int width = source.getImageHeight();
+         int height = source.getImageWidth();
+         source = source.copyBuilder()
+               .imageWidth(width)
+               .imageHeight(height)
+               .build();
+      }
+      return source;
+   }
+
    /**
     * Process one image.
     */
@@ -77,12 +99,12 @@ public class FlipperProcessor implements Processor {
    }
 
    /**
-    * Executes image transformation
+    * Executes image transformation.
     * First mirror the image if requested, than rotate as requested
     *
-    * @param studio
+    * @param studio   Studio object to use for creating the image.
     * @param image      Image to be transformed.
-    * @param isMirrored Whether or not to mirror the image.
+    * @param isMirrored Whether to mirror the image.
     * @param rotation   Degrees to rotate by (R0, R90, R180, R270)
     * @return - Transformed Image, otherwise a copy of the input
     */
