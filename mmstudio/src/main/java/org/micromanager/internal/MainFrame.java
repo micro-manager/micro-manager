@@ -24,6 +24,7 @@ package org.micromanager.internal;
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -76,6 +77,7 @@ import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMKeyDispatcher;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -179,34 +181,52 @@ public final class MainFrame extends JFrame {
    }
 
    private void setupWindowHandlers() {
-      addWindowListener(new WindowAdapter() {
-         // HACK: on OSX, some kind of system bug can disable the entire
-         // menu bar at times (it has something to do with modal dialogs and
-         // possibly with errors resulting from the code that handles their
-         // output). Calling setEnabled() on the MenuBar does *not* fix the
-         // enabled-ness of the menus. However, through experimentation, I've
-         // figured out that setting the menubar to null and then back again
-         // does fix the issue for all menus *except* the Help menu. Note that
-         // if we named our Help menu e.g. "Help2" then it would behave
-         // properly, so this is clearly something special to do with OSX.
-         @Override
-         public void windowActivated(WindowEvent event) {
-            setMenuBar(null);
-            setJMenuBar(getJMenuBar());
-         }
+      if (JavaUtils.isMac()) {
+         addWindowListener(new WindowAdapter() {
+            // HACK: on OSX, some kind of system bug can disable the entire
+            // menu bar at times (it has something to do with modal dialogs and
+            // possibly with errors resulting from the code that handles their
+            // output). Calling setEnabled() on the MenuBar does *not* fix the
+            // enabled-ness of the menus. However, through experimentation, I've
+            // figured out that setting the menubar to null and then back again
+            // does fix the issue for all menus *except* the Help menu. Note that
+            // if we named our Help menu e.g. "Help2" then it would behave
+            // properly, so this is clearly something special to do with OSX.
+            @Override
+            public void windowActivated(WindowEvent event) {
+               // This is a workaround for a bug in Java on OSX that causes
+               // the menu bar to be disabled.
+               setJMenuBar(null);
+               setJMenuBar(getJMenuBar());
+            }
 
-         // Shut down when this window is closed.
-         @Override
-         public void windowClosing(WindowEvent event) {
-            if (mmStudio_.closeSequence(false)) {
-               if (exitOnClose_) {
-                  System.exit(0);
-               } else {
-                  dispose();
+            // Shut down when this window is closed.
+            @Override
+            public void windowClosing(WindowEvent event) {
+               if (mmStudio_.closeSequence(false)) {
+                  if (exitOnClose_) {
+                     System.exit(0);
+                  } else {
+                     dispose();
+                  }
                }
             }
-         }
-      });
+         });
+      } else { // Windows/Linux
+         addWindowListener(new WindowAdapter() {
+            // Shut down when this window is closed.
+            @Override
+            public void windowClosing(WindowEvent event) {
+               if (mmStudio_.closeSequence(false)) {
+                  if (exitOnClose_) {
+                     System.exit(0);
+                  } else {
+                     dispose();
+                  }
+               }
+            }
+         });
+      }
    }
 
    public void initializeConfigPad() {
