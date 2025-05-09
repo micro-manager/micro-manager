@@ -72,7 +72,7 @@ if [ "$do_download" = yes ]; then
    [ -f libexif-0.6.21.tar.bz2 ] || curl -L -o libexif-0.6.21.tar.bz2 http://sourceforge.net/projects/libexif/files/libexif/0.6.21/libexif-0.6.21.tar.bz2/download
    [ -f libtool-2.5.4.tar.gz ] || curl -LO https://ftpmirror.gnu.org/libtool/libtool-2.5.4.tar.gz
    [ -f libgphoto2-2.5.2.tar.bz2 ] || curl -L -o libgphoto2-2.5.2.tar.bz2 http://sourceforge.net/projects/gphoto/files/libgphoto/2.5.2/libgphoto2-2.5.2.tar.bz2/download
-   [ -f FreeImage3154.zip ] || curl -LO http://downloads.sourceforge.net/freeimage/FreeImage3154.zip
+   [ -f FreeImage3180.zip ] || curl -LO http://downloads.sourceforge.net/freeimage/FreeImage3180.zip
    [ -f libdc1394-2.2.1.tar.gz ] || curl -L -o libdc1394-2.2.1.tar.gz http://sourceforge.net/projects/libdc1394/files/libdc1394-2/2.2.1/libdc1394-2.2.1.tar.gz/download
    [ -f opencv-2.4.13.6.zip ] || curl -L -o opencv-2.4.13.6.zip https://github.com/opencv/opencv/archive/refs/tags/2.4.13.6.zip
    [ -f msgpack-cxx-4.1.3.tar.gz ] || curl -LO https://github.com/msgpack/msgpack-c/releases/download/cpp-4.1.3/msgpack-cxx-4.1.3.tar.gz
@@ -86,7 +86,7 @@ ed58c632befe0d299b39f9e23de1fc20d03870d7  boost_1_85_0.tar.bz2
 a52219b12dbc8d33fc096468591170fda71316c0  libexif-0.6.21.tar.bz2
 77227188ead223ed8ba447301eda3761cb68ef57  libtool-2.5.4.tar.gz
 6b70ff6feec62a955bef1fc9a2b16dd07f0e277a  libgphoto2-2.5.2.tar.bz2
-1d30057a127b2016cf9b4f0f8f2ba92547670f96  FreeImage3154.zip
+38daa9d8f1bca2330a2eaa42ec66fbe6ede7dce9  FreeImage3180.zip
 b92c9670b68c4e5011148f16c87532bef2e5b808  libdc1394-2.2.1.tar.gz
 a6c3d6ac8091e3311fc44125e017dd1e88e74825  opencv-2.4.13.6.zip
 451d83b5d0302c88b69e3100be020fe3236391a2  msgpack-cxx-4.1.3.tar.gz
@@ -227,12 +227,12 @@ popd
 # FreeImage
 #
 
-unzip -oq ../downloads/FreeImage3154.zip
+unzip -oq ../downloads/FreeImage3180.zip
 pushd FreeImage
 
-# FreeImage 3.15.4 comes with a Makefile.osx, but it is hardcoded to use
-# outdated tools and is therefore useless. Replace the makefile with a minimal
-# version for building a fat static library.
+# FreeImage comes with a Makefile.osx, but it is hardcoded to use outdated
+# tools and is therefore useless. Replace the makefile with a minimal version
+# for building a fat static library.
 cat > Makefile.clang <<'END_OF_MAKEFILE'
 include Makefile.srcs
 
@@ -265,26 +265,46 @@ clean:
 	rm -f Dist/$(STATICLIB) Dist/$(HEADER) $(MODULES) $(STATICLIB)
 END_OF_MAKEFILE
 
-# Patch to add a missing #include
-patch -p1 <<'END_OF_PATCH'
---- FreeImage3154/Source/OpenEXR/IlmImf/ImfAutoArray.h  2014-01-16 12:44:00.000000000 -0800
-+++ FreeImage-patched/Source/OpenEXR/IlmImf/ImfAutoArray.h      2014-01-16 13:29:32.000000000 -0800
-@@ -37,6 +37,8 @@
- #ifndef INCLUDED_IMF_AUTO_ARRAY_H
- #define INCLUDED_IMF_AUTO_ARRAY_H
+# Some of the source files have CRLF newlines. Always use --ignore-whitespace
+# to patch.
 
-+#include <string.h>
-+
- //-----------------------------------------------------------------------------
- //
- //     class AutoArray -- a workaround for systems with
+# Disable the JXR (JPEG XR) plugin, which does not build on macOS.
+sed -i '' 's/[^ ]*LibJXR[^ ]*//g' Makefile.srcs
+sed -i '' 's/[^ ]*PluginJXR[^ ]*//g' Makefile.srcs
+patch --ignore-whitespace -p1 <<'END_OF_PATCH'
+--- a/Source/FreeImage/Plugin.cpp
++++ b/Source/FreeImage/Plugin.cpp
+@@ -272,9 +272,6 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
+ 			s_plugins->AddNode(InitPICT);
+ 			s_plugins->AddNode(InitRAW);
+ 			s_plugins->AddNode(InitWEBP);
+-#if !(defined(_MSC_VER) && (_MSC_VER <= 1310))
+-			s_plugins->AddNode(InitJXR);
+-#endif // unsupported by MS Visual Studio 2003 !!!
+ 			
+ 			// external plugin initialization
+ 
+END_OF_PATCH
+
+# Patch to fix wrong fdopen() #define (missing #include)
+patch --ignore-whitespace -p1 <<'END_OF_PATCH'
+--- a/Source/ZLib/zutil.h
++++ b/Source/ZLib/zutil.h
+@@ -136,6 +136,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
+ #    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
+ #      include <unix.h> /* for fdopen */
+ #    else
++#      include <stdio.h>
+ #      ifndef fdopen
+ #        define fdopen(fd,mode) NULL /* No fdopen() */
+ #      endif
 END_OF_PATCH
 
 # Patch to add another missing #include
-patch -p2 <<'END_OF_PATCH'
---- a/FreeImage3154/Source/ZLib/gzguts.h	2021-12-10 13:02:41.000000000 -0600
-+++ b/FreeImage3154/Source/ZLib/gzguts.h	2021-12-10 13:03:06.000000000 -0600
-@@ -29,6 +29,8 @@
+patch --ignore-whitespace -p1 <<'END_OF_PATCH'
+--- a/Source/ZLib/gzguts.h
++++ b/Source/ZLib/gzguts.h
+@@ -33,6 +33,8 @@
  
  #ifdef _WIN32
  #  include <stddef.h>
@@ -293,6 +313,34 @@ patch -p2 <<'END_OF_PATCH'
  #endif
  
  #if defined(__TURBOC__) || defined(_MSC_VER) || defined(_WIN32)
+END_OF_PATCH
+
+# Patch to remove an obsolete #include that no longer works
+# See https://github.com/pnggroup/libpng/pull/529
+patch --ignore-whitespace -p1 <<'END_OF_PATCH'
+--- a/Source/LibPNG/pngpriv.h
++++ b/Source/LibPNG/pngpriv.h
+@@ -514,18 +514,8 @@
+     */
+ #  include <float.h>
+ 
+-#  if (defined(__MWERKS__) && defined(macintosh)) || defined(applec) || \
+-    defined(THINK_C) || defined(__SC__) || defined(TARGET_OS_MAC)
+-   /* We need to check that <math.h> hasn't already been included earlier
+-    * as it seems it doesn't agree with <fp.h>, yet we should really use
+-    * <fp.h> if possible.
+-    */
+-#    if !defined(__MATH_H__) && !defined(__MATH_H) && !defined(__cmath__)
+-#      include <fp.h>
+-#    endif
+-#  else
+-#    include <math.h>
+-#  endif
++#  include <math.h>
++
+ #  if defined(_AMIGA) && defined(__SASC) && defined(_M68881)
+    /* Amiga SAS/C: We must include builtin FPU functions when compiling using
+     * MATH=68881
 END_OF_PATCH
 
 make -f Makefile.clang $MM_PARALLELMAKEFLAG CC="$MM_CC" CXX="$MM_CXX" MM_CPPFLAGS="$MM_CPPFLAGS"
