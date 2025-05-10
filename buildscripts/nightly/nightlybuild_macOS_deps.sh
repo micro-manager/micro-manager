@@ -75,7 +75,7 @@ if [ "$do_download" = yes ]; then
    [ -f FreeImage3180.zip ] || curl -LO http://downloads.sourceforge.net/freeimage/FreeImage3180.zip
    [ -f libdc1394-2.2.1.tar.gz ] || curl -L -o libdc1394-2.2.1.tar.gz http://sourceforge.net/projects/libdc1394/files/libdc1394-2/2.2.1/libdc1394-2.2.1.tar.gz/download
    [ -f opencv-2.4.13.6.zip ] || curl -L -o opencv-2.4.13.6.zip https://github.com/opencv/opencv/archive/refs/tags/2.4.13.6.zip
-   [ -f msgpack-cxx-4.1.3.tar.gz ] || curl -LO https://github.com/msgpack/msgpack-c/releases/download/cpp-4.1.3/msgpack-cxx-4.1.3.tar.gz
+   [ -f msgpack-cxx-7.0.0.tar.gz ] || curl -LO https://github.com/msgpack/msgpack-c/releases/download/cpp-7.0.0/msgpack-cxx-7.0.0.tar.gz
 fi
 
 cat >sha1sums <<EOF
@@ -89,7 +89,7 @@ a52219b12dbc8d33fc096468591170fda71316c0  libexif-0.6.21.tar.bz2
 38daa9d8f1bca2330a2eaa42ec66fbe6ede7dce9  FreeImage3180.zip
 b92c9670b68c4e5011148f16c87532bef2e5b808  libdc1394-2.2.1.tar.gz
 a6c3d6ac8091e3311fc44125e017dd1e88e74825  opencv-2.4.13.6.zip
-451d83b5d0302c88b69e3100be020fe3236391a2  msgpack-cxx-4.1.3.tar.gz
+37bbdbf69ef44392c7af215b9cb419891a9e1c9c  msgpack-cxx-7.0.0.tar.gz
 EOF
 shasum -c sha1sums || { echo "SHA1 checksum mismatch or missing file; remove file and rerun with -d flag"; exit 1; }
 
@@ -559,8 +559,8 @@ popd
 # msgpack-c
 #
 
-tar xzf ../downloads/msgpack-cxx-4.1.3.tar.gz
-pushd msgpack-cxx-4.1.3
+tar xzf ../downloads/msgpack-cxx-7.0.0.tar.gz
+pushd msgpack-cxx-7.0.0
 mkdir -p build-for-mm && cd build-for-mm
 cmake \
 -DBUILD_SHARED_LIBS=OFF \
