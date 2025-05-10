@@ -462,6 +462,37 @@ popd
 
 unzip -oq ../downloads/opencv-2.4.13.6.zip
 pushd opencv-2.4.13.6
+
+patch -p1 <<'END_OF_PATCH'
+--- opencv-2.4.13.6/CMakeLists.txt	2018-02-21 12:27:31.000000000 -0600
++++ opencv-patched/CMakeLists.txt	2025-05-09 22:29:23.007048086 -0500
+@@ -36,23 +36,12 @@
+ # --------------------------------------------------------------
+ # Top level OpenCV project
+ # --------------------------------------------------------------
+-if(CMAKE_GENERATOR MATCHES Xcode AND XCODE_VERSION VERSION_GREATER 4.3)
+-  cmake_minimum_required(VERSION 3.0)
+-elseif(IOS)
+-  cmake_minimum_required(VERSION 3.0)
+-else()
+-  cmake_minimum_required(VERSION 2.8.12.2)
+-endif()
++cmake_minimum_required(VERSION 3.5)
+ 
+ if(POLICY CMP0026)
+   cmake_policy(SET CMP0026 NEW)
+ endif()
+ 
+-if (POLICY CMP0042)
+-  # silence cmake 3.0+ warnings about MACOSX_RPATH
+-  cmake_policy(SET CMP0042 OLD)
+-endif()
+-
+ # must go before the project command
+ set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Configs" FORCE)
+ if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_VERSION VERSION_GREATER "2.8")
+END_OF_PATCH
+
 # OpenCV modules: highgui depends on imgproc; imgproc depends on core; OpenCVgrabber requires highgui and core
 mkdir -p build-for-mm && cd build-for-mm
 PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig cmake \
