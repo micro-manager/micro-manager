@@ -181,49 +181,35 @@ public final class MainFrame extends JFrame {
    }
 
    private void setupWindowHandlers() {
+      addWindowListener(new WindowAdapter() {
+         // Shut down when this window is closed.
+         @Override
+         public void windowClosing(WindowEvent event) {
+            if (mmStudio_.closeSequence(false)) {
+               if (exitOnClose_) {
+                  System.exit(0);
+               } else {
+                  dispose();
+               }
+            }
+         }
+      });
+
       if (JavaUtils.isMac()) {
+         // HACK: on OSX, some kind of system bug can disable the entire
+         // menu bar at times (it has something to do with modal dialogs and
+         // possibly with errors resulting from the code that handles their
+         // output). Calling setEnabled() on the MenuBar does *not* fix the
+         // enabled-ness of the menus. However, through experimentation, I've
+         // figured out that setting the menubar to null and then back again
+         // does fix the issue for all menus *except* the Help menu. Note that
+         // if we named our Help menu e.g. "Help2" then it would behave
+         // properly, so this is clearly something special to do with OSX.
          addWindowListener(new WindowAdapter() {
-            // HACK: on OSX, some kind of system bug can disable the entire
-            // menu bar at times (it has something to do with modal dialogs and
-            // possibly with errors resulting from the code that handles their
-            // output). Calling setEnabled() on the MenuBar does *not* fix the
-            // enabled-ness of the menus. However, through experimentation, I've
-            // figured out that setting the menubar to null and then back again
-            // does fix the issue for all menus *except* the Help menu. Note that
-            // if we named our Help menu e.g. "Help2" then it would behave
-            // properly, so this is clearly something special to do with OSX.
             @Override
             public void windowActivated(WindowEvent event) {
-               // This is a workaround for a bug in Java on OSX that causes
-               // the menu bar to be disabled.
                setJMenuBar(null);
                setJMenuBar(getJMenuBar());
-            }
-
-            // Shut down when this window is closed.
-            @Override
-            public void windowClosing(WindowEvent event) {
-               if (mmStudio_.closeSequence(false)) {
-                  if (exitOnClose_) {
-                     System.exit(0);
-                  } else {
-                     dispose();
-                  }
-               }
-            }
-         });
-      } else { // Windows/Linux
-         addWindowListener(new WindowAdapter() {
-            // Shut down when this window is closed.
-            @Override
-            public void windowClosing(WindowEvent event) {
-               if (mmStudio_.closeSequence(false)) {
-                  if (exitOnClose_) {
-                     System.exit(0);
-                  } else {
-                     dispose();
-                  }
-               }
             }
          });
       }
