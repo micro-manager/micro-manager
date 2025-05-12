@@ -100,7 +100,7 @@ function S = StartMMStudio(varargin)
    % The javaclasspath.txt file was added in R2012b.
    % The undocumented '<before>' feature in javaclasspath.txt requires R2013a.
    release = sscanf(version('-release'),'%d');
-   if str2num(release) < 2013
+   if release < 2013
       error('MATLAB R2013a or later required');
    end
 
