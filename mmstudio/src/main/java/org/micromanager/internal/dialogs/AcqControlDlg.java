@@ -1508,6 +1508,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (!zDrives.isEmpty()) {
          slicesPanel_.setEnabled(true);
          zDriveLabel_.setVisible(true);
+         // Temporarily remove action listeners to prevent them from being triggered
+         // during the reconfiguration of the combo box. This ensures that the UI
+         // updates correctly without unintended side effects.
+         ActionListener[] actionListeners = zDriveCombo_.getActionListeners();
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.removeActionListener(al);
+         }
          zDriveCombo_.removeAllItems();
          for (int i = 0; i < zDrives.size(); i++) {
             zDriveCombo_.addItem(zDrives.get(i));
@@ -1523,6 +1530,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             }
          } catch (Exception ex) {
             mmStudio_.logs().logError(ex, "Failed to get position from core");
+         }
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.addActionListener(al);
          }
          zDrivePositionLabel_.setVisible(true);
          zDrivePositionUmLabel_.setVisible(true);
