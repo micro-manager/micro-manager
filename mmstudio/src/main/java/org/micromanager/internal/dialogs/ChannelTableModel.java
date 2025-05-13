@@ -319,9 +319,7 @@ public final class ChannelTableModel extends AbstractTableModel {
             // write this config to the profile
             settings_.putString(channelProfileKey(cs.channelGroup(), cs.config()),
                   ChannelSpec.toJSONStream(cs));
-            if (!mmStudio_.getAcquisitionEngine().isConfigAvailable(cs.config())) {
-               it.remove();
-            }
+            it.remove();
          }
       }
       // Stores the config names that we had for the old channelGroup

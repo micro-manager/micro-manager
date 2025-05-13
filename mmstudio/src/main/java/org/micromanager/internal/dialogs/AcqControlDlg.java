@@ -28,6 +28,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -401,7 +402,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             return new JTableHeader(columnModel) {
                @Override
                public String getToolTipText(MouseEvent e) {
-                  java.awt.Point p = e.getPoint();
+                  Point p = e.getPoint();
                   int index = columnModel.getColumnIndexAtX(p.x);
                   int realIndex = columnModel.getColumn(index).getModelIndex();
                   return model_.getToolTipText(realIndex);
