@@ -180,21 +180,6 @@ public final class MainFrame extends JFrame {
 
    private void setupWindowHandlers() {
       addWindowListener(new WindowAdapter() {
-         // HACK: on OSX, some kind of system bug can disable the entire
-         // menu bar at times (it has something to do with modal dialogs and
-         // possibly with errors resulting from the code that handles their
-         // output). Calling setEnabled() on the MenuBar does *not* fix the
-         // enabled-ness of the menus. However, through experimentation, I've
-         // figured out that setting the menubar to null and then back again
-         // does fix the issue for all menus *except* the Help menu. Note that
-         // if we named our Help menu e.g. "Help2" then it would behave
-         // properly, so this is clearly something special to do with OSX.
-         @Override
-         public void windowActivated(WindowEvent event) {
-            setMenuBar(null);
-            setJMenuBar(getJMenuBar());
-         }
-
          // Shut down when this window is closed.
          @Override
          public void windowClosing(WindowEvent event) {
