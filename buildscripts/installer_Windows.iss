@@ -194,6 +194,3 @@ Name: {commondesktop}\Micro-Manager 2.0; Filename: {app}\ImageJ.exe; Tasks: desk
 
 [Run]
 Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-2.0}; Flags: nowait postinstall skipifsilent
-
-[Registry]
-Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: string; ValueName: "{app}\ImageJ.exe"; ValueData: "~ DPIUNAWARE";
