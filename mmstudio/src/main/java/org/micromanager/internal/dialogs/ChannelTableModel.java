@@ -328,23 +328,21 @@ public final class ChannelTableModel extends AbstractTableModel {
       // Restore channels from profile
       String newChannelGroup = mmStudio_.getAcquisitionEngine().getSequenceSettings()
             .channelGroup();
-      if (!channelGroup.equals(newChannelGroup)) {
-         List<String> newConfigNames = settings_.getStringList("CG:" + newChannelGroup);
-         for (String newConfig : newConfigNames) {
-            ChannelSpec cs = ChannelSpec.fromJSONStream(
-                  settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
-            if (cs != null) {
-               // Definite data about colors is in RememberedSettings
-               Color csColor = RememberedDisplaySettings.loadChannel(
-                     mmStudio_, newChannelGroup, newConfig, cs.color()).getColor();
-               cs = cs.copyBuilder().color(csColor).build();
-               channels_.add(cs);
-            }
+      List<String> newConfigNames = settings_.getStringList("CG:" + newChannelGroup);
+      for (String newConfig : newConfigNames) {
+         ChannelSpec cs = ChannelSpec.fromJSONStream(
+               settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
+         if (cs != null) {
+            // Definite data about colors is in RememberedSettings
+            Color csColor = RememberedDisplaySettings.loadChannel(
+                  mmStudio_, newChannelGroup, newConfig, cs.color()).getColor();
+            cs = cs.copyBuilder().color(csColor).build();
+            channels_.add(cs);
          }
-         mmStudio_.getAcquisitionEngine().setSequenceSettings(mmStudio_.getAcquisitionEngine()
-               .getSequenceSettings().copyBuilder().channels(channels_).build());
-         fireTableDataChanged();
       }
+      mmStudio_.getAcquisitionEngine().setSequenceSettings(mmStudio_.getAcquisitionEngine()
+            .getSequenceSettings().copyBuilder().channels(channels_).build());
+      fireTableDataChanged();
    }
 
    /**
