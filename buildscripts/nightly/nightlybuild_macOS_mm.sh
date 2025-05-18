@@ -188,16 +188,12 @@ for artifact_dir in compile optional runtime; do
       cp $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar $MM_JARDIR
    fi
 done
-# Include jogl/gluegen native libraries.  
+
+
+# Include jogl/gluegen native libraries.
 mkdir -p $MM_STAGEDIR/natives/macosx-universal
 cp ../3rdpartypublic/javalib3d/lib/natives/macosx-universal/* $MM_STAGEDIR/natives/macosx-universal/
 
-# ij.jar goes into the ImageJ.app directory
-# Note: this copying step messes up the code signing that previously happened
-# So, for now, rely on the copy of ij.jar in the repository.  
-# Revisit this once we are signing the app ourselves.
-#mkdir -p $MM_STAGEDIR/ImageJ.app/Contents/Java
-#cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ImageJ.app/Contents/Java/ij.jar
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
@@ -207,12 +203,6 @@ if [ -n "$MM_PREPACKAGE_HOOK" ]; then
    $MM_PREPACKAGE_HOOK
    popd
 fi
-
-# Apply ad-hoc signature to the launchers, to prevent "damaged" messages on
-# Mountain Lion and later.
-# This now creates problems.  Try to verbatim copy the ImageJ.app
-# Revisit once we have our own developer keys
-# codesign -s - -f $MM_STAGEDIR/ImageJ.app
 
 if [ "$make_disk_image" != yes ]; then
    exit 0
