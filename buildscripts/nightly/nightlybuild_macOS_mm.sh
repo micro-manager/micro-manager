@@ -11,6 +11,7 @@ usage() {
    echo "   -D PATH    -- use dependencies at prefix PATH" 1>&2
    echo "   -R         -- use release version string (no date)" 1>&2
    echo "   -v VERSION -- set version string" 1>&2
+   echo "   -s         -- sign the binaries and (if applicable) DMG" 1>&2
    echo "Environment:" 1>&2
    echo "   MAKEFLAGS  -- flags to pass to make(1) for building" 1>&2
    exit 1
@@ -21,7 +22,8 @@ skip_config=no
 make_disk_image=yes
 print_config_only=no
 use_release_version=no
-while getopts ":rIcCD:Rv:" o; do
+do_codesign=no
+while getopts ":rIcCD:Rv:s" o; do
    case $o in
       r) skip_autogen=yes ;;
       C) skip_config=yes ;;
@@ -30,6 +32,7 @@ while getopts ":rIcCD:Rv:" o; do
       D) MM_DEPS_PREFIX="$OPTARG" ;;
       R) use_release_version=yes ;;
       v) MM_VERSION="$OPTARG" ;;
+      s) do_codesign=yes ;;
       *) usage ;;
    esac
 done
@@ -204,8 +207,13 @@ if [ -n "$MM_PREPACKAGE_HOOK" ]; then
    popd
 fi
 
-if [ "$make_disk_image" != yes ]; then
-   exit 0
+
+##
+## Sign the binaries
+##
+codesign_script="`dirname $0`/macOS-codesign.sh"
+if [ "$do_codesign" = yes ]; then
+   "$codesign_script" -b "$MM_STAGEDIR"
 fi
 
 
@@ -213,14 +221,27 @@ fi
 ## Create disk image
 ##
 
-cd $MM_BUILDDIR
-rm -f Micro-Manager.dmg Micro-Manager.sparseimage
+if [ "$make_disk_image" != yes ]; then
+   exit 0
+fi
 
-hdiutil convert $MM_SRCDIR/buildscripts/MacInstaller/Micro-Manager.dmg -format UDSP -o Micro-Manager.sparseimage
+blank_dmg="$MM_SRCDIR/buildscripts/MacInstaller/Micro-Manager.dmg"
+sparseimage_name="Micro-Manager.sparseimage"
+dmg_name="Micro-Manager-$MM_VERSION.dmg"
+cd $MM_BUILDDIR
+rm -f "$sparseimage_name" "$dmg_name"
+
+hdiutil convert "$blank_dmg" -format UDSP -o "$sparseimage_name"
 mkdir -p mm-mnt
-hdiutil attach Micro-Manager.sparseimage -mountpoint mm-mnt
+hdiutil attach "$sparseimage_name" -mountpoint mm-mnt
 cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager
 mv mm-mnt/Micro-Manager mm-mnt/Micro-Manager-$MM_VERSION
 hdiutil detach mm-mnt
 rmdir mm-mnt
-hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager-$MM_VERSION.dmg
+hdiutil convert "$sparseimage_name" -format UDBZ -o "$dmg_name"
+
+
+# Sign the DMG, too (so that path randomization is not applied)
+if [ "$do_codesign" = yes ]; then
+   "$codesign_script" -D "$dmg_name"
+fi
