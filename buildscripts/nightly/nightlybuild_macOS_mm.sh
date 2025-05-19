@@ -12,6 +12,7 @@ usage() {
    echo "   -R         -- use release version string (no date)" 1>&2
    echo "   -v VERSION -- set version string" 1>&2
    echo "   -s         -- sign the binaries and (if applicable) DMG" 1>&2
+   echo "   -n         -- notarize and staple the DMG (requires -s)" 1>&2
    echo "Environment:" 1>&2
    echo "   MAKEFLAGS  -- flags to pass to make(1) for building" 1>&2
    exit 1
@@ -23,7 +24,8 @@ make_disk_image=yes
 print_config_only=no
 use_release_version=no
 do_codesign=no
-while getopts ":rIcCD:Rv:s" o; do
+do_notarize=no
+while getopts ":rIcCD:Rv:sn" o; do
    case $o in
       r) skip_autogen=yes ;;
       C) skip_config=yes ;;
@@ -33,9 +35,18 @@ while getopts ":rIcCD:Rv:s" o; do
       R) use_release_version=yes ;;
       v) MM_VERSION="$OPTARG" ;;
       s) do_codesign=yes ;;
+      n) do_notarize=yes ;;
       *) usage ;;
    esac
 done
+
+if [ "$do_notarize" = "yes" ]; then
+   if [ "$do_codesign" != "yes" ]; then
+       echo "Notarization requires code signing" 1>&2
+       echo 1>&2
+       usage
+   fi
+fi
 
 
 ##
@@ -241,7 +252,14 @@ rmdir mm-mnt
 hdiutil convert "$sparseimage_name" -format UDBZ -o "$dmg_name"
 
 
-# Sign the DMG, too (so that path randomization is not applied)
+# Sign the DMG, too
 if [ "$do_codesign" = yes ]; then
    "$codesign_script" -D "$dmg_name"
+fi
+
+
+# Notarize and staple the DMG
+notarize_script="`dirname $0`/macOS-notarize.sh"
+if [ "$do_notarize" = yes ]; then
+   "$notarize_script" "$dmg_name"
 fi
