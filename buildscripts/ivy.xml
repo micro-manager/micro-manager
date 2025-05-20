@@ -111,22 +111,18 @@
       </dependency>
       <dependency org="org.jogamp.jogl" name="jogl-all" rev="2.3.2">
          <artifact name="jogl-all"/>
-         <artifact name="jogl-all" e:classifier="natives-linux-i586"/>
          <artifact name="jogl-all" e:classifier="natives-linux-amd64"/>
          <artifact name="jogl-all" e:classifier="natives-macosx-universal"/>
          <artifact name="jogl-all" e:classifier="natives-windows-amd64"/>
-         <artifact name="jogl-all" e:classifier="natives-windows-i586"/>
       </dependency>
       <dependency org="org.jogamp.gluegen" name="gluegen-rt-main" rev="2.3.2">
          <artifact name="gluegen-rt-main"/>
       </dependency>
       <dependency org="org.jogamp.gluegen" name="gluegen-rt" rev="2.3.2">
          <artifact name="gluegen-rt"/>
-         <artifact name="gluegen-rt" e:classifier="natives-linux-i586"/>
          <artifact name="gluegen-rt" e:classifier="natives-linux-amd64"/>
          <artifact name="gluegen-rt" e:classifier="natives-macosx-universal"/>
          <artifact name="gluegen-rt" e:classifier="natives-windows-amd64"/>
-         <artifact name="gluegen-rt" e:classifier="natives-windows-i586"/>
       </dependency>
 
       <dependency org="org.boofcv" name="boofcv-ip" rev="0.36"/>
