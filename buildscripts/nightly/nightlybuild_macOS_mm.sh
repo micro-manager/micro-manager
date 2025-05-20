@@ -114,7 +114,7 @@ $EVAL ./configure \
    "JAVA_HOME=\"$MM_JDK_HOME\"" \
    "JNI_CPPFLAGS=\"-I$MM_JDK_HOME/include -I$MM_JDK_HOME/include/darwin\"" \
    "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.8 -target 1.8\"" \
-   "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
+   "OPENCV_LDFLAGS=\"-framework QuartzCore -framework CoreVideo -framework CoreMedia -framework CoreGraphics -framework AVFoundation -framework Accelerate -framework Cocoa\"" \
    "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
    PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig \
    "LIBUSB_0_1_LDFLAGS=\"-framework IOKit -framework CoreFoundation\"" \
