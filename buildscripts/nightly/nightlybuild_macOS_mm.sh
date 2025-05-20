@@ -220,12 +220,30 @@ fi
 
 
 ##
+## Temporarily unpack JARs for processing; remove other archs
+##
+
+# In order to sign any dylibs and jnilibs inside JARs, unpack them temporarily.
+# We do this even if not signing, so that the unjar/rejar is tested.
+
+jar_unjar_script="`dirname $0`/jar-unjar.sh"
+"$jar_unjar_script" -x "$MM_STAGEDIR"
+
+
+##
 ## Sign the binaries
 ##
 codesign_script="`dirname $0`/macOS-codesign.sh"
 if [ "$do_codesign" = yes ]; then
    "$codesign_script" -b "$MM_STAGEDIR"
 fi
+
+
+##
+## Re-archive JARs
+##
+
+"$jar_unjar_script" -c "$MM_STAGEDIR"
 
 
 ##
