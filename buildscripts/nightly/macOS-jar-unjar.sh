@@ -7,7 +7,8 @@ usage() {
    echo "Usage: $0 -x DIR | -c DIR" 1>&2
    echo "   -x DIR  -- replace .jar files with .jar directories" 1>&2
    echo "   -c DIR  -- replace .jar directories with .jar files" 1>&2
-   echo "In both cases, all files/dirs named *.jar  under DIR are processed." 1>&2
+   echo "In both cases, all files/dirs named *.jar under DIR are processed." 1>&2
+   echo "For -x, only JARs containing *.dylib or *.jnilib are extracted." 1>&2
    exit 1
 }
 
@@ -26,6 +27,9 @@ unjar_one() {
    parent="$(dirname "$name")"
    temp_dir=$(mktemp -d)
    temp_jar="$temp_dir/$(basename "$name")"
+
+   # Only unjar if it contains *.dylib or *.jnilib.
+   jar tf "$name" | grep -qE '\.(dylib|jnilib)' || return 0
 
    mv "$name" "$temp_jar"
    mkdir "$name"
