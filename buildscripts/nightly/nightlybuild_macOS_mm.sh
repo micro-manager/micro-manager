@@ -224,11 +224,15 @@ fi
 ##
 
 # In order to sign any dylibs and jnilibs inside JARs, unpack them temporarily.
-# We do this even if not signing, so that the unjar/rejar is tested.
+# Also take advantage of the opportunity to remove unnecessary architectures
+# from universal binaries.
+# We do this even if not signing, so that the unjar/thin/rejar is tested.
 
 jar_unjar_script="`dirname $0`/macOS-jar-unjar.sh"
 "$jar_unjar_script" -x "$MM_STAGEDIR"
 
+thin_script="`dirname $0`/macOS-thin-binaries.sh"
+"$thin_script" -a $MM_ARCH -d "$MM_STAGEDIR"
 
 ##
 ## Sign the binaries
