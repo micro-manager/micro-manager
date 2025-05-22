@@ -98,7 +98,7 @@
       <!-- ClearVolume dependencies -->
       <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3"/>
       <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
-<!--      <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/>-->
+      <!-- <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/> -->
       <dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
       <dependency org="net.clearcontrol" name="coremem" rev="0.4.5"/>
 
@@ -111,22 +111,18 @@
       </dependency>
       <dependency org="org.jogamp.jogl" name="jogl-all" rev="2.3.2">
          <artifact name="jogl-all"/>
-         <artifact name="jogl-all" e:classifier="natives-linux-i586"/>
          <artifact name="jogl-all" e:classifier="natives-linux-amd64"/>
          <artifact name="jogl-all" e:classifier="natives-macosx-universal"/>
          <artifact name="jogl-all" e:classifier="natives-windows-amd64"/>
-         <artifact name="jogl-all" e:classifier="natives-windows-i586"/>
       </dependency>
       <dependency org="org.jogamp.gluegen" name="gluegen-rt-main" rev="2.3.2">
          <artifact name="gluegen-rt-main"/>
       </dependency>
       <dependency org="org.jogamp.gluegen" name="gluegen-rt" rev="2.3.2">
          <artifact name="gluegen-rt"/>
-         <artifact name="gluegen-rt" e:classifier="natives-linux-i586"/>
          <artifact name="gluegen-rt" e:classifier="natives-linux-amd64"/>
          <artifact name="gluegen-rt" e:classifier="natives-macosx-universal"/>
          <artifact name="gluegen-rt" e:classifier="natives-windows-amd64"/>
-         <artifact name="gluegen-rt" e:classifier="natives-windows-i586"/>
       </dependency>
 
       <dependency org="org.boofcv" name="boofcv-ip" rev="0.36"/>
@@ -137,7 +133,9 @@
 
       <!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
       <dependency org="" name="iconloader" rev="GIT"/>
-      <!---      <dependency org="" name="TSFProto" rev="SVN"/>--><!-- dependency on protobuf-java will not be resolved -->
+
+      <!-- <dependency org="" name="TSFProto" rev="SVN"/> -->
+      <!-- dependency on protobuf-java will not be resolved -->
 
       <!-- Magellan dependencies; not open source; not in Maven -->
       <dependency conf="optional" org="" name="DT1.2" rev=""/>
@@ -148,8 +146,23 @@
       <!-- Run-time-only dependencies -->
       <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 
+
       <!-- Always exclude these -->
       <exclude org="com.googlecode.efficient-java-matrix-library"/>
       <exclude org="log4j"/>
+
+      <!-- Our code is not GPL-compatible -->
+      <exclude org="ome" module="formats-gpl"/>
+
+      <!-- turbojpeg, a dependency of formats-bsd, contains very old native
+           libs, which are incompatible with modern macOS -->
+      <exclude org="ome" module="turbojpeg"/>
+
+      <!-- Actually we don't need any of formats-bsd (transitive dependency of
+           clearcl) for ClearVolume to work, and excluding it reduces the size
+           of our installer significantly). This exclusion can be removed if
+           formats-bsd becomes necessary in the future. -->
+      <exclude org="ome" module="formats-bsd"/>
+
    </dependencies>
 </ivy-module>
