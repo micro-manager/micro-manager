@@ -11,6 +11,8 @@ usage() {
    echo "   -D PATH    -- use dependencies at prefix PATH" 1>&2
    echo "   -R         -- use release version string (no date)" 1>&2
    echo "   -v VERSION -- set version string" 1>&2
+   echo "   -s         -- sign the binaries and (if applicable) DMG" 1>&2
+   echo "   -n         -- notarize and staple the DMG (requires -s)" 1>&2
    echo "Environment:" 1>&2
    echo "   MAKEFLAGS  -- flags to pass to make(1) for building" 1>&2
    exit 1
@@ -21,7 +23,9 @@ skip_config=no
 make_disk_image=yes
 print_config_only=no
 use_release_version=no
-while getopts ":rIcCD:Rv:" o; do
+do_codesign=no
+do_notarize=no
+while getopts ":rIcCD:Rv:sn" o; do
    case $o in
       r) skip_autogen=yes ;;
       C) skip_config=yes ;;
@@ -30,9 +34,19 @@ while getopts ":rIcCD:Rv:" o; do
       D) MM_DEPS_PREFIX="$OPTARG" ;;
       R) use_release_version=yes ;;
       v) MM_VERSION="$OPTARG" ;;
+      s) do_codesign=yes ;;
+      n) do_notarize=yes ;;
       *) usage ;;
    esac
 done
+
+if [ "$do_notarize" = "yes" ]; then
+   if [ "$do_codesign" != "yes" ]; then
+       echo "Notarization requires code signing" 1>&2
+       echo 1>&2
+       usage
+   fi
+fi
 
 
 ##
@@ -188,16 +202,12 @@ for artifact_dir in compile optional runtime; do
       cp $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar $MM_JARDIR
    fi
 done
-# Include jogl/gluegen native libraries.  
+
+
+# Include jogl/gluegen native libraries.
 mkdir -p $MM_STAGEDIR/natives/macosx-universal
 cp ../3rdpartypublic/javalib3d/lib/natives/macosx-universal/* $MM_STAGEDIR/natives/macosx-universal/
 
-# ij.jar goes into the ImageJ.app directory
-# Note: this copying step messes up the code signing that previously happened
-# So, for now, rely on the copy of ij.jar in the repository.  
-# Revisit this once we are signing the app ourselves.
-#mkdir -p $MM_STAGEDIR/ImageJ.app/Contents/Java
-#cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ImageJ.app/Contents/Java/ij.jar
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
@@ -208,29 +218,70 @@ if [ -n "$MM_PREPACKAGE_HOOK" ]; then
    popd
 fi
 
-# Apply ad-hoc signature to the launchers, to prevent "damaged" messages on
-# Mountain Lion and later.
-# This now creates problems.  Try to verbatim copy the ImageJ.app
-# Revisit once we have our own developer keys
-# codesign -s - -f $MM_STAGEDIR/ImageJ.app
 
-if [ "$make_disk_image" != yes ]; then
-   exit 0
+##
+## Temporarily unpack JARs for processing; remove other archs
+##
+
+# In order to sign any dylibs and jnilibs inside JARs, unpack them temporarily.
+# Also take advantage of the opportunity to remove unnecessary architectures
+# from universal binaries.
+# We do this even if not signing, so that the unjar/thin/rejar is tested.
+
+jar_unjar_script="`dirname $0`/macOS-jar-unjar.sh"
+"$jar_unjar_script" -x "$MM_STAGEDIR"
+
+thin_script="`dirname $0`/macOS-thin-binaries.sh"
+"$thin_script" -a $MM_ARCH -d "$MM_STAGEDIR"
+
+##
+## Sign the binaries
+##
+codesign_script="`dirname $0`/macOS-codesign.sh"
+if [ "$do_codesign" = yes ]; then
+   "$codesign_script" -b "$MM_STAGEDIR"
 fi
+
+
+##
+## Re-archive JARs
+##
+
+"$jar_unjar_script" -c "$MM_STAGEDIR"
 
 
 ##
 ## Create disk image
 ##
 
-cd $MM_BUILDDIR
-rm -f Micro-Manager.dmg Micro-Manager.sparseimage
+if [ "$make_disk_image" != yes ]; then
+   exit 0
+fi
 
-hdiutil convert $MM_SRCDIR/buildscripts/MacInstaller/Micro-Manager.dmg -format UDSP -o Micro-Manager.sparseimage
+blank_dmg="$MM_SRCDIR/buildscripts/MacInstaller/Micro-Manager.dmg"
+sparseimage_name="Micro-Manager.sparseimage"
+dmg_name="Micro-Manager-$MM_VERSION.dmg"
+cd $MM_BUILDDIR
+rm -f "$sparseimage_name" "$dmg_name"
+
+hdiutil convert "$blank_dmg" -format UDSP -o "$sparseimage_name"
 mkdir -p mm-mnt
-hdiutil attach Micro-Manager.sparseimage -mountpoint mm-mnt
+hdiutil attach "$sparseimage_name" -mountpoint mm-mnt
 cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager
 mv mm-mnt/Micro-Manager mm-mnt/Micro-Manager-$MM_VERSION
 hdiutil detach mm-mnt
 rmdir mm-mnt
-hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager-$MM_VERSION.dmg
+hdiutil convert "$sparseimage_name" -format UDBZ -o "$dmg_name"
+
+
+# Sign the DMG, too
+if [ "$do_codesign" = yes ]; then
+   "$codesign_script" -D "$dmg_name"
+fi
+
+
+# Notarize and staple the DMG
+notarize_script="`dirname $0`/macOS-notarize.sh"
+if [ "$do_notarize" = yes ]; then
+   "$notarize_script" "$dmg_name"
+fi
