@@ -1047,19 +1047,13 @@ int CScanner::RunSequence()
 
 int CScanner::SetSpotInterval(double pulseInterval_us)
 {
-   // sets time between points in sequence (and also "on" time for PointAndFire)
-   // it appears from SLM code in Projector plugin that this is used to set the actual "on" time
-   // and that the interval will depend on hardware overhead time to switch positions
-   // so we take the same general approach here: use the requested pulseInterval_us NOT
-   // as an actual interval but as the on-time and set the hardware interval to include the on time
-   // plus the time required to move to a new position (wait time plus a bit of overhead)
+   // From MM API documentation: This function seems to be misnamed. Its name suggest[s] that it is the interval between
+   // illuminating two consecutive spots, but in practice it is used to set the time a single spot is illuminated
+   // When using the ring buffer the time to move between two spots is set by the separate property RingBufferDelayBetweenPoints(ms)
    long targetExposure = long (pulseInterval_us/1000 + 0.5);  // our instance variable gets updated in the property handler
    ostringstream command; command.str("");
    command << targetExposure;
    RETURN_ON_MM_ERROR ( SetProperty(g_TargetExposureTimePropertyName, command.str().c_str()) );
-   long intervalMs = targetExposure_ + targetSettling_ + 3;  // 3 ms extra cushion, need 1-2 ms for busy signal to go low beyond wait time
-   command.str(""); command << intervalMs;
-   RETURN_ON_MM_ERROR ( SetProperty(g_RB_DelayPropertyName, command.str().c_str()) );
    return DEVICE_OK;
 }
 
