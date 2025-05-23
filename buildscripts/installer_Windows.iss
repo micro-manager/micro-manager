@@ -172,7 +172,14 @@ Source: {#MMStageDir}\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 ; MATLAB utility script
 Source: {#MMStageDir}\StartMMStudio.m; DestDir: {app}; Flags: ignoreversion
 
-; Java Runtime
+;;
+;; Java Runtime
+;;
+
+[InstallDelete]
+Type: filesandordirs; Name: "{app}\jre"
+
+[Files]
 Source: {#MMStageDir}\jre\*; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 
