@@ -318,8 +318,8 @@ public class Galvo implements ProjectionDevice {
    public void setRoiInterval(long roiIntervalUs) {
       try {
          roiIntervalUs_ = roiIntervalUs;
-         if(mmc_.getDeviceLibrary(galvo_).equals("ASITiger")) {
-            mmc_.setProperty(galvo_, "RingBufferDelayBetweenPoints(ms)", roiIntervalUs/1000f);
+         if (mmc_.getDeviceLibrary(galvo_).equals("ASITiger")) {
+            mmc_.setProperty(galvo_, "RingBufferDelayBetweenPoints(ms)", roiIntervalUs / 1000f);
          }
       } catch (Exception ex) {
          app_.logs().showError(ex);

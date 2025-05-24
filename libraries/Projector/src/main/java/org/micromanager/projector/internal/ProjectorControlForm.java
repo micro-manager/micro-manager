@@ -148,7 +148,7 @@ public class ProjectorControlForm extends JFrame {
    private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
    private javax.swing.JTextField logDirectoryTextField_;
-   private javax.swing.JSpinner pointAndShootIntervalSpinner_;  // mis-named (as is the device API), actually the exposure time
+   private javax.swing.JSpinner pointAndShootIntervalSpinner_;  // mis-named, actually is the exposure time
    private javax.swing.JToggleButton pointAndShootOffButton_;
    private javax.swing.JToggleButton pointAndShootOnButton;
    private javax.swing.JCheckBox repeatCheckBox_;
