@@ -54,4 +54,12 @@
 			 Needed to prevent downstream errors. -->
 		<mkdir dir="${mm.ivy.lib.dir}/optional"/>
 	</target>
+
+	<target name="show-deps" depends="resolve">
+		<ivy:dependencytree/>
+	</target>
+
+	<target name="ivy-report" depends="resolve">
+		<ivy:report todir="${mm.ivy.lib.dir}/ivy-report" graph="true"/>
+	</target>
 </project>

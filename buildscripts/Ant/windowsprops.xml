@@ -101,10 +101,7 @@
 	<property name="mm.scripts.installdir" location="${mm.installdir}/scripts"/>
 
 	<!-- Location of Java Runtime to package -->
-	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre1.8.0_152_x86">
-		<equals arg1="${mm.architecture}" arg2="Win32"/>
-	</condition>
-	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre1.8.0_152_x64">
+	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/Adoptium/temurin-jre-11.0.27+6-win-x64">
 		<equals arg1="${mm.architecture}" arg2="x64"/>
 	</condition>
 
@@ -141,16 +138,10 @@
 			<echo file="${run_msbuild}">
 				$SavePwd = pwd
 
-				# We require exactly Visual Studio 2019 (16.x); 2022 may fail.
-				$VsInstPath = &amp; 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' '-version' '[16.0,17.0)' '-property' 'installationPath'
+				$VsInstPath = &amp; 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' '-version' '[17.0,18.0)' '-property' 'installationPath'
 				if (-not $VsInstPath) {
-					echo 'Cannot find Visual Studio 2019 installation path'
-					echo 'Attempting fallback to VS2022 (requires VS2019 build tools)'
-					$VsInstPath = &amp; 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' '-version' '[17.0,18.0)' '-property' 'installationPath'
-					if (-not $VsInstPath) {
-						echo 'Cannot find Visual Studio 2019 or 2022 installation path'
-						exit 1
-					}
+					echo 'Cannot find Visual Studio 2022 installation path'
+					exit 1
 				}
 
 				# Works better when run from the file location

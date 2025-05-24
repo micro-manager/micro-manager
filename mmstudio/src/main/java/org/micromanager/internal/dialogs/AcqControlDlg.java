@@ -28,6 +28,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -401,7 +402,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             return new JTableHeader(columnModel) {
                @Override
                public String getToolTipText(MouseEvent e) {
-                  java.awt.Point p = e.getPoint();
+                  Point p = e.getPoint();
                   int index = columnModel.getColumnIndexAtX(p.x);
                   int realIndex = columnModel.getColumn(index).getModelIndex();
                   return model_.getToolTipText(realIndex);
@@ -1508,6 +1509,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (!zDrives.isEmpty()) {
          slicesPanel_.setEnabled(true);
          zDriveLabel_.setVisible(true);
+         // Temporarily remove action listeners to prevent them from being triggered
+         // during the reconfiguration of the combo box. This ensures that the UI
+         // updates correctly without unintended side effects.
+         ActionListener[] actionListeners = zDriveCombo_.getActionListeners();
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.removeActionListener(al);
+         }
          zDriveCombo_.removeAllItems();
          for (int i = 0; i < zDrives.size(); i++) {
             zDriveCombo_.addItem(zDrives.get(i));
@@ -1519,10 +1527,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             zDriveCombo_.setVisible(true);
             double pixelSize = mmStudio_.core().getPixelSizeUm();
             if (pixelSize != 0.0) {
-               proposedZStepLabel_.setText(NumberUtils.doubleToDisplayString(pixelSize * 5.0));
+               proposedZStepLabel_.setText(getOptimalZStep(true));
             }
          } catch (Exception ex) {
             mmStudio_.logs().logError(ex, "Failed to get position from core");
+         }
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.addActionListener(al);
          }
          zDrivePositionLabel_.setVisible(true);
          zDrivePositionUmLabel_.setVisible(true);
@@ -1984,6 +1995,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zEnd_.getText()));
          ssb.sliceZStepUm(NumberUtils.displayStringToDouble(zStep_.getText()));
          ssb.relativeZSlice(zRelativeAbsolute_ == 0);  // 0 == relative, 1 == absolute
+         try {
+            // the default Z stage that will be used in the MDA should be set at this point
+            ssb.zReference(mmStudio_.core().getPosition());
+         } catch (Exception ex) {
+            mmStudio_.logs().logError(ex, "Failed to get Z Position from Core.");
+            // continue, zReference will be set to 0
+         }
          ssb.useSlices(slicesPanel_.isSelected());
 
          ssb.usePositionList(positionsPanel_.isSelected());

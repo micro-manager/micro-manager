@@ -172,7 +172,14 @@ Source: {#MMStageDir}\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 ; MATLAB utility script
 Source: {#MMStageDir}\StartMMStudio.m; DestDir: {app}; Flags: ignoreversion
 
-; Java Runtime
+;;
+;; Java Runtime
+;;
+
+[InstallDelete]
+Type: filesandordirs; Name: "{app}\jre"
+
+[Files]
 Source: {#MMStageDir}\jre\*; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 
@@ -194,6 +201,3 @@ Name: {commondesktop}\Micro-Manager 2.0; Filename: {app}\ImageJ.exe; Tasks: desk
 
 [Run]
 Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-2.0}; Flags: nowait postinstall skipifsilent
-
-[Registry]
-Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: string; ValueName: "{app}\ImageJ.exe"; ValueData: "~ DPIUNAWARE";

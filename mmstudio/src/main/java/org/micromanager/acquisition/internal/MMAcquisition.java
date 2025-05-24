@@ -216,13 +216,14 @@ public final class MMAcquisition extends DataViewerListener {
                } else {
                   displaySettingsBuilder.colorModeComposite();
                }
-               for (int channelIndex = 0; channelIndex < nrChannels
-                        && channelIndex < acquisitionSettings.channels().size(); channelIndex++) {
+               for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
                   displaySettingsBuilder.channel(channelIndex,
                            RememberedDisplaySettings.loadChannel(studio_,
                                  store_.getSummaryMetadata().getChannelGroup(),
                                  store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
-                                 acquisitionSettings.channels().get(channelIndex).color()));
+                                 channelIndex < acquisitionSettings.channels().size()
+                                          ? acquisitionSettings.channels().get(channelIndex).color()
+                                          : null));
                }
             } while (!display_.compareAndSetDisplaySettings(
                      display_.getDisplaySettings(), displaySettingsBuilder.build()));

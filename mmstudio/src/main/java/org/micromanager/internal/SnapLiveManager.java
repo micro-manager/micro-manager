@@ -634,12 +634,14 @@ public final class SnapLiveManager extends DataViewerListener
          shouldReset = true;
          store_ = null;
       }
-      // NS-20241128: not quite sure if this serves any function anymore.  Delete?
+      // THis code checks the current channel and adjusts the names for the images from multiple
+      // cameras accordingly.
       if (store_ != null && !store_.isFrozen()) {
          List<String> channelNames = store_.getSummaryMetadata().getChannelNameList();
          String curChannel = "";
          try {
-            curChannel = core_.getCurrentConfig(core_.getChannelGroup());
+            // if not from cache, we will slow down live mode
+            curChannel = core_.getCurrentConfigFromCache(core_.getChannelGroup());
          } catch (Exception e) {
             ReportingUtils.logError(e, "Error getting current channel");
          }

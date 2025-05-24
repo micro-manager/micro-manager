@@ -34,8 +34,9 @@ function S = StartMMStudio(varargin)
 % MATLAB needs to be restarted) or 0 (indicating that no changes were made)
 
 % Author: Mark Tsuchida (inspired by an earlier script by Kyle Karhohs)
-%
+% Author: Konstantin Neuhaus (small change to support recent MATLAB Versions)
 % Copyright (c) 2015, Regents of the University of California
+% Script 
 % All rights reserved.
 %
 % Redistribution and use in source and binary forms, with or without
@@ -98,8 +99,8 @@ function S = StartMMStudio(varargin)
 
    % The javaclasspath.txt file was added in R2012b.
    % The undocumented '<before>' feature in javaclasspath.txt requires R2013a.
-   release = version('-release');
-   if str2num(release) < 2013
+   release = sscanf(version('-release'),'%d');
+   if release < 2013
       error('MATLAB R2013a or later required');
    end
 
@@ -272,8 +273,15 @@ function [] = AppendMMClasspath(pathToMM)
    % This is an undocumented trick (R2013a+), which causes all JARs listed
    % after the '<before>' line to be placed before MATLAB's system classpath.
    % In our case, we need guava to come before google-collect.
-   fprintf(fid, '<before>\n');
-   fprintf(fid, '%s\n', guavaJar);
+   % With MATLAB releases after 2022, Matlab will not start if the guavaJar 
+   % is put before MATLAB's system classpath.
+   release = sscanf(version('-release'),'%d');
+   if release > 2022
+       fprintf(fid, '%s\n', guavaJar);
+   else
+       fprintf(fid, '<before>\n');
+       fprintf(fid, '%s\n', guavaJar);
+   end
 
    fclose(fid);
 end
