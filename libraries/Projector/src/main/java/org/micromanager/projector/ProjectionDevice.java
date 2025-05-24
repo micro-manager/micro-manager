@@ -77,6 +77,10 @@ public interface ProjectionDevice {
     */
    void setExposure(long intervalUs);
 
+   // ## Get/set internal ROI interval setting
+   void setRoiInterval(long roiIntervalUs);
+   long getRoiInterval();
+
    // ## Control illumination
    void turnOn();
 

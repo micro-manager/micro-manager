@@ -135,6 +135,19 @@ public class SLM implements ProjectionDevice {
       return 0;
    }
 
+   // Sets how long the SLM will be off between image
+   // NB: not currently implemented
+   @Override
+   public void setRoiInterval(long intervalUs) {
+      return;
+   }
+
+   // Reads the interval time in microseconds.
+   @Override
+   public long getRoiInterval() {
+      return 0;
+   }
+
    // Makes sure all pixels are illuminated at maximum intensity (white).
    @Override
    public void activateAllPixels() {

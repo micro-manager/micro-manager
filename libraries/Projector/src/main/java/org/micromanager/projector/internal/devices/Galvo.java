@@ -39,6 +39,7 @@ public class Galvo implements ProjectionDevice {
    private final HashSet<OnStateListener> onStateListeners_ =
          new HashSet<>();
    private long intervalUs_;
+   private long roiIntervalUs_;
    private String externalShutter_;
 
    public Galvo(Studio app, CMMCore mmc) {
@@ -301,7 +302,7 @@ public class Galvo implements ProjectionDevice {
    public void setExposure(long intervalUs) {
       try {
          intervalUs_ = intervalUs;
-         mmc_.setGalvoSpotInterval(galvo_, intervalUs);
+         mmc_.setGalvoSpotInterval(galvo_, intervalUs);  // really sets the exposure time
       } catch (Exception ex) {
          app_.logs().showError(ex);
       }
@@ -311,6 +312,24 @@ public class Galvo implements ProjectionDevice {
    @Override
    public long getExposure() {
       return intervalUs_;
+   }
+
+   @Override
+   public void setRoiInterval(long roiIntervalUs) {
+      try {
+         roiIntervalUs_ = roiIntervalUs;
+         if(mmc_.getDeviceLibrary(galvo_).equals("ASITiger")) {
+            mmc_.setProperty(galvo_, "RingBufferDelayBetweenPoints(ms)", roiIntervalUs/1000f);
+         }
+      } catch (Exception ex) {
+         app_.logs().showError(ex);
+      }
+   }
+
+   // Reads the ROI interval time in us
+   @Override
+   public long getRoiInterval() {
+      return roiIntervalUs_;
    }
 
    @Override
