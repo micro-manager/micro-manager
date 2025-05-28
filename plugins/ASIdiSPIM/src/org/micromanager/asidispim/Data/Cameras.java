@@ -262,6 +262,11 @@ public class Cameras {
             
             props_.setPropValue(devKey,
                   Properties.Keys.HAMAMATSU_LINE_INTERVAL, (float)Math.max(rowTime, lowerLimit));
+
+            // setting this seems to be required to force the camera to re-calculate something
+            // this works around an apparent bug in the device adapter
+            props_.setPropValue(devKey, Properties.Keys.HAMAMATSU_LINE_SPEED, 0.01f);
+
             break;
          case LEVEL:
             props_.setPropValue(devKey,
@@ -781,8 +786,11 @@ public class Cameras {
          }
          break;
       case LIGHT_SHEET:
-         if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3.toString())) {
-            readoutTimeMs = 10000;  // absurdly large, light sheet mode over USB3 isn't supported by Flash4 but we are set up to decide available modes by device library and not a property
+         if (camLibrary == Devices.Libraries.HAMCAM && !isFusion(camKey)
+            && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3.toString())) {
+            // absurdly large, light sheet mode over USB3 isn't supported by Flash4 but we are set up to decide available modes by device library and not a property
+            // Fusion does seem to support light sheet mode over USB3
+            readoutTimeMs = 10000;
          } else if (camLibrary == Devices.Libraries.PVCAM) {
             readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
          } else {
