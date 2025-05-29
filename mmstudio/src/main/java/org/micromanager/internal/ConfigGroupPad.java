@@ -34,6 +34,7 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
+import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -250,10 +251,13 @@ public final class ConfigGroupPad extends JScrollPane {
                   }
 
                   // Associate exposure time with presets in current channel group
+                  // only when syncing exposure time with MDA window.
                   if (item.group.equals(core_.getChannelGroup())) {
-                     core_.setExposure(
-                           studio_.app().getChannelExposureTime(
-                                 item.group, value.toString(), core_.getExposure()));
+                     if (AcqControlDlg.getShouldSyncExposure()) {
+                        core_.setExposure(
+                                 studio_.app().getChannelExposureTime(
+                                          item.group, value.toString(), core_.getExposure()));
+                     }
                   }
 
                   // By updating the system cache here we are able to use it in 
@@ -263,12 +267,10 @@ public final class ConfigGroupPad extends JScrollPane {
                   refreshStatus();
                   table_.repaint();
                   // This is a little superfluous, but it is nice that we
-                  // are depending only on Studio, not MMStudio
-                  // directly, so keep it that way.
+                  // depend only on Studio, not MMStudio directly, so keep it that way.
                   if (studio_ instanceof MMStudio) {
-                     // But it appears to be important for performance that
-                     // we use the non-config-pad-updating version of
-                     // MMStudio.refreshGUI().
+                     // It appears important for performance that we use the
+                     // non-config-pad-updating version of MMStudio.refreshGUI().
                      MMStudio parentGUI = (MMStudio) studio_;
                      parentGUI.uiManager().updateGUI(false, true);
                   } else {
