@@ -107,11 +107,11 @@ public final class UserProfileAdmin {
          lock = ProfileWriteLock.tryCreate(
                new File(getAppDataDirectory(), WRITE_LOCK_FILE));
          if (lock == null) {
-            ReportingUtils.logMessage(
+            ReportingUtils.showMessage(
                   "Failed to acquire User Profile write lock; profiles will be read-only");
          }
       } catch (IOException e) {
-         ReportingUtils.logError(e,
+         ReportingUtils.showError(e,
                "Failed to acquire User Profile write lock due to IO error; profiles will "
                      + "be read-only");
       }
