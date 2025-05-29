@@ -39,6 +39,7 @@ import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.DefaultChannelExposureEvent;
+import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
@@ -104,13 +105,16 @@ public class DefaultApplication implements Application {
       // resetting the exposure to the old, stored-in-profile exposure time).
       String channelGroup = "";
       String channel = "";
-      try {
-         channelGroup = studio_.core().getChannelGroup();
-         channel = studio_.core().getCurrentConfigFromCache(channelGroup);
-         studio_.events().post(new DefaultChannelExposureEvent(exposureTime,
-               channelGroup, channel, true));
-      } catch (Exception e) {
-         studio_.logs().logError("Unable to determine channel group");
+      if (AcqControlDlg.getShouldSyncExposure()) {
+         // If the user has enabled the "sync exposure" option, we need to
+         // update the exposure time in the channel group and channel.
+         try {
+            channelGroup = studio_.core().getChannelGroup();
+            channel = studio_.core().getCurrentConfigFromCache(channelGroup);
+            storeChannelExposureTime(channelGroup, channel, exposureTime);
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Failed to set exposure time in channel group");
+         }
       }
 
       if (!studio_.core().getCameraDevice().equals("") && shouldSetInCore) {
@@ -118,14 +122,21 @@ public class DefaultApplication implements Application {
          try {
             studio_.core().setExposure(exposureTime);
             studio_.core().waitForDevice(studio_.core().getCameraDevice());
-         } catch (Exception e) {
-            ReportingUtils.logError(e, "Failed to set core exposure time.");
-            try {
+            if (AcqControlDlg.getShouldSyncExposure()) {
                double exposure = studio_.core().getExposure();
                studio_.events().post(new DefaultChannelExposureEvent(exposure,
-                     channelGroup, channel, true));
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex, "Failed to read exposure time.");
+                        channelGroup, channel, true));
+            }
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Failed to set core exposure time.");
+            if (AcqControlDlg.getShouldSyncExposure()) {
+               try {
+                  double exposure = studio_.core().getExposure();
+                  studio_.events().post(new DefaultChannelExposureEvent(exposure,
+                           channelGroup, channel, true));
+               } catch (Exception ex) {
+                  ReportingUtils.logError(ex, "Failed to read exposure time.");
+               }
             }
          }
          studio_.live().setSuspended(false);
