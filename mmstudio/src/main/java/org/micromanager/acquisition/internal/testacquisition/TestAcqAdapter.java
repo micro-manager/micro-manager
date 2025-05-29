@@ -170,6 +170,18 @@ public class TestAcqAdapter extends DataViewerListener implements
          sb.channels(null);
       }
 
+      // AcquisitionEngineJ has very rigid ideas about stepSize direction. Correct here.
+      if (sequenceSettings.useSlices()) {
+         double zStep = sequenceSettings.sliceZStepUm();
+         if (zStep < 0.0) {
+            zStep = Math.abs(zStep);
+         }
+         if (sequenceSettings.sliceZBottomUm() > sequenceSettings.sliceZTopUm()) {
+            zStep = -zStep;
+         }
+         sb.sliceZStepUm(zStep);
+      }
+
       // It is unclear if this code is still needed, it may be needed to add tags to OME TIFF
       // that are used by Bioformats to read the data correctly.
       switch (sequenceSettings.acqOrderMode()) {
