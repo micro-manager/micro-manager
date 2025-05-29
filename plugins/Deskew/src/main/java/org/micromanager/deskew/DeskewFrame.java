@@ -46,6 +46,7 @@ import org.micromanager.data.ProcessorFactory;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
@@ -227,6 +228,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       }
       final JTextField outputPath = new JTextField(25);
       final JButton browseButton = new JButton("...");
+      final JButton copyDirButton = new JButton("from MDA");
       final JTextField outputName = new JTextField(15);
       final ActionListener listener = e -> {
          if (outputRam.isSelected()) {
@@ -244,11 +246,13 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
          }
          outputPath.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
          browseButton.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
+         copyDirButton.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
          outputName.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
       };
 
       outputPath.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
       browseButton.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
+      copyDirButton.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
       outputName.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
       outputSingleplane.addActionListener(listener);
       outputMultipage.addActionListener(listener);
@@ -279,6 +283,18 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
          }
       });
       add(outputPath, "growx");
+      copyDirButton.setToolTipText("Copy directory root from MDA Window");
+      copyDirButton.addActionListener(e -> {
+         String path = studio_.acquisitions().getAcquisitionSettings().root();
+         if (path != null && !path.isEmpty()) {
+            outputPath.setText(path);
+            settings_.putString(OUTPUT_PATH, path);
+         } else {
+            studio_.logs().showError("No MDA directory set. Please run an MDA first.");
+         }
+      });
+      add(copyDirButton);
+
       browseButton.setToolTipText("Browse for a directory to save to");
       browseButton.addActionListener(e -> {
          File result = FileDialogs.openDir(DeskewFrame.this,
