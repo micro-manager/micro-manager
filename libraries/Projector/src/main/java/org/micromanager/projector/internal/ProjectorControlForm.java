@@ -113,6 +113,7 @@ public class ProjectorControlForm extends JFrame {
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
    private final boolean isSLM_;
+   private final boolean isASIScanner_;
    private Roi[] individualRois_ = {};
    private Mapping mapping_;
    private String targetingChannel_;
@@ -140,36 +141,38 @@ public class ProjectorControlForm extends JFrame {
 
 
    // GUI element variables declaration
-   private JButton allPixelsButton_;
-   private JTabbedPane attachToMdaTabbedPane_;
-   private JButton calibrateButton_;
-   private JComboBox<String> channelComboBox_;
-   private JButton checkerBoardButton_;
-   private JTextField delayField_;
-   private JTextField logDirectoryTextField_;
-   private JSpinner pointAndShootIntervalSpinner_;
-   private JToggleButton pointAndShootOffButton_;
-   private JToggleButton pointAndShootOnButton;
-   private JCheckBox repeatCheckBox_;
-   private JCheckBox repeatCheckBoxTime_;
-   private JSpinner repeatEveryFrameSpinner_;
-   private JLabel repeatEveryFrameUnitLabel_;
-   private JSpinner repeatEveryIntervalSpinner_;
-   private JLabel repeatEveryIntervalUnitLabel_;
-   private JLabel roiLoopLabel_;
-   private JSpinner roiLoopSpinner_;
-   private JLabel roiLoopTimesLabel_;
-   private JLabel roiStatusLabel_;
-   private JButton exposeROIsButton_;
-   private JButton sequencingButton_;
-   private JComboBox<String> shutterComboBox_;
-   private JLabel startFrameLabel_;
-   private JSpinner startFrameSpinner_;
-   private JLabel startTimeLabel_;
-   private JSpinner startTimeSpinner_;
-   private JLabel startTimeUnitLabel_;
-   private JPanel syncRoiPanel_;
-   private JCheckBox useInMDAcheckBox;
+   private javax.swing.JButton allPixelsButton_;
+   private javax.swing.JTabbedPane attachToMdaTabbedPane_;
+   private javax.swing.JButton calibrateButton_;
+   private javax.swing.JComboBox<String> channelComboBox_;
+   private javax.swing.JButton checkerBoardButton_;
+   private javax.swing.JTextField delayField_;
+   private javax.swing.JTextField logDirectoryTextField_;
+   private javax.swing.JSpinner pointAndShootIntervalSpinner_; // NB: mis-named
+   // pointAndShootIntervalSpinner actually is the exposure time; device setSpotInterval() also
+   private javax.swing.JToggleButton pointAndShootOffButton_;
+   private javax.swing.JToggleButton pointAndShootOnButton;
+   private javax.swing.JCheckBox repeatCheckBox_;
+   private javax.swing.JCheckBox repeatCheckBoxTime_;
+   private javax.swing.JSpinner repeatEveryFrameSpinner_;
+   private javax.swing.JLabel repeatEveryFrameUnitLabel_;
+   private javax.swing.JSpinner repeatEveryIntervalSpinner_;
+   private javax.swing.JLabel repeatEveryIntervalUnitLabel_;
+   private javax.swing.JLabel roiLoopLabel_;
+   private javax.swing.JSpinner roiLoopSpinner_;
+   private javax.swing.JLabel roiLoopTimesLabel_;
+   private javax.swing.JSpinner roiIntervalSpinner_;
+   private javax.swing.JLabel roiStatusLabel_;
+   private javax.swing.JButton exposeROIsButton_;
+   private javax.swing.JButton sequencingButton_;
+   private javax.swing.JComboBox<String> shutterComboBox_;
+   private javax.swing.JLabel startFrameLabel_;
+   private javax.swing.JSpinner startFrameSpinner_;
+   private javax.swing.JLabel startTimeLabel_;
+   private javax.swing.JSpinner startTimeSpinner_;
+   private javax.swing.JLabel startTimeUnitLabel_;
+   private javax.swing.JPanel syncRoiPanel_;
+   private javax.swing.JCheckBox useInMDAcheckBox;
 
    /**
     * Constructor. Creates the main window for the Projector plugin.
@@ -186,17 +189,27 @@ public class ProjectorControlForm extends JFrame {
       projectorControlExecution_ = new ProjectorControlExecution(studio_);
       studio_.events().registerForEvents(projectorControlExecution_);
 
+      isSLM_ = dev_ instanceof SLM;
+      // Only an SLM (not a galvo) has pixels.
+
+      boolean temp = false;
+      try {
+         temp = !isSLM_ && core_.getDeviceLibrary(dev_.getName()).equals("ASITiger");
+      }  catch (Exception ex) {
+         studio_.logs().logError(ex);
+      }
+      isASIScanner_ = temp;
+
       // Create GUI
       initComponents();
 
-      isSLM_ = dev_ instanceof SLM;
-      // Only an SLM (not a galvo) has pixels.
       allPixelsButton_.setVisible(isSLM_);
       checkerBoardButton_.setVisible(isSLM_);
       // No point in looping ROIs on an SLM.
       roiLoopSpinner_.setVisible(!isSLM_);
       roiLoopLabel_.setVisible(!isSLM_);
       roiLoopTimesLabel_.setVisible(!isSLM_);
+      roiIntervalSpinner_.setVisible(isASIScanner_);
       pointAndShootOffButton_.setSelected(true);
       populateChannelComboBox(settings_.getString(Terms.PTCHANNEL, ""));
       populateShutterComboBox(settings_.getString(Terms.PTSHUTTER, ""));
@@ -215,7 +228,9 @@ public class ProjectorControlForm extends JFrame {
       commitSpinnerOnValidEdit(repeatEveryFrameSpinner_);
       commitSpinnerOnValidEdit(repeatEveryIntervalSpinner_);
       commitSpinnerOnValidEdit(roiLoopSpinner_);
+      commitSpinnerOnValidEdit(roiIntervalSpinner_);
       pointAndShootIntervalSpinner_.setValue(dev_.getExposure() / 1000);
+      roiIntervalSpinner_.setValue(dev_.getRoiInterval() / 1000);
       sequencingButton_.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
 
       studioEventHandler_ = new Object() {
@@ -861,6 +876,7 @@ public class ProjectorControlForm extends JFrame {
       roiLoopLabel_.setEnabled(roisSubmitted);
       roiLoopSpinner_.setEnabled(!isSLM_ && roisSubmitted);
       roiLoopTimesLabel_.setEnabled(!isSLM_ && roisSubmitted);
+      roiIntervalSpinner_.setEnabled(isASIScanner_ && roisSubmitted);
       exposeROIsButton_.setEnabled(roisSubmitted);
       useInMDAcheckBox.setEnabled(roisSubmitted);
 
@@ -870,6 +886,13 @@ public class ProjectorControlForm extends JFrame {
          settings_.putInteger(Terms.NRROIREPETITIONS, nrRepetitions);
       }
       dev_.setPolygonRepetitions(nrRepetitions);
+
+      double roiIntervalMs = 0;
+      if (roiIntervalSpinner_.isEnabled()) {
+         roiIntervalMs = getSpinnerDoubleValue(roiIntervalSpinner_);
+         settings_.putDouble(Terms.ROIINTERVAL, roiIntervalMs);
+      }
+      ProjectorActions.setRoiIntervalUs(dev_, 1000 * roiIntervalMs);
 
       boolean useInMDA = roisSubmitted && useInMDAcheckBox.isSelected();
       attachToMdaTabbedPane_.setEnabled(useInMDA);
@@ -925,6 +948,14 @@ public class ProjectorControlForm extends JFrame {
             pointAndShootIntervalSpinner_.getValue().toString());
       ProjectorActions.setExposure(dev_, 1000 * exposureMs);
       settings_.putDouble(Terms.EXPOSURE, exposureMs);
+   }
+
+   // Set the ROI interval to whatever value is currently in the Interval field.
+   private void updateRoiInterval() {
+      double intervalMs = Double.parseDouble(
+              roiIntervalSpinner_.getValue().toString());
+      ProjectorActions.setRoiIntervalUs(dev_, 1000 * intervalMs);
+      settings_.putDouble(Terms.ROIINTERVAL, intervalMs);
    }
 
    private void updateX(String text) {
@@ -1020,6 +1051,7 @@ public class ProjectorControlForm extends JFrame {
       roiLoopTimesLabel_ = new JLabel();
       exposeROIsButton_ = new JButton();
       roiLoopSpinner_ = new JSpinner();
+      roiIntervalSpinner_ = new JSpinner();
       useInMDAcheckBox = new JCheckBox();
       roiStatusLabel_ = new JLabel();
       sequencingButton_ = new JButton();
@@ -1198,6 +1230,10 @@ public class ProjectorControlForm extends JFrame {
       roiLoopSpinner_.addChangeListener((ChangeEvent evt) -> updateROISettings());
       roiLoopSpinner_.setValue(settings_.getInteger(Terms.NRROIREPETITIONS, 1));
 
+      roiIntervalSpinner_.setModel(new SpinnerNumberModel(1, 0, 1000000000, 1));
+      roiIntervalSpinner_.addChangeListener((ChangeEvent evt) -> updateRoiInterval());
+      roiIntervalSpinner_.setValue(settings_.getDouble(Terms.ROIINTERVAL, 1.0));
+
       useInMDAcheckBox.setText("Run ROIs in Multi-Dimensional Acquisition");
       useInMDAcheckBox.addActionListener((ActionEvent evt) -> updateROISettings());
 
@@ -1268,7 +1304,15 @@ public class ProjectorControlForm extends JFrame {
 
       roisTab.add(roiLoopLabel_, "split 3");
       roisTab.add(roiLoopSpinner_, "wmin 60, wmax 60");
-      roisTab.add(roiLoopTimesLabel_, "wrap");
+
+      if (isASIScanner_) {
+         roisTab.add(roiLoopTimesLabel_);
+         roisTab.add(new JLabel("Interval"), "align center, split 3");
+         roisTab.add(roiIntervalSpinner_, "wmin 60, wmax 60");
+         roisTab.add(new JLabel("ms"), "wrap");
+      } else {
+         roisTab.add(roiLoopTimesLabel_, "wrap");
+      }
 
       roisTab.add(exposeROIsButton_, "align center");
       roisTab.add(useInMDAcheckBox, "wrap");

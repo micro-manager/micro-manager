@@ -77,6 +77,20 @@ public abstract class ProjectorActions {
       }
    }
 
+   /**
+    * Sets the ROI interval time for the photo-targeting device in microseconds.
+    *
+    * @param dev        ProjectionDevice to be used
+    * @param intervalUs new interval time in microseconds
+    */
+   public static void setRoiIntervalUs(ProjectionDevice dev, double intervalUs) {
+      long previousInterval = dev.getRoiInterval();
+      long newInterval = (long) intervalUs;
+      if (previousInterval != newInterval) {
+         dev.setRoiInterval(newInterval);
+      }
+   }
+
 
    /**
     * Displays a spot at position x,y.
