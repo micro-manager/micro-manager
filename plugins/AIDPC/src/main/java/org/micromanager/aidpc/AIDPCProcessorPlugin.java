@@ -28,7 +28,9 @@ public class AIDPCProcessorPlugin implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public ProcessorConfigurator createConfigurator(PropertyMap settings) {
-      return new AIDPCConfigurator(settings, studio_);
+      AIDPCConfigurator configurator = new AIDPCConfigurator(settings, studio_);
+      studio_.events().registerForEvents(configurator);
+      return configurator;
    }
 
    @Override
