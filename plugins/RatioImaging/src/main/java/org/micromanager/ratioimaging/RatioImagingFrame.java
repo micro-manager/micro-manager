@@ -27,13 +27,10 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.text.ParseException;
-import java.util.Vector;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -42,13 +39,10 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import mmcorej.CMMCore;
-import mmcorej.DeviceType;
-import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
 // Imports for MMStudio internal packages
@@ -59,6 +53,7 @@ import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
+import org.micromanager.pluginutilities.PluginUtilities;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -87,6 +82,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
    private final JTextField background2TextField_;
    private final JButton background1Button_;
    private final JButton background2Button_;
+   private final PluginUtilities pluginUtilities_;
 
    /**
     * Constructs the UI of the plugin.
@@ -99,12 +95,13 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       core_ = studio_.getCMMCore();
       settings_ = studio_.profile().getSettings(this.getClass());
       copySettings(settings_, configuratorSettings);
+      pluginUtilities_ = new PluginUtilities(studio_);
 
       super.setTitle("Ratio Imaging");
       super.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-      ch1Combo_ = createChannelCombo(settings_, CHANNEL1);
-      ch2Combo_ = createChannelCombo(settings_, CHANNEL2);
+      ch1Combo_ = pluginUtilities_.createChannelCombo(settings_, CHANNEL1);
+      ch2Combo_ = pluginUtilities_.createChannelCombo(settings_, CHANNEL2);
       
       super.setLayout(new MigLayout("flowx"));
       
@@ -196,77 +193,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       settings.putString(FACTOR, configuratorSettings.getString(FACTOR, ""));
    }
 
-   private JComboBox<String> createChannelCombo(
-           MutablePropertyMapView settings, String prefKey) {
-      
-      final JComboBox<String> cBox = new JComboBox<>();
-      String ch = "";
-      if (settings.containsString(prefKey)) {
-         ch = settings.getString(prefKey, "");
-      }
-      populateWithChannels(cBox);
-      for (int i = 0; i < cBox.getItemCount(); i++) {
-         if (ch.equals(cBox.getItemAt(i))) {
-            cBox.setSelectedItem(ch);
-         }
-      }
-      cBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            settings.putString(prefKey, (String) cBox.getSelectedItem());
-         }
-      });
-      settings.putString(prefKey, (String) cBox.getSelectedItem());
-      return cBox;
-   }
 
-   /**
-    * Get the channel names from the core.
-    * If there is more than one camera, add those as "channel-camera", however, try
-    * to avoid the MultiCamera device by checking the library it comes from (Utilities).
-    * Quite a bit of heuristics here...
-    *
-    * @param cBox The comboBox to be populated.
-    */
-   private void populateWithChannels(JComboBox<String> cBox) {
-      final String selectedItem = (String) cBox.getSelectedItem();
-      cBox.removeAllItems();
-      String channelGroup = core_.getChannelGroup();
-      StrVector channels = core_.getAvailableConfigs(channelGroup);
-      StrVector camerasStrV = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
-      Vector<String> cameras = new Vector<>();
-      for (String camera : camerasStrV) {
-         try {
-            if (!core_.getDeviceLibrary(camera).equals("Utilities")) {
-               cameras.add(camera);
-            }
-         } catch (Exception ex) {
-            studio_.logs().logError(ex);
-         }
-      }
-      for (int i = 0; i < channels.size(); i++) {
-         cBox.addItem(channels.get(i));
-         if (cameras.size() > 1) {
-            for (String camera : cameras) {
-               cBox.addItem(channels.get(i) + "-" + camera);
-            }
-         }
-      }
-      if (channels.size() == 0 && cameras.size() > 1) {
-         for (String camera : cameras) {
-            cBox.addItem(camera);
-         }
-      }
-      // also add channels from images that are open.  This allows the user to
-      // select channels that are not in the channel group.
-      for (DisplayWindow dw : studio_.displays().getAllImageWindows()) {
-         for (String ch : dw.getDataProvider().getSummaryMetadata().getChannelNameList()) {
-            cBox.addItem(ch);
-         }
-      }
-      cBox.setSelectedItem(selectedItem);
-   }
-   
    private JTextField createBackgroundTextField(MutablePropertyMapView settings,
            String prefKey) {
       
@@ -311,16 +238,13 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       button.setMargin(new Insets(0, 0, 0, 0));
       
       button.setText("...");
-      button.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            File f = FileDialogs.openFile(null, "Background",
-                    new FileDialogs.FileType("MMAcq", "Dark image",
-                            backgroundField.getText(), true, IMAGESUFFIXES));
-            if (f != null) {
-               processBackgroundImage(f.getAbsolutePath(), settings, prefKey);
-               backgroundField.setText(f.getAbsolutePath());
-            }
+      button.addActionListener(evt -> {
+         File f = FileDialogs.openFile(null, "Background",
+                 new FileDialogs.FileType("MMAcq", "Dark image",
+                         backgroundField.getText(), true, IMAGESUFFIXES));
+         if (f != null) {
+            processBackgroundImage(f.getAbsolutePath(), settings, prefKey);
+            backgroundField.setText(f.getAbsolutePath());
          }
       });
       return button;
@@ -334,8 +258,8 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
     */
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
-      populateWithChannels(ch1Combo_);
-      populateWithChannels(ch2Combo_);
+      pluginUtilities_.populateWithChannels(ch1Combo_);
+      pluginUtilities_.populateWithChannels(ch2Combo_);
       pack();
    }
 
@@ -347,8 +271,8 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
     */
    @Subscribe
    public void onDisplayAdded(DataViewerAddedEvent dae) {
-      populateWithChannels(ch1Combo_);
-      populateWithChannels(ch2Combo_);
+      pluginUtilities_.populateWithChannels(ch1Combo_);
+      pluginUtilities_.populateWithChannels(ch2Combo_);
       pack();
    }
 
