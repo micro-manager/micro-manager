@@ -6,7 +6,7 @@ nobase_mmlibrary_DATA = \
 	Big.jar \
 	GaussianLibrary.jar \
 	ImageProcessing.jar \
-	PluginLibraries.jar \
+	PluginUtilities.jar \
 	Projector.jar
 
 .PHONY: libraries.stamp
