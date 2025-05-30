@@ -102,7 +102,7 @@ class AIDPCConfigurator implements ProcessorConfigurator {
    }
 
    /**
-    * Called when a new display opens.  Use this event to update the cannel
+    * Called when a new display opens.  Use this event to update the channel
     * list in the UI.
     *
     * @param dae Event signalling a new display was added.
