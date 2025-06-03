@@ -1,0 +1,25 @@
+// It can be nice to open some windows and plugins automatically on startup
+// This script gives some examples how to do this.  
+// Add this code to your MMStartup.bsh script
+// Nico Stuurman 2025-06-03
+
+// Show MDA dialog
+mm.uiManager().getAcquisitionWindow().setVisible(true);;
+
+// show Deskew plugin
+plugins = mm.plugins().getProcessorPlugins();
+for (plugin : plugins.values()) {
+	if (plugin.getName().equals("Deskew")) {
+		deskew = plugin.createConfigurator(null);
+		deskew.showGUI();
+	}
+}
+
+// show Snap-On-Move Preview
+plugins = mm.plugins().getMenuPlugins();
+for (plugin : plugins.values()) {
+	mm.scripter().message(plugin.getName());
+	if (plugin.getName().equals("Snap-on-Move Preview")) {
+		plugin.onPluginSelected();
+	}
+}
