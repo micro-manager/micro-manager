@@ -3,6 +3,7 @@
 // Add this code to your MMStartup.bsh script
 // Nico Stuurman 2025-06-03
 
+
 // Show MDA dialog
 mm.uiManager().getAcquisitionWindow().setVisible(true);;
 
@@ -23,3 +24,7 @@ for (plugin : plugins.values()) {
 		plugin.onPluginSelected();
 	}
 }
+
+// show Stage Control window
+import org.micromanager.internal.dialogs.StageControlFrame;
+StageControlFrame.showStageControl(mm);
