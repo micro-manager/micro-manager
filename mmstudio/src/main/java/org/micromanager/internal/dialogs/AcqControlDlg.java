@@ -1302,7 +1302,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    public void updateGroupsCombo() {
       String[] groups = getAcquisitionEngine().getAvailableGroups();
       ActionListener[] als = channelGroupCombo_.getActionListeners();
-      for (ActionListener al: als) {
+      for (ActionListener al : als) {
          channelGroupCombo_.removeActionListener(al);
       }
       if (groups.length != 0) {
@@ -1313,7 +1313,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
          channelGroupCombo_.setSelectedItem(getAcquisitionEngine().getChannelGroup());
       }
-      for (ActionListener al: als) {
+      for (ActionListener al : als) {
          channelGroupCombo_.addActionListener(al);
       }
    }
