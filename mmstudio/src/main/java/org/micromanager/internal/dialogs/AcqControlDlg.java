@@ -1301,6 +1301,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     */
    public void updateGroupsCombo() {
       String[] groups = getAcquisitionEngine().getAvailableGroups();
+      ActionListener[] als = channelGroupCombo_.getActionListeners();
+      for (ActionListener al : als) {
+         channelGroupCombo_.removeActionListener(al);
+      }
       if (groups.length != 0) {
          channelGroupCombo_.setModel(new DefaultComboBoxModel<>(groups));
          if (!inArray(getAcquisitionEngine().getChannelGroup(), groups)) {
@@ -1308,6 +1312,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          }
 
          channelGroupCombo_.setSelectedItem(getAcquisitionEngine().getChannelGroup());
+      }
+      for (ActionListener al : als) {
+         channelGroupCombo_.addActionListener(al);
       }
    }
 
@@ -1403,8 +1410,15 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          afPanel_.setSelected(sequenceSettings.useAutofocus());
 
          channelsPanel_.setSelected(sequenceSettings.useChannels());
+         ActionListener[] cgsals = channelGroupCombo_.getActionListeners();
+         for (ActionListener cgsal : cgsals) {
+            channelGroupCombo_.removeActionListener(cgsal);
+         }
          channelGroupCombo_.setSelectedItem(sequenceSettings.channelGroup());
          getAcquisitionEngine().setChannelGroup(sequenceSettings.channelGroup());
+         for (ActionListener cgsal : cgsals) {
+            channelGroupCombo_.addActionListener(cgsal);
+         }
          model_.setChannels(sequenceSettings.channels());
          model_.fireTableStructureChanged();
          chanKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenChannels());
