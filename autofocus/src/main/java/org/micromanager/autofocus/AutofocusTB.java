@@ -6,6 +6,7 @@ import ij.gui.ImageWindow;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import ij.process.ColorProcessor;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.Date;
@@ -45,7 +46,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    private ImageProcessor ipCurrent_ = null;
 
    /**
-    *  Description of the Field.
+    * Description of the Field.
     */
    public double sizeFirst_ = 2;
    //
@@ -59,11 +60,10 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    public String channel2_ = "DAPI";
 
    private final double indx = 0;
-   //snapshot show new window iff indx = 1
+   // snapshot show new window iff indx = 1
 
    private boolean verbose_ = true;
    // displaying debug info or not
-
 
    private String channelGroup_;
 
@@ -76,6 +76,9 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    private long tPrev;
    private long tcur;
 
+   // channel group for autofocus
+   private static final String KEY_COLOR_CHANNEL = "Color Channel";
+   private String selectedColorChannel_ = "Red (BGRA)"; // Default
 
    /**
     * Constructor for the Autofocus_ object.
@@ -89,8 +92,8 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       super.createProperty(KEY_CROP_SIZE, Double.toString(cropSize_));
       super.createProperty(KEY_CHANNEL1, channel1_);
       super.createProperty(KEY_CHANNEL2, channel2_);
+      super.createProperty(KEY_COLOR_CHANNEL, selectedColorChannel_);
    }
-
 
    @Override
    public void applySettings() {
@@ -104,6 +107,8 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
          channel1_ = getPropertyValue(KEY_CHANNEL1);
          channel2_ = getPropertyValue(KEY_CHANNEL2);
 
+         selectedColorChannel_ = getPropertyValue(KEY_COLOR_CHANNEL);
+
       } catch (Exception e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
@@ -113,13 +118,13 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    /**
     * Main processing method for the Autofocus_ object.
     *
-    *@param  arg  Description of the Parameter
+    * @param arg Description of the Parameter
     */
    public void run(String arg) {
       t0 = System.currentTimeMillis();
       bestDist = 5000;
       bestSh = 0;
-      //############# CHECK INPUT ARG AND CORE ########
+      // ############# CHECK INPUT ARG AND CORE ########
       verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0) {
@@ -140,11 +145,11 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
 
       applySettings();
 
-      //######################## START THE ROUTINE ###########
+      // ######################## START THE ROUTINE ###########
 
       try {
          IJ.log("Autofocus TB started.");
-         //########System setup##########
+         // ########System setup##########
          if (!channel1_.equals(NOCHANNEL) && channelGroup_ != null) {
             core_.setConfig(channelGroup_, channel1_);
          }
@@ -152,32 +157,31 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
          if (core_.getShutterDevice().trim().length() > 0) {
             core_.waitForDevice(core_.getShutterDevice());
          }
-         //delay_time(3000);
+         // delay_time(3000);
 
-
-         //Snapshot, zdistance and sharpNess before AF
+         // Snapshot, zdistance and sharpNess before AF
          /*
-          *  curDist = core_.getPosition(core_.getFocusDevice());
-          *  indx =1;
-          *  snapSingleImage();
-          *  indx =0;
-          *  tPrev = System.currentTimeMillis();
-          *  curSh = sharpNess(ipCurrent_);
-          *  tcur = System.currentTimeMillis()-tPrev;
+          * curDist = core_.getPosition(core_.getFocusDevice());
+          * indx =1;
+          * snapSingleImage();
+          * indx =0;
+          * tPrev = System.currentTimeMillis();
+          * curSh = sharpNess(ipCurrent_);
+          * tcur = System.currentTimeMillis()-tPrev;
           */
-         //set z-distance to the lowest z-distance of the stack
+         // set z-distance to the lowest z-distance of the stack
          curDist = core_.getPosition(core_.getFocusDevice());
          baseDist = curDist - sizeFirst_ * numFirst_;
          core_.setPosition(core_.getFocusDevice(), baseDist);
          core_.waitForDevice(core_.getFocusDevice());
          delayTime(100);
 
-         //core_.setShutterOpen(true);
-         //core_.setAutoShutter(false);
+         // core_.setShutterOpen(true);
+         // core_.setAutoShutter(false);
 
          IJ.log("Before rough search: " + curDist);
 
-         //Rough search
+         // Rough search
          for (int i = 0; i < 2 * numFirst_ + 1; i++) {
             tPrev = System.currentTimeMillis();
 
@@ -188,7 +192,6 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
             // indx =1;
             snapSingleImage();
             // indx =0;
-
 
             curSh = computeScore(ipCurrent_);
 
@@ -215,7 +218,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
          if (core_.getShutterDevice().trim().length() > 0) {
             core_.waitForDevice(core_.getShutterDevice());
          }
-         //Fine search
+         // Fine search
          for (int i = 0; i < 2 * numSecond_ + 1; i++) {
             tPrev = System.currentTimeMillis();
             core_.setPosition(core_.getFocusDevice(), baseDist + i * sizeSecond_);
@@ -236,7 +239,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
             }
             tcur = System.currentTimeMillis() - tPrev;
 
-            //===IJ.write(String.valueOf(curDist)+" "+String.valueOf(curSh)+" "
+            // ===IJ.write(String.valueOf(curDist)+" "+String.valueOf(curSh)+" "
             // +String.valueOf(tcur));
          }
 
@@ -246,8 +249,8 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
          // indx =1;
          snapSingleImage();
          // indx =0;
-         //core_.setShutterOpen(false);
-         //core_.setAutoShutter(true);
+         // core_.setShutterOpen(false);
+         // core_.setAutoShutter(true);
 
          IJ.log("Total Time: " + (System.currentTimeMillis() - t0));
       } catch (Exception e) {
@@ -255,28 +258,87 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       }
    }
 
-
-
-   //take a snapshot and save pixel values in ipCurrent_
+   // take a snapshot and save pixel values in ipCurrent_
    private boolean snapSingleImage() {
       try {
          core_.snapImage();
+         Thread.sleep(50);
          Object img = core_.getImage();
-         ImagePlus implus = newWindow();
-         // this step will create a new window iff indx = 1
-         implus.getProcessor().setPixels(img);
-         ipCurrent_ = implus.getProcessor();
+
+         int width = (int) core_.getImageWidth();
+         int height = (int) core_.getImageHeight();
+
+         ImagePlus implus;
+
+         if (selectedColorChannel_.equals("Grayscale")) {
+            if (img instanceof byte[]) {
+               IJ.log("snapSingleImage: Detected 8-bit grayscale image.");
+               ByteProcessor bp = new ByteProcessor(width, height);
+               bp.setPixels(img);
+               implus = new ImagePlus("Grayscale 8-bit", bp);
+               this.ipCurrent_ = bp;
+            } else if (img instanceof short[]) {
+               IJ.log("snapSingleImage: Detected 16-bit grayscale image.");
+               ShortProcessor sp = new ShortProcessor(width, height);
+               sp.setPixels(img);
+               implus = new ImagePlus("Grayscale 16-bit", sp);
+            //    implus.show();
+               this.ipCurrent_ = sp;
+            } else {
+               String err = "Unsupported grayscale format: " + img.getClass().getName();
+               IJ.log("snapSingleImage: " + err);
+               IJ.error(err);
+               return false;
+            }
+
+         } else if (this.core_.getNumberOfComponents() >= 3 && img instanceof byte[]) {
+            IJ.log("snapSingleImage: Detected color image, extracting: " + selectedColorChannel_);
+            byte[] rgbBytes = (byte[]) img;
+            byte[] channel = new byte[width * height];
+
+            int channelOffset;
+            switch (selectedColorChannel_) {
+               case "Red (BGRA)":
+                  channelOffset = 2;
+                  break;
+               case "Green (BGRA)":
+                  channelOffset = 1;
+                  break;
+               case "Blue (BGRA)":
+                  channelOffset = 0;
+                  break;
+               default:
+                  IJ.log("snapSingleImage: Invalid color channel selection.");
+                  return false;
+            }
+
+            for (int i = 0; i < width * height; i++) {
+               channel[i] = rgbBytes[4 * i + channelOffset];
+            }
+
+            ByteProcessor channelProcessor = new ByteProcessor(width, height, channel, null);
+            implus = new ImagePlus(selectedColorChannel_, channelProcessor);
+            // implus.show();
+            this.ipCurrent_ = channelProcessor;
+         } else {
+            String err = "Unsupported image format or configuration.";
+            IJ.log("snapSingleImage: " + err);
+            // IJ.error(err);
+            return false;
+         }
+
       } catch (Exception e) {
-         IJ.log(e.getMessage());
+         IJ.log("Exception in snapSingleImage: " + e.getMessage());
+         e.printStackTrace();
          IJ.error(e.getMessage());
          return false;
+
       }
 
       return true;
    }
 
-
-   //waiting
+   // waiting
    private void delayTime(double delay) {
       Date date = new Date();
       long sec = date.getTime();
@@ -286,7 +348,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    }
 
    /*
-    *  calculate the sharpness of a given image (in "impro").
+    * calculate the sharpness of a given image (in "impro").
     */
    private double sharpNessp(ImageProcessor impro) {
 
@@ -300,7 +362,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       double[] windo = new double[9];
 
       /*
-       *  Apply 3x3 median filter to reduce noise
+       * Apply 3x3 median filter to reduce noise
        */
       for (int i = 1; i < width - 1; i++) {
          for (int j = 1; j < height - 1; j++) {
@@ -343,50 +405,49 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       return sharpNess;
    }
 
-
    /*
-    *  calculate the sharpness of a given image (in "impro").
+    * calculate the sharpness of a given image (in "impro").
     */
    public double computeScore(final ImageProcessor impro) {
       int width = (int) (cropSize_ * core_.getImageWidth());
       int height = (int) (cropSize_ * core_.getImageHeight());
       int sx = (int) (core_.getImageWidth() - width) / 2;
       int sy = (int) (core_.getImageHeight() - height) / 2;
-      //int ow = (int) (((1 - CROP_SIZE) / 2) * core_.getImageWidth());
-      //int oh = (int) (((1 - CROP_SIZE) / 2) * core_.getImageHeight());
+      // int ow = (int) (((1 - CROP_SIZE) / 2) * core_.getImageWidth());
+      // int oh = (int) (((1 - CROP_SIZE) / 2) * core_.getImageHeight());
 
       // double[][] medPix = new double[width][height];
       double sharpNess = 0;
-      //double[] windo = new double[9];
+      // double[] windo = new double[9];
 
       /*
-       *  Apply 3x3 median filter to reduce noise
+       * Apply 3x3 median filter to reduce noise
        */
       /*
-       *  for (int i=0; i<width; i++){
-       *  for (int j=0; j<height; j++){
-       *  windo[0] = (double)impro.getPixel(ow+i-1,oh+j-1);
-       *  windo[1] = (double)impro.getPixel(ow+i,oh+j-1);
-       *  windo[2] = (double)impro.getPixel(ow+i+1,oh+j-1);
-       *  windo[3] = (double)impro.getPixel(ow+i-1,oh+j);
-       *  windo[4] = (double)impro.getPixel(ow+i,oh+j);
-       *  windo[5] = (double)impro.getPixel(ow+i+1,oh+j);
-       *  windo[6] = (double)impro.getPixel(ow+i-1,oh+j+1);
-       *  windo[7] = (double)impro.getPixel(ow+i,oh+j+1);
-       *  windo[8] = (double)impro.getPixel(ow+i+1,oh+j+1);
-       *  medPix[i][j] = findMed(windo);
-       *  }
-       *  }
+       * for (int i=0; i<width; i++){
+       * for (int j=0; j<height; j++){
+       * windo[0] = (double)impro.getPixel(ow+i-1,oh+j-1);
+       * windo[1] = (double)impro.getPixel(ow+i,oh+j-1);
+       * windo[2] = (double)impro.getPixel(ow+i+1,oh+j-1);
+       * windo[3] = (double)impro.getPixel(ow+i-1,oh+j);
+       * windo[4] = (double)impro.getPixel(ow+i,oh+j);
+       * windo[5] = (double)impro.getPixel(ow+i+1,oh+j);
+       * windo[6] = (double)impro.getPixel(ow+i-1,oh+j+1);
+       * windo[7] = (double)impro.getPixel(ow+i,oh+j+1);
+       * windo[8] = (double)impro.getPixel(ow+i+1,oh+j+1);
+       * medPix[i][j] = findMed(windo);
+       * }
+       * }
        */
-      //tPrev = System.currentTimeMillis();
+      // tPrev = System.currentTimeMillis();
 
       impro.setRoi(new Rectangle(sx, sy, width, height));
       impro.crop();
       impro.medianFilter();
       impro.findEdges();
 
-      //int[] ken = {2, 1, 0, 1, 0, -1, 0, -1, -2};
-      //impro.convolve3x3(ken);
+      // int[] ken = {2, 1, 0, 1, 0, -1, 0, -1, -2};
+      // impro.convolve3x3(ken);
 
       for (int i = 0; i < width; i++) {
          for (int j = 0; j < height; j++) {
@@ -397,44 +458,45 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       // tcur = System.currentTimeMillis()-tPrev;
 
       /*
-       *  Edge detection using a 3x3 filter: [-2 -1 0; -1 0 1; 0 1 2].
+       * Edge detection using a 3x3 filter: [-2 -1 0; -1 0 1; 0 1 2].
        * Then sum all pixel values. Ideally, the sum is large if most edges are sharp
        */
       /*
-       *  for (int k=1; k<width-1; k++){
-       *  for (int l=1; l<height-1; l++){
-       *  sharpNess = sharpNess + Math.pow((-2*medPix[k-1][l-1]- medPix[k][l-1]
+       * for (int k=1; k<width-1; k++){
+       * for (int l=1; l<height-1; l++){
+       * sharpNess = sharpNess + Math.pow((-2*medPix[k-1][l-1]- medPix[k][l-1]
        * - medPix[k-1][l]+medPix[k+1][l]+medPix[k][l+1]+2*medPix[k+1][l+1]),2);
-       *  }
-       *  }
+       * }
+       * }
        */
       return sharpNess;
    }
 
-
-   //making a new window for a new snapshot.
+   // making a new window for a new snapshot.
    private ImagePlus newWindow() {
       ImageProcessor ip;
       long byteDepth = core_.getBytesPerPixel();
+      long numComponents = core_.getNumberOfComponents();
 
-      if (byteDepth == 1) {
-         ip = new ByteProcessor((int) core_.getImageWidth(), (int) core_.getImageHeight());
+      if (numComponents >= 3) {
+         ip = new ColorProcessor((int) this.core_.getImageWidth(), (int) this.core_.getImageHeight());
+      } else if (byteDepth == 1L) {
+         ip = new ByteProcessor((int) this.core_.getImageWidth(), (int) this.core_.getImageHeight());
       } else {
-         ip = new ShortProcessor((int) core_.getImageWidth(), (int) core_.getImageHeight());
+         ip = new ShortProcessor((int) this.core_.getImageWidth(), (int) this.core_.getImageHeight());
       }
       ip.setColor(Color.black);
       ip.fill();
 
       ImagePlus implus = new ImagePlus(String.valueOf(curDist), ip);
-      if (indx == 1) {
-         if (verbose_) {
-            // create image window if we are in the verbose mode
-            ImageWindow imageWin = new ImageWindow(implus);
-         }
-      }
+      // if (indx == 1) {
+      // if (verbose_) {
+      // // create image window if we are in the verbose mode
+      // ImageWindow imageWin = new ImageWindow(implus);
+      // }
+      // }
       return implus;
    }
-
 
    private double findMed(double[] arr) {
       double tmp;
@@ -455,27 +517,24 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       return arr[5];
    }
 
-
    public double fullFocus() {
       run("silent");
       return 0;
    }
 
-
    /**
     * Gets the verboseStatus attribute of the Autofocus_ object.
     *
-    *@return    The verboseStatus value
+    * @return The verboseStatus value
     */
    public String getVerboseStatus() {
       return "OK";
    }
 
-
    /**
-    *  Description of the Method.
+    * Description of the Method.
     *
-    *@return    Description of the Return Value
+    * @return Description of the Return Value
     */
    public double incrementalFocus() {
       run("silent");
@@ -502,6 +561,15 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       allowedChannels[0] = NOCHANNEL;
 
       try {
+         PropertyItem colorChannel = getProperty(KEY_COLOR_CHANNEL);
+         colorChannel.allowed = new String[] {
+               "Grayscale",
+               "Red (BGRA)",
+               "Green (BGRA)",
+               "Blue (BGRA)"
+         };
+         setProperty(colorChannel);
+
          PropertyItem p1 = getProperty(KEY_CHANNEL1);
          PropertyItem p2 = getProperty(KEY_CHANNEL2);
          boolean found1 = false;
@@ -526,7 +594,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
             p2.value = allowedChannels[0];
          }
          setProperty(p2);
-      } catch (Exception e1) {                                                                      
+      } catch (Exception e1) {
          // TODO Auto-generated catch block
          e1.printStackTrace();
       }
