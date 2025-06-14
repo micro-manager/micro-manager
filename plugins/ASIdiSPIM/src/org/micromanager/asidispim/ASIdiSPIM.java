@@ -46,7 +46,7 @@ public class ASIdiSPIM implements MMPlugin {
    public static final boolean SCOPE = false;
    public static final boolean singleView = (oSPIM || SCOPE);  // true for SCOPE and oSPIM (and possibly other situations?)
    public static final boolean doubleXYZ = false;
-   public final static String versionString = " 20250101";
+   public final static String versionString = " 20250528";
    
    public final static String menuName = "ASI " 
          + (SCOPE ? "SCOPE" : (oSPIM ? "oSPIM" : "diSPIM") ) 

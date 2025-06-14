@@ -248,7 +248,7 @@ public class Cameras {
                   Properties.Values.EDGE);
             double rowTime = getRowReadoutTime(devKey) * 
                   props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
-            
+
             // get the lower limit from the camera (0.0098 for Flash4)
             double lowerLimit = 0.0;
             final String deviceName = devices_.getMMDevice(Devices.Keys.CAMERAA);
@@ -259,13 +259,19 @@ public class Cameras {
             	// ignore => will set the HAMAMATSU_LINE_INTERVAL property  
             	// to the rowTime without considering the lower limit
             }
-            
-            props_.setPropValue(devKey,
-                  Properties.Keys.HAMAMATSU_LINE_INTERVAL, (float)Math.max(rowTime, lowerLimit));
 
-            // setting this seems to be required to force the camera to re-calculate something
-            // this works around an apparent bug in the device adapter
-            props_.setPropValue(devKey, Properties.Keys.HAMAMATSU_LINE_SPEED, 0.01f);
+            final float shutterSpeed = props_.getPropValueFloat(
+                    Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+
+            props_.setPropValue(devKey,
+                    Properties.Keys.HAMAMATSU_LINE_INTERVAL, (float)Math.max(rowTime, lowerLimit));
+
+            if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                 Properties.Keys.PLUGIN_USE_TOOLSET, false)) {
+               // setting this seems to be required to force the camera to re-calculate something
+               // this works around an apparent bug in the device adapter
+               props_.setPropValue(devKey, Properties.Keys.HAMAMATSU_LINE_SPEED, 0.1f / shutterSpeed);
+            }
 
             break;
          case LEVEL:
@@ -593,6 +599,7 @@ public class Cameras {
    public double getRowReadoutTime(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
+         // TODO changes this for LIGHT_SHEET mode?
          if (isFusion(camKey)) {
             String mode = props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE);
             if (mode.equals("3")) {
