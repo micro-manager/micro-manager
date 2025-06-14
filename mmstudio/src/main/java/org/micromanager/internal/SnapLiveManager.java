@@ -255,6 +255,9 @@ public final class SnapLiveManager extends DataViewerListener
          amStartingSequenceAcquisition_ = true;
          core_.startContinuousSequenceAcquisition(0);
          amStartingSequenceAcquisition_ = false;
+         if (core_.getAutoShutter()) {
+            core_.waitForDevice(core_.getShutterDevice());
+         }
       } catch (Exception e) {
          ReportingUtils.showError(e, "Couldn't start live mode sequence acquisition");
          // Give up on starting live mode.
@@ -385,6 +388,9 @@ public final class SnapLiveManager extends DataViewerListener
          }
          while (core_.isSequenceRunning()) {
             core_.sleep(2);
+         }
+         if (core_.getAutoShutter()) {
+            core_.waitForDevice(core_.getShutterDevice());
          }
       } catch (Exception e) {
          ReportingUtils.showError(e,
