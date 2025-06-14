@@ -940,6 +940,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   if (event.getZIndex() != null
                         && event.getZIndex() == sequenceSettings.slices().size() - 1) {
                      if (!event.isZSequenced() && sequenceSettings.useChannels()
+                           && event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) != null
                              && (sequenceSettings.acqOrderMode()
                                        == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                              || sequenceSettings.acqOrderMode()
