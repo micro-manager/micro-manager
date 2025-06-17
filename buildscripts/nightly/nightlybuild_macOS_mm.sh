@@ -212,12 +212,6 @@ cp ../3rdpartypublic/javalib3d/lib/natives/macosx-universal/* $MM_STAGEDIR/nativ
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
 
-if [ -n "$MM_PREPACKAGE_HOOK" ]; then
-   pushd $MM_STAGEDIR
-   $MM_PREPACKAGE_HOOK
-   popd
-fi
-
 
 ##
 ## Temporarily unpack JARs for processing; remove other archs
