@@ -163,7 +163,7 @@ public class TestAcqAdapter extends DataViewerListener implements
     */
    private Datastore runAcquisition(SequenceSettings sequenceSettings) {
       SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
-      sb.useFrames(false).usePositionList(false).save(false);
+      sb.useFrames(false).usePositionList(false).save(false).isTestAcquisition(true);
       sb.numFrames(0);
 
       if (!sequenceSettings.useChannels()) {
