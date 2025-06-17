@@ -204,11 +204,6 @@ for artifact_dir in compile optional runtime; do
 done
 
 
-# Include jogl/gluegen native libraries.
-mkdir -p $MM_STAGEDIR/natives/macosx-universal
-cp ../3rdpartypublic/javalib3d/lib/natives/macosx-universal/* $MM_STAGEDIR/natives/macosx-universal/
-
-
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
 
@@ -235,6 +230,18 @@ codesign_script="`dirname $0`/macOS-codesign.sh"
 if [ "$do_codesign" = yes ]; then
    "$codesign_script" -b "$MM_STAGEDIR"
 fi
+
+##
+## Add extracted copies of the JOGL native libraries
+##
+
+jogl_native_jars="$(find $MM_STAGEDIR/plugins/Micro-Manager -name '*-natives-macosx-universal.jar')"
+jogl_libdir="$MM_STAGEDIR/natives/macosx-universal"
+
+mkdir -p "$jogl_libdir"
+for jar in $jogl_native_jars; do
+    cp $jar/natives/macosx-universal/*.jnilib "$jogl_libdir"
+done
 
 
 ##
