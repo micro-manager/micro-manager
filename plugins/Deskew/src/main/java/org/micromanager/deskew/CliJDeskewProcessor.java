@@ -4,8 +4,8 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij.clearcl.exceptions.OpenCLException;
@@ -13,14 +13,12 @@ import net.haesleinhuepf.clij2.CLIJ2;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.DataViewer;
-import org.micromanager.display.DisplaySettings;
+import org.micromanager.internal.utils.NumberUtils;
 
 public class CliJDeskewProcessor implements Processor {
    private final Studio studio_;
@@ -32,6 +30,7 @@ public class CliJDeskewProcessor implements Processor {
    private final boolean doOrthogonalProjections_;
    private final String orthogonalProjectionsMode_;
    private final boolean keepOriginals_;
+   private final DeskewAcqManager deskewAcqManager_;
    private Datastore fullVolumeStore_;
    private Datastore xyProjectionStore_;
    private Datastore orthogonalStore_;
@@ -41,21 +40,30 @@ public class CliJDeskewProcessor implements Processor {
    private Integer newDepth_;
    private Double newZSizeUm_;
 
-   public CliJDeskewProcessor(Studio studio, String gpuName, Double theta, boolean doFullVolume,
-            boolean doXYProjections, String xyProjectionMode,
-            boolean doOrthogonalProjections, String orthogonalProjectionsMode,
-            boolean keepOriginals, PropertyMap settings) {
+   public CliJDeskewProcessor(Studio studio, DeskewAcqManager deskewAcqManager,
+                              PropertyMap settings) throws ParseException {
       studio_ = studio;
-      theta_ = theta;
+      settings_ = settings;
+      String gpuName = settings.getString(DeskewFrame.GPU, CLIJ2.getInstance().getGPUName());
       clij2_ = CLIJ2.getInstance(gpuName);
       clij2_.clear(); // Really needed?
-      doFullVolume_ = doFullVolume;
-      doXYProjections_ = doXYProjections;
-      xyProjectionMode_ = xyProjectionMode;
-      doOrthogonalProjections_ = doOrthogonalProjections;
-      orthogonalProjectionsMode_ = orthogonalProjectionsMode;
-      keepOriginals_ = keepOriginals;
-      settings_ = settings;
+      // this can throw a ParseException if the angle is not a valid number
+      theta_ = Math.toRadians(NumberUtils.displayStringToDouble(settings_.getString(
+               DeskewFrame.DEGREE, "60.0")));
+      if (theta_ == 0.0) {
+         studio_.logs().showError("Can not deskew LighSheet data with an angle of 0.0 degrees");
+      }
+      doFullVolume_ = settings_.getBoolean(DeskewFrame.FULL_VOLUME, true);
+      doXYProjections_ = settings_.getBoolean(DeskewFrame.XY_PROJECTION, false);
+      xyProjectionMode_ = settings_.getString(DeskewFrame.XY_PROJECTION_MODE,
+               DeskewFrame.MAX);
+      doOrthogonalProjections_ = settings_.getBoolean(DeskewFrame.ORTHOGONAL_PROJECTIONS,
+               false);
+      orthogonalProjectionsMode_ = settings_.getString(
+               DeskewFrame.ORTHOGONAL_PROJECTIONS_MODE, DeskewFrame.MAX);
+      keepOriginals_ = settings_.getBoolean(DeskewFrame.KEEP_ORIGINAL, true);
+
+      deskewAcqManager_ = deskewAcqManager;
    }
 
    @Override
@@ -98,9 +106,10 @@ public class CliJDeskewProcessor implements Processor {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Projection-GPU";
-                  xyProjectionStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                  xyProjectionStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
+                           DeskewAcqManager.ProjectionType.YX_PROJECTION,
                            newPrefix,
                            projection.getWidth(),
                            projection.getHeight(),
@@ -119,9 +128,10 @@ public class CliJDeskewProcessor implements Processor {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Orthogonal-Projection-GPU";
-                  orthogonalStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                  orthogonalStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
+                           DeskewAcqManager.ProjectionType.ORTHOGONAL_VIEWS,
                            newPrefix,
                            projection.getWidth(),
                            projection.getHeight(),
@@ -140,9 +150,10 @@ public class CliJDeskewProcessor implements Processor {
                            image.getMetadata());
                   if (fullVolumeStore_ == null) {
                      String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume-GPU";
-                     fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                     fullVolumeStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
                              settings_,
                              inputSummaryMetadata_,
+                             DeskewAcqManager.ProjectionType.FULL_VOLUME,
                              newPrefix,
                              image1.getWidth(),
                              image1.getHeight(),

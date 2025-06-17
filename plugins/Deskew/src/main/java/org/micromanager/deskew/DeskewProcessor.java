@@ -1,6 +1,7 @@
 package org.micromanager.deskew;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,8 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.PixelType;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 
 /**
@@ -38,6 +41,7 @@ public class DeskewProcessor implements Processor {
    private final boolean doOrthogonalProjections_;
    private final String orthogonalProjectionsMode_;
    private final boolean keepOriginals_;
+   private final DeskewAcqManager deskewAcqManager_;
    private final PropertyMap settings_;
 
    private final ExecutorService processingExecutor_;
@@ -50,6 +54,7 @@ public class DeskewProcessor implements Processor {
    private final Map<Coords, Future<?>> fullVolumeFutures_ = new HashMap<>();
    private final Map<Coords, Future<?>> xyProjectionFutures_ = new HashMap<>();
    private final Map<Coords, Future<?>> orthogonalFutures_ = new HashMap<>();
+   private final List<DisplayWindow> testDisplayWindows_ = new ArrayList<>();
    private Datastore fullVolumeStore_;
    private Datastore xyProjectionStore_;
    private Datastore orthogonalStore_;
@@ -59,34 +64,35 @@ public class DeskewProcessor implements Processor {
     * Pycromanager deskew code.
     *
     * @param studio Micro-Manager Studio instance
-    * @param theta Angle between the light sheet and the sample plane in radians.
-    * @param doFullVolume Whether to generate a full volume.
-    * @param doXYProjections Whether to generate XY Projections.
-    * @param xyProjectionMode Max or average projection
-    * @param doOrthogonalProjections Whether to generate orthogonal projections
-    * @param orthogonalProjectionsMode Max or average projection
-    * @param keepOriginals Whether to send the original data through the pipeline or
-    *                      to drop them.
+    * @param deskewAcqManager DeskewAcqManager instance
+    * @param settings PropertyMap with settings
     */
-   public DeskewProcessor(Studio studio, double theta, boolean doFullVolume,
-                          boolean doXYProjections, String xyProjectionMode,
-                          boolean doOrthogonalProjections, String orthogonalProjectionsMode,
-                          boolean keepOriginals, PropertyMap settings) {
+   public DeskewProcessor(Studio studio, DeskewAcqManager deskewAcqManager,
+                          PropertyMap settings) throws ParseException {
       studio_ = studio;
-      theta_ = theta;
-      doFullVolume_ = doFullVolume;
-      doXYProjections_ = doXYProjections;
-      xyProjectionMode_ = xyProjectionMode;
-      doOrthogonalProjections_ = doOrthogonalProjections;
-      orthogonalProjectionsMode_ = orthogonalProjectionsMode;
-      keepOriginals_ = keepOriginals;
+      settings_ = settings;
+      // this can throw a ParseException if the angle is not a valid number
+      theta_ = Math.toRadians(NumberUtils.displayStringToDouble(settings_.getString(
+               DeskewFrame.DEGREE, "60.0")));
+      if (theta_ == 0.0) {
+         studio_.logs().showError("Can not deskew LighSheet data with an angle of 0.0 degrees");
+      }
+      doFullVolume_ = settings_.getBoolean(DeskewFrame.FULL_VOLUME, true);
+      doXYProjections_ = settings_.getBoolean(DeskewFrame.XY_PROJECTION, false);
+      xyProjectionMode_ = settings_.getString(DeskewFrame.XY_PROJECTION_MODE,
+               DeskewFrame.MAX);
+      doOrthogonalProjections_ = settings_.getBoolean(DeskewFrame.ORTHOGONAL_PROJECTIONS,
+               false);
+      orthogonalProjectionsMode_ = settings_.getString(
+               DeskewFrame.ORTHOGONAL_PROJECTIONS_MODE, DeskewFrame.MAX);
+      keepOriginals_ = settings_.getBoolean(DeskewFrame.KEEP_ORIGINAL, true);
       processingExecutor_ =
                new ThreadPoolExecutor(1,
                         settings.getInteger(DeskewFrame.NR_THREADS, 12),
                         1000,
                         TimeUnit.MILLISECONDS,
                         new LinkedBlockingDeque<>());
-      settings_ = settings;
+      deskewAcqManager_ = deskewAcqManager;
    }
 
    @Override
@@ -136,9 +142,10 @@ public class DeskewProcessor implements Processor {
                int height = fullVolumeResamplers_.get(coordsNoZ).getResampledShapeY();
                if (fullVolumeStore_ == null) {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume-CPU";
-                  fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                  fullVolumeStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
+                           DeskewAcqManager.ProjectionType.FULL_VOLUME,
                            newPrefix,
                            width,
                            height,
@@ -176,9 +183,10 @@ public class DeskewProcessor implements Processor {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Projection-CPU";
-                  xyProjectionStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                  xyProjectionStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
+                           DeskewAcqManager.ProjectionType.YX_PROJECTION,
                            newPrefix,
                            width,
                            height,
@@ -222,9 +230,10 @@ public class DeskewProcessor implements Processor {
                   int separatorSize = 3;
                   int newWidth = width + separatorSize + zSize;
                   int newHeight = height + separatorSize + zSize;
-                  orthogonalStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                  orthogonalStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
+                           DeskewAcqManager.ProjectionType.ORTHOGONAL_VIEWS,
                            newPrefix,
                            newWidth,
                            newHeight,

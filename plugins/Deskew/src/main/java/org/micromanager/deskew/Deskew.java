@@ -17,10 +17,12 @@ public class Deskew implements ProcessorPlugin, SciJavaPlugin {
 
 
    private Studio studio_;
+   private DeskewFactory deskewFactory_;
 
    @Override
    public void setContext(Studio studio) {
       studio_ = studio;
+      deskewFactory_ = new DeskewFactory(studio_);
    }
 
    @Override
@@ -45,11 +47,12 @@ public class Deskew implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public ProcessorConfigurator createConfigurator(PropertyMap settings) {
-      return new DeskewFrame(settings, studio_);
+      return new DeskewFrame(settings, studio_, deskewFactory_);
    }
 
    @Override
    public ProcessorFactory createFactory(PropertyMap settings) {
-      return new DeskewFactory(studio_, settings);
+      deskewFactory_.setSettings(settings);
+      return deskewFactory_;
    }
 }
