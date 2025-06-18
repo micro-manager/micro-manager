@@ -4,9 +4,9 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import ij.process.ColorProcessor;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.Date;
@@ -282,7 +282,6 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
                ShortProcessor sp = new ShortProcessor(width, height);
                sp.setPixels(img);
                implus = new ImagePlus("Grayscale 16-bit", sp);
-            //    implus.show();
                this.ipCurrent_ = sp;
             } else {
                String err = "Unsupported grayscale format: " + img.getClass().getName();
@@ -479,11 +478,17 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       long numComponents = core_.getNumberOfComponents();
 
       if (numComponents >= 3) {
-         ip = new ColorProcessor((int) this.core_.getImageWidth(), (int) this.core_.getImageHeight());
+         ip = new ColorProcessor(
+               (int) this.core_.getImageWidth(),
+               (int) this.core_.getImageHeight());
       } else if (byteDepth == 1L) {
-         ip = new ByteProcessor((int) this.core_.getImageWidth(), (int) this.core_.getImageHeight());
+         ip = new ByteProcessor(
+               (int) this.core_.getImageWidth(),
+               (int) this.core_.getImageHeight());
       } else {
-         ip = new ShortProcessor((int) this.core_.getImageWidth(), (int) this.core_.getImageHeight());
+         ip = new ShortProcessor(
+               (int) this.core_.getImageWidth(),
+               (int) this.core_.getImageHeight());
       }
       ip.setColor(Color.black);
       ip.fill();
