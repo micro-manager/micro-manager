@@ -861,6 +861,13 @@ public final class SequenceSettings {
    /**
     * Whether this is a test acquisition.
     * Test acquisitions are not saved to disk and are used for testing purposes.
+    * They differ from normal acquisition that are not saved to disk by their intent, i.e.
+    * Test Acquisitions are quick throw away acquisition to ensure that all the settings
+    * are correct, whereas normal acquisition that are not saved to disk are useful
+    * acquisition that the user may alter want to save.
+    * TestAcquisition are especially convenient with modalities like Light Sheet and function
+    * as the equivalent of a Preview window but then for the complete Z-stack (with multiple
+    * channels if so desired).
     *
     * @return true if this is a test acquisition, false otherwise
     */
