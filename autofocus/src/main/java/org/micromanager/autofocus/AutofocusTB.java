@@ -268,21 +268,18 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
          int width = (int) core_.getImageWidth();
          int height = (int) core_.getImageHeight();
 
-         ImagePlus implus;
+         ImagePlus implus = newWindow();
+         ImageProcessor ip = implus.getProcessor();
 
          if (selectedColorChannel_.equals("Grayscale")) {
             if (img instanceof byte[]) {
                IJ.log("snapSingleImage: Detected 8-bit grayscale image.");
-               ByteProcessor bp = new ByteProcessor(width, height);
-               bp.setPixels(img);
-               implus = new ImagePlus("Grayscale 8-bit", bp);
-               this.ipCurrent_ = bp;
+               ip.setPixels(img);
+               this.ipCurrent_ = ip;
             } else if (img instanceof short[]) {
                IJ.log("snapSingleImage: Detected 16-bit grayscale image.");
-               ShortProcessor sp = new ShortProcessor(width, height);
-               sp.setPixels(img);
-               implus = new ImagePlus("Grayscale 16-bit", sp);
-               this.ipCurrent_ = sp;
+               ip.setPixels(img);
+               this.ipCurrent_ = ip;
             } else {
                String err = "Unsupported grayscale format: " + img.getClass().getName();
                IJ.log("snapSingleImage: " + err);
@@ -316,13 +313,11 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
             }
 
             ByteProcessor channelProcessor = new ByteProcessor(width, height, channel, null);
-            implus = new ImagePlus(selectedColorChannel_, channelProcessor);
-            // implus.show();
             this.ipCurrent_ = channelProcessor;
+            implus.setProcessor(channelProcessor);
          } else {
             String err = "Unsupported image format or configuration.";
             IJ.log("snapSingleImage: " + err);
-            // IJ.error(err);
             return false;
          }
 
@@ -474,33 +469,24 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    // making a new window for a new snapshot.
    private ImagePlus newWindow() {
       ImageProcessor ip;
+
+      int width = (int) core_.getImageWidth();
+   int height = (int) core_.getImageHeight();
       long byteDepth = core_.getBytesPerPixel();
       long numComponents = core_.getNumberOfComponents();
 
       if (numComponents >= 3) {
-         ip = new ColorProcessor(
-               (int) this.core_.getImageWidth(),
-               (int) this.core_.getImageHeight());
+         ip = new ColorProcessor(width,height);
       } else if (byteDepth == 1L) {
-         ip = new ByteProcessor(
-               (int) this.core_.getImageWidth(),
-               (int) this.core_.getImageHeight());
+         ip = new ByteProcessor(width,height);
       } else {
-         ip = new ShortProcessor(
-               (int) this.core_.getImageWidth(),
-               (int) this.core_.getImageHeight());
+         ip = new ShortProcessor(width,height);
       }
       ip.setColor(Color.black);
       ip.fill();
 
-      ImagePlus implus = new ImagePlus(String.valueOf(curDist), ip);
-      // if (indx == 1) {
-      // if (verbose_) {
-      // // create image window if we are in the verbose mode
-      // ImageWindow imageWin = new ImageWindow(implus);
-      // }
-      // }
-      return implus;
+      return new ImagePlus("Snap: " + curDist, ip);
+
    }
 
    private double findMed(double[] arr) {
