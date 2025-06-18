@@ -270,9 +270,16 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       return ret;
    }
 
-   // Evaluate a version that includes display settings.
-   // This reduces cpu cycles by current code creating display settings that
-   // are over-written later.
+   /**
+    * Preferred version of createDisplay.  This allows the caller to include
+    * initial display settings that can be used during display creation
+    * (currently to place the window), but also reduces CPU cycles since
+    * the called code will not need to construct a default set of display setting.
+    *
+    * @param provider The DataProvider to use for this display
+    * @param factory  The DisplayWindowControlsFactory to use for this display
+    * @return The created DisplayWindow
+    */
    @Override
    public DisplayWindow createDisplay(DataProvider provider,
                                       DisplayWindowControlsFactory factory,
