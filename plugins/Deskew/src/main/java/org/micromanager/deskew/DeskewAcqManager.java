@@ -1,9 +1,7 @@
 package org.micromanager.deskew;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -28,6 +26,9 @@ public class DeskewAcqManager {
    private Datastore testXYProjectionsStore_;
    private DisplayWindow testXYProjectionsWindow_;
 
+   /**
+    * Enum representing the different projection types for displaying data.
+    */
    public enum ProjectionType {
       YX_PROJECTION,
       ORTHOGONAL_VIEWS,
@@ -37,31 +38,6 @@ public class DeskewAcqManager {
    public DeskewAcqManager(Studio studio) {
       studio_ = studio;
    }
-
-   /**
-    * Closes existing data viewers and stores for test acquisitions
-    * created by the Deskew plugin. Store the new test datastores
-    * so that we can close them next time we renew the test data.
-    *
-    * @param testDatastores List of test datastores to be set.
-   public void renewTestData(List<Datastore> testDatastores) {
-      for (Datastore ds : testDatastores_) {
-         for (DisplayWindow iw : studio_.displays().getAllImageWindows()) {
-            if (ds.equals(iw.getDataProvider())) {
-               iw.close();
-            }
-         }
-         try {
-            ds.freeze();
-            ds.close();
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         }
-      }
-      testDatastores_.clear();
-      testDatastores_.addAll(testDatastores);
-   }
-    */
 
    public Datastore createStoreAndDisplay(Studio studio,
                                                     PropertyMap settings,
