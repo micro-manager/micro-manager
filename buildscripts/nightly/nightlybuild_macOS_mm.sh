@@ -182,7 +182,7 @@ mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2
 mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2_port
 cp $MM_DEPS_PREFIX/lib/libgphoto2/2.5.2/*.so $MM_STAGEDIR/libgphoto2/libgphoto2
 cp $MM_DEPS_PREFIX/lib/libgphoto2_port/0.10.0/*.so $MM_STAGEDIR/libgphoto2/libgphoto2_port
-echo 'Staging portable app with mkportableapp.py...'
+echo 'Staging portable app with mkportableapp.py...' 1>&2
 buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
    --verbose \
    --srcdir $MM_DEPS_PREFIX/lib \
@@ -193,7 +193,7 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
    --forbid-from /usr/local \
    --map-path 'libltdl*.dylib:libgphoto2' \
    --map-path 'libgphoto2*.dylib:libgphoto2'
-echo 'Finished staging portable app'
+echo 'Finished staging portable app' 1>&2
 
 
 # Stage third-party JARs.
@@ -204,19 +204,8 @@ for artifact_dir in compile optional runtime; do
 done
 
 
-# Include jogl/gluegen native libraries.
-mkdir -p $MM_STAGEDIR/natives/macosx-universal
-cp ../3rdpartypublic/javalib3d/lib/natives/macosx-universal/* $MM_STAGEDIR/natives/macosx-universal/
-
-
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
-
-if [ -n "$MM_PREPACKAGE_HOOK" ]; then
-   pushd $MM_STAGEDIR
-   $MM_PREPACKAGE_HOOK
-   popd
-fi
 
 
 ##
@@ -229,6 +218,7 @@ fi
 # We do this even if not signing, so that the unjar/thin/rejar is tested.
 
 jar_unjar_script="`dirname $0`/macOS-jar-unjar.sh"
+echo 'Unarchiving JARs containing native code...' 1>&2
 "$jar_unjar_script" -x "$MM_STAGEDIR"
 
 thin_script="`dirname $0`/macOS-thin-binaries.sh"
@@ -242,11 +232,24 @@ if [ "$do_codesign" = yes ]; then
    "$codesign_script" -b "$MM_STAGEDIR"
 fi
 
+##
+## Add extracted copies of the JOGL native libraries
+##
+
+jogl_native_jars="$(find $MM_STAGEDIR/plugins/Micro-Manager -name '*-natives-macosx-universal.jar')"
+jogl_libdir="$MM_STAGEDIR/natives/macosx-universal"
+
+mkdir -p "$jogl_libdir"
+for jar in $jogl_native_jars; do
+    cp $jar/natives/macosx-universal/*.jnilib "$jogl_libdir"
+done
+
 
 ##
 ## Re-archive JARs
 ##
 
+echo 'Re-archiving JARs...' 1>&2
 "$jar_unjar_script" -c "$MM_STAGEDIR"
 
 
@@ -257,6 +260,7 @@ fi
 if [ "$make_disk_image" != yes ]; then
    exit 0
 fi
+echo 'Creating disk image...' 1>&2
 
 blank_dmg="$MM_SRCDIR/buildscripts/MacInstaller/Micro-Manager.dmg"
 sparseimage_name="Micro-Manager.sparseimage"
