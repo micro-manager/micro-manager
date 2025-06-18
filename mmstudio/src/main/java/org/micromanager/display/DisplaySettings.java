@@ -129,6 +129,15 @@ public interface DisplaySettings {
       Builder channels(Iterable<ChannelDisplaySettings> channelSettings);
 
       /**
+       * Adds a key to the DisplaySettings that will be used to position the Windows.
+       *
+       * @param key Key to use for positioning the DisplayWindow. New DisplayWindows with the
+       *            same key will be positioned at the same position
+       * @return builder instance to enable chaining commands
+       */
+      Builder windowPositionKey(String key);
+
+      /**
        * Number of ChannelDisplaySettings in this builder.  Not sure why a builder needs this...
        *
        * @return Number of ChannelDisplaySettings in this Builder.
@@ -246,6 +255,8 @@ public interface DisplaySettings {
    List<Boolean> getAllChannelVisibilities();
 
    boolean isChannelVisible(int channel);
+
+   String getWindowPositionKey();
 
    Builder copyBuilder();
 
