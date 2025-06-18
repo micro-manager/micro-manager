@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public final class SequenceSettings {
    // version ID for the sequence settings
-   public static final double Version = 1.3;
+   public static final double Version = 1.4;
 
    /**
     * SequenceSettings Builder.
@@ -79,6 +79,7 @@ public final class SequenceSettings {
       private double sliceZBottomUm = 0.0;
       private double sliceZTopUm = 0.0;
       private int acqOrderMode; // defined in org.micromanager.internal.utils.AcqOrderMode
+      private boolean isTestAcquisition = false;
 
       public Builder numFrames(int nFrames) {
          numFrames = nFrames;
@@ -255,6 +256,19 @@ public final class SequenceSettings {
          return this;
       }
 
+
+      /**
+       * Sets whether this is a test acquisition.
+       * Test acquisitions are not saved to disk and are used for testing purposes.
+       *
+       * @param isTest true if this is a test acquisition, false otherwise
+       * @return Builder instance for convenience.
+       */
+      public Builder isTestAcquisition(boolean isTest) {
+         isTestAcquisition = isTest;
+         return this;
+      }
+
       public Builder() {
       }
 
@@ -295,6 +309,7 @@ public final class SequenceSettings {
          sliceZBottomUm = s.sliceZBottomUm;
          sliceZTopUm = s.sliceZTopUm;
          acqOrderMode = s.acqOrderMode;
+         isTestAcquisition = s.isTestAcquisition;
       }
 
       /**
@@ -335,6 +350,7 @@ public final class SequenceSettings {
          s.sliceZBottomUm = sliceZBottomUm;
          s.sliceZTopUm = sliceZTopUm;
          s.acqOrderMode = acqOrderMode;
+         s.isTestAcquisition = isTestAcquisition;
          s.version = Version;
 
          return s;
@@ -560,6 +576,12 @@ public final class SequenceSettings {
     * {@link org.micromanager.internal.utils.AcqOrderMode}.
     */
    private int acqOrderMode;
+
+   /**
+    * Whether this is a test acquisition.
+    * Test acquisitions are not saved to disk and are used for testing purposes.
+    */
+   private boolean isTestAcquisition = false;
 
    private double version;
 
@@ -834,6 +856,23 @@ public final class SequenceSettings {
     */
    public int acqOrderMode() {
       return acqOrderMode;
+   }
+
+   /**
+    * Whether this is a test acquisition.
+    * Test acquisitions are not saved to disk and are used for testing purposes.
+    * They differ from normal acquisition that are not saved to disk by their intent, i.e.
+    * Test Acquisitions are quick throw away acquisition to ensure that all the settings
+    * are correct, whereas normal acquisition that are not saved to disk are useful
+    * acquisition that the user may alter want to save.
+    * TestAcquisition are especially convenient with modalities like Light Sheet and function
+    * as the equivalent of a Preview window but then for the complete Z-stack (with multiple
+    * channels if so desired).
+    *
+    * @return true if this is a test acquisition, false otherwise
+    */
+   public boolean isTestAcquisition() {
+      return isTestAcquisition;
    }
 
    public double getVersion() {

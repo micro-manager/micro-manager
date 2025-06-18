@@ -46,7 +46,6 @@ import org.micromanager.data.ProcessorFactory;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
@@ -85,6 +84,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String OUTPUT_PATH = "Output path";
    static final String SHOW = "Show";
    private final Studio studio_;
+   private final DeskewFactory deskewFactory_;
    private final MutablePropertyMapView settings_;
    private final CLIJ2 clij2_;
    private JComboBox<String> input_;
@@ -95,8 +95,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
     * @param configuratorSettings I am always confused about this propertymap
     * @param studio The Studio instance, usually a singleton.
     */
-   public DeskewFrame(PropertyMap configuratorSettings, Studio studio) {
+   public DeskewFrame(PropertyMap configuratorSettings, Studio studio,
+                      DeskewFactory deskewFactory) {
       studio_ = studio;
+      deskewFactory_ = deskewFactory;
       settings_ = studio_.profile().getSettings(this.getClass());
       clij2_ = CLIJ2.getInstance();
       studio_.logs().logMessage(CLIJ2.clinfo());
@@ -465,11 +467,12 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
                "Processing images...                                    \t",
                 "", 0, source.getNumImages());
 
-      Datastore destination = studio_.data().createRAMDatastore();
+      final Datastore destination = studio_.data().createRAMDatastore();
       List<ProcessorFactory> factories = new ArrayList<>();
 
       settings_.putBoolean(KEEP_ORIGINAL, false);
-      factories.add(new DeskewFactory(studio_, settings_.toPropertyMap()));
+      deskewFactory_.setSettings(settings_.toPropertyMap());
+      factories.add(deskewFactory_);
       Pipeline pipeline = studio_.data().createPipeline(factories, destination, true);
       try {
          pipeline.insertSummaryMetadata(source.getSummaryMetadata());
