@@ -203,6 +203,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          return this;
       }
 
+      public Builder displaySettings(DisplaySettings displaySettings) {
+         displaySettings_ = displaySettings;
+         return this;
+      }
+
       @MustCallOnEDT
       public DisplayController build(Studio studio) {
          return DisplayController.create(studio, this);

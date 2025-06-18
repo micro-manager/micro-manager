@@ -38,6 +38,13 @@ import java.util.List;
 public interface DisplaySettings {
 
    /**
+    * Keys used by Studio for Window positioning.
+    */
+   static final String ALBUM_DISPLAY = "ALBUM_DISPLAY";
+   static final String PREVIEW_DISPLAY = "PREVIEW_DISPLAY";
+   static final String MDA_DISPLAY = "MDA_DISPLAY";
+
+   /**
     * Builder for DisplaySettings.  Get an instance using the
     * {@link org.micromanager.display.DisplayManager} displaySettingsBuilder()
     * method or by using one of the copy() methods of an existing DisplaySettings instance.

@@ -121,8 +121,6 @@ public final class DefaultAlbum implements Album {
             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
          studio_.displays().manage(store_);
-         display_ = studio_.displays().createDisplay(store_);
-         display_.setCustomTitle("Album");
          DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
                studio_.profile(),
                PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
@@ -137,7 +135,10 @@ public final class DefaultAlbum implements Album {
                         store_.getSummaryMetadata().getSafeChannelName(ch),
                         Color.white)).build();
          }
-         display_.setDisplaySettings(ds);
+         ds = ds.copyBuilder().windowPositionKey(DisplaySettings.ALBUM_DISPLAY).build();
+         display_ = studio_.displays().createDisplay(store_, null, ds);
+         display_.setCustomTitle("Album");
+
 
          curTime_ = null;
       }

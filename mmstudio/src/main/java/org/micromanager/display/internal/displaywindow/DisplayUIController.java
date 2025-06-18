@@ -286,7 +286,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                getClass().getResource("/org/micromanager/icons/microscope.gif")));
          frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
          frame.setBounds(320, 320, 480, 320);
-         displayController_.getDisplaySettings().getKey();
+         String key = displayController_.getDisplaySettings().getWindowPositionKey();
          WindowPositioning.setUpBoundsMemory(frame, DisplayUIController.class, key);
 
          // TODO Determine initial window bounds using a CascadingWindowPositioner:
