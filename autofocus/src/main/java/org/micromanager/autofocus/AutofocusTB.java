@@ -471,16 +471,16 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       ImageProcessor ip;
 
       int width = (int) core_.getImageWidth();
-   int height = (int) core_.getImageHeight();
+      int height = (int) core_.getImageHeight();
       long byteDepth = core_.getBytesPerPixel();
       long numComponents = core_.getNumberOfComponents();
 
       if (numComponents >= 3) {
-         ip = new ColorProcessor(width,height);
+         ip = new ColorProcessor(width, height);
       } else if (byteDepth == 1L) {
-         ip = new ByteProcessor(width,height);
+         ip = new ByteProcessor(width, height);
       } else {
-         ip = new ShortProcessor(width,height);
+         ip = new ShortProcessor(width, height);
       }
       ip.setColor(Color.black);
       ip.fill();
