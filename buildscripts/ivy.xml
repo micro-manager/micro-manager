@@ -68,29 +68,18 @@
          <exclude org="com.fifesoft" module="autocomplete"/>
          <exclude org="com.fifesoft" module="languagesupport"/>
          <exclude org="com.github.sbridges" module="object-inspector"/>
-         <exclude org="edu.mines" module="mines-jtk"/>
          <exclude org="net.imagej" module="ij"/>
          <exclude org="net.imagej" module="ij1-patcher"/>
          <exclude org="net.imagej" module="imagej-deprecated"/>
-         <exclude org="net.imagej" module="imagej-mesh"/>
          <exclude org="net.imagej" module="imagej-ops"/>
-         <exclude org="net.imglib2" module="imglib2-algorithm-fft"/>
-         <exclude org="net.imglib2" module="imglib2-algorithm"/>
          <exclude org="net.imglib2" module="imglib2-cache"/>
          <exclude org="net.imglib2" module="imglib2-roi"/>
          <exclude org="org.javassist" module="javassist"/>
-         <exclude org="org.joml" module="joml"/>
-         <exclude org="org.mozilla" module="rhino"/>
          <exclude org="org.ocpsoft.prettytime" module="prettyTime"/>
-         <exclude org="org.ojalgo" module="ojalgo"/>
-         <exclude org="org.scijava" module="batch-processor"/>
-         <exclude org="org.scijava" module="minimaven"/>
-         <exclude org="org.scijava" module="parsington"/>
          <exclude org="org.scijava" module="scijava-search"/>
          <exclude org="org.scijava" module="scijava-table"/>
          <exclude org="org.scijava" module="scijava-ui-awt"/>
          <exclude org="org.scijava" module="script-editor"/>
-         <exclude org="org.scijava" module="scripting-javascript"/>
          <exclude org="org.scijava" module="swing-checkbox-tree"/>
       </dependency>
 
