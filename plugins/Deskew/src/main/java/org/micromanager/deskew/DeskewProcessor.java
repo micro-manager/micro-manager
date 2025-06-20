@@ -141,7 +141,9 @@ public class DeskewProcessor implements Processor {
                int width = fullVolumeResamplers_.get(coordsNoZ).getResampledShapeX();
                int height = fullVolumeResamplers_.get(coordsNoZ).getResampledShapeY();
                if (fullVolumeStore_ == null) {
-                  String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume-CPU";
+                  String prefix = inputSummaryMetadata_.getPrefix().isEmpty()
+                           ? "Untitled" : inputSummaryMetadata_.getPrefix();
+                  String newPrefix = prefix + "-Full-Volume-CPU";
                   fullVolumeStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
@@ -180,7 +182,9 @@ public class DeskewProcessor implements Processor {
                           coordsNoZ).getResampledShapeX();
                   int height = xyProjectionResamplers_.get(
                           coordsNoZ).getResampledShapeY();
-                  String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
+                  String prefix = inputSummaryMetadata_.getPrefix().isEmpty()
+                           ? "Untitled" : inputSummaryMetadata_.getPrefix();
+                  String newPrefix = prefix + "-"
                            + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Projection-CPU";
                   xyProjectionStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
@@ -218,7 +222,9 @@ public class DeskewProcessor implements Processor {
                                  orthogonalProjectionResamplers_.get(coordsNoZ)
                                           .startStackProcessing()));
                if (orthogonalStore_ == null) {
-                  String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
+                  String prefix = inputSummaryMetadata_.getPrefix().isEmpty()
+                           ? "Untitled" : inputSummaryMetadata_.getPrefix();
+                  String newPrefix = prefix + "-"
                            + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Orthogonal-Projection-CPU";
                   int width = orthogonalProjectionResamplers_.get(
