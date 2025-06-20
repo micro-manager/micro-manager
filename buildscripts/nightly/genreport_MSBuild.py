@@ -107,10 +107,14 @@ def read_entry(line, target):
         if m:
             entry_lines.append(m.group(1))
             continue
-        if not line: # Empty line after last entry
-            break
+        if not line:
+            # Empty lines (with or without spaces) may occur, usually at the
+            # end of the entry; they can be discarded.
+            continue
         m = re.match(r"^ *([:0-9]+)>(.*)$", line) # Next entry
         if m:
+            break
+        if line.startswith("Build "): # End of entries
             break
         # If we get here, we have a line that continues the current entry, but
         # has fewer than 7 spaces of indent.
@@ -151,7 +155,8 @@ def read_summary_block(line, target):
         return line, False
 
     while True:
-        m = re.match(r"^ {9}(.*)$", line)
+        # Message indent is usully 9 but sometimes 7.
+        m = re.match(r"^ {7,9}(.*)$", line)
         if m:
             messages.append(Message(m.group(1)))
             line = yield
