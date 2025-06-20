@@ -214,8 +214,7 @@ find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
 
 # The 'jre' directory is preferred over system-installed JREs by the launcher.
 rm -rf $MM_STAGEDIR/jre
-# cp -R $(cjdk --arch $MM_ARCH -j temurin-jre:11 java-home) $MM_STAGEDIR/jre
-# ^ Disabled until we figure out codesigning issues
+cp -R $(cjdk --arch $MM_ARCH -j temurin-jre:11 java-home) $MM_STAGEDIR/jre
 
 
 ##
