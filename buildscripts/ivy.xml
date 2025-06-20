@@ -68,13 +68,13 @@
          <exclude org="com.fifesoft" module="autocomplete"/>
          <exclude org="com.fifesoft" module="languagesupport"/>
          <exclude org="net.imagej" module="ij"/>
-         <exclude org="net.imagej" module="ij1-patcher"/>
          <exclude org="net.imagej" module="imagej-legacy"/>
          <exclude org="net.imagej" module="imagej-ops"/>
          <exclude org="net.imglib2" module="imglib2-cache"/>
          <exclude org="net.imglib2" module="imglib2-roi"/>
          <exclude org="org.scijava" module="scijava-table"/>
          <exclude org="org.scijava" module="script-editor"/>
+         <exclude org="sc.fiji" module="fiji-lib"/>
       </dependency>
 
 
