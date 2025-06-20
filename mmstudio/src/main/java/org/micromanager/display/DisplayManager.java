@@ -156,6 +156,22 @@ public interface DisplayManager extends EventPublisher {
                                DisplayWindowControlsFactory factory);
 
    /**
+    * Create a new DisplayWindow for the specified DataProvider and return it.
+    * This version allows you to specify the DisplaySettings to use for the
+    * DisplayWindow. Set the DisplayWindowControlsFactory to null if you do not
+    * use custom controls.
+    *
+    * @param provider        The DataProvider whose data should be displayed.
+    * @param factory         A ControlsFactory used to create custom controls for
+    *                        the DisplayWindow. May be null.
+    * @param displaySettings The initial DisplaySettings to use for the DisplayWindow.
+    * @return The created DisplayWindow.
+    */
+   DisplayWindow createDisplay(DataProvider provider,
+                                      DisplayWindowControlsFactory factory,
+                                      DisplaySettings displaySettings);
+
+   /**
     * Create a new Inspector window that shows information for the specified
     * DataViewer, or for the topmost window if the DataViewer is null.
     *

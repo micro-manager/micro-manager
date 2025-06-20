@@ -181,7 +181,6 @@ public final class MMAcquisition extends DataViewerListener {
 
       if (show_) {
          studio_.displays().manage(store_);
-         display_ = studio_.displays().createDisplay(store_, makeControlsFactory());
 
          // Color handling is a problem. They are no longer part of the summary
          // metadata.  However, they clearly need to be stored
@@ -192,45 +191,37 @@ public final class MMAcquisition extends DataViewerListener {
          // settings here seems clumsy, but I am not sure where else this belongs
 
          // Use settings of last closed acquisition viewer
-         DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
+         DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
                   studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
 
-         if (dsTmp == null) {
-            dsTmp = DefaultDisplaySettings.getStandardSettings(
+         if (ds == null) {
+            ds = DefaultDisplaySettings.getStandardSettings(
                      PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
 
-         //if (summaryMetadata.has("ChColors")) {
          final int nrChannels = store_.getSummaryMetadata().getChannelNameList().size();
-         if (nrChannels > 0) {
-            //JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
-
-            DisplaySettings.Builder displaySettingsBuilder
-                     = dsTmp.copyBuilder();
-
-            // the do-while loop is a way to set display settings in a thread
-            // safe way.  See docs to compareAndSetDisplaySettings.
-            do {
-               if (nrChannels == 1) {
-                  displaySettingsBuilder.colorModeGrayscale();
-               } else {
-                  displaySettingsBuilder.colorModeComposite();
-               }
-               for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
-                  displaySettingsBuilder.channel(channelIndex,
-                           RememberedDisplaySettings.loadChannel(studio_,
+         DisplaySettings.Builder displaySettingsBuilder = ds.copyBuilder();
+         if (nrChannels > 0) { // I believe this will always be true, but just in case...
+            if (nrChannels == 1) {
+               displaySettingsBuilder.colorModeGrayscale();
+            } else {
+               displaySettingsBuilder.colorModeComposite();
+            }
+            for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
+               displaySettingsBuilder.channel(channelIndex,
+                        RememberedDisplaySettings.loadChannel(studio_,
                                  store_.getSummaryMetadata().getChannelGroup(),
                                  store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
                                  channelIndex < acquisitionSettings.channels().size()
                                           ? acquisitionSettings.channels().get(channelIndex).color()
                                           : null));
-               }
-            } while (!display_.compareAndSetDisplaySettings(
-                     display_.getDisplaySettings(), displaySettingsBuilder.build()));
-         } else {
-            display_.compareAndSetDisplaySettings(
-                     display_.getDisplaySettings(), dsTmp);
+            }
          }
+
+         displaySettingsBuilder.windowPositionKey(DisplaySettings.MDA_DISPLAY);
+         display_ = studio_.displays().createDisplay(store_,
+                  makeControlsFactory(),
+                  displaySettingsBuilder.build());
 
          // It is a bit funny that there are listeners and events
          // The listener provides the canClose functionality (which needs to be

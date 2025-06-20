@@ -58,6 +58,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private final boolean histogramLogarithmic_;
    private final boolean ignoreZeros_;
    private final List<ChannelDisplaySettings> channelSettings_;
+   private final String windowPositionKey_;
 
    private static class Builder implements DisplaySettings.Builder {
       private double zoom_ = 1.0;
@@ -70,6 +71,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       private double extremaQuantile_ = 0.001;
       private boolean ignoreZeros_ = false;
       private List<ChannelDisplaySettings> channelSettings_ = new ArrayList<>();
+      private String windowPositionKey_ = null;
 
       private Builder() {
          channelSettings_.add(DefaultChannelDisplaySettings.builder().build());
@@ -165,6 +167,12 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public Builder windowPositionKey(String key) {
+         windowPositionKey_ = key;
+         return this;
+      }
+
+      @Override
       public Builder channel(int channel) {
          Preconditions.checkArgument(channel >= 0);
          while (channelSettings_.size() <= channel) {
@@ -223,6 +231,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       histogramLogarithmic_ = builder.histogramLogarithmic_;
       channelSettings_ =
             new ArrayList<>(builder.channelSettings_);
+      windowPositionKey_ = builder.windowPositionKey_;
    }
 
    @Override
@@ -278,6 +287,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public int getNumberOfChannels() {
       return channelSettings_.size();
+   }
+
+   @Override
+   public String getWindowPositionKey() {
+      return windowPositionKey_;
    }
 
    @Override
@@ -865,6 +879,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .autostretch(autostretch_)
             .roiAutoscale(useROI_)
             .histogramLogarithmic(histogramLogarithmic_)
+            .windowPositionKey(windowPositionKey_)
             .autoscaleIgnoredQuantile(extremaQuantile_)
             .autoscaleIgnoringZeros(ignoreZeros_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {

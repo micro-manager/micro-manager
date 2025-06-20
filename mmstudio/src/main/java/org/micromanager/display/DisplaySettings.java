@@ -38,6 +38,13 @@ import java.util.List;
 public interface DisplaySettings {
 
    /**
+    * Keys used by Studio for Window positioning.
+    */
+   static final String ALBUM_DISPLAY = "ALBUM_DISPLAY";
+   static final String PREVIEW_DISPLAY = "PREVIEW_DISPLAY";
+   static final String MDA_DISPLAY = "MDA_DISPLAY";
+
+   /**
     * Builder for DisplaySettings.  Get an instance using the
     * {@link org.micromanager.display.DisplayManager} displaySettingsBuilder()
     * method or by using one of the copy() methods of an existing DisplaySettings instance.
@@ -127,6 +134,15 @@ public interface DisplaySettings {
        * @return builder instance to enable chaining commands
        */
       Builder channels(Iterable<ChannelDisplaySettings> channelSettings);
+
+      /**
+       * Adds a key to the DisplaySettings that will be used to position the Windows.
+       *
+       * @param key Key to use for positioning the DisplayWindow. New DisplayWindows with the
+       *            same key will be positioned at the same position
+       * @return builder instance to enable chaining commands
+       */
+      Builder windowPositionKey(String key);
 
       /**
        * Number of ChannelDisplaySettings in this builder.  Not sure why a builder needs this...
@@ -246,6 +262,8 @@ public interface DisplaySettings {
    List<Boolean> getAllChannelVisibilities();
 
    boolean isChannelVisible(int channel);
+
+   String getWindowPositionKey();
 
    Builder copyBuilder();
 
