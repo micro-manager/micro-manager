@@ -2311,17 +2311,17 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    private String getOptimalZStep(boolean cached) {
+      double optimalZ = 0.0;
       try {
-         double optimalZ = mmStudio_.core().getPixelSizeOptimalZUm(cached);
-         if (optimalZ == 0.0) {
-            double pixelSize = mmStudio_.core().getPixelSizeUm(cached);
-            optimalZ = 4.0 * pixelSize;
-         }
-         return NumberUtils.doubleToDisplayString(optimalZ);
+         optimalZ = mmStudio_.core().getPixelSizeOptimalZUm(cached);
       } catch (Exception ex) {
-         mmStudio_.logs().logError(ex, "Failed to get optimalZ step from core");
+         mmStudio_.logs().logError("Failed to get optimalZ step from core");
       }
-      return "1.0";
+      if (optimalZ == 0.0) {
+         double pixelSize = mmStudio_.core().getPixelSizeUm(cached);
+         optimalZ = 4.0 * pixelSize;
+      }
+      return NumberUtils.doubleToDisplayString(optimalZ);
    }
 
    public static boolean getShouldSyncExposure() {
