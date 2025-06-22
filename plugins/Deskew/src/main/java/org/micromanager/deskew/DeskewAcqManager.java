@@ -57,7 +57,7 @@ public class DeskewAcqManager {
                                                     Double newZStepUm) throws IOException {
       boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
       DisplaySettings displaySettings = null;
-      Datastore store = DeskewAcqManager.createDatastore(studio, settings, prefix);
+      Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
       if (isTestAcq) {
          switch (projectionType) {
             case FULL_VOLUME:
@@ -174,10 +174,11 @@ public class DeskewAcqManager {
       return store;
    }
 
-   protected static Datastore createDatastore(Studio studio, PropertyMap settings, String prefix)
+   protected static Datastore createDatastore(Studio studio, PropertyMap settings,
+                                              boolean isTestAcq, String prefix)
             throws IOException {
       String output  = settings.getString(DeskewFrame.OUTPUT_OPTION, DeskewFrame.OPTION_RAM);
-      if (output.equals(DeskewFrame.OPTION_RAM)) {
+      if (output.equals(DeskewFrame.OPTION_RAM) || isTestAcq) {
          Datastore store = studio.data().createRAMDatastore();
          store.setName(prefix);
          return store;
