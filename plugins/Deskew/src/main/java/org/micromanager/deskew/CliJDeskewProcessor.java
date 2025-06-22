@@ -103,7 +103,9 @@ public class CliJDeskewProcessor implements Processor {
                Image projection = studio_.data().ij().createImage(resultImage.getProcessor(),
                        coordsNoZPossiblyNoT.copyBuilder().build(), image.getMetadata());
                if (xyProjectionStore_ == null) {
-                  String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
+                  String prefix = inputSummaryMetadata_.getPrefix().isEmpty()
+                           ? "Untitled" : inputSummaryMetadata_.getPrefix();
+                  String newPrefix = prefix + "-"
                            + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Projection-GPU";
                   xyProjectionStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
@@ -125,7 +127,9 @@ public class CliJDeskewProcessor implements Processor {
                Image projection = studio_.data().ij().createImage(resultImage.getProcessor(),
                        coordsNoZPossiblyNoT.copyBuilder().build(), image.getMetadata());
                if (orthogonalStore_ == null) {
-                  String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
+                  String prefix = inputSummaryMetadata_.getPrefix().isEmpty()
+                           ? "Untitled" : inputSummaryMetadata_.getPrefix();
+                  String newPrefix = prefix + "-"
                            + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Orthogonal-Projection-GPU";
                   orthogonalStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
@@ -149,7 +153,9 @@ public class CliJDeskewProcessor implements Processor {
                            coordsNoZPossiblyNoT.copyBuilder().z(i).build(),
                            image.getMetadata());
                   if (fullVolumeStore_ == null) {
-                     String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume-GPU";
+                     String prefix = inputSummaryMetadata_.getPrefix().isEmpty()
+                              ? "Untitled" : inputSummaryMetadata_.getPrefix();
+                     String newPrefix = prefix + "-" + "-Full-Volume-GPU";
                      fullVolumeStore_ = deskewAcqManager_.createStoreAndDisplay(studio_,
                              settings_,
                              inputSummaryMetadata_,

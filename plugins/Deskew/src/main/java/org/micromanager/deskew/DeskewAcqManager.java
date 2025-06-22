@@ -26,6 +26,7 @@ public class DeskewAcqManager {
    private Datastore testXYProjectionsStore_;
    private DisplayWindow testXYProjectionsWindow_;
 
+
    /**
     * Enum representing the different projection types for displaying data.
     */
@@ -34,6 +35,12 @@ public class DeskewAcqManager {
       ORTHOGONAL_VIEWS,
       FULL_VOLUME
    }
+
+   public static final String[] PROJECTION_TYPES = {
+      ProjectionType.YX_PROJECTION.name(),
+      ProjectionType.ORTHOGONAL_VIEWS.name(),
+      ProjectionType.FULL_VOLUME.name()
+   };
 
    public DeskewAcqManager(Studio studio) {
       studio_ = studio;
@@ -50,7 +57,7 @@ public class DeskewAcqManager {
                                                     Double newZStepUm) throws IOException {
       boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
       DisplaySettings displaySettings = null;
-      Datastore store = DeskewAcqManager.createDatastore(studio, settings, prefix);
+      Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
       if (isTestAcq) {
          switch (projectionType) {
             case FULL_VOLUME:
@@ -103,6 +110,10 @@ public class DeskewAcqManager {
                return null;
          }
       }
+      if (store == null) {
+         studio.logs().showError("Failed to create datastore for Deskew.");
+         return null;
+      }
       Coords.Builder cb = summaryMetadata.getIntendedDimensions().copyBuilder().z(nrZSlices);
       if (store instanceof RewritableDatastore) {
          cb.t(0);
@@ -137,10 +148,11 @@ public class DeskewAcqManager {
                && (settings.getString(DeskewFrame.OUTPUT_OPTION, "").equals(DeskewFrame.OPTION_RAM)
                || settings.getString(DeskewFrame.OUTPUT_OPTION, "")
                .equals(DeskewFrame.OPTION_REWRITABLE_RAM)))) {
-         DisplayWindow display = studio.displays().createDisplay(store);
          if (displaySettings != null) {
-            display.setDisplaySettings(displaySettings);
+            displaySettings = displaySettings.copyBuilder().windowPositionKey(
+                     PROJECTION_TYPES[projectionType.ordinal()]).build();
          }
+         DisplayWindow display = studio.displays().createDisplay(store, null, displaySettings);
          if (isTestAcq) {
             switch (projectionType) {
                case FULL_VOLUME:
@@ -162,10 +174,11 @@ public class DeskewAcqManager {
       return store;
    }
 
-   protected static Datastore createDatastore(Studio studio, PropertyMap settings, String prefix)
+   protected static Datastore createDatastore(Studio studio, PropertyMap settings,
+                                              boolean isTestAcq, String prefix)
             throws IOException {
       String output  = settings.getString(DeskewFrame.OUTPUT_OPTION, DeskewFrame.OPTION_RAM);
-      if (output.equals(DeskewFrame.OPTION_RAM)) {
+      if (output.equals(DeskewFrame.OPTION_RAM) || isTestAcq) {
          Datastore store = studio.data().createRAMDatastore();
          store.setName(prefix);
          return store;
