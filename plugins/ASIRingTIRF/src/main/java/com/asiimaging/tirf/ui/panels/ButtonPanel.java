@@ -55,9 +55,7 @@ public class ButtonPanel extends Panel {
          }
       });
 
-      tglLiveMode.registerListener(event -> {
-         frame.toggleLiveMode();
-      });
+      tglLiveMode.registerListener(event -> frame.toggleLiveMode());
    }
 
    public ToggleButton getStartButton() {

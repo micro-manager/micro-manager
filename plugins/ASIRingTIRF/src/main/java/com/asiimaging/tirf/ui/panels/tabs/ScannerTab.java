@@ -34,9 +34,10 @@ public class ScannerTab extends Panel {
    private Button btnCalibrate;
    private Button btnSetFastCirclesHz;
    private Button btnSaveToFlash;
+   private Button btnSetupPLogic;
 
-   private Spinner spnScannerH;
-   private Spinner spnScannerI;
+   private Spinner spnScannerX;
+   private Spinner spnScannerY;
 
    private Label lblFastCirclesHz;
 
@@ -62,11 +63,11 @@ public class ScannerTab extends Panel {
 
       spnNumFastCircles = Spinner.createIntegerSpinner(model.getNumFastCircles(), 1, 10, 1);
       spnFastCirclesRadius =
-            Spinner.createFloatSpinner(model.getScanner().getFastCirclesRadius(), 0.0f, 90.0f,
-                  0.01f);
+            Spinner.createDoubleSpinner(model.getScanner().getFastCirclesRadius(), 0.0, 90.0,
+                  0.01);
       spnFastCirclesAsymmetry =
-            Spinner.createFloatSpinner(model.getScanner().getFastCirclesAsymmetry(), 0.0f, 2.0f,
-                  0.01f);
+            Spinner.createDoubleSpinner(model.getScanner().getFastCirclesAsymmetry(), 0.0, 2.0,
+                  0.01);
 
       tglBeamEnabled =
             new ToggleButton("Beam On", "Beam Off", Icons.ARROW_RIGHT, Icons.CANCEL, 130, 30);
@@ -89,22 +90,24 @@ public class ScannerTab extends Panel {
       final Label lblCalibrationStartRadius = new Label("Calibration Start:");
       final Label lblCalibrationRadiusIncrement = new Label("Calibration Increment:");
       spnCalibrationImages = Spinner.createIntegerSpinner(10, 1, Integer.MAX_VALUE, 1);
-      spnCalibrationStart = Spinner.createFloatSpinner(0.5f, 0.0f, Float.MAX_VALUE, 0.1f);
+      spnCalibrationStart = Spinner.createDoubleSpinner(0.5, 0.0, Double.MAX_VALUE, 0.1);
       spnCalibrationIncrement =
-            Spinner.createFloatSpinner(0.01f, Float.MIN_VALUE, Float.MAX_VALUE, 0.01f);
-      btnCalibrate = new Button("Calibrate System", 120, 20);
+            Spinner.createDoubleSpinner(0.01, Double.MIN_VALUE, Double.MAX_VALUE, 0.01);
+      btnCalibrate = new Button("Run Calibration Acq", 130, 20);
 
-      final Label lblScannerH = new Label("Scanner H:");
-      final Label lblScannerI = new Label("Scanner I:");
-      spnScannerH =
-            Spinner.createFloatSpinner(model.getScanner().getPositionH(), -4000.0f, 4000.0f, 20.0f);
-      spnScannerI =
-            Spinner.createFloatSpinner(model.getScanner().getPositionI(), -4000.0f, 4000.0f, 20.0f);
+      final Label lblScannerH = new Label("Scanner " + model.getScanner().getAxisX() + "°:");
+      final Label lblScannerI = new Label("Scanner " + model.getScanner().getAxisY() + "°:");
+      spnScannerX = Spinner.createDoubleSpinner(0.0, -4.0, 4.0, 20.0);
+      spnScannerY = Spinner.createDoubleSpinner(0.0, -4.0, 4.0, 20.0);
 
       lblFastCirclesHz = new Label("Fast Circles Rate: 0 Hz");
       updateFastCirclesHzLabel(); // make sure it reflects current exposure
 
       btnSaveToFlash = new Button("Save Settings to Flash", 160, 22);
+      btnSaveToFlash.setToolTipText("Send the SAVESET Z command to the scanner device.");
+
+      btnSetupPLogic = new Button("Setup PLogic", 120, 22);
+      btnSetupPLogic.setToolTipText("Send the PLogic card the program to change the camera trigger rate.");
 
       // create action listeners
       createEventHandlers();
@@ -130,12 +133,13 @@ public class ScannerTab extends Panel {
       add(tglFastCirclesState, "");
       add(lblFastCirclesHz, "wrap");
       add(lblScannerH, "split 2");
-      add(spnScannerH, "");
+      add(spnScannerX, "");
       add(lblScannerI, "split 2");
-      add(spnScannerI, "wrap");
+      add(spnScannerY, "wrap");
       add(lblCalibration, "span 4, wrap");
       add(calibrationPanel, "span 4, wrap");
       add(btnSaveToFlash, "");
+      add(btnSetupPLogic, "");
    }
 
    public void setBeamEnabledState(final boolean state) {
@@ -148,34 +152,37 @@ public class ScannerTab extends Panel {
 
    public void updateFastCirclesHzLabel() {
       lblFastCirclesHz.setText(
-            "Fast Circles Rate: " + model.getScanner().getFastCirclesRate() + " Hz");
+            "Fast Circles Rate: " + model.getScanner().getFastCirclesRateHz() + " Hz");
    }
 
    private void createEventHandlers() {
       // number of circles per camera exposure period
       spnNumFastCircles.registerListener(event -> {
          model.setNumFastCircles(spnNumFastCircles.getInt());
-         model.getScanner().setFastCirclesStateRestart();
+         if (model.getScanner().getFastCirclesEnabled()) {
+            model.getScanner().setFastCirclesStateRestart();
+         }
       });
 
       // correct scanner circle for asymmetry
       spnFastCirclesAsymmetry.registerListener(event -> {
-         model.getScanner().setFastCirclesAsymmetry(spnFastCirclesAsymmetry.getFloat());
-         model.getScanner().setFastCirclesStateRestart();
+         model.getScanner().setFastCirclesAsymmetry(spnFastCirclesAsymmetry.getDouble());
+         if (model.getScanner().getFastCirclesEnabled()) {
+            model.getScanner().setFastCirclesStateRestart();
+         }
       });
 
       // the fast circles radius
       spnFastCirclesRadius.registerListener(event -> {
-         model.getScanner().setFastCirclesRadius(spnFastCirclesRadius.getFloat());
-         model.getScanner().setFastCirclesStateRestart();
+         model.getScanner().setFastCirclesRadius(spnFastCirclesRadius.getDouble());
+         if (model.getScanner().getFastCirclesEnabled()) {
+            model.getScanner().setFastCirclesStateRestart();
+         }
       });
 
       // enable the scanner beam
-      tglBeamEnabled.registerListener(event -> {
-         model.getScanner().setBeamEnabled(tglBeamEnabled.isSelected());
-         spnScannerH.setValue(model.getScanner().getPositionH());
-         spnScannerI.setValue(model.getScanner().getPositionI());
-      });
+      tglBeamEnabled.registerListener(event ->
+            model.getScanner().setBeamEnabled(tglBeamEnabled.isSelected()));
 
       // enable the fast circles state
       tglFastCirclesState.registerListener(event -> {
@@ -186,44 +193,49 @@ public class ScannerTab extends Panel {
 
       // run the fast circles calibration routine
       btnCalibrate.registerListener(event -> {
-         System.out.println("Calibration Start...");
+         //System.out.println("Calibration Start...");
          model.calibrateFastCircles(
                spnCalibrationImages.getInt(),
-               spnCalibrationStart.getFloat(),
-               spnCalibrationIncrement.getFloat()
+               spnCalibrationStart.getDouble(),
+               spnCalibrationIncrement.getDouble()
          );
       });
 
       // sets the fast circles rate based on exposure
       btnSetFastCirclesHz.registerListener(event -> {
-         model.getScanner().setFastCirclesRate(model.computeFastCirclesHz());
-         model.getScanner().setFastCirclesStateRestart();
+         model.getScanner().setFastCirclesRateHz(model.computeFastCirclesHz());
+         // set the "one shot (NRT)" config value (trigger time in milliseconds)
+         if (model.getScanner().getFirmwareVersion() >= 3.51) {
+            model.getPLogic().setPointerPosition(1); // logic cell 1
+            model.getPLogic().setCellConfig(model.computeOneShotTiming());
+         }
+         if (model.getScanner().getFastCirclesEnabled()) {
+            model.getScanner().setFastCirclesStateRestart();
+         }
          updateFastCirclesHzLabel();
       });
 
-      // move the scanner H axis
-      spnScannerH.registerListener(event -> {
-         model.getScanner().moveH(spnScannerH.getFloat());
-         //System.out.println(model.getScanner().getPositionH());
-      });
+      // move the scanner X axis
+      spnScannerX.registerListener(event ->
+            model.getScanner().moveX(spnScannerX.getDouble()));
 
-      // move the scanner I axis
-      spnScannerI.registerListener(event -> {
-         model.getScanner().moveI(spnScannerI.getFloat());
-         //System.out.println(model.getScanner().getPositionI());
-      });
+      // move the scanner Y axis
+      spnScannerY.registerListener(event ->
+            model.getScanner().moveY(spnScannerY.getDouble()));
 
-      // save settings the the controller hardware
-      btnSaveToFlash.registerListener(event -> {
-         model.getScanner().setSaveSettings();
-      });
+      // save settings the controller hardware
+      btnSaveToFlash.registerListener(event ->
+            model.getScanner().setSaveSettings());
+
+      // send the PLC program to the PLogic card
+      btnSetupPLogic.registerListener(event -> model.setupPLogic());
    }
 
-   public Spinner getSpinnerScannerH() {
-      return spnScannerH;
+   public Spinner getSpinnerScannerX() {
+      return spnScannerX;
    }
 
-   public Spinner getSpinnerScannerI() {
-      return spnScannerI;
+   public Spinner getSpinnerScannerY() {
+      return spnScannerY;
    }
 }

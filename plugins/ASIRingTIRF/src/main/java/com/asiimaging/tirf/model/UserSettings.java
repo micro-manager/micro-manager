@@ -13,17 +13,18 @@ import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
+import java.util.Objects;
+
 public class UserSettings {
 
-   private final Class<?> cls;
+   private final Studio studio;
    private final String userName;
-
-   private final UserProfile profile;
    private final MutablePropertyMapView settings;
 
    public UserSettings(final Studio studio) {
-      cls = UserSettings.class;
-      profile = studio.getUserProfile();
+      this.studio = Objects.requireNonNull(studio);
+      Class<?> cls = UserSettings.class;
+      UserProfile profile = studio.getUserProfile();
       userName = profile.getProfileName();
       settings = profile.getSettings(cls);
    }
@@ -59,7 +60,7 @@ public class UserSettings {
    public String load() {
       final String json = settings.getString("settings", Settings.createDefaultSettings().toJson());
       if (TIRFControlFrame.DEBUG) {
-         System.out.println("LOADED JSON => " + json);
+         studio.logs().logMessage("LOADED JSON => " + json);
       }
       return json;
    }
@@ -70,7 +71,7 @@ public class UserSettings {
    public void save(final TIRFControlModel model) {
       settings.putString("settings", model.toJson());
       if (TIRFControlFrame.DEBUG) {
-         System.out.println("SAVED JSON => " + model.toJson());
+         studio.logs().logMessage("SAVED JSON => " + model.toJson());
       }
    }
 }

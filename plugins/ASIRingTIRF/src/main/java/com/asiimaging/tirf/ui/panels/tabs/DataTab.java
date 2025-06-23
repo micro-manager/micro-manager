@@ -20,6 +20,9 @@ import java.awt.Font;
 import java.io.File;
 import java.util.Objects;
 import javax.swing.JTextField;
+
+import com.asiimaging.tirf.ui.utils.BrowserUtils;
+import com.asiimaging.tirf.ui.utils.DialogUtils;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.utils.FileDialogs;
 
@@ -38,6 +41,8 @@ public class DataTab extends Panel {
    private CheckBox chkUseShutdownScript;
    private JTextField txtStartupScript;
    private JTextField txtShutdownScript;
+
+   private Button btnManual;
 
    private final TIRFControlModel model;
    private final FileDialogs.FileType fileSelect;
@@ -82,7 +87,7 @@ public class DataTab extends Panel {
       btnBrowse = new Button("Browse", 80, 20);
 
       final Label lblSaveType = new Label("Save Format:");
-      final String[] buttonNames = {"Single Plane TIFF", "Multi-Page TIFF"};
+      final String[] buttonNames = {"Single Plane TIFF", "Multi-Page TIFF", "NDTiff"};
       final String selected = getSaveModeText(model.getDatastoreSaveMode());
       radSaveType = new RadioButton(buttonNames, selected);
 
@@ -124,6 +129,8 @@ public class DataTab extends Panel {
       chkUseStartupScript = new CheckBox("", 12, model.getUseStartupScript());
       chkUseShutdownScript = new CheckBox("", 12, model.getUseShutdownScript());
 
+      btnManual = new Button("Manual", 120, 30);
+
       // add elements to scriptPanel
       scriptPanel.add(lblStartupScript, "");
       scriptPanel.add(txtStartupScript, "");
@@ -145,13 +152,13 @@ public class DataTab extends Panel {
       add(lblSaveType, "");
       add(radSaveType, "wrap");
       add(lblSaveDirectory, "");
-      add(txtSaveDirectory, "");
-      add(btnBrowse, "wrap");
+      add(txtSaveDirectory, "split 2");
+      add(btnBrowse, "wrap, gapleft 8px");
       add(lblSaveFileName, "");
-      add(txtSaveFileName, "wrap, gapbottom 80px");
-      //add(btnSave, "span 2, wrap");
+      add(txtSaveFileName, "wrap, gapbottom 60px");
       add(lblScripts, "span 2, wrap");
-      add(scriptPanel, "span 4");
+      add(scriptPanel, "span 4, wrap, gapbottom 20px");
+      add(btnManual,"");
    }
 
    private void createEventHandlers() {
@@ -163,12 +170,17 @@ public class DataTab extends Panel {
       // select datastore save type
       radSaveType.registerListener(e -> {
          final String text = radSaveType.getSelectedButtonText();
-         if (text.equals("Single Plane TIFF")) {
-            model.setDatastoreSaveMode(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-         } else {
-            model.setDatastoreSaveMode(Datastore.SaveMode.MULTIPAGE_TIFF);
+         switch (text) {
+            case "Single Plane TIFF":
+               model.setDatastoreSaveMode(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+               break;
+            case "Multi Page TIFF":
+               model.setDatastoreSaveMode(Datastore.SaveMode.MULTIPAGE_TIFF);
+               break;
+            case "NDTiff":
+               model.setDatastoreSaveMode(Datastore.SaveMode.ND_TIFF);
+               break;
          }
-         System.out.println(text);
       });
 
       // select datastore save directory
@@ -230,11 +242,33 @@ public class DataTab extends Panel {
          model.setScriptDelay(spnScriptDelay.getInt());
       });
 
+      btnManual.registerListener(e -> {
+         final boolean result = DialogUtils.showYesNoDialog(btnManual,
+               "Open Browser", "Would you like to navigate to the plugin manual?");
+         if (result) {
+            BrowserUtils.openWebsite(model.getStudio(),
+                  "https://www.asiimaging.com/docs/ringtirf");
+         }
+      });
+
    }
 
    private String getSaveModeText(final Datastore.SaveMode saveMode) {
-      return (saveMode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) ? "Single Plane TIFF" :
-            "Multi-Page TIFF";
+      String result = "";
+      switch (saveMode) {
+         case SINGLEPLANE_TIFF_SERIES:
+            result = "Single Plane TIFF";
+            break;
+         case MULTIPAGE_TIFF:
+            result = "Multi-Page TIFF";
+            break;
+         case ND_TIFF:
+            result = "NDTiff";
+            break;
+         default:
+            break;
+      }
+      return result;
    }
 
 }

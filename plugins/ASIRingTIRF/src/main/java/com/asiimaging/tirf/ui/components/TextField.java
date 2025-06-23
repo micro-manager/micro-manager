@@ -46,7 +46,7 @@ public class TextField extends JTextField {
             update();
          }
 
-         protected void update() {
+         private void update() {
             method.run();
          }
       });
