@@ -7,6 +7,8 @@
 
 package com.asiimaging.tirf.model.devices;
 
+import com.asiimaging.tirf.model.data.CameraLibrary;
+import com.asiimaging.tirf.model.data.CameraName;
 import java.util.Objects;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
@@ -16,10 +18,10 @@ public class Camera {
    private final Studio studio;
    private final CMMCore core;
 
-   private String cameraName;
    private String deviceName;
+   private CameraLibrary cameraLibrary;
+   private CameraName cameraName;
 
-   private boolean isSupported;
 
    public static class Properties {
 
@@ -36,43 +38,123 @@ public class Camera {
    public Camera(final Studio studio) {
       this.studio = Objects.requireNonNull(studio);
       core = studio.core();
-      isSupported = false;
-      cameraName = "";
+      cameraLibrary = CameraLibrary.NOT_SUPPORTED;
+      cameraName = CameraName.NOT_SUPPORTED;
       deviceName = "";
-   }
-
-   public boolean isSupported() {
-      return isSupported;
-   }
-
-   public void setDeviceName(final String name) {
-      deviceName = name;
    }
 
    public String getDeviceName() {
       return deviceName;
    }
 
-   public void setup() {
-      deviceName = core.getCameraDevice();
-      cameraName = getCameraName();
-      setupDeviceProperties();
+   public CameraName getCameraName() {
+      return cameraName;
    }
 
-   private void setupDeviceProperties() {
+   public boolean isSupported() {
+      return cameraName != CameraName.NOT_SUPPORTED && cameraName != CameraName.DEMOCAM;
+   }
+
+   public CameraLibrary getDeviceLibrary() {
+      try {
+         return CameraLibrary.fromString(core.getDeviceLibrary(deviceName));
+      } catch (Exception e) {
+         studio.logs().logError("could not get the device library for the camera.");
+         return CameraLibrary.NOT_SUPPORTED;
+      }
+   }
+
+   /**
+    * Returns true if the camera is supported.
+    *
+    * <p>This method sets up the camera device properties.
+    *
+    * @return true if the camera is supported
+    */
+   public boolean setupProperties() {
+      boolean result = false;
+      deviceName = core.getCameraDevice();
+      cameraLibrary = getDeviceLibrary();
+      cameraName = CameraName.fromString(getCameraNameString());
+      switch (cameraLibrary) {
+         case DEMOCAMERA:
+            result = setupDevicePropertiesDemocam();
+            break;
+         case HAMAMATSUHAM:
+            result = setupDevicePropertiesHamamatsu();
+            break;
+         case PVCAM:
+            result = setupDevicePropertiesPVCAM();
+            break;
+         default:
+            break;
+      }
+      return result;
+   }
+
+   /**
+    * Returns the name of the camera.
+    *
+    * <p>This method should only be called after the CameraLibrary has been detected
+    *
+    * @return the name of the camera
+    */
+   public String getCameraNameString() {
+      String result = "";
+      try {
+         switch (cameraLibrary) {
+            case DEMOCAMERA: // uses "CamaraName" property
+            case HAMAMATSUHAM:
+               result = core.getProperty(deviceName, "CameraName");
+               break;
+            case PVCAM:
+               result = core.getProperty(deviceName, "ChipName");
+               break;
+            default:
+               break;
+         }
+      } catch (Exception e) {
+         studio.logs().showError("could not get the camera name for deviceName: " + deviceName);
+      }
+      return result;
+   }
+
+   private boolean setupDevicePropertiesDemocam() {
+      return cameraName == CameraName.DEMOCAM;
+   }
+
+   private boolean setupDevicePropertiesHamamatsu() {
+      boolean result = false;
       switch (cameraName) {
-         case "C14440-20UP": // Hamamatsu Fusion
+         case HAMAMATSU_FUSION:
             Properties.Keys.TRIGGER_MODE = "TRIGGER SOURCE";
             Properties.Values.EXTERNAL_TRIGGER = "EXTERNAL";
             Properties.Values.INTERNAL_TRIGGER = "INTERNAL";
             setScanModeFast();
             setTriggerPolarity();
-            isSupported = true;
+            result = true;
             break;
          default:
-            isSupported = false;
+            // camera not supported
             break;
       }
+      return result;
+   }
+
+   private boolean setupDevicePropertiesPVCAM() {
+      boolean result = false;
+      switch (cameraName) {
+         case PRIME_95B:
+            Properties.Keys.TRIGGER_MODE = "TriggerMode";
+            Properties.Values.EXTERNAL_TRIGGER = "Edge Trigger";
+            Properties.Values.INTERNAL_TRIGGER = "Internal Trigger";
+            result = true;
+            break;
+         default:
+            // camera not supported
+            break;
+      }
+      return result;
    }
 
    public void setTriggerModeExternal() {
@@ -103,12 +185,12 @@ public class Camera {
       return result.equals(Properties.Values.EXTERNAL_TRIGGER);
    }
 
-   /////// Hamamatsu
+   /////// Hamamatsu - these properties are specific to Hamamatsu cameras
    public void setScanModeFast() {
       try {
          core.setProperty(deviceName, "ScanMode", "3");
       } catch (Exception e) {
-         e.printStackTrace();
+         studio.logs().showError("could not set the \"ScanMode\" property for the camera.");
       }
    }
 
@@ -116,7 +198,7 @@ public class Camera {
       try {
          core.setProperty(deviceName, "TriggerPolarity", "POSITIVE");
       } catch (Exception e) {
-         e.printStackTrace();
+         studio.logs().showError("could not set the \"TriggerPolarity\" property for the camera.");
       }
    }
    ///////
@@ -129,16 +211,6 @@ public class Camera {
          studio.logs().showError("could not get exposure!");
       }
       return exposure;
-   }
-
-   public String getCameraName() {
-      String result = "";
-      try {
-         result = core.getProperty(deviceName, "CameraName");
-      } catch (Exception e) {
-         studio.logs().showError("could not get the camera name!");
-      }
-      return result;
    }
 
    // Burst Acquisition

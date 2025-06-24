@@ -15,8 +15,4 @@ public class ZStage extends ASITigerDevice {
       super(studio);
    }
 
-   public void foo() {
-      logs.logMessage("asdas");
-   }
-
 }

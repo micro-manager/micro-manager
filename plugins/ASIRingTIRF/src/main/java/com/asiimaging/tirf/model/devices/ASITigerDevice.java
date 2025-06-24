@@ -38,7 +38,7 @@ public abstract class ASITigerDevice {
    }
 
    public String getDeviceInfoString() {
-      return !deviceName.equals("")
+      return !deviceName.isEmpty()
             ? getFirmwareBuild() + " v" + getFirmwareVersion() + " " + getFirmwareDate() :
             "No Device";
    }
@@ -61,9 +61,9 @@ public abstract class ASITigerDevice {
       return "";
    }
 
-   public float getFirmwareVersion() {
+   public double getFirmwareVersion() {
       try {
-         return Float.parseFloat(core.getProperty(deviceName, Keys.FIRMWARE_VERSION));
+         return Double.parseDouble(core.getProperty(deviceName, Keys.FIRMWARE_VERSION));
       } catch (Exception e) {
          logs.logError("could not get the firmware version property");
       }
@@ -116,10 +116,7 @@ public abstract class ASITigerDevice {
       return result;
    }
 
-   public class Keys {
-      public static final String TIGER_LIBRARY_NAME = "ASITiger";
-      // public static final String MS2000_LIBRARY_NAME = "ASIStage";
-
+   public static class Keys {
       public static final String NAME = "Name";
       public static final String DESCRIPTION = "Description";
       public static final String TIGER_HEX_ADDRESS = "TigerHexAddress";

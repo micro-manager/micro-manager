@@ -21,7 +21,7 @@ public class TIRFControlPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String copyright = "Applied Scientific Instrumentation (ASI), 2022";
    public static final String description = "Controls an ASI Ring TIRF microscope.";
    public static final String menuName = "ASI Ring TIRF Control";
-   public static final String version = "0.2.1";
+   public static final String version = "0.3.0";
 
    private Studio studio;
    private TIRFControlFrame frame;

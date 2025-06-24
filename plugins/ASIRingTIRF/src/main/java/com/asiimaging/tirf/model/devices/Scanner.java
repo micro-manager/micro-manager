@@ -14,8 +14,19 @@ import org.micromanager.Studio;
  */
 public class Scanner extends ASITigerDevice {
 
+   private char axisX;
+   private char axisY;
+
    public Scanner(final Studio studio) {
       super(studio);
+   }
+
+   public char getAxisX() {
+      return axisX;
+   }
+
+   public char getAxisY() {
+      return axisY;
    }
 
    /**
@@ -36,7 +47,7 @@ public class Scanner extends ASITigerDevice {
       return hasFastCircles;
    }
 
-   public void setFastCirclesAsymmetry(final float value) {
+   public void setFastCirclesAsymmetry(final double value) {
       try {
          core.setProperty(deviceName, Keys.FAST_CIRCLES_ASYMMETRY, value);
       } catch (Exception e) {
@@ -68,7 +79,7 @@ public class Scanner extends ASITigerDevice {
       }
    }
 
-   public void setFastCirclesRate(final float rateHz) {
+   public void setFastCirclesRateHz(final double rateHz) {
       try {
          core.setProperty(deviceName, Keys.FAST_CIRCLES_RATE, rateHz);
       } catch (Exception e) {
@@ -76,7 +87,7 @@ public class Scanner extends ASITigerDevice {
       }
    }
 
-   public void setFastCirclesRadius(final float degrees) {
+   public void setFastCirclesRadius(final double degrees) {
       try {
          core.setProperty(deviceName, Keys.FAST_CIRCLES_RADIUS, degrees);
       } catch (Exception e) {
@@ -94,24 +105,24 @@ public class Scanner extends ASITigerDevice {
       return result.equals(Values.YES);
    }
 
-   public float getFastCirclesRadius() {
+   public double getFastCirclesRadius() {
       String result = "-1.0";
       try {
          result = core.getProperty(deviceName, Keys.FAST_CIRCLES_RADIUS);
       } catch (Exception e) {
          logs.logError("getFastCirclesRadius failed.");
       }
-      return Float.parseFloat(result);
+      return Double.parseDouble(result);
    }
 
-   public float getFastCirclesRate() {
+   public double getFastCirclesRateHz() {
       String result = "-1.0";
       try {
          result = core.getProperty(deviceName, Keys.FAST_CIRCLES_RATE);
       } catch (Exception e) {
          logs.logError("getFastCirclesRate failed.");
       }
-      return Float.parseFloat(result);
+      return Double.parseDouble(result);
    }
 
    public String getFastCirclesState() {
@@ -134,63 +145,68 @@ public class Scanner extends ASITigerDevice {
       return result.equals(Values.FastCirclesState.ON);
    }
 
-   public float getFastCirclesAsymmetry() {
+   public double getFastCirclesAsymmetry() {
       String result = "-1.0f";
       try {
          result = core.getProperty(deviceName, Keys.FAST_CIRCLES_ASYMMETRY);
       } catch (Exception e) {
          logs.logError("setFastCirclesAsymmetry failed.");
       }
-      return Float.parseFloat(result);
+      return Double.parseDouble(result);
    }
 
-   // TODO: move these elsewhere?
-   public void moveH(final float value) {
+   public void moveX(final double value) {
       try {
-         core.setProperty("TigerCommHub", "SerialCommand", "m h=" + value);
+         final double y = core.getGalvoPosition(deviceName).y;
+         core.setGalvoPosition(deviceName, value, y);
       } catch (Exception e) {
-         logs.logError("moveH failed.");
+         logs.logError("move " + axisX + " failed.");
       }
    }
 
-   public void moveI(final float value) {
+   public void moveY(final double value) {
       try {
-         core.setProperty("TigerCommHub", "SerialCommand", "m i=" + value);
+         final double x = core.getGalvoPosition(deviceName).x;
+         core.setGalvoPosition(deviceName, x, value);
       } catch (Exception e) {
-         logs.logError("moveI failed.");
+         logs.logError("move " + axisY + " failed.");
       }
    }
 
-   public float getPositionH() {
-      String response = "";
+   public double getPositionX() {
       try {
-         core.setProperty("TigerCommHub", "SerialCommand", "w h?");
-         response = core.getProperty("TigerCommHub", "SerialResponse");
-         response = response.split(" ")[1];
+         return core.getGalvoPosition(deviceName).x;
       } catch (Exception e) {
-         logs.logError("could not get the positon of axis H.");
+         logs.logError("could not get the position of axis " + axisX);
+         return 0.0f;
       }
-      return Float.parseFloat(response);
    }
 
-   public float getPositionI() {
-      String response = "";
+   public double getPositionY() {
       try {
-         core.setProperty("TigerCommHub", "SerialCommand", "w i?");
-         response = core.getProperty("TigerCommHub", "SerialResponse");
-         response = response.split(" ")[1];
+         return core.getGalvoPosition(deviceName).y;
       } catch (Exception e) {
-         logs.logError("could not get the positon of axis I.");
+         logs.logError("could not get the position of axis " + axisY);
+         return 0.0f;
       }
-      return Float.parseFloat(response);
    }
-
 
    public void setSaveSettings() {
       try {
          core.setProperty(deviceName, Keys.SAVE_CARD_SETTINGS, Values.SAVE_SETTINGS_DONE);
       } catch (Exception e) {
          logs.logError("could not save settings to the scanner.");
+      }
+   }
+
+   public void getScanAxisNames() {
+      if (!deviceName.isEmpty()) {
+         String[] splitName = deviceName.split(":");
+         String axisNames = splitName[1];
+         axisX = axisNames.charAt(0);
+         axisY = axisNames.charAt(1);
+      } else {
+         logs.logError("could not get the axis names for the Scanner.");
       }
    }
 

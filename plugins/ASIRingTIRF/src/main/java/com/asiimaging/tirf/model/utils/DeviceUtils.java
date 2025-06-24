@@ -11,7 +11,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 /**
- * Useful methods for helping users debug their problems.
+ * Useful methods for debugging.
  */
 public class DeviceUtils {
 

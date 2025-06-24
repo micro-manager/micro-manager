@@ -15,6 +15,16 @@ public class PLC extends ASITigerDevice {
       super(studio);
    }
 
+   public String getPLogicMode() {
+      String result = "";
+      try {
+         result = core.getProperty(deviceName, Keys.PLOGIC_MODE);
+      } catch (Exception e) {
+         logs.logError("could not get the \"PLogicMode\" property.");
+      }
+      return result;
+   }
+
    public void setTriggerSource(final String source) {
       try {
          core.setProperty(deviceName, Keys.TRIGGER_SOURCE, source);
@@ -92,6 +102,7 @@ public class PLC extends ASITigerDevice {
 
    // Device Properties
    public static class Keys {
+      public static final String PLOGIC_MODE = "PLogicMode";
 
       public static final String CLEAR_ALL_CELL_STATES = "ClearAllCellStates";
       public static final String EDIT_CELL_UPDATE_AUTO = "EditCellUpdateAutomatically";

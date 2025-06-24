@@ -16,6 +16,7 @@ import com.asiimaging.tirf.ui.components.Label;
 import com.asiimaging.tirf.ui.panels.ButtonPanel;
 import com.asiimaging.tirf.ui.panels.TabPanel;
 import com.asiimaging.tirf.ui.utils.BrowserUtils;
+import com.asiimaging.tirf.ui.utils.DialogUtils;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Font;
@@ -77,7 +78,6 @@ public class TIRFControlFrame extends JFrame {
       final Button btnWebsite = new Button("Website", 120, 30);
       final Button btnManual = new Button("Manual", 120, 30);
 
-
       final JLabel lblTigerFound = new JLabel("");
       final JLabel lblFastCirclesFound = new JLabel("");
 
@@ -96,10 +96,23 @@ public class TIRFControlFrame extends JFrame {
          lblFastCirclesFound.setForeground(Color.RED);
       }
 
-      btnWebsite.registerListener(e -> BrowserUtils.openWebsite(studio,
-            "https://www.asiimaging.com/products/light-sheet-microscopy/fiber-coupled-laser-scanner"));
-      btnManual.registerListener(e -> BrowserUtils.openWebsite(studio,
-            "https://www.asiimaging.com/docs/ringtirf"));
+      btnWebsite.registerListener(e -> {
+         final boolean result = DialogUtils.showYesNoDialog(btnManual,
+               "Open Browser", "Would you like to navigate to the product website?");
+         if (result) {
+            BrowserUtils.openWebsite(studio,
+                  "https://www.asiimaging.com/products/light-sheet-microscopy/fiber-coupled-laser-scanner");
+         }
+      });
+
+      btnManual.registerListener(e -> {
+         final boolean result = DialogUtils.showYesNoDialog(btnManual,
+               "Open Browser", "Would you like to navigate to the plugin manual?");
+         if (result) {
+            BrowserUtils.openWebsite(studio,
+                  "https://www.asiimaging.com/docs/ringtirf");
+         }
+      });
 
       add(lblTitle, "align center, wrap");
       add(lblError, "align center, wrap");
@@ -150,6 +163,14 @@ public class TIRFControlFrame extends JFrame {
 
       // clean up resources when the frame is closed
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+      // set up the PLogic card for fast circles
+      // Note: setupPLogic() should only be run after the user settings have been loaded
+      final boolean result = DialogUtils.showYesNoDialog(this, "PLogic Card Settings",
+            "Would you like to send settings to the PLogic device to setup the plugin?");
+      if (result) {
+         model.setupPLogic();
+      }
    }
 
    /**
@@ -162,20 +183,20 @@ public class TIRFControlFrame extends JFrame {
             model.getUserSettings().save(model);
             model.getScanner().setBeamEnabled(false);
             model.getScanner().setFastCirclesState(Scanner.Values.FastCirclesState.OFF);
-            //System.out.println("settings saved => plugin closed!");
+            studio.logs().logDebugMessage("plugin closed");
          }
       });
    }
-
-   // TODO: turn off external triggering when using live mode
 
    /**
     * Enable or disable the live mode window.
     */
    public void toggleLiveMode() {
       // set to internal trigger mode
-      if (model.getCamera().isTriggerModeExternal()) {
-         model.getCamera().setTriggerModeInternal();
+      if (model.getCamera().isSupported()) {
+         if (model.getCamera().isTriggerModeExternal()) {
+            model.getCamera().setTriggerModeInternal();
+         }
       }
       // toggle live mode
       if (studio.live().isLiveModeOn()) {

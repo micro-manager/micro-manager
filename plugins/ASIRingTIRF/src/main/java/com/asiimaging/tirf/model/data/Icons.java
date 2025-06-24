@@ -21,10 +21,6 @@ public final class Icons {
          Studio.class.getResource("/org/micromanager/icons/camera.png");
    private static final URL CAMERA_GO_PATH =
          Studio.class.getResource("/org/micromanager/icons/camera_go.png");
-   private static final URL ARROW_UP_PATH =
-         Studio.class.getResource("/org/micromanager/icons/arrow_up.png");
-   private static final URL ARROW_DOWN_PATH =
-         Studio.class.getResource("/org/micromanager/icons/arrow_down.png");
    private static final URL ARROW_RIGHT_PATH =
          Studio.class.getResource("/org/micromanager/icons/arrow_right.png");
    private static final URL MICROSCOPE_PATH =
@@ -33,9 +29,6 @@ public final class Icons {
    public static final ImageIcon CANCEL = new ImageIcon(Objects.requireNonNull(CANCEL_PATH));
    public static final ImageIcon CAMERA = new ImageIcon(Objects.requireNonNull(CAMERA_PATH));
    public static final ImageIcon CAMERA_GO = new ImageIcon(Objects.requireNonNull(CAMERA_GO_PATH));
-   public static final ImageIcon ARROW_UP = new ImageIcon(Objects.requireNonNull(ARROW_UP_PATH));
-   public static final ImageIcon ARROW_DOWN =
-         new ImageIcon(Objects.requireNonNull(ARROW_DOWN_PATH));
    public static final ImageIcon ARROW_RIGHT =
          new ImageIcon(Objects.requireNonNull(ARROW_RIGHT_PATH));
    public static final ImageIcon MICROSCOPE =

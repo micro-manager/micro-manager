@@ -33,13 +33,14 @@ import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 
 public class TIRFControlModel {
 
+   private static final String TIGER_DEVICE_LIBRARY = "ASITiger";
+
    private final Studio studio;
    private final CMMCore core;
-
-   private static final String TIGER_DEVICE_LIBRARY = "ASITiger";
 
    // hardware devices
    private final Scanner scanner;
@@ -104,18 +105,21 @@ public class TIRFControlModel {
       }
 
       // update camera properties based on detected camera model
-      camera.setup();
-
-      // datastore
-      datastore = studio.data().createRAMDatastore();
+      if (!camera.setupProperties()) {
+         studio.logs().showError("Your camera is not supported by the plugin.\n"
+               + "Please send an email to info@asiimaging.com and we can add support.\n"
+               + "You can also use a Beanshell script to set the camera trigger mode.\n"
+               + "You are welcome to submit a pull request to GitHub as well.");
+      }
 
       // used to serialize settings into JSON
       GSON = new GsonBuilder()
             .excludeFieldsWithoutExposeAnnotation()
             .create();
+   }
 
-      // set up the PLogic card for fast circles
-      setupPLC();
+   public Studio getStudio() {
+      return studio;
    }
 
    /**
@@ -175,20 +179,89 @@ public class TIRFControlModel {
       xyStage.setDeviceName(core.getXYStageDevice());
       zStage.setDeviceName(core.getFocusDevice());
       plc.setDeviceName(core.getShutterDevice());
+      scanner.getScanAxisNames();
    }
 
    /**
-    * This sets up the PLC program to divide the clock for FAST_CIRCLES scanner firmware.
+    * Select the PLogic program based on firmware version.
     */
-   public void setupPLC() {
-      final int addrDFlop = 1;
-      final int addrOutputBNC1 = 33;
+   public void setupPLogic() {
+      // "FastCirclesRate(Hz)" needs to be current for setupPLogicNew()
+      // Used when setting the "one shot (NRT)" config value
+      scanner.setFastCirclesRateHz(computeFastCirclesHz());
+      frame.getTabPanel().getScannerTab().updateFastCirclesHzLabel();
+      if (scanner.getFirmwareVersion() >= 3.51) {
+         setupPLogicNew();
+      } else {
+         setupPLogicOld();
+      }
+   }
+
+   /**
+    * Set up the PLogic program for the latest firmware.
+    *
+    * <p>Firmware version >= 3.51 required.
+    */
+   private void setupPLogicNew() {
+      int addrOutputBNC = 33; // BNC1
+      if (plc.getPLogicMode().equals("Seven-channel shutter")
+            || plc.getPLogicMode().equals("Seven-channel TTL shutter")) {
+         addrOutputBNC = 40; // BNC8
+      }
+
+      final int addrInvert = 64;
+      final int addrOneShotNRT = 1; // use logic cell 1
+
+      // always use the Micro-mirror card as a clock source
+      plc.setTriggerSource(PLC.Values.TriggerSource.MICRO_MIRROR_CARD);
+
+      // connect to output BNC1 or BNC8
+      plc.setPointerPosition(addrOutputBNC);
+      // invert the signal because "one shot (NRT)" stays high by default
+      plc.setCellConfig(addrOneShotNRT + addrInvert);
+
+      // setup "one shot NRT" cell
+      plc.setPointerPosition(addrOneShotNRT);
+      plc.setCellType(PLC.Values.EditCellType.ONE_SHOT_NRT);
+      plc.setCellInput1(192);
+      plc.setCellInput2(192);
+
+      // trigger timing
+      plc.setCellConfig(computeOneShotTiming());
+   }
+
+   /**
+    * Compute the configuration value for the "one shot (NRT)" cell in the PLogic program.
+    * This cell controls the timing of the BNC output signal.
+    *
+    * <p>Firmware >= 3.51 required.
+    *
+    * @return the configuration value for logic cell 1
+    */
+   public int computeOneShotTiming() {
+      final int periodMs = 1000 / (int) (scanner.getFastCirclesRateHz() / getNumFastCircles());
+      return (periodMs * 4) - 1;
+   }
+
+   /**
+    * Set up the PLogic program to divide the clock for FAST_CIRCLES scanner firmware.
+    *
+    * <p>This is to ensure backwards compatibility with older firmware versions.
+    */
+   private void setupPLogicOld() {
+      int addrOutputBNC = 33; // BNC1
+      if (plc.getPLogicMode().equals("Seven-channel shutter")
+            || plc.getPLogicMode().equals("Seven-channel TTL shutter")) {
+         addrOutputBNC = 40; // BNC8
+      }
+
+      final int addrDFlop = 1; // use logic cell 1
 
       // always use the Micro-mirror card as a clock source
       plc.setTriggerSource(PLC.Values.TriggerSource.MICRO_MIRROR_CARD);
 
       // connect to output BNC1
-      plc.setPointerPosition(addrOutputBNC1);
+      plc.setPointerPosition(addrOutputBNC);
       plc.setCellConfig(addrDFlop);
 
       // setup one shot cell
@@ -198,24 +271,27 @@ public class TIRFControlModel {
       plc.setCellInput2(192); // trigger every clock pulse
    }
 
-   public void calibrateFastCircles(final int nImages, final float startSize,
-                                    final float radiusIncrement) {
+   public void calibrateFastCircles(final int nImages, final double startSize,
+                                    final double radiusIncrement) {
       final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
          
-         final float originalRadius = scanner.getFastCirclesRadius();
+         final double originalRadius = scanner.getFastCirclesRadius();
          
          @Override
-         protected Void doInBackground() throws Exception {
+         protected Void doInBackground() {
             studio.logs().logMessage("Calibration Started");
 
             Image image;
-            final double exposure = camera.getExposure();
-            final double fastCirclesHz = (1.0 / exposure) * 1000.0;
-            scanner.setFastCirclesRate((float) fastCirclesHz);
 
-            SwingUtilities.invokeLater(() -> {
-               frame.getTabPanel().getScannerTab().updateFastCirclesHzLabel();
-            });
+            // make sure values are current
+            scanner.setFastCirclesRateHz(computeFastCirclesHz());
+            if (scanner.getFirmwareVersion() >= 3.51) {
+               plc.setPointerPosition(1); // logic cell 1
+               plc.setCellConfig(computeOneShotTiming());
+            }
+
+            SwingUtilities.invokeLater(() ->
+                  frame.getTabPanel().getScannerTab().updateFastCirclesHzLabel());
 
             if (camera.isSupported()) {
                camera.setTriggerModeExternal();
@@ -243,7 +319,7 @@ public class TIRFControlModel {
                try {
                   datastore.putImage(image);
                } catch (IOException e) {
-                  e.printStackTrace();
+                  studio.logs().logError("error putting the image into the datastore!");
                }
                time++;
 
@@ -273,6 +349,9 @@ public class TIRFControlModel {
       worker.execute();
    }
 
+   /**
+    * Run an acquisition.
+    */
    public void burstAcq() {
       final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
@@ -296,17 +375,25 @@ public class TIRFControlModel {
             // create the datastore
             final String filePath = studio.data().getUniqueSaveDirectory(
                   Paths.get(datastoreSavePath, datastoreSaveFileName).toString());
+
             if (datastoreSaveMode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
                datastore = studio.data().createSinglePlaneTIFFSeriesDatastore(filePath);
-            } else {
+            } else if (datastoreSaveMode == Datastore.SaveMode.MULTIPAGE_TIFF) {
                datastore = studio.data().createMultipageTIFFDatastore(filePath, false, false);
+            } else if (datastoreSaveMode == Datastore.SaveMode.ND_TIFF) {
+               datastore = studio.data().createNDTIFFDatastore(filePath);
             }
-            //datastore = studio.data().createRAMDatastore();
 
             // create the display window
             studio.displays().createDisplay(datastore);
             studio.displays().manage(datastore);
             Coords.CoordsBuilder builder = Coordinates.builder();
+
+            // metadata
+            Metadata.Builder metadataBuilder = studio.data().metadataBuilder();
+            metadataBuilder.fileName(getDatastoreSaveFileName());
+            metadataBuilder.positionName("0");
+            Metadata metadata = metadataBuilder.build();
 
             if (useStartupScript) {
                runBeanshellScript(startupScriptPath);
@@ -319,8 +406,13 @@ public class TIRFControlModel {
             }
 
             scanner.setBeamEnabled(true);
-            final double fastCirclesHz = computeFastCirclesHz();
-            scanner.setFastCirclesRate((float) fastCirclesHz);
+
+            // make sure values are current
+            scanner.setFastCirclesRateHz(computeFastCirclesHz());
+            if (scanner.getFirmwareVersion() >= 3.51) {
+               plc.setPointerPosition(1); // logic cell 1
+               plc.setCellConfig(computeOneShotTiming());
+            }
 
             // update ui
             SwingUtilities.invokeLater(() -> {
@@ -328,10 +420,10 @@ public class TIRFControlModel {
                frame.getTabPanel().getScannerTab().setBeamEnabledState(true);
                frame.getTabPanel().getScannerTab().setFastCirclesState(true);
 
-               frame.getTabPanel().getScannerTab().getSpinnerScannerH()
-                     .setValue(scanner.getPositionH());
-               frame.getTabPanel().getScannerTab().getSpinnerScannerI()
-                     .setValue(scanner.getPositionI());
+               frame.getTabPanel().getScannerTab().getSpinnerScannerX()
+                     .setValue(scanner.getPositionX());
+               frame.getTabPanel().getScannerTab().getSpinnerScannerY()
+                     .setValue(scanner.getPositionY());
             });
 
             scanner.setFastCirclesStateRestart();
@@ -353,7 +445,7 @@ public class TIRFControlModel {
                   // get the next image and put it in the datastore
                   taggedImage = core.popNextTaggedImage();
                   image = studio.data()
-                        .convertTaggedImage(taggedImage, builder.time(time).build(), null);
+                        .convertTaggedImage(taggedImage, builder.time(time).build(), metadata);
                   datastore.putImage(image);
                   time++;
 
@@ -384,11 +476,11 @@ public class TIRFControlModel {
             frame.getTabPanel().getScannerTab().setFastCirclesState(false);
             frame.getTabPanel().getScannerTab().setBeamEnabledState(false);
 
-            // update the h/i location spinners
-            frame.getTabPanel().getScannerTab().getSpinnerScannerH()
-                  .setValue(scanner.getPositionH());
-            frame.getTabPanel().getScannerTab().getSpinnerScannerI()
-                  .setValue(scanner.getPositionI());
+            // update the scanner position spinners
+            frame.getTabPanel().getScannerTab().getSpinnerScannerX()
+                  .setValue(scanner.getPositionX());
+            frame.getTabPanel().getScannerTab().getSpinnerScannerY()
+                  .setValue(scanner.getPositionY());
 
             if (camera.isSupported()) {
                camera.setTriggerModeInternal();
@@ -414,10 +506,16 @@ public class TIRFControlModel {
     *
     * @return the fast circles rate in Hz
     */
-   public float computeFastCirclesHz() {
-      return (float) ((1.0 / camera.getExposure()) * (1000.0 * numFastCircles));
+   public double computeFastCirclesHz() {
+      return (1.0 / camera.getExposure()) * (1000.0 * numFastCircles);
    }
 
+   /**
+    * Returns the camera exposure based on the "FastCirclesRate(Hz)".
+    *
+    * @param rateHz the scanner fast circles rate
+    * @return the camera exposure
+    */
    public double computeExposureFromFastCirclesHz(final double rateHz) {
       return 1000.0 / rateHz;
    }
@@ -432,24 +530,10 @@ public class TIRFControlModel {
       return GSON.toJson(this);
    }
 
-   // TODO: needed?
+   // Getters/Setters
 
-   /**
-    * Saves the datastore to a unique path.
-    */
-   public void saveDatastore(final String filePath) {
-      try {
-         datastore.save(datastoreSaveMode, filePath);
-      } catch (IOException e) {
-         studio.logs().showError("could not save the datastore to: "
-               + datastoreSavePath + "\n" + e.getMessage());
-      }
-   }
-
-   // === Getters/Setters ===
-
-   public void setNumFastCircles(final int n) {
-      numFastCircles = n;
+   public void setNumFastCircles(final int num) {
+      numFastCircles = num;
    }
 
    public int getNumFastCircles() {
@@ -556,7 +640,7 @@ public class TIRFControlModel {
       return camera;
    }
 
-   public PLC getPLC() {
+   public PLC getPLogic() {
       return plc;
    }
 
