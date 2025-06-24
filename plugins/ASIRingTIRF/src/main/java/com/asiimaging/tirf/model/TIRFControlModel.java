@@ -273,7 +273,7 @@ public class TIRFControlModel {
 
    public void calibrateFastCircles(final int nImages, final double startSize,
                                     final double radiusIncrement) {
-      final SwingWorker<Void, Void> worker = new SwingWorker<>() {
+      final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
          
          final double originalRadius = scanner.getFastCirclesRadius();
          
@@ -353,7 +353,7 @@ public class TIRFControlModel {
     * Run an acquisition.
     */
    public void burstAcq() {
-      final SwingWorker<Void, Void> worker = new SwingWorker<>() {
+      final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
          @Override
          protected Void doInBackground() throws Exception {
