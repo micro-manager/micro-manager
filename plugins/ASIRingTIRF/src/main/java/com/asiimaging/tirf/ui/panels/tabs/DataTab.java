@@ -15,13 +15,13 @@ import com.asiimaging.tirf.ui.components.Panel;
 import com.asiimaging.tirf.ui.components.RadioButton;
 import com.asiimaging.tirf.ui.components.Spinner;
 import com.asiimaging.tirf.ui.components.TextField;
+import com.asiimaging.tirf.ui.utils.BrowserUtils;
+import com.asiimaging.tirf.ui.utils.DialogUtils;
 import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
 import java.util.Objects;
 import javax.swing.JTextField;
-import com.asiimaging.tirf.ui.utils.BrowserUtils;
-import com.asiimaging.tirf.ui.utils.DialogUtils;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.utils.FileDialogs;
 
@@ -178,6 +178,8 @@ public class DataTab extends Panel {
                break;
             case "NDTiff":
                model.setDatastoreSaveMode(Datastore.SaveMode.ND_TIFF);
+               break;
+            default:
                break;
          }
       });

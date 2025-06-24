@@ -9,11 +9,10 @@ package com.asiimaging.tirf.model;
 
 import com.asiimaging.tirf.model.data.Settings;
 import com.asiimaging.tirf.ui.TIRFControlFrame;
+import java.util.Objects;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.util.Objects;
 
 public class UserSettings {
 

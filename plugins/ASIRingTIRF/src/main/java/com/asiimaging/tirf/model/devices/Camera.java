@@ -7,10 +7,9 @@
 
 package com.asiimaging.tirf.model.devices;
 
-import java.util.Objects;
-
 import com.asiimaging.tirf.model.data.CameraName;
 import com.asiimaging.tirf.model.data.CameraLibrary;
+import java.util.Objects;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 

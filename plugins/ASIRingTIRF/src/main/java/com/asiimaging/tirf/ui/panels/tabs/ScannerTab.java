@@ -107,7 +107,8 @@ public class ScannerTab extends Panel {
       btnSaveToFlash.setToolTipText("Send the SAVESET Z command to the scanner device.");
 
       btnSetupPLogic = new Button("Setup PLogic", 120, 22);
-      btnSetupPLogic.setToolTipText("Send the PLogic card the program to change the camera trigger rate.");
+      btnSetupPLogic.setToolTipText(
+            "Send the PLogic card the program to change the camera trigger rate.");
 
       // create action listeners
       createEventHandlers();
