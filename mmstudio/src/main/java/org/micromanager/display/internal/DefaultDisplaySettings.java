@@ -59,6 +59,8 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private final boolean ignoreZeros_;
    private final List<ChannelDisplaySettings> channelSettings_;
    private final String windowPositionKey_;
+   private final String profileKey_;
+   private final UserProfile profile_;
 
    private static class Builder implements DisplaySettings.Builder {
       private double zoom_ = 1.0;
@@ -72,6 +74,8 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       private boolean ignoreZeros_ = false;
       private List<ChannelDisplaySettings> channelSettings_ = new ArrayList<>();
       private String windowPositionKey_ = null;
+      private String profileKey_ = null;
+      private UserProfile profile_ = null;
 
       private Builder() {
          channelSettings_.add(DefaultChannelDisplaySettings.builder().build());
@@ -173,6 +177,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public Builder profileKey(UserProfile profile, String key) {
+         profile_ = profile;
+         profileKey_ = key;
+         return this;
+      }
+
+      @Override
       public Builder channel(int channel) {
          Preconditions.checkArgument(channel >= 0);
          while (channelSettings_.size() <= channel) {
@@ -232,6 +243,8 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       channelSettings_ =
             new ArrayList<>(builder.channelSettings_);
       windowPositionKey_ = builder.windowPositionKey_;
+      profileKey_ = builder.profileKey_;
+      profile_ = builder.profile_;
    }
 
    @Override
@@ -292,6 +305,16 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public String getWindowPositionKey() {
       return windowPositionKey_;
+   }
+
+   @Override
+   public String getProfileKey() {
+      return profileKey_;
+   }
+
+   @Override
+   public UserProfile getProfile() {
+      return profile_;
    }
 
    @Override
@@ -418,7 +441,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       final String finalKey = new StringBuilder(PROFILEKEY).append("-").append(key).toString();
       if (mpmv.containsPropertyMap(finalKey)) {
          PropertyMap propertyMap = mpmv.getPropertyMap(finalKey, null);
-         return fromPropertyMap(propertyMap);
+         return fromPropertyMap(propertyMap).profileKey(profile, key).build();
       }
       return null;
    }
@@ -881,7 +904,9 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .histogramLogarithmic(histogramLogarithmic_)
             .windowPositionKey(windowPositionKey_)
             .autoscaleIgnoredQuantile(extremaQuantile_)
-            .autoscaleIgnoringZeros(ignoreZeros_);
+            .autoscaleIgnoringZeros(ignoreZeros_)
+            .windowPositionKey(windowPositionKey_)
+            .profileKey(profile_, profileKey_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
          ret.channel(i, channelSettings_.get(i));
       }
@@ -915,7 +940,9 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .roiAutoscale(useROI_)
             .histogramLogarithmic(histogramLogarithmic_)
             .autoscaleIgnoredQuantile(extremaQuantile_)
-            .autoscaleIgnoringZeros(ignoreZeros_);
+            .autoscaleIgnoringZeros(ignoreZeros_)
+            .windowPositionKey(windowPositionKey_)
+            .profileKey(profile_, profileKey_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
          ret.channel(i, channelSettings_.get(i));
       }
@@ -1051,6 +1078,8 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .putBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(), ignoreZeros_)
             .putDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key(), extremaQuantile_)
             .putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings)
+            .putString(PropertyKey.WINDOW_POSITION_KEY.key(), windowPositionKey_)
+            .putString(PropertyKey.PROFILE_KEY.key(), profileKey_)
             .build();
    }
 
@@ -1062,7 +1091,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     * @return restored DisplaySettings.  Any missing component will be replaced
     *     with the (Builder's) default.
     */
-   public static DisplaySettings fromPropertyMap(PropertyMap pMap) {
+   public static DisplaySettings.Builder fromPropertyMap(PropertyMap pMap) {
       DefaultDisplaySettings.Builder ddsb = new DefaultDisplaySettings.Builder();
 
       if (pMap != null) {
@@ -1108,9 +1137,17 @@ public final class DefaultDisplaySettings implements DisplaySettings {
                      .fromPropertyMap(propertyMapList.get(i)));
             }
          }
+         if (pMap.containsString(PropertyKey.WINDOW_POSITION_KEY.key())) {
+            ddsb.windowPositionKey(pMap.getString(PropertyKey.WINDOW_POSITION_KEY.key(),
+                  ddsb.windowPositionKey_));
+         }
+         if (pMap.containsString(PropertyKey.PROFILE_KEY.key())) {
+            ddsb.profileKey(MMStudio.getInstance().profile(),
+                     pMap.getString(PropertyKey.PROFILE_KEY.key(), ddsb.profileKey_));
+         }
       } // note that if PropertyMap was null, the builder will return defaults
 
-      return ddsb.build();
+      return ddsb;
    }
 
    /**
@@ -1122,7 +1159,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    public static DisplaySettings getSavedDisplaySettings(final File sourceFile) {
       if (sourceFile.canRead()) {
          try {
-            return DefaultDisplaySettings.fromPropertyMap(PropertyMaps.loadJSON(sourceFile));
+            return DefaultDisplaySettings.fromPropertyMap(PropertyMaps.loadJSON(sourceFile)).build();
          } catch (IOException ioe) {
             ReportingUtils.logError(ioe, "Error reading: " + sourceFile.getPath());
          }

@@ -87,6 +87,7 @@ import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.DefaultComponentDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
@@ -1104,6 +1105,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
       ijBridge_.mm2ijSetZoom(settings.getZoomRatio());
 
       displayController_.setPlaybackSpeedFps(settings.getPlaybackFPS());
+      // write to profile on every change
+      if (settings.getProfileKey() != null
+               && !settings.getProfileKey().isEmpty()
+               && settings.getProfile() != null
+               && settings instanceof DefaultDisplaySettings) {
+         ((DefaultDisplaySettings)settings).saveToProfile(
+                  settings.getProfile(), settings.getProfileKey());
+      }
 
    }
 

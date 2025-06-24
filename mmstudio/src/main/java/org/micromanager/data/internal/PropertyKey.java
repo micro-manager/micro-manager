@@ -1,6 +1,5 @@
 package org.micromanager.data.internal;
 
-import clojure.lang.PersistentTreeMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -1650,6 +1649,46 @@ public enum PropertyKey {
       protected JsonElement convertToGson(PropertyMap pmap) {
          // Save zero even if missing
          return new JsonPrimitive(pmap.getInteger(key(), 0));
+      }
+   },
+
+   WINDOW_POSITION_KEY("WindowPositionKey", DisplaySettings.class) {
+      @Override
+      public String getDescription() {
+         return "The key used to store the window position and size for this image";
+      }
+
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putString(key(), je.getAsString());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return null;
+      }
+   },
+
+   PROFILE_KEY("ProfileKey", DisplaySettings.class) {
+      @Override
+      public String getDescription() {
+         return "The key used to store the display settings for this image";
+      }
+
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putString(key(), je.getAsString());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return null;
       }
    },
 
