@@ -8,7 +8,6 @@
 package com.asiimaging.tirf.model.data;
 
 import org.micromanager.data.Datastore;
-
 import java.io.File;
 
 /**

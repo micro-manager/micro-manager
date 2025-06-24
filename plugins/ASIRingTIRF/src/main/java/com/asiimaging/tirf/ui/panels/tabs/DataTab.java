@@ -20,7 +20,6 @@ import java.awt.Font;
 import java.io.File;
 import java.util.Objects;
 import javax.swing.JTextField;
-
 import com.asiimaging.tirf.ui.utils.BrowserUtils;
 import com.asiimaging.tirf.ui.utils.DialogUtils;
 import org.micromanager.data.Datastore;
@@ -158,7 +157,7 @@ public class DataTab extends Panel {
       add(txtSaveFileName, "wrap, gapbottom 60px");
       add(lblScripts, "span 2, wrap");
       add(scriptPanel, "span 4, wrap, gapbottom 20px");
-      add(btnManual,"");
+      add(btnManual, "");
    }
 
    private void createEventHandlers() {

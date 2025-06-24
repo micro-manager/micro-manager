@@ -106,10 +106,10 @@ public class TIRFControlModel {
 
       // update camera properties based on detected camera model
       if (!camera.setupProperties()) {
-         studio.logs().showError("Your camera is not supported by the plugin.\n" +
-               "Please send an email to info@asiimaging.com and we can add support.\n" +
-               "You can also use a Beanshell script to set the camera trigger mode.\n" +
-               "You are welcome to submit a pull request to GitHub as well.");
+         studio.logs().showError("Your camera is not supported by the plugin.\n"
+               + "Please send an email to info@asiimaging.com and we can add support.\n"
+               + "You can also use a Beanshell script to set the camera trigger mode.\n"
+               + "You are welcome to submit a pull request to GitHub as well.");
       }
 
       // used to serialize settings into JSON
