@@ -73,13 +73,20 @@ public final class DefaultShutterManager implements ShutterManager {
       repostShutterState();
    }
 
+   private void waitForShutter() throws Exception {
+      String shutter = studio_.core().getShutterDevice();
+      if (shutter != null && !shutter.isEmpty()) {
+         studio_.core().waitForDevice(shutter);
+      }
+   }
+
    /**
     * Check the current shutter state, and post events if it has changed
     * compared to our cached values.
     */
    private void repostShutterState() {
       try {
-         studio_.core().waitForDevice(studio_.core().getShutterDevice());
+         waitForShutter();
          boolean isOpen = getShutter();
          if (isOpen != isOpen_) {
             // Shutter state changed; notify everyone.
@@ -104,7 +111,7 @@ public final class DefaultShutterManager implements ShutterManager {
          setAutoShutter(false);
       }
       studio_.core().setShutterOpen(isOpen);
-      studio_.core().waitForDevice(studio_.core().getShutterDevice());
+      waitForShutter();
       studio_.events().post(new DefaultShutterEvent(isOpen));
       isOpen_ = isOpen;
       return isAutoOn;
