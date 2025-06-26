@@ -232,6 +232,13 @@ public final class SnapLiveManager extends DataViewerListener
       }
    }
 
+   private void waitForShutter() throws Exception {
+      String shutter = core_.getShutterDevice();
+      if (shutter != null && !shutter.isEmpty()) {
+         core_.waitForDevice(shutter);
+      }
+   }
+
    private void startLiveMode() {
       if (amStartingSequenceAcquisition_) {
          // HACK: if startContinuousSequenceAcquisition results in a core
@@ -256,7 +263,7 @@ public final class SnapLiveManager extends DataViewerListener
          core_.startContinuousSequenceAcquisition(0);
          amStartingSequenceAcquisition_ = false;
          if (core_.getAutoShutter()) {
-            core_.waitForDevice(core_.getShutterDevice());
+            waitForShutter();
          }
       } catch (Exception e) {
          ReportingUtils.showError(e, "Couldn't start live mode sequence acquisition");
@@ -390,7 +397,7 @@ public final class SnapLiveManager extends DataViewerListener
             core_.sleep(2);
          }
          if (core_.getAutoShutter()) {
-            core_.waitForDevice(core_.getShutterDevice());
+            waitForShutter();
          }
       } catch (Exception e) {
          ReportingUtils.showError(e,
