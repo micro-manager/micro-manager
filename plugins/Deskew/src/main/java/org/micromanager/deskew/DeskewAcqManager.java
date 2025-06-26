@@ -1,6 +1,7 @@
 package org.micromanager.deskew;
 
 import java.io.IOException;
+import java.util.EnumMap;
 import java.util.List;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -42,6 +43,7 @@ public class DeskewAcqManager {
       ORTHOGONAL_VIEWS,
       FULL_VOLUME
    }
+   public EnumMap<ProjectionType, String> projectionTypeDisplayKeys = new EnumMap<>(ProjectionType.class);
 
    public static final String[] PROJECTION_TYPES = {
       ProjectionType.YX_PROJECTION.name(),
@@ -51,6 +53,9 @@ public class DeskewAcqManager {
 
    public DeskewAcqManager(Studio studio) {
       studio_ = studio;
+      projectionTypeDisplayKeys.put(ProjectionType.YX_PROJECTION, DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS);
+      projectionTypeDisplayKeys.put(ProjectionType.ORTHOGONAL_VIEWS, DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS);
+      projectionTypeDisplayKeys.put(ProjectionType.FULL_VOLUME, DESKEW_DISPLAYSETTINGS_VOLUME);
    }
 
    public Datastore createStoreAndDisplay(Studio studio,
@@ -65,12 +70,11 @@ public class DeskewAcqManager {
       boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
       DisplaySettings displaySettings = null;
       Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
-      String displayKey = null;
+      String displayKey = projectionTypeDisplayKeys.get(projectionType);
       if (isTestAcq) {
          switch (projectionType) {
             case FULL_VOLUME:
                if (testFullVolumeWindow_ != null) {
-                  displayKey = DESKEW_DISPLAYSETTINGS_VOLUME;
                   testFullVolumeWindow_.close();
                }
                if (testFullVolumeStore_ != null) {
@@ -85,7 +89,6 @@ public class DeskewAcqManager {
                break;
             case YX_PROJECTION:
                if (testXYProjectionsWindow_ != null) {
-                  displayKey = DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS;
                   testXYProjectionsWindow_.close();
                }
                if (testXYProjectionsStore_ != null) {
@@ -100,7 +103,6 @@ public class DeskewAcqManager {
                break;
             case ORTHOGONAL_VIEWS:
                if (testOrthogonalProjectionsWindow_ != null) {
-                  displayKey = DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS;
                   testOrthogonalProjectionsWindow_.close();
                }
                if (testOrthogonalProjectionsStore_ != null) {
