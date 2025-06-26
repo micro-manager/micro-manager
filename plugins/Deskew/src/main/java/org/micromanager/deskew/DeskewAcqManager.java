@@ -9,9 +9,12 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 
 /**
  * This class manages the test datastores and data viewers for the Deskew plugin.
@@ -25,6 +28,10 @@ public class DeskewAcqManager {
    private DisplayWindow testOrthogonalProjectionsWindow_;
    private Datastore testXYProjectionsStore_;
    private DisplayWindow testXYProjectionsWindow_;
+
+   public static final String DESKEW_DISPLAYSETTINGS_VOLUME = "Deskew_Display_Volume";
+   public static final String DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS = "Deskew_Display_Orthogonal_Views";
+   public static final String DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS = "Deskew_Display_YX_Projections";
 
 
    /**
@@ -58,11 +65,12 @@ public class DeskewAcqManager {
       boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
       DisplaySettings displaySettings = null;
       Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
+      String displayKey = null;
       if (isTestAcq) {
          switch (projectionType) {
             case FULL_VOLUME:
                if (testFullVolumeWindow_ != null) {
-                  displaySettings = testFullVolumeWindow_.getDisplaySettings();
+                  displayKey = DESKEW_DISPLAYSETTINGS_VOLUME;
                   testFullVolumeWindow_.close();
                }
                if (testFullVolumeStore_ != null) {
@@ -77,7 +85,7 @@ public class DeskewAcqManager {
                break;
             case YX_PROJECTION:
                if (testXYProjectionsWindow_ != null) {
-                  displaySettings = testXYProjectionsWindow_.getDisplaySettings();
+                  displayKey = DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS;
                   testXYProjectionsWindow_.close();
                }
                if (testXYProjectionsStore_ != null) {
@@ -92,7 +100,7 @@ public class DeskewAcqManager {
                break;
             case ORTHOGONAL_VIEWS:
                if (testOrthogonalProjectionsWindow_ != null) {
-                  displaySettings = testOrthogonalProjectionsWindow_.getDisplaySettings();
+                  displayKey = DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS;
                   testOrthogonalProjectionsWindow_.close();
                }
                if (testOrthogonalProjectionsStore_ != null) {
@@ -132,15 +140,18 @@ public class DeskewAcqManager {
       } catch (IOException ioe) {
          studio.logs().logError(ioe);
       }
-      // complicated way to find the viewer that had this data
-      // This depends on the SummaryMetadata being the original
+
+      displaySettings = DefaultDisplaySettings.restoreFromProfile(
+               studio_.profile(), displayKey);
       if (displaySettings == null) {
-         List<DataViewer> dataViewers = studio.displays().getAllDataViewers();
-         for (DataViewer dv : dataViewers) {
-            DataProvider provider = dv.getDataProvider();
-            if (provider != null && provider.getSummaryMetadata() == summaryMetadata) {
-               displaySettings = dv.getDisplaySettings();
-            }
+         displaySettings = DefaultDisplaySettings.restoreFromProfile(
+                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         if (displaySettings != null) {
+            displaySettings = displaySettings.copyBuilder()
+                     .profileKey(studio_.profile(), displayKey)
+                     .build();
+         } else {
+            displaySettings = DefaultDisplaySettings.builder().build();
          }
       }
       if ((settings.containsKey(DeskewFrame.SHOW) && settings.getBoolean(DeskewFrame.SHOW, false))
@@ -148,10 +159,8 @@ public class DeskewAcqManager {
                && (settings.getString(DeskewFrame.OUTPUT_OPTION, "").equals(DeskewFrame.OPTION_RAM)
                || settings.getString(DeskewFrame.OUTPUT_OPTION, "")
                .equals(DeskewFrame.OPTION_REWRITABLE_RAM)))) {
-         if (displaySettings != null) {
-            displaySettings = displaySettings.copyBuilder().windowPositionKey(
-                     PROJECTION_TYPES[projectionType.ordinal()]).build();
-         }
+         displaySettings = displaySettings.copyBuilder().windowPositionKey(
+                  PROJECTION_TYPES[projectionType.ordinal()]).build();
          DisplayWindow display = studio.displays().createDisplay(store, null, displaySettings);
          if (isTestAcq) {
             switch (projectionType) {
