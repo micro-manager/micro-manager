@@ -125,8 +125,10 @@ public final class DefaultAlbum implements Album {
                studio_.profile(),
                PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          if (ds == null) {
-            ds = DefaultDisplaySettings.builder().colorMode(
-                  DisplaySettings.ColorMode.GRAYSCALE).build();
+            ds = DefaultDisplaySettings.builder()
+                     .colorMode(DisplaySettings.ColorMode.GRAYSCALE)
+                     .profileKey(studio_.profile(), PropertyKey.ALBUM_DISPLAY_SETTINGS.key())
+                     .build();
          }
          for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
             ds = ds.copyBuilderWithChannelSettings(ch,
@@ -237,16 +239,7 @@ public final class DefaultAlbum implements Album {
    @Subscribe
    public void onAlbumStoreClosing(DataViewerWillCloseEvent viewerWillCloseEvent) {
       if (viewerWillCloseEvent.getDataViewer().getDataProvider().equals(store_)) {
-         saveDisplaySettings();
          store_ = null;
-      }
-   }
-
-   private void saveDisplaySettings() {
-      if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) display_.getDisplaySettings())
-               .saveToProfile(studio_.profile(),
-                     PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
       }
    }
 

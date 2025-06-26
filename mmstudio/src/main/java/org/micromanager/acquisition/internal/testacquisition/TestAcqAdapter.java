@@ -97,6 +97,7 @@ public class TestAcqAdapter extends DataViewerListener implements
 
    public static final String ACQ_IDENTIFIER = "Acq_Identifier";
    private static final String TITLE = "Test-Acquisition";
+   private static final String TEST_ACQUISITION_DISPLAY_SETTINGS = "TestAcquisitionDisplaySettings";
    private static final SimpleDateFormat DATE_FORMATTER =
            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
    private Acquisition currentAcquisition_;
@@ -242,12 +243,13 @@ public class TestAcqAdapter extends DataViewerListener implements
 
          // Use settings of last closed acquisition viewer
          DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
-                 studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+                 studio_.profile(), TEST_ACQUISITION_DISPLAY_SETTINGS);
          if (dsTmp == null) {
             dsTmp = DefaultDisplaySettings.getStandardSettings(
                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
-         DisplaySettings.Builder displaySettingsBuilder = dsTmp.copyBuilder();
+         DisplaySettings.Builder displaySettingsBuilder = dsTmp.copyBuilder()
+                  .profileKey(studio_.profile(), TEST_ACQUISITION_DISPLAY_SETTINGS);
          final int nrChannels = summaryMetadata.getChannelNameList().size();
          if (nrChannels > 0) {
             // the do-while loop is a way to set display settings in a thread

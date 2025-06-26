@@ -771,7 +771,6 @@ public final class SnapLiveManager extends DataViewerListener
       setSuspended(true);
       if (display_ != null && !display_.isClosed()) {
          //displayLoc = display_.getWindow().getLocation();
-         saveDisplaySettings();
          display_.close();
       }
 
@@ -904,17 +903,9 @@ public final class SnapLiveManager extends DataViewerListener
       }
    }
 
-   private void saveDisplaySettings() {
-      if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
-         ds.saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
-      }
-   }
-
    @Override
    public boolean canCloseViewer(DataViewer viewer) {
       if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
-         saveDisplaySettings();
          setLiveModeOn(false);
       }
       return true;

@@ -291,10 +291,8 @@ public final class MMAcquisition extends DataViewerListener {
       // NS 20241128: I do not understand the logic here.
       // If this is not out Datastore or viewer, why deal with it?
       if (callbacks_.getAcquisitionDatastore() != viewer.getDataProvider()) {
-         if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-            DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
-            ds.saveToProfile(studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-         }
+         studio_.logs()
+               .logError("MMAcquisition: received canCloseViewer with unknown store");
          display_.removeListener(this);
          display_ = null;
          return true;
@@ -302,11 +300,6 @@ public final class MMAcquisition extends DataViewerListener {
       boolean result = callbacks_.abortRequest();
       if (result) {
          if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
-            // saving settings (again) may not be needed
-            if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-               DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
-               ds.saveToProfile(studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-            }
             display_.removeListener(this);
             display_ = null;
          }
@@ -428,9 +421,6 @@ public final class MMAcquisition extends DataViewerListener {
                ((DefaultDisplaySettings) display_.getDisplaySettings())
                      .save(store_.getSavePath());
             }
-            // save display settings to profile
-            ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
          display_.unregisterForEvents(this);
       }
@@ -453,22 +443,6 @@ public final class MMAcquisition extends DataViewerListener {
    public void onNewImage(DataProviderHasNewImageEvent event) {
       imagesReceived_++;
       setProgressText();
-   }
-
-   /**
-    * VIewer signals that display setting changed.
-    *
-    * @param event display settings changed event.
-    */
-   @Subscribe
-   public void onDisplaySettingsChangedEvent(DisplaySettingsChangedEvent event) {
-      if (!event.getDataViewer().equals(display_)) {
-         ReportingUtils.logError("MMAcquisition: received event from unknown viewer");
-      }
-      if (event.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) event.getDisplaySettings()).saveToProfile(
-               studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-      }
    }
 
    private void setProgressText() {
