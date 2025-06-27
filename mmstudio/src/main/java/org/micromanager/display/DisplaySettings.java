@@ -421,6 +421,40 @@ public interface DisplaySettings {
 
 
    /**
+    * ColorMode enums.
+    */
+   enum ColorMode {
+      // TODO Integer indices should be implementation detail of file format
+      COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
+      RED_HOT(5), @Deprecated SPECTRUM(6);
+
+      private final int index_;
+
+      ColorMode(int index) {
+         index_ = index;
+      }
+
+      @Deprecated
+      public int getIndex() {
+         return index_;
+      }
+
+      @Deprecated
+      public static ColorMode fromInt(int index) {
+         for (ColorMode mode : ColorMode.values()) {
+            if (mode.getIndex() == index) {
+               return mode;
+            }
+         }
+         return null;
+      }
+   }
+
+
+   //////////////////////////////// Deprecated methods below ////////////////////////////////
+
+
+   /**
     * This object contains contrast settings for a single channel. It is used
     * to set the minimum contrast value (treated as black), maximum contrast
     * value (treated as white, or full-intensity for colored displays), and
@@ -726,35 +760,6 @@ public interface DisplaySettings {
    @Deprecated
    Boolean getSafeIsVisible(int index, Boolean defaultVal);
 
-   /**
-    * ColorMode enums.
-    */
-   enum ColorMode {
-      // TODO Integer indices should be implementation detail of file format
-      COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
-      RED_HOT(5), @Deprecated SPECTRUM(6);
-
-      private final int index_;
-
-      ColorMode(int index) {
-         index_ = index;
-      }
-
-      @Deprecated
-      public int getIndex() {
-         return index_;
-      }
-
-      @Deprecated
-      public static ColorMode fromInt(int index) {
-         for (ColorMode mode : ColorMode.values()) {
-            if (mode.getIndex() == index) {
-               return mode;
-            }
-         }
-         return null;
-      }
-   }
 
    /**
     * The index into the "Display mode" control.
