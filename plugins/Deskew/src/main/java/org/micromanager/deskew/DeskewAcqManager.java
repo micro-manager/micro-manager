@@ -41,7 +41,7 @@ public class DeskewAcqManager {
       FULL_VOLUME
    }
 
-   public EnumMap<ProjectionType, String> projectionTypeDisplayKeys
+   private final EnumMap<ProjectionType, String> projectionTypeDisplayKeys
             = new EnumMap<>(ProjectionType.class);
 
    public static final String[] PROJECTION_TYPES = {

@@ -401,7 +401,7 @@ public interface DisplaySettings {
                .putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings)
                .putString(PropertyKey.WINDOW_POSITION_KEY.key(),
                         displaySettings.getWindowPositionKey())
-               .putString(PropertyKey.PROFILE_KEY.key(), displaySettings.getWindowPositionKey())
+               .putString(PropertyKey.PROFILE_KEY.key(), displaySettings.getProfileKey())
                .build();
    }
 
