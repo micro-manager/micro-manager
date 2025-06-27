@@ -21,10 +21,18 @@
 package org.micromanager.display;
 
 
-import org.micromanager.UserProfile;
-
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
+import org.micromanager.UserProfile;
+import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.internal.DefaultChannelDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.propertymap.MutablePropertyMapView;
+
 
 /**
  * This class defines the parameters that control how a given DisplayWindow
@@ -43,9 +51,16 @@ public interface DisplaySettings {
    /**
     * Keys used by Studio for Window positioning.
     */
-   static final String ALBUM_DISPLAY = "ALBUM_DISPLAY";
-   static final String PREVIEW_DISPLAY = "PREVIEW_DISPLAY";
-   static final String MDA_DISPLAY = "MDA_DISPLAY";
+   String ALBUM_DISPLAY = "ALBUM_DISPLAY";
+   String PREVIEW_DISPLAY = "PREVIEW_DISPLAY";
+   String MDA_DISPLAY = "MDA_DISPLAY";
+
+   /**
+    * Key used to store DisplaySettings in the UserProfile.
+    * This key is prepended to the key used to store the DisplaySettings
+    * in the UserProfile.
+    */
+   String PROFILEKEY = "Default_Display_Settings";
 
    /**
     * Builder for DisplaySettings.  Get an instance using the
@@ -148,7 +163,7 @@ public interface DisplaySettings {
       Builder windowPositionKey(String key);
 
       /**
-       * Sets the key under which these Displaysettings will be stored in the profile.
+       * Sets the key under which these DisplaySettings will be stored in the profile.
        * This key allows the DisplaySettings to keep an up-to-date copy in the profile.
        *
        * @param profile UserProfile to which these DisplaySettings will be saved.
@@ -288,6 +303,121 @@ public interface DisplaySettings {
 
    Builder copyBuilderWithComponentSettings(
          int channel, int component, ComponentDisplaySettings settings);
+
+
+   /**
+    * Restore DisplaySettings from a PropertyMap.
+    * If PropertyMap was null, the builder will return defaults.
+    * These defaults happen to be the same as the defaults in DefaultDisplaySettings.builder()
+    *
+    * @param pMap PropertyMap to be restored to DisplaySettings
+    * @return restored DisplaySettings.  Any missing component will be replaced
+    *     with the (Builder's) default.
+    */
+   static DisplaySettings.Builder fromPropertyMap(PropertyMap pMap) {
+      DisplaySettings.Builder ddsb = DefaultDisplaySettings.builder();
+
+      if (pMap != null) {
+         if (pMap.containsDouble(PropertyKey.ZOOM_RATIO.key())) {
+            ddsb.zoomRatio(pMap.getDouble(PropertyKey.ZOOM_RATIO.key(), 1.0));
+         }
+         if (pMap.containsDouble(PropertyKey.PLAYBACK_FPS.key())) {
+            ddsb.playbackFPS(pMap.getDouble(PropertyKey.PLAYBACK_FPS.key(), 10.0));
+         }
+         if (pMap.containsStringForEnum(PropertyKey.COLOR_MODE.key(), ColorMode.class)) {
+            ddsb.colorMode(pMap.getStringAsEnum(PropertyKey.COLOR_MODE.key(),
+                     ColorMode.class, ColorMode.GRAYSCALE));
+         }
+         if (pMap.containsBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key())) {
+            ddsb.uniformChannelScaling(pMap.getBoolean(
+                     PropertyKey.UNIFORM_CHANNEL_SCALING.key(), false));
+         }
+         if (pMap.containsBoolean(PropertyKey.AUTOSTRETCH.key())) {
+            ddsb.autostretch(pMap.getBoolean(PropertyKey.AUTOSTRETCH.key(), true));
+         }
+         if (pMap.containsBoolean(PropertyKey.HISTOGRAM_IS_LOGARITHMIC.key())) {
+            ddsb.histogramLogarithmic(pMap.getBoolean(PropertyKey.HISTOGRAM_IS_LOGARITHMIC.key(),
+                     false));
+         }
+         if (pMap.containsBoolean(PropertyKey.ROI_AUTOSCALE.key())) {
+            ddsb.roiAutoscale(pMap.getBoolean(PropertyKey.ROI_AUTOSCALE.key(), true));
+         }
+         if (pMap.containsBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key())) {
+            ddsb.autoscaleIgnoringZeros(pMap.getBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(),
+                     false));
+         }
+         if (pMap.containsDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key())) {
+            ddsb.autoscaleIgnoredQuantile(pMap.getDouble(PropertyKey
+                              .AUTOSCALE_IGNORED_QUANTILE.key(),
+                     0.001));
+         }
+         if (pMap.containsPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key())) {
+            List<PropertyMap> propertyMapList = pMap.getPropertyMapList(
+                     PropertyKey.CHANNEL_SETTINGS.key(), new ArrayList<>());
+            for (int i = 0; i < propertyMapList.size(); i++) {
+               ddsb.channel(i, DefaultChannelDisplaySettings
+                        .fromPropertyMap(propertyMapList.get(i)));
+            }
+         }
+         if (pMap.containsString(PropertyKey.WINDOW_POSITION_KEY.key())) {
+            ddsb.windowPositionKey(pMap.getString(PropertyKey.WINDOW_POSITION_KEY.key(),
+                     null));
+         }
+         if (pMap.containsString(PropertyKey.PROFILE_KEY.key())) {
+            ddsb.profileKey(MMStudio.getInstance().profile(),
+                     pMap.getString(PropertyKey.PROFILE_KEY.key(), null));
+         }
+      }
+
+      return ddsb;
+   }
+
+   /**
+    * Store displaySettings in a propertyMap.
+    *
+    * @param displaySettings DisplaySettings to be stored
+    * @return PropertyMap containing these DisplaySettings
+    */
+   static PropertyMap toPropertyMap(DisplaySettings displaySettings) {
+      List<PropertyMap> channelSettings = new ArrayList<>();
+      for (ChannelDisplaySettings cs : displaySettings.getAllChannelSettings()) {
+         channelSettings.add(((DefaultChannelDisplaySettings) cs).toPropertyMap());
+      }
+
+      return PropertyMaps.builder()
+               .putDouble(PropertyKey.ZOOM_RATIO.key(), displaySettings.getZoomRatio())
+               .putDouble(PropertyKey.PLAYBACK_FPS.key(), displaySettings.getPlaybackFPS())
+               .putEnumAsString(PropertyKey.COLOR_MODE.key(), displaySettings.getColorMode())
+               .putBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key(), displaySettings.isUniformChannelScalingEnabled())
+               .putBoolean(PropertyKey.AUTOSTRETCH.key(), displaySettings.isAutostretchEnabled())
+               .putBoolean(PropertyKey.HISTOGRAM_IS_LOGARITHMIC.key(), displaySettings.isHistogramLogarithmic())
+               .putBoolean(PropertyKey.ROI_AUTOSCALE.key(), displaySettings.isROIAutoscaleEnabled())
+               .putBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(), displaySettings.isAutoscaleIgnoringZeros())
+               .putDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key(), displaySettings.getAutoscaleIgnoredQuantile())
+               .putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings)
+               .putString(PropertyKey.WINDOW_POSITION_KEY.key(), displaySettings.getWindowPositionKey())
+               .putString(PropertyKey.PROFILE_KEY.key(), displaySettings.getWindowPositionKey())
+               .build();
+   }
+
+
+   /**
+    * Retrieve DisplaySettings from the User Profile.
+    *
+    * @param profile UserProfile to restore these Display Settings from.
+    * @param key     Key use to retrieve the DisplaySettings.
+    *                Will be pre-pended with PROFILEKEY.
+    * @return Stored DisplaySettings or null if none found.
+    */
+   static DisplaySettings restoreFromProfile(UserProfile profile, String key) {
+      MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
+      final String finalKey = new StringBuilder(PROFILEKEY).append("-").append(key).toString();
+      if (mpmv.containsPropertyMap(finalKey)) {
+         PropertyMap propertyMap = mpmv.getPropertyMap(finalKey, null);
+         return DisplaySettings.fromPropertyMap(propertyMap).profileKey(profile, key).build();
+      }
+      return null;
+   }
 
 
    // TODO Add static builder() in Java 8

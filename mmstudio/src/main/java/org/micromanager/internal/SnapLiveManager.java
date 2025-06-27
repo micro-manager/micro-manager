@@ -497,7 +497,7 @@ public final class SnapLiveManager extends DataViewerListener
    }
 
    private void createDisplay() {
-      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
+      DisplaySettings ds = DisplaySettings.restoreFromProfile(
             mmStudio_.profile(),
             PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
       if (ds == null) {

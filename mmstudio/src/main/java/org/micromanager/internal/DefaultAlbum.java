@@ -121,7 +121,7 @@ public final class DefaultAlbum implements Album {
             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
          studio_.displays().manage(store_);
-         DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
+         DisplaySettings ds = DisplaySettings.restoreFromProfile(
                studio_.profile(),
                PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          if (ds == null) {

@@ -242,7 +242,7 @@ public class TestAcqAdapter extends DataViewerListener implements
          displayWindow_.setCustomTitle(TITLE);
 
          // Use settings of last closed acquisition viewer
-         DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
+         DisplaySettings dsTmp = DisplaySettings.restoreFromProfile(
                  studio_.profile(), TEST_ACQUISITION_DISPLAY_SETTINGS);
          if (dsTmp == null) {
             dsTmp = DefaultDisplaySettings.getStandardSettings(

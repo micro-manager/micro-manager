@@ -2,20 +2,16 @@ package org.micromanager.deskew;
 
 import java.io.IOException;
 import java.util.EnumMap;
-import java.util.List;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
-import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.RememberedDisplaySettings;
 
 /**
  * This class manages the test datastores and data viewers for the Deskew plugin.
@@ -143,10 +139,10 @@ public class DeskewAcqManager {
          studio.logs().logError(ioe);
       }
 
-      displaySettings = DefaultDisplaySettings.restoreFromProfile(
+      displaySettings = DisplaySettings.restoreFromProfile(
                studio_.profile(), displayKey);
       if (displaySettings == null) {
-         displaySettings = DefaultDisplaySettings.restoreFromProfile(
+         displaySettings = DisplaySettings.restoreFromProfile(
                   studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          if (displaySettings != null) {
             displaySettings = displaySettings.copyBuilder()
