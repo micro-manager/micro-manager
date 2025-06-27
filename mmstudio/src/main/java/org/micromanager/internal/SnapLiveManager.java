@@ -60,7 +60,6 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
@@ -501,7 +500,7 @@ public final class SnapLiveManager extends DataViewerListener
             mmStudio_.profile(),
             PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
       if (displaySettingsBuilder == null) {
-         displaySettingsBuilder = DefaultDisplaySettings.builder().colorMode(
+         displaySettingsBuilder = mmStudio_.displays().displaySettingsBuilder().colorMode(
                DisplaySettings.ColorMode.GRAYSCALE);
       }
       for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {

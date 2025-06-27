@@ -60,7 +60,6 @@ import org.micromanager.data.internal.ndtiff.NDTiffAdapter;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplaySettingsChangedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.DefaultDisplaySettings;

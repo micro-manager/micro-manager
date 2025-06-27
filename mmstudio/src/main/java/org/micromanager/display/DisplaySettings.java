@@ -420,9 +420,6 @@ public interface DisplaySettings {
    }
 
 
-   // TODO Add static builder() in Java 8
-
-
    /**
     * This object contains contrast settings for a single channel. It is used
     * to set the minimum contrast value (treated as black), maximum contrast

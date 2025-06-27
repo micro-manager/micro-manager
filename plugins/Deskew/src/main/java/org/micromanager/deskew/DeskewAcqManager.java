@@ -11,7 +11,6 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 
 /**
  * This class manages the test datastores and data viewers for the Deskew plugin.
@@ -144,7 +143,7 @@ public class DeskewAcqManager {
          displaySettingsBuilder = DisplaySettings.restoreFromProfile(
                   studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          if (displaySettingsBuilder == null) {
-            displaySettingsBuilder = DefaultDisplaySettings.builder();
+            displaySettingsBuilder = studio_.displays().displaySettingsBuilder();
          }
          displaySettingsBuilder.profileKey(studio_.profile(), displayKey);
       }
@@ -153,8 +152,7 @@ public class DeskewAcqManager {
                && (settings.getString(DeskewFrame.OUTPUT_OPTION, "").equals(DeskewFrame.OPTION_RAM)
                || settings.getString(DeskewFrame.OUTPUT_OPTION, "")
                .equals(DeskewFrame.OPTION_REWRITABLE_RAM)))) {
-         displaySettingsBuilder.windowPositionKey(
-                  PROJECTION_TYPES[projectionType.ordinal()]);
+         displaySettingsBuilder.windowPositionKey(PROJECTION_TYPES[projectionType.ordinal()]);
          DisplayWindow display = studio.displays().createDisplay(store, null, displaySettingsBuilder.build());
          if (isTestAcq) {
             switch (projectionType) {

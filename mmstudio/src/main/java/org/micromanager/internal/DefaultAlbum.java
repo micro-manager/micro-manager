@@ -125,7 +125,7 @@ public final class DefaultAlbum implements Album {
                studio_.profile(),
                PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          if (displaySettingsBuilder == null) {
-            displaySettingsBuilder = DefaultDisplaySettings.builder()
+            displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
                      .colorMode(DisplaySettings.ColorMode.GRAYSCALE)
                      .profileKey(studio_.profile(), PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          }
