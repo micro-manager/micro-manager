@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.event.DefaultDisplayPositionChangedEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;

@@ -33,6 +33,7 @@ import javax.swing.JOptionPane;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreClosingEvent;
@@ -166,6 +167,12 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Override
    public DisplaySettings getStandardDisplaySettings() {
       return DefaultDisplaySettings.getStandardSettings(null);
+   }
+
+   @Override
+   public DisplaySettings.Builder displaySettingsBuilderFromProfile(UserProfile profile,
+                                                             String profileKey) {
+      return DefaultDisplaySettings.restoreFromProfile(profile, profileKey);
    }
 
    @Override

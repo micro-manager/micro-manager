@@ -20,8 +20,19 @@
 
 package org.micromanager.display;
 
+
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
+import org.micromanager.UserProfile;
+import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.internal.DefaultChannelDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.propertymap.MutablePropertyMapView;
+
 
 /**
  * This class defines the parameters that control how a given DisplayWindow
@@ -40,9 +51,16 @@ public interface DisplaySettings {
    /**
     * Keys used by Studio for Window positioning.
     */
-   static final String ALBUM_DISPLAY = "ALBUM_DISPLAY";
-   static final String PREVIEW_DISPLAY = "PREVIEW_DISPLAY";
-   static final String MDA_DISPLAY = "MDA_DISPLAY";
+   String ALBUM_DISPLAY = "ALBUM_DISPLAY";
+   String PREVIEW_DISPLAY = "PREVIEW_DISPLAY";
+   String MDA_DISPLAY = "MDA_DISPLAY";
+
+   /**
+    * Key used to store DisplaySettings in the UserProfile.
+    * This key is prepended to the key used to store the DisplaySettings
+    * in the UserProfile.
+    */
+   String PROFILEKEY = "Default_Display_Settings";
 
    /**
     * Builder for DisplaySettings.  Get an instance using the
@@ -143,6 +161,16 @@ public interface DisplaySettings {
        * @return builder instance to enable chaining commands
        */
       Builder windowPositionKey(String key);
+
+      /**
+       * Sets the key under which these DisplaySettings will be stored in the profile.
+       * This key allows the DisplaySettings to keep an up-to-date copy in the profile.
+       *
+       * @param profile UserProfile to which these DisplaySettings will be saved.
+       * @param key Used to identify these DisplaySettings in the profile.
+       * @return builder instance to enable chaining commands
+       */
+      Builder profileKey(UserProfile profile, String key);
 
       /**
        * Number of ChannelDisplaySettings in this builder.  Not sure why a builder needs this...
@@ -265,6 +293,10 @@ public interface DisplaySettings {
 
    String getWindowPositionKey();
 
+   String getProfileKey();
+
+   UserProfile getProfile();
+
    Builder copyBuilder();
 
    Builder copyBuilderWithChannelSettings(int channel, ChannelDisplaySettings settings);
@@ -273,7 +305,41 @@ public interface DisplaySettings {
          int channel, int component, ComponentDisplaySettings settings);
 
 
-   // TODO Add static builder() in Java 8
+
+
+
+   /**
+    * ColorMode enums.
+    */
+   enum ColorMode {
+      // TODO Integer indices should be implementation detail of file format
+      COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
+      RED_HOT(5), @Deprecated SPECTRUM(6);
+
+      private final int index_;
+
+      ColorMode(int index) {
+         index_ = index;
+      }
+
+      @Deprecated
+      public int getIndex() {
+         return index_;
+      }
+
+      @Deprecated
+      public static ColorMode fromInt(int index) {
+         for (ColorMode mode : ColorMode.values()) {
+            if (mode.getIndex() == index) {
+               return mode;
+            }
+         }
+         return null;
+      }
+   }
+
+
+   //////////////////////////////// Deprecated methods below ////////////////////////////////
 
 
    /**
@@ -582,35 +648,6 @@ public interface DisplaySettings {
    @Deprecated
    Boolean getSafeIsVisible(int index, Boolean defaultVal);
 
-   /**
-    * ColorMode enums.
-    */
-   enum ColorMode {
-      // TODO Integer indices should be implementation detail of file format
-      COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
-      RED_HOT(5), @Deprecated SPECTRUM(6);
-
-      private final int index_;
-
-      ColorMode(int index) {
-         index_ = index;
-      }
-
-      @Deprecated
-      public int getIndex() {
-         return index_;
-      }
-
-      @Deprecated
-      public static ColorMode fromInt(int index) {
-         for (ColorMode mode : ColorMode.values()) {
-            if (mode.getIndex() == index) {
-               return mode;
-            }
-         }
-         return null;
-      }
-   }
 
    /**
     * The index into the "Display mode" control.

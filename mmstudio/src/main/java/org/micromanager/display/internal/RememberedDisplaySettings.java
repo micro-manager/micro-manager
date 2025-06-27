@@ -56,7 +56,7 @@ public class RememberedDisplaySettings {
       if (cds == null || channelName == null || channelGroup == null) {
          return;
       }
-      String key = genKey(channelGroup, channelName);
+      String key = generateChannelKey(channelGroup, channelName);
       MutablePropertyMapView settings =
             studio.profile().getSettings(RememberedDisplaySettings.class);
       if (cds instanceof DefaultChannelDisplaySettings) {
@@ -90,7 +90,7 @@ public class RememberedDisplaySettings {
    public static ChannelDisplaySettings loadChannel(Studio studio,
                                                     String channelGroup, String channelName,
                                                     Color defaultColor) {
-      String key = genKey(channelGroup, channelName);
+      String key = generateChannelKey(channelGroup, channelName);
       MutablePropertyMapView settings =
             studio.profile().getSettings(RememberedDisplaySettings.class);
       if (settings.containsPropertyMap(key)) {
@@ -167,7 +167,16 @@ public class RememberedDisplaySettings {
    }
 
 
-   private static String genKey(String channelGroup, String channelName) {
+   private static String generateChannelKey(String channelGroup, String channelName) {
       return channelGroup + ":" + channelName;
    }
+
+   private static String generateChannelKey(String key, String channelGroup, String channelName) {
+      if (key == null || key.isEmpty()) {
+         return generateChannelKey(channelGroup, channelName);
+      }
+      return key + ":" + channelGroup + ":" + channelName;
+   }
+
+
 }

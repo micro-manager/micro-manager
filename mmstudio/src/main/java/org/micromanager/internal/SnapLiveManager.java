@@ -60,7 +60,6 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
@@ -504,25 +503,26 @@ public final class SnapLiveManager extends DataViewerListener
    }
 
    private void createDisplay() {
-      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
-            mmStudio_.profile(),
-            PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
-      if (ds == null) {
-         ds = DefaultDisplaySettings.builder().colorMode(
-               DisplaySettings.ColorMode.GRAYSCALE).build();
+      DisplaySettings.Builder displaySettingsBuilder =
+               mmStudio_.displays().displaySettingsBuilderFromProfile(
+                        mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+      if (displaySettingsBuilder == null) {
+         displaySettingsBuilder = mmStudio_.displays().displaySettingsBuilder().colorMode(
+               DisplaySettings.ColorMode.GRAYSCALE);
       }
       for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
-         ds = ds.copyBuilderWithChannelSettings(ch,
+         displaySettingsBuilder.channel(ch,
                RememberedDisplaySettings.loadChannel(mmStudio_,
                      store_.getSummaryMetadata().getChannelGroup(),
                      store_.getSummaryMetadata().getSafeChannelName(ch),
-                     Color.white)).build();
+                     Color.white));
       }
-      ds = ds.copyBuilder().windowPositionKey(DisplaySettings.PREVIEW_DISPLAY).build();
+      displaySettingsBuilder.windowPositionKey(DisplaySettings.PREVIEW_DISPLAY);
       final DisplayWindowControlsFactory controlsFactory =
                (DisplayWindow display) -> createControls();
       display_ = new DisplayController.Builder(store_)
-            .controlsFactory(controlsFactory).displaySettings(ds).build(mmStudio_);
+            .controlsFactory(controlsFactory).displaySettings(displaySettingsBuilder.build())
+               .build(mmStudio_);
 
       mmStudio_.displays().addViewer(display_);
 
@@ -778,7 +778,6 @@ public final class SnapLiveManager extends DataViewerListener
       setSuspended(true);
       if (display_ != null && !display_.isClosed()) {
          //displayLoc = display_.getWindow().getLocation();
-         saveDisplaySettings();
          display_.close();
       }
 
@@ -911,17 +910,9 @@ public final class SnapLiveManager extends DataViewerListener
       }
    }
 
-   private void saveDisplaySettings() {
-      if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
-         ds.saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
-      }
-   }
-
    @Override
    public boolean canCloseViewer(DataViewer viewer) {
       if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
-         saveDisplaySettings();
          setLiveModeOn(false);
       }
       return true;
