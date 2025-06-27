@@ -597,399 +597,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return result;
    }
 
-   /**
-    * Deprecated way of storing default contrast settings.
-    */
-   @Deprecated
-   public static class DefaultContrastSettings implements DisplaySettings.ContrastSettings {
-      Integer[] contrastMins_;
-      Integer[] contrastMaxes_;
-      Double[] gammas_;
-      Boolean isVisible_;
-
-      /**
-       * Convenience method for single-component settings.
-       *
-       * @param contrastMin - new value for contrastMin
-       * @param contrastMax - new value for contrastMax
-       * @param gamma       - new gamma value
-       * @param isVisible   - new boolean to indicate visibility
-       */
-      public DefaultContrastSettings(Integer contrastMin, Integer contrastMax,
-                                     Double gamma, Boolean isVisible) {
-         contrastMins_ = new Integer[] {contrastMin};
-         contrastMaxes_ = new Integer[] {contrastMax};
-         gammas_ = new Double[] {gamma};
-         isVisible_ = isVisible;
-      }
-
-      public DefaultContrastSettings(Integer[] contrastMins,
-                                     Integer[] contrastMaxes, Double[] gammas, Boolean isVisible) {
-         contrastMins_ = contrastMins;
-         contrastMaxes_ = contrastMaxes;
-         gammas_ = gammas;
-         isVisible_ = isVisible;
-      }
-
-      @Override
-      @Deprecated
-      public Integer[] getContrastMins() {
-         return contrastMins_;
-      }
-
-      @Override
-      @Deprecated
-      public Integer getSafeContrastMin(int component, Integer defaultVal) {
-         if (component < 0 || contrastMins_ == null
-               || contrastMins_.length <= component) {
-            return defaultVal;
-         }
-         return contrastMins_[component];
-      }
-
-      @Override
-      @Deprecated
-      public Integer[] getContrastMaxes() {
-         return contrastMaxes_;
-      }
-
-      @Override
-      @Deprecated
-      public Integer getSafeContrastMax(int component, Integer defaultVal) {
-         if (component < 0 || contrastMaxes_ == null
-               || contrastMaxes_.length <= component) {
-            return defaultVal;
-         }
-         return contrastMaxes_[component];
-      }
-
-      @Override
-      @Deprecated
-      public Double[] getContrastGammas() {
-         return gammas_;
-      }
-
-      @Override
-      public Double getSafeContrastGamma(int component, Double defaultVal) {
-         if (component < 0 || gammas_ == null
-               || gammas_.length <= component) {
-            return defaultVal;
-         }
-         return gammas_[component];
-      }
-
-      @Override
-      @Deprecated
-      public int getNumComponents() {
-         int result = 0;
-         if (contrastMins_ != null) {
-            result = Math.max(result, contrastMins_.length);
-         }
-         if (contrastMaxes_ != null) {
-            result = Math.max(result, contrastMaxes_.length);
-         }
-         if (gammas_ != null) {
-            result = Math.max(result, gammas_.length);
-         }
-         return result;
-      }
-
-      @Override
-      @Deprecated
-      public Boolean getIsVisible() {
-         return isVisible();
-      }
-
-      @Override
-      @Deprecated
-      public Boolean isVisible() {
-         return isVisible_;
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-         if (!(obj instanceof ContrastSettings)) {
-            return false;
-         }
-         ContrastSettings alt = (ContrastSettings) obj;
-         if (getNumComponents() != alt.getNumComponents()) {
-            return false;
-         }
-         Integer[] altMins = alt.getContrastMins();
-         Integer[] altMaxes = alt.getContrastMaxes();
-         Double[] altGammas = alt.getContrastGammas();
-         if (((contrastMins_ == null) != (altMins == null))
-               || ((contrastMaxes_ == null) != (altMaxes == null))
-               || ((gammas_ == null) != (altGammas == null))) {
-            // Someone's array is null where the other one isn't.
-            return false;
-         }
-         if ((contrastMins_ != null
-               && !Arrays.deepEquals(contrastMins_, altMins))
-               || (contrastMaxes_ != null
-               && !Arrays.deepEquals(contrastMaxes_, altMaxes))
-               || (gammas_ != null && !Arrays.deepEquals(gammas_, altGammas))) {
-            // Arrays contain unequal values.
-            return false;
-         }
-         // All arrays have same contents or are both null.
-         return (isVisible_ != alt.isVisible());
-      }
-
-      @Override
-      public String toString() {
-         String result = String.format("<ContrastSettings (%d components)", getNumComponents());
-         for (int i = 0; i < getNumComponents(); ++i) {
-            result += String.format("(%d, %d @ %.2f)", getSafeContrastMin(i, -1),
-                  getSafeContrastMax(i, -1), getSafeContrastGamma(i, -1.0));
-         }
-         if (isVisible_ != null) {
-            result += isVisible_ ? " (visible)" : " (hidden)";
-         }
-         return result + ">";
-      }
-   }
-
-   @Deprecated
-   public static class LegacyBuilder extends Builder
-         implements DisplaySettings.DisplaySettingsBuilder {
-      @Override
-      public DefaultDisplaySettings build() {
-         return new DefaultDisplaySettings(this);
-      }
-
-      @Override
-      public DisplaySettingsBuilder channelColors(Color[] channelColors) {
-         for (int i = 0; i < channelColors.length; ++i) {
-            if (channelColors[i] == null) {
-               continue;
-            }
-            channel(i, getChannelSettings(i).copyBuilder()
-                  .color(channelColors[i]).build());
-         }
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
-                                                           int channelIndex) {
-         channel(channelIndex, getChannelSettings(channelIndex).copyBuilder()
-               .color(newColor).build());
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder channelContrastSettings(ContrastSettings[] contrastSettings) {
-         if (contrastSettings == null) {
-            return this;
-         }
-         for (int i = 0; i < contrastSettings.length; ++i) {
-            if (contrastSettings[i] == null) {
-               continue;
-            }
-            safeUpdateContrastSettings(contrastSettings[i], i);
-         }
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder safeUpdateContrastSettings(
-            ContrastSettings legacySettings, int channelIndex) {
-         if (legacySettings == null) {
-            return this;
-         }
-         ChannelDisplaySettings channelSettings = getChannelSettings(channelIndex);
-         ChannelDisplaySettings.Builder channelBuilder =
-               channelSettings.copyBuilder();
-         for (int j = 0; j < legacySettings.getNumComponents(); ++j) {
-            ComponentDisplaySettings.Builder componentBuilder =
-                  channelSettings.getComponentSettings(j).copyBuilder();
-            if (legacySettings.getContrastMins() != null
-                  && legacySettings.getContrastMins()[j] != null) {
-               componentBuilder = componentBuilder.scalingMinimum(
-                     legacySettings.getContrastMins()[j]);
-            }
-            if (legacySettings.getContrastMaxes() != null
-                  && legacySettings.getContrastMaxes()[j] != null) {
-               componentBuilder = componentBuilder.scalingMaximum(
-                     legacySettings.getContrastMaxes()[j]);
-            }
-            if (legacySettings.getContrastGammas() != null
-                  && legacySettings.getContrastGammas()[j] != null) {
-               componentBuilder = componentBuilder.scalingGamma(
-                     legacySettings.getContrastGammas()[j]);
-            }
-            channelBuilder.component(j, componentBuilder.build());
-         }
-         if (legacySettings.isVisible() != null) {
-            channelBuilder.visible(legacySettings.isVisible());
-         }
-         channel(channelIndex, channelBuilder.build());
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder zoom(Double ratio) {
-         if (ratio != null) {
-            zoomRatio(ratio);
-         }
-         return this;
-      }
-
-      @Override
-      @Deprecated
-      public DisplaySettingsBuilder magnification(Double ratio) {
-         return zoom(ratio);
-      }
-
-      @Override
-      public DisplaySettingsBuilder animationFPS(Double animationFPS) {
-         if (animationFPS != null) {
-            playbackFPS(animationFPS);
-         }
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode) {
-         if (channelColorMode != null) {
-            colorMode(channelColorMode);
-         }
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels) {
-         if (shouldSyncChannels != null) {
-            uniformChannelScaling(shouldSyncChannels);
-         }
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch) {
-         if (shouldAutostretch != null) {
-            autostretch(shouldAutostretch);
-         }
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder shouldScaleWithROI(Boolean shouldScaleWithROI) {
-         if (shouldScaleWithROI != null) {
-            roiAutoscale(shouldScaleWithROI);
-         }
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder extremaPercentage(Double extremaPercentage) {
-         if (extremaPercentage != null) {
-            autoscaleIgnoredPercentile(extremaPercentage);
-         }
-         return this;
-      }
-   }
-
-   @Override
-   @Deprecated
-   public ContrastSettings[] getChannelContrastSettings() {
-      ContrastSettings[] ret = new ContrastSettings[getNumberOfChannels()];
-      for (int i = 0; i < getNumberOfChannels(); ++i) {
-         ret[i] = getSafeContrastSettings(i, null);
-      }
-      return ret;
-   }
-
-   @Override
-   @Deprecated
-   public ContrastSettings getSafeContrastSettings(int index,
-                                                   ContrastSettings defaultVal) {
-      if (index < 0 || index >= getNumberOfChannels()) {
-         return defaultVal;
-      }
-      ChannelDisplaySettings channelSettings = getChannelSettings(index);
-      int nComponents = channelSettings.getNumberOfComponents();
-      Integer[] mins = new Integer[nComponents];
-      Integer[] maxes = new Integer[nComponents];
-      Double[] gammas = new Double[nComponents];
-      for (int j = 0; j < nComponents; ++j) {
-         ComponentDisplaySettings componentSettings =
-               channelSettings.getComponentSettings(j);
-         long min = componentSettings.getScalingMinimum();
-         mins[j] = min > Integer.MAX_VALUE ? null : (int) min;
-         long max = componentSettings.getScalingMaximum();
-         maxes[j] = max > Integer.MAX_VALUE ? null : (int) max;
-         gammas[j] = componentSettings.getScalingGamma();
-      }
-      return new DefaultContrastSettings(mins, maxes, gammas,
-            channelSettings.isVisible());
-   }
-
-   @Override
-   @Deprecated
-   public Integer getSafeContrastMin(int index, int component,
-                                     Integer defaultVal) {
-      if (index < 0 || index >= getNumberOfChannels()) {
-         return defaultVal;
-      }
-      ChannelDisplaySettings channelSettings = getChannelSettings(index);
-      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
-         return defaultVal;
-      }
-      long min = channelSettings.getComponentSettings(component).getScalingMinimum();
-      return min > Integer.MAX_VALUE ? defaultVal : (int) min;
-   }
-
-   @Override
-   @Deprecated
-   public Integer getSafeContrastMax(int index, int component,
-                                     Integer defaultVal) {
-      if (index < 0 || index >= getNumberOfChannels()) {
-         return defaultVal;
-      }
-      ChannelDisplaySettings channelSettings = getChannelSettings(index);
-      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
-         return defaultVal;
-      }
-      long max = channelSettings.getComponentSettings(component).getScalingMaximum();
-      return max > Integer.MAX_VALUE ? defaultVal : (int) max;
-   }
-
-   @Override
-   @Deprecated
-   public Double getSafeContrastGamma(int index, int component,
-                                      Double defaultVal) {
-      if (index < 0 || index >= getNumberOfChannels()) {
-         return defaultVal;
-      }
-      ChannelDisplaySettings channelSettings = getChannelSettings(index);
-      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
-         return defaultVal;
-      }
-      return channelSettings.getComponentSettings(component).getScalingGamma();
-   }
-
-   @Override
-   @Deprecated
-   public Boolean getSafeIsVisible(int index, Boolean defaultVal) {
-      if (index < 0 || index >= getNumberOfChannels()) {
-         return defaultVal;
-      }
-      return getChannelSettings(index).isVisible();
-   }
-
-   @Override
-   @Deprecated
-   public DisplaySettings.ColorMode getChannelColorMode() {
-      return getColorMode();
-   }
-
-   @Override
-   @Deprecated
-   public Boolean getShouldSyncChannels() {
-      return null;
-   }
 
    @Override
    public DisplaySettings.Builder copyBuilder() {
@@ -1027,26 +634,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
                   .build());
    }
 
-   @Override
-   @Deprecated
-   public DisplaySettingsBuilder copy() {
-      DisplaySettings.Builder ret = new LegacyBuilder()
-            .zoomRatio(zoom_)
-            .playbackFPS(fps_)
-            .colorMode(mode_)
-            .uniformChannelScaling(uniformChannelScaling_)
-            .autostretch(autostretch_)
-            .roiAutoscale(useROI_)
-            .histogramLogarithmic(histogramLogarithmic_)
-            .autoscaleIgnoredQuantile(extremaQuantile_)
-            .autoscaleIgnoringZeros(ignoreZeros_)
-            .windowPositionKey(windowPositionKey_)
-            .profileKey(profile_, profileKey_);
-      for (int i = 0; i < getNumberOfChannels(); ++i) {
-         ret.channel(i, channelSettings_.get(i));
-      }
-      return (LegacyBuilder) ret;
-   }
 
    // TODO This should go in NonPropertyMapJSONFormats.DisplaySettings
    public static DefaultDisplaySettings legacyFromJSON(JSONObject tags) {
@@ -1206,5 +793,424 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       save(displaySettingsFile);
    }
 
+
+
+   /////////////////////////////////////Deprecated methods/////////////////////////////////////
+
+
+   /**
+    * Deprecated way of storing default contrast settings.
+    */
+   @Deprecated
+   public static class DefaultContrastSettings implements DisplaySettings.ContrastSettings {
+      Integer[] contrastMins_;
+      Integer[] contrastMaxes_;
+      Double[] gammas_;
+      Boolean isVisible_;
+
+      /**
+       * Convenience method for single-component settings.
+       *
+       * @param contrastMin - new value for contrastMin
+       * @param contrastMax - new value for contrastMax
+       * @param gamma       - new gamma value
+       * @param isVisible   - new boolean to indicate visibility
+       */
+      public DefaultContrastSettings(Integer contrastMin, Integer contrastMax,
+                                     Double gamma, Boolean isVisible) {
+         contrastMins_ = new Integer[] {contrastMin};
+         contrastMaxes_ = new Integer[] {contrastMax};
+         gammas_ = new Double[] {gamma};
+         isVisible_ = isVisible;
+      }
+
+      public DefaultContrastSettings(Integer[] contrastMins,
+                                     Integer[] contrastMaxes, Double[] gammas, Boolean isVisible) {
+         contrastMins_ = contrastMins;
+         contrastMaxes_ = contrastMaxes;
+         gammas_ = gammas;
+         isVisible_ = isVisible;
+      }
+
+      @Override
+      @Deprecated
+      public Integer[] getContrastMins() {
+         return contrastMins_;
+      }
+
+      @Override
+      @Deprecated
+      public Integer getSafeContrastMin(int component, Integer defaultVal) {
+         if (component < 0 || contrastMins_ == null
+                  || contrastMins_.length <= component) {
+            return defaultVal;
+         }
+         return contrastMins_[component];
+      }
+
+      @Override
+      @Deprecated
+      public Integer[] getContrastMaxes() {
+         return contrastMaxes_;
+      }
+
+      @Override
+      @Deprecated
+      public Integer getSafeContrastMax(int component, Integer defaultVal) {
+         if (component < 0 || contrastMaxes_ == null
+                  || contrastMaxes_.length <= component) {
+            return defaultVal;
+         }
+         return contrastMaxes_[component];
+      }
+
+      @Override
+      @Deprecated
+      public Double[] getContrastGammas() {
+         return gammas_;
+      }
+
+      @Override
+      public Double getSafeContrastGamma(int component, Double defaultVal) {
+         if (component < 0 || gammas_ == null
+                  || gammas_.length <= component) {
+            return defaultVal;
+         }
+         return gammas_[component];
+      }
+
+      @Override
+      @Deprecated
+      public int getNumComponents() {
+         int result = 0;
+         if (contrastMins_ != null) {
+            result = Math.max(result, contrastMins_.length);
+         }
+         if (contrastMaxes_ != null) {
+            result = Math.max(result, contrastMaxes_.length);
+         }
+         if (gammas_ != null) {
+            result = Math.max(result, gammas_.length);
+         }
+         return result;
+      }
+
+      @Override
+      @Deprecated
+      public Boolean getIsVisible() {
+         return isVisible();
+      }
+
+      @Override
+      @Deprecated
+      public Boolean isVisible() {
+         return isVisible_;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (!(obj instanceof ContrastSettings)) {
+            return false;
+         }
+         ContrastSettings alt = (ContrastSettings) obj;
+         if (getNumComponents() != alt.getNumComponents()) {
+            return false;
+         }
+         Integer[] altMins = alt.getContrastMins();
+         Integer[] altMaxes = alt.getContrastMaxes();
+         Double[] altGammas = alt.getContrastGammas();
+         if (((contrastMins_ == null) != (altMins == null))
+                  || ((contrastMaxes_ == null) != (altMaxes == null))
+                  || ((gammas_ == null) != (altGammas == null))) {
+            // Someone's array is null where the other one isn't.
+            return false;
+         }
+         if ((contrastMins_ != null
+                  && !Arrays.deepEquals(contrastMins_, altMins))
+                  || (contrastMaxes_ != null
+                  && !Arrays.deepEquals(contrastMaxes_, altMaxes))
+                  || (gammas_ != null && !Arrays.deepEquals(gammas_, altGammas))) {
+            // Arrays contain unequal values.
+            return false;
+         }
+         // All arrays have same contents or are both null.
+         return (isVisible_ != alt.isVisible());
+      }
+
+      @Override
+      public String toString() {
+         String result = String.format("<ContrastSettings (%d components)", getNumComponents());
+         for (int i = 0; i < getNumComponents(); ++i) {
+            result += String.format("(%d, %d @ %.2f)", getSafeContrastMin(i, -1),
+                     getSafeContrastMax(i, -1), getSafeContrastGamma(i, -1.0));
+         }
+         if (isVisible_ != null) {
+            result += isVisible_ ? " (visible)" : " (hidden)";
+         }
+         return result + ">";
+      }
+   }
+
+   @Deprecated
+   public static class LegacyBuilder extends Builder
+            implements DisplaySettings.DisplaySettingsBuilder {
+      @Override
+      public DefaultDisplaySettings build() {
+         return new DefaultDisplaySettings(this);
+      }
+
+      @Override
+      public DisplaySettingsBuilder channelColors(Color[] channelColors) {
+         for (int i = 0; i < channelColors.length; ++i) {
+            if (channelColors[i] == null) {
+               continue;
+            }
+            channel(i, getChannelSettings(i).copyBuilder()
+                     .color(channelColors[i]).build());
+         }
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
+                                                           int channelIndex) {
+         channel(channelIndex, getChannelSettings(channelIndex).copyBuilder()
+                  .color(newColor).build());
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder channelContrastSettings(ContrastSettings[] contrastSettings) {
+         if (contrastSettings == null) {
+            return this;
+         }
+         for (int i = 0; i < contrastSettings.length; ++i) {
+            if (contrastSettings[i] == null) {
+               continue;
+            }
+            safeUpdateContrastSettings(contrastSettings[i], i);
+         }
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder safeUpdateContrastSettings(
+               ContrastSettings legacySettings, int channelIndex) {
+         if (legacySettings == null) {
+            return this;
+         }
+         ChannelDisplaySettings channelSettings = getChannelSettings(channelIndex);
+         ChannelDisplaySettings.Builder channelBuilder =
+                  channelSettings.copyBuilder();
+         for (int j = 0; j < legacySettings.getNumComponents(); ++j) {
+            ComponentDisplaySettings.Builder componentBuilder =
+                     channelSettings.getComponentSettings(j).copyBuilder();
+            if (legacySettings.getContrastMins() != null
+                     && legacySettings.getContrastMins()[j] != null) {
+               componentBuilder = componentBuilder.scalingMinimum(
+                        legacySettings.getContrastMins()[j]);
+            }
+            if (legacySettings.getContrastMaxes() != null
+                     && legacySettings.getContrastMaxes()[j] != null) {
+               componentBuilder = componentBuilder.scalingMaximum(
+                        legacySettings.getContrastMaxes()[j]);
+            }
+            if (legacySettings.getContrastGammas() != null
+                     && legacySettings.getContrastGammas()[j] != null) {
+               componentBuilder = componentBuilder.scalingGamma(
+                        legacySettings.getContrastGammas()[j]);
+            }
+            channelBuilder.component(j, componentBuilder.build());
+         }
+         if (legacySettings.isVisible() != null) {
+            channelBuilder.visible(legacySettings.isVisible());
+         }
+         channel(channelIndex, channelBuilder.build());
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder zoom(Double ratio) {
+         if (ratio != null) {
+            zoomRatio(ratio);
+         }
+         return this;
+      }
+
+      @Override
+      @Deprecated
+      public DisplaySettingsBuilder magnification(Double ratio) {
+         return zoom(ratio);
+      }
+
+      @Override
+      public DisplaySettingsBuilder animationFPS(Double animationFPS) {
+         if (animationFPS != null) {
+            playbackFPS(animationFPS);
+         }
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode) {
+         if (channelColorMode != null) {
+            colorMode(channelColorMode);
+         }
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels) {
+         if (shouldSyncChannels != null) {
+            uniformChannelScaling(shouldSyncChannels);
+         }
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch) {
+         if (shouldAutostretch != null) {
+            autostretch(shouldAutostretch);
+         }
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder shouldScaleWithROI(Boolean shouldScaleWithROI) {
+         if (shouldScaleWithROI != null) {
+            roiAutoscale(shouldScaleWithROI);
+         }
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder extremaPercentage(Double extremaPercentage) {
+         if (extremaPercentage != null) {
+            autoscaleIgnoredPercentile(extremaPercentage);
+         }
+         return this;
+      }
+   }
+
+   @Override
+   @Deprecated
+   public ContrastSettings[] getChannelContrastSettings() {
+      ContrastSettings[] ret = new ContrastSettings[getNumberOfChannels()];
+      for (int i = 0; i < getNumberOfChannels(); ++i) {
+         ret[i] = getSafeContrastSettings(i, null);
+      }
+      return ret;
+   }
+
+   @Override
+   @Deprecated
+   public ContrastSettings getSafeContrastSettings(int index,
+                                                   ContrastSettings defaultVal) {
+      if (index < 0 || index >= getNumberOfChannels()) {
+         return defaultVal;
+      }
+      ChannelDisplaySettings channelSettings = getChannelSettings(index);
+      int nComponents = channelSettings.getNumberOfComponents();
+      Integer[] mins = new Integer[nComponents];
+      Integer[] maxes = new Integer[nComponents];
+      Double[] gammas = new Double[nComponents];
+      for (int j = 0; j < nComponents; ++j) {
+         ComponentDisplaySettings componentSettings =
+                  channelSettings.getComponentSettings(j);
+         long min = componentSettings.getScalingMinimum();
+         mins[j] = min > Integer.MAX_VALUE ? null : (int) min;
+         long max = componentSettings.getScalingMaximum();
+         maxes[j] = max > Integer.MAX_VALUE ? null : (int) max;
+         gammas[j] = componentSettings.getScalingGamma();
+      }
+      return new DefaultContrastSettings(mins, maxes, gammas,
+               channelSettings.isVisible());
+   }
+
+   @Override
+   @Deprecated
+   public Integer getSafeContrastMin(int index, int component,
+                                     Integer defaultVal) {
+      if (index < 0 || index >= getNumberOfChannels()) {
+         return defaultVal;
+      }
+      ChannelDisplaySettings channelSettings = getChannelSettings(index);
+      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
+         return defaultVal;
+      }
+      long min = channelSettings.getComponentSettings(component).getScalingMinimum();
+      return min > Integer.MAX_VALUE ? defaultVal : (int) min;
+   }
+
+   @Override
+   @Deprecated
+   public Integer getSafeContrastMax(int index, int component,
+                                     Integer defaultVal) {
+      if (index < 0 || index >= getNumberOfChannels()) {
+         return defaultVal;
+      }
+      ChannelDisplaySettings channelSettings = getChannelSettings(index);
+      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
+         return defaultVal;
+      }
+      long max = channelSettings.getComponentSettings(component).getScalingMaximum();
+      return max > Integer.MAX_VALUE ? defaultVal : (int) max;
+   }
+
+   @Override
+   @Deprecated
+   public Double getSafeContrastGamma(int index, int component,
+                                      Double defaultVal) {
+      if (index < 0 || index >= getNumberOfChannels()) {
+         return defaultVal;
+      }
+      ChannelDisplaySettings channelSettings = getChannelSettings(index);
+      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
+         return defaultVal;
+      }
+      return channelSettings.getComponentSettings(component).getScalingGamma();
+   }
+
+   @Override
+   @Deprecated
+   public Boolean getSafeIsVisible(int index, Boolean defaultVal) {
+      if (index < 0 || index >= getNumberOfChannels()) {
+         return defaultVal;
+      }
+      return getChannelSettings(index).isVisible();
+   }
+
+   @Override
+   @Deprecated
+   public DisplaySettings.ColorMode getChannelColorMode() {
+      return getColorMode();
+   }
+
+   @Override
+   @Deprecated
+   public Boolean getShouldSyncChannels() {
+      return null;
+   }
+
+   @Override
+   @Deprecated
+   public DisplaySettingsBuilder copy() {
+      DisplaySettings.Builder ret = new LegacyBuilder()
+               .zoomRatio(zoom_)
+               .playbackFPS(fps_)
+               .colorMode(mode_)
+               .uniformChannelScaling(uniformChannelScaling_)
+               .autostretch(autostretch_)
+               .roiAutoscale(useROI_)
+               .histogramLogarithmic(histogramLogarithmic_)
+               .autoscaleIgnoredQuantile(extremaQuantile_)
+               .autoscaleIgnoringZeros(ignoreZeros_)
+               .windowPositionKey(windowPositionKey_)
+               .profileKey(profile_, profileKey_);
+      for (int i = 0; i < getNumberOfChannels(); ++i) {
+         ret.channel(i, channelSettings_.get(i));
+      }
+      return (LegacyBuilder) ret;
+   }
 
 }
