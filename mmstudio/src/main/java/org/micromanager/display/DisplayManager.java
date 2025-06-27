@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
+import org.micromanager.UserProfile;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -47,11 +48,25 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Retrieve a DisplaySettings holding the values the user has saved as their
     * default values.
+    * Nico 20250627: It is unclear what this method is supposed to do. I can
+    * not find a "Set as default" button, or a DisplayWindow Settings tab.
     *
     * @return The DisplaySettings as of the last time the user clicked the
     *     "Set as default" button in the Settings tab of a DisplayWindow.
     */
    DisplaySettings getStandardDisplaySettings();
+
+   /**
+    * Restore DisplaySettings.Builder from the provided UserProfile and
+    * profile key. Returns null if the profile does not contain the requested DisplaySettings.
+    *
+    * @param profile    The UserProfile to use for the DisplaySettings.
+    * @param profileKey The key in the UserProfile to use for the DisplaySettings.
+    * @return A DisplaySettings.Builder with the values from the UserProfile or null if
+    *         the UserProfile did not contain DisplaySettings under the provided key.
+    */
+   DisplaySettings.Builder displaySettingsBuilderFromProfile(UserProfile profile,
+                                                             String profileKey);
 
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.

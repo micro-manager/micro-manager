@@ -258,7 +258,7 @@ public final class MultipageTiffWriter {
                                                   DisplaySettings settings) {
       return summary.copyBuilder()
             .putPropertyMap(PropertyKey.DISPLAY_SETTINGS.key(),
-                  DisplaySettings.toPropertyMap(settings)).build();
+                  DefaultDisplaySettings.toPropertyMap(settings)).build();
    }
 
    //
@@ -1032,7 +1032,7 @@ public final class MultipageTiffWriter {
       header.putInt(4, numReservedBytes);
       fileChannelWrite(header, filePosition_);
       DisplaySettings settings = DefaultDisplaySettings.builder().build();
-      String settingsJSON = DisplaySettings.toPropertyMap(settings).toJSON();
+      String settingsJSON = DefaultDisplaySettings.toPropertyMap(settings).toJSON();
       ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settingsJSON));
       fileChannelWrite(buffer, filePosition_ + 8);
 

@@ -797,7 +797,7 @@ public final class MultipageTiffReader {
    // TODO: There is a very similar but not identical method in the Writer
    private int writeDisplaySettings(DisplaySettings settings, long filePosition)
          throws IOException {
-      String settingsJSON = DisplaySettings.toPropertyMap(settings).toJSON();
+      String settingsJSON = DefaultDisplaySettings.toPropertyMap(settings).toJSON();
       int numReservedBytes = settingsJSON.length()
             * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);

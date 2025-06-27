@@ -190,8 +190,9 @@ public final class MMAcquisition extends DataViewerListener {
          // settings here seems clumsy, but I am not sure where else this belongs
 
          // Use settings of last closed acquisition viewer
-         DisplaySettings.Builder displaySettingsBuilder = DisplaySettings.restoreFromProfile(
-                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         DisplaySettings.Builder displaySettingsBuilder =
+                  studio_.displays().displaySettingsBuilderFromProfile(
+                           studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
 
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = DefaultDisplaySettings.getStandardSettings(
