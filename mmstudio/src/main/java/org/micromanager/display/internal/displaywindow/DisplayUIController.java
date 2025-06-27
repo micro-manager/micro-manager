@@ -1110,7 +1110,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                && !settings.getProfileKey().isEmpty()
                && settings.getProfile() != null
                && settings instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings)settings).saveToProfile(
+         ((DefaultDisplaySettings) settings).saveToProfile(
                   settings.getProfile(), settings.getProfileKey());
       }
 
