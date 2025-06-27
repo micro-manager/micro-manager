@@ -26,8 +26,10 @@ public class DeskewAcqManager {
    private DisplayWindow testXYProjectionsWindow_;
 
    public static final String DESKEW_DISPLAYSETTINGS_VOLUME = "Deskew_Display_Volume";
-   public static final String DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS = "Deskew_Display_Orthogonal_Views";
-   public static final String DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS = "Deskew_Display_YX_Projections";
+   public static final String DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS
+            = "Deskew_Display_Orthogonal_Views";
+   public static final String DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS
+            = "Deskew_Display_YX_Projections";
 
 
    /**
@@ -38,7 +40,9 @@ public class DeskewAcqManager {
       ORTHOGONAL_VIEWS,
       FULL_VOLUME
    }
-   public EnumMap<ProjectionType, String> projectionTypeDisplayKeys = new EnumMap<>(ProjectionType.class);
+
+   public EnumMap<ProjectionType, String> projectionTypeDisplayKeys
+            = new EnumMap<>(ProjectionType.class);
 
    public static final String[] PROJECTION_TYPES = {
       ProjectionType.YX_PROJECTION.name(),
@@ -46,13 +50,36 @@ public class DeskewAcqManager {
       ProjectionType.FULL_VOLUME.name()
    };
 
+   /**
+    * Constructor for DeskewAcqManager.
+    *
+    * @param studio The Studio instance to use for data management and display.
+    */
    public DeskewAcqManager(Studio studio) {
       studio_ = studio;
-      projectionTypeDisplayKeys.put(ProjectionType.YX_PROJECTION, DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS);
-      projectionTypeDisplayKeys.put(ProjectionType.ORTHOGONAL_VIEWS, DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS);
-      projectionTypeDisplayKeys.put(ProjectionType.FULL_VOLUME, DESKEW_DISPLAYSETTINGS_VOLUME);
+      projectionTypeDisplayKeys.put(ProjectionType.YX_PROJECTION,
+               DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS);
+      projectionTypeDisplayKeys.put(ProjectionType.ORTHOGONAL_VIEWS,
+               DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS);
+      projectionTypeDisplayKeys.put(ProjectionType.FULL_VOLUME,
+               DESKEW_DISPLAYSETTINGS_VOLUME);
    }
 
+   /**
+    * Creates a new datastore and displays it based on the provided settings.
+    *
+    * @param studio The Studio instance to use for data management and display.
+    * @param settings The PropertyMap containing settings for the datastore.
+    * @param summaryMetadata Metadata summarizing the dataset.
+    * @param projectionType The type of projection to display.
+    * @param prefix A prefix for the datastore name.
+    * @param width The width of the images in the datastore.
+    * @param height The height of the images in the datastore.
+    * @param nrZSlices The number of Z slices in the dataset.
+    * @param newZStepUm The new Z step size in micrometers, or null if not applicable.
+    * @return The created Datastore, or null if creation failed.
+    * @throws IOException If an error occurs during datastore creation.
+    */
    public Datastore createStoreAndDisplay(Studio studio,
                                                     PropertyMap settings,
                                                     SummaryMetadata summaryMetadata,
@@ -64,7 +91,6 @@ public class DeskewAcqManager {
                                                     Double newZStepUm) throws IOException {
       boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
       Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
-      String displayKey = projectionTypeDisplayKeys.get(projectionType);
       if (isTestAcq) {
          switch (projectionType) {
             case FULL_VOLUME:
@@ -137,6 +163,7 @@ public class DeskewAcqManager {
          studio.logs().logError(ioe);
       }
 
+      final String displayKey = projectionTypeDisplayKeys.get(projectionType);
       DisplaySettings.Builder displaySettingsBuilder = DisplaySettings.restoreFromProfile(
                studio_.profile(), displayKey);
       if (displaySettingsBuilder == null) {
@@ -153,7 +180,8 @@ public class DeskewAcqManager {
                || settings.getString(DeskewFrame.OUTPUT_OPTION, "")
                .equals(DeskewFrame.OPTION_REWRITABLE_RAM)))) {
          displaySettingsBuilder.windowPositionKey(PROJECTION_TYPES[projectionType.ordinal()]);
-         DisplayWindow display = studio.displays().createDisplay(store, null, displaySettingsBuilder.build());
+         DisplayWindow display = studio.displays().createDisplay(store, null,
+                  displaySettingsBuilder.build());
          if (isTestAcq) {
             switch (projectionType) {
                case FULL_VOLUME:

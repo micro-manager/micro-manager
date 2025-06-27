@@ -388,14 +388,19 @@ public interface DisplaySettings {
                .putDouble(PropertyKey.ZOOM_RATIO.key(), displaySettings.getZoomRatio())
                .putDouble(PropertyKey.PLAYBACK_FPS.key(), displaySettings.getPlaybackFPS())
                .putEnumAsString(PropertyKey.COLOR_MODE.key(), displaySettings.getColorMode())
-               .putBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key(), displaySettings.isUniformChannelScalingEnabled())
+               .putBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key(),
+                        displaySettings.isUniformChannelScalingEnabled())
                .putBoolean(PropertyKey.AUTOSTRETCH.key(), displaySettings.isAutostretchEnabled())
-               .putBoolean(PropertyKey.HISTOGRAM_IS_LOGARITHMIC.key(), displaySettings.isHistogramLogarithmic())
+               .putBoolean(PropertyKey.HISTOGRAM_IS_LOGARITHMIC.key(),
+                        displaySettings.isHistogramLogarithmic())
                .putBoolean(PropertyKey.ROI_AUTOSCALE.key(), displaySettings.isROIAutoscaleEnabled())
-               .putBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(), displaySettings.isAutoscaleIgnoringZeros())
-               .putDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key(), displaySettings.getAutoscaleIgnoredQuantile())
+               .putBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(),
+                        displaySettings.isAutoscaleIgnoringZeros())
+               .putDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key(),
+                        displaySettings.getAutoscaleIgnoredQuantile())
                .putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings)
-               .putString(PropertyKey.WINDOW_POSITION_KEY.key(), displaySettings.getWindowPositionKey())
+               .putString(PropertyKey.WINDOW_POSITION_KEY.key(),
+                        displaySettings.getWindowPositionKey())
                .putString(PropertyKey.PROFILE_KEY.key(), displaySettings.getWindowPositionKey())
                .build();
    }
