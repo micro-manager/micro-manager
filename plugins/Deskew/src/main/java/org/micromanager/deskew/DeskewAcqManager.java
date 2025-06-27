@@ -64,7 +64,6 @@ public class DeskewAcqManager {
                                                     int nrZSlices,
                                                     Double newZStepUm) throws IOException {
       boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
-      DisplaySettings displaySettings = null;
       Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
       String displayKey = projectionTypeDisplayKeys.get(projectionType);
       if (isTestAcq) {
@@ -139,27 +138,24 @@ public class DeskewAcqManager {
          studio.logs().logError(ioe);
       }
 
-      displaySettings = DisplaySettings.restoreFromProfile(
+      DisplaySettings.Builder displaySettingsBuilder = DisplaySettings.restoreFromProfile(
                studio_.profile(), displayKey);
-      if (displaySettings == null) {
-         displaySettings = DisplaySettings.restoreFromProfile(
+      if (displaySettingsBuilder == null) {
+         displaySettingsBuilder = DisplaySettings.restoreFromProfile(
                   studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-         if (displaySettings != null) {
-            displaySettings = displaySettings.copyBuilder()
-                     .profileKey(studio_.profile(), displayKey)
-                     .build();
-         } else {
-            displaySettings = DefaultDisplaySettings.builder().build();
+         if (displaySettingsBuilder == null) {
+            displaySettingsBuilder = DefaultDisplaySettings.builder();
          }
+         displaySettingsBuilder.profileKey(studio_.profile(), displayKey);
       }
       if ((settings.containsKey(DeskewFrame.SHOW) && settings.getBoolean(DeskewFrame.SHOW, false))
                || (settings.containsKey(DeskewFrame.OUTPUT_OPTION)
                && (settings.getString(DeskewFrame.OUTPUT_OPTION, "").equals(DeskewFrame.OPTION_RAM)
                || settings.getString(DeskewFrame.OUTPUT_OPTION, "")
                .equals(DeskewFrame.OPTION_REWRITABLE_RAM)))) {
-         displaySettings = displaySettings.copyBuilder().windowPositionKey(
-                  PROJECTION_TYPES[projectionType.ordinal()]).build();
-         DisplayWindow display = studio.displays().createDisplay(store, null, displaySettings);
+         displaySettingsBuilder.windowPositionKey(
+                  PROJECTION_TYPES[projectionType.ordinal()]);
+         DisplayWindow display = studio.displays().createDisplay(store, null, displaySettingsBuilder.build());
          if (isTestAcq) {
             switch (projectionType) {
                case FULL_VOLUME:

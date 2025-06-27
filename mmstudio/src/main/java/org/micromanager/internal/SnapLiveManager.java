@@ -497,25 +497,25 @@ public final class SnapLiveManager extends DataViewerListener
    }
 
    private void createDisplay() {
-      DisplaySettings ds = DisplaySettings.restoreFromProfile(
+      DisplaySettings.Builder displaySettingsBuilder = DisplaySettings.restoreFromProfile(
             mmStudio_.profile(),
             PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
-      if (ds == null) {
-         ds = DefaultDisplaySettings.builder().colorMode(
-               DisplaySettings.ColorMode.GRAYSCALE).build();
+      if (displaySettingsBuilder == null) {
+         displaySettingsBuilder = DefaultDisplaySettings.builder().colorMode(
+               DisplaySettings.ColorMode.GRAYSCALE);
       }
       for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
-         ds = ds.copyBuilderWithChannelSettings(ch,
+         displaySettingsBuilder.channel(ch,
                RememberedDisplaySettings.loadChannel(mmStudio_,
                      store_.getSummaryMetadata().getChannelGroup(),
                      store_.getSummaryMetadata().getSafeChannelName(ch),
-                     Color.white)).build();
+                     Color.white));
       }
-      ds = ds.copyBuilder().windowPositionKey(DisplaySettings.PREVIEW_DISPLAY).build();
+      displaySettingsBuilder.windowPositionKey(DisplaySettings.PREVIEW_DISPLAY);
       final DisplayWindowControlsFactory controlsFactory =
                (DisplayWindow display) -> createControls();
       display_ = new DisplayController.Builder(store_)
-            .controlsFactory(controlsFactory).displaySettings(ds).build(mmStudio_);
+            .controlsFactory(controlsFactory).displaySettings(displaySettingsBuilder.build()).build(mmStudio_);
 
       mmStudio_.displays().addViewer(display_);
 

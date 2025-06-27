@@ -191,16 +191,17 @@ public final class MMAcquisition extends DataViewerListener {
          // settings here seems clumsy, but I am not sure where else this belongs
 
          // Use settings of last closed acquisition viewer
-         DisplaySettings ds = DisplaySettings.restoreFromProfile(
+         DisplaySettings.Builder displaySettingsBuilder = DisplaySettings.restoreFromProfile(
                   studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
 
-         if (ds == null) {
-            ds = DefaultDisplaySettings.getStandardSettings(
+         if (displaySettingsBuilder == null) {
+            displaySettingsBuilder = DefaultDisplaySettings.getStandardSettings(
+                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key()).copyBuilder();
+            displaySettingsBuilder.profileKey(studio_.profile(),
                      PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
 
          final int nrChannels = store_.getSummaryMetadata().getChannelNameList().size();
-         DisplaySettings.Builder displaySettingsBuilder = ds.copyBuilder();
          if (nrChannels > 0) { // I believe this will always be true, but just in case...
             if (nrChannels == 1) {
                displaySettingsBuilder.colorModeGrayscale();

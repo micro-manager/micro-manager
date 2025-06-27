@@ -409,12 +409,12 @@ public interface DisplaySettings {
     *                Will be pre-pended with PROFILEKEY.
     * @return Stored DisplaySettings or null if none found.
     */
-   static DisplaySettings restoreFromProfile(UserProfile profile, String key) {
+   static DisplaySettings.Builder restoreFromProfile(UserProfile profile, String key) {
       MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
       final String finalKey = new StringBuilder(PROFILEKEY).append("-").append(key).toString();
       if (mpmv.containsPropertyMap(finalKey)) {
          PropertyMap propertyMap = mpmv.getPropertyMap(finalKey, null);
-         return DisplaySettings.fromPropertyMap(propertyMap).profileKey(profile, key).build();
+         return DisplaySettings.fromPropertyMap(propertyMap).profileKey(profile, key);
       }
       return null;
    }

@@ -121,26 +121,24 @@ public final class DefaultAlbum implements Album {
             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
          studio_.displays().manage(store_);
-         DisplaySettings ds = DisplaySettings.restoreFromProfile(
+         DisplaySettings.Builder displaySettingsBuilder = DisplaySettings.restoreFromProfile(
                studio_.profile(),
                PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
-         if (ds == null) {
-            ds = DefaultDisplaySettings.builder()
+         if (displaySettingsBuilder == null) {
+            displaySettingsBuilder = DefaultDisplaySettings.builder()
                      .colorMode(DisplaySettings.ColorMode.GRAYSCALE)
-                     .profileKey(studio_.profile(), PropertyKey.ALBUM_DISPLAY_SETTINGS.key())
-                     .build();
+                     .profileKey(studio_.profile(), PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          }
          for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
-            ds = ds.copyBuilderWithChannelSettings(ch,
+            displaySettingsBuilder.channel(ch,
                   RememberedDisplaySettings.loadChannel(studio_,
                         store_.getSummaryMetadata().getChannelGroup(),
                         store_.getSummaryMetadata().getSafeChannelName(ch),
-                        Color.white)).build();
+                        Color.white));
          }
-         ds = ds.copyBuilder().windowPositionKey(DisplaySettings.ALBUM_DISPLAY).build();
-         display_ = studio_.displays().createDisplay(store_, null, ds);
+         displaySettingsBuilder.windowPositionKey(DisplaySettings.ALBUM_DISPLAY);
+         display_ = studio_.displays().createDisplay(store_, null, displaySettingsBuilder.build());
          display_.setCustomTitle("Album");
-
 
          curTime_ = null;
       }

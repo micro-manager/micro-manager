@@ -242,14 +242,13 @@ public class TestAcqAdapter extends DataViewerListener implements
          displayWindow_.setCustomTitle(TITLE);
 
          // Use settings of last closed acquisition viewer
-         DisplaySettings dsTmp = DisplaySettings.restoreFromProfile(
+         DisplaySettings.Builder displaySettingsBuilder = DisplaySettings.restoreFromProfile(
                  studio_.profile(), TEST_ACQUISITION_DISPLAY_SETTINGS);
-         if (dsTmp == null) {
-            dsTmp = DefaultDisplaySettings.getStandardSettings(
-                    PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         if (displaySettingsBuilder == null) {
+            displaySettingsBuilder = DefaultDisplaySettings.getStandardSettings(
+                    PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key()).copyBuilder();
+            displaySettingsBuilder.profileKey(studio_.profile(), TEST_ACQUISITION_DISPLAY_SETTINGS);
          }
-         DisplaySettings.Builder displaySettingsBuilder = dsTmp.copyBuilder()
-                  .profileKey(studio_.profile(), TEST_ACQUISITION_DISPLAY_SETTINGS);
          final int nrChannels = summaryMetadata.getChannelNameList().size();
          if (nrChannels > 0) {
             // the do-while loop is a way to set display settings in a thread
