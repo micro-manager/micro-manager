@@ -1355,7 +1355,7 @@ public final class MMStudio implements Studio {
 
       public void setIncludeVerboseMetadata(boolean include) {
          profile().getSettings(MMStudio.class).putBoolean(
-               INCLUDE_VERBOSE_METADATA, true);
+               INCLUDE_VERBOSE_METADATA, include);
       }
 
       public boolean getIncludeVerboseMetadata() {
