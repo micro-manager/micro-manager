@@ -594,8 +594,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                chSpecs,
                null);
       } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
-         boolean hasZOffsets = !chSpecs.stream().map(t -> t.zOffset())
-               .filter(t -> t != 0).collect(Collectors.toList()).isEmpty();
+         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
          if (hasZOffsets) {
             // add a fake z stack so that the channel z-offsets are handles correctly
             zStack = MDAAcqEventModules.zStack(0,
