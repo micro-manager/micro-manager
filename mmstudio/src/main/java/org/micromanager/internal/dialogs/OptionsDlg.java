@@ -247,6 +247,17 @@ public final class OptionsDlg extends JDialog {
             StorageMultipageTiff.setShouldSplitPositions(
                   separateFilesForPositionsMPTiffCheckBox.isSelected()));
 
+      final JCheckBox includeVerboseMetadataCheckBox = new JCheckBox();
+      includeVerboseMetadataCheckBox.setText(
+            "Include verbose metadata with MDA images");
+      includeVerboseMetadataCheckBox.setSelected(
+            mmStudio_.core().getIncludeSystemStateCache());
+      includeVerboseMetadataCheckBox.addActionListener((ActionEvent arg0) -> {
+         boolean includeVerboseMetadata = includeVerboseMetadataCheckBox.isSelected();
+         mmStudio.core().setIncludeSystemStateCache(includeVerboseMetadata);
+         mmStudio_.settings().setIncludeVerboseMetadata(includeVerboseMetadata);
+      });
+
       final JCheckBox syncExposureMainAndMDA = new JCheckBox();
       syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
       syncExposureMainAndMDA.setSelected(AcqControlDlg.getShouldSyncExposure());
@@ -316,6 +327,7 @@ public final class OptionsDlg extends JDialog {
 
       super.add(metadataFileWithMultipageTiffCheckBox, "wrap");
       super.add(separateFilesForPositionsMPTiffCheckBox, "wrap");
+      super.add(includeVerboseMetadataCheckBox, "wrap");
 
       super.add(new JSeparator(), "wrap");
 
