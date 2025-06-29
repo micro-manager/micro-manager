@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -592,6 +593,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                origin,
                chSpecs,
                null);
+      } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
+         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
+         if (hasZOffsets) {
+            // add a fake z stack so that the channel z-offsets are handles correctly
+            zStack = MDAAcqEventModules.zStack(0,
+                  0,
+                  0.1,
+                  studio_.core().getPosition(),
+                  chSpecs,
+                  null);
+         }
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
@@ -632,7 +644,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (acquisitionSettings.useChannels()) {
             acqFunctions.add(channels);
          }
-         if (acquisitionSettings.useSlices()) {
+         if (zStack != null) {
             acqFunctions.add(zStack);
          }
       } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
@@ -642,7 +654,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (acquisitionSettings.useFrames()) {
             acqFunctions.add(timelapse);
          }
-         if (acquisitionSettings.useSlices()) {
+         if (zStack != null) {
             acqFunctions.add(zStack);
          }
          if (acquisitionSettings.useChannels()) {
@@ -658,7 +670,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (acquisitionSettings.useChannels()) {
             acqFunctions.add(channels);
          }
-         if (acquisitionSettings.useSlices()) {
+         if (zStack != null) {
             acqFunctions.add(zStack);
          }
       } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
@@ -668,7 +680,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (acquisitionSettings.usePositionList()) {
             acqFunctions.add(positions);
          }
-         if (acquisitionSettings.useSlices()) {
+         if (zStack != null) {
             acqFunctions.add(zStack);
          }
          if (acquisitionSettings.useChannels()) {
