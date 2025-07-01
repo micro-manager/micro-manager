@@ -22,16 +22,7 @@ package org.micromanager.display;
 
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.List;
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
-import org.micromanager.UserProfile;
-import org.micromanager.data.internal.PropertyKey;
-import org.micromanager.display.internal.DefaultChannelDisplaySettings;
-import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**
@@ -54,13 +45,6 @@ public interface DisplaySettings {
    String ALBUM_DISPLAY = "ALBUM_DISPLAY";
    String PREVIEW_DISPLAY = "PREVIEW_DISPLAY";
    String MDA_DISPLAY = "MDA_DISPLAY";
-
-   /**
-    * Key used to store DisplaySettings in the UserProfile.
-    * This key is prepended to the key used to store the DisplaySettings
-    * in the UserProfile.
-    */
-   String PROFILEKEY = "Default_Display_Settings";
 
    /**
     * Builder for DisplaySettings.  Get an instance using the

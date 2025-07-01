@@ -47,6 +47,13 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * Implementation of the DisplaySettings interface.
  */
 public final class DefaultDisplaySettings implements DisplaySettings {
+   /**
+    * Key used to store DisplaySettings in the UserProfile.
+    * This key is prepended to the key used to store the DisplaySettings
+    * in the UserProfile.
+    */
+   private static final String PROFILEKEY = "Default_Display_Settings";
+
    private final double zoom_;
    private final double fps_;
    private final ColorMode mode_;
