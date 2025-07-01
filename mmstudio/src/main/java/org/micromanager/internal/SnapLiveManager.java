@@ -516,6 +516,7 @@ public final class SnapLiveManager extends DataViewerListener
       display_ = new DisplayController.Builder(store_)
             .controlsFactory(controlsFactory).displaySettings(displaySettingsBuilder.build())
                .build(mmStudio_);
+      display_.setDisplaySettingsProfileKey(PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
 
       mmStudio_.displays().addViewer(display_);
 

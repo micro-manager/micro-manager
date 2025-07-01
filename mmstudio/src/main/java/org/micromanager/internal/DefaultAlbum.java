@@ -126,8 +126,7 @@ public final class DefaultAlbum implements Album {
                            PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
-                     .colorMode(DisplaySettings.ColorMode.GRAYSCALE)
-                     .profileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+                     .colorMode(DisplaySettings.ColorMode.GRAYSCALE);
          }
          for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
             displaySettingsBuilder.channel(ch,
@@ -139,6 +138,7 @@ public final class DefaultAlbum implements Album {
          displaySettingsBuilder.windowPositionKey(DisplaySettings.ALBUM_DISPLAY);
          display_ = studio_.displays().createDisplay(store_, null, displaySettingsBuilder.build());
          display_.setCustomTitle("Album");
+         display_.setDisplaySettingsProfileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
 
          curTime_ = null;
       }

@@ -65,7 +65,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private final boolean ignoreZeros_;
    private final List<ChannelDisplaySettings> channelSettings_;
    private final String windowPositionKey_;
-   private final String profileKey_;
 
    private static class Builder implements DisplaySettings.Builder {
       private double zoom_ = 1.0;
@@ -79,8 +78,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       private boolean ignoreZeros_ = false;
       private List<ChannelDisplaySettings> channelSettings_ = new ArrayList<>();
       private String windowPositionKey_ = null;
-      private String profileKey_ = null;
-      private UserProfile profile_ = null;
 
       private Builder() {
          channelSettings_.add(DefaultChannelDisplaySettings.builder().build());
@@ -182,12 +179,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public Builder profileKey(String key) {
-         profileKey_ = key;
-         return this;
-      }
-
-      @Override
       public Builder channel(int channel) {
          Preconditions.checkArgument(channel >= 0);
          while (channelSettings_.size() <= channel) {
@@ -247,7 +238,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       channelSettings_ =
             new ArrayList<>(builder.channelSettings_);
       windowPositionKey_ = builder.windowPositionKey_;
-      profileKey_ = builder.profileKey_;
    }
 
    @Override
@@ -308,11 +298,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public String getWindowPositionKey() {
       return windowPositionKey_;
-   }
-
-   @Override
-   public String getProfileKey() {
-      return profileKey_;
    }
 
    @Override
@@ -440,9 +425,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             ddsb.windowPositionKey(pMap.getString(PropertyKey.WINDOW_POSITION_KEY.key(),
                      null));
          }
-         if (pMap.containsString(PropertyKey.PROFILE_KEY.key())) {
-            ddsb.profileKey(pMap.getString(PropertyKey.PROFILE_KEY.key(), null));
-         }
       }
 
       return ddsb;
@@ -478,7 +460,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
                .putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings)
                .putString(PropertyKey.WINDOW_POSITION_KEY.key(),
                         displaySettings.getWindowPositionKey())
-               .putString(PropertyKey.PROFILE_KEY.key(), displaySettings.getProfileKey())
                .build();
    }
 
@@ -495,7 +476,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       final String finalKey = PROFILEKEY + "-" + key;
       if (mpmv.containsPropertyMap(finalKey)) {
          PropertyMap propertyMap = mpmv.getPropertyMap(finalKey, null);
-         return fromPropertyMap(propertyMap).profileKey(key);
+         return fromPropertyMap(propertyMap);
       }
       return null;
    }
@@ -565,8 +546,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .windowPositionKey(windowPositionKey_)
             .autoscaleIgnoredQuantile(extremaQuantile_)
             .autoscaleIgnoringZeros(ignoreZeros_)
-            .windowPositionKey(windowPositionKey_)
-            .profileKey(profileKey_);
+            .windowPositionKey(windowPositionKey_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
          ret.channel(i, channelSettings_.get(i));
       }
@@ -1159,8 +1139,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
                .histogramLogarithmic(histogramLogarithmic_)
                .autoscaleIgnoredQuantile(extremaQuantile_)
                .autoscaleIgnoringZeros(ignoreZeros_)
-               .windowPositionKey(windowPositionKey_)
-               .profileKey(profileKey_);
+               .windowPositionKey(windowPositionKey_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
          ret.channel(i, channelSettings_.get(i));
       }

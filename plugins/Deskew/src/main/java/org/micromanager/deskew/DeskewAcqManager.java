@@ -172,7 +172,6 @@ public class DeskewAcqManager {
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = studio_.displays().displaySettingsBuilder();
          }
-         displaySettingsBuilder.profileKey(displayKey);
       }
       if ((settings.containsKey(DeskewFrame.SHOW) && settings.getBoolean(DeskewFrame.SHOW, false))
                || (settings.containsKey(DeskewFrame.OUTPUT_OPTION)
@@ -182,6 +181,7 @@ public class DeskewAcqManager {
          displaySettingsBuilder.windowPositionKey(PROJECTION_TYPES[projectionType.ordinal()]);
          DisplayWindow display = studio.displays().createDisplay(store, null,
                   displaySettingsBuilder.build());
+         display.setDisplaySettingsProfileKey(displayKey);
          if (isTestAcq) {
             switch (projectionType) {
                case FULL_VOLUME:

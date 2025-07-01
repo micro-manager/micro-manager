@@ -245,19 +245,18 @@ public class TestAcqAdapter extends DataViewerListener implements
          DisplaySettings.Builder displaySettingsBuilder =
                   studio_.displays().displaySettingsBuilderFromProfile(
                            TEST_ACQUISITION_DISPLAY_SETTINGS);
+         final int nrChannels = summaryMetadata.getChannelNameList().size();
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = DefaultDisplaySettings.builder();
-            displaySettingsBuilder.profileKey(TEST_ACQUISITION_DISPLAY_SETTINGS);
-         }
-         final int nrChannels = summaryMetadata.getChannelNameList().size();
-         if (nrChannels > 0) {
-            // the do-while loop is a way to set display settings in a thread
-            // safe way.  See docs to compareAndSetDisplaySettings.
             if (nrChannels == 1) {
                displaySettingsBuilder.colorModeGrayscale();
             } else {
                displaySettingsBuilder.colorModeComposite();
             }
+         }
+         if (nrChannels > 0) {
+            // the do-while loop is a way to set display settings in a thread
+            // safe way.  See docs to compareAndSetDisplaySettings.
             for (int channelIndex = 0; channelIndex < nrChannels
                      && channelIndex < acquisitionSettings.channels().size(); channelIndex++) {
                displaySettingsBuilder.channel(channelIndex,
@@ -269,6 +268,7 @@ public class TestAcqAdapter extends DataViewerListener implements
          }
          displayWindow_.getWindow().toFront();
          displayWindow_.setDisplaySettings(displaySettingsBuilder.build());
+         displayWindow_.setDisplaySettingsProfileKey(TEST_ACQUISITION_DISPLAY_SETTINGS);
          displayWindow_.addListener(this, 1);
 
          sink.setDatastore(curStore_);

@@ -113,6 +113,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // Must access on EDT
    private DisplayUIController uiController_;
 
+   // The key for the display profile. This is used to save
+   // display settings for this display window.
+   private String profileKey_ = "DefaultDisplayProfile";
+
    private final Object selectionLock_ = new Object();
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
 
@@ -546,6 +550,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             }
 
             uiController_.applyDisplaySettings(adjustedSettings);
+            ((DefaultDisplaySettings) adjustedSettings).saveToProfile(profileKey_);
          }
       });
       return adjustedSettings;
@@ -1274,6 +1279,17 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (dataProvider_ instanceof Datastore) {
          ((Datastore) dataProvider_).setName(title);
       }
+   }
+
+   /**
+    * Set the key used to save and restore display settings to the
+    * user profile for this display.
+    *
+    * @param key String to use as the key for saving and restoring
+    */
+   @Override
+   public void setDisplaySettingsProfileKey(String key) {
+      profileKey_ = key;
    }
 
 

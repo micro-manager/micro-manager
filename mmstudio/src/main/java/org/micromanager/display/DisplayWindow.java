@@ -320,6 +320,14 @@ public interface DisplayWindow extends DataViewer, Closeable {
    void setCustomTitle(String title);
 
    /**
+    * Set the key used to save and restore display settings to the
+    * user profile for this display.
+    *
+    * @param key String to use as the key for saving and restoring
+    */
+   void setDisplaySettingsProfileKey(String key);
+
+   /**
     * DisplayWindows are not shown by default.  Call this function after
     * construction, and after attaching listeners as needed, to show the Window.
     */

@@ -196,8 +196,6 @@ public final class MMAcquisition extends DataViewerListener {
 
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = DefaultDisplaySettings.builder();
-            displaySettingsBuilder.profileKey(
-                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
 
          final int nrChannels = store_.getSummaryMetadata().getChannelNameList().size();
@@ -223,6 +221,7 @@ public final class MMAcquisition extends DataViewerListener {
                   makeControlsFactory(),
                   displaySettingsBuilder.build());
 
+         display_.setDisplaySettingsProfileKey(PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          // It is a bit funny that there are listeners and events
          // The listener provides the canClose functionality (which needs to be
          // synchronous), whereas Events are asynchronous

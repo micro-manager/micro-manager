@@ -1105,12 +1105,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
       ijBridge_.mm2ijSetZoom(settings.getZoomRatio());
 
       displayController_.setPlaybackSpeedFps(settings.getPlaybackFPS());
-      // write to profile on every change
-      if (settings.getProfileKey() != null
-               && !settings.getProfileKey().isEmpty()
-               && settings instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) settings).saveToProfile(settings.getProfileKey());
-      }
 
    }
 
