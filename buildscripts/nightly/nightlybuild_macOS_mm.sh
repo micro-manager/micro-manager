@@ -214,8 +214,7 @@ find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
 
 # The 'jre' directory is preferred over system-installed JREs by the launcher.
 rm -rf $MM_STAGEDIR/jre
-# cp -R $(cjdk --arch $MM_ARCH -j temurin-jre:11 java-home) $MM_STAGEDIR/jre
-# ^ Disabled until we figure out codesigning issues
+cp -R $(cjdk --arch $MM_ARCH -j temurin-jre:11 java-home) $MM_STAGEDIR/jre
 
 
 ##
@@ -239,7 +238,17 @@ thin_script="`dirname $0`/macOS-thin-binaries.sh"
 ##
 codesign_script="`dirname $0`/macOS-codesign.sh"
 if [ "$do_codesign" = yes ]; then
-   "$codesign_script" -b "$MM_STAGEDIR"
+   "$codesign_script" -d "$MM_STAGEDIR" --options runtime
+
+   # Temurin JRE has the same 5 entitlements on all executables and dylibs.
+   # Zulu JRE does the same (except for adding audio-input for 'java').
+   # Even though I don't think dylibs need entitlements, let's follow that.
+   "$codesign_script" -d "$MM_STAGEDIR/jre" --options runtime \
+      --force-library-entitlements \
+      --entitlements "`dirname $0`/macOS-java-entitlements.plist"
+
+   # The ImageJ.app launcher bundle (which contains a shell script; no binary)
+   "$codesign_script" -1 "$MM_STAGEDIR/ImageJ.app"
 fi
 
 ##
@@ -290,7 +299,7 @@ hdiutil convert "$sparseimage_name" -format UDBZ -o "$dmg_name"
 
 # Sign the DMG, too
 if [ "$do_codesign" = yes ]; then
-   "$codesign_script" -D "$dmg_name"
+   "$codesign_script" -1 "$dmg_name"
 fi
 
 
