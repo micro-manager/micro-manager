@@ -165,14 +165,14 @@ public class DeskewAcqManager {
 
       final String displayKey = projectionTypeDisplayKeys.get(projectionType);
       DisplaySettings.Builder displaySettingsBuilder =
-               studio_.displays().displaySettingsBuilderFromProfile(studio_.profile(), displayKey);
+               studio_.displays().displaySettingsBuilderFromProfile(displayKey);
       if (displaySettingsBuilder == null) {
          displaySettingsBuilder = studio_.displays().displaySettingsBuilderFromProfile(
-                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+                  PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = studio_.displays().displaySettingsBuilder();
          }
-         displaySettingsBuilder.profileKey(studio_.profile(), displayKey);
+         displaySettingsBuilder.profileKey(displayKey);
       }
       if ((settings.containsKey(DeskewFrame.SHOW) && settings.getBoolean(DeskewFrame.SHOW, false))
                || (settings.containsKey(DeskewFrame.OUTPUT_OPTION)

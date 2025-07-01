@@ -170,9 +170,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
 
    @Override
-   public DisplaySettings.Builder displaySettingsBuilderFromProfile(UserProfile profile,
-                                                             String profileKey) {
-      return DefaultDisplaySettings.restoreFromProfile(profile, profileKey);
+   public DisplaySettings.Builder displaySettingsBuilderFromProfile(String profileKey) {
+      return DefaultDisplaySettings.restoreFromProfile(profileKey);
    }
 
    @Override

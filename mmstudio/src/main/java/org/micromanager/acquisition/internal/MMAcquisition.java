@@ -192,12 +192,11 @@ public final class MMAcquisition extends DataViewerListener {
          // Use settings of last closed acquisition viewer
          DisplaySettings.Builder displaySettingsBuilder =
                   studio_.displays().displaySettingsBuilderFromProfile(
-                           studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+                           PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
 
          if (displaySettingsBuilder == null) {
-            displaySettingsBuilder = DefaultDisplaySettings.getStandardSettings(
-                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key()).copyBuilder();
-            displaySettingsBuilder.profileKey(studio_.profile(),
+            displaySettingsBuilder = DefaultDisplaySettings.builder();
+            displaySettingsBuilder.profileKey(
                      PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
 

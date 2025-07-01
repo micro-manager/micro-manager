@@ -498,7 +498,7 @@ public final class SnapLiveManager extends DataViewerListener
    private void createDisplay() {
       DisplaySettings.Builder displaySettingsBuilder =
                mmStudio_.displays().displaySettingsBuilderFromProfile(
-                        mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+                        PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
       if (displaySettingsBuilder == null) {
          displaySettingsBuilder = mmStudio_.displays().displaySettingsBuilder().colorMode(
                DisplaySettings.ColorMode.GRAYSCALE);

@@ -166,11 +166,10 @@ public interface DisplaySettings {
        * Sets the key under which these DisplaySettings will be stored in the profile.
        * This key allows the DisplaySettings to keep an up-to-date copy in the profile.
        *
-       * @param profile UserProfile to which these DisplaySettings will be saved.
        * @param key Used to identify these DisplaySettings in the profile.
        * @return builder instance to enable chaining commands
        */
-      Builder profileKey(UserProfile profile, String key);
+      Builder profileKey(String key);
 
       /**
        * Number of ChannelDisplaySettings in this builder.  Not sure why a builder needs this...
@@ -294,8 +293,6 @@ public interface DisplaySettings {
    String getWindowPositionKey();
 
    String getProfileKey();
-
-   UserProfile getProfile();
 
    Builder copyBuilder();
 

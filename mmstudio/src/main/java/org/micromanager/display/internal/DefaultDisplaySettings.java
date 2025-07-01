@@ -59,7 +59,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private final List<ChannelDisplaySettings> channelSettings_;
    private final String windowPositionKey_;
    private final String profileKey_;
-   private final UserProfile profile_;
 
    private static class Builder implements DisplaySettings.Builder {
       private double zoom_ = 1.0;
@@ -176,8 +175,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public Builder profileKey(UserProfile profile, String key) {
-         profile_ = profile;
+      public Builder profileKey(String key) {
          profileKey_ = key;
          return this;
       }
@@ -243,7 +241,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             new ArrayList<>(builder.channelSettings_);
       windowPositionKey_ = builder.windowPositionKey_;
       profileKey_ = builder.profileKey_;
-      profile_ = builder.profile_;
    }
 
    @Override
@@ -312,11 +309,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public UserProfile getProfile() {
-      return profile_;
-   }
-
-   @Override
    public ChannelDisplaySettings getChannelSettings(int channel) {
       if (channel >= channelSettings_.size()) {
          return DefaultChannelDisplaySettings.builder().build();
@@ -373,11 +365,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     * Saves these DisplaySettings in the UserProfile. Implementers are free to
     * save copies of the settings themselves.
     *
-    * @param profile Profile to which these settings should be saved
     * @param key     Key under which the settings will be stored.
     *                Will be pre-pended with PROFILEKEY
     */
-   public void saveToProfile(UserProfile profile, String key) {
+   public void saveToProfile(String key) {
+      UserProfile profile = MMStudio.getInstance().profile();
       MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
       mpmv.putPropertyMap(PROFILEKEY + "-" + key, toPropertyMap(this));
    }
@@ -442,8 +434,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
                      null));
          }
          if (pMap.containsString(PropertyKey.PROFILE_KEY.key())) {
-            ddsb.profileKey(MMStudio.getInstance().profile(),
-                     pMap.getString(PropertyKey.PROFILE_KEY.key(), null));
+            ddsb.profileKey(pMap.getString(PropertyKey.PROFILE_KEY.key(), null));
          }
       }
 
@@ -487,17 +478,17 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    /**
     * Retrieve DisplaySettings from the User Profile.
     *
-    * @param profile UserProfile to restore these Display Settings from.
     * @param key     Key use to retrieve the DisplaySettings.
     *                Will be pre-pended with PROFILEKEY.
     * @return Stored DisplaySettings or null if none found.
     */
-   public static DisplaySettings.Builder restoreFromProfile(UserProfile profile, String key) {
+   public static DisplaySettings.Builder restoreFromProfile(String key) {
+      UserProfile profile = MMStudio.getInstance().profile();
       MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
       final String finalKey = PROFILEKEY + "-" + key;
       if (mpmv.containsPropertyMap(finalKey)) {
          PropertyMap propertyMap = mpmv.getPropertyMap(finalKey, null);
-         return fromPropertyMap(propertyMap).profileKey(profile, key);
+         return fromPropertyMap(propertyMap).profileKey(key);
       }
       return null;
    }
@@ -568,7 +559,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .autoscaleIgnoredQuantile(extremaQuantile_)
             .autoscaleIgnoringZeros(ignoreZeros_)
             .windowPositionKey(windowPositionKey_)
-            .profileKey(profile_, profileKey_);
+            .profileKey(profileKey_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
          ret.channel(i, channelSettings_.get(i));
       }
@@ -1162,7 +1153,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
                .autoscaleIgnoredQuantile(extremaQuantile_)
                .autoscaleIgnoringZeros(ignoreZeros_)
                .windowPositionKey(windowPositionKey_)
-               .profileKey(profile_, profileKey_);
+               .profileKey(profileKey_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
          ret.channel(i, channelSettings_.get(i));
       }

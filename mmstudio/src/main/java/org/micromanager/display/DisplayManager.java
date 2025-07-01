@@ -57,16 +57,14 @@ public interface DisplayManager extends EventPublisher {
    DisplaySettings getStandardDisplaySettings();
 
    /**
-    * Restore DisplaySettings.Builder from the provided UserProfile and
+    * Restore DisplaySettings.Builder from the UserProfile using the
     * profile key. Returns null if the profile does not contain the requested DisplaySettings.
     *
-    * @param profile    The UserProfile to use for the DisplaySettings.
     * @param profileKey The key in the UserProfile to use for the DisplaySettings.
     * @return A DisplaySettings.Builder with the values from the UserProfile or null if
     *         the UserProfile did not contain DisplaySettings under the provided key.
     */
-   DisplaySettings.Builder displaySettingsBuilderFromProfile(UserProfile profile,
-                                                             String profileKey);
+   DisplaySettings.Builder displaySettingsBuilderFromProfile(String profileKey);
 
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.

@@ -123,11 +123,11 @@ public final class DefaultAlbum implements Album {
          studio_.displays().manage(store_);
          DisplaySettings.Builder displaySettingsBuilder =
                   studio_.displays().displaySettingsBuilderFromProfile(
-                           studio_.profile(), PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+                           PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
                      .colorMode(DisplaySettings.ColorMode.GRAYSCALE)
-                     .profileKey(studio_.profile(), PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+                     .profileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          }
          for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
             displaySettingsBuilder.channel(ch,
