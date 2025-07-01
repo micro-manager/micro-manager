@@ -413,6 +413,8 @@ public final class MMStudio implements Studio {
          ReportingUtils.showError(ex);
       }
 
+      core_.setIncludeSystemStateCache(settings().getIncludeVerboseMetadata());
+
       // Arrange to log stack traces when the EDT hangs.
       // Use parameters that ensure a stack trace dump within 10 seconds of an
       // EDT hang (and _no_ dump on hangs under 5.5 seconds)
@@ -1254,6 +1256,8 @@ public final class MMStudio implements Studio {
               = "Show background window";
       private static final String SNAP_AFTER_ROI_BUTTON
             = "Snap after pressing ROI button";
+      private static final String INCLUDE_VERBOSE_METADATA
+            = "Include verbose metadata";
 
       public boolean getShouldDeleteOldCoreLogs() {
          return profile().getSettings(MMStudio.class).getBoolean(
@@ -1348,5 +1352,16 @@ public final class MMStudio implements Studio {
          return profile().getSettings(MMStudio.class).getBoolean(
                  SNAP_AFTER_ROI_BUTTON, false);
       }
+
+      public void setIncludeVerboseMetadata(boolean include) {
+         profile().getSettings(MMStudio.class).putBoolean(
+               INCLUDE_VERBOSE_METADATA, include);
+      }
+
+      public boolean getIncludeVerboseMetadata() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+                  INCLUDE_VERBOSE_METADATA, true);
+      }
+
    }
 }
