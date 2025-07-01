@@ -368,50 +368,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private static final String IGNORE_ZEROS_AUTOSCALE = "IgnoreZerosWhenAutoscaling";
    private static final String HISTOGRAM_IS_LOGARITHMIC = "histogramIsLogarithmic";
 
-   /**
-    * Retrieve the display settings that have been saved in the preferences.
-    * Note: we explicitly don't cache these settings, to ensure that
-    * displays don't end up with copies of the same settings.
-    *
-    * @param key String for storing settings under different locations, so
-    *            different "types" of displays can have different default settings.
-    * @return display settings that were saved in the preferences
-    */
-   public static DefaultDisplaySettings getStandardSettings(String key) {
-      UserProfile profile = MMStudio.getInstance().profile();
-      MutablePropertyMapView settings = profile.getSettings(DefaultDisplaySettings.class);
-      LegacyBuilder builder = new LegacyBuilder();
-      // We have to convert colors to/from int arrays.
-      // Note we assume RGB tuples in the colors array.
-      // Seven colors because ImageJ only supports 7 channels; put yellow/cyan
-      // first for colorblind-friendliness.
-      Color[] defaultColors = new Color[] {Color.YELLOW, Color.CYAN,
-            Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
-      Integer[] defaultIntColors = colorsToInts(defaultColors);
-
-      key += "_";
-      // This value used to be an int, then got changed to a double, hence the
-      // name change.
-      builder.animationFPS(settings.getDouble(
-            key + ANIMATION_FPS_DOUBLE, 10.0));
-      builder.channelColorMode(
-            DisplaySettings.ColorMode.fromInt(settings.getInteger(
-                  key + CHANNEL_COLOR_MODE,
-                  DisplaySettings.ColorMode.COMPOSITE.getIndex())));
-      builder.zoom(settings.getDouble(key + ZOOM_RATIO, 1.0));
-      builder.shouldSyncChannels(settings.getBoolean(key + SHOULD_SYNC_CHANNELS, false));
-      builder.shouldAutostretch(settings.getBoolean(key + SHOULD_AUTOSTRETCH, true));
-      builder.shouldScaleWithROI(settings.getBoolean(key + SHOULD_SCALE_WITH_ROI, true));
-      builder.extremaPercentage(settings.getDouble(key + EXTREMA_PERCENTAGE, 0.0));
-      builder.autoscaleIgnoringZeros(settings.getBoolean(
-            key + IGNORE_ZEROS_AUTOSCALE, false));
-      builder.histogramLogarithmic(settings.getBoolean(
-            key + HISTOGRAM_IS_LOGARITHMIC, false));
-      // Note we don't store user data in the prefs explicitly; let third-party
-      // code manually access the prefs if they want.
-      return builder.build();
-   }
-
 
    /**
     * Saves these DisplaySettings in the UserProfile. Implementers are free to

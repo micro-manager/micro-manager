@@ -46,14 +46,14 @@ public interface DisplayManager extends EventPublisher {
    Datastore show(Image image);
 
    /**
-    * Retrieve a DisplaySettings holding the values the user has saved as their
-    * default values.
-    * Nico 20250627: It is unclear what this method is supposed to do. I can
-    * not find a "Set as default" button, or a DisplayWindow Settings tab.
+    * This was mean to retrieve a DisplaySettings holding the values the
+    * user had saved as their default values. Since there is no UI to save
+    * settings as the default, this function was never used in the UI
     *
-    * @return The DisplaySettings as of the last time the user clicked the
-    *     "Set as default" button in the Settings tab of a DisplayWindow.
+    * @return Blank  DisplaySettings
+    * @deprecated use displaySettingsBuilder() instead
     */
+   @Deprecated
    DisplaySettings getStandardDisplaySettings();
 
    /**

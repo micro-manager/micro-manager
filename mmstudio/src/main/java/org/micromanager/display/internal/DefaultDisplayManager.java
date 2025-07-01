@@ -166,7 +166,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    @Override
    public DisplaySettings getStandardDisplaySettings() {
-      return DefaultDisplaySettings.getStandardSettings(null);
+      return DefaultDisplaySettings.builder().build();
    }
 
    @Override
