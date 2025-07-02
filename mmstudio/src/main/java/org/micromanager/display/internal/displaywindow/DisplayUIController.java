@@ -87,7 +87,6 @@ import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.DefaultComponentDisplaySettings;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
@@ -287,8 +286,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
                getClass().getResource("/org/micromanager/icons/microscope.gif")));
          frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
          frame.setBounds(320, 320, 480, 320);
-         String key = displayController_.getDisplaySettings().getWindowPositionKey();
-         WindowPositioning.setUpBoundsMemory(frame, DisplayUIController.class, key);
 
          // TODO Determine initial window bounds using a CascadingWindowPositioner:
          // - (Setting canvas zoom has been handled by DisplayController (ImageJLink))
@@ -388,6 +385,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    public ImagePlus getIJImagePlus() {
       return ijBridge_.getIJImagePlus();
+   }
+
+   @MustCallOnEDT
+   public void setWindowPositioning(String key) {
+      if (frame_ != null) {
+         WindowPositioning.setUpBoundsMemory(frame_, DisplayUIController.class, key);
+      }
    }
 
    /**

@@ -62,6 +62,7 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
@@ -216,12 +217,12 @@ public final class MMAcquisition extends DataViewerListener {
             }
          }
 
-         displaySettingsBuilder.windowPositionKey(DisplaySettings.MDA_DISPLAY);
          display_ = studio_.displays().createDisplay(store_,
                   makeControlsFactory(),
                   displaySettingsBuilder.build());
-
+         display_.setWindowPositionKey(DefaultDisplayManager.MDA_DISPLAY);
          display_.setDisplaySettingsProfileKey(PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+
          // It is a bit funny that there are listeners and events
          // The listener provides the canClose functionality (which needs to be
          // synchronous), whereas Events are asynchronous

@@ -116,7 +116,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * <p>The intensity range of the currently displayed image is used to set the
     * intensity scaling range for all displayed channels.</p>
     *
-    * <p> Calls are ignored if the display has closed.</p>
+    * <p>Calls are ignored if the display has closed.</p>
     *
     * <p>This method can be called from any thread. However, you should call it
     * from the Swing/AWT event dispatch thread if you want to correctly
@@ -326,6 +326,16 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * @param key String to use as the key for saving and restoring
     */
    void setDisplaySettingsProfileKey(String key);
+
+   /**
+    * Sets a key that will be used to remember Window positoin in the profile.
+    *
+    * @param key Key to use for positioning the DisplayWindow.
+    *           if called before showing the DisplayWindow,
+    *           the DisplayWindow will be positioned at the
+    *           remembered position.
+    */
+   void setWindowPositionKey(String key);
 
    /**
     * DisplayWindows are not shown by default.  Call this function after

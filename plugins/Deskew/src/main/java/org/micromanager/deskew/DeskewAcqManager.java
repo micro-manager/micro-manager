@@ -181,9 +181,9 @@ public class DeskewAcqManager {
                && (settings.getString(DeskewFrame.OUTPUT_OPTION, "").equals(DeskewFrame.OPTION_RAM)
                || settings.getString(DeskewFrame.OUTPUT_OPTION, "")
                .equals(DeskewFrame.OPTION_REWRITABLE_RAM)))) {
-         displaySettingsBuilder.windowPositionKey(PROJECTION_TYPES[projectionType.ordinal()]);
          DisplayWindow display = studio.displays().createDisplay(store, null,
                   displaySettingsBuilder.build());
+         display.setWindowPositionKey(PROJECTION_TYPES[projectionType.ordinal()]);
          display.setDisplaySettingsProfileKey(displayKey);
          if (isTestAcq) {
             switch (projectionType) {
