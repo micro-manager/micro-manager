@@ -496,12 +496,15 @@ public final class SnapLiveManager extends DataViewerListener
    }
 
    private void createDisplay() {
-      DisplaySettings.Builder displaySettingsBuilder =
-               mmStudio_.displays().displaySettingsBuilderFromProfile(
+      DisplaySettings.Builder displaySettingsBuilder = null;
+      DisplaySettings displaySettings =
+               mmStudio_.displays().displaySettingsFromProfile(
                         PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
-      if (displaySettingsBuilder == null) {
+      if (displaySettings == null) {
          displaySettingsBuilder = mmStudio_.displays().displaySettingsBuilder().colorMode(
                DisplaySettings.ColorMode.GRAYSCALE);
+      } else {
+         displaySettingsBuilder = displaySettings.copyBuilder();
       }
       for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
          displaySettingsBuilder.channel(ch,

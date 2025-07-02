@@ -470,13 +470,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     *                Will be pre-pended with PROFILEKEY.
     * @return Stored DisplaySettings or null if none found.
     */
-   public static DisplaySettings.Builder restoreFromProfile(String key) {
+   public static DisplaySettings restoreFromProfile(String key) {
       UserProfile profile = MMStudio.getInstance().profile();
       MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
       final String finalKey = PROFILEKEY + "-" + key;
       if (mpmv.containsPropertyMap(finalKey)) {
          PropertyMap propertyMap = mpmv.getPropertyMap(finalKey, null);
-         return fromPropertyMap(propertyMap);
+         return fromPropertyMap(propertyMap).build();
       }
       return null;
    }

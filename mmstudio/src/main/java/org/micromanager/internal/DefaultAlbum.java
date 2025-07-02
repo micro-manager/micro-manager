@@ -121,12 +121,14 @@ public final class DefaultAlbum implements Album {
             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
          studio_.displays().manage(store_);
-         DisplaySettings.Builder displaySettingsBuilder =
-                  studio_.displays().displaySettingsBuilderFromProfile(
+         DisplaySettings.Builder displaySettingsBuilder = null;
+         DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
                            PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
-         if (displaySettingsBuilder == null) {
+         if (displaySettings == null) {
             displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
                      .colorMode(DisplaySettings.ColorMode.GRAYSCALE);
+         } else {
+            displaySettingsBuilder = displaySettings.copyBuilder();
          }
          for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
             displaySettingsBuilder.channel(ch,

@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
-import org.micromanager.UserProfile;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -57,14 +56,14 @@ public interface DisplayManager extends EventPublisher {
    DisplaySettings getStandardDisplaySettings();
 
    /**
-    * Restore DisplaySettings.Builder from the UserProfile using the
+    * Restore DisplaySettings from the UserProfile using the
     * profile key. Returns null if the profile does not contain the requested DisplaySettings.
     *
     * @param profileKey The key in the UserProfile to use for the DisplaySettings.
-    * @return A DisplaySettings.Builder with the values from the UserProfile or null if
+    * @return DisplaySettings with the values from the UserProfile or null if
     *         the UserProfile did not contain DisplaySettings under the provided key.
     */
-   DisplaySettings.Builder displaySettingsBuilderFromProfile(String profileKey);
+   DisplaySettings displaySettingsFromProfile(String profileKey);
 
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.

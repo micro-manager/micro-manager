@@ -241,10 +241,12 @@ public class TestAcqAdapter extends DataViewerListener implements
          displayWindow_ = studio_.displays().createDisplay(curStore_, null);
          displayWindow_.setCustomTitle(TITLE);
 
-         // Use settings of last closed acquisition viewer
-         DisplaySettings.Builder displaySettingsBuilder =
-                  studio_.displays().displaySettingsBuilderFromProfile(
-                           TEST_ACQUISITION_DISPLAY_SETTINGS);
+         DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
+                     TEST_ACQUISITION_DISPLAY_SETTINGS);
+         DisplaySettings.Builder displaySettingsBuilder = null;
+         if (displaySettings != null) {
+            displaySettingsBuilder = displaySettings.copyBuilder();
+         }
          final int nrChannels = summaryMetadata.getChannelNameList().size();
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = DefaultDisplaySettings.builder();
