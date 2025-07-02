@@ -45,13 +45,25 @@ public interface DisplayManager extends EventPublisher {
    Datastore show(Image image);
 
    /**
-    * Retrieve a DisplaySettings holding the values the user has saved as their
-    * default values.
+    * This was mean to retrieve a DisplaySettings holding the values the
+    * user had saved as their default values. Since there is no UI to save
+    * settings as the default, this function was never used in the UI
     *
-    * @return The DisplaySettings as of the last time the user clicked the
-    *     "Set as default" button in the Settings tab of a DisplayWindow.
+    * @return Blank  DisplaySettings
+    * @deprecated use displaySettingsBuilder() instead
     */
+   @Deprecated
    DisplaySettings getStandardDisplaySettings();
+
+   /**
+    * Restore DisplaySettings from the UserProfile using the
+    * profile key. Returns null if the profile does not contain the requested DisplaySettings.
+    *
+    * @param profileKey The key in the UserProfile to use for the DisplaySettings.
+    * @return DisplaySettings with the values from the UserProfile or null if
+    *         the UserProfile did not contain DisplaySettings under the provided key.
+    */
+   DisplaySettings displaySettingsFromProfile(String profileKey);
 
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.

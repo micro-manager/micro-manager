@@ -121,24 +121,26 @@ public final class DefaultAlbum implements Album {
             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
          studio_.displays().manage(store_);
-         DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
-               studio_.profile(),
-               PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
-         if (ds == null) {
-            ds = DefaultDisplaySettings.builder().colorMode(
-                  DisplaySettings.ColorMode.GRAYSCALE).build();
+         DisplaySettings.Builder displaySettingsBuilder = null;
+         DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
+                           PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+         if (displaySettings == null) {
+            displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
+                     .colorMode(DisplaySettings.ColorMode.GRAYSCALE);
+         } else {
+            displaySettingsBuilder = displaySettings.copyBuilder();
          }
          for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
-            ds = ds.copyBuilderWithChannelSettings(ch,
+            displaySettingsBuilder.channel(ch,
                   RememberedDisplaySettings.loadChannel(studio_,
                         store_.getSummaryMetadata().getChannelGroup(),
                         store_.getSummaryMetadata().getSafeChannelName(ch),
-                        Color.white)).build();
+                        Color.white));
          }
-         ds = ds.copyBuilder().windowPositionKey(DisplaySettings.ALBUM_DISPLAY).build();
-         display_ = studio_.displays().createDisplay(store_, null, ds);
+         displaySettingsBuilder.windowPositionKey(DisplaySettings.ALBUM_DISPLAY);
+         display_ = studio_.displays().createDisplay(store_, null, displaySettingsBuilder.build());
          display_.setCustomTitle("Album");
-
+         display_.setDisplaySettingsProfileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
 
          curTime_ = null;
       }
@@ -237,16 +239,7 @@ public final class DefaultAlbum implements Album {
    @Subscribe
    public void onAlbumStoreClosing(DataViewerWillCloseEvent viewerWillCloseEvent) {
       if (viewerWillCloseEvent.getDataViewer().getDataProvider().equals(store_)) {
-         saveDisplaySettings();
          store_ = null;
-      }
-   }
-
-   private void saveDisplaySettings() {
-      if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) display_.getDisplaySettings())
-               .saveToProfile(studio_.profile(),
-                     PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
       }
    }
 

@@ -1,15 +1,14 @@
 package org.micromanager.deskew;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.EnumMap;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.DataViewer;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 
@@ -26,6 +25,12 @@ public class DeskewAcqManager {
    private Datastore testXYProjectionsStore_;
    private DisplayWindow testXYProjectionsWindow_;
 
+   public static final String DESKEW_DISPLAYSETTINGS_VOLUME = "Deskew_Display_Volume";
+   public static final String DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS
+            = "Deskew_Display_Orthogonal_Views";
+   public static final String DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS
+            = "Deskew_Display_YX_Projections";
+
 
    /**
     * Enum representing the different projection types for displaying data.
@@ -36,16 +41,45 @@ public class DeskewAcqManager {
       FULL_VOLUME
    }
 
+   private final EnumMap<ProjectionType, String> projectionTypeDisplayKeys
+            = new EnumMap<>(ProjectionType.class);
+
    public static final String[] PROJECTION_TYPES = {
       ProjectionType.YX_PROJECTION.name(),
       ProjectionType.ORTHOGONAL_VIEWS.name(),
       ProjectionType.FULL_VOLUME.name()
    };
 
+   /**
+    * Constructor for DeskewAcqManager.
+    *
+    * @param studio The Studio instance to use for data management and display.
+    */
    public DeskewAcqManager(Studio studio) {
       studio_ = studio;
+      projectionTypeDisplayKeys.put(ProjectionType.YX_PROJECTION,
+               DESKEW_DISPLAYSETTINGS_YX_PROJECTIONS);
+      projectionTypeDisplayKeys.put(ProjectionType.ORTHOGONAL_VIEWS,
+               DESKEW_DISPLAYSETTINGS_ORTHOGONAL_VIEWS);
+      projectionTypeDisplayKeys.put(ProjectionType.FULL_VOLUME,
+               DESKEW_DISPLAYSETTINGS_VOLUME);
    }
 
+   /**
+    * Creates a new datastore and displays it based on the provided settings.
+    *
+    * @param studio The Studio instance to use for data management and display.
+    * @param settings The PropertyMap containing settings for the datastore.
+    * @param summaryMetadata Metadata summarizing the dataset.
+    * @param projectionType The type of projection to display.
+    * @param prefix A prefix for the datastore name.
+    * @param width The width of the images in the datastore.
+    * @param height The height of the images in the datastore.
+    * @param nrZSlices The number of Z slices in the dataset.
+    * @param newZStepUm The new Z step size in micrometers, or null if not applicable.
+    * @return The created Datastore, or null if creation failed.
+    * @throws IOException If an error occurs during datastore creation.
+    */
    public Datastore createStoreAndDisplay(Studio studio,
                                                     PropertyMap settings,
                                                     SummaryMetadata summaryMetadata,
@@ -56,13 +90,11 @@ public class DeskewAcqManager {
                                                     int nrZSlices,
                                                     Double newZStepUm) throws IOException {
       boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
-      DisplaySettings displaySettings = null;
       Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
       if (isTestAcq) {
          switch (projectionType) {
             case FULL_VOLUME:
                if (testFullVolumeWindow_ != null) {
-                  displaySettings = testFullVolumeWindow_.getDisplaySettings();
                   testFullVolumeWindow_.close();
                }
                if (testFullVolumeStore_ != null) {
@@ -77,7 +109,6 @@ public class DeskewAcqManager {
                break;
             case YX_PROJECTION:
                if (testXYProjectionsWindow_ != null) {
-                  displaySettings = testXYProjectionsWindow_.getDisplaySettings();
                   testXYProjectionsWindow_.close();
                }
                if (testXYProjectionsStore_ != null) {
@@ -92,7 +123,6 @@ public class DeskewAcqManager {
                break;
             case ORTHOGONAL_VIEWS:
                if (testOrthogonalProjectionsWindow_ != null) {
-                  displaySettings = testOrthogonalProjectionsWindow_.getDisplaySettings();
                   testOrthogonalProjectionsWindow_.close();
                }
                if (testOrthogonalProjectionsStore_ != null) {
@@ -132,27 +162,29 @@ public class DeskewAcqManager {
       } catch (IOException ioe) {
          studio.logs().logError(ioe);
       }
-      // complicated way to find the viewer that had this data
-      // This depends on the SummaryMetadata being the original
+
+      final String displayKey = projectionTypeDisplayKeys.get(projectionType);
+      DisplaySettings displaySettings =
+               studio_.displays().displaySettingsFromProfile(displayKey);
+      DisplaySettings.Builder displaySettingsBuilder = null;
       if (displaySettings == null) {
-         List<DataViewer> dataViewers = studio.displays().getAllDataViewers();
-         for (DataViewer dv : dataViewers) {
-            DataProvider provider = dv.getDataProvider();
-            if (provider != null && provider.getSummaryMetadata() == summaryMetadata) {
-               displaySettings = dv.getDisplaySettings();
-            }
-         }
+         displaySettings = studio_.displays().displaySettingsFromProfile(
+                  PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+      }
+      if (displaySettings == null) {
+         displaySettingsBuilder = studio_.displays().displaySettingsBuilder();
+      } else {
+         displaySettingsBuilder = displaySettings.copyBuilder();
       }
       if ((settings.containsKey(DeskewFrame.SHOW) && settings.getBoolean(DeskewFrame.SHOW, false))
                || (settings.containsKey(DeskewFrame.OUTPUT_OPTION)
                && (settings.getString(DeskewFrame.OUTPUT_OPTION, "").equals(DeskewFrame.OPTION_RAM)
                || settings.getString(DeskewFrame.OUTPUT_OPTION, "")
                .equals(DeskewFrame.OPTION_REWRITABLE_RAM)))) {
-         if (displaySettings != null) {
-            displaySettings = displaySettings.copyBuilder().windowPositionKey(
-                     PROJECTION_TYPES[projectionType.ordinal()]).build();
-         }
-         DisplayWindow display = studio.displays().createDisplay(store, null, displaySettings);
+         displaySettingsBuilder.windowPositionKey(PROJECTION_TYPES[projectionType.ordinal()]);
+         DisplayWindow display = studio.displays().createDisplay(store, null,
+                  displaySettingsBuilder.build());
+         display.setDisplaySettingsProfileKey(displayKey);
          if (isTestAcq) {
             switch (projectionType) {
                case FULL_VOLUME:

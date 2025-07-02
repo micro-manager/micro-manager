@@ -97,6 +97,7 @@ public class TestAcqAdapter extends DataViewerListener implements
 
    public static final String ACQ_IDENTIFIER = "Acq_Identifier";
    private static final String TITLE = "Test-Acquisition";
+   private static final String TEST_ACQUISITION_DISPLAY_SETTINGS = "TestAcquisitionDisplaySettings";
    private static final SimpleDateFormat DATE_FORMATTER =
            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
    private Acquisition currentAcquisition_;
@@ -240,23 +241,24 @@ public class TestAcqAdapter extends DataViewerListener implements
          displayWindow_ = studio_.displays().createDisplay(curStore_, null);
          displayWindow_.setCustomTitle(TITLE);
 
-         // Use settings of last closed acquisition viewer
-         DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
-                 studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-         if (dsTmp == null) {
-            dsTmp = DefaultDisplaySettings.getStandardSettings(
-                    PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
+                     TEST_ACQUISITION_DISPLAY_SETTINGS);
+         DisplaySettings.Builder displaySettingsBuilder = null;
+         if (displaySettings != null) {
+            displaySettingsBuilder = displaySettings.copyBuilder();
          }
-         DisplaySettings.Builder displaySettingsBuilder = dsTmp.copyBuilder();
          final int nrChannels = summaryMetadata.getChannelNameList().size();
-         if (nrChannels > 0) {
-            // the do-while loop is a way to set display settings in a thread
-            // safe way.  See docs to compareAndSetDisplaySettings.
+         if (displaySettingsBuilder == null) {
+            displaySettingsBuilder = DefaultDisplaySettings.builder();
             if (nrChannels == 1) {
                displaySettingsBuilder.colorModeGrayscale();
             } else {
                displaySettingsBuilder.colorModeComposite();
             }
+         }
+         if (nrChannels > 0) {
+            // the do-while loop is a way to set display settings in a thread
+            // safe way.  See docs to compareAndSetDisplaySettings.
             for (int channelIndex = 0; channelIndex < nrChannels
                      && channelIndex < acquisitionSettings.channels().size(); channelIndex++) {
                displaySettingsBuilder.channel(channelIndex,
@@ -268,6 +270,7 @@ public class TestAcqAdapter extends DataViewerListener implements
          }
          displayWindow_.getWindow().toFront();
          displayWindow_.setDisplaySettings(displaySettingsBuilder.build());
+         displayWindow_.setDisplaySettingsProfileKey(TEST_ACQUISITION_DISPLAY_SETTINGS);
          displayWindow_.addListener(this, 1);
 
          sink.setDatastore(curStore_);

@@ -60,7 +60,6 @@ import org.micromanager.data.internal.ndtiff.NDTiffAdapter;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplaySettingsChangedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.DefaultDisplaySettings;
@@ -191,16 +190,15 @@ public final class MMAcquisition extends DataViewerListener {
          // settings here seems clumsy, but I am not sure where else this belongs
 
          // Use settings of last closed acquisition viewer
-         DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
-                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         DisplaySettings.Builder displaySettingsBuilder =
+                  studio_.displays().displaySettingsFromProfile(
+                           PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key()).copyBuilder();
 
-         if (ds == null) {
-            ds = DefaultDisplaySettings.getStandardSettings(
-                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         if (displaySettingsBuilder == null) {
+            displaySettingsBuilder = DefaultDisplaySettings.builder();
          }
 
          final int nrChannels = store_.getSummaryMetadata().getChannelNameList().size();
-         DisplaySettings.Builder displaySettingsBuilder = ds.copyBuilder();
          if (nrChannels > 0) { // I believe this will always be true, but just in case...
             if (nrChannels == 1) {
                displaySettingsBuilder.colorModeGrayscale();
@@ -223,6 +221,7 @@ public final class MMAcquisition extends DataViewerListener {
                   makeControlsFactory(),
                   displaySettingsBuilder.build());
 
+         display_.setDisplaySettingsProfileKey(PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          // It is a bit funny that there are listeners and events
          // The listener provides the canClose functionality (which needs to be
          // synchronous), whereas Events are asynchronous
@@ -291,10 +290,8 @@ public final class MMAcquisition extends DataViewerListener {
       // NS 20241128: I do not understand the logic here.
       // If this is not out Datastore or viewer, why deal with it?
       if (callbacks_.getAcquisitionDatastore() != viewer.getDataProvider()) {
-         if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-            DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
-            ds.saveToProfile(studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-         }
+         studio_.logs()
+               .logError("MMAcquisition: received canCloseViewer with unknown store");
          display_.removeListener(this);
          display_ = null;
          return true;
@@ -302,11 +299,6 @@ public final class MMAcquisition extends DataViewerListener {
       boolean result = callbacks_.abortRequest();
       if (result) {
          if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
-            // saving settings (again) may not be needed
-            if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-               DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
-               ds.saveToProfile(studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-            }
             display_.removeListener(this);
             display_ = null;
          }
@@ -428,9 +420,6 @@ public final class MMAcquisition extends DataViewerListener {
                ((DefaultDisplaySettings) display_.getDisplaySettings())
                      .save(store_.getSavePath());
             }
-            // save display settings to profile
-            ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
          display_.unregisterForEvents(this);
       }
@@ -453,22 +442,6 @@ public final class MMAcquisition extends DataViewerListener {
    public void onNewImage(DataProviderHasNewImageEvent event) {
       imagesReceived_++;
       setProgressText();
-   }
-
-   /**
-    * VIewer signals that display setting changed.
-    *
-    * @param event display settings changed event.
-    */
-   @Subscribe
-   public void onDisplaySettingsChangedEvent(DisplaySettingsChangedEvent event) {
-      if (!event.getDataViewer().equals(display_)) {
-         ReportingUtils.logError("MMAcquisition: received event from unknown viewer");
-      }
-      if (event.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) event.getDisplaySettings()).saveToProfile(
-               studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-      }
    }
 
    private void setProgressText() {
