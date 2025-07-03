@@ -186,7 +186,7 @@ public class Fitter {
 
    /**
     * Calculates a measure for the goodness of fit as defined here:
-    * http://en.wikipedia.org/wiki/Coefficient_of_determination
+    * http://en.wikipedia.org/wiki/Coefficient_of_determination.
     * R^2 = 1 - (SSres/SStot)
     * where
     *    SSres = SUM(i) (yi - fi)^2

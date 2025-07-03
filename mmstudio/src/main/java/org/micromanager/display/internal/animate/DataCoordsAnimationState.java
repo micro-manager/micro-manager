@@ -52,8 +52,8 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
    /**
     * Instead of constructor.
     *
-    * @param delegate
-    * @return
+    * @param delegate supplies information about the absence/presence of data
+    * @return a new instance of DataCoordsAnimationState
     */
    public static DataCoordsAnimationState create(CoordsProvider delegate) {
       if (delegate == null) {

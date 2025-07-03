@@ -36,7 +36,7 @@ public interface LinkAnchor<T> {
    /**
     * Return the current local value of the linked attribute.
     *
-    * @return
+    * @return the current local value of the linked attribute
     */
    T getCurrentValue();
 
@@ -92,7 +92,7 @@ public interface LinkAnchor<T> {
    /**
     * Return the currently linked peers.
     *
-    * @return
+    * @return collection of linked peer anchors
     */
    Collection<LinkAnchor<T>> getLinkedPeers();
 

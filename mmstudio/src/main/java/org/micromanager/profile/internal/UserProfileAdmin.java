@@ -165,7 +165,8 @@ public final class UserProfileAdmin {
     * happen automatically.
     *
     * @return true if migration was necessary; false otherwise
-    * @throws IOException
+    * @throws IOException if there was an error reading the legacy index file or
+    *                     migrating the profiles
     */
    private boolean migrateLegacyProfiles() throws IOException {
       if (didMigrateLegacy_) {
@@ -293,21 +294,25 @@ public final class UserProfileAdmin {
    }
 
    /**
+    * Get a user profile that does not save back to file.
+    *
     * @param uuid The unique ID number associated with the profile you want to get.
     * @return A `User Profile` instance that will not save back to file at all.
-    * @throws IOException
+    * @throws IOException if there was an error reading the profile
     */
    public UserProfile getNonSavingProfile(UUID uuid) throws IOException {
       return getProfileImpl(uuid, false, null);
    }
 
    /**
+    * Get a user profile that will routinely save to file.
+    *
     * @param uuid         The unique ID number associated with the profile you want to get.
     * @param errorHandler If an exception occurs during the autosave process the exception
     *                     will be passed to this object's `exceptionThrown` method.
     * @return A `User Profile` instance that will routinely save to file in case
     *         the program crashes.
-    * @throws IOException
+    * @throws IOException if there was an error reading the profile
     */
    public UserProfile getAutosavingProfile(UUID uuid,
                                            final ExceptionListener errorHandler)
@@ -555,7 +560,7 @@ public final class UserProfileAdmin {
     * @param profile               The profile to be saved.
     * @param ignoreProfileReadOnly If the `READ_ONLY` setting of the profile is `true`
     *                              then this method will do not save unless this argument is `true`.
-    * @throws IOException
+    * @throws IOException if there was an error writing the profile file
     */
    private void writeFile(String filename, Profile profile, boolean ignoreProfileReadOnly)
          throws IOException {

@@ -111,8 +111,8 @@ public class Utils {
    /**
     * Converts a Point with integer values to a Point with x and y doubles.
     *
-    * @param pt
-    * @return
+    * @param pt Point with integer values
+    * @return Point2D.Double with x and y as doubles
     */
    public static Point2D.Double toDoublePoint(Point pt) {
       return new Point2D.Double(pt.x, pt.y);

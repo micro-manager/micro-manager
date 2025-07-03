@@ -491,7 +491,7 @@ public final class ImageJBridge {
       int[] ijPos3d = imagePlus_.convertIndexToPosition(flatIndex);
       int channel = ijPos3d[0] - 1;
       int zSlice = ijPos3d[1] - 1;
-      int timePoint = ijPos3d[2] - 1;
+      final int timePoint = ijPos3d[2] - 1;
 
       Coords position = uiController_.getMMPrincipalDisplayedCoords();
       if (position == null) {
@@ -613,8 +613,6 @@ public final class ImageJBridge {
             double pixelSize = 0.0;
             double zStepSize = 0.0;
             double timeInterval = 0.0;
-            String dir = "";
-            String prefix = "";
             if (metadata.getPixelSizeUm() != null) {
                pixelSize = metadata.getPixelSizeUm();
             }
@@ -624,9 +622,11 @@ public final class ImageJBridge {
             if (summaryMetadata.getWaitInterval() != null) {
                timeInterval = summaryMetadata.getWaitInterval();
             }
+            String dir = "";
             if (summaryMetadata.getDirectory() != null) {
                dir = summaryMetadata.getDirectory();
             }
+            String prefix = "";
             if (summaryMetadata.getPrefix() != null) {
                prefix = summaryMetadata.getPrefix();
             }

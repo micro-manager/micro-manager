@@ -30,14 +30,13 @@ public final class ChannelCellRenderer extends JLabel implements TableCellRender
                                                   boolean isSelected, boolean hasFocus,
                                                   int rowIndex, int colIndex) {
 
-      ChannelTableModel model = (ChannelTableModel) table.getModel();
-      ArrayList<ChannelSpec> channels = model.getChannels();
-      ChannelSpec channel = channels.get(rowIndex);
       this.setEnabled(table.isEnabled());
-
       colIndex = table.convertColumnIndexToModel(colIndex);
-
       setOpaque(false);
+
+      final ChannelTableModel model = (ChannelTableModel) table.getModel();
+      final ArrayList<ChannelSpec> channels = model.getChannels();
+      final ChannelSpec channel = channels.get(rowIndex);
       if (colIndex == 0) {
          JCheckBox check = new JCheckBox("", channel.useChannel());
          check.setEnabled(table.isEnabled());

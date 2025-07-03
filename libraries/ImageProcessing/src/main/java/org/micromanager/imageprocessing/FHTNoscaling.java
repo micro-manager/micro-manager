@@ -191,6 +191,7 @@ public class FHTNoscaling extends FloatProcessor {
     *                maxN.
     */
    private void dfht3(float[] x, int base, boolean inverse, int maxN) {
+      /*
       int i;
       int stage;
       int nlog2;
@@ -206,14 +207,23 @@ public class FHTNoscaling extends FloatProcessor {
       float rt2;
       float rt3;
       float rt4;
+       */
 
       if (s_ == null) {
          initializeTables(maxN);
       }
-      nlog2 = log2(maxN);
+      int nlog2 = log2(maxN);
       bitRevRArr(x, base, nlog2, maxN);   //bitReverse the input array
       int gpSize = 2;     //first & second stages - do radix 4 butterflies once thru
       int numGps = maxN / 4;
+      int ad1;
+      int ad2;
+      int ad3;
+      int ad4;
+      float rt1;
+      float rt2;
+      float rt3;
+      float rt4;
       for (int gpNum = 0; gpNum < numGps; gpNum++) {
          ad1 = gpNum * 4;
          ad2 = ad1 + 1;
@@ -229,6 +239,11 @@ public class FHTNoscaling extends FloatProcessor {
          x[base + ad4] = rt2 - rt4;      // a - b - (c - d)
       }
 
+      int numBfs;
+      int stage;
+      int ad0;
+      int bfNum;
+      int csad;
       if (nlog2 > 2) {
          // third + stages computed here
          gpSize = 4;
@@ -272,7 +287,7 @@ public class FHTNoscaling extends FloatProcessor {
       } /* end if nlog2 > 2 */
 
       if (inverse) {
-         for (i = 0; i < maxN; i++) {
+         for (int i = 0; i < maxN; i++) {
             x[base + i] = x[base + i] / maxN;
          }
       }

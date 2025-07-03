@@ -36,7 +36,11 @@ class ZGeneratorShepard implements ZGenerator {
    Map<String, ShepardInterpolator> interpolators_;
 
    /**
-    * @param positionList
+    * Constructor that creates a ZGeneratorShepard using the
+    * PositionList provided.
+    *
+    * @param positionList PositionList containing the positions to be used for
+    *                     interpolation.
     */
    public ZGeneratorShepard(PositionList positionList) {
       //use default exponent of 2
@@ -51,15 +55,13 @@ class ZGeneratorShepard implements ZGenerator {
       int nPositions;
       double[] x;
       double[] y;
-      double[] z; //positions to be passed to interpolator
-      MultiStagePosition msp;
-      StagePosition sp;
 
       //initialize arrays
       nPositions = positionList.getNumberOfPositions();
       x = new double[nPositions];
       y = new double[nPositions];
 
+      MultiStagePosition msp;
       interpolators_ = new HashMap<String, ShepardInterpolator>(5);
       //Loop over all positions and extract X and Y values
       for (int p = 0; p < nPositions; p++) {
@@ -70,6 +72,8 @@ class ZGeneratorShepard implements ZGenerator {
 
       //now repeat for each single axis stage and create an interpolator for each one
       msp = positionList.getPosition(0);
+      double[] z; //positions to be passed to interpolator
+      StagePosition sp;
       for (int a = 0; a < msp.size(); a++) {
          z = new double[nPositions];
          sp = msp.get(a); //get an axis
@@ -84,10 +88,12 @@ class ZGeneratorShepard implements ZGenerator {
    }
 
    /**
-    * @param x
-    * @param y
-    * @param axis
-    * @return
+    * Returns the Z position for the given X and Y coordinates
+    * using Shepard Interpolation.
+    *
+    * @param x X coordinate
+    * @param y Y coordinate
+    * @return Z coordinate
     */
    @Override
    public double getZ(double x, double y, String zDevice) {

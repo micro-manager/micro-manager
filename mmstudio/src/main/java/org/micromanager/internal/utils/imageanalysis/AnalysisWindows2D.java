@@ -1,8 +1,8 @@
 package org.micromanager.internal.utils.imageanalysis;
 
 /**
- * Code to generate Making Windows (https://en.wikipedia.org/wiki/Window_function)
- * for instance useful when masking edges to avoid Fourier border artefacts
+ * Code to generate Window functions (https://en.wikipedia.org/wiki/Window_function).
+ * For instance useful when masking edges to avoid Fourier border artefacts.
  *
  * @author nico
  */

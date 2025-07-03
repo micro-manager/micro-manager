@@ -54,7 +54,7 @@ public class MappingStorage {
    }
 
    /**
-    * Builds a Property Map representing the input
+    * Builds a Property Map representing the input.
     *
     * <p>Polygon PropertyMaps are structured as: - Integer - nrEntries - x-i - x position
     * of point #i - y-i - y position of point #i
@@ -107,11 +107,11 @@ public class MappingStorage {
    }
 
    /**
-    * Restores mapping from a PropertyMap created by the function mapToPropertyMap
+    * Restores mapping from a PropertyMap created by the function mapToPropertyMap.
     *
     * @param pMap propertyMap containing mapping data
     * @param core MMCore
-    * @return
+    * @return Mapping object containing the mapping data
     */
    static Mapping mapFromPropertyMap(final CMMCore core, final PropertyMap pMap) {
       Rectangle roi = null;

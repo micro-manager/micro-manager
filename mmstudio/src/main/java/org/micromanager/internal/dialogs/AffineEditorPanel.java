@@ -156,7 +156,7 @@ public class AffineEditorPanel extends JPanel {
       atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
    }
 
-   /*******************Renderer.******************************/
+   /*******************Renderer*****************************.*/
 
    private class AffineCellRenderer implements TableCellRenderer {
 
@@ -195,7 +195,7 @@ public class AffineEditorPanel extends JPanel {
       }
    }
 
-   /************************Table Model.**********************/
+   /************************Table Model*********************.*/
 
    private class AffineTableModel extends AbstractTableModel {
 

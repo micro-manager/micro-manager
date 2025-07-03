@@ -23,8 +23,8 @@ public class ImagePadder {
     * Doubles the image in size, fills in the edges by mirroring,
     * and using a Han window (only over the edges)
     *
-    * @param input
-    * @return
+    * @param input Image to be padded
+    * @return Padded image, twice the size of the input
     */
    public static ImageGray padPreibisch(ImageGray input) {
       //TODO: define input size requirements and enforce them
@@ -109,9 +109,9 @@ public class ImagePadder {
     * Creates a HanWindow specific for the padPreibisch function
     * Left half is 0, followed by a "half" HanWindow ending at 1.0.
     *
-    * @param width
-    * @param height
-    * @return
+    * @param width width of ?
+    * @param height height of ?
+    * @return HanWindow 2D array
     */
    public static float[] leftHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[width];
@@ -135,9 +135,9 @@ public class ImagePadder {
     * Creates a HanWindow specific for the padPreibisch function
     * Right half is 0, followed by a "half" HanWindow ending at 1.0.
     *
-    * @param width
-    * @param height
-    * @return
+    * @param width width of the image
+    * @param height  height of the image
+    * @return HanWindow 2D array
     */
    public static float[] rightHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[width];
@@ -162,9 +162,9 @@ public class ImagePadder {
     * Creates a HanWindow specific for the padPreibisch function
     * Top half is 0, followed by a "half" HanWindow ending at 1.0.
     *
-    * @param width
-    * @param height
-    * @return
+    * @param width width of the image
+    * @param height height of the image
+    * @return HanWindow 2D array
     */
    public static float[] topHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[height];
@@ -188,9 +188,9 @@ public class ImagePadder {
     * Creates a HanWindow specific for the padPreibisch function
     * Top half is 0, followed by a "half" HanWindow ending at 1.0.
     *
-    * @param width
-    * @param height
-    * @return
+    * @param width width of the imagej
+    * @param height height of the image
+    * @return HanWindow 2D array
     */
    public static float[] bottomHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[height];

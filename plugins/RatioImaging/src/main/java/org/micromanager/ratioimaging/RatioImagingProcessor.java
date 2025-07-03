@@ -122,8 +122,8 @@ public class RatioImagingProcessor implements Processor {
          // Can't do anything as we don't know how many names there'll be.
          return summary;
       }
-      String ch1Name = settings_.getString(RatioImagingFrame.CHANNEL1, "");
-      String ch2Name = settings_.getString(RatioImagingFrame.CHANNEL2, "");
+      final String ch1Name = settings_.getString(RatioImagingFrame.CHANNEL1, "");
+      final String ch2Name = settings_.getString(RatioImagingFrame.CHANNEL2, "");
       
       process_ = true;
       

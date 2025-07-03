@@ -316,7 +316,6 @@ public final class ProcessExistingDataDialog extends JDialog {
             destination, false);
       try {
          pipeline.insertSummaryMetadata(source.getSummaryMetadata());
-         int i = 0;
          // HACK: using arbitrary order to replay images, as the axisOrder
          // metadata property cannot be relied on (c.f. issue #151).
          Iterable<Coords> unorderedImageCoords = source.getUnorderedImageCoords();
@@ -341,6 +340,7 @@ public final class ProcessExistingDataDialog extends JDialog {
             }
          });
 
+         int i = 0;
          for (Coords c : orderedImageCoords) {
             i++;
             monitor.setProgress(i);

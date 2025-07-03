@@ -352,7 +352,7 @@ public class PatternOverlay extends AbstractOverlay {
                             Rectangle2D.Float imageViewPort) {
       g.setColor(color_.getColor());
       Double pixelSize = primaryImage.getMetadata().getPixelSizeUm();
-      double umPerImagePixel = pixelSize != null ? pixelSize : Double.NaN;
+      final double umPerImagePixel = pixelSize != null ? pixelSize : Double.NaN;
       final double zoomRatio = imageViewPort.width / screenRect.width;
 
       // Draw the pattern in image pixel coordinates by applying a transform

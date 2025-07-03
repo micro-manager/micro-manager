@@ -162,7 +162,7 @@ public final class DefaultImage implements Image {
     * @param format   PropertyMap specifying image width, height, and pixelType (not null).
     * @param coords   Coords to be used for this new image (can be null).
     * @param metadata Metadata to be used this new image (can be null).
-    * @throws IllegalArgumentException
+    * @throws IllegalArgumentException thrown when pixels is null
     */
    public DefaultImage(Object pixels, PropertyMap format, Coords coords,
                        Metadata metadata) throws IllegalArgumentException {
@@ -186,7 +186,7 @@ public final class DefaultImage implements Image {
     * @param pixels   Image pixels.  Should be a Java array of bytes or shorts (not null).
     * @param coords   Coords to be used for this new image (can be null).
     * @param metadata Metadata to be used this new image (can be null).
-    * @throws IllegalArgumentException
+    * @throws IllegalArgumentException thrown when pixels is null
     */
    public DefaultImage(Object pixels, int width, int height, int bytesPerPixel,
                        int numComponents, Coords coords, Metadata metadata)

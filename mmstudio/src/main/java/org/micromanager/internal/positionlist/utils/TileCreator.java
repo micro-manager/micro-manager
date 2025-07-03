@@ -237,7 +237,7 @@ public final class TileCreator {
          ReportingUtils.showError("Two endpoints should be set", dialog_);
          return null;
       }
-      boolean invert = endPoints[0].get(xyStage).get2DPositionX()
+      final boolean invert = endPoints[0].get(xyStage).get2DPositionX()
               - endPoints[1].get(xyStage).get2DPositionX()
               + endPoints[0].get(xyStage).get2DPositionY()
               - endPoints[1].get(xyStage).get2DPositionY() > 0;
