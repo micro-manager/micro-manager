@@ -791,8 +791,8 @@ public final class HistogramView extends JPanel {
          Rectangle rect = getGraphRect();
          float[] data = getComponentInterpolatedLogScaledData(component);
          float dataMax = getComponentInterpolatedLogScaledDataMax(component);
-         float dataScaling = (float) rect.height / dataMax;
-         float pixelsPerBin = (float) rect.width / data.length;
+         final float dataScaling = (float) rect.height / dataMax;
+         final float pixelsPerBin = (float) rect.width / data.length;
 
          if (dataMax == 0.0) {
             // A zero-area path can cause rendering artifacts (seen with Apple

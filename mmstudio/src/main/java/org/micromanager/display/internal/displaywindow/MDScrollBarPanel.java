@@ -112,7 +112,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
     * <p>State of existing axes (based on string name matching) is preserved, even
     * if axes are reordered.
     *
-    * @param axes
+    * @param axes List of axis names to display scroll bars for.
     */
    @MustCallOnEDT
    void setAxes(List<String> axes) {
@@ -140,7 +140,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
          boolean isRowCountChanging = axes.size() != axes_.size();
 
-         int oldHeight = getHeight();
+         final int oldHeight = getHeight();
          if (isRowCountChanging) {
             listeners_.fire().scrollBarPanelHeightWillChange(this, getHeight());
          }

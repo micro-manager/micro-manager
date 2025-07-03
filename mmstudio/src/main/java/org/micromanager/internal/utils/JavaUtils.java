@@ -46,14 +46,14 @@ public final class JavaUtils {
     * invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object param1,
     * Class paramType1, Object param2, Class paramType2, ...)
     *
-    * @param obj
-    * @param theClass
-    * @param methodName
-    * @param paramsAndTypes
+    * @param obj      Object on which to call a method
+    * @param theClass Class to which this object belongs
+    * @param methodName Name of the method to call
+    * @param paramsAndTypes Array of parameters and their types, alternating
     *
-    * @throws java.lang.NoSuchMethodException
-    * @throws java.lang.IllegalAccessException
-    * @throws java.lang.reflect.InvocationTargetException
+    * @throws java.lang.NoSuchMethodException if the method was not found
+    * @throws java.lang.IllegalAccessException     if we still failed to call this method
+    * @throws java.lang.reflect.InvocationTargetException  if the method throws an exception
     */
    public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName,
                                                Object... paramsAndTypes)

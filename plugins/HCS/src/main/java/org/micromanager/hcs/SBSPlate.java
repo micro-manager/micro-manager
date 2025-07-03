@@ -354,7 +354,7 @@ public class SBSPlate {
     * Site XY coordinates are assumed to be relative to the well center.
     *
     * @param xyStageName Name of the (default) XY stage
-    * @param sites
+    * @param sites - a list of sites to be merged into the well positions
     * @return - an array of well positions
     */
    public WellPositionList[] generatePositions(final String xyStageName,

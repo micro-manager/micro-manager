@@ -121,14 +121,14 @@ public final class ImageStatsProcessor {
    private ImageStats computeStats(Image image,
                                    ImageStatsRequest request, int index)
          throws ClassCastException {
-      CPUTimer cpuTimer = CPUTimer.createStarted();
+      final CPUTimer cpuTimer = CPUTimer.createStarted();
 
-      int nComponents = image.getNumComponents();
-      Integer boxedBitDepth = image.getMetadata().getBitDepth();
-      int bytesPerSample = image.getBytesPerPixel() / nComponents;
-      int bitDepth = boxedBitDepth == null
+      final int nComponents = image.getNumComponents();
+      final Integer boxedBitDepth = image.getMetadata().getBitDepth();
+      final int bytesPerSample = image.getBytesPerPixel() / nComponents;
+      final int bitDepth = boxedBitDepth == null
             ? 8 * bytesPerSample : boxedBitDepth;
-      int binCountPowerOf2 =
+      final int binCountPowerOf2 =
             Math.min(bitDepth, request.getMaxBinCountPowerOf2());
 
       // RGB888 images can come with an extra component in the pixel buffer.

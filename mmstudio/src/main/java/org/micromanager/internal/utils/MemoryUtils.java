@@ -37,7 +37,7 @@ public final class MemoryUtils {
    }
 
    /**
-    * Returns the maximum amount of memory available
+    * Returns the maximum amount of memory available.
     *
     * @return estimate of maximum amount of memory available in bytes
     */

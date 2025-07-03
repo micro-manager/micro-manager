@@ -52,7 +52,7 @@ public class PopupButton extends JToggleButton
        * Provides the listener an opportunity to configure or swap the popup
        * before it is displayed.
        *
-       * @param button
+       * @param button the button that is about to show the popup
        */
       void popupButtonWillShowPopup(PopupButton button);
    }

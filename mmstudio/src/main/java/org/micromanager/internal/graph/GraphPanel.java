@@ -140,8 +140,8 @@ public final class GraphPanel extends JPanel {
    /**
     * Draw graph traces.
     *
-    * @param g
-    * @param box
+    * @param g graphics context
+    * @param box drawing rectangle
     */
    protected void drawGraph(Graphics2D g, Rectangle box) {
       if (data_.getSize() < 2) {
@@ -237,8 +237,8 @@ public final class GraphPanel extends JPanel {
    /**
     * Draw grid on the graph box with tick lines and numbers.
     *
-    * @param g
-    * @param box
+    * @param g graphics context
+    * @param box drawing rectangle
     */
    private void drawGrid(Graphics2D g, Rectangle box) {
       if (data_.getSize() < 2) {
@@ -262,8 +262,8 @@ public final class GraphPanel extends JPanel {
       int tickCountX = 5;
       int tickCountY = 5;
 
-      int tickSizeX = box.width / tickCountX;
-      int tickSizeY = box.height / tickCountY;
+      final int tickSizeX = box.width / tickCountX;
+      final int tickSizeY = box.height / tickCountY;
 
       final Color oldColor = g.getColor();
       final Stroke oldStroke = g.getStroke();

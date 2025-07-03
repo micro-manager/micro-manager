@@ -36,10 +36,10 @@ public class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<
     *
     * <p>Not tested for signed integer types.
     *
-    * @param <T>
-    * @param sampleDepthPowerOf2
-    * @param binCountPowerOf2
-    * @return
+    * @param <T> the integer type
+    * @param sampleDepthPowerOf2 the power of 2 for the sample depth
+    * @param binCountPowerOf2 the power of 2 for the number of bins
+    * @return a new bin mapper
     */
    public static <T extends IntegerType<T>> PowerOf2BinMapper<T>
          create(int sampleDepthPowerOf2, int binCountPowerOf2) {

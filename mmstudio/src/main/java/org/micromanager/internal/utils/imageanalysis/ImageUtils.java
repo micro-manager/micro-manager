@@ -424,8 +424,9 @@ public final class ImageUtils {
     * coming from MMCore will have unsigned bytes, so used the appropriate
     * function for that conversion.
     *
-    * @param pixels
-    * @return
+    * @param pixels RGB32 pixels as a byte array, where each pixel is
+    *               4 bytes long (B,G,R,A).
+    * @return int array of pixels, where each pixel is
     */
    public static int[] convertRGB32BytesToInt(byte[] pixels) {
       int[] ints = new int[pixels.length / 4];
@@ -441,8 +442,9 @@ public final class ImageUtils {
     * Used to convert unsigned bytes coming from the C++ later into
     * ints that can be used by ImageJ.
     *
-    * @param pixels
-    * @return
+    * @param pixels RGB32 pixels as a byte array, where each pixel is
+    * @return int array of pixels, where each pixel is
+    *    the sum of RGB pixels.
     */
    public static int[] convertRGB32UBytesToInt(byte[] pixels) {
       int[] ints = new int[pixels.length / 4];

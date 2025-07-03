@@ -87,7 +87,7 @@ public final class DefaultPluginManager implements PluginManager {
     * plugin loading to complete.
     *
     * @param timeoutMs return after no more than this amount of milliseconds
-    * @throws java.lang.InterruptedException
+    * @throws java.lang.InterruptedException if the thread is interrupted while waiting
     */
    public void waitForInitialization(int timeoutMs) throws InterruptedException {
       loadingThread_.join(timeoutMs);

@@ -36,6 +36,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * single acquisition. Various methods of the AcquisitionManager will consume
  * or generate SequenceSettings, and you can create your own to configure your
  * custom acquisitions.
+ *
  * <p>
  * Maintainer note: This should be an interface, but kept as a class for backward
  * compatibility.</p>

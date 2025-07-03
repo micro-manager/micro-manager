@@ -85,7 +85,7 @@ public final class DefaultImageExporter implements ImageExporter {
        * Insert a new innermost ExporterLoop -- recursively propagates the
        * provided child to the end of the list.
        *
-       * @param child
+       * @param child ExporterLoop to be added as the innermost loop
        */
       public void setInnermostLoop(ExporterLoop child) {
          if (child_ == null) {
@@ -98,7 +98,7 @@ public final class DefaultImageExporter implements ImageExporter {
       /**
        * Recursively propagate a display through the list.
        *
-       * @param display
+       * @param display DisplayWindow to be set for this ExporterLoop
        */
       public void setDisplay(DisplayWindow display) {
          if (display != null) {
@@ -114,8 +114,8 @@ public final class DefaultImageExporter implements ImageExporter {
        * determining which images will be exported. Use the provided
        * base coordinates to cover for any coords we aren't iterating over.
        *
-       * @param baseCoords
-       * @param result
+       * @param baseCoords Base coordinates to use for this loop
+       * @param result  List to which we will add the coordinates of images
        */
       public void selectImageCoords(Coords baseCoords,
                                     ArrayList<Coords> result) {
@@ -221,7 +221,8 @@ public final class DefaultImageExporter implements ImageExporter {
     * display responding to our request to set the image coordinates, and
     * then once for the display painting to our provided Graphics object.
     *
-    * @param event
+    * @param event DisplayDidShowImageEvent that contains the image that was just
+    *                drawn.
     */
    @Subscribe
    public void onDrawComplete(DisplayDidShowImageEvent event) {

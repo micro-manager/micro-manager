@@ -2,12 +2,12 @@ package org.micromanager.projector.internal;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import mmcorej.Configuration;
 import org.micromanager.projector.ProjectionDevice;
 
 /**
- * Simple class to hold data needed for Point and SHoot actions Instances of this class are used on
- * a blocking queue, used to asynchronously execute Point and Shoot actions
+ * Simple class to hold data needed for Point and Shoot actions.
+ * Instances of this class are used on a blocking queue, used to
+ * asynchronously execute Point and Shoot actions
  *
  * @author nico
  */

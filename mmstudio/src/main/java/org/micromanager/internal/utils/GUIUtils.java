@@ -310,9 +310,9 @@ public final class GUIUtils {
    /**
     * Adds a menu to the specified menu bar.
     *
-    * @param menuBar
-    * @param menuName
-    * @return
+    * @param menuBar - the menu bar to which the menu will be added
+    * @param menuName - name of the menu as it appears in the menu bar
+    * @return the created menu
     */
    public static JMenu createMenuInMenuBar(final JMenuBar menuBar, final String menuName) {
       final JMenu menu = new JMenu();
@@ -326,9 +326,9 @@ public final class GUIUtils {
     *
     * @param parentMenu         - "top level" menu
     * @param menuItem           - prepared menuitem
-    * @param menuItemToolTip
+    * @param menuItemToolTip    - tooltip text for the menu item
     * @param menuActionRunnable - code that will be executed on selection of this menu
-    * @return
+    * @return menuitem
     */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
                                        JMenuItem menuItem,
@@ -349,7 +349,7 @@ public final class GUIUtils {
     *
     * @param parentMenu         - "top level" menu
     * @param menuItemText       - name as it appears in the menu
-    * @param menuItemToolTip
+    * @param menuItemToolTip    - tooltip text for the menu item
     * @param menuActionRunnable - code that will be executed on selection of this menu
     * @return menuitem
     */
@@ -366,9 +366,9 @@ public final class GUIUtils {
     *
     * @param parentMenu         - "top level" menu
     * @param menuItemText       - name as it appears in the menu
-    * @param menuItemToolTip
+    * @param menuItemToolTip    - tooltip text for the menu item
     * @param menuActionRunnable - code that will be executed on selection of this menu
-    * @param iconFileName
+    * @param iconFileName       - name of the icon file in the icons directory
     * @return menuitem
     */
    public static JMenuItem addMenuItem(final JMenu parentMenu,

@@ -4,7 +4,7 @@ import org.micromanager.data.DataProvider;
 
 /**
  * Acquisiton Engine-agnostic interface for pausing, aborting, 
- * getting Datastore, etc
+ * getting Datastore, etc.
  */
 public interface MMAcquistionControlCallbacks {
    void stop(boolean b);

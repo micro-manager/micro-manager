@@ -3,8 +3,8 @@ package org.micromanager.acquisition;
 import org.micromanager.MMEvent;
 
 /**
- * <p>The default implementation of this event posts on the Studio event bus,
- * so subscribe to this event using {@link org.micromanager.events.EventManager}.</p>
+ * The default implementation of this event posts on the Studio event bus,
+ * so subscribe to this event using {@link org.micromanager.events.EventManager}.
  */
 public interface AcquisitionSettingsChangedEvent extends MMEvent {
 

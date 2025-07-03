@@ -55,7 +55,7 @@ public final class IJVersionCheckDlg extends JDialog {
    /**
     * Show the warning dialog, if applicable and user has not opted out.
     *
-    * @param studio
+    * @param studio the Studio instance
     */
    public static void execute(Studio studio) {
       if (ALLOWED_VERSIONS.contains(ImageJ.VERSION)) {
@@ -92,7 +92,7 @@ public final class IJVersionCheckDlg extends JDialog {
    /**
     * Show the dialog.
     *
-    * @param studio
+    * @param studio - Studio instance.
     * @param badVersion - User's version.
     */
    public IJVersionCheckDlg(Studio studio, String badVersion) {
