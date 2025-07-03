@@ -66,6 +66,13 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 // TODO Methods must implement correct threading semantics!
 public final class DefaultDisplayManager extends DataViewerListener implements DisplayManager {
+   /**
+    * Keys used by Studio for Window positioning.
+    */
+   public static final String ALBUM_DISPLAY = "ALBUM_DISPLAY";
+   public static final String PREVIEW_DISPLAY = "PREVIEW_DISPLAY";
+   public static final String MDA_DISPLAY = "MDA_DISPLAY";
+
    private static final String[] CLOSE_OPTIONS = new String[] {
          "Cancel", "Prompt for each", "Close without save prompt"};
 

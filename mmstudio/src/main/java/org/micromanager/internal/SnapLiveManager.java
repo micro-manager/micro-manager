@@ -60,6 +60,7 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
@@ -520,13 +521,13 @@ public final class SnapLiveManager extends DataViewerListener
                      store_.getSummaryMetadata().getSafeChannelName(ch),
                      Color.white));
       }
-      displaySettingsBuilder.windowPositionKey(DisplaySettings.PREVIEW_DISPLAY);
       final DisplayWindowControlsFactory controlsFactory =
                (DisplayWindow display) -> createControls();
       display_ = new DisplayController.Builder(store_)
             .controlsFactory(controlsFactory).displaySettings(displaySettingsBuilder.build())
                .build(mmStudio_);
       display_.setDisplaySettingsProfileKey(PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+      display_.setWindowPositionKey(DefaultDisplayManager.PREVIEW_DISPLAY);
 
       mmStudio_.displays().addViewer(display_);
 

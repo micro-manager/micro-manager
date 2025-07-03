@@ -116,6 +116,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // The key for the display profile. This is used to save
    // display settings for this display window.
    private String profileKey_ = "DefaultDisplayProfile";
+   // The key for the display window. This is used to save
+   // the display window's position and size.
+   private String windowKey_ = "DefaultDisplayWindow";
 
    private final Object selectionLock_ = new Object();
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
@@ -1290,6 +1293,22 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void setDisplaySettingsProfileKey(String key) {
       profileKey_ = key;
+   }
+
+   /**
+    * Sets a key that will be used to remember Window position in the profile.
+    *
+    * @param key Key to use for positioning the DisplayWindow.
+    *            if called before showing the DisplayWindow,
+    *            the DisplayWindow will be positioned at the
+    *            remembered position.
+    */
+   @Override
+   public void setWindowPositionKey(String key) {
+      windowKey_ = key;
+      if (uiController_ != null) {
+         uiController_.setWindowPositioning(key);
+      }
    }
 
 

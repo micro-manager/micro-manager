@@ -39,6 +39,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -137,8 +138,8 @@ public final class DefaultAlbum implements Album {
                         store_.getSummaryMetadata().getSafeChannelName(ch),
                         Color.white));
          }
-         displaySettingsBuilder.windowPositionKey(DisplaySettings.ALBUM_DISPLAY);
          display_ = studio_.displays().createDisplay(store_, null, displaySettingsBuilder.build());
+         display_.setWindowPositionKey(DefaultDisplayManager.ALBUM_DISPLAY);
          display_.setCustomTitle("Album");
          display_.setDisplaySettingsProfileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
 
