@@ -444,7 +444,7 @@ public final class ImageUtils {
     *
     * @param pixels RGB32 pixels as a byte array, where each pixel is
     * @return int array of pixels, where each pixel is
-    *    the sum of RGB pixels.
+    *     the sum of RGB pixels.
     */
    public static int[] convertRGB32UBytesToInt(byte[] pixels) {
       int[] ints = new int[pixels.length / 4];
