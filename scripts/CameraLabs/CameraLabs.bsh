@@ -17,11 +17,11 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 
 // final (maximum exposure in ms)
-double finalExposure = 640;
+double finalExposure = 140;
 // Number of data points desired
 int nrExposures = 50;
 // Initial exposure in ms
-double startExposure = 0.0025;
+double startExposure = 0.0262;
 
 // Place where data will be saved
 acqRoot = System.getProperty("user.home") + "/Data";
