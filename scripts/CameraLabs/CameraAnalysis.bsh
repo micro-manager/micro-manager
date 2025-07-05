@@ -31,7 +31,7 @@ for (int i=0; i <stack.getSize()/2; i++) {
 		rt.addValue("Slope of Log", ( (Math.log(stdDev) - Math.log(data.getY(i-1))) / (Math.log(stats.mean) - Math.log(data.getX(i-1)))));
 		rt.addValue("PCF", stats.mean/(stdDev*stdDev));
 	}
-	gui.message("Processing: " + i);
+	mm.scripter().message("Processing: " + i);
 	data.add(stats.mean, stdDev);
 }
 
