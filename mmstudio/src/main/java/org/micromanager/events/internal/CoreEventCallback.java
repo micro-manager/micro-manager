@@ -193,6 +193,21 @@ public final class CoreEventCallback extends MMEventCallback {
       }
    }
 
+   @Override
+   public void onShutterOpenChanged(String deviceName, boolean open) {
+      if (ignoreCoreEvents_) {
+         core_.logMessage("Notification from MMCore ignored", true);
+      } else {
+         if (deviceName.equals(core_.getShutterDevice())) {
+            SwingUtilities.invokeLater(() -> studio_.events().post(
+                  new DefaultShutterEvent(open)));
+         } else { // not currently used...
+            SwingUtilities.invokeLater(() -> studio_.events().post(
+                  new DefaultShutterOpenChangedEvent(deviceName, open)));
+         }
+      }
+   }
+
    public void setIgnoring(boolean isIgnoring) {
       ignoreCoreEvents_ = isIgnoring;
    }

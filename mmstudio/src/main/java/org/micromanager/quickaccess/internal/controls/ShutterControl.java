@@ -103,17 +103,17 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       Object registrant = new Object() {
          @Subscribe
          public void onShutter(ShutterEvent event) {
-            updateIcon(icon, studio);
+            updateIcon(icon, studio, event.getShutter());
          }
 
          @Subscribe
          public void onAutoShutter(AutoShutterEvent event) {
-            updateIcon(icon, studio);
+            updateIcon(icon, studio, null);
          }
 
          @Subscribe
          public void onGUIRefresh(GUIRefreshEvent event) {
-            updateIcon(icon, studio);
+            updateIcon(icon, studio, null);
          }
       };
       // Toggle icon state when mouse is pressed.
@@ -130,7 +130,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
             }
          }
       });
-      updateIcon(icon, studio);
+      updateIcon(icon, studio, null);
       studio.events().registerForEvents(registrant);
       return icon;
    }
@@ -138,14 +138,24 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
    /**
     * Update the JLabel's icon based on the current state of the shutter and
     * autoshutter.
+    *
+    * @param icon Shutter Icon
+    * @param studio Omnipresent Studio object
+    * @param open Please provide if known to improve performance.  When null, the code will
+    *             enquire the hardware which may take time
     */
-   private static void updateIcon(JLabel icon, Studio studio) {
+   private static void updateIcon(JLabel icon, Studio studio, Boolean open) {
       String path = "/org/micromanager/icons/shutter_";
       String tooltip = "The shutter is ";
       // Note that we use the mode both for the tooltip and for
       // constructing the image file path, since it happens to work out.
       try {
-         String mode = studio.shutter().getShutter() ? "open" : "closed";
+         String mode = "open";
+         if (open == null) {
+            mode = studio.shutter().getShutter() ? "open" : "closed";
+         } else {
+            mode = open ? "open" : "closed";
+         }
          path += mode;
          tooltip += mode;
          if (studio.shutter().getAutoShutter()) {
