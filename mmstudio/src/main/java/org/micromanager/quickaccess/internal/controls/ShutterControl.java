@@ -150,7 +150,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       // Note that we use the mode both for the tooltip and for
       // constructing the image file path, since it happens to work out.
       try {
-         String mode = "open";
+         String mode;
          if (open == null) {
             mode = studio.shutter().getShutter() ? "open" : "closed";
          } else {
