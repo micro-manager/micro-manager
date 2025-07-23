@@ -239,6 +239,7 @@ public class TestAcqAdapter extends DataViewerListener implements
          curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
          curPipeline_.insertSummaryMetadata(summaryMetadata);
          displayWindow_ = studio_.displays().createDisplay(curStore_, null);
+         displayWindow_.setWindowPositionKey("Test Acquisition");
          displayWindow_.setCustomTitle(TITLE);
 
          DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
