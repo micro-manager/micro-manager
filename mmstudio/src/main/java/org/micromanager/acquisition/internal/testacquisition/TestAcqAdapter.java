@@ -811,9 +811,6 @@ public class TestAcqAdapter extends DataViewerListener implements
 
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
-            if (event.isAcquisitionFinishedEvent()) {
-               return event;
-            }
             // do nothing if this is not our acquisition
             if (acqIndex != null
                     && event.getTags().containsKey(ACQ_IDENTIFIER)
@@ -821,6 +818,16 @@ public class TestAcqAdapter extends DataViewerListener implements
                return event;
             }
             try {
+               if (event.isAcquisitionFinishedEvent()) {
+                  if (sequenceSettings_.useSlices()) {
+                     if (sequenceSettings_.relativeZSlice()) {
+                        core_.setPosition(sequenceSettings.zReference());
+                     } else {
+                        core_.setPosition(zStagePositionBefore_);
+                     }
+                  }
+                  return event;
+               }
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
                   if (event.getZIndex() == 0) {
                      if (!event.isZSequenced() && sequenceSettings.useChannels()
