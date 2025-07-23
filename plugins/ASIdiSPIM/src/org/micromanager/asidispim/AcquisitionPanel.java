@@ -541,7 +541,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       JLabel lineScanPeriodLabel = new JLabel("Line scan duration [ms]:");
       sliceAdvancedPanel_.add(lineScanPeriodLabel);
-      lineScanDuration_ = pu.makeSpinnerFloat(1, 10000, 0.25,
+      lineScanDuration_ = pu.makeSpinnerFloat(0.25, 10000, 0.25,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_DURATION_SCAN, 10);
       lineScanDuration_.addChangeListener(PanelUtils.coerceToQuarterIntegers(lineScanDuration_));
@@ -3272,6 +3272,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   + " Use the number of slices to set the number of images to acquire.", hideErrors);
             return AcquisitionStatus.FATAL_ERROR;
          }
+         // single-sided piezo acquisition risks illumination piezo sleeping; with non-hardware timepoints
+         // send relative move before each trigger, but here help in case of hardware timepoints
+         // considered disabling sleep but this seems foolish in case we fail to restore it
+         if (!twoSided) {
+            final Devices.Keys piezoIllumKey = firstSideA ? Devices.Keys.PIEZOB : Devices.Keys.PIEZOA;
+            int sleepTime = props_.getPropValueInteger(piezoIllumKey, Properties.Keys.AUTO_SLEEP_DELAY);
+            if ( sleepTime!=0  // will be 0 if no piezo found or if the sleep function is disabled
+                    && (sleepTime < computeActualTimeLapseDuration()/60) ) {
+               MyDialogUtils.showError("Piezo expected to sleep in middle of the acquisition.", hideErrors);
+               return AcquisitionStatus.FATAL_ERROR;
+            }
+         }
       }
       
       if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME_HW
@@ -3937,6 +3949,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // check if we are raising the SPIM head to the load position between every acquisition
             final boolean raiseSPIMHead = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
                   Properties.Keys.PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS, false);
+
+            // single-sided piezo acquisition risks illumination piezo sleeping; with non-hardware timepoints
+            // send relative move before each trigger, but here help in case of hardware timepoints
+            // considered disabling sleep but this seems foolish in case we fail to restore it
+            if (acqSettings.hardwareTimepoints && !twoSided) {
+               final Devices.Keys piezoIllumKey = firstSideA ? Devices.Keys.PIEZOB : Devices.Keys.PIEZOA;
+               if (props_.getPropValueInteger(piezoIllumKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
+                  core_.setRelativePosition(devices_.getMMDevice(piezoIllumKey), 0);
+               }
+            }
             
             // Loop over all the times we trigger the controller's acquisition
             //  (although if multi-channel with volume switching is selected there

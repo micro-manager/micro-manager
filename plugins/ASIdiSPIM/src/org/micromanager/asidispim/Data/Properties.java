@@ -169,6 +169,7 @@ public class Properties {
       SCAN_MODE("ScanMode"),              // for Hamamatsu, for Flash4: 1 = slow scan, 2 = fast scan, for Fusion 1 = slow scan, 2 = standard scan, 3 = fast scan
       CAMERA_BUS("Camera Bus"),           // for Hamamatsu interface type, USB3 or ??
       HAMAMATSU_LINE_INTERVAL("INTERNAL LINE INTERVAL"), // for Hamamatsu
+      HAMAMATSU_LINE_SPEED("INTERNAL LINE SPEED"), // for Hamamatsu
       TRIGGER_MODE_PCO("Triggermode"),         // for PCO
       PIXEL_RATE("PixelRate"),                 // for PCO
       CAMERA_TYPE("CameraType"),               // for PCO
