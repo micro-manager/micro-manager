@@ -75,7 +75,8 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
       for (Device device : devices_) {
          for (int j = 0; j < device.getNumberOfProperties(); j++) {
             PropertyItem p = device.getProperty(j);
-            if (!p.readOnly && p.preInit && !device.isSerialPort()) {
+            // null check can likely be removed as I believe I found the source, but hey, it should not hurt
+            if (p != null && !p.readOnly && p.preInit && !device.isSerialPort()) {
                props.add(p);
                dn.add(device.getName());
                PropertyItem setupProp = device.findSetupProperty(p.name);

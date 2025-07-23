@@ -77,6 +77,7 @@ public final class DeviceSetupDlg extends JDialog {
             core_.unloadDevice(d.getName());
             core_.loadDevice(d.getName(), d.getLibrary(), d.getAdapterName());
             d.setInitialized(false);
+            d.loadDataFromHardware(core_);
          } catch (Exception e) {
             studio_.logs().showError(e, "Failed to load device " + d.getName());
             ReportingUtils.logError(e);
