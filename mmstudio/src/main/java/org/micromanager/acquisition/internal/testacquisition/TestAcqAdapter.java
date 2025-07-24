@@ -820,8 +820,8 @@ public class TestAcqAdapter extends DataViewerListener implements
             }
             try {
                if (event.isAcquisitionFinishedEvent()) {
-                  if (sequenceSettings_.useSlices()) {
-                     if (sequenceSettings_.relativeZSlice()) {
+                  if (sequenceSettings.useSlices()) {
+                     if (sequenceSettings.relativeZSlice()) {
                         core_.setPosition(sequenceSettings.zReference());
                      } else {
                         core_.setPosition(zStagePositionBefore_);
