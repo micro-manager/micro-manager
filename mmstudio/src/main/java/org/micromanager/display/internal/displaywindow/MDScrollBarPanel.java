@@ -25,6 +25,7 @@ import javax.swing.BoundedRangeModel;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.SwingUtilities;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -116,6 +117,12 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
     */
    @MustCallOnEDT
    void setAxes(List<String> axes) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            setAxes(axes);
+         });
+         return;
+      }
       if (axes_.equals(axes)) {
          return;
       }
