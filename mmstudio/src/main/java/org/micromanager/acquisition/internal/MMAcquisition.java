@@ -218,6 +218,10 @@ public final class MMAcquisition extends DataViewerListener {
                                           ? acquisitionSettings.channels().get(channelIndex).color()
                                           : null));
             }
+         } else {
+            int tmpNrChannels = summaryMetadata.getChannelNameList().size();
+            studio_.logs().logError("nrChannel in MMAcquisition was unexpectedly zero");
+
          }
 
          display_ = studio_.displays().createDisplay(store_,
