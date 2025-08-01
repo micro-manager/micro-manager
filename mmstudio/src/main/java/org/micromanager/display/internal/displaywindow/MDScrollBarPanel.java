@@ -117,12 +117,6 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
     */
    @MustCallOnEDT
    void setAxes(List<String> axes) {
-      if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            setAxes(axes);
-         });
-         return;
-      }
       if (axes_.equals(axes)) {
          return;
       }
