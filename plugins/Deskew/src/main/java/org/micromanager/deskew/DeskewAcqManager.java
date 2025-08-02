@@ -195,7 +195,7 @@ public class DeskewAcqManager {
                                        : Color.WHITE));
          }
       } else {
-         studio_.logs().logError("nrChannel in MMAcquisition was unexpectedly zero");
+         studio_.logs().logError("nrChannel in DeskewAcqManager was unexpectedly zero");
       }
 
       if ((settings.containsKey(DeskewFrame.SHOW) && settings.getBoolean(DeskewFrame.SHOW, false))
