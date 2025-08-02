@@ -195,7 +195,6 @@ public class DeskewAcqManager {
                                        : Color.WHITE));
          }
       } else {
-         int tmpNrChannels = summaryMetadata.getChannelNameList().size();
          studio_.logs().logError("nrChannel in MMAcquisition was unexpectedly zero");
       }
 
