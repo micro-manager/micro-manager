@@ -192,10 +192,11 @@ public final class MMAcquisition extends DataViewerListener {
 
          // Use settings of last closed acquisition viewer
          DisplaySettings.Builder displaySettingsBuilder = null;
-         if (studio_.displays().displaySettingsFromProfile(
-                           PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key()) != null) {
-            displaySettingsBuilder = studio_.displays().displaySettingsFromProfile(
-                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key()).copyBuilder();
+         DisplaySettings tmpDisplaySettings =
+               studio_.displays().displaySettingsFromProfile(
+                        PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         if (tmpDisplaySettings != null) {
+            displaySettingsBuilder = tmpDisplaySettings.copyBuilder();
          }
          if (displaySettingsBuilder == null) {
             displaySettingsBuilder = DefaultDisplaySettings.builder();
@@ -217,6 +218,10 @@ public final class MMAcquisition extends DataViewerListener {
                                           ? acquisitionSettings.channels().get(channelIndex).color()
                                           : null));
             }
+         } else {
+            int tmpNrChannels = summaryMetadata.getChannelNameList().size();
+            studio_.logs().logError("nrChannel in MMAcquisition was unexpectedly zero");
+
          }
 
          display_ = studio_.displays().createDisplay(store_,
