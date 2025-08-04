@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.EnumMap;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.RewritableDatastore;
@@ -91,7 +92,11 @@ public class DeskewAcqManager {
                                                     int height,
                                                     int nrZSlices,
                                                     Double newZStepUm) throws IOException {
-      boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
+      boolean isTestAcq = false;
+      SequenceSettings sequenceSetting = summaryMetadata.getSequenceSettings();
+      if (sequenceSetting != null) {
+         isTestAcq = sequenceSetting.isTestAcquisition();
+      }
       Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
       if (isTestAcq) {
          switch (projectionType) {
