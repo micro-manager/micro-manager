@@ -21,6 +21,7 @@
 
 package org.micromanager.internal.utils;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -50,6 +51,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
+import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.internal.MMStudio;
 
 /**
@@ -76,7 +78,7 @@ public final class AutofocusPropertyEditor extends JDialog {
    /**
     * Constructs the Autofocus Property Editor.
     *
-    * @param studio Gives access to the API of the currently MM instance
+    * @param studio Gives access to the API of the current MM instance
     * @param afmgr  We presumably need access to functions not available through the API
     */
    public AutofocusPropertyEditor(Studio studio, DefaultAutofocusManager afmgr) {
@@ -227,6 +229,7 @@ public final class AutofocusPropertyEditor extends JDialog {
       }
 
       data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
+      studio_.events().registerForEvents(this);
    }
 
    protected void changeAFMethod(String focusDev) {
@@ -277,7 +280,7 @@ public final class AutofocusPropertyEditor extends JDialog {
    }
 
    private void handleException(Exception e) {
-      ReportingUtils.showError(e);
+      ReportingUtils.showError(e, this);
    }
 
 
@@ -363,6 +366,8 @@ public final class AutofocusPropertyEditor extends JDialog {
                refresh();
 
                fireTableCellUpdated(row, col);
+               afMgr_.getAutofocusMethod().applySettings();
+               afMgr_.getAutofocusMethod().saveSettings();
             } catch (Exception e) {
                handleException(e);
             }
@@ -416,6 +421,17 @@ public final class AutofocusPropertyEditor extends JDialog {
          this.fireTableStructureChanged();
       }
 
+   }
+
+   /**
+    * This method is called when the channel group changes.
+    * It updates the property table data to reflect the new state.
+    *
+    * @param event The event containing information about the channel group change.
+    */
+   @Subscribe
+   public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
+      data_.updateStatus();
    }
 
    /**
