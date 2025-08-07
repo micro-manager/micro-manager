@@ -578,13 +578,8 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
                   int zIndex = axisOrder.indexOf(Coords.Z);
                   // Move Z to the end of the axis order
                   axisOrder.remove(zIndex);
-                  // If the axis order is empty, we need to add Z as the only axis
-                  if (axisOrder.isEmpty()) {
-                     axisOrder.add(Coords.Z);
-                  } else {
-                     // Otherwise, we add Z to the end of the axis order
-                     axisOrder.add(Coords.Z);
-                  }
+                  // Always add Z to the end of the axis order after removing it
+                  axisOrder.add(Coords.Z);
                }
             }
          }
