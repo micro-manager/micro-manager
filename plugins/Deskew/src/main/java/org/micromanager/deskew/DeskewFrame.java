@@ -569,20 +569,35 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
             orderedImageCoords.add(c);
          }
          final List<String> axisOrder = source.getSummaryMetadata().getOrderedAxes();
-         Collections.reverse(axisOrder);
-
-         Collections.sort(orderedImageCoords, new Comparator<Coords>() {
-            @Override
-            public int compare(Coords o1, Coords o2) {
-               for (String axis : axisOrder) {
-                  if (o1.getIndex(axis)  < o2.getIndex(axis)) {
-                     return -1;
-                  }  else if (o1.getIndex(axis) > o2.getIndex(axis)) {
-                     return 1;
+         // We need to ensure that the z axis is last:
+         if (!axisOrder.get(axisOrder.size() - 1).equals(Coords.Z)) {
+            if (axisOrder.get(0).equals(Coords.Z)) {
+               Collections.reverse(axisOrder);
+            } else {
+               if (axisOrder.contains(Coords.Z)) {
+                  int zIndex = axisOrder.indexOf(Coords.Z);
+                  // Move Z to the end of the axis order
+                  axisOrder.remove(zIndex);
+                  // If the axis order is empty, we need to add Z as the only axis
+                  if (axisOrder.isEmpty()) {
+                     axisOrder.add(Coords.Z);
+                  } else {
+                     // Otherwise, we add Z to the end of the axis order
+                     axisOrder.add(Coords.Z);
                   }
                }
-               return 0;
             }
+         }
+
+         orderedImageCoords.sort((Coords o1, Coords o2) -> {
+            for (String axis : axisOrder) {
+               if (o1.getIndex(axis) < o2.getIndex(axis)) {
+                  return -1;
+               } else if (o1.getIndex(axis) > o2.getIndex(axis)) {
+                  return 1;
+               }
+            }
+            return 0;
          });
 
          int i = 0;
