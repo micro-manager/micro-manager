@@ -56,6 +56,8 @@ import org.micromanager.Studio;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.events.internal.DefaultStagePositionChangedEvent;
+import org.micromanager.events.internal.DefaultXYStagePositionChangedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.navigation.UiMovesStageManager;
@@ -824,7 +826,8 @@ public final class StageControlFrame extends JFrame {
 
    private void getXYPosLabelFromCore() throws Exception {
       Point2D.Double pos = core_.getXYStagePosition(core_.getXYStageDevice());
-      setXYPosLabel(pos.x, pos.y);
+      studio_.events().post(new DefaultXYStagePositionChangedEvent(
+               core_.getXYStageDevice(), pos.x, pos.y));
    }
 
    private void setXYPosLabel(double x, double y) {
@@ -836,7 +839,8 @@ public final class StageControlFrame extends JFrame {
 
    private void getZPosLabelFromCore(int idx) throws Exception {
       double zPos = core_.getPosition((String) zDriveSelect_[idx].getSelectedItem());
-      setZPosLabel(zPos, idx);
+      studio_.events().post(new DefaultStagePositionChangedEvent(
+            (String) zDriveSelect_[idx].getSelectedItem(), zPos));
    }
 
    private void setZPosLabel(double z, int idx) {
