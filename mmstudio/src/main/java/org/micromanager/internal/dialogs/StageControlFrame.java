@@ -48,6 +48,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -844,10 +846,13 @@ public final class StageControlFrame extends JFrame {
    }
 
    private void setZPosLabel(double z, int idx) {
-      zPositionLabel_[idx].setText(
-            TextUtils.removeNegativeZero(
-                  NumberUtils.doubleToDisplayString(z, 1))
-                  + " \u00B5m"); // U+00B5 MICRO SIGN
+      String label = TextUtils.removeNegativeZero(
+            NumberUtils.doubleToDisplayString(z, 1)) + " µm"; // U+00B5 MICRO SIGN
+      if (SwingUtilities.isEventDispatchThread()) {
+         zPositionLabel_[idx].setText(label);
+      } else {
+         SwingUtilities.invokeLater(() -> zPositionLabel_[idx].setText(label));
+      }
    }
 
    private static JFormattedTextField createDoubleEntryFieldFromCombo(

@@ -30,6 +30,8 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
@@ -143,8 +145,9 @@ public class ExampleFrame extends JFrame {
     */
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
-      exposureTimeLabel_.setText(String.format("Camera %s exposure time set to %.2fms",
-            event.getCameraName(), event.getNewExposureTime()));
+      SwingUtilities.invokeLater(() ->
+            exposureTimeLabel_.setText(String.format("Camera %s exposure time set to %.2fms",
+                  event.getCameraName(), event.getNewExposureTime())));
    }
 
    /**

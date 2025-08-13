@@ -33,6 +33,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
@@ -242,7 +243,18 @@ public final class PropertyEditor extends JFrame {
          }
       }
 
+      /**
+       * Updates the value of a property in the table.
+       *
+       * @param device    Device name
+       * @param propName  Property name
+       * @param newValue  New value to set
+       */
       public void update(String device, String propName, String newValue) {
+         if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> update(device, propName, newValue));
+            return;
+         }
          PropertyItem item = getItem(device, propName);
          if (item != null) {
             item.value = newValue;

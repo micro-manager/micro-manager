@@ -6,12 +6,15 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
+import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.pluginutilities.PluginUtilities;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -96,6 +99,10 @@ class AIDPCConfigurator implements ProcessorConfigurator {
     */
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> onChannelGroupChanged(event));
+         return;
+      }
       pluginUtilities_.populateWithChannels(ch1Combo_);
       pluginUtilities_.populateWithChannels(ch2Combo_);
       dialog_.pack();
@@ -108,6 +115,7 @@ class AIDPCConfigurator implements ProcessorConfigurator {
     * @param dae Event signalling a new display was added.
     */
    @Subscribe
+   @MustCallOnEDT
    public void onDisplayAdded(DataViewerAddedEvent dae) {
       pluginUtilities_.populateWithChannels(ch1Combo_);
       pluginUtilities_.populateWithChannels(ch2Combo_);

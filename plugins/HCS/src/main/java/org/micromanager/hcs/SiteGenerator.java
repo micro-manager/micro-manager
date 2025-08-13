@@ -26,6 +26,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
@@ -756,7 +757,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             + "um" : "") + " -- Stage: X=" + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y="
             + TextUtils.FMT2.format(xyStagePos_.y) + "um, Z="
             + TextUtils.FMT2.format(zStagePos_) + "um, " + stageWell_;
-      statusLabel_.setText(statusTxt);
+      if (SwingUtilities.isEventDispatchThread()) {
+         statusLabel_.setText(statusTxt);
+      } else  {
+         SwingUtilities.invokeLater(() -> statusLabel_.setText(statusTxt));
+      }
    }
 
    @Override

@@ -706,7 +706,12 @@ public final class MMStudio implements Studio {
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
       if (event.getCameraName().equals(cache().getCameraLabel())) {
-         ui_.frame().setDisplayedExposureTime(event.getNewExposureTime());
+         if (SwingUtilities.isEventDispatchThread()) {
+            ui_.frame().setDisplayedExposureTime(event.getNewExposureTime());
+         } else {
+            SwingUtilities.invokeLater(() -> ui_.frame().setDisplayedExposureTime(
+                     event.getNewExposureTime()));
+         }
       }
    }
 
@@ -714,7 +719,7 @@ public final class MMStudio implements Studio {
     * Cleans up resources while shutting down.
     *
     * @param quitInitiatedByImageJ True if closing command came from ImageJ.
-    * @return Whether or not cleanup was successful. Shutdown should abort
+    * @return Whether cleanup was successful. Shutdown should abort
     *     on failure.
     */
    private boolean cleanupOnClose(boolean quitInitiatedByImageJ) {

@@ -27,6 +27,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
@@ -97,10 +98,18 @@ public final class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
     * Reload our exposure time from the core.
     */
    private void reloadExposureTime(JTextField text) {
+      String exposure = "0.0";
       try {
-         text.setText(NumberUtils.doubleToDisplayString(studio_.core().getExposure()));
+         exposure = NumberUtils.doubleToDisplayString(studio_.core().getExposure());
       } catch (Exception e) {
          studio_.logs().logError(e, "Error getting core exposure time");
+         return;
+      }
+      if (SwingUtilities.isEventDispatchThread()) {
+         text.setText(exposure);
+      } else {
+         String finalExposure = exposure;
+         SwingUtilities.invokeLater(() -> text.setText(finalExposure));
       }
    }
 
