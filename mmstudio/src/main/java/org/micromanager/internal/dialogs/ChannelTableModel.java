@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.acquisition.ChannelSpec;
@@ -342,7 +343,11 @@ public final class ChannelTableModel extends AbstractTableModel {
       }
       mmStudio_.getAcquisitionEngine().setSequenceSettings(mmStudio_.getAcquisitionEngine()
             .getSequenceSettings().copyBuilder().channels(channels_).build());
-      fireTableDataChanged();
+      if (SwingUtilities.isEventDispatchThread()) {
+         fireTableDataChanged();
+      } else {
+         SwingUtilities.invokeLater(this::fireTableDataChanged);
+      }
    }
 
    /**
@@ -379,7 +384,12 @@ public final class ChannelTableModel extends AbstractTableModel {
          ChannelSpec cs = channels_.get(row);
          if (cs.config().equals(channel)) {
             channels_.set(row, cs.copyBuilder().exposure(exposure).build());
-            this.fireTableCellUpdated(row, 2);
+            if (SwingUtilities.isEventDispatchThread()) {
+               this.fireTableCellUpdated(row, 2);
+            } else {
+               final int finalRow = row;
+               SwingUtilities.invokeLater(() -> fireTableCellUpdated(finalRow, 2));
+            }
             return;
          }
       }

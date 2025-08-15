@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -374,8 +375,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          studio_.live().setSuspended(false);
       }
 
-      this.fireTableStructureChanged();
-
+      if (SwingUtilities.isEventDispatchThread()) {
+         this.fireTableStructureChanged();
+      } else  {
+         SwingUtilities.invokeLater(this::fireTableStructureChanged);
+      }
    }
 
    public void updateRowVisibility(ShowFlags flags) {
@@ -409,8 +413,15 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       }
 
 
-      this.fireTableStructureChanged();
-      this.fireTableDataChanged();
+      if (SwingUtilities.isEventDispatchThread()) {
+         this.fireTableStructureChanged();
+         this.fireTableDataChanged();
+      } else {
+         SwingUtilities.invokeLater(() -> {
+            this.fireTableStructureChanged();
+            this.fireTableDataChanged();
+         });
+      }
    }
 
    public Boolean showDevice(ShowFlags flags, String deviceName) {

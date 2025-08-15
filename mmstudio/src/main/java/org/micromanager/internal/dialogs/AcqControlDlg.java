@@ -1300,6 +1300,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * Updates the channel group drop down box.
     */
    public void updateGroupsCombo() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(this::updateGroupsCombo);
+         return;
+      }
       String[] groups = getAcquisitionEngine().getAvailableGroups();
       ActionListener[] als = channelGroupCombo_.getActionListeners();
       for (ActionListener al : als) {
@@ -1581,7 +1585,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onStagePositionChangedEvent(StagePositionChangedEvent spce) {
       if (spce.getDeviceName().equals(mmStudio_.core().getFocusDevice())) {
-         zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(spce.getPos()));
+         if (SwingUtilities.isEventDispatchThread()) {
+            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(spce.getPos()));
+         } else {
+            SwingUtilities.invokeLater(() -> zDrivePositionLabel_.setText(
+                     NumberUtils.doubleToDisplayString(spce.getPos())));
+         }
       }
    }
 
@@ -1593,18 +1602,34 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onPropertyChangedEvent(PropertyChangedEvent pce) {
       if ("Core".equals(pce.getDevice()) && ("Focus".equals(pce.getProperty()))) {
-         try {
-            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
-                     mmStudio_.core().getPosition()));
-         } catch (Exception e) {
-            mmStudio_.logs().logError(e, "Failed to get Z drive position from core.");
+         if (SwingUtilities.isEventDispatchThread()) {
+            try {
+               zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
+                        mmStudio_.core().getPosition()));
+            } catch (Exception e) {
+               mmStudio_.logs().logError(e, "Failed to get Z drive position from core.");
+            }
+         } else {
+            SwingUtilities.invokeLater(() -> {
+               try {
+                  zDrivePositionLabel_.setText(
+                           NumberUtils.doubleToDisplayString(mmStudio_.core().getPosition()));
+               } catch (Exception e) {
+                  mmStudio_.logs().logError(e, "Failed to get Z drive position from core.");
+               }
+            });
          }
       }
    }
 
    @Subscribe
    public void onPixelSizeChangedEvent(PixelSizeChangedEvent psce) {
-      proposedZStepLabel_.setText(getOptimalZStep(true));
+      final String optimalZStep = getOptimalZStep(true);
+      if (SwingUtilities.isEventDispatchThread()) {
+         proposedZStepLabel_.setText(optimalZStep);
+      } else {
+         SwingUtilities.invokeLater(() -> proposedZStepLabel_.setText(optimalZStep));
+      }
    }
 
 

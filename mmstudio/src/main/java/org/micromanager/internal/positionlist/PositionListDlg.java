@@ -709,18 +709,20 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    public void onStagePositionChanged(StagePositionChangedEvent event) {
       // Do the update on the EDT (1) to prevent data races.
       // Use info from the event, do not query hardware
-      SwingUtilities.invokeLater(() -> {
-         if (!axisList_.use(event.getDeviceName())) {
-            return; // this axis is not in the list, continue
-         }
-         MultiStagePosition msp = MultiStagePosition.newInstance(curMsp_);
-         StagePosition sp = msp.get(event.getDeviceName());
-         msp.remove(sp);
-         sp = StagePosition.create1D(event.getDeviceName(), event.getPos());
-         msp.add(sp);
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> onStagePositionChanged(event));
+         return;
+      }
+      if (!axisList_.use(event.getDeviceName())) {
+         return; // this axis is not in the list, continue
+      }
+      MultiStagePosition msp = MultiStagePosition.newInstance(curMsp_);
+      StagePosition sp = msp.get(event.getDeviceName());
+      msp.remove(sp);
+      sp = StagePosition.create1D(event.getDeviceName(), event.getPos());
+      msp.add(sp);
 
-         updateCurrentMsp(msp);
-      });
+      updateCurrentMsp(msp);
    }
 
 
@@ -733,18 +735,20 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
       // Do the update on the EDT (1) to prevent data races.
       // Use info from the event and do not query hardware
-      SwingUtilities.invokeLater(() -> {
-         if (!axisList_.use(event.getDeviceName())) {
-            return; // this axis is not in the list, continue
-         }
-         MultiStagePosition msp = MultiStagePosition.newInstance(curMsp_);
-         StagePosition sp = msp.get(event.getDeviceName());
-         msp.remove(sp);
-         sp = StagePosition.create2D(event.getDeviceName(), event.getXPos(), event.getYPos());
-         msp.add(sp);
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> onXYStagePositionChanged(event));
+         return;
+      }
+      if (!axisList_.use(event.getDeviceName())) {
+         return; // this axis is not in the list, continue
+      }
+      MultiStagePosition msp = MultiStagePosition.newInstance(curMsp_);
+      StagePosition sp = msp.get(event.getDeviceName());
+      msp.remove(sp);
+      sp = StagePosition.create2D(event.getDeviceName(), event.getXPos(), event.getYPos());
+      msp.add(sp);
 
-         updateCurrentMsp(msp);
-      });
+      updateCurrentMsp(msp);
    }
 
 
@@ -786,6 +790,10 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    }
 
    private void updateCurrentMsp(MultiStagePosition newCurrentMsp) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> updateCurrentMsp(newCurrentMsp));
+         return;
+      }
       newCurrentMsp.setLabel("Current");
       // it would be nice to check if all stage names in the msp are actually in
       // use.  However, I do not see a safe way to do so. (NS: 20201116)

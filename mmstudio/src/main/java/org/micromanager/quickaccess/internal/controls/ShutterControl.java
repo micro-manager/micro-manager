@@ -32,6 +32,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -40,6 +41,7 @@ import org.micromanager.events.AutoShutterEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.ShutterEvent;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -154,8 +156,17 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
          }
          path += ".png";
          tooltip += ". Click to open or close the shutter.";
-         icon.setIcon(IconLoader.getIcon(path));
-         icon.setToolTipText(tooltip);
+         if (SwingUtilities.isEventDispatchThread()) {
+            icon.setIcon(IconLoader.getIcon(path));
+            icon.setToolTipText(tooltip);
+         } else {
+            String finalPath = path;
+            String finalTooltip = tooltip;
+            SwingUtilities.invokeLater(() -> {
+               icon.setIcon(IconLoader.getIcon(finalPath));
+               icon.setToolTipText(finalTooltip);
+            });
+         }
       } catch (Exception e) {
          studio.logs().logError(e, "Unable to update shutter state display");
       }
@@ -164,6 +175,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
    /**
     * Create a checkbox for turning autoshutter on/off.
     */
+   @MustCallOnEDT
    public static JCheckBox makeAutoShutterCheckBox(final Studio studio) {
       final JCheckBox toggle = new JCheckBox("Auto");
       // Must create a separate object to register for events, because
@@ -172,12 +184,21 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       final Object registrant = new Object() {
          @Subscribe
          public void onAutoShutter(AutoShutterEvent event) {
-            toggle.setSelected(event.getAutoShutter());
+            if (SwingUtilities.isEventDispatchThread()) {
+               toggle.setSelected(event.getAutoShutter());
+            } else {
+               SwingUtilities.invokeLater(() -> toggle.setSelected(event.getAutoShutter()));
+            }
          }
 
          @Subscribe
          public void onGUIRefresh(GUIRefreshEvent event) {
-            toggle.setSelected(studio.shutter().getAutoShutter());
+            if (SwingUtilities.isEventDispatchThread()) {
+               toggle.setSelected(studio.shutter().getAutoShutter());
+            } else {
+               SwingUtilities.invokeLater(() ->
+                        toggle.setSelected(studio.shutter().getAutoShutter()));
+            }
          }
       };
       toggle.setFont(GUIUtils.buttonFont);
@@ -204,6 +225,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
    /**
     * Create a button for opening/closing the shutter.
     */
+   @MustCallOnEDT
    public static JButton makeShutterButton(final Studio studio) {
       final JButton button = new JButton();
       // Must create a separate object to register for events, because
@@ -212,15 +234,26 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       final Object registrant = new Object() {
          @Subscribe
          public void onShutter(ShutterEvent event) {
-            button.setText(event.getShutter() ? "Close" : "Open");
+            if (SwingUtilities.isEventDispatchThread()) {
+               button.setText(event.getShutter() ? "Close" : "Open");
+            } else {
+               SwingUtilities.invokeLater(() ->
+                        button.setText(event.getShutter() ? "Close" : "Open"));
+            }
          }
 
          @Subscribe
          public void onAutoShutter(AutoShutterEvent event) {
-            button.setEnabled(!event.getAutoShutter());
+            if (SwingUtilities.isEventDispatchThread()) {
+               button.setEnabled(!event.getAutoShutter());
+            } else {
+               SwingUtilities.invokeLater(() ->
+                        button.setEnabled(!event.getAutoShutter()));
+            }
          }
 
          @Subscribe
+         @MustCallOnEDT
          public void onGUIRefresh(GUIRefreshEvent event) {
             try {
                button.setText(studio.shutter().getShutter() ? "Close" : "Open");

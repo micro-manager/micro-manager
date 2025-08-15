@@ -787,9 +787,20 @@ public class PlatePanel extends JPanel {
       if (studio_ == null) {
          return;
       }
-      
-      refreshStagePosition();
-      repaint();
+
+      if (SwingUtilities.isEventDispatchThread()) {
+         refreshStagePosition();
+         repaint();
+      } else {
+         SwingUtilities.invokeLater(() -> {
+            try {
+               refreshStagePosition();
+               repaint();
+            } catch (HCSException e) {
+               studio_.logs().logError(e, "HCS-PlatePanel");
+            }
+         });
+      }
    }
 
    public void setLockAspect(boolean state) {
@@ -845,10 +856,19 @@ public class PlatePanel extends JPanel {
             return;
          }
          String well = plate_.getWellLabel(pt.x, pt.y);
-         plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_,
-                 well, "undefined");
-         drawStagePointer(g);
-         repaint();
+         if (SwingUtilities.isEventDispatchThread()) {
+            plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_,
+                     well, "undefined");
+            drawStagePointer(g);
+            repaint();
+         } else {
+            SwingUtilities.invokeLater(() -> {
+               plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_,
+                     well, "undefined");
+               drawStagePointer(g);
+               repaint();
+            });
+         }
       }
    }
 
@@ -862,11 +882,14 @@ public class PlatePanel extends JPanel {
    public void systemConfigurationLoaded(
            SystemConfigurationLoadedEvent systemConfigurationLoadedEvent) {
       // assume that pixel size changed too
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(()
+                  -> systemConfigurationLoaded(systemConfigurationLoadedEvent));
+         return;
+      }
       updateCameraFieldOfView();
-      SwingUtilities.invokeLater(() -> {
-         rescale();
-         repaint();
-      });
+      rescale();
+      repaint();
       if (plateGui_.isCalibratedXY()) {
          try {
             refreshStagePosition();

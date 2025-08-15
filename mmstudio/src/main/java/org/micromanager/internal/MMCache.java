@@ -202,11 +202,11 @@ public class MMCache {
             "Image info (from camera): %s X %s X %s bytes, Intensity range: %s bits, %s nm/px",
             width_, height_, bytesPerPixel_, imageBitDepth_,
             TextUtils.FMT0.format(pixSizeUm_ * 1000));
-      if (zStageLabel_.length() > 0) {
+      if (!zStageLabel_.isEmpty()) {
          text += String.format(", Z=%s \u00b5m", // Micro-m (i.e. micron)
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(zPos_)));
       }
-      if (xyStageLabel_.length() > 0) {
+      if (!xyStageLabel_.isEmpty()) {
          text += String.format(", XY=(%s,%s) \u00b5m", // micro-m, i.e. micron
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(x_)),
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(y_)));

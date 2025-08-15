@@ -606,7 +606,13 @@ public final class MainFrame extends JFrame {
    }
 
    protected void setConfigSaveButtonStatus(boolean changed) {
-      saveConfigButton_.setEnabled(changed);
+      if (SwingUtilities.isEventDispatchThread()) {
+         saveConfigButton_.setEnabled(changed);
+      } else {
+         SwingUtilities.invokeLater(() -> {
+            saveConfigButton_.setEnabled(changed);
+         });
+      }
    }
 
    /**
@@ -615,7 +621,13 @@ public final class MainFrame extends JFrame {
     * @param text text to be shown
     */
    public void updateInfoDisplay(String text) {
-      labelImageDimensions_.setText(text);
+      if (SwingUtilities.isEventDispatchThread()) {
+         labelImageDimensions_.setText(text);
+      } else {
+         SwingUtilities.invokeLater(() -> {
+            labelImageDimensions_.setText(text);
+         });
+      }
    }
 
    /**
@@ -815,6 +827,10 @@ public final class MainFrame extends JFrame {
    }
 
    public void setDisplayedExposureTime(double exposure) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> setDisplayedExposureTime(exposure));
+         return;
+      }
       textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));
    }
 

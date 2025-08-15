@@ -28,6 +28,7 @@ import java.util.HashMap;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
@@ -109,6 +110,10 @@ public final class ConfigGroupPad extends JScrollPane {
     *                  with the actual hardware.
     */
    public void refreshStructure(boolean fromCache) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> refreshStructure(fromCache));
+         return;
+      }
       if (data_ != null) {
          data_.rebuildModel(fromCache);
          data_.fireTableStructureChanged();
@@ -126,6 +131,10 @@ public final class ConfigGroupPad extends JScrollPane {
     * @param configName ConfigName
     */
    public void refreshGroup(String groupName, String configName) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> refreshGroup(groupName, configName));
+         return;
+      }
       if (data_ != null) {
          data_.refreshGroup(groupName, configName);
          data_.fireTableStructureChanged();
