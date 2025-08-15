@@ -846,7 +846,7 @@ public final class StageControlFrame extends JFrame {
 
    private void setZPosLabel(double z, int idx) {
       String label = TextUtils.removeNegativeZero(
-            NumberUtils.doubleToDisplayString(z, 1)) + " µm"; // U+00B5 MICRO SIGN
+            NumberUtils.doubleToDisplayString(z, 1)) + " \u00b5m"; // U+00B5 MICRO SIGN
       if (SwingUtilities.isEventDispatchThread()) {
          zPositionLabel_[idx].setText(label);
       } else {

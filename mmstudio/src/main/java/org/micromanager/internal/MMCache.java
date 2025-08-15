@@ -203,11 +203,11 @@ public class MMCache {
             width_, height_, bytesPerPixel_, imageBitDepth_,
             TextUtils.FMT0.format(pixSizeUm_ * 1000));
       if (!zStageLabel_.isEmpty()) {
-         text += String.format(", Z=%s µm", // Micro-m (i.e. micron)
+         text += String.format(", Z=%s \u00b5m", // Micro-m (i.e. micron)
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(zPos_)));
       }
       if (!xyStageLabel_.isEmpty()) {
-         text += String.format(", XY=(%s,%s) µm", // micro-m, i.e. micron
+         text += String.format(", XY=(%s,%s) \u00b5m", // micro-m, i.e. micron
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(x_)),
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(y_)));
       }
