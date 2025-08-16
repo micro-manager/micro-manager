@@ -99,6 +99,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private JTextField outputPath_;
    private JButton browseButton_;
    private JButton copyDirButton_;
+   private boolean eventsRegistered_ = false;
 
    /**
     * Generates the UI.
@@ -397,7 +398,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    private void manageMDASync(boolean syncEnabled) {
       if (syncEnabled) {
-         studio_.events().registerForEvents(this);
+         if (!eventsRegistered_) {
+            eventsRegistered_ = true;
+            studio_.events().registerForEvents(this);
+         }
          outputPath_.setEnabled(false);
          browseButton_.setEnabled(false);
          copyDirButton_.setEnabled(false);
@@ -406,7 +410,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
          outputRam_.setEnabled(false);
          outputRewritableRam_.setEnabled(false);
       } else {
-         studio_.events().unregisterForEvents(this);
+         if (eventsRegistered_) {
+            studio_.events().unregisterForEvents(this);
+            eventsRegistered_ = false;
+         }
          outputPath_.setEnabled(true);
          browseButton_.setEnabled(true);
          copyDirButton_.setEnabled(true);
