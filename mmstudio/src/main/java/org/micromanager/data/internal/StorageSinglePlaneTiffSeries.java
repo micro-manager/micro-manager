@@ -46,8 +46,10 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -317,8 +319,11 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       if (coordsToFilename_.isEmpty()) {
          return null;
       }
-      Coords coords = new ArrayList<>(coordsToFilename_.keySet()).get(0);
-      return getImage(coords);
+      Enumeration<Coords> keyEnumerator = coordsToFilename_.keys();
+      if (keyEnumerator.hasMoreElements()) {
+         return getImage(keyEnumerator.nextElement());
+      }
+      return null;
    }
 
    @Override
