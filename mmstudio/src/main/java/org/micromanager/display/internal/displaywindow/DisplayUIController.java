@@ -233,6 +233,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    private long nrLiveFramesReceived_ = 0;
    private long lastImageNumber_ = 0;
+   private long nrInLongestAxis_ = 0;
+   private int digitsInNrInLongestAxis_ = 1;
    private double durationMs_ = 0.0;
    private double lastElapsedTimeMs_ = 0.0;
    private double fps_ = 0.0;
@@ -530,6 +532,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
       final JPanel panel = makeValidationRootJPanel(
             new MigLayout(new LC().insets("1").gridGap("0", "0").fillX()));
 
+      Coords intendedDimensions = displayController_.getDataProvider().getSummaryMetadata()
+            .getIntendedDimensions();
+      for (String axis : intendedDimensions.getAxes()) {
+         nrInLongestAxis_ = Math.max(intendedDimensions.getIndex(axis), nrInLongestAxis_);
+      }
+      digitsInNrInLongestAxis_ = (int) Math.floor(Math.log10(nrInLongestAxis_)) + 1;
+
       pixelInfoLabel_ = new JLabel(" ");
       pixelInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
       pixelInfoLabel_.setMinimumSize(new Dimension(0, 10));
@@ -662,12 +671,21 @@ public final class DisplayUIController implements Closeable, WindowListener,
          positionButton.setFont(positionButton.getFont().deriveFont(10.0f));
          int offset = 0;
          if (JavaUtils.isWindows()) {
-            offset = 8;
+            offset = 10;
             positionButton.setBorderPainted(false);
          }
+         StringBuilder sb = new StringBuilder();
+         for (int i = 0; i < digitsInNrInLongestAxis_; i++) {
+            sb.append('9');
+         }
+         sb.append('/');
+         for (int i = 0; i < digitsInNrInLongestAxis_ + 1; i++) {
+            sb.append('9');
+         }
+         sb.append('9');
          int width = offset + positionButton.getFontMetrics(positionButton.getFont())
-               .stringWidth("99999/99999");
-         positionButton.setHorizontalAlignment(SwingConstants.RIGHT);
+               .stringWidth(sb.toString());
+         positionButton.setHorizontalAlignment(SwingConstants.LEFT);
          Dimension size = new Dimension(width, height);
          positionButton.setMinimumSize(size);
          positionButton.setMaximumSize(size);
@@ -1232,7 +1250,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       for (Map.Entry<String, PopupButton> e : axisPositionButtons_) {
          if (axis.equals(e.getKey())) {
-            e.getValue().setText(String.format("% 5d/% 5d",
+            int formatLength1 = digitsInNrInLongestAxis_ + 1;
+            String formatString = "%" + formatLength1 + "d/%" + formatLength1 + "d";
+            e.getValue().setText(String.format(formatString,
                   checkedPosition + 1, checkedLength));
             if (animationController_ != null && !animationController_.isAnimating()) {
                JComponent popup = e.getValue().getPopupComponent();
@@ -1484,7 +1504,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
                @Override
                public void run() {
-                  displayController_.selectionDidChange(selection);
+                  // it is possible the controller was closed in the interim
+                  if (displayController_ != null) {
+                     displayController_.selectionDidChange(selection);
+                  }
                }
             });
          }
