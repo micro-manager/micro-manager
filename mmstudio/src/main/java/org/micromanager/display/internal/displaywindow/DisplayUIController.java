@@ -681,10 +681,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
             sb.append('9');
          }
          sb.append('/');
-         for (int i = 0; i < digitsInLongestAxis_ + 1; i++) {
+         // Not sure why, but we need more space on the right
+         for (int i = 0; i < digitsInLongestAxis_ + 2; i++) {
             sb.append('9');
          }
-         sb.append('9');
          int width = offset + positionButton.getFontMetrics(positionButton.getFont())
                .stringWidth(sb.toString());
          positionButton.setHorizontalAlignment(SwingConstants.LEFT);
