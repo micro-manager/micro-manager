@@ -328,7 +328,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
    void setDisplaySettingsProfileKey(String key);
 
    /**
-    * Sets a key that will be used to remember Window positoin in the profile.
+    * Sets a key that will be used to remember Window position in the profile.
     *
     * @param key Key to use for positioning the DisplayWindow.
     *           if called before showing the DisplayWindow,

@@ -239,6 +239,7 @@ public class TestAcqAdapter extends DataViewerListener implements
          curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
          curPipeline_.insertSummaryMetadata(summaryMetadata);
          displayWindow_ = studio_.displays().createDisplay(curStore_, null);
+         displayWindow_.setWindowPositionKey("Test Acquisition");
          displayWindow_.setCustomTitle(TITLE);
 
          DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
@@ -811,9 +812,6 @@ public class TestAcqAdapter extends DataViewerListener implements
 
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
-            if (event.isAcquisitionFinishedEvent()) {
-               return event;
-            }
             // do nothing if this is not our acquisition
             if (acqIndex != null
                     && event.getTags().containsKey(ACQ_IDENTIFIER)
@@ -821,6 +819,16 @@ public class TestAcqAdapter extends DataViewerListener implements
                return event;
             }
             try {
+               if (event.isAcquisitionFinishedEvent()) {
+                  if (sequenceSettings.useSlices()) {
+                     if (sequenceSettings.relativeZSlice()) {
+                        core_.setPosition(sequenceSettings.zReference());
+                     } else {
+                        core_.setPosition(zStagePositionBefore_);
+                     }
+                  }
+                  return event;
+               }
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
                   if (event.getZIndex() == 0) {
                      if (!event.isZSequenced() && sequenceSettings.useChannels()

@@ -1,9 +1,11 @@
 package org.micromanager.deskew;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.EnumMap;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.RewritableDatastore;
@@ -11,6 +13,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 
 /**
  * This class manages the test datastores and data viewers for the Deskew plugin.
@@ -89,7 +92,11 @@ public class DeskewAcqManager {
                                                     int height,
                                                     int nrZSlices,
                                                     Double newZStepUm) throws IOException {
-      boolean isTestAcq = summaryMetadata.getSequenceSettings().isTestAcquisition();
+      boolean isTestAcq = false;
+      SequenceSettings sequenceSetting = summaryMetadata.getSequenceSettings();
+      if (sequenceSetting != null) {
+         isTestAcq = sequenceSetting.isTestAcquisition();
+      }
       Datastore store = DeskewAcqManager.createDatastore(studio, settings, isTestAcq, prefix);
       if (isTestAcq) {
          switch (projectionType) {
@@ -176,6 +183,26 @@ public class DeskewAcqManager {
       } else {
          displaySettingsBuilder = displaySettings.copyBuilder();
       }
+      final int nrChannels = store.getSummaryMetadata().getChannelNameList().size();
+      if (nrChannels > 0) { // I believe this will always be true, but just in case...
+         if (nrChannels == 1) {
+            displaySettingsBuilder.colorModeGrayscale();
+         } else {
+            displaySettingsBuilder.colorModeComposite();
+         }
+         for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
+            displaySettingsBuilder.channel(channelIndex,
+                     RememberedDisplaySettings.loadChannel(studio_,
+                              store.getSummaryMetadata().getChannelGroup(),
+                              store.getSummaryMetadata().getChannelNameList().get(channelIndex),
+                              displaySettings != null
+                                       ? displaySettings.getChannelColor(channelIndex)
+                                       : Color.WHITE));
+         }
+      } else {
+         studio_.logs().logError("nrChannel in DeskewAcqManager was unexpectedly zero");
+      }
+
       if ((settings.containsKey(DeskewFrame.SHOW) && settings.getBoolean(DeskewFrame.SHOW, false))
                || (settings.containsKey(DeskewFrame.OUTPUT_OPTION)
                && (settings.getString(DeskewFrame.OUTPUT_OPTION, "").equals(DeskewFrame.OPTION_RAM)

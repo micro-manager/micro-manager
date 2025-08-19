@@ -56,6 +56,8 @@ import org.micromanager.Studio;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.events.internal.DefaultStagePositionChangedEvent;
+import org.micromanager.events.internal.DefaultXYStagePositionChangedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.navigation.UiMovesStageManager;
@@ -83,7 +85,7 @@ public final class StageControlFrame extends JFrame {
    private final UiMovesStageManager uiMovesStageManager_;
    private final MutablePropertyMapView settings_;
 
-   private static final int MAX_NUM_Z_PANELS = 5;
+   private static final int MAX_NUM_Z_PANELS = 8;
    private static final int FRAME_X_DEFAULT_POS = 100;
    private static final int FRAME_Y_DEFAULT_POS = 100;
 
@@ -281,6 +283,9 @@ public final class StageControlFrame extends JFrame {
       // mailing list report 12/31/2019 encounters nrZPanels == 0, workaround:
       if (nrZPanels <= 0 && nrZDrives > 0) {
          nrZPanels = 1;
+      }
+      if (nrZPanels > nrZDrives) {
+         nrZPanels = nrZDrives;
       }
       settings_.putInteger(key, nrZPanels);
       for (int idx = 1; idx < MAX_NUM_Z_PANELS; ++idx) {
@@ -821,7 +826,8 @@ public final class StageControlFrame extends JFrame {
 
    private void getXYPosLabelFromCore() throws Exception {
       Point2D.Double pos = core_.getXYStagePosition(core_.getXYStageDevice());
-      setXYPosLabel(pos.x, pos.y);
+      studio_.events().post(new DefaultXYStagePositionChangedEvent(
+               core_.getXYStageDevice(), pos.x, pos.y));
    }
 
    private void setXYPosLabel(double x, double y) {
@@ -833,7 +839,8 @@ public final class StageControlFrame extends JFrame {
 
    private void getZPosLabelFromCore(int idx) throws Exception {
       double zPos = core_.getPosition((String) zDriveSelect_[idx].getSelectedItem());
-      setZPosLabel(zPos, idx);
+      studio_.events().post(new DefaultStagePositionChangedEvent(
+            (String) zDriveSelect_[idx].getSelectedItem(), zPos));
    }
 
    private void setZPosLabel(double z, int idx) {

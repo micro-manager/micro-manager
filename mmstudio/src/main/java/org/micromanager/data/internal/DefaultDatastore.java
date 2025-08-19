@@ -89,6 +89,8 @@ public class DefaultDatastore implements Datastore {
    protected String name_ = "Untitled";
    protected Map<String, Annotation> annotations_ = new HashMap<>();
    protected PrioritizedEventBus bus_;
+   // Some messages need to be sent synchronously, so we have a second bus
+   protected PrioritizedEventBus syncBus_;
    protected boolean isFrozen_ = false;
    protected final Studio studio_;
 
@@ -98,6 +100,7 @@ public class DefaultDatastore implements Datastore {
    public DefaultDatastore(Studio mmStudio) {
       studio_ = mmStudio;
       bus_ = new PrioritizedEventBus(true);
+      syncBus_ = new PrioritizedEventBus(false);
    }
 
    /**
@@ -165,11 +168,13 @@ public class DefaultDatastore implements Datastore {
 
    public void registerForEvents(Object obj, int priority) {
       bus_.register(obj, priority);
+      syncBus_.register(obj, priority);
    }
 
    @Override
    public void unregisterForEvents(Object obj) {
       bus_.unregister(obj);
+      syncBus_.unregister(obj);
    }
 
    @Override
@@ -313,7 +318,9 @@ public class DefaultDatastore implements Datastore {
          throw new DatastoreRewriteException();
       }
       haveSetSummary_ = true;
-      bus_.post(new DefaultNewSummaryMetadataEvent(metadata));
+      // Send synchronously to guarantee that the next call to getSummaryMetadata()
+      // returns the new metadata.
+      syncBus_.post(new DefaultNewSummaryMetadataEvent(metadata));
    }
 
    @Override
@@ -417,6 +424,7 @@ public class DefaultDatastore implements Datastore {
          System.gc();
       }
       bus_.shutDown();
+      syncBus_.shutDown();
    }
 
    @Override
