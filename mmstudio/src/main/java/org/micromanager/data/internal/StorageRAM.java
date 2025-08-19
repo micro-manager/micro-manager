@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -123,9 +124,11 @@ public final class StorageRAM implements RewritableStorage {
    @Override
    public Image getAnyImage() {
       synchronized (this) {
-         if (coordsToImage_ != null && coordsToImage_.size() > 0) {
-            Coords coords = new ArrayList<>(coordsToImage_.keySet()).get(0);
-            return coordsToImage_.get(coords);
+         if (coordsToImage_ != null && !coordsToImage_.isEmpty()) {
+            Iterator<Image> valueIterator = coordsToImage_.values().iterator();
+            if (valueIterator.hasNext()) {
+               return valueIterator.next();
+            }
          }
       }
       return null;
