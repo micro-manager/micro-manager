@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -25,25 +24,19 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 
 public class VolumeControlSubPanel extends JPanel {
-   private final int PANEL_HEIGHT = 400;
-   private final int PANEL_WIDTH = 150;
-   private final int N_STEPS = 100000;
+   private static final int PANEL_HEIGHT = 400;
+   private static final int PANEL_WIDTH = 150;
+   private static final int N_STEPS = 100000;
 
-   private DecimalFormat df = new DecimalFormat("0.##");
-
-   private Studio studio_;
-   private String device_;
-
-   private Insets insets;
+   private final Studio studio_;
+   private final String device_;
 
    private DoubleJSlider controlSlider;
    private JFormattedTextField imposedTextField;
-   private NumberFormatter formatter;
-   private JLabel imposedLabel;
    private JButton startButton;
 
    public boolean isPumping = false;
-   public double flowrate = 0;
+   public double flowRate = 0;
 
    VolumeControlSubPanel(Studio studio, String device) {
       this.setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
@@ -79,6 +72,7 @@ public class VolumeControlSubPanel extends JPanel {
                studio_.core()
                      .setProperty(device_, "Flow rate uL/sec", controlSlider.getScaledValue());
             } catch (Exception ignored) {
+               studio_.logs().logDebugMessage("Failed to set Flowrate in VolumeControlSubPanel.");
             }
          }
       });
@@ -89,14 +83,11 @@ public class VolumeControlSubPanel extends JPanel {
       controlSlider.setPaintLabels(true);
       controlSlider.setPaintTicks(true);
 
-      // Initialize imposedLabel
-      imposedLabel = new JLabel("Imposed");
-
       // Initialize the imposed pressure TextField
       NumberFormat numberFormat = NumberFormat.getNumberInstance();
       numberFormat.setMaximumFractionDigits(2);
       numberFormat.setMinimumFractionDigits(0);
-      formatter = new NumberFormatter(numberFormat);
+      NumberFormatter formatter = new NumberFormatter(numberFormat);
       formatter.setValueClass(Float.class);
       formatter.setMinimum(0);
       formatter.setMaximum(100);
@@ -112,28 +103,35 @@ public class VolumeControlSubPanel extends JPanel {
                   double value = Double.parseDouble(imposedTextField.getText());
                   imposedTextField.setValue(value);
                } catch (Exception ignored) {
+                  studio_.logs().logDebugMessage(
+                        "Exception parsing imposedTextField in VolumeControlSubPanel.");
                }
-
                double value = Double.parseDouble(imposedTextField.getValue().toString());
                controlSlider.setScaledValue(value);
-               setFlowrate(value);
+               setFlowRate(value);
             }
          }
       });
 
       // Some panels
-      Dimension size;
-      int col = 65;
+      final int col = 65;
       JPanel imposedPanel = new JPanel();
       imposedPanel.setLayout(new MigLayout());
-      insets = imposedPanel.getInsets();
+      Insets insets = imposedPanel.getInsets();
+      // Initialize imposedLabel
+      JLabel imposedLabel = new JLabel("Imposed");
       imposedPanel.add(imposedLabel);
       imposedPanel.add(imposedTextField);
-      size = imposedLabel.getPreferredSize();
-      imposedLabel.setBounds(insets.left + col - size.width - 5, insets.top + 10, size.width,
-            size.height);
-      size = imposedTextField.getPreferredSize();
-      imposedTextField.setBounds(insets.left + col, insets.top + 10, size.width, size.height);
+      Dimension imposedLabelSize = imposedLabel.getPreferredSize();
+      imposedLabel.setBounds(insets.left + col - imposedLabelSize.width - 5,
+            insets.top + 10,
+            imposedLabelSize.width,
+            imposedLabelSize.height);
+      Dimension imposedTextFieldPreferredSize = imposedTextField.getPreferredSize();
+      imposedTextField.setBounds(insets.left + col,
+            insets.top + 10,
+            imposedTextFieldPreferredSize.width,
+            imposedTextFieldPreferredSize.height);
 
       // Start button
       startButton = new JButton("Start");
@@ -145,11 +143,13 @@ public class VolumeControlSubPanel extends JPanel {
       this.add(startButton, "align center");
    }
 
-   public void setFlowrate(double value) {
-      flowrate = value;
+   public void setFlowRate(double value) {
+      flowRate = value;
       try {
          studio_.core().setPumpFlowrate(device_, value);
       } catch (Exception ignored) {
+         studio_.logs().logDebugMessage(
+               "Exception while setting PumpFlowRate in VolumeControlSubPanel.");
       }
    }
 
@@ -164,7 +164,7 @@ public class VolumeControlSubPanel extends JPanel {
                   startButton.setText("Start");
                   isPumping = false;
                } else {
-                  setFlowrate(flowrate); // Set flowrate again, just in case
+                  setFlowRate(flowRate); // Set flowrate again, just in case
                   studio_.core().pumpStart(device_);
                   startButton.setText("Stop");
                   isPumping = true;

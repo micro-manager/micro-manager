@@ -10,7 +10,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 
 public class FluidControlPanel extends JPanel {
-   private final int DELAY = 1000; // Delay for requesting new pressure in ms
+   private static final int DELAY = 1000; // Delay for requesting new pressure in ms
 
    private final Studio studio_;
    private Config config_;

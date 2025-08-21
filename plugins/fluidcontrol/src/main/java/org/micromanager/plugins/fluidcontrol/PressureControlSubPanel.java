@@ -26,23 +26,17 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 
 public class PressureControlSubPanel extends JPanel {
-   private final int PANEL_HEIGHT = 430;
-   private final int PANEL_WIDTH = 150;
-   private final int N_STEPS = 10000;
+   private static final int PANEL_HEIGHT = 430;
+   private static final int PANEL_WIDTH = 150;
+   private static final int N_STEPS = 10000;
 
-   private DecimalFormat df = new DecimalFormat("0.##");
-
-   private Studio studio_;
-   private String device_;
-
-   private Insets insets;
+   private final DecimalFormat df = new DecimalFormat("0.##");
+   private final Studio studio_;
+   private final String device_;
 
    private DoubleJSlider controlSlider;
    private JFormattedTextField imposedTextField;
    private JTextField measuredTextField;
-   private NumberFormatter formatter;
-   private JLabel imposedLabel;
-   private JLabel measuredLabel;
    private JButton startButton;
 
    public boolean isPumping = false;
@@ -89,13 +83,13 @@ public class PressureControlSubPanel extends JPanel {
       controlSlider.setPaintTicks(true);
 
       // Initialize imposedLabel
-      imposedLabel = new JLabel("Imposed");
+      final JLabel imposedLabel = new JLabel("Imposed");
 
       // Initialize the imposed pressure TextField
       NumberFormat numberFormat = NumberFormat.getNumberInstance();
       numberFormat.setMaximumFractionDigits(2);
       numberFormat.setMinimumFractionDigits(0);
-      formatter = new NumberFormatter(numberFormat);
+      NumberFormatter formatter = new NumberFormatter(numberFormat);
       formatter.setValueClass(Float.class);
       formatter.setMinimum(0);
       formatter.setMaximum(100);
@@ -111,6 +105,8 @@ public class PressureControlSubPanel extends JPanel {
                   double value = Double.parseDouble(imposedTextField.getText());
                   imposedTextField.setValue(value);
                } catch (Exception ignored) {
+                  studio_.logs().logDebugMessage(
+                        "Exception parsing imposedTExtField in PressureControlSubPanel");
                }
                double value = Double.parseDouble(imposedTextField.getValue().toString());
                controlSlider.setScaledValue(value);
@@ -120,7 +116,7 @@ public class PressureControlSubPanel extends JPanel {
       });
 
       // Initialize measureLabel
-      measuredLabel = new JLabel("Measured");
+      final JLabel measuredLabel = new JLabel("Measured");
 
       // Initialize measured pressure TextField
       measuredTextField = new JTextField();
@@ -129,29 +125,39 @@ public class PressureControlSubPanel extends JPanel {
       measuredTextField.setForeground(new Color(140, 140, 140));
 
       // Some panels
-      Dimension size;
-      int col = 65;
+      final int col = 65;
       JPanel imposedPanel = new JPanel();
       imposedPanel.setLayout(null);
-      insets = imposedPanel.getInsets();
       imposedPanel.add(imposedLabel);
       imposedPanel.add(imposedTextField);
-      size = imposedLabel.getPreferredSize();
-      imposedLabel.setBounds(insets.left + col - size.width - 5, insets.top + 10, size.width,
-            size.height);
-      size = imposedTextField.getPreferredSize();
-      imposedTextField.setBounds(insets.left + col, insets.top + 10, size.width, size.height);
+      final Dimension imposedLabelPreferredSize = imposedLabel.getPreferredSize();
+      final Insets imposedPanelInsets = imposedPanel.getInsets();
+      imposedLabel.setBounds(imposedPanelInsets.left + col - imposedLabelPreferredSize.width - 5,
+            imposedPanelInsets.top + 10,
+            imposedLabelPreferredSize.width,
+            imposedLabelPreferredSize.height);
+      final Dimension imposedTextFieldPreferredSize = imposedTextField.getPreferredSize();
+      imposedTextField.setBounds(imposedPanelInsets.left + col,
+            imposedPanelInsets.top + 10,
+            imposedTextFieldPreferredSize.width,
+            imposedTextFieldPreferredSize.height);
 
       JPanel measuredPanel = new JPanel();
       measuredPanel.setLayout(null);
-      insets = measuredPanel.getInsets();
       measuredPanel.add(measuredLabel);
       measuredPanel.add(measuredTextField);
-      size = measuredLabel.getPreferredSize();
-      measuredLabel.setBounds(insets.left + col - size.width - 5, insets.top + 10, size.width,
-            size.height);
-      size = measuredTextField.getPreferredSize();
-      measuredTextField.setBounds(insets.left + col, insets.top + 10, size.width, size.height);
+      final Insets measuredPanelInsets = measuredPanel.getInsets();
+      final Dimension measuredLabelPreferredSize = measuredLabel.getPreferredSize();
+      measuredLabel.setBounds(measuredPanelInsets.left + col
+                  - measuredLabelPreferredSize.width - 5,
+            measuredPanelInsets.top + 10,
+            measuredLabelPreferredSize.width,
+            measuredLabelPreferredSize.height);
+      final Dimension measuredTextFieldPreferredSize = measuredTextField.getPreferredSize();
+      measuredTextField.setBounds(imposedPanelInsets.left + col,
+            imposedPanelInsets.top + 10,
+            measuredTextFieldPreferredSize.width,
+            measuredTextFieldPreferredSize.height);
 
       // Start button
       startButton = new JButton("Start");
@@ -169,6 +175,7 @@ public class PressureControlSubPanel extends JPanel {
       try {
          temp = studio_.core().getPumpPressureKPa(device_);
       } catch (Exception ignored) {
+         studio_.logs().logDebugMessage("Failed to get Pump Pressure in PressureControlSubPanel");
       }
       measuredTextField.setText(df.format(temp));
    }
@@ -181,6 +188,7 @@ public class PressureControlSubPanel extends JPanel {
       try {
          studio_.core().setPumpPressureKPa(device_, value);
       } catch (Exception ignored) {
+         studio_.logs().logDebugMessage("Failed to set Pump Pressure in PressureControlSubPanel");
       }
    }
 

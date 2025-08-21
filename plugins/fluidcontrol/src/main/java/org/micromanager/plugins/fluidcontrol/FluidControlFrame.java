@@ -15,7 +15,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
 
 public class FluidControlFrame extends JFrame {
-   final private Studio studio_;
+   private final Studio studio_;
    private Config config_;
    private PropertyChangeListener pcl_;
 
@@ -108,6 +108,7 @@ public class FluidControlFrame extends JFrame {
     */
    private void aboutAction() {
       aboutFrame_ = new AboutFrame();
+      aboutFrame_.setLocation(this.getLocation());
       aboutFrame_.setVisible(true);
    }
 }

@@ -17,12 +17,12 @@ public class AboutFrame extends JFrame {
             "This plugin is build by Lars Kool, Institut Pierre-Gilles de Gennes, Paris."),
             "wrap");
       this.add(new JLabel(
-                  "It automatically loads all 'PressurePump' and 'Volumetric pump devices." +
-                        "You can select which devices"),
+                  "It automatically loads all 'PressurePump' and 'Volumetric pump devices."
+                        + "You can select which devices"),
             "wrap");
       this.add(new JLabel(
-            "are shown by (un)checking the corresponding controllers in the" +
-                  "'Menu->Configure' menu"));
+            "are shown by (un)checking the corresponding controllers in the"
+                  + "'Menu->Configure' menu"));
       this.pack();
    }
 }
