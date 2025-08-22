@@ -39,29 +39,33 @@ public class VolumeControlSubPanel extends JPanel {
    public double flowRate = 0;
 
    VolumeControlSubPanel(Studio studio, String device) {
-      this.setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
-      this.setFocusable(false);
-      this.setLayout(new MigLayout("insets 2"));
-
       this.studio_ = studio;
       this.device_ = device;
 
-      Border outline = BorderFactory.createTitledBorder(device_);
-      this.setBorder(outline);
+      this.setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
+      this.setFocusable(false);
+      this.setLayout(new MigLayout("insets 2"));
       initialize();
    }
 
    private void initialize() {
       // Initialize the slider
+      String propName = "Flow rate uL/sec";
       int minValue = 0;
       int maxValue = 0;
       try {
-         minValue = (int) studio_.core().getPropertyLowerLimit(device_, "Flow rate uL/sec");
-         maxValue = (int) studio_.core().getPropertyUpperLimit(device_, "Flow rate uL/sec");
+         minValue = (int) studio_.core().getPropertyLowerLimit(device_, propName);
+         maxValue = (int) studio_.core().getPropertyUpperLimit(device_, propName);
       } catch (Exception e) {
-         studio_.getLogManager().logError(e);
+         this.add(new JLabel(device_), "wrap");
+         this.add(new JLabel(propName + " missing"));
+         studio_.logs().logError(
+               "This Volumetric pump does not have required property " + propName);
          return;
       }
+
+      Border outline = BorderFactory.createTitledBorder(device_);
+      this.setBorder(outline);
 
       controlSlider = new DoubleJSlider(minValue, maxValue, 0, N_STEPS);
       controlSlider.addChangeListener(new ChangeListener() {

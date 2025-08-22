@@ -2,6 +2,7 @@ package org.micromanager.plugins.fluidcontrol;
 
 import static org.micromanager.internal.utils.JavaUtils.sleep;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -19,11 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.NumberFormatter;
-
-import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.events.PropertyChangedEvent;
@@ -46,15 +44,12 @@ public class PressureControlSubPanel extends JPanel {
    public double pressure = 0;
 
    PressureControlSubPanel(Studio studio, String device) {
-      this.setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
-      this.setFocusable(false);
-      this.setLayout(new MigLayout("insets 2"));
-
       this.studio_ = studio;
       this.device_ = device;
 
-      Border outline = BorderFactory.createTitledBorder(device_);
-      this.setBorder(outline);
+      this.setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
+      this.setFocusable(false);
+      this.setLayout(new MigLayout("insets 2"));
       initialize();
       studio_.events().registerForEvents(this);
    }
@@ -68,9 +63,14 @@ public class PressureControlSubPanel extends JPanel {
          minValue = (int) studio_.core().getPropertyLowerLimit(device_, propName);
          maxValue = (int) studio_.core().getPropertyUpperLimit(device_, propName);
       } catch (Exception e) {
-         studio_.logs().showError("Device does not have required property " + propName);
+         this.add(new JLabel(device_), "wrap");
+         this.add(new JLabel(propName + " missing"));
+         studio_.logs().logError("This PressurePump does not have required property " + propName);
          return;
       }
+
+      Border outline = BorderFactory.createTitledBorder(device_);
+      this.setBorder(outline);
 
       controlSlider = new DoubleJSlider(minValue, maxValue, 0, N_STEPS);
       controlSlider.addChangeListener(e -> {
