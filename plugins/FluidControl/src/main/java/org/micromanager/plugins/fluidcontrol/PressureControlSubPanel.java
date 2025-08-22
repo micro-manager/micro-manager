@@ -22,8 +22,11 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.NumberFormatter;
+
+import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.events.PropertyChangedEvent;
 
 public class PressureControlSubPanel extends JPanel {
    private static final int PANEL_HEIGHT = 430;
@@ -53,27 +56,26 @@ public class PressureControlSubPanel extends JPanel {
       Border outline = BorderFactory.createTitledBorder(device_);
       this.setBorder(outline);
       initialize();
+      studio_.events().registerForEvents(this);
    }
 
    private void initialize() {
       // Initialize the slider
+      String propName = "Imposed Pressure";
       int minValue = 0;
       int maxValue = 0;
       try {
-         minValue = (int) studio_.core().getPropertyLowerLimit(device_, "Imposed Pressure");
-         maxValue = (int) studio_.core().getPropertyUpperLimit(device_, "Imposed Pressure");
+         minValue = (int) studio_.core().getPropertyLowerLimit(device_, propName);
+         maxValue = (int) studio_.core().getPropertyUpperLimit(device_, propName);
       } catch (Exception e) {
-         studio_.getLogManager().logError(e);
+         studio_.logs().showError("Device does not have required property " + propName);
          return;
       }
 
       controlSlider = new DoubleJSlider(minValue, maxValue, 0, N_STEPS);
-      controlSlider.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            imposedTextField.setValue(controlSlider.getScaledValue());
-            setPressure(controlSlider.getScaledValue());
-         }
+      controlSlider.addChangeListener(e -> {
+         imposedTextField.setValue(controlSlider.getScaledValue());
+         setPressure(controlSlider.getScaledValue());
       });
       controlSlider.setFocusable(false);
       controlSlider.setOrientation(SwingConstants.VERTICAL);
@@ -168,6 +170,21 @@ public class PressureControlSubPanel extends JPanel {
       this.add(imposedPanel, "align center, wrap");
       this.add(measuredPanel, "align center, wrap");
       this.add(startButton, "align center");
+   }
+
+   @Subscribe
+   public void onImposedPressureChanged(PropertyChangedEvent pce) {
+      if (pce.getDevice().equals(device_) && pce.getProperty().equals("Imposed Pressure")) {
+         ChangeListener[] cls = controlSlider.getChangeListeners();
+         for (ChangeListener cl : cls) {
+            controlSlider.removeChangeListener(cl);
+         }
+         controlSlider.setScaledValue(Double.parseDouble(pce.getValue()));
+         imposedTextField.setValue(controlSlider.getScaledValue());
+         for (ChangeListener cl : cls) {
+            controlSlider.addChangeListener(cl);
+         }
+      }
    }
 
    public void updatePressure() {

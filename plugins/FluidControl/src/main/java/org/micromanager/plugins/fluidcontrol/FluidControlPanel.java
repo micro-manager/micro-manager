@@ -1,6 +1,5 @@
 package org.micromanager.plugins.fluidcontrol;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import javax.swing.JPanel;
@@ -28,12 +27,14 @@ public class FluidControlPanel extends JPanel {
 
       // Initialize all devices
       try {
+         config_.pressurePumpSelected.clear();
          config_.pressurePumpSelected.addAll(
                Arrays.asList(studio_.core()
                      .getLoadedDevicesOfType(DeviceType.PressurePumpDevice)
                      .toArray()
                )
          );
+         config_.volumePumpSelected.clear();
          config_.volumePumpSelected.addAll(
                Arrays.asList(studio_.core()
                      .getLoadedDevicesOfType(DeviceType.VolumetricPumpDevice)
@@ -57,11 +58,9 @@ public class FluidControlPanel extends JPanel {
    }
 
    private void initializeUpdater() {
-      updateTask = new ActionListener() {
-         public void actionPerformed(ActionEvent evt) {
-            pressurePanel.update();
-            // Volume pumps don't need to be updated
-         }
+      updateTask = evt -> {
+         pressurePanel.update();
+         // Volume pumps don't need to be updated
       };
       timer = new Timer(DELAY, updateTask);
    }

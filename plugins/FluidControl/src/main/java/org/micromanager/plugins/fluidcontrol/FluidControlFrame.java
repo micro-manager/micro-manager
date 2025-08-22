@@ -1,8 +1,6 @@
 package org.micromanager.plugins.fluidcontrol;
 
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JFrame;
@@ -10,8 +8,11 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.WindowConstants;
+
+import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.internal.utils.WindowPositioning;
 
 public class FluidControlFrame extends JFrame {
@@ -59,6 +60,7 @@ public class FluidControlFrame extends JFrame {
             null);
 
       super.pack();
+      studio_.events().registerForEvents(this);
    }
 
    private void redrawPumps() {
@@ -77,20 +79,10 @@ public class FluidControlFrame extends JFrame {
       JMenuItem openConfig = fileMenu.add("About");
 
       // Action to be performed upon clicking "Menu->Configure"
-      newConfig.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            configureAction();
-         }
-      });
+      newConfig.addActionListener(e -> configureAction());
 
       // Action to be performed upon clicking "Menu->About"
-      openConfig.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            aboutAction();
-         }
-      });
+      openConfig.addActionListener(e -> aboutAction());
 
       menuBar_.add(fileMenu);
    }
@@ -110,5 +102,10 @@ public class FluidControlFrame extends JFrame {
       aboutFrame_ = new AboutFrame();
       aboutFrame_.setLocation(this.getLocation());
       aboutFrame_.setVisible(true);
+   }
+
+   @Subscribe
+   public void onConfigurationLoaded(SystemConfigurationLoadedEvent scle) {
+      redrawPumps();
    }
 }

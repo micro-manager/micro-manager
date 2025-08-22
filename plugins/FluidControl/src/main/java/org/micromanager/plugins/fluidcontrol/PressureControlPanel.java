@@ -6,15 +6,11 @@ import org.micromanager.Studio;
 
 public class PressureControlPanel extends JPanel {
    private Studio studio_;
-   private Config config_;
 
-   private int nSelected;
    private PressureControlSubPanel[] panelList;
-   private String[] devices_;
 
    PressureControlPanel(Studio studio, String[] devices) {
       this.studio_ = studio;
-      this.devices_ = devices;
 
       panelList = new PressureControlSubPanel[devices.length];
       for (int i = 0; i < devices.length; i++) {

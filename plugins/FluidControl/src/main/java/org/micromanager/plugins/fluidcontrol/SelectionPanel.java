@@ -1,7 +1,6 @@
 package org.micromanager.plugins.fluidcontrol;
 
 import java.awt.Window;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,17 +64,14 @@ public class SelectionPanel extends JPanel {
    }
 
    private void addConfirmAction() {
-      confirmAction = new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            updateSelected();
-            config_.pressurePumpSelected = pressurePumpsSelected;
-            config_.volumePumpSelected = volumePumpsSelected;
-            config_.setProperty("hasChanged", true);
+      confirmAction = e -> {
+         updateSelected();
+         config_.pressurePumpSelected = pressurePumpsSelected;
+         config_.volumePumpSelected = volumePumpsSelected;
+         config_.setProperty("hasChanged", true);
 
-            Window win = SwingUtilities.getWindowAncestor((JComponent) e.getSource());
-            win.dispose();
-         }
+         Window win = SwingUtilities.getWindowAncestor((JComponent) e.getSource());
+         win.dispose();
       };
       confirmButton.addActionListener(confirmAction);
    }
