@@ -291,6 +291,11 @@ public class DuplicatorPluginFrame extends JDialog {
                   unselectedChannels.add(channelCheckBox.getText());
                }
             }
+            if (channelCheckBoxes.isEmpty()) {
+               // no channels in data set, but duplicator expects at least one
+               String channelName = ourProvider_.getSummaryMetadata().getSafeChannelName(0);
+               channels.put(channelName, true);
+            }
             settings.putStringList(UNSELECTED_CHANNELS, unselectedChannels);
             Datastore.SaveMode saveMode = null;
             if (saveBox.isSelected()) {
