@@ -899,7 +899,14 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       result.add(acquireButton, BUTTON_SIZE);
 
       final JButton stopButton = new JButton("Stop");
-      stopButton.addActionListener((final ActionEvent e) -> getAcquisitionEngine().abortRequest());
+      stopButton.addActionListener((final ActionEvent e) -> {
+         if (testAcqAdapter_.isAcquisitionRunning()) {
+            testAcqAdapter_.abortRequest();
+         }
+         if (getAcquisitionEngine().isAcquisitionRunning()) {
+            getAcquisitionEngine().abortRequest();
+         }
+      });
       stopButton.setFont(new Font("Arial", Font.BOLD, 12));
       result.add(stopButton, BUTTON_SIZE);
       return result;
