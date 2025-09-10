@@ -256,9 +256,12 @@ public final class GroupEditor extends ConfigDialog {
                         // test that first character of every possible value is a numeral
                         // if so, show user the list sorted by the numeric prefix
                         for (int k = 0; k < item.allowed.length; k++) {
-                           if (!Character.isDigit(item.allowed[k].charAt(0))) {
-                              allNumeric = false;
-                              break;
+                           if (!item.allowed[k].isEmpty()) {
+                              // should allNumeric be false for an empty string?
+                              if (!Character.isDigit(item.allowed[k].charAt(0))) {
+                                 allNumeric = false;
+                                 break;
+                              }
                            }
                         }
                         if (allNumeric) {
