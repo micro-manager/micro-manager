@@ -95,6 +95,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private JRadioButton outputMultipage_;
    private JRadioButton outputRam_;
    private JRadioButton outputRewritableRam_;
+   private JCheckBox keepOriginal_;
    private JCheckBox showDisplay_;
    private JTextField outputPath_;
    private JButton browseButton_;
@@ -136,7 +137,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    @Override
    public PropertyMap getSettings() {
-      settings_.putBoolean(KEEP_ORIGINAL, true);
       return settings_.toPropertyMap();
    }
 
@@ -220,6 +220,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       outputRam_ = new JRadioButton("Hold in RAM");
       outputRewritableRam_ = new JRadioButton("Live");
       showDisplay_ = new JCheckBox(SHOW);
+      keepOriginal_ = new JCheckBox("Keep Original Images");
       ButtonGroup group = new ButtonGroup();
       group.add(outputSingleplane_);
       group.add(outputMultipage_);
@@ -305,6 +306,13 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
          }
       });
       add(browseButton_, "wrap");
+
+      keepOriginal_.setToolTipText("Keep the original images in the output dataset");
+      keepOriginal_.setSelected(settings_.getBoolean(KEEP_ORIGINAL, true));
+      keepOriginal_.addActionListener(e -> {
+         settings_.putBoolean(KEEP_ORIGINAL, keepOriginal_.isSelected());
+      });
+      add(keepOriginal_);
 
       showDisplay_.setToolTipText("Display the processed data in a new image window");
       showDisplay_.setSelected(settings_.getBoolean(SHOW, true));
@@ -562,10 +570,15 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
                 "", 0, source.getNumImages());
 
       final Datastore destination = studio_.data().createRAMDatastore();
-      List<ProcessorFactory> factories = new ArrayList<>();
+      final List<ProcessorFactory> factories = new ArrayList<>();
 
+      // Elaborate way to deal with KeepOriginal when processing existing data.
+      // We do not want to reproduce the originals, but we want to keep the
+      // KEEP_ORIGINAL setting in the settings_ object.
+      boolean keepOriginal = settings_.getBoolean(KEEP_ORIGINAL, false);
       settings_.putBoolean(KEEP_ORIGINAL, false);
       deskewFactory_.setSettings(settings_.toPropertyMap());
+      settings_.putBoolean(KEEP_ORIGINAL, keepOriginal);
       factories.add(deskewFactory_);
       Pipeline pipeline = studio_.data().createPipeline(factories, destination, true);
       try {
