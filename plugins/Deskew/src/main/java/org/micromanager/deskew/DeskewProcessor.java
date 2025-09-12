@@ -396,4 +396,33 @@ public class DeskewProcessor implements Processor {
 
    }
 
+   @Override
+   public void cleanup(ProcessorContext context) {
+      // TODO: shutdown processing executor?
+      if (fullVolumeStore_ != null && fullVolumeStore_.getNumImages() == 0) {
+         deskewAcqManager_.closeViewerFor(fullVolumeStore_);
+         try {
+            fullVolumeStore_.close();
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
+      if (xyProjectionStore_ != null && xyProjectionStore_.getNumImages() == 0) {
+         deskewAcqManager_.closeViewerFor(xyProjectionStore_);
+         try {
+            xyProjectionStore_.close();
+         } catch (IOException e) {
+            studio_.logs().showError(e);
+         }
+      }
+      if (orthogonalStore_ != null && orthogonalStore_.getNumImages() == 0) {
+         deskewAcqManager_.closeViewerFor(orthogonalStore_);
+         try {
+            orthogonalStore_.close();
+         } catch (IOException e) {
+            studio_.logs().showError(e);
+         }
+      }
+
+   }
 }

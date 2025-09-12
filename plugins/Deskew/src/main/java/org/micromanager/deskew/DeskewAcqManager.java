@@ -7,6 +7,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.SummaryMetadata;
@@ -231,6 +232,20 @@ public class DeskewAcqManager {
          display.show();
       }
       return store;
+   }
+
+   public void closeViewerFor(DataProvider provider) {
+      if (provider == testFullVolumeStore_ && testFullVolumeWindow_ != null) {
+         testFullVolumeWindow_.close();
+         testFullVolumeWindow_ = null;
+      } else if (provider == testXYProjectionsStore_ && testXYProjectionsWindow_ != null) {
+         testXYProjectionsWindow_.close();
+         testXYProjectionsWindow_ = null;
+      } else if (provider == testOrthogonalProjectionsStore_
+               && testOrthogonalProjectionsWindow_ != null) {
+         testOrthogonalProjectionsWindow_.close();
+         testOrthogonalProjectionsWindow_ = null;
+      }
    }
 
    protected static Datastore createDatastore(Studio studio, PropertyMap settings,
