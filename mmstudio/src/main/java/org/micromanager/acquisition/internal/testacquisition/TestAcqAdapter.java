@@ -117,8 +117,7 @@ public class TestAcqAdapter extends DataViewerListener implements
    public boolean canCloseViewer(DataViewer viewer) {
       if (viewer.equals(displayWindow_)) {
          if (currentAcquisition_ != null && currentAcquisition_.isStarted()) {
-            currentAcquisition_.abort(new InterruptedException(
-                    "Test Acquisition aborted since user closed Windows"));
+            return abortRequest(displayWindow_.getWindow());
          }
       }
       return true;
@@ -1240,16 +1239,20 @@ public class TestAcqAdapter extends DataViewerListener implements
 
    @Override
    public boolean abortRequest() {
+      return abortRequest(null);
+   }
+
+   public boolean abortRequest(Component parentComponent) {
       if (curStore_ == null) {
          stop(true);
          return true;
       }
       if (isAcquisitionRunning()) {
          String[] options = {"Abort", "Cancel"};
-         List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) curStore_);
-         Component parentComponent = null;
-         if (displays != null && ! displays.isEmpty()) {
-            parentComponent = displays.get(0).getWindow();
+         if (parentComponent == null) {
+            if (displayWindow_ != null) {
+               parentComponent = displayWindow_.getWindow();
+            }
          }
          int result = JOptionPane.showOptionDialog(parentComponent,
                  "Abort current acquisition task?",

@@ -79,7 +79,7 @@ public final class TestAcqDataSink implements AcqEngJDataSink {
 
    @Override
    public void finish() {
-      //pipeline_.halt();
+      pipeline_.halt();
       studioEvents_.post(
               new DefaultAcquisitionEndedEvent(store_, Engine.getInstance()));
       finished_ = true;
