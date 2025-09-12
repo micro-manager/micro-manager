@@ -136,7 +136,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    @Override
    public PropertyMap getSettings() {
-      //settings_.putBoolean(KEEP_ORIGINAL, true);
       return settings_.toPropertyMap();
    }
 
