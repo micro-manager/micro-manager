@@ -412,7 +412,7 @@ public class DeskewProcessor implements Processor {
          try {
             xyProjectionStore_.close();
          } catch (IOException e) {
-            studio_.logs().showError(e);
+            studio_.logs().logError(e);
          }
       }
       if (orthogonalStore_ != null && orthogonalStore_.getNumImages() == 0) {
@@ -420,7 +420,7 @@ public class DeskewProcessor implements Processor {
          try {
             orthogonalStore_.close();
          } catch (IOException e) {
-            studio_.logs().showError(e);
+            studio_.logs().logError(e);
          }
       }
 
