@@ -140,8 +140,7 @@ public class PlotFrame extends JFrame {
          try {
             FileUtils.saveFile(data.toCSV(), file.toString(), ".csv");
          } catch (IOException ex) {
-            // TODO: log or show the error
-            //DialogUtils.showMessage(btnSaveData, "Failed to save the data.");
+            MMStudio.getInstance().logs().showError("Failed to save the data.");
          }
       });
    }
@@ -159,8 +158,8 @@ public class PlotFrame extends JFrame {
          final File file = new File(filepath);
          ChartUtils.saveChartAsPNG(file, chart, size.width, size.height);
       } catch (IOException e) {
-         // TODO: log or show error
-         //ReportingUtils.showError("Could not save the plot as a PNG file.");
+         MMStudio.getInstance().logs().showError(
+               "Could not save the plot as a PNG file.");
       }
    }
 }
