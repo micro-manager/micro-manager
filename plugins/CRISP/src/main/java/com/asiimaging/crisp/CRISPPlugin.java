@@ -14,15 +14,15 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 // The original plugin was created by Nico Stuurman, rewritten by Vikram Kopuri, 
-// and then once again rewritten by the current maintainer.
+// and then once again rewritten by the current maintainer, Brandon Simpson.
 @Plugin(type = MenuPlugin.class)
 public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
 
-   public static final String copyright = "Applied Scientific Instrumentation (ASI), 2014-2024";
+   public static final String copyright = "Applied Scientific Instrumentation (ASI), 2014-2025";
    public static final String description =
            "An interface to control the ASI CRISP Autofocus device.";
    public static final String menuName = "ASI CRISP Control";
-   public static final String version = "2.5.3";
+   public static final String version = "2.6.0";
 
    private Studio studio;
    private CRISPFrame frame;
