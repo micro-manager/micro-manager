@@ -52,7 +52,7 @@ public class StatusPanel extends Panel {
       lblSumValue = new JLabel("###");
       lblOffsetValue = new JLabel("###");
 
-      // TODO: tooltips based on firmware version? extra x vs lk t for example
+      // TODO: tooltips based on firmware version? EXTRA X? vs LK T? for example
 
       // tooltips for labels
       // "Property:" is the associated Micro-Manager property name
@@ -97,12 +97,16 @@ public class StatusPanel extends Panel {
     * after CRISP enters the Log Cal state for several ticks.
     */
    public void update() {
+      //final long startTime = System.nanoTime();
       final String state = crisp.getState();
       final String error = crisp.getDitherError();
       final String snr = crisp.getSNR();
       final String agc = crisp.getAGC();
       final String sum = crisp.getSum();
       final String offset = crisp.getOffsetString();
+      //final long endTime = System.nanoTime();
+      //final double durationMs = (endTime - startTime) / 1_000_000.0;
+      //System.out.println("duration: " + durationMs + " ms");
       EventQueue.invokeLater(() -> {
          setLabelText(lblStateValue, state);
          setLabelText(lblErrorValue, error);

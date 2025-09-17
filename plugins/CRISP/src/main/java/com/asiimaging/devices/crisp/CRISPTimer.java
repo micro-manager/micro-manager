@@ -8,8 +8,10 @@
 package com.asiimaging.devices.crisp;
 
 import com.asiimaging.crisp.panels.StatusPanel;
-import java.awt.event.ActionListener;
-import javax.swing.Timer;
+
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.SwingWorker;
 
 /**
  * A SwingTimer that helps update the ui with values queried from CRISP.
@@ -19,14 +21,15 @@ public class CRISPTimer {
    private int pollRateMs;
    private int skipCounter;
    private int skipRefresh;
-   private ActionListener pollTask;
 
-   private Timer timer;
    private StatusPanel panel;
    private final CRISP crisp;
+   private final AtomicBoolean isPolling;
+   private SwingWorker<Void, Void> worker;
 
    public CRISPTimer(final CRISP crisp) {
-      this.crisp = crisp;
+      this.crisp = Objects.requireNonNull(crisp);
+      isPolling = new AtomicBoolean();
       skipCounter = 0;
       skipRefresh = 10; // this value changes based on pollRateMs
       pollRateMs = 250;
@@ -42,24 +45,33 @@ public class CRISPTimer {
     *
     * @param panel the Panel to update
     */
-   public void createTimerTask(final StatusPanel panel) {
+   public void setStatusPanel(final StatusPanel panel) {
       this.panel = panel;
-      createPollingTask();
-      timer = new Timer(pollRateMs, pollTask);
    }
 
    /**
-    * Create the event handler that is called at the polling rate in milliseconds.
-    *
-    * <p>The polling task runs on the Event Dispatch Thread.
+    * Create the SwingWorker that is called at the polling rate in milliseconds.
     */
-   private void createPollingTask() {
-      pollTask = event -> {
-         if (skipCounter > 0) {
-            skipCounter--;
-            panel.setStateLabelText("Calibrating..." + computeRemainingSeconds() + "s");
-         } else {
-            panel.update();
+   private void createPollingWorker() {
+      worker = new SwingWorker<Void, Void>() {
+         @Override
+         protected Void doInBackground() {
+            long startTime = System.nanoTime();
+            while (isPolling.get()) {
+               final long endTime = System.nanoTime();
+               final double elapsedMs = (endTime - startTime) / 1_000_000.0;
+               if (elapsedMs > pollRateMs) {
+                  if (skipCounter > 0) {
+                     skipCounter--;
+                     panel.setStateLabelText("Calibrating..." + computeRemainingSeconds() + "s");
+                  } else {
+                     panel.update();
+                  }
+                  //System.out.println("tick: " + elapsedMs + " ms");
+                  startTime = System.nanoTime();
+               }
+            }
+            return null;
          }
       };
    }
@@ -78,23 +90,25 @@ public class CRISPTimer {
    }
 
    /**
-    * Start the Swing timer.
+    * Start polling CRISP.
     */
    public void start() {
-      timer.start();
+      isPolling.set(true);
       if (crisp.isTiger()) {
          crisp.setRefreshPropertyValues(true);
       }
+      createPollingWorker();
+      worker.execute();
    }
 
    /**
-    * Stop the Swing timer.
+    * Stop polling CRISP.
     */
    public void stop() {
       if (crisp.isTiger()) {
          crisp.setRefreshPropertyValues(false);
       }
-      timer.stop();
+      isPolling.set(false);
    }
 
    /**
@@ -102,11 +116,8 @@ public class CRISPTimer {
     */
    public void onLogCal() {
       // controller becomes unresponsive during loG_cal => skip polling a few times
-      if (timer.isRunning()) {
-         skipCounter = skipRefresh;
-         timer.restart();
-         panel.setStateLabelText("Calibrating..." + computeRemainingSeconds() + "s");
-      }
+      skipCounter = skipRefresh;
+      panel.setStateLabelText("Calibrating..." + computeRemainingSeconds() + "s");
    }
 
    /**
@@ -126,7 +137,6 @@ public class CRISPTimer {
    public void setPollRateMs(final int rate) {
       skipRefresh = Math.round(2500.0f / rate);
       pollRateMs = rate;
-      timer.setDelay(rate);
    }
 
 }
