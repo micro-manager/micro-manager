@@ -86,7 +86,7 @@ public class CRISP {
     */
    private static final class Description {
       public static final String TIGER = "ASI CRISP AutoFocus";
-      public static final String MS2000 = "ASI CRISP Autofocus adapter";
+      public static final String MS2000 = "ASI CRISP Autofocus";
    }
 
    /**
@@ -201,7 +201,7 @@ public class CRISP {
                break;
             }
          } else if (deviceLibrary.equals(DeviceLibrary.MS2000)) {
-            if (getDescription(device).equals(Description.MS2000)) {
+            if (getDescription(device).startsWith(Description.MS2000)) {
                deviceType = ControllerType.MS2000;
                deviceName = device;
                found = true;
