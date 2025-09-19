@@ -8,7 +8,6 @@
 package com.asiimaging.devices.crisp;
 
 import com.asiimaging.crisp.panels.StatusPanel;
-
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.SwingWorker;
