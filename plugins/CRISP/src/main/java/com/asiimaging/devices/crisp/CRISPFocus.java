@@ -11,8 +11,6 @@ import com.asiimaging.crisp.plot.FocusData;
 import com.asiimaging.crisp.plot.FocusDataSet;
 import com.asiimaging.devices.zstage.ZStage;
 
-// TODO: consider whether or not to just add "LR F?" to the device adapter ("C Z?" too?)
-
 /**
  * A helper class to generate a focus curve in software using CRISP and ZStage for
  * Tiger controllers.
@@ -28,6 +26,7 @@ public class CRISPFocus {
       final double countsMM = Double.parseDouble(rawCounts[1].split(" ")[0]);
       //System.out.println("countsMM = " + countsMM);
 
+      // TODO: use "Calibration Range" property?
       crisp.sendSerialCommand("LR F?");
       final String[] rawCalRange = crisp.getSerialResponse().split("=");
       final double calRange = Double.parseDouble(rawCalRange[1]);

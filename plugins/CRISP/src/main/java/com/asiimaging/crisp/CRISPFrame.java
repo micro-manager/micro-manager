@@ -104,7 +104,7 @@ public class CRISPFrame extends JFrame {
       spinnerPanel.setAxisLabelText(crisp.getAxisString());
 
       // the timer task updates the status panel
-      timer.createTimerTask(statusPanel);
+      timer.setStatusPanel(statusPanel);
 
       // load settings before the polling check
       // but after we created the timer task we need

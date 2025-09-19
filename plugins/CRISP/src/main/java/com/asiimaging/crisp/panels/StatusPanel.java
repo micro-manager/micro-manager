@@ -10,6 +10,7 @@ package com.asiimaging.crisp.panels;
 import com.asiimaging.devices.crisp.CRISP;
 import com.asiimaging.ui.Panel;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.util.Objects;
 import javax.swing.JLabel;
 import net.miginfocom.swing.MigLayout;
@@ -51,8 +52,7 @@ public class StatusPanel extends Panel {
       lblSumValue = new JLabel("###");
       lblOffsetValue = new JLabel("###");
 
-      // TODO: finish tooltips for agc, sum, and offset
-      //   (tooltips based on firmware version? extra x vs lk t for example)
+      // TODO: tooltips based on firmware version? EXTRA X? vs LK T? for example
 
       // tooltips for labels
       // "Property:" is the associated Micro-Manager property name
@@ -97,12 +97,24 @@ public class StatusPanel extends Panel {
     * after CRISP enters the Log Cal state for several ticks.
     */
    public void update() {
-      setLabelText(lblStateValue, crisp.getState());
-      setLabelText(lblErrorValue, crisp.getDitherError());
-      setLabelText(lblSNRValue, crisp.getSNR());
-      setLabelText(lblAGCValue, crisp.getAGC());
-      setLabelText(lblSumValue, crisp.getSum());
-      setLabelText(lblOffsetValue, crisp.getOffsetString());
+      //final long startTime = System.nanoTime();
+      final String state = crisp.getState();
+      final String error = crisp.getDitherError();
+      final String snr = crisp.getSNR();
+      final String agc = crisp.getAGC();
+      final String sum = crisp.getSum();
+      final String offset = crisp.getOffsetString();
+      //final long endTime = System.nanoTime();
+      //final double durationMs = (endTime - startTime) / 1_000_000.0;
+      //System.out.println("duration: " + durationMs + " ms");
+      EventQueue.invokeLater(() -> {
+         setLabelText(lblStateValue, state);
+         setLabelText(lblErrorValue, error);
+         setLabelText(lblSNRValue, snr);
+         setLabelText(lblAGCValue, agc);
+         setLabelText(lblSumValue, sum);
+         setLabelText(lblOffsetValue, offset);
+      });
    }
 
    /**
@@ -112,11 +124,7 @@ public class StatusPanel extends Panel {
     * @param label The label to update.
     */
    private void setLabelText(final JLabel label, final String text) {
-      if (text.isEmpty()) {
-         label.setText("read error");
-      } else {
-         label.setText(text);
-      }
+      label.setText(text.isEmpty() ? "read error" : text);
    }
 
    /**
