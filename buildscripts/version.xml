@@ -1,38 +1,12 @@
 <project name="mm.version">
-	<target name="set-versionstring" if="mm.build.mode" unless="mm.versionstring">
-		<loadfile property="mm.version.short" srcfile="${mm.basedir}/version.txt">
-			<!-- Make sure we have no trailing newline -->
-			<filterchain><striplinebreaks/></filterchain>
-		</loadfile>
+	<!-- In plain builds (not invoked from the nightly script),
+		mm.versionstring is not expected to be set. In that case, do not set
+		any version. -->
 
-		<tstamp>
-			<format property="DSTAMP" pattern="yyyyMMdd" timezone="GMT-8"/>
-		</tstamp>
+	<target name="set-version" if="mm.versionstring">
+		<property name="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit_${mm.versionstring}"/>
+		<property name="mm.symbols.basename" value="MMDebugSymbols_DoNotDistribute_${mm.architecture.bits}bit_${mm.versionstring}"/>
 
-		<!-- TODO Add SVN revision (use Apache Subversion Ant Library) -->
-
-		<condition property="mm.versionstring" value="${mm.version.short} ${DSTAMP}">
-			<equals arg1="${mm.build.mode}" arg2="nightly" casesensitive="false"/>
-		</condition>
-		<condition property="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit_${mm.version.short}_${DSTAMP}">
-			<equals arg1="${mm.build.mode}" arg2="nightly" casesensitive="false"/>
-		</condition>
-		<condition property="mm.symbols.basename" value="MMDebugSymbols_DoNotDistribute_${mm.architecture.bits}bit_${mm.version.short}_${DSTAMP}">
-			<equals arg1="${mm.build.mode}" arg2="nightly" casesensitive="false"/>
-		</condition>
-
-		<condition property="mm.versionstring" value="${mm.version.short}">
-			<equals arg1="${mm.build.mode}" arg2="release" casesensitive="false"/>
-		</condition>
-		<condition property="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit_${mm.version.short}">
-			<equals arg1="${mm.build.mode}" arg2="release" casesensitive="false"/>
-		</condition>
-		<condition property="mm.symbols.basename" value="MMDebugSymbols_DoNotDistribute_${mm.architecture.bits}bit_${mm.version.short}">
-			<equals arg1="${mm.build.mode}" arg2="nightly" casesensitive="false"/>
-		</condition>
-	</target>
-
-	<target name="set-version" if="mm.versionstring" depends="set-versionstring">
 		<tempfile property="mm.version.java.tmp" suffix=".java"/>
 		<copy tofile="${mm.version.java.tmp}" file="${mm.basedir}/buildscripts/MMVersion.java.in"/>
 		<replace file="${mm.version.java.tmp}"
