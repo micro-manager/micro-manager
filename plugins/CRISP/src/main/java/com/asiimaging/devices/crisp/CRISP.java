@@ -82,14 +82,6 @@ public class CRISP {
    }
 
    /**
-    * Stores the device descriptions for TIGER and MS2000.
-    */
-   private static final class Description {
-      public static final String TIGER = "ASI CRISP AutoFocus";
-      public static final String MS2000 = "ASI CRISP Autofocus";
-   }
-
-   /**
     * Constructs a new CRISP device to be used in a Micro-Manager plugin.
     *
     * @param studio the {@link Studio} instance
@@ -190,18 +182,19 @@ public class CRISP {
     */
    public boolean detectDevice() {
       boolean found = false;
+      final String descriptionPrefix = "ASI CRISP";
       final StrVector devices = core.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
       for (final String device : devices) {
          final String deviceLibrary = getDeviceLibrary(device);
          if (deviceLibrary.equals(DeviceLibrary.TIGER)) {
-            if (getDescription(device).startsWith(Description.TIGER)) {
+            if (getDescription(device).startsWith(descriptionPrefix)) {
                deviceType = ControllerType.TIGER;
                deviceName = device;
                found = true;
                break;
             }
          } else if (deviceLibrary.equals(DeviceLibrary.MS2000)) {
-            if (getDescription(device).startsWith(Description.MS2000)) {
+            if (getDescription(device).startsWith(descriptionPrefix)) {
                deviceType = ControllerType.MS2000;
                deviceName = device;
                found = true;
