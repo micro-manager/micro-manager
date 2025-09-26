@@ -1835,37 +1835,34 @@ public:
       this->AddAllowedValue(MM::g_Keyword_Transpose_MirrorY, "1");
    }
 
-   
-   virtual int CalculatePositionSteps(long& xSteps, long& ySteps, double x, double y)
+   // This converts an absolute position (x_um, y_um), under the current
+   // adapter origin and x/y mirroring, to an absolute step position. Do not
+   // use for relative offsets.
+   void ConvertPositionUmToSteps(double x_um, double y_um, long& xSteps, long& ySteps)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
 
       if (mirrorX)
-         xSteps = originXSteps_ - nint (x / this->GetStepSizeXUm());
+         xSteps = originXSteps_ - nint (x_um / this->GetStepSizeXUm());
       else
-         xSteps = originXSteps_ + nint (x / this->GetStepSizeXUm());
+         xSteps = originXSteps_ + nint (x_um / this->GetStepSizeXUm());
       if (mirrorY)
-         ySteps = originYSteps_ - nint (y / this->GetStepSizeYUm());
+         ySteps = originYSteps_ - nint (y_um / this->GetStepSizeYUm());
       else
-         ySteps = originYSteps_ + nint (y / this->GetStepSizeYUm());
-
-      return DEVICE_OK;     
+         ySteps = originYSteps_ + nint (y_um / this->GetStepSizeYUm());
    }
-
 
    virtual int SetPositionUm(double x, double y)
    {
-      double xPos = x;
-      double yPos = y;
-      long xSteps = 0;
-      long ySteps = 0;
+      const double xPos = x;
+      const double yPos = y;
+      long xSteps{};
+      long ySteps{};
 
-      int ret = CalculatePositionSteps(xSteps, ySteps, x, y);
-      if (ret != DEVICE_OK)
-         return ret;
-      
-      ret = this->SetPositionSteps(xSteps, ySteps);
+      ConvertPositionUmToSteps(xPos, yPos, xSteps, ySteps);
+
+      int ret = this->SetPositionSteps(xSteps, ySteps);
       if (ret == DEVICE_OK) {
          xPos_ = xPos;
          yPos_ = yPos;
