@@ -42,6 +42,7 @@
 #include <iomanip>
 #include <map>
 #include <sstream>
+#include <utility>
 
 // common error messages
 const char* const g_Msg_ERR = "Unknown error in the device";
@@ -1838,11 +1839,12 @@ public:
    // This converts an absolute position (x_um, y_um), under the current
    // adapter origin and x/y mirroring, to an absolute step position. Do not
    // use for relative offsets.
-   void ConvertPositionUmToSteps(double x_um, double y_um, long& xSteps, long& ySteps)
+   std::pair<long, long> ConvertPositionUmToSteps(double x_um, double y_um)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
 
+      long xSteps{}, ySteps{};
       if (mirrorX)
          xSteps = originXSteps_ - nint (x_um / this->GetStepSizeXUm());
       else
@@ -1851,16 +1853,19 @@ public:
          ySteps = originYSteps_ - nint (y_um / this->GetStepSizeYUm());
       else
          ySteps = originYSteps_ + nint (y_um / this->GetStepSizeYUm());
+
+      return {xSteps, ySteps};
    }
 
    // This converts an absolute position (xSteps, ySteps), under the current
    // adapter origin and x/y mirroring, to an absolute um position. Do not use
    // for relative offsets.
-   void ConvertPositionStepsToUm(long xSteps, long ySteps, double& x_um, double& y_um)
+   std::pair<double, double> ConvertPositionStepsToUm(long xSteps, long ySteps)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
 
+      double x_um{}, y_um{};
       if (mirrorX)
          x_um = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
       else
@@ -1870,21 +1875,20 @@ public:
          y_um = (originYSteps_ - ySteps) * this->GetStepSizeYUm();
       else
          y_um = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
+
+      return {x_um, y_um};
    }
 
-   virtual int SetPositionUm(double x, double y)
+   virtual int SetPositionUm(double x_um, double y_um)
    {
-      const double xPos = x;
-      const double yPos = y;
-      long xSteps{};
-      long ySteps{};
-
-      ConvertPositionUmToSteps(xPos, yPos, xSteps, ySteps);
+      auto posSteps = ConvertPositionUmToSteps(x_um, y_um);
+      long xSteps = posSteps.first;
+      long ySteps = posSteps.second;
 
       int ret = this->SetPositionSteps(xSteps, ySteps);
       if (ret == DEVICE_OK) {
-         xPos_ = xPos;
-         yPos_ = yPos;
+         xPos_ = x_um;
+         yPos_ = y_um;
          this->OnXYStagePositionChanged(xPos_, yPos_);
       }
       return ret;
@@ -1950,7 +1954,9 @@ public:
       if (ret != DEVICE_OK)
          return ret;
 
-      ConvertPositionStepsToUm(xSteps, ySteps, x_um, y_um);
+      auto pos_um = ConvertPositionStepsToUm(xSteps, ySteps);
+      x_um = pos_um.first;
+      y_um = pos_um.second;
 
       xPos_ = x_um;
       yPos_ = y_um;

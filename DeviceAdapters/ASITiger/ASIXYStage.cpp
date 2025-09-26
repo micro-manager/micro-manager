@@ -746,14 +746,14 @@ int CXYStage::ClearXYStageSequence()
 
 int CXYStage::AddToXYStageSequence(double positionX, double positionY)
 {
-   long positionXSteps = 0;
-   long positionYSteps = 0;
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
    
-   ConvertPositionUmToSteps(positionX, positionY, positionXSteps, positionYSteps);
+   auto positionSteps = ConvertPositionUmToSteps(positionX, positionY);
+   long positionXSteps = positionSteps.first;
+   long positionYSteps = positionSteps.second;
    sequenceX_.push_back(positionXSteps*unitMultX_*stepSizeXUm_);
    sequenceY_.push_back(positionYSteps*unitMultY_*stepSizeYUm_);
    return DEVICE_OK;
@@ -1980,8 +1980,6 @@ int CXYStage::OnScanFastStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
 {
    ostringstream command; command.str("");
    double tmp = 0;
-   long xSteps = 0;
-   long ySteps = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
@@ -1996,7 +1994,9 @@ int CXYStage::OnScanFastStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
       pProp->Get(tmp);
       // get in terms of MM's coordinate system and then convert to millimeters
       // calculate for both X and Y and then decide which to use
-      ConvertPositionUmToSteps(tmp*1000, tmp*1000, xSteps, ySteps);
+      auto steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      long xSteps = steps.first;
+      long ySteps = steps.second;
       char axisForScan[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_ScanFastAxisPropertyName, axisForScan) );
       if (strcmp(axisForScan, g_ScanAxisY) == 0)
@@ -2013,8 +2013,6 @@ int CXYStage::OnScanFastStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
 {
    ostringstream command; command.str("");
    double tmp = 0;
-   long xSteps = 0;
-   long ySteps = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
@@ -2029,7 +2027,9 @@ int CXYStage::OnScanFastStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
       pProp->Get(tmp);
       // get in terms of MM's coordinate system and then convert to millimeters
       // calculate for both X and Y and then decide which to use
-      ConvertPositionUmToSteps(tmp*1000, tmp*1000, xSteps, ySteps);
+      auto steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      long xSteps = steps.first;
+      long ySteps = steps.second;
       char axisForScan[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_ScanFastAxisPropertyName, axisForScan) );
       if (strcmp(axisForScan, g_ScanAxisY) == 0)
@@ -2046,8 +2046,6 @@ int CXYStage::OnScanSlowStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
 {
    ostringstream command; command.str("");
    double tmp = 0;
-   long xSteps = 0;
-   long ySteps = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
@@ -2062,7 +2060,9 @@ int CXYStage::OnScanSlowStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
       pProp->Get(tmp);
       // get in terms of MM's coordinate system and then convert to millimeters
       // calculate for both X and Y and then decide which to use
-      ConvertPositionUmToSteps(tmp*1000, tmp*1000, xSteps, ySteps);
+      auto steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      long xSteps = steps.first;
+      long ySteps = steps.second;
       char axisForScan[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_ScanSlowAxisPropertyName, axisForScan) );
       if (strcmp(axisForScan, g_ScanAxisY) == 0)
@@ -2079,8 +2079,6 @@ int CXYStage::OnScanSlowStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
 {
    ostringstream command; command.str("");
    double tmp = 0;
-   long xSteps = 0;
-   long ySteps = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
@@ -2095,7 +2093,9 @@ int CXYStage::OnScanSlowStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
       pProp->Get(tmp);
       // get in terms of MM's coordinate system and then convert to millimeters
       // calculate for both X and Y and then decide which to use
-      ConvertPositionUmToSteps(tmp*1000, tmp*1000, xSteps, ySteps);
+      auto steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      long xSteps = steps.first;
+      long ySteps = steps.second;
       char axisForScan[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_ScanSlowAxisPropertyName, axisForScan) );
       if (strcmp(axisForScan, g_ScanAxisY) == 0)
