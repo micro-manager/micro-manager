@@ -1853,6 +1853,25 @@ public:
          ySteps = originYSteps_ + nint (y_um / this->GetStepSizeYUm());
    }
 
+   // This converts an absolute position (xSteps, ySteps), under the current
+   // adapter origin and x/y mirroring, to an absolute um position. Do not use
+   // for relative offsets.
+   void ConvertPositionStepsToUm(long xSteps, long ySteps, double& x_um, double& y_um)
+   {
+      bool mirrorX, mirrorY;
+      GetOrientation(mirrorX, mirrorY);
+
+      if (mirrorX)
+         x_um = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
+      else
+         x_um =  - ((originXSteps_ - xSteps) * this->GetStepSizeXUm());
+
+      if (mirrorY)
+         y_um = (originYSteps_ - ySteps) * this->GetStepSizeYUm();
+      else
+         y_um = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
+   }
+
    virtual int SetPositionUm(double x, double y)
    {
       const double xPos = x;
@@ -1924,28 +1943,17 @@ public:
       return DEVICE_OK;
    }
 
-   virtual int GetPositionUm(double& x, double& y)
+   virtual int GetPositionUm(double& x_um, double& y_um)
    {
-      bool mirrorX, mirrorY;
-      GetOrientation(mirrorX, mirrorY);
-
       long xSteps, ySteps;
       int ret = this->GetPositionSteps(xSteps, ySteps);
       if (ret != DEVICE_OK)
          return ret;
 
-      if (mirrorX)
-         x = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
-      else
-         x =  - ((originXSteps_ - xSteps) * this->GetStepSizeXUm());
+      ConvertPositionStepsToUm(xSteps, ySteps, x_um, y_um);
 
-      if (mirrorY)
-         y = (originYSteps_ - ySteps) * this->GetStepSizeYUm();
-      else
-         y = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
-
-      xPos_ = x;
-      yPos_ = y;
+      xPos_ = x_um;
+      yPos_ = y_um;
 
       return DEVICE_OK;
    }
