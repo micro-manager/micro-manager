@@ -1844,7 +1844,7 @@ public:
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
 
-      long xSteps{}, ySteps{};
+      long xSteps, ySteps;
       if (mirrorX)
          xSteps = originXSteps_ - nint (x_um / this->GetStepSizeXUm());
       else
@@ -1854,7 +1854,7 @@ public:
       else
          ySteps = originYSteps_ + nint (y_um / this->GetStepSizeYUm());
 
-      return {xSteps, ySteps};
+      return std::make_pair(xSteps, ySteps);
    }
 
    // This converts an absolute position (xSteps, ySteps), under the current
@@ -1865,7 +1865,7 @@ public:
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
 
-      double x_um{}, y_um{};
+      double x_um, y_um;
       if (mirrorX)
          x_um = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
       else
@@ -1876,7 +1876,7 @@ public:
       else
          y_um = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
 
-      return {x_um, y_um};
+      return std::make_pair(x_um, y_um);
    }
 
    virtual int SetPositionUm(double x_um, double y_um)

@@ -751,7 +751,7 @@ int CXYStage::AddToXYStageSequence(double positionX, double positionY)
       return DEVICE_UNSUPPORTED_COMMAND;
    }
    
-   auto positionSteps = ConvertPositionUmToSteps(positionX, positionY);
+   std::pair<long, long> positionSteps = ConvertPositionUmToSteps(positionX, positionY);
    long positionXSteps = positionSteps.first;
    long positionYSteps = positionSteps.second;
    sequenceX_.push_back(positionXSteps*unitMultX_*stepSizeXUm_);
@@ -1994,7 +1994,7 @@ int CXYStage::OnScanFastStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
       pProp->Get(tmp);
       // get in terms of MM's coordinate system and then convert to millimeters
       // calculate for both X and Y and then decide which to use
-      auto steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      std::pair<long, long> steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
       long xSteps = steps.first;
       long ySteps = steps.second;
       char axisForScan[MM::MaxStrLength];
@@ -2027,7 +2027,7 @@ int CXYStage::OnScanFastStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
       pProp->Get(tmp);
       // get in terms of MM's coordinate system and then convert to millimeters
       // calculate for both X and Y and then decide which to use
-      auto steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      std::pair<long, long> steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
       long xSteps = steps.first;
       long ySteps = steps.second;
       char axisForScan[MM::MaxStrLength];
@@ -2060,7 +2060,7 @@ int CXYStage::OnScanSlowStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
       pProp->Get(tmp);
       // get in terms of MM's coordinate system and then convert to millimeters
       // calculate for both X and Y and then decide which to use
-      auto steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      std::pair<long, long> steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
       long xSteps = steps.first;
       long ySteps = steps.second;
       char axisForScan[MM::MaxStrLength];
@@ -2093,7 +2093,7 @@ int CXYStage::OnScanSlowStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
       pProp->Get(tmp);
       // get in terms of MM's coordinate system and then convert to millimeters
       // calculate for both X and Y and then decide which to use
-      auto steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      std::pair<long, long> steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
       long xSteps = steps.first;
       long ySteps = steps.second;
       char axisForScan[MM::MaxStrLength];
