@@ -168,6 +168,11 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       for (String device : openCLDevices()) {
          gpuComboBox.addItem(device);
       }
+      String selectedGPU = "";
+      if (gpuComboBox.getItemCount() > 0) {
+         selectedGPU = (String) gpuComboBox.getSelectedItem();
+      }
+      gpuComboBox.setSelectedItem(settings_.getString(GPU, selectedGPU));
       gpuComboBox.addActionListener(e -> {
          settings_.putString(GPU, (String) gpuComboBox.getSelectedItem());
       });
