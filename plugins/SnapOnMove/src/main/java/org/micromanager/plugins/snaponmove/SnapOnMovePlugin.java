@@ -50,7 +50,7 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class SnapOnMovePlugin implements SciJavaPlugin, MenuPlugin {
    private Studio studio_;
-   // these need to be static since MM loads this plugin twice....
+   // these need to be static since MM loads this plugin twice ....
    private static MainController controller_;
    private static ConfigFrame frame_;
 
