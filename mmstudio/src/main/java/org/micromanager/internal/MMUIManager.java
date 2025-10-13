@@ -31,6 +31,7 @@ import org.micromanager.PositionList;
 import org.micromanager.events.internal.DefaultGUIRefreshEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
+import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.positionlist.MMPositionListDlg;
@@ -112,6 +113,10 @@ public class MMUIManager {
 
    public void createScriptPanel() {
       scriptPanel_ = new ScriptPanel(studio_);
+   }
+
+   public void createStageControlFrame()  {
+      StageControlFrame.createStageControl(studio_);
    }
 
    public ScriptPanel getScriptPanel() {
@@ -346,7 +351,7 @@ public class MMUIManager {
             }
          }
 
-         // Rebuild stage list in XY PositinList
+         // Rebuild stage list in XY PositionList
          if (posListDlg_ != null) {
             posListDlg_.rebuildAxisList();
          }
