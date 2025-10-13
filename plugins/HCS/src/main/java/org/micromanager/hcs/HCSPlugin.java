@@ -30,6 +30,7 @@ import com.google.common.eventbus.Subscribe;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.events.StartupCompleteEvent;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -44,9 +45,10 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    private static final String DESCRIPTION =
          "Generate imaging site positions for micro-well plates and slides";
    private static final String NAME = "HCS Site Generator";
+   private static final String HCS_FRAME_OPEN = "HCSFrameOpen";
 
    private Studio studio_;
-   private SiteGenerator frame_;
+   private static SiteGenerator frame_;
 
    @Override
    public void setContext(Studio studio) {
@@ -90,7 +92,25 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    @Subscribe
    public void closeRequested(ShutdownCommencingEvent sce) {
       if (!sce.isCanceled() && frame_ != null) {
+         studio_.profile().getSettings(this.getClass()).putBoolean(
+                  HCS_FRAME_OPEN, frame_.isVisible());
          frame_.dispose();
+      }
+   }
+
+   /**
+    * User has logged in and startup is complete; restore our visibility.
+    *
+    * @param event signals that MM startup is complete.
+    */
+   @Subscribe
+   public void onStartupComplete(StartupCompleteEvent event) {
+      if (studio_.profile().getSettings(this.getClass()).getBoolean(HCS_FRAME_OPEN, false)) {
+         // if the dialog was open when MM was shut down, restore it now.
+         if (frame_ == null) {
+            frame_ = new SiteGenerator(studio_);
+         }
+         frame_.setVisible(true);
       }
    }
 }
