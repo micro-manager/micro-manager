@@ -43,7 +43,7 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String VERSION_INFO = "1.5.0";
    private static final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
    private static final String DESCRIPTION =
-         "Generate imaging site positions for micro-well plates and slides";
+            "Generate imaging site positions for micro-well plates and slides";
    private static final String NAME = "HCS Site Generator";
    private static final String HCS_FRAME_OPEN = "HCSFrameOpen";
 
@@ -107,10 +107,13 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    public void onStartupComplete(StartupCompleteEvent event) {
       if (studio_.profile().getSettings(this.getClass()).getBoolean(HCS_FRAME_OPEN, false)) {
          // if the dialog was open when MM was shut down, restore it now.
-         if (frame_ == null) {
-            frame_ = new SiteGenerator(studio_);
+         if (!studio_.core().getXYStageDevice().isEmpty() && !studio_.core().getFocusDevice().isEmpty()) {
+            if (frame_ == null) {
+               frame_ = new SiteGenerator(studio_);
+            }
+            frame_.setVisible(true);
          }
-         frame_.setVisible(true);
       }
    }
+
 }
