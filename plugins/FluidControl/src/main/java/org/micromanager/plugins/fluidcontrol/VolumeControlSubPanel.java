@@ -38,6 +38,8 @@ public class VolumeControlSubPanel extends JPanel {
    public boolean isPumping = false;
    public double flowRate = 0;
 
+   private String propName = "Flowrate_uL_per_sec";
+
    VolumeControlSubPanel(Studio studio, String device) {
       this.studio_ = studio;
       this.device_ = device;
@@ -50,7 +52,6 @@ public class VolumeControlSubPanel extends JPanel {
 
    private void initialize() {
       // Initialize the slider
-      String propName = "Flow rate uL/sec";
       int minValue = 0;
       int maxValue = 0;
       try {
@@ -74,7 +75,7 @@ public class VolumeControlSubPanel extends JPanel {
             imposedTextField.setValue(controlSlider.getScaledValue());
             try {
                studio_.core()
-                     .setProperty(device_, "Flow rate uL/sec", controlSlider.getScaledValue());
+                     .setProperty(device_, propName, controlSlider.getScaledValue());
             } catch (Exception ignored) {
                studio_.logs().logDebugMessage("Failed to set Flowrate in VolumeControlSubPanel.");
             }
