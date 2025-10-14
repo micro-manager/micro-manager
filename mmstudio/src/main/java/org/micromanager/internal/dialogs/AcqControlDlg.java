@@ -105,7 +105,9 @@ import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
+import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.MMStudio;
@@ -145,6 +147,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          "whether to prompt the user if their exposure times seem excessively long";
    private static final String BUTTON_SIZE = "width 80!, height 22!";
    private static final String PANEL_CONSTRAINT = "fillx, gap 2, insets 2";
+   private static final String MDA_DLG_OPEN = "MDA_DLG_OPEN";
 
    private JSpinner afSkipInterval_;
    private JComboBox<AcqOrderMode> acqOrderBox_;
@@ -2082,6 +2085,30 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       channelTable_.editCellAt(editingRow, editingColumn, null);
    }
 
+
+   /**
+    * User has logged in and startup is complete; restore their pipeline.
+    *
+    * @param event signals that MM has completed its startup.
+    */
+   @Subscribe
+   public void onStartupComplete(StartupCompleteEvent event) {
+      if (settings_.getBoolean(MDA_DLG_OPEN, false)) {
+         // if the dialog was open when MM was shut down, restore it now.
+         this.setVisible(true);
+      }
+   }
+
+   /**
+    * When shutdown starts, we record the current processing pipeline, so it
+    * can be restored later.
+    *
+    * @param event signals that MM is commencing shutdown.
+    */
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      settings_.putBoolean(MDA_DLG_OPEN, this.isVisible());
+   }
 
    private double convertTimeToMs(double interval, int units) {
       switch (units) {

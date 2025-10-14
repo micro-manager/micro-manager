@@ -38,6 +38,7 @@ import java.awt.event.WindowEvent;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.events.StartupCompleteEvent;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -49,20 +50,23 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class SnapOnMovePlugin implements SciJavaPlugin, MenuPlugin {
    private Studio studio_;
-   private MainController controller_;
-   private ConfigFrame frame_;
+   // these need to be static since MM loads this plugin twice ....
+   private static MainController controller_;
+   private static ConfigFrame frame_;
+
+   private static final String FRAME_VISIBLE = "frameVisible";
 
 
    @Override
    public void setContext(Studio studio) {
       studio_ = studio;
+      studio_.events().registerForEvents(this);
    }
 
    @Override
    public void onPluginSelected() {
       if (controller_ == null) {
          controller_ = new MainController(studio_);
-         studio_.events().registerForEvents(this);
       }
 
       if (frame_ == null) {
@@ -84,14 +88,26 @@ public class SnapOnMovePlugin implements SciJavaPlugin, MenuPlugin {
          return;
       }
 
-      frame_.dispose();
-      frame_ = null;
+      if (frame_ != null) {
+         studio_.profile().getSettings(this.getClass()).putBoolean(
+                  FRAME_VISIBLE, frame_.isVisible());
+         frame_.dispose();
+         frame_ = null;
+      }
 
       if (controller_ != null) {
          controller_.setEnabled(false);
          controller_ = null;
       }
       studio_.events().unregisterForEvents(this);
+   }
+
+   @Subscribe
+   public void onStartupComplete(StartupCompleteEvent e) {
+      if (studio_.profile().getSettings(this.getClass()).getBoolean(
+               FRAME_VISIBLE, false)) {
+         onPluginSelected();
+      }
    }
 
    @Override

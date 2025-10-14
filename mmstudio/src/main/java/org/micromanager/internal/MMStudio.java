@@ -430,6 +430,7 @@ public final class MMStudio implements Studio {
       }
 
       ui_.createScriptPanel();  // Load (but do no show) the scriptPanel
+      ui_.createStageControlFrame(); // Load (but do not show) the Stage Control Frame
       ui_.createMainWindow(); // Now create and show the main window
 
       cache_ = new MMCache(this, ui_.frame());
