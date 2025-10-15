@@ -23,6 +23,8 @@ public class AboutFrame extends JFrame {
       this.add(new JLabel(
             "are shown by (un)checking the corresponding controllers in the"
                   + "'Menu->Configure' menu"));
+      this.add(new JLabel(
+            "For more information check https://micro-manager.org/FluidControl"));
       this.pack();
    }
 }

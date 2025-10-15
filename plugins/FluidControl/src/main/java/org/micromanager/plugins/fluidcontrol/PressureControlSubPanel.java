@@ -43,6 +43,9 @@ public class PressureControlSubPanel extends JPanel {
    public boolean isPumping = false;
    public double pressure = 0;
 
+   // This is a MMCore keyword, please don't change.
+   private String propName = "Pressure Imposed";
+
    PressureControlSubPanel(Studio studio, String device) {
       this.studio_ = studio;
       this.device_ = device;
@@ -56,7 +59,6 @@ public class PressureControlSubPanel extends JPanel {
 
    private void initialize() {
       // Initialize the slider
-      String propName = "Imposed Pressure";
       int minValue = 0;
       int maxValue = 0;
       try {
@@ -72,109 +74,23 @@ public class PressureControlSubPanel extends JPanel {
       Border outline = BorderFactory.createTitledBorder(device_);
       this.setBorder(outline);
 
-      controlSlider = new DoubleJSlider(minValue, maxValue, 0, N_STEPS);
-      controlSlider.addChangeListener(e -> {
-         imposedTextField.setValue(controlSlider.getScaledValue());
-         setPressure(controlSlider.getScaledValue());
-      });
-      controlSlider.setFocusable(false);
-      controlSlider.setOrientation(SwingConstants.VERTICAL);
-      controlSlider.setPreferredSize(new Dimension(PANEL_WIDTH - 10, 300));
-      controlSlider.setMajorTickSpacing(10);
-      controlSlider.setPaintLabels(true);
-      controlSlider.setPaintTicks(true);
-
-      // Initialize imposedLabel
-      final JLabel imposedLabel = new JLabel("Imposed");
-
-      // Initialize the imposed pressure TextField
-      NumberFormat numberFormat = NumberFormat.getNumberInstance();
-      numberFormat.setMaximumFractionDigits(2);
-      numberFormat.setMinimumFractionDigits(0);
-      NumberFormatter formatter = new NumberFormatter(numberFormat);
-      formatter.setValueClass(Float.class);
-      formatter.setMinimum(0);
-      formatter.setMaximum(100);
-      imposedTextField = new JFormattedTextField(formatter);
-      imposedTextField.setBackground(new Color(240, 240, 240));
-      imposedTextField.setForeground(new Color(60, 60, 60));
-      imposedTextField.setValue(0.0);
-      imposedTextField.setColumns(7);
-      imposedTextField.addKeyListener(new KeyAdapter() {
-         public void keyPressed(KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-               try {
-                  double value = Double.parseDouble(imposedTextField.getText());
-                  imposedTextField.setValue(value);
-               } catch (Exception ignored) {
-                  studio_.logs().logDebugMessage(
-                        "Exception parsing imposedTExtField in PressureControlSubPanel");
-               }
-               double value = Double.parseDouble(imposedTextField.getValue().toString());
-               controlSlider.setScaledValue(value);
-               setPressure(value);
-            }
-         }
-      });
-
-      // Initialize measureLabel
-      final JLabel measuredLabel = new JLabel("Measured");
-
-      // Initialize measured pressure TextField
-      measuredTextField = new JTextField();
-      measuredTextField.setColumns(7);
-      measuredTextField.setEditable(false);
-      measuredTextField.setForeground(new Color(140, 140, 140));
-
-      // Some panels
-      final int col = 65;
-      JPanel imposedPanel = new JPanel();
-      imposedPanel.setLayout(null);
-      imposedPanel.add(imposedLabel);
-      imposedPanel.add(imposedTextField);
-      final Dimension imposedLabelPreferredSize = imposedLabel.getPreferredSize();
-      final Insets imposedPanelInsets = imposedPanel.getInsets();
-      imposedLabel.setBounds(imposedPanelInsets.left + col - imposedLabelPreferredSize.width - 5,
-            imposedPanelInsets.top + 10,
-            imposedLabelPreferredSize.width,
-            imposedLabelPreferredSize.height);
-      final Dimension imposedTextFieldPreferredSize = imposedTextField.getPreferredSize();
-      imposedTextField.setBounds(imposedPanelInsets.left + col,
-            imposedPanelInsets.top + 10,
-            imposedTextFieldPreferredSize.width,
-            imposedTextFieldPreferredSize.height);
-
-      JPanel measuredPanel = new JPanel();
-      measuredPanel.setLayout(null);
-      measuredPanel.add(measuredLabel);
-      measuredPanel.add(measuredTextField);
-      final Insets measuredPanelInsets = measuredPanel.getInsets();
-      final Dimension measuredLabelPreferredSize = measuredLabel.getPreferredSize();
-      measuredLabel.setBounds(measuredPanelInsets.left + col
-                  - measuredLabelPreferredSize.width - 5,
-            measuredPanelInsets.top + 10,
-            measuredLabelPreferredSize.width,
-            measuredLabelPreferredSize.height);
-      final Dimension measuredTextFieldPreferredSize = measuredTextField.getPreferredSize();
-      measuredTextField.setBounds(imposedPanelInsets.left + col,
-            imposedPanelInsets.top + 10,
-            measuredTextFieldPreferredSize.width,
-            measuredTextFieldPreferredSize.height);
-
-      // Start button
-      startButton = new JButton("Start");
-      initializeStartButton();
-
-      // Add components in the right order
+      NumberFormatter formatter = initializeNumberFormatter(minValue, maxValue);
+      initializeSlider(minValue, maxValue);
       this.add(controlSlider, "align center, wrap");
+
+      JPanel imposedPanel = initializeImposedPressure(formatter);
       this.add(imposedPanel, "align center, wrap");
+
+      JPanel measuredPanel = initializeMeasuredPanel();
       this.add(measuredPanel, "align center, wrap");
+
+      startButton = initializeStartButton();
       this.add(startButton, "align center");
    }
 
    @Subscribe
    public void onImposedPressureChanged(PropertyChangedEvent pce) {
-      if (pce.getDevice().equals(device_) && pce.getProperty().equals("Imposed Pressure")) {
+      if (pce.getDevice().equals(device_) && pce.getProperty().equals(propName)) {
          ChangeListener[] cls = controlSlider.getChangeListeners();
          for (ChangeListener cl : cls) {
             controlSlider.removeChangeListener(cl);
@@ -209,7 +125,76 @@ public class PressureControlSubPanel extends JPanel {
       }
    }
 
-   private void initializeStartButton() {
+   private NumberFormatter initializeNumberFormatter(double minValue, double maxValue) {
+      NumberFormat numberFormat = NumberFormat.getNumberInstance();
+      numberFormat.setMaximumFractionDigits(2);
+      numberFormat.setMinimumFractionDigits(0);
+      NumberFormatter formatter = new NumberFormatter(numberFormat);
+      formatter.setValueClass(Float.class);
+      formatter.setMinimum(minValue);
+      formatter.setMaximum(maxValue);
+      return formatter;
+   }
+
+   private JPanel initializeImposedPressure(NumberFormatter formatter) {
+      final JLabel imposedLabel = new JLabel("Imposed");
+      imposedTextField = new JFormattedTextField(formatter);
+      imposedTextField.setBackground(new Color(240, 240, 240));
+      imposedTextField.setForeground(new Color(60, 60, 60));
+      imposedTextField.setValue(0.0);
+      imposedTextField.setColumns(5);
+      imposedTextField.addKeyListener(new KeyAdapter() {
+         public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+               try {
+                  double value = Double.parseDouble(imposedTextField.getText());
+                  imposedTextField.setValue(value);
+                  controlSlider.setScaledValue(value);
+               } catch (Exception ignored) {
+                  studio_.logs().logDebugMessage(
+                        "Exception parsing imposedTExtField in PressureControlSubPanel");
+               }
+            }
+         }
+      });
+
+      JPanel imposedPanel = new JPanel();
+      imposedPanel.setLayout(new MigLayout("insets 2"));
+      imposedPanel.add(imposedLabel);
+      imposedPanel.add(imposedTextField);
+      return imposedPanel;
+   }
+
+   private JPanel initializeMeasuredPanel() {
+      final JLabel measuredLabel = new JLabel("Measured");
+      measuredTextField = new JTextField();
+      measuredTextField.setColumns(5);
+      measuredTextField.setEditable(false);
+      measuredTextField.setForeground(new Color(140, 140, 140));
+
+      JPanel measuredPanel = new JPanel();
+      measuredPanel.setLayout(new MigLayout("insets 2"));
+      measuredPanel.add(measuredLabel);
+      measuredPanel.add(measuredTextField);
+      return measuredPanel;
+   }
+
+   private void initializeSlider(double minValue, double maxValue) {
+      controlSlider = new DoubleJSlider(minValue, maxValue, 0, N_STEPS);
+      controlSlider.addChangeListener(e -> {
+         imposedTextField.setValue(controlSlider.getScaledValue());
+         setPressure(controlSlider.getScaledValue());
+      });
+      controlSlider.setFocusable(false);
+      controlSlider.setOrientation(SwingConstants.VERTICAL);
+      controlSlider.setPreferredSize(new Dimension(PANEL_WIDTH - 10, 300));
+      controlSlider.setMajorTickSpacing(10);
+      controlSlider.setPaintLabels(true);
+      controlSlider.setPaintTicks(true);
+   }
+
+   private JButton initializeStartButton() {
+      JButton startButton = new JButton("Start");
       ActionListener startAction = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -233,5 +218,6 @@ public class PressureControlSubPanel extends JPanel {
          }
       };
       startButton.addActionListener(startAction);
+      return startButton;
    }
 }

@@ -38,6 +38,7 @@ public class VolumeControlSubPanel extends JPanel {
    public boolean isPumping = false;
    public double flowRate = 0;
 
+   // This is a keyword in the cpp layer
    private String propName = "Flowrate_uL_per_sec";
 
    VolumeControlSubPanel(Studio studio, String device) {
@@ -73,12 +74,7 @@ public class VolumeControlSubPanel extends JPanel {
          @Override
          public void stateChanged(ChangeEvent e) {
             imposedTextField.setValue(controlSlider.getScaledValue());
-            try {
-               studio_.core()
-                     .setProperty(device_, propName, controlSlider.getScaledValue());
-            } catch (Exception ignored) {
-               studio_.logs().logDebugMessage("Failed to set Flowrate in VolumeControlSubPanel.");
-            }
+            setFlowRate(controlSlider.getScaledValue());
          }
       });
       controlSlider.setFocusable(false);
@@ -107,13 +103,11 @@ public class VolumeControlSubPanel extends JPanel {
                try {
                   double value = Double.parseDouble(imposedTextField.getText());
                   imposedTextField.setValue(value);
+                  controlSlider.setScaledValue(value);
                } catch (Exception ignored) {
                   studio_.logs().logDebugMessage(
                         "Exception parsing imposedTextField in VolumeControlSubPanel.");
                }
-               double value = Double.parseDouble(imposedTextField.getValue().toString());
-               controlSlider.setScaledValue(value);
-               setFlowRate(value);
             }
          }
       });
@@ -149,13 +143,17 @@ public class VolumeControlSubPanel extends JPanel {
    }
 
    public void setFlowRate(double value) {
-      flowRate = value;
+      if (flowRate == value) {
+         return;
+      }
+
       try {
          studio_.core().setPumpFlowrate(device_, value);
       } catch (Exception ignored) {
          studio_.logs().logDebugMessage(
                "Exception while setting PumpFlowRate in VolumeControlSubPanel.");
       }
+      flowRate = value;
    }
 
    private void initializeStartButton() {
@@ -169,7 +167,6 @@ public class VolumeControlSubPanel extends JPanel {
                   startButton.setText("Start");
                   isPumping = false;
                } else {
-                  setFlowRate(flowRate); // Set flowrate again, just in case
                   studio_.core().pumpStart(device_);
                   startButton.setText("Stop");
                   isPumping = true;
