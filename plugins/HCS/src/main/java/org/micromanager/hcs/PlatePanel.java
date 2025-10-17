@@ -812,7 +812,9 @@ public class PlatePanel extends JPanel {
       if (studio_ != null) {
          try {
             xyStagePos_ = studio_.getCMMCore().getXYStagePosition();
-            zStagePos_ = studio_.getCMMCore().getPosition(plateGui_.getZStageName());
+            if (!plateGui_.getZStageName().isEmpty()) {
+               zStagePos_ = studio_.getCMMCore().getPosition(plateGui_.getZStageName());
+            }
          } catch (Exception e) {
             throw new HCSException(e);
          }
@@ -862,6 +864,13 @@ public class PlatePanel extends JPanel {
    public void systemConfigurationLoaded(
            SystemConfigurationLoadedEvent systemConfigurationLoadedEvent) {
       // assume that pixel size changed too
+      if (studio_.core().getCameraDevice().isEmpty()
+               || studio_.core().getXYStageDevice().isEmpty()
+               || studio_.core().getFocusDevice().isEmpty()) {
+         studio_.logs().logMessage(
+                  "HCS Plugin: No camera or XY stage or Z stage defined in the config");
+         return;
+      }
       updateCameraFieldOfView();
       SwingUtilities.invokeLater(() -> {
          rescale();

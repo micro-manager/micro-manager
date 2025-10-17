@@ -1546,12 +1546,14 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          }
          zDriveCombo_.setSelectedItem(mmStudio_.core().getFocusDevice());
          try {
-            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
-                     mmStudio_.core().getPosition()));
             zDriveCombo_.setVisible(true);
             double pixelSize = mmStudio_.core().getPixelSizeUm();
             if (pixelSize != 0.0) {
                proposedZStepLabel_.setText(getOptimalZStep(true));
+            }
+            if (!mmStudio_.core().getFocusDevice().isEmpty()) {
+               zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
+                        mmStudio_.core().getPosition()));
             }
          } catch (Exception ex) {
             mmStudio_.logs().logError(ex, "Failed to get position from core");
