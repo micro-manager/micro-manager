@@ -866,7 +866,7 @@ public class PlatePanel extends JPanel {
       // assume that pixel size changed too
       if (studio_.core().getCameraDevice().isEmpty()
                || studio_.core().getXYStageDevice().isEmpty()
-               || studio_.core().getXYStageDevice().isEmpty()) {
+               || studio_.core().getFocusDevice().isEmpty()) {
          studio_.logs().logMessage("HCS Plugin: No camera or XY stage or Z stage defined in the config");
          return;
       }
