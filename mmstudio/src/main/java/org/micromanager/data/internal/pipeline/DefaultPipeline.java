@@ -49,8 +49,8 @@ public final class DefaultPipeline implements Pipeline {
                           boolean isSynchronous) {
       processors_ = processors;
       store_ = store;
-      contexts_ = new ArrayList<BaseContext>();
-      exceptions_ = new ArrayList<Exception>();
+      contexts_ = new ArrayList<>();
+      exceptions_ = new ArrayList<>();
       for (Processor processor : processors_) {
          if (isSynchronous) {
             contexts_.add(new SynchronousContext(processor, store_, this));
@@ -145,6 +145,11 @@ public final class DefaultPipeline implements Pipeline {
       } catch (InterruptedException e) {
          ReportingUtils.logError("Interrupted while waiting for flush to complete.");
       }
+      // cleanup to avoid memory leaks
+      contexts_.clear();
+      processors_.clear();
+      exceptions_.clear();
+
       isHalted_ = true;
    }
 
