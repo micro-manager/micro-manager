@@ -322,32 +322,14 @@ public class CliJDeskewProcessor implements Processor {
    }
 
    private String humanReadableBytes(double numBytes) {
-      if (numBytes > (double) 1024.0F) {
-         numBytes /= (double) 1024.0F;
-         if (numBytes > (double) 1024.0F) {
-            numBytes /= (double) 1024.0F;
-            if (numBytes > (double) 1024.0F) {
-               numBytes /= (double) 1024.0F;
-               if (numBytes > (double) 1024.0F) {
-                  numBytes /= (double) 1024.0F;
-                  return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
-                           + " terabytes";
-               } else {
-                  return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
-                           + " gigabytes";
-               }
-            } else {
-               return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
-                        + " megabytes";
-            }
-         } else {
-            return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
-                     + " kilobytes";
-         }
-      } else {
-         return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
-                  + " bytes";
+      String[] units = {"bytes", "kilobytes", "megabytes", "gigabytes", "terabytes"};
+      int unitIndex = 0;
+      while (numBytes > 1024.0 && unitIndex < units.length - 1) {
+          numBytes /= 1024.0;
+          unitIndex++;
       }
+      double rounded = ((long) (numBytes * 10.0)) / 10.0;
+      return rounded + " " + units[unitIndex];
    }
 
 }
