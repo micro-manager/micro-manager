@@ -20,6 +20,9 @@ import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
 
+/**
+ * Implements deskewing using CliJ on the GPU.
+ */
 public class CliJDeskewProcessor implements Processor {
    private final Studio studio_;
    private final Double theta_;
@@ -40,6 +43,14 @@ public class CliJDeskewProcessor implements Processor {
    private Integer newDepth_;
    private Double newZSizeUm_;
 
+   /**
+    * Implements deskewing using CliJ on the GPU.
+    *
+    * @param studio Always present Studio object
+    * @param deskewAcqManager Parent DeskewAcqManager
+    * @param settings PropertyMap with settings
+    * @throws ParseException if angle is not a valid number
+    */
    public CliJDeskewProcessor(Studio studio, DeskewAcqManager deskewAcqManager,
                               PropertyMap settings) throws ParseException {
       studio_ = studio;
@@ -95,6 +106,9 @@ public class CliJDeskewProcessor implements Processor {
          try {
             ClearCLBuffer fullVolumeGPU = deskewAndRotateOnGPU(
                      stacks_.get(coordsNoZPossiblyNoT), image);
+            if (fullVolumeGPU == null) {
+               return;
+            }
             stacks_.remove(coordsNoZPossiblyNoT);
             if (doXYProjections_) {
                ClearCLBuffer xy = projectXYOnGPU(fullVolumeGPU);
@@ -178,7 +192,44 @@ public class CliJDeskewProcessor implements Processor {
       if (keepOriginals_) {
          context.outputImage(image);
       }
-      // TODO: freeze all stores at the end...
+   }
+
+   @Override
+   public void cleanup(ProcessorContext context) {
+      // TODO: shutdown processing executor?
+      if (fullVolumeStore_ != null) {
+         try {
+            fullVolumeStore_.freeze();
+            if (fullVolumeStore_.getNumImages() == 0) {
+               deskewAcqManager_.closeViewerFor(fullVolumeStore_);
+               fullVolumeStore_.close();
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
+      if (xyProjectionStore_ != null) {
+         try {
+            xyProjectionStore_.freeze();
+            if (xyProjectionStore_.getNumImages() == 0) {
+               deskewAcqManager_.closeViewerFor(xyProjectionStore_);
+               xyProjectionStore_.close();
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
+      if (orthogonalStore_ != null) {
+         try {
+            orthogonalStore_.freeze();
+            if (orthogonalStore_.getNumImages() == 0) {
+               deskewAcqManager_.closeViewerFor(orthogonalStore_);
+               orthogonalStore_.close();
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
    }
 
    private ClearCLBuffer deskewAndRotateOnGPU(ImageStack stack, Image image) {
@@ -203,6 +254,21 @@ public class CliJDeskewProcessor implements Processor {
 
       newDepth_ = newDepth;
       newZSizeUm_ = pxDepth;
+
+      // check if image fits into GPU memory
+      long maxClijImageSize = clij2_.getCLIJ().getClearCLContext().getDevice()
+               .getMaxMemoryAllocationSizeInBytes();
+      long estimatedSize = (long) newWidth * (long) newHeight * (long) newDepth
+               * (long) image.getBytesPerPixel();
+      if (estimatedSize > maxClijImageSize) {
+         studio_.logs().showError("Deskewed image size of "
+                  + humanReadableBytes(estimatedSize)
+                  + " bytes exceeds maximum GPU memory allocation size of "
+                  + humanReadableBytes(maxClijImageSize)
+                  + " bytes on GPU " + clij2_.getCLIJ().getGPUName() + ".\n"
+                  + "Please choose a different GPU with more memory or reduce the image size.");
+         return null;
+      }
 
       // do the clij stuff
       ImagePlus imp = new ImagePlus("test", stack);
@@ -264,6 +330,17 @@ public class CliJDeskewProcessor implements Processor {
       clij2_.release(yz);
       clij2_.release(xyXz);
       return xyXzYz;
+   }
+
+   private String humanReadableBytes(double numBytes) {
+      String[] units = {"bytes", "kilobytes", "megabytes", "gigabytes", "terabytes"};
+      int unitIndex = 0;
+      while (numBytes > 1024.0 && unitIndex < units.length - 1) {
+         numBytes /= 1024.0;
+         unitIndex++;
+      }
+      double rounded = ((long) (numBytes * 10.0)) / 10.0;
+      return rounded + " " + units[unitIndex];
    }
 
 }
