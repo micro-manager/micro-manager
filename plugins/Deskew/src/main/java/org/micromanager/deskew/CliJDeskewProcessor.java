@@ -20,6 +20,9 @@ import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
 
+/**
+ * Implements deskewing using CliJ on the GPU.
+ */
 public class CliJDeskewProcessor implements Processor {
    private final Studio studio_;
    private final Double theta_;
@@ -40,6 +43,14 @@ public class CliJDeskewProcessor implements Processor {
    private Integer newDepth_;
    private Double newZSizeUm_;
 
+   /**
+    * Implements deskewing using CliJ on the GPU.
+    *
+    * @param studio Always present Studio object
+    * @param deskewAcqManager Parent DeskewAcqManager
+    * @param settings PropertyMap with settings
+    * @throws ParseException if angle is not a valid number
+    */
    public CliJDeskewProcessor(Studio studio, DeskewAcqManager deskewAcqManager,
                               PropertyMap settings) throws ParseException {
       studio_ = studio;
@@ -325,8 +336,8 @@ public class CliJDeskewProcessor implements Processor {
       String[] units = {"bytes", "kilobytes", "megabytes", "gigabytes", "terabytes"};
       int unitIndex = 0;
       while (numBytes > 1024.0 && unitIndex < units.length - 1) {
-          numBytes /= 1024.0;
-          unitIndex++;
+         numBytes /= 1024.0;
+         unitIndex++;
       }
       double rounded = ((long) (numBytes * 10.0)) / 10.0;
       return rounded + " " + units[unitIndex];
