@@ -95,6 +95,9 @@ public class CliJDeskewProcessor implements Processor {
          try {
             ClearCLBuffer fullVolumeGPU = deskewAndRotateOnGPU(
                      stacks_.get(coordsNoZPossiblyNoT), image);
+            if (fullVolumeGPU == null) {
+               return;
+            }
             stacks_.remove(coordsNoZPossiblyNoT);
             if (doXYProjections_) {
                ClearCLBuffer xy = projectXYOnGPU(fullVolumeGPU);
@@ -178,7 +181,44 @@ public class CliJDeskewProcessor implements Processor {
       if (keepOriginals_) {
          context.outputImage(image);
       }
-      // TODO: freeze all stores at the end...
+   }
+
+   @Override
+   public void cleanup(ProcessorContext context) {
+      // TODO: shutdown processing executor?
+      if (fullVolumeStore_ != null) {
+         try {
+            fullVolumeStore_.freeze();
+            if (fullVolumeStore_.getNumImages() == 0) {
+               deskewAcqManager_.closeViewerFor(fullVolumeStore_);
+               fullVolumeStore_.close();
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
+      if (xyProjectionStore_ != null) {
+         try {
+            xyProjectionStore_.freeze();
+            if (xyProjectionStore_.getNumImages() == 0) {
+               deskewAcqManager_.closeViewerFor(xyProjectionStore_);
+               xyProjectionStore_.close();
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
+      if (orthogonalStore_ != null) {
+         try {
+            orthogonalStore_.freeze();
+            if (orthogonalStore_.getNumImages() == 0) {
+               deskewAcqManager_.closeViewerFor(orthogonalStore_);
+               orthogonalStore_.close();
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
    }
 
    private ClearCLBuffer deskewAndRotateOnGPU(ImageStack stack, Image image) {
@@ -203,6 +243,21 @@ public class CliJDeskewProcessor implements Processor {
 
       newDepth_ = newDepth;
       newZSizeUm_ = pxDepth;
+
+      // check if image fits into GPU memory
+      long maxClijImageSize = clij2_.getCLIJ().getClearCLContext().getDevice()
+               .getMaxMemoryAllocationSizeInBytes();
+      long estimatedSize = (long) newWidth * (long) newHeight * (long) newDepth
+               * (long) image.getBytesPerPixel();
+      if (estimatedSize > maxClijImageSize) {
+         studio_.logs().showError("Deskewed image size of "
+                  + humanReadableBytes(estimatedSize)
+                  + " bytes exceeds maximum GPU memory allocation size of "
+                  + humanReadableBytes(maxClijImageSize)
+                  + " bytes on GPU " + clij2_.getCLIJ().getGPUName() + ".\n"
+                  + "Please choose a different GPU with more memory or reduce the image size.");
+         return null;
+      }
 
       // do the clij stuff
       ImagePlus imp = new ImagePlus("test", stack);
@@ -264,6 +319,35 @@ public class CliJDeskewProcessor implements Processor {
       clij2_.release(yz);
       clij2_.release(xyXz);
       return xyXzYz;
+   }
+
+   private String humanReadableBytes(double numBytes) {
+      if (numBytes > (double) 1024.0F) {
+         numBytes /= (double) 1024.0F;
+         if (numBytes > (double) 1024.0F) {
+            numBytes /= (double) 1024.0F;
+            if (numBytes > (double) 1024.0F) {
+               numBytes /= (double) 1024.0F;
+               if (numBytes > (double) 1024.0F) {
+                  numBytes /= (double) 1024.0F;
+                  return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
+                           + " terabytes";
+               } else {
+                  return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
+                           + " gigabytes";
+               }
+            } else {
+               return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
+                        + " megabytes";
+            }
+         } else {
+            return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
+                     + " kilobytes";
+         }
+      } else {
+         return (double) ((long) (numBytes * (double) 10.0F)) / (double) 10.0F
+                  + " bytes";
+      }
    }
 
 }
