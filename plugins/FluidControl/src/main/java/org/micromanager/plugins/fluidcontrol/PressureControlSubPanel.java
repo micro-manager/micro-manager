@@ -44,17 +44,17 @@ public class PressureControlSubPanel extends JPanel {
    private double pressure = 0;
 
    public boolean isPumping() {
-       return isPumping;
+      return isPumping;
    }
+
    public void setPumping(boolean pumping) {
-       this.isPumping = pumping;
+      this.isPumping = pumping;
    }
+
    public double getPressure() {
-       return pressure;
+      return pressure;
    }
-   public void setPressure(double pressure) {
-       this.pressure = pressure;
-   }
+
    // This is a MMCore keyword, please don't change.
    private String propName = "Pressure Imposed";
 
@@ -126,7 +126,7 @@ public class PressureControlSubPanel extends JPanel {
    }
 
    public void setPressure(double value) {
-      pressure = value;
+      this.pressure = value;
       if (!isPumping) {
          return;
       } // Don't actually change pressure if not pumping
