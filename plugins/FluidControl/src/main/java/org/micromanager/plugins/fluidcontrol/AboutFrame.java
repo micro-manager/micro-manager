@@ -17,7 +17,7 @@ public class AboutFrame extends JFrame {
             "This plugin is build by Lars Kool, Institut Pierre-Gilles de Gennes, Paris."),
             "wrap");
       this.add(new JLabel(
-                  "It automatically loads all 'PressurePump' and 'Volumetric pump devices."
+                  "It automatically loads all 'PressurePump' and 'Volumetric pump' devices."
                         + "You can select which devices"),
             "wrap");
       this.add(new JLabel(
