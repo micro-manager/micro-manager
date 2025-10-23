@@ -40,9 +40,21 @@ public class PressureControlSubPanel extends JPanel {
    private JTextField measuredTextField;
    private JButton startButton;
 
-   public boolean isPumping = false;
-   public double pressure = 0;
+   private boolean isPumping = false;
+   private double pressure = 0;
 
+   public boolean isPumping() {
+       return isPumping;
+   }
+   public void setPumping(boolean pumping) {
+       this.isPumping = pumping;
+   }
+   public double getPressure() {
+       return pressure;
+   }
+   public void setPressure(double pressure) {
+       this.pressure = pressure;
+   }
    // This is a MMCore keyword, please don't change.
    private String propName = "Pressure Imposed";
 
