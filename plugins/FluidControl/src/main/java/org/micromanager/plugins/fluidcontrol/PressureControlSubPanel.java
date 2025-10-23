@@ -152,7 +152,7 @@ public class PressureControlSubPanel extends JPanel {
                   controlSlider.setScaledValue(value);
                } catch (Exception ignored) {
                   studio_.logs().logDebugMessage(
-                        "Exception parsing imposedTExtField in PressureControlSubPanel");
+                        "Exception parsing imposedTextField in PressureControlSubPanel");
                }
             }
          }
