@@ -23,7 +23,7 @@ class DoubleJSlider extends JSlider {
       this.max = max;
       this.nSteps = nSteps;
 
-      labelTable = new Hashtable<Integer, JLabel>();
+      labelTable = new Hashtable<>();
       for (int i = 0; i < 11; i++) {
          labelTable.put(
                i * nSteps / 10,
