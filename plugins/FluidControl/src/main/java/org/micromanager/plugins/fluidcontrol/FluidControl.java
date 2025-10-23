@@ -65,6 +65,6 @@ public class FluidControl implements SciJavaPlugin, MenuPlugin {
 
    @Override
    public String getCopyright() {
-      return "Insitut Pierre-Gilles de Gennes (IPGG), 2023";
+      return "Institut Pierre-Gilles de Gennes (IPGG), 2023";
    }
 }
