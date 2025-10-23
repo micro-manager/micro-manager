@@ -14,7 +14,7 @@ public class AboutFrame extends JFrame {
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
       this.add(new JLabel(
-            "This plugin is build by Lars Kool, Institut Pierre-Gilles de Gennes, Paris."),
+            "This plugin is built by Lars Kool, Institut Pierre-Gilles de Gennes, Paris."),
             "wrap");
       this.add(new JLabel(
                   "It automatically loads all 'PressurePump' and 'Volumetric pump' devices."
