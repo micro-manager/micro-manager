@@ -996,6 +996,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       testAcquisitionButton.setFont(DEFAULT_FONT);
       testAcquisitionButton.setMargin(new Insets(-5, -5, -5, -5));
       testAcquisitionButton.addActionListener((ActionEvent e) -> {
+         AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
+         if (ae != null) {
+            ae.stopCellEditing();
+         }
          runTestAcquisition(mmStudio_.acquisitions().getAcquisitionSettings());
       });
       result.add(testAcquisitionButton, BUTTON_SIZE);
