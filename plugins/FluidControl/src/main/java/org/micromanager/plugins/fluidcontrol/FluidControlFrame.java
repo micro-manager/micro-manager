@@ -1,5 +1,6 @@
 package org.micromanager.plugins.fluidcontrol;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Toolkit;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -8,8 +9,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.WindowConstants;
-
-import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
