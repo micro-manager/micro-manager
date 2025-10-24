@@ -28,6 +28,8 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 
+import javax.swing.*;
+
 /**
  * Deskews data using the Deskew code in PycroManager.
  */
@@ -406,8 +408,14 @@ public class DeskewProcessor implements Processor {
             fullVolumeResamplers_.clear();
             freeFullVolumeResamplers_.clear();
             if (fullVolumeStore_.getNumImages() == 0) {
-               deskewAcqManager_.closeViewerFor(fullVolumeStore_);
-               fullVolumeStore_.close();
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(fullVolumeStore_);
+                  try {
+                     fullVolumeStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
             }
          } catch (IOException e) {
             studio_.logs().logError(e);
@@ -420,8 +428,14 @@ public class DeskewProcessor implements Processor {
             xyProjectionResamplers_.clear();
             freeXYProjectionResamplers_.clear();
             if (xyProjectionStore_.getNumImages() == 0) {
-               deskewAcqManager_.closeViewerFor(xyProjectionStore_);
-               xyProjectionStore_.close();
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(xyProjectionStore_);
+                  try {
+                     xyProjectionStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
             }
          } catch (IOException e) {
             studio_.logs().logError(e);
@@ -434,8 +448,14 @@ public class DeskewProcessor implements Processor {
             orthogonalProjectionResamplers_.clear();
             freeOrthogonalProjectionResamplers_.clear();
             if (orthogonalStore_.getNumImages() == 0) {
-               deskewAcqManager_.closeViewerFor(orthogonalStore_);
-               orthogonalStore_.close();
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(orthogonalStore_);
+                  try {
+                     orthogonalStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
             }
          } catch (IOException e) {
             studio_.logs().logError(e);
