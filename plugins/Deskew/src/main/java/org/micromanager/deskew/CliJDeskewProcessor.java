@@ -282,7 +282,7 @@ public class CliJDeskewProcessor implements Processor {
                * (long) image.getBytesPerPixel();
       long inputImageSize = (long) image.getHeight() * image.getWidth() * image.getBytesPerPixel() * imDepth;
       if ( (estimatedSize + (2 * inputImageSize)) > maxClijImageSize) {
-         studio_.logs().showError("Deskewed plus 2 input images are "
+         studio_.logs().showError("Deskewed image plus 2 input images are "
                   + humanReadableBytes(estimatedSize + (2 * inputImageSize))
                   + " bytes and exceed maximum GPU memory allocation size of "
                   + humanReadableBytes(maxClijImageSize)
