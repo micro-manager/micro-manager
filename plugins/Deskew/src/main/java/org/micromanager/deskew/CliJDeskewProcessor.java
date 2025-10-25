@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij.clearcl.exceptions.OpenCLException;
 import net.haesleinhuepf.clij2.CLIJ2;
@@ -19,6 +20,7 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
+
 
 /**
  * Implements deskewing using CliJ on the GPU.
@@ -201,8 +203,14 @@ public class CliJDeskewProcessor implements Processor {
          try {
             fullVolumeStore_.freeze();
             if (fullVolumeStore_.getNumImages() == 0) {
-               deskewAcqManager_.closeViewerFor(fullVolumeStore_);
-               fullVolumeStore_.close();
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(fullVolumeStore_);
+                  try {
+                     fullVolumeStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
             }
          } catch (IOException e) {
             studio_.logs().logError(e);
@@ -212,8 +220,14 @@ public class CliJDeskewProcessor implements Processor {
          try {
             xyProjectionStore_.freeze();
             if (xyProjectionStore_.getNumImages() == 0) {
-               deskewAcqManager_.closeViewerFor(xyProjectionStore_);
-               xyProjectionStore_.close();
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(xyProjectionStore_);
+                  try {
+                     xyProjectionStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
             }
          } catch (IOException e) {
             studio_.logs().logError(e);
@@ -223,8 +237,14 @@ public class CliJDeskewProcessor implements Processor {
          try {
             orthogonalStore_.freeze();
             if (orthogonalStore_.getNumImages() == 0) {
-               deskewAcqManager_.closeViewerFor(orthogonalStore_);
-               orthogonalStore_.close();
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(orthogonalStore_);
+                  try {
+                     orthogonalStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
             }
          } catch (IOException e) {
             studio_.logs().logError(e);
@@ -260,10 +280,12 @@ public class CliJDeskewProcessor implements Processor {
                .getMaxMemoryAllocationSizeInBytes();
       long estimatedSize = (long) newWidth * (long) newHeight * (long) newDepth
                * (long) image.getBytesPerPixel();
-      if (estimatedSize > maxClijImageSize) {
-         studio_.logs().showError("Deskewed image size of "
-                  + humanReadableBytes(estimatedSize)
-                  + " bytes exceeds maximum GPU memory allocation size of "
+      long inputImageSize = (long) image.getHeight() * image.getWidth() * image.getBytesPerPixel()
+               * imDepth;
+      if ((estimatedSize + (2 * inputImageSize)) > maxClijImageSize) {
+         studio_.logs().showError("Deskewed image plus 2 input images are "
+                  + humanReadableBytes(estimatedSize + (2 * inputImageSize))
+                  + " bytes and exceed maximum GPU memory allocation size of "
                   + humanReadableBytes(maxClijImageSize)
                   + " bytes on GPU " + clij2_.getCLIJ().getGPUName() + ".\n"
                   + "Please choose a different GPU with more memory or reduce the image size.");

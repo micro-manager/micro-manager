@@ -1196,8 +1196,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          for (String axis : dataProvider_.getAxes()) {
             cb.index(axis, dataProvider_.getNextIndex(axis) - 1);
          }
-         SwingUtilities.invokeLater(() ->
-               uiController_.expandDisplayedRangeToInclude(cb.build()));
+         SwingUtilities.invokeLater(() -> {
+            // uiController_ may have become null in the meantime
+            if (uiController_ != null) {
+               uiController_.expandDisplayedRangeToInclude(cb.build());
+            }
+         });
       }
    }
 
