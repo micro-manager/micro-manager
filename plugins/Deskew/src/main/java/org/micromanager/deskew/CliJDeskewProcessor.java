@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij.clearcl.exceptions.OpenCLException;
 import net.haesleinhuepf.clij2.CLIJ2;
@@ -20,7 +21,6 @@ import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
 
-import javax.swing.*;
 
 /**
  * Implements deskewing using CliJ on the GPU.
@@ -280,8 +280,9 @@ public class CliJDeskewProcessor implements Processor {
                .getMaxMemoryAllocationSizeInBytes();
       long estimatedSize = (long) newWidth * (long) newHeight * (long) newDepth
                * (long) image.getBytesPerPixel();
-      long inputImageSize = (long) image.getHeight() * image.getWidth() * image.getBytesPerPixel() * imDepth;
-      if ( (estimatedSize + (2 * inputImageSize)) > maxClijImageSize) {
+      long inputImageSize = (long) image.getHeight() * image.getWidth() * image.getBytesPerPixel()
+               * imDepth;
+      if ((estimatedSize + (2 * inputImageSize)) > maxClijImageSize) {
          studio_.logs().showError("Deskewed image plus 2 input images are "
                   + humanReadableBytes(estimatedSize + (2 * inputImageSize))
                   + " bytes and exceed maximum GPU memory allocation size of "

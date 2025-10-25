@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.swing.SwingUtilities;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
@@ -28,7 +29,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 
-import javax.swing.*;
+
 
 /**
  * Deskews data using the Deskew code in PycroManager.
