@@ -204,11 +204,11 @@ public final class DefaultAlbum implements Album {
                .channel(image.getCoords().getChannel())
                .t(curTime_)
                .build();
-         java.util.List<Image> existingImageList = store_.getImagesIgnoringAxes(matcher,"");
-         if (!existingImageList.isEmpty() ) {
+         java.util.List<Image> existingImageList = store_.getImagesIgnoringAxes(matcher, "");
+         if (!existingImageList.isEmpty()) {
             if (existingImageList.get(0) != null) {
-                // Have an image at this time/channel pair already.
-                curTime_++;
+               // Have an image at this time/channel pair already.
+               curTime_++;
             }
          }
       }

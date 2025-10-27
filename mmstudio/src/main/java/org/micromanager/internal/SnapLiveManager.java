@@ -608,12 +608,14 @@ public final class SnapLiveManager extends DataViewerListener
       toAlbumButton.setFont(GUIUtils.buttonFont);
       toAlbumButton.setMargin(zeroInsets);
       toAlbumButton.addActionListener((ActionEvent event) -> {
-         // Disable Application Processors so that images from the live window aren't sent through the pipeline again
-         java.util.List<ProcessorConfigurator> pcList = mmStudio_.data().getApplicationPipelineConfigurators(true);
+         // Disable Application Processors so that images from the live window
+         // aren't sent through the pipeline again
+         java.util.List<ProcessorConfigurator> pcList =
+               mmStudio_.data().getApplicationPipelineConfigurators(true);
          boolean[] pcEnabled = new boolean[pcList.size()]; 
-         for (int a=0; a < pcList.size(); a++) {
-             pcEnabled[a] = mmStudio_.data().isApplicationPipelineStepEnabled(a);
-             mmStudio_.data().setApplicationPipelineStepEnabled(a,false);
+         for (int a = 0; a < pcList.size(); a++) {
+            pcEnabled[a] = mmStudio_.data().isApplicationPipelineStepEnabled(a);
+            mmStudio_.data().setApplicationPipelineStepEnabled(a, false);
          }
          
          // Send all images at current channel to the album.
@@ -623,7 +625,7 @@ public final class SnapLiveManager extends DataViewerListener
             builder.channel(i);
             try {
                mmStudio_.album().addImages(store_.getImagesIgnoringAxes(
-                     builder.build(),""));
+                     builder.build(), ""));
                hadChannels = true;
             } catch (IOException e) {
                ReportingUtils.showError(e, "There was an error grabbing the images");
@@ -639,8 +641,8 @@ public final class SnapLiveManager extends DataViewerListener
          }
          
          // Re-enable Application Processors
-         for (int b=0; b < pcList.size(); b++) {
-             mmStudio_.data().setApplicationPipelineStepEnabled(b,pcEnabled[b]);
+         for (int b = 0; b < pcList.size(); b++) {
+            mmStudio_.data().setApplicationPipelineStepEnabled(b, pcEnabled[b]);
          }
       });
       controls.add(toAlbumButton);
