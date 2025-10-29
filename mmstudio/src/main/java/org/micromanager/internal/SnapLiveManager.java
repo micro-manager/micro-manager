@@ -615,7 +615,7 @@ public final class SnapLiveManager extends DataViewerListener
             builder.channel(i);
             try {
                mmStudio_.album().addImagesWithoutProcessing(store_.getImagesIgnoringAxes(
-                     builder.build(),""));
+                     builder.build(), ""));
                hadChannels = true;
             } catch (IOException e) {
                ReportingUtils.showError(e, "There was an error grabbing the images");
@@ -624,7 +624,7 @@ public final class SnapLiveManager extends DataViewerListener
          try {
             if (!hadChannels) {
                mmStudio_.album().addImagesWithoutProcessing(store_.getImagesIgnoringAxes(
-                     builder.build(),""));
+                     builder.build(), ""));
             }
          } catch (IOException e) {
             ReportingUtils.showError(e, "There was an error grabbing the image");

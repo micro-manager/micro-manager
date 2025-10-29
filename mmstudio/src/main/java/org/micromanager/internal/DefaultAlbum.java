@@ -226,11 +226,11 @@ public final class DefaultAlbum implements Album {
                .channel(image.getCoords().getChannel())
                .t(curTime_)
                .build();
-         java.util.List<Image> existingImageList = store_.getImagesIgnoringAxes(matcher,"");
-         if (!existingImageList.isEmpty() ) {
+         java.util.List<Image> existingImageList = store_.getImagesIgnoringAxes(matcher, "");
+         if (!existingImageList.isEmpty()) {
             if (existingImageList.get(0) != null) {
-                // Have an image at this time/channel pair already.
-                curTime_++;
+               // Have an image at this time/channel pair already.
+               curTime_++;
             }
          }
       }
@@ -259,44 +259,44 @@ public final class DefaultAlbum implements Album {
    }
 
    private void createNewAlbum(String curChannel)throws IOException {
-        store_ = studio_.data().createRAMDatastore();
+      store_ = studio_.data().createRAMDatastore();
 
-          try {
-             SummaryMetadata.Builder smb = studio_.acquisitions()
-                   .generateSummaryMetadata().copyBuilder();
-             smb.channelGroup(studio_.core().getChannelGroup());
-             // TODO: can there be other axes than T?
-             smb.channelNames(curChannel).axisOrder(
-                   Coords.T, Coords.C, Coords.Z, Coords.P);
-             store_.setSummaryMetadata(smb.build());
-          } catch (DatastoreFrozenException | DatastoreRewriteException e) {
-             // This should never happen!
-             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
-          }
-          studio_.displays().manage(store_);
-          DisplaySettings.Builder displaySettingsBuilder = null;
-          DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
-                            PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
-          if (displaySettings == null) {
-             displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
-                      .colorMode(DisplaySettings.ColorMode.GRAYSCALE);
-          } else {
-             displaySettingsBuilder = displaySettings.copyBuilder();
-          }
-          for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
-             displaySettingsBuilder.channel(ch,
-                   RememberedDisplaySettings.loadChannel(studio_,
-                         store_.getSummaryMetadata().getChannelGroup(),
-                         store_.getSummaryMetadata().getSafeChannelName(ch),
-                         Color.white));
-          }
-          display_ = studio_.displays().createDisplay(store_, null, displaySettingsBuilder.build());
-          display_.setWindowPositionKey(DefaultDisplayManager.ALBUM_DISPLAY);
-          display_.setCustomTitle("Album");
-          display_.setDisplaySettingsProfileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+      try {
+         SummaryMetadata.Builder smb = studio_.acquisitions()
+               .generateSummaryMetadata().copyBuilder();
+         smb.channelGroup(studio_.core().getChannelGroup());
+         // TODO: can there be other axes than T?
+         smb.channelNames(curChannel).axisOrder(
+               Coords.T, Coords.C, Coords.Z, Coords.P);
+         store_.setSummaryMetadata(smb.build());
+      } catch (DatastoreFrozenException | DatastoreRewriteException e) {
+         // This should never happen!
+         studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
+      }
+      studio_.displays().manage(store_);
+      DisplaySettings.Builder displaySettingsBuilder = null;
+      DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
+                        PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+      if (displaySettings == null) {
+         displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
+                  .colorMode(DisplaySettings.ColorMode.GRAYSCALE);
+      } else {
+         displaySettingsBuilder = displaySettings.copyBuilder();
+      }
+      for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
+         displaySettingsBuilder.channel(ch,
+               RememberedDisplaySettings.loadChannel(studio_,
+                     store_.getSummaryMetadata().getChannelGroup(),
+                     store_.getSummaryMetadata().getSafeChannelName(ch),
+                     Color.white));
+      }
+      display_ = studio_.displays().createDisplay(store_, null, displaySettingsBuilder.build());
+      display_.setWindowPositionKey(DefaultDisplayManager.ALBUM_DISPLAY);
+      display_.setCustomTitle("Album");
+      display_.setDisplaySettingsProfileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
 
-          curTime_ = null;
-    }
+      curTime_ = null;
+   }
    
    /**
     * Handle events indicating that the viewer will close.
