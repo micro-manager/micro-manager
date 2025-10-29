@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -50,6 +51,7 @@ import org.micromanager.data.Metadata;
 import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
+import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.PropertyKey;
@@ -605,15 +607,15 @@ public final class SnapLiveManager extends DataViewerListener
       toAlbumButton.setMinimumSize(buttonSize);
       toAlbumButton.setFont(GUIUtils.buttonFont);
       toAlbumButton.setMargin(zeroInsets);
-      toAlbumButton.addActionListener((ActionEvent event) -> {
+      toAlbumButton.addActionListener((ActionEvent event) -> {      
          // Send all images at current channel to the album.
          Coords.CoordsBuilder builder = Coordinates.builder();
          boolean hadChannels = false;
          for (int i = 0; i < store_.getNextIndex(Coords.CHANNEL); ++i) {
             builder.channel(i);
             try {
-               mmStudio_.album().addImages(store_.getImagesMatching(
-                     builder.build()));
+               mmStudio_.album().addImagesWithoutProcessing(store_.getImagesIgnoringAxes(
+                     builder.build(), ""));
                hadChannels = true;
             } catch (IOException e) {
                ReportingUtils.showError(e, "There was an error grabbing the images");
@@ -621,8 +623,8 @@ public final class SnapLiveManager extends DataViewerListener
          }
          try {
             if (!hadChannels) {
-               mmStudio_.album().addImages(store_.getImagesMatching(
-                     Coordinates.builder().build()));
+               mmStudio_.album().addImagesWithoutProcessing(store_.getImagesIgnoringAxes(
+                     builder.build(), ""));
             }
          } catch (IOException e) {
             ReportingUtils.showError(e, "There was an error grabbing the image");
