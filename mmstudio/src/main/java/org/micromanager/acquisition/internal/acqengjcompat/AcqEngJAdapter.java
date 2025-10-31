@@ -106,6 +106,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private Datastore curStore_;
    private Pipeline curPipeline_;
    private long nextWakeTime_ = -1;
+   private long lastFrameIndex_ = -1;
    private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
 
    private class RunnablePlusIndices {
@@ -356,9 +357,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             currentAcquisition_.addHook(restorePositionHook(msp),
                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
-
          // This hook is used to update the time of the next wake up call
          if (sequenceSettings.useFrames()) {
+            lastFrameIndex_ = -1;
             currentAcquisition_.addHook(updateNextWakeHook(acquisitionSettings),
                   AcquisitionAPI.AFTER_HARDWARE_HOOK);
          }
@@ -1114,10 +1115,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (event.getMinimumStartTimeAbsolute() != null) {
-               // Note that nanoTime() and currentTimeMillis() are not guaranteed to have
-               // the same offset (0).
-               nextWakeTime_ = System.nanoTime() / 1000000L
-                       + (long) (sequenceSettings.intervalMs());
+               int frameIndex = event.getTIndex() == null ? 0 : event.getTIndex();
+               if (event.getSequence() != null && event.getSequence().get(0) != null) {
+                  frameIndex = event.getSequence().get(0).getTIndex();
+               }
+               if (frameIndex > lastFrameIndex_) {
+                  lastFrameIndex_ = frameIndex;
+                  // Note that nanoTime() and currentTimeMillis() are not guaranteed to have
+                  // the same offset (0).
+                  nextWakeTime_ = System.nanoTime() / 1000000L
+                           + (long) (sequenceSettings.intervalMs());
+               }
             }
             return event;
          }
