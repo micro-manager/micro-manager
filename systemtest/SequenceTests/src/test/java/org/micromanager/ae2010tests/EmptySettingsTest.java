@@ -4,9 +4,9 @@ import java.util.List;
 import mmcorej.CMMCore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.micromanager.AcquisitionEngine2010;
-import org.micromanager.api.IAcquisitionEngine2010;
-import org.micromanager.api.SequenceSettings;
+import org.micromanager.internal.AcquisitionEngine2010;
+import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.testing.AE2010ImageDecoder;
 import org.micromanager.testing.MMCoreWithTestHubResource;
 import static org.junit.Assert.*;
@@ -31,7 +31,7 @@ public class EmptySettingsTest {
       IAcquisitionEngine2010 ae2010 = new AcquisitionEngine2010(mmc);
 
       // Default SequenceSettings should do a single snap.
-      SequenceSettings mdaSeq = new SequenceSettings();
+      SequenceSettings mdaSeq = new SequenceSettings.Builder().build();
 
       List<InfoPacket> packets = AE2010ImageDecoder.collectImages(
             ae2010.run(mdaSeq, true, null, null));

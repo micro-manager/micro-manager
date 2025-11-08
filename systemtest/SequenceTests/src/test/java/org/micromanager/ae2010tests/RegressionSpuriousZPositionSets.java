@@ -6,13 +6,13 @@ import java.util.List;
 import mmcorej.CMMCore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.micromanager.AcquisitionEngine2010;
-import org.micromanager.api.IAcquisitionEngine2010;
-import org.micromanager.api.SequenceSettings;
+import org.micromanager.internal.AcquisitionEngine2010;
+import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.testing.AE2010ImageDecoder;
 import org.micromanager.testing.MMCoreWithTestHubResource;
 import org.micromanager.testing.TaggedImageDecoder;
-import org.micromanager.utils.ChannelSpec;
+import org.micromanager.acquisition.ChannelSpec;
 import static org.junit.Assert.*;
 import static org.micromanager.testing.TestImageDecoder.InfoPacket;
 
@@ -42,7 +42,7 @@ public class RegressionSpuriousZPositionSets {
 
       double exposure = 1.0;
 
-      SequenceSettings mdaSeq = new SequenceSettings();
+      SequenceSettings mdaSeq = new SequenceSettings.Builder().build();
       mdaSeq.numFrames = 2;
       mdaSeq.intervalMs = exposure + 1.0;
       mdaSeq.channelGroup = channelGroup;
@@ -87,7 +87,7 @@ public class RegressionSpuriousZPositionSets {
       double exposure = 1.0;
       mmc.setExposure(exposure);
 
-      SequenceSettings mdaSeq = new SequenceSettings();
+      SequenceSettings mdaSeq = new SequenceSettings.Builder().build();
       mdaSeq.numFrames = 2;
       mdaSeq.intervalMs = exposure + 1.0;
 
@@ -131,7 +131,7 @@ public class RegressionSpuriousZPositionSets {
 
       double exposure = 1.0;
 
-      SequenceSettings mdaSeq = new SequenceSettings();
+      SequenceSettings mdaSeq = new SequenceSettings.Builder().build();
       mdaSeq.numFrames = 2;
       mdaSeq.intervalMs = 2 * exposure + 100.0;
       mdaSeq.channelGroup = channelGroup;
