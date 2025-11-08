@@ -133,7 +133,7 @@
 			<classpath refid="project.test.classpath"/>
 		</mm-javac>
 		<copy todir="${test.intdir}">
-			<fileset dir="${testrscdir}"/>
+			<fileset dir="${testrscdir}" erroronmissingdir="false"/>
 		</copy>
 		<mkdir dir="${test.reportdir}"/>
         <junit fork="true" haltonfailure="true" printsummary="true"
