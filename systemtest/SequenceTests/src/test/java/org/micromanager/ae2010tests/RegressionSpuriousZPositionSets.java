@@ -6,13 +6,13 @@ import java.util.List;
 import mmcorej.CMMCore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.micromanager.AcquisitionEngine2010;
-import org.micromanager.api.IAcquisitionEngine2010;
-import org.micromanager.api.SequenceSettings;
+import org.micromanager.internal.AcquisitionEngine2010;
+import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.testing.AE2010ImageDecoder;
 import org.micromanager.testing.MMCoreWithTestHubResource;
 import org.micromanager.testing.TaggedImageDecoder;
-import org.micromanager.utils.ChannelSpec;
+import org.micromanager.acquisition.ChannelSpec;
 import static org.junit.Assert.*;
 import static org.micromanager.testing.TestImageDecoder.InfoPacket;
 
@@ -42,19 +42,22 @@ public class RegressionSpuriousZPositionSets {
 
       double exposure = 1.0;
 
-      SequenceSettings mdaSeq = new SequenceSettings();
-      mdaSeq.numFrames = 2;
-      mdaSeq.intervalMs = exposure + 1.0;
-      mdaSeq.channelGroup = channelGroup;
-      mdaSeq.channels = new ArrayList<ChannelSpec>(Arrays.asList(
-               new ChannelSpec[] {
-                  new ChannelSpec(),
-                  new ChannelSpec()
-               }));
-      mdaSeq.channels.get(0).config = ch0Preset;
-      mdaSeq.channels.get(0).exposure = exposure;
-      mdaSeq.channels.get(1).config = ch1Preset;
-      mdaSeq.channels.get(1).exposure = exposure;
+      ArrayList<ChannelSpec> channelSpecs = new ArrayList<>(Arrays.asList(
+            new ChannelSpec.Builder()
+                  .config(ch0Preset)
+                  .exposure(exposure)
+                  .build(),
+            new ChannelSpec.Builder()
+                  .config(ch1Preset)
+                  .exposure(exposure)
+                  .build()));
+
+      SequenceSettings mdaSeq = new SequenceSettings.Builder()
+            .numFrames(2)
+            .intervalMs(exposure + 1.0)
+            .channelGroup(channelGroup)
+            .channels(channelSpecs)
+            .build();
 
       List<InfoPacket> packets = AE2010ImageDecoder.collectImages(
             ae2010.run(mdaSeq, true, null, null));
@@ -87,9 +90,10 @@ public class RegressionSpuriousZPositionSets {
       double exposure = 1.0;
       mmc.setExposure(exposure);
 
-      SequenceSettings mdaSeq = new SequenceSettings();
-      mdaSeq.numFrames = 2;
-      mdaSeq.intervalMs = exposure + 1.0;
+      SequenceSettings mdaSeq = new SequenceSettings.Builder()
+            .numFrames(2)
+            .intervalMs(exposure + 1.0)
+            .build();
 
       List<InfoPacket> packets = AE2010ImageDecoder.collectImages(
             ae2010.run(mdaSeq, true, null, null));
@@ -131,19 +135,22 @@ public class RegressionSpuriousZPositionSets {
 
       double exposure = 1.0;
 
-      SequenceSettings mdaSeq = new SequenceSettings();
-      mdaSeq.numFrames = 2;
-      mdaSeq.intervalMs = 2 * exposure + 100.0;
-      mdaSeq.channelGroup = channelGroup;
-      mdaSeq.channels = new ArrayList<ChannelSpec>(Arrays.asList(
-               new ChannelSpec[] {
-                  new ChannelSpec(),
-                  new ChannelSpec()
-               }));
-      mdaSeq.channels.get(0).config = ch0Preset;
-      mdaSeq.channels.get(0).exposure = exposure;
-      mdaSeq.channels.get(1).config = ch1Preset;
-      mdaSeq.channels.get(1).exposure = exposure;
+      ArrayList<ChannelSpec> channelSpecs = new ArrayList<>(Arrays.asList(
+            new ChannelSpec.Builder()
+                  .config(ch0Preset)
+                  .exposure(exposure)
+                  .build(),
+            new ChannelSpec.Builder()
+                  .config(ch1Preset)
+                  .exposure(exposure)
+                  .build()));
+
+      SequenceSettings mdaSeq = new SequenceSettings.Builder()
+            .numFrames(2)
+            .intervalMs(2 * exposure + 100.0)
+            .channelGroup(channelGroup)
+            .channels(channelSpecs)
+            .build();
 
       List<InfoPacket> packets = AE2010ImageDecoder.collectImages(
             ae2010.run(mdaSeq, true, null, null));
