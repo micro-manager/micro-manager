@@ -1,5 +1,6 @@
 package org.micromanager.ae2010tests;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -98,17 +99,22 @@ public class RegressionExposureIntervalComparisonMustUseChannelExposures {
 
       IAcquisitionEngine2010 ae2010 = new AcquisitionEngine2010(mmc);
 
-      SequenceSettings mdaSeq = new SequenceSettings.Builder().build();
-      mdaSeq.numFrames = 2;
-      mdaSeq.intervalMs = interval_;
-      if (nrChannels_ > 0) {
-         mdaSeq.channelGroup = channelGroup;
-      }
+      ArrayList<ChannelSpec> channelSpecs = new ArrayList<>();
       for (int i = 0; i < nrChannels_; i++) {
-         mdaSeq.channels.add(new ChannelSpec());
-         mdaSeq.channels.get(i).config = channels[i];
-         mdaSeq.channels.get(i).exposure = CHANNEL_EXPOSURE;
+         channelSpecs.add(new ChannelSpec.Builder()
+               .config(channels[i])
+               .exposure(CHANNEL_EXPOSURE)
+               .build());
       }
+
+      SequenceSettings.Builder builder = new SequenceSettings.Builder()
+            .numFrames(2)
+            .intervalMs(interval_);
+      if (nrChannels_ > 0) {
+         builder.channelGroup(channelGroup)
+               .channels(channelSpecs);
+      }
+      SequenceSettings mdaSeq = builder.build();
 
       List<InfoPacket> packets = AE2010ImageDecoder.collectImages(
             ae2010.run(mdaSeq, true, null, null));
