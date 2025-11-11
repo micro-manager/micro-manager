@@ -16,7 +16,6 @@
 package org.micromanager.pmqi;
 
 import com.google.common.eventbus.Subscribe;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.math.BigDecimal;
@@ -46,6 +45,7 @@ public class WhiteBalanceUI extends JFrame {
    /**
     * Creates new form WhiteBalance_UI
     */
+
    private static final int WB_FAILED_TOO_MANY_ITERATIONS = 0;
    private static final int WB_FAILED_TOO_MANY_ITERATIONS_TOO_BRIGHT = 1;
    private static final int WB_FAILED_TOO_MANY_ITERATIONS_TOO_DARK = 2;
@@ -55,14 +55,19 @@ public class WhiteBalanceUI extends JFrame {
    private static final int WB_FAILED_EXP_TOO_LONG = 6;
    private static final int WB_FAILED_EXCEPTION = 7;
    private static final int WB_SUCCESS = 8;
+
    private static final int MIN_EXPOSURE = 2;
    private static final int MAX_EXPOSURE = 2000;
+
    private static final int WB_EXP_ITERATIONS_MAX = 20;
    private static final double WB_SUCCESS_SNAP_FACTOR = 1.75;
+
+   // CFA_* values serve also as index for combo box
    private static final int CFA_RGGB = 0;
    private static final int CFA_BGGR = 1;
    private static final int CFA_GRBG = 2;
    private static final int CFA_GBRG = 3;
+
    private static final int DEPTH8BIT = 8;
    private static final int DEPTH10BIT = 10;
    private static final int DEPTH12BIT = 12;
@@ -76,8 +81,10 @@ public class WhiteBalanceUI extends JFrame {
    private static final int DEPTH12BIT_MEAN_MAX = 2300;
    private static final int DEPTH10BIT_MEAN_MIN = 420;
    private static final int DEPTH10BIT_MEAN_MAX = 600;
+
    private static final int EXP_1MS = 1;
    private static final int EXP_100MS = 100;
+
    private static final int ADU_BIAS_16BIT = 500;
    private static final int ADU_BIAS_LESS16BIT = 150;
 
@@ -85,9 +92,22 @@ public class WhiteBalanceUI extends JFrame {
    private int wbMeanMax;
    private int wbResult;
 
-   private static final String RED_SCALE_LABEL = "Color - Red scale";
-   private static final String GREEN_SCALE_LABEL = "Color - Green scale";
-   private static final String BLUE_SCALE_LABEL = "Color - Blue scale";
+   // Keywords must match the values in MMDeviceConstants.h
+   private static final String KEYWORD_PIXEL_TYPE = "PixelType"; // g_Keyword_PixelType
+
+   // Keywords must match the values in PVCAMUniversal.cpp
+   private static final String KEYWORD_CHIP_NAME = "ChipName"; // g_Keyword_ChipName
+   private static final String KEYWORD_COLOR = "Color"; // g_Keyword_Color
+   private static final String KEYWORD_RED_SCALE = "Color - Red scale"; // g_Keyword_RedScale
+   private static final String KEYWORD_BLUE_SCALE = "Color - Blue scale"; // g_Keyword_BlueScale
+   private static final String KEYWORD_GREEN_SCALE = "Color - Green scale"; // g_Keyword_GreenScale
+   private static final String KEYWORD_SENSOR_CFA = "Color - Sensor CFA"; // g_Keyword_SensorCFA
+   private static final String KEYWORD_RGGB = "R-G-G-B"; // g_Keyword_RGGB
+   private static final String KEYWORD_BGGR = "B-G-G-R"; // g_Keyword_BGGR
+   private static final String KEYWORD_GRBG = "G-R-B-G"; // g_Keyword_GRBG
+   private static final String KEYWORD_GBRG = "G-B-R-G"; // g_Keyword_GBRG
+   private static final String KEYWORD_ON = "ON"; // g_Keyword_ON
+   private static final String KEYWORD_OFF = "OFF"; // g_Keyword_OFF
 
    private int cameraBitDepth;
    private int cfaPattern;
@@ -96,7 +116,6 @@ public class WhiteBalanceUI extends JFrame {
    private boolean isColorCamera;
 
    private ShortProcessor capturedImageShort;
-   private ByteProcessor capturedImageByte;
    private double rMean;
    private double gMean;
    private double bMean;
@@ -121,7 +140,6 @@ public class WhiteBalanceUI extends JFrame {
 
       try {
          cameraLabel = core_.getCameraDevice();
-
       } catch (Exception ex) {
          throw new Exception("WB plugin could not get camera device from Micro-Manager.");
       }
@@ -140,11 +158,10 @@ public class WhiteBalanceUI extends JFrame {
             "<" + String.valueOf(wbMeanMin) + "-" + String.valueOf(wbMeanMax) + ">");
    }
 
-   //private void CheckIsCameraConnected()
    private void checkIsColorCamera() {
       isColorCamera = true;
       try {
-         if (!core_.hasProperty(cameraLabel, "Color - Red scale")) {
+         if (!core_.hasProperty(cameraLabel, KEYWORD_RED_SCALE)) {
             isColorCamera = false;
          }
       } catch (Exception ex) {
@@ -160,7 +177,7 @@ public class WhiteBalanceUI extends JFrame {
    private void getCameraModel() throws Exception {
       String chipName;
       try {
-         chipName = core_.getProperty(cameraLabel, "ChipName");
+         chipName = core_.getProperty(cameraLabel, KEYWORD_CHIP_NAME);
       } catch (Exception ex) {
          throw new Exception("Failed to read camera model. A PVCAM compatible camera is required.");
       }
@@ -181,9 +198,9 @@ public class WhiteBalanceUI extends JFrame {
    private void getCFAPattern() {
       String cfaPattern;
       try {
-         cfaPattern = core_.getProperty(cameraLabel, "Color - Sensor CFA Pattern");
+         cfaPattern = core_.getProperty(cameraLabel, KEYWORD_SENSOR_CFA);
       } catch (Exception ex) {
-         cfaPattern = "R-G-G-B";
+         cfaPattern = KEYWORD_RGGB;
          Logger.getLogger(WhiteBalanceUI.class.getName()).log(Level.SEVERE, null, ex);
          JOptionPane.showMessageDialog(this, "Failed to retrieve sensor mask pattern", "Error",
                JOptionPane.ERROR_MESSAGE);
@@ -192,16 +209,16 @@ public class WhiteBalanceUI extends JFrame {
    }
 
    private void setCFAPattern(String pattern) {
-      if (pattern.contains("R-G-G-B")) {
+      if (pattern.contains(KEYWORD_RGGB)) {
          cfaPattern = CFA_RGGB;
          cbxCFAPattern.setSelectedIndex(CFA_RGGB);
-      } else if (pattern.contains("B-G-G-R")) {
+      } else if (pattern.contains(KEYWORD_BGGR)) {
          cfaPattern = CFA_BGGR;
          cbxCFAPattern.setSelectedIndex(CFA_BGGR);
-      } else if (pattern.contains("G-R-B-G")) {
+      } else if (pattern.contains(KEYWORD_GRBG)) {
          cfaPattern = CFA_GRBG;
          cbxCFAPattern.setSelectedIndex(CFA_GRBG);
-      } else if (pattern.contains("G-B-R-G")) {
+      } else if (pattern.contains(KEYWORD_GBRG)) {
          cfaPattern = CFA_GBRG;
          cbxCFAPattern.setSelectedIndex(CFA_GBRG);
       } else {
@@ -213,7 +230,7 @@ public class WhiteBalanceUI extends JFrame {
    private void getBitDepth() {
       String bitDepth;
       try {
-         bitDepth = core_.getProperty(cameraLabel, "PixelType");
+         bitDepth = core_.getProperty(cameraLabel, KEYWORD_PIXEL_TYPE);
       } catch (Exception ex) {
          bitDepth = "N/A";
          Logger.getLogger(WhiteBalanceUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -247,7 +264,6 @@ public class WhiteBalanceUI extends JFrame {
          wbMeanMax = DEPTH16BIT_MEAN_MAX;
          cbxBitDepth.setSelectedIndex(4);
       }
-
    }
 
    /**
@@ -968,7 +984,7 @@ public class WhiteBalanceUI extends JFrame {
 
       //disable color mode in MM before the WB algorithm
       try {
-         core_.setProperty(cameraLabel, "Color", "OFF");
+         core_.setProperty(cameraLabel, KEYWORD_COLOR, KEYWORD_OFF);
          gui_.app().refreshGUI();
          wbExposure = findExposureForWB();
       } catch (Exception ex) {
@@ -996,17 +1012,17 @@ public class WhiteBalanceUI extends JFrame {
             snapImage(wbExposure);
             debayerImage(capturedImageShort);
             getScales();
-            core_.setProperty(cameraLabel, RED_SCALE_LABEL, redScale);
-            core_.setProperty(cameraLabel, GREEN_SCALE_LABEL, greenScale);
-            core_.setProperty(cameraLabel, BLUE_SCALE_LABEL, blueScale);
-            core_.setProperty(cameraLabel, "Color", "ON");
+            core_.setProperty(cameraLabel, KEYWORD_RED_SCALE, redScale);
+            core_.setProperty(cameraLabel, KEYWORD_GREEN_SCALE, greenScale);
+            core_.setProperty(cameraLabel, KEYWORD_BLUE_SCALE, blueScale);
+            core_.setProperty(cameraLabel, KEYWORD_COLOR, KEYWORD_ON);
             gui_.app().refreshGUI();
             gui_.live().snap(true);
          } else {
-            core_.setProperty(cameraLabel, RED_SCALE_LABEL, 1.0);
-            core_.setProperty(cameraLabel, GREEN_SCALE_LABEL, 1.0);
-            core_.setProperty(cameraLabel, BLUE_SCALE_LABEL, 1.0);
-            core_.setProperty(cameraLabel, "Color", "ON");
+            core_.setProperty(cameraLabel, KEYWORD_RED_SCALE, 1.0);
+            core_.setProperty(cameraLabel, KEYWORD_GREEN_SCALE, 1.0);
+            core_.setProperty(cameraLabel, KEYWORD_BLUE_SCALE, 1.0);
+            core_.setProperty(cameraLabel, KEYWORD_COLOR, KEYWORD_ON);
             gui_.app().refreshGUI();
          }
       } catch (Exception ex) {
@@ -1022,7 +1038,6 @@ public class WhiteBalanceUI extends JFrame {
       btnRunWB.setEnabled(true);
       btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
       gui_.live().setSuspended(false);
-
    }
 
    private void cbxBitDepthActionPerformed(
@@ -1045,37 +1060,30 @@ public class WhiteBalanceUI extends JFrame {
             break;
          default:
             cameraBitDepth = DEPTH16BIT;
+            break;
       }
    }
 
-
    private void cbxCFAPatternActionPerformed(
          java.awt.event.ActionEvent evt) {
-
       switch (cbxCFAPattern.getSelectedIndex()) {
          case CFA_RGGB:
             cfaPattern = CFA_RGGB;
             break;
-
          case CFA_BGGR:
             cfaPattern = CFA_BGGR;
             break;
-
          case CFA_GRBG:
             cfaPattern = CFA_GRBG;
             break;
-
          case CFA_GBRG:
             cfaPattern = CFA_GBRG;
             break;
-
          default:
             cfaPattern = CFA_RGGB;
             break;
-
       }
    }
-
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private JButton btnRunWB;
@@ -1114,12 +1122,11 @@ public class WhiteBalanceUI extends JFrame {
 
    //if user changes the CFA pattern in the MM UI select the same pattern also in the
    //WB plugin
-
    @Subscribe
    public void onPropertyChanged(PropertyChangedEvent event) {
       String property = event.getProperty();
       String value = event.getValue();
-      if (property.equals("Color - Sensor CFA Pattern")) {
+      if (property.equals(KEYWORD_SENSOR_CFA)) {
          setCFAPattern(value);
       }
    }
