@@ -805,6 +805,11 @@ public class WhiteBalanceUI extends JFrame {
                b.putPixel(x + 1, y + 1, one);
             }
          }
+         for (int x = 0; x < width; x += 2) {
+            one = ip.getPixel(x, 1);
+            b.putPixel(x, 0, one);
+            b.putPixel(x + 1, 0, one);
+         }
 
          for (int y = 0; y < height; y += 2) {
             for (int x = 1; x < width; x += 2) {
@@ -814,6 +819,11 @@ public class WhiteBalanceUI extends JFrame {
                r.putPixel(x, y + 1, one);
                r.putPixel(x + 1, y + 1, one);
             }
+         }
+         for (int y = 0; y < height; y += 2) {
+            one = ip.getPixel(1, y);
+            r.putPixel(0, y, one);
+            r.putPixel(0, y + 1, one);
          }
 
          for (int y = 0; y < height; y += 2) {
@@ -830,6 +840,10 @@ public class WhiteBalanceUI extends JFrame {
                g.putPixel(x, y, one);
                g.putPixel(x + 1, y, one);
             }
+         }
+         for (int y = 1; y < height; y += 2) {
+            one = ip.getPixel(1, y);
+            g.putPixel(0, y, one);
          }
 
          if (cfaPattern == CFA_GRBG) {
@@ -869,6 +883,18 @@ public class WhiteBalanceUI extends JFrame {
                r.putPixel(x + 1, y + 1, one);
             }
          }
+         for (int y = 1; y < height; y += 2) {
+            one = ip.getPixel(1, y);
+            r.putPixel(0, y, one);
+            r.putPixel(0, y + 1, one);
+         }
+         for (int x = 1; x < width; x += 2) {
+            one = ip.getPixel(x, 1);
+            r.putPixel(x, 0, one);
+            r.putPixel(x + 1, 0, one);
+         }
+         one = ip.getPixel(1, 1);
+         r.putPixel(0, 0, one);
 
          for (int y = 0; y < height; y += 2) {
             for (int x = 1; x < width; x += 2) {
@@ -876,6 +902,10 @@ public class WhiteBalanceUI extends JFrame {
                g.putPixel(x, y, one);
                g.putPixel(x + 1, y, one);
             }
+         }
+         for (int y = 0; y < height; y += 2) {
+            one = ip.getPixel(1, y);
+            g.putPixel(0, y, one);
          }
 
          for (int y = 1; y < height; y += 2) {
@@ -885,6 +915,7 @@ public class WhiteBalanceUI extends JFrame {
                g.putPixel(x + 1, y, one);
             }
          }
+
          if (cfaPattern == CFA_RGGB) {
             rMean = b.getStatistics().mean;
             gMean = g.getStatistics().mean;
