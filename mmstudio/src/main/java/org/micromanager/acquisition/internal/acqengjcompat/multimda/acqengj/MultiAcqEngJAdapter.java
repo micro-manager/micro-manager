@@ -38,6 +38,7 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -375,13 +376,17 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
+         PositionList posList = null;
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+            if (acquisitionSettings.usePositionList() && posListHasZDrive(positionList)) {
+               posList = positionList;
+            }
          }
-         zStack = MDAAcqEventModules.zStack(0,
-               acquisitionSettings.slices().size() - 1,
-               acquisitionSettings.sliceZStepUm(),
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
                origin,
+               posList,
                chSpecs,
                tag);
       }
@@ -1098,6 +1103,28 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return sequenceSettings.comment();
    }
 
+   private boolean posListHasZDrive(PositionList posList) {
+      // assume that all positions contain the same drives
+      if (posList == null || posList.getNumberOfPositions() == 0) {
+         return false;
+      }
+      MultiStagePosition msp = posList.getPosition(0);
+      for (int i = 0; i < msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         if (sp != null && sp.is1DStagePosition()) {
+            String stageLabel = sp.getStageDeviceLabel();
+            try {
+               if (core_.getFocusDevice().equals(stageLabel)) {
+                  return true;
+               }
+            } catch (Exception e) {
+               studio_.logs().logError(e);
+            }
+         }
+      }
+      return false;
+
+   }
 
    ////////////////////////////////////////////
    ////////// Event handlers

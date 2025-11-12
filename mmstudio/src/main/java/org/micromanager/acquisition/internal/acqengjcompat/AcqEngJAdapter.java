@@ -356,6 +356,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             currentAcquisition_.addHook(restorePositionHook(msp),
                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
          // This hook is used to update the time of the next wake up call
          if (sequenceSettings.useFrames()) {
@@ -582,25 +583,29 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
+      PositionList posList = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+            if (acquisitionSettings.usePositionList() && posListHasZDrive(posList_)) {
+               posList = posList_;
+            }
          }
-         zStack = MDAAcqEventModules.zStack(0,
-               acquisitionSettings.slices().size() - 1,
-               acquisitionSettings.sliceZStepUm(),
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
                origin,
+               posList,
                chSpecs,
                null);
       } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
          boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
          if (hasZOffsets) {
             // add a fake z stack so that the channel z-offsets are handles correctly
-            zStack = MDAAcqEventModules.zStack(0,
-                  0,
-                  0.1,
+            zStack = MDAAcqEventModules.zStack(
+                     acquisitionSettings,
                   studio_.core().getPosition(),
+                  posList,
                   chSpecs,
                   null);
          }
@@ -1802,6 +1807,29 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    @Override
    public String getComment() {
       return sequenceSettings_.comment();
+   }
+
+   private boolean posListHasZDrive(PositionList posList) {
+      // assume that all positions contain the same drives
+      if (posList == null || posList.getNumberOfPositions() == 0) {
+         return false;
+      }
+      MultiStagePosition msp = posList.getPosition(0);
+      for (int i = 0; i < msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         if (sp != null && sp.is1DStagePosition()) {
+            String stageLabel = sp.getStageDeviceLabel();
+            try {
+               if (core_.getFocusDevice().equals(stageLabel)) {
+                  return true;
+               }
+            } catch (Exception e) {
+               studio_.logs().logError(e);
+            }
+         }
+      }
+      return false;
+
    }
 
 
