@@ -402,7 +402,13 @@ public final class ConfigGroupPad extends JScrollPane {
          try {
             for (StateItem item : groupList_) {
                if (item.group.equals(groupName)) {
-                  item.config = configName;
+                  if (item.singleProp) {
+                     item.setValueFromCoreString(
+                              core_.getPropertyFromCache(item.device, item.name));
+                     item.config = item.value;
+                  } else {
+                     item.config = configName;
+                  }
                }
             }
          } catch (Exception e) {
