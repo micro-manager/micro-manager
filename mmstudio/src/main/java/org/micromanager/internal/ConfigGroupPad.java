@@ -403,7 +403,8 @@ public final class ConfigGroupPad extends JScrollPane {
             for (StateItem item : groupList_) {
                if (item.group.equals(groupName)) {
                   if (item.singleProp) {
-                     item.setValueFromCoreString(core_.getPropertyFromCache(item.device, item.name));
+                     item.setValueFromCoreString(
+                              core_.getPropertyFromCache(item.device, item.name));
                      item.config = item.value;
                   } else {
                      item.config = configName;
