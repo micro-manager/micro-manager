@@ -101,7 +101,7 @@ public class WhiteBalanceUI extends JFrame {
    private static final String KEYWORD_RED_SCALE = "Color - Red scale"; // g_Keyword_RedScale
    private static final String KEYWORD_BLUE_SCALE = "Color - Blue scale"; // g_Keyword_BlueScale
    private static final String KEYWORD_GREEN_SCALE = "Color - Green scale"; // g_Keyword_GreenScale
-   private static final String KEYWORD_SENSOR_CFA = "Color - Sensor CFA"; // g_Keyword_SensorCFA
+   private static final String KEYWORD_ALGORITHM_CFA = "Color - Algorithm CFA"; // g_Keyword_AlgorithmCFA
    private static final String KEYWORD_RGGB = "R-G-G-B"; // g_Keyword_RGGB
    private static final String KEYWORD_BGGR = "B-G-G-R"; // g_Keyword_BGGR
    private static final String KEYWORD_GRBG = "G-R-B-G"; // g_Keyword_GRBG
@@ -198,7 +198,7 @@ public class WhiteBalanceUI extends JFrame {
    private void getCFAPattern() {
       String cfaPattern;
       try {
-         cfaPattern = core_.getProperty(cameraLabel, KEYWORD_SENSOR_CFA);
+         cfaPattern = core_.getProperty(cameraLabel, KEYWORD_ALGORITHM_CFA);
       } catch (Exception ex) {
          cfaPattern = KEYWORD_RGGB;
          Logger.getLogger(WhiteBalanceUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -1157,7 +1157,7 @@ public class WhiteBalanceUI extends JFrame {
    public void onPropertyChanged(PropertyChangedEvent event) {
       String property = event.getProperty();
       String value = event.getValue();
-      if (property.equals(KEYWORD_SENSOR_CFA)) {
+      if (property.equals(KEYWORD_ALGORITHM_CFA)) {
          setCFAPattern(value);
       }
    }
