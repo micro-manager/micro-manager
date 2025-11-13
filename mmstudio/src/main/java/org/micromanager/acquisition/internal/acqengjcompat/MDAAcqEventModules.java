@@ -34,7 +34,12 @@ public class MDAAcqEventModules {
     * @param acquisitionSettings Settings for this acquisition
     * @param zOrigin Origin of Z drive.  When MDA uses absolute Z, this will be zero, when
     *                using relative Z, it will be the current Z position
-    * @return Not quire sure, but something that tells the AcqEngineJ what to do.
+    * @param positionList List of positions used for relative Z calculations;
+    *                     may be null if not used
+    * @param chSpecs List of channel specifications,
+    *                used to determine channel-specific Z stack behavior
+    * @param extraTags Additional metadata tags to be added to each event; may be null if not used
+    * @return Not quite sure, but something that tells the AcqEngineJ what to do.
     */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(
                                             SequenceSettings acquisitionSettings,
