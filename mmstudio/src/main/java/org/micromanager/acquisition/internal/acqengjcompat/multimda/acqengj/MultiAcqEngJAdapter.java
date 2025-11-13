@@ -38,6 +38,7 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -53,6 +54,7 @@ import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEv
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
+import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJUtils;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MDASettingData;
 import org.micromanager.data.DataProvider;
@@ -375,13 +377,18 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
+         PositionList posList = null;
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+            if (acquisitionSettings.usePositionList()
+                     && AcqEngJUtils.posListHasZDrive(studio_, positionList)) {
+               posList = positionList;
+            }
          }
-         zStack = MDAAcqEventModules.zStack(0,
-               acquisitionSettings.slices().size() - 1,
-               acquisitionSettings.sliceZStepUm(),
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
                origin,
+               posList,
                chSpecs,
                tag);
       }
@@ -1097,7 +1104,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    public String getComment(SequenceSettings sequenceSettings) {
       return sequenceSettings.comment();
    }
-
 
    ////////////////////////////////////////////
    ////////// Event handlers

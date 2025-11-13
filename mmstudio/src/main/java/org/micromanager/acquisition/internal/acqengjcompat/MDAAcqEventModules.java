@@ -15,6 +15,7 @@ import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acquisition.ChannelSpec;
+import org.micromanager.acquisition.SequenceSettings;
 
 
 public class MDAAcqEventModules {
@@ -30,19 +31,25 @@ public class MDAAcqEventModules {
    /**
     * Translates desired Z stack settings into acquisition events.
     *
-    * @param startSliceIndex index of first slice (most often 0)
-    * @param stopSliceIndex index of last slice
-    * @param zStep Desired step size in microns
+    * @param acquisitionSettings Settings for this acquisition
     * @param zOrigin Origin of Z drive.  When MDA uses absolute Z, this will be zero, when
     *                using relative Z, it will be the current Z position
-    * @return Not quire sure, but something that tells the AcqEngineJ what to do.
+    * @param positionList List of positions used for relative Z calculations;
+    *                     may be null if not used
+    * @param chSpecs List of channel specifications,
+    *                used to determine channel-specific Z stack behavior
+    * @param extraTags Additional metadata tags to be added to each event; may be null if not used
+    * @return Not quite sure, but something that tells the AcqEngineJ what to do.
     */
-   public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(int startSliceIndex,
-                                            int stopSliceIndex,
-                                            double zStep,
+   public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(
+                                            SequenceSettings acquisitionSettings,
                                             double zOrigin,
+                                            PositionList positionList,
                                             List<ChannelSpec> chSpecs,
                                             HashMap<String, String> extraTags) {
+      final int startSliceIndex = 0;
+      final int stopSliceIndex = acquisitionSettings.slices().size() - 1;
+      final double zStep  = acquisitionSettings.sliceZStepUm();
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
 
@@ -67,13 +74,32 @@ public class MDAAcqEventModules {
                   zIndex_++;
                   return null;
                }
-               double zPos = zIndex_ * zStep + zOrigin;
+               double zBegin = zOrigin;
+               if (positionList != null && (
+                        acquisitionSettings.relativeZSlice() || !acquisitionSettings.useSlices())) {
+                  // Get Z origin from position list if available
+                  MultiStagePosition msp = positionList.getPosition(
+                        (Integer) event.getAxisPosition(POSITION_AXIS));
+                  try {
+                     StagePosition sp = msp.get(Engine.getCore().getFocusDevice());
+                     if (sp != null) {
+                        zBegin = sp.get1DPosition();
+                        if (!acquisitionSettings.slices().isEmpty()) {
+                           zBegin += acquisitionSettings.slices().get(0);
+                        }
+                     }
+                  } catch (Exception e) {
+                     throw new RuntimeException(e);
+                  }
+               }
+
+               double zPos = zIndex_ * zStep + zBegin;
                // Do plus equals here in case z positions have been modified by
                // another function (e.g. channel specific focal offsets)
                Integer chIndex = (Integer) event.getAxisPosition("channel");
                if (chIndex != null) {
                   if (!chSpecs.get(chIndex).doZStack()) {
-                     zPos = zOrigin + ((stopSliceIndex - startSliceIndex) / 2) * zStep;
+                     zPos = zBegin + ((stopSliceIndex - startSliceIndex) / 2) * zStep;
                   }
                }
                AcquisitionEvent sliceEvent = event.copy();
@@ -207,7 +233,7 @@ public class MDAAcqEventModules {
 
    /**
     * Iterate over an arbitrary list of positions. Adds in position indices to
-    * the axes that assume the order in the list provided correspondis to the
+    * the axes that assume the order in the list provided corresponds to the
     * desired indices.
     *
     * @param positionList MM PositionList used in this acquisition

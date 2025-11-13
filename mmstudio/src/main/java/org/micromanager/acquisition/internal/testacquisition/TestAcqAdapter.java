@@ -39,7 +39,9 @@ import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -57,7 +59,6 @@ import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEv
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.SummaryMetadata;
@@ -82,9 +83,8 @@ import org.micromanager.internal.utils.NumberUtils;
 
 
 /**
- * This class provides a compatibility layer between AcqEngJ and the
- * AcquisitionEngine interface. It is analogous to AcquisitionWrapperEngine.java,
- * which does the same thing for the clojure acquisition engine
+ * This class runs TestAcquisitions, acquisitions. These only take into account
+ * ZStack and channels settings, and are never saved automatically.
  *
  * <p>AcquisitionEngine implements a subset of the functionality of AcqEngJ,
  * and this class enforces those specific assumptions. These include:
@@ -520,12 +520,22 @@ public class TestAcqAdapter extends DataViewerListener implements
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
          }
-         zStack = MDAAcqEventModules.zStack(0,
-                 acquisitionSettings.slices().size() - 1,
-                 acquisitionSettings.sliceZStepUm(),
+         zStack = MDAAcqEventModules.zStack(
+                 acquisitionSettings,
                  origin,
+                 null,
                  chSpecs,
                  null);
+      } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
+         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
+         if (hasZOffsets) {
+            zStack = MDAAcqEventModules.zStack(
+                     acquisitionSettings,
+                     studio_.core().getPosition(),
+                     null,
+                     chSpecs,
+                     null);
+         }
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
@@ -1653,6 +1663,27 @@ public class TestAcqAdapter extends DataViewerListener implements
       return sequenceSettings_.comment();
    }
 
+   private boolean posListHasZDrive(PositionList posList) {
+      // assume that all positions contain the same drives
+      if (posList == null || posList.getNumberOfPositions() == 0) {
+         return false;
+      }
+      MultiStagePosition msp = posList.getPosition(0);
+      for (int i = 0; i < msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         if (sp != null && sp.is1DStagePosition()) {
+            String stageLabel = sp.getStageDeviceLabel();
+            try {
+               if (core_.getFocusDevice().equals(stageLabel)) {
+                  return true;
+               }
+            } catch (Exception e) {
+               studio_.logs().logError(e);
+            }
+         }
+      }
+      return false;
+   }
 
    ////////////////////////////////////////////
    ////////// Event handlers

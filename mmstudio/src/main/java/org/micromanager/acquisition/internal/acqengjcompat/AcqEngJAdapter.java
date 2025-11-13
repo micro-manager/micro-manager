@@ -276,7 +276,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
 
          // Hook to move back the ZStage to its original position after a Z stack
-         if (sequenceSettings.useSlices()) {
+         List<ChannelSpec> chSpecs = new ArrayList<>();
+         for (ChannelSpec chSpec : acquisitionSettings.channels()) {
+            if (chSpec.useChannel()) {
+               chSpecs.add(chSpec);
+            }
+         }
+         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
+         if (sequenceSettings.useSlices() || (sequenceSettings.useChannels() && hasZOffsets)) {
             currentAcquisition_.addHook(zPositionHook(acquisitionSettings,
                   Acquisition.BEFORE_HARDWARE_HOOK, null),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -356,6 +363,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             currentAcquisition_.addHook(restorePositionHook(msp),
                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
          // This hook is used to update the time of the next wake up call
          if (sequenceSettings.useFrames()) {
@@ -582,25 +590,34 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
+      PositionList posList = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+            if (acquisitionSettings.usePositionList()
+                     && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
+               posList = posList_;
+            }
          }
-         zStack = MDAAcqEventModules.zStack(0,
-               acquisitionSettings.slices().size() - 1,
-               acquisitionSettings.sliceZStepUm(),
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
                origin,
+               posList,
                chSpecs,
                null);
       } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
          boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
          if (hasZOffsets) {
             // add a fake z stack so that the channel z-offsets are handles correctly
-            zStack = MDAAcqEventModules.zStack(0,
-                  0,
-                  0.1,
+            if (acquisitionSettings.usePositionList()
+                     && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
+               posList = posList_;
+            }
+            zStack = MDAAcqEventModules.zStack(
+                     acquisitionSettings,
                   studio_.core().getPosition(),
+                  posList,
                   chSpecs,
                   null);
          }
@@ -926,26 +943,28 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             try {
                if (event.isAcquisitionFinishedEvent()) {
-                  if (sequenceSettings_.useSlices()) {
-                     if (sequenceSettings_.relativeZSlice()) {
-                        core_.setPosition(sequenceSettings.zReference());
-                     } else {
-                        core_.setPosition(zStagePositionBefore_);
-                     }
+                  if (sequenceSettings_.relativeZSlice()) {
+                     core_.setPosition(sequenceSettings.zReference());
+                  } else {
+                     core_.setPosition(zStagePositionBefore_);
                   }
                   return event;
                }
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
-                  if (event.getZIndex() != null && event.getZIndex() == 0) {
-                     if (!event.isZSequenced() && sequenceSettings.useChannels()
-                             && (sequenceSettings.acqOrderMode()
-                                       == AcqOrderMode.TIME_POS_SLICE_CHANNEL
-                             || sequenceSettings.acqOrderMode()
-                                       == AcqOrderMode.POS_TIME_SLICE_CHANNEL)) {
-                        if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) != 0) {
-                           return event;
+                  if (sequenceSettings.useSlices()) {
+                     if (event.getZIndex() != null && event.getZIndex() == 0) {
+                        if (!event.isZSequenced() && sequenceSettings.useChannels()
+                                 && (sequenceSettings.acqOrderMode()
+                                 == AcqOrderMode.TIME_POS_SLICE_CHANNEL
+                                 || sequenceSettings.acqOrderMode()
+                                 == AcqOrderMode.POS_TIME_SLICE_CHANNEL)) {
+                           if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) != 0) {
+                              return event;
+                           }
                         }
+                        zStagePositionBefore_ = core_.getPosition();
                      }
+                  } else {
                      zStagePositionBefore_ = core_.getPosition();
                   }
                } else if (when == AcquisitionAPI.AFTER_EXPOSURE_HOOK) {
