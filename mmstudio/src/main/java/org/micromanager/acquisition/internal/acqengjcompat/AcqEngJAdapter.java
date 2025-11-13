@@ -595,7 +595,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
-            if (acquisitionSettings.usePositionList() && posListHasZDrive(posList_)) {
+            if (acquisitionSettings.usePositionList()
+                     && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
                posList = posList_;
             }
          }
@@ -609,7 +610,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
          if (hasZOffsets) {
             // add a fake z stack so that the channel z-offsets are handles correctly
-            if (acquisitionSettings.usePositionList() && posListHasZDrive(posList_)) {
+            if (acquisitionSettings.usePositionList()
+                     && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
                posList = posList_;
             }
             zStack = MDAAcqEventModules.zStack(
@@ -1819,29 +1821,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    @Override
    public String getComment() {
       return sequenceSettings_.comment();
-   }
-
-   private boolean posListHasZDrive(PositionList posList) {
-      // assume that all positions contain the same drives
-      if (posList == null || posList.getNumberOfPositions() == 0) {
-         return false;
-      }
-      MultiStagePosition msp = posList.getPosition(0);
-      for (int i = 0; i < msp.size(); i++) {
-         StagePosition sp = msp.get(i);
-         if (sp != null && sp.is1DStagePosition()) {
-            String stageLabel = sp.getStageDeviceLabel();
-            try {
-               if (core_.getFocusDevice().equals(stageLabel)) {
-                  return true;
-               }
-            } catch (Exception e) {
-               studio_.logs().logError(e);
-            }
-         }
-      }
-      return false;
-
    }
 
 

@@ -54,6 +54,7 @@ import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEv
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
+import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJUtils;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MDASettingData;
 import org.micromanager.data.DataProvider;
@@ -379,7 +380,8 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          PositionList posList = null;
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
-            if (acquisitionSettings.usePositionList() && posListHasZDrive(positionList)) {
+            if (acquisitionSettings.usePositionList()
+                     && AcqEngJUtils.posListHasZDrive(studio_, positionList)) {
                posList = positionList;
             }
          }
@@ -1101,28 +1103,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
    public String getComment(SequenceSettings sequenceSettings) {
       return sequenceSettings.comment();
-   }
-
-   private boolean posListHasZDrive(PositionList posList) {
-      // assume that all positions contain the same drives
-      if (posList == null || posList.getNumberOfPositions() == 0) {
-         return false;
-      }
-      MultiStagePosition msp = posList.getPosition(0);
-      for (int i = 0; i < msp.size(); i++) {
-         StagePosition sp = msp.get(i);
-         if (sp != null && sp.is1DStagePosition()) {
-            String stageLabel = sp.getStageDeviceLabel();
-            try {
-               if (core_.getFocusDevice().equals(stageLabel)) {
-                  return true;
-               }
-            } catch (Exception e) {
-               studio_.logs().logError(e);
-            }
-         }
-      }
-      return false;
    }
 
    ////////////////////////////////////////////
