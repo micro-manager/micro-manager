@@ -70,14 +70,18 @@ public class MDAAcqEventModules {
                   return null;
                }
                double zBegin = zOrigin;
-               if (positionList != null && acquisitionSettings.relativeZSlice()) {
+               if (positionList != null && (
+                        acquisitionSettings.relativeZSlice() || !acquisitionSettings.useSlices())) {
                   // Get Z origin from position list if available
                   MultiStagePosition msp = positionList.getPosition(
                         (Integer) event.getAxisPosition(POSITION_AXIS));
                   try {
                      StagePosition sp = msp.get(Engine.getCore().getFocusDevice());
                      if (sp != null) {
-                        zBegin = sp.get1DPosition() + acquisitionSettings.slices().get(0);
+                        zBegin = sp.get1DPosition();
+                        if (!acquisitionSettings.slices().isEmpty()) {
+                           zBegin += acquisitionSettings.slices().get(0);
+                        }
                      }
                   } catch (Exception e) {
                      throw new RuntimeException(e);

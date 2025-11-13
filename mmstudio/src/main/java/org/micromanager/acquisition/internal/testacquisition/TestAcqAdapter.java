@@ -39,7 +39,9 @@ import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -524,6 +526,16 @@ public class TestAcqAdapter extends DataViewerListener implements
                  null,
                  chSpecs,
                  null);
+      } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
+         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
+         if (hasZOffsets) {
+            zStack = MDAAcqEventModules.zStack(
+                     acquisitionSettings,
+                     studio_.core().getPosition(),
+                     null,
+                     chSpecs,
+                     null);
+         }
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
@@ -1651,6 +1663,27 @@ public class TestAcqAdapter extends DataViewerListener implements
       return sequenceSettings_.comment();
    }
 
+   private boolean posListHasZDrive(PositionList posList) {
+      // assume that all positions contain the same drives
+      if (posList == null || posList.getNumberOfPositions() == 0) {
+         return false;
+      }
+      MultiStagePosition msp = posList.getPosition(0);
+      for (int i = 0; i < msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         if (sp != null && sp.is1DStagePosition()) {
+            String stageLabel = sp.getStageDeviceLabel();
+            try {
+               if (core_.getFocusDevice().equals(stageLabel)) {
+                  return true;
+               }
+            } catch (Exception e) {
+               studio_.logs().logError(e);
+            }
+         }
+      }
+      return false;
+   }
 
    ////////////////////////////////////////////
    ////////// Event handlers

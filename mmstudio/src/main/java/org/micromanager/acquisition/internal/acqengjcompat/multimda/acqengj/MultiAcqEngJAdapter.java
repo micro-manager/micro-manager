@@ -1123,7 +1123,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
       }
       return false;
-
    }
 
    ////////////////////////////////////////////
