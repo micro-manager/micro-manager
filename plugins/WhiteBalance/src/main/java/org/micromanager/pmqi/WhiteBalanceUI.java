@@ -1043,6 +1043,14 @@ public class WhiteBalanceUI extends JFrame {
       cbxBitDepth.paintImmediately(cbxBitDepth.getVisibleRect());
       lblMeanTarget.paintImmediately(lblMeanTarget.getVisibleRect());
 
+      if (cameraBitDepth_ <= DEPTH8BIT || cameraBitDepth_ > DEPTH16BIT) {
+         JOptionPane.showMessageDialog(this,
+               "This plugin supports 16-bit pixels only.\n"
+               + "Current bit depth is " + String.valueOf(cameraBitDepth_) + ".",
+               "Error", JOptionPane.ERROR_MESSAGE);
+         return;
+      }
+
       lblMean.setText("0");
       lblMean.paintImmediately(lblMean.getVisibleRect());
       lblRedMean.setText("0");
