@@ -828,9 +828,9 @@ public class WhiteBalanceUI extends JFrame {
       int height = capturedImageShort_.getHeight();
       int width = capturedImageShort_.getWidth();
 
-      ImageProcessor r = new ShortProcessor(width, width);
-      ImageProcessor g = new ShortProcessor(width, width);
-      ImageProcessor b = new ShortProcessor(width, width);
+      ImageProcessor r = new ShortProcessor(width, height);
+      ImageProcessor g = new ShortProcessor(width, height);
+      ImageProcessor b = new ShortProcessor(width, height);
       ImageProcessor ip = imgToProcess;
 
       if (cfaPattern_ == CFA_GRBG || cfaPattern_ == CFA_GBRG) {
