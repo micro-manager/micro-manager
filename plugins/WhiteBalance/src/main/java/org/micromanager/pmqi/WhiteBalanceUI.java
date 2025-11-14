@@ -92,12 +92,17 @@ public class WhiteBalanceUI extends JFrame {
 
    // Keywords must match the values in DeviceAdapters/PVCAM/PVCAMUniversal.cpp
    // The same values with similar names are also in DeviceAdapters/QCam/QICamera.cpp
-   private static final String KEYWORD_CHIP_NAME = "ChipName"; // g_Keyword_ChipName (PVCAM only)
+   // g_Keyword_ChipName (PVCAM only)
+   private static final String KEYWORD_CHIP_NAME = "ChipName";
    private static final String KEYWORD_COLOR = "Color"; // g_Keyword_Color
-   private static final String KEYWORD_RED_SCALE = "Color - Red scale"; // g_Keyword_RedScale
-   private static final String KEYWORD_BLUE_SCALE = "Color - Blue scale"; // g_Keyword_BlueScale
-   private static final String KEYWORD_GREEN_SCALE = "Color - Green scale"; // g_Keyword_GreenScale
-   private static final String KEYWORD_ALGORITHM_CFA = "Color - Algorithm CFA"; // g_Keyword_AlgorithmCFA
+   // g_Keyword_RedScale
+   private static final String KEYWORD_RED_SCALE = "Color - Red scale";
+   // g_Keyword_BlueScale
+   private static final String KEYWORD_BLUE_SCALE = "Color - Blue scale";
+   // g_Keyword_GreenScale
+   private static final String KEYWORD_GREEN_SCALE = "Color - Green scale";
+   // g_Keyword_AlgorithmCFA
+   private static final String KEYWORD_ALGORITHM_CFA = "Color - Algorithm CFA";
    private static final String KEYWORD_RGGB = "R-G-G-B"; // g_Keyword_RGGB
    private static final String KEYWORD_BGGR = "B-G-G-R"; // g_Keyword_BGGR
    private static final String KEYWORD_GRBG = "G-R-B-G"; // g_Keyword_GRBG
@@ -1092,13 +1097,14 @@ public class WhiteBalanceUI extends JFrame {
          btnRunWB.setText("Run WB");
          btnRunWB.setEnabled(true);
          btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
-         JOptionPane.showMessageDialog(this, "Finding exposure for White Balance algorithm failed.",
+         JOptionPane.showMessageDialog(this,
+               "Finding exposure for White Balance algorithm failed.",
                "Error", JOptionPane.ERROR_MESSAGE);
          return;
       }
 
-      lblWBExposure.setText(
-            String.valueOf(new BigDecimal(wbExposure_).setScale(0, RoundingMode.HALF_EVEN)) + " ms");
+      lblWBExposure.setText(String.valueOf(
+            new BigDecimal(wbExposure_).setScale(0, RoundingMode.HALF_EVEN)) + " ms");
 
       lblMean.setText(String.valueOf(
             new BigDecimal(capturedImageShort_.getStatistics().mean).setScale(1,
