@@ -91,7 +91,8 @@ public class WhiteBalanceUI extends JFrame {
    private static final int ADU_BIAS_LESS16BIT = 150;
 
    // Keywords must match the values in DeviceAdapters/PVCAM/PVCAMUniversal.cpp
-   private static final String KEYWORD_CHIP_NAME = "ChipName"; // g_Keyword_ChipName
+   // The same values with similar names are also in DeviceAdapters/QCam/QICamera.cpp
+   private static final String KEYWORD_CHIP_NAME = "ChipName"; // g_Keyword_ChipName (PVCAM only)
    private static final String KEYWORD_COLOR = "Color"; // g_Keyword_Color
    private static final String KEYWORD_RED_SCALE = "Color - Red scale"; // g_Keyword_RedScale
    private static final String KEYWORD_BLUE_SCALE = "Color - Blue scale"; // g_Keyword_BlueScale
@@ -141,13 +142,6 @@ public class WhiteBalanceUI extends JFrame {
 
       initComponents();
 
-      try {
-         String model = core_.getProperty(camera_, KEYWORD_CHIP_NAME);
-         lblCameraModel.setText(model);
-      } catch (Exception ex) {
-         throw new Exception("Failed to read camera model. A PVCAM compatible camera is required.");
-      }
-
       if (!isColorCamera()) {
          throw new Exception("This is not a color camera.");
       }
@@ -159,6 +153,7 @@ public class WhiteBalanceUI extends JFrame {
          throw new Exception("Failed to turn on color mode.");
       }
 
+      updateCameraModel();
       updateCFAPattern();
       updateBitDepth();
 
@@ -179,6 +174,21 @@ public class WhiteBalanceUI extends JFrame {
          gui_.logs().logError(ex);
       }
       return isColor;
+   }
+
+   private void updateCameraModel() {
+      String model = "Unknown";
+      try {
+         model = core_.getProperty(camera_, KEYWORD_CHIP_NAME);
+      } catch (Exception ex) {
+         // Not PVCAM camera
+      }
+      try {
+         model = core_.getProperty(camera_, MMCoreJ.getG_Keyword_CameraName());
+      } catch (Exception ex) {
+         // Not Qcam camera
+      }
+      lblCameraModel.setText(model);
    }
 
    private void updateCFAPattern() {
