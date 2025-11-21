@@ -155,8 +155,20 @@ public final class DefaultAutofocusManager implements AutofocusManager {
       if (afDlg_ == null) {
          afDlg_ = new AutofocusPropertyEditor(studio_, this);
       }
+      boolean exists = false;
       if (settings_.containsString(AFDEVICE)) {
-         afDlg_.changeAFMethod(settings_.getString(AFDEVICE, ""));
+         String autofocusDevice = settings_.getString(AFDEVICE, "");
+         for (AutofocusPlugin af : afs_) {
+            if (af.getName().equals(autofocusDevice)) {
+               exists = true;
+            }
+         }
+         if (exists) {
+            afDlg_.changeAFMethod(autofocusDevice);
+         }
+      }
+      if (exists & (afs_.size() > 0)) {
+         afDlg_.changeAFMethod(afs_.get(0).getName());
       }
       afDlg_.setVisible(true);
       if (currentAfDevice_ != null) {
