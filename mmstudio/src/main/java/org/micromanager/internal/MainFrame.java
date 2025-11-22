@@ -684,8 +684,8 @@ public final class MainFrame extends JFrame {
       String tooltip = isLocked ? "Unlock autofocus" : "Lock autofocus";
       SwingUtilities.invokeLater(() -> {
          autofocusLockButton_.setIcon(IconLoader.getIcon("/org/micromanager/icons/" + iconName));
+         autofocusLockButton_.setToolTipText(tooltip);
       });
-      autofocusLockButton_.setToolTipText(tooltip);
    }
 
    @Subscribe
