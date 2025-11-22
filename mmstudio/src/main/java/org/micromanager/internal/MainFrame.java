@@ -576,7 +576,7 @@ public final class MainFrame extends JFrame {
       autofocusLockButton_ = createButton(null,
             "lock_open.png", "Lock autofocus", () -> {
                boolean enabled = mmStudio_.isAutofocusEnabled();
-               mmStudio_.setAutfocusEnabled(!enabled);
+               mmStudio_.setAutofocusEnabled(!enabled);
                final Icon tmpIcon = !enabled ? lockIcon : unlockedIcon;
                   SwingUtilities.invokeLater(()
                            -> autofocusLockButton_.setIcon(tmpIcon));
