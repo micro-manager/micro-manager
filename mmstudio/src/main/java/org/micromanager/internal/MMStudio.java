@@ -947,6 +947,8 @@ public final class MMStudio implements Studio {
    public void autofocusNow() {
       if (afMgr_.getAutofocusMethod() != null) {
          new Thread(() -> {
+            // is it needed to suspend live mode here?
+            // Probably depends on the autofocus method
             live().setSuspended(true);
             try {
                afMgr_.getAutofocusMethod().fullFocus();
@@ -958,6 +960,27 @@ public final class MMStudio implements Studio {
       } else {
          ReportingUtils.showError("No autofocus device is selected.");
       }
+   }
+
+   public void setAutofocusEnabled(boolean enabled) {
+      if (afMgr_.getAutofocusMethod() != null) {
+         try {
+            afMgr_.getAutofocusMethod().enableContinuousFocus(enabled);
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex, "An error occurred while changing autofocus state");
+         }
+      }
+   }
+
+   public boolean isAutofocusEnabled() {
+      if (afMgr_.getAutofocusMethod() != null) {
+         try {
+            return afMgr_.getAutofocusMethod().isContinuousFocusEnabled();
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex, "An error occurred while getting autofocus state");
+         }
+      }
+      return false;
    }
 
    // //////////////////////////////////////////////////////////////////////////
