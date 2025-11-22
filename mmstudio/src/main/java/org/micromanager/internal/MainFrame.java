@@ -109,6 +109,7 @@ public final class MainFrame extends JFrame {
    private JButton toggleShutterButton_;
    private JToggleButton handMovesButton_;
    private JButton autofocusNowButton_;
+   private JButton autofocusLockButton_;
    private JButton autofocusConfigureButton_;
    private JButton saveConfigButton_;
    private JLabel alertLabel_;
@@ -568,6 +569,20 @@ public final class MainFrame extends JFrame {
             });
       autoPanel.add(autofocusNowButton_, SMALLBUTTON_SIZE);
 
+      final Icon lockIcon = IconLoader.getIcon(
+            "/org/micromanager/icons/lock_locked.png");
+      final Icon unlockedIcon = IconLoader.getIcon(
+            "/org/micromanager/icons/lock_open.png");
+      autofocusLockButton_ = createButton(null,
+            "lock_open.png", "Lock autofocus", () -> {
+               boolean enabled = mmStudio_.isAutofocusEnabled();
+               mmStudio_.setAutfocusEnabled(!enabled);
+               final Icon tmpIcon = !enabled ? lockIcon : unlockedIcon;
+                  SwingUtilities.invokeLater(()
+                           -> autofocusLockButton_.setIcon(tmpIcon));
+            });
+      autoPanel.add(autofocusLockButton_, SMALLBUTTON_SIZE);
+
       // Icon based on the public-domain icon at
       // http://publicdomainvectors.org/en/free-clipart/Adjustable-wrench-icon-vector-image/23097.html
       autofocusConfigureButton_ = createButton(null,
@@ -659,8 +674,18 @@ public final class MainFrame extends JFrame {
       }
    }
 
-   public void updateAutofocusButton(boolean isEnabled) {
+   public void updateAutofocusButtons(boolean isEnabled) {
       autofocusNowButton_.setEnabled(isEnabled);
+      autofocusLockButton_.setEnabled(isEnabled);
+   }
+
+   public void onAFLockStatusChanged(boolean isLocked) {
+      String iconName = isLocked ? "lock_super.png" : "lock_open.png";
+      String tooltip = isLocked ? "Unlock autofocus" : "Lock autofocus";
+      SwingUtilities.invokeLater(() -> {
+         autofocusLockButton_.setIcon(IconLoader.getIcon("/org/micromanager/icons/" + iconName));
+      });
+      autofocusLockButton_.setToolTipText(tooltip);
    }
 
    @Subscribe

@@ -294,7 +294,7 @@ public class MMUIManager {
             frame_.setBinSize(binSize);
          }
 
-         frame_.updateAutofocusButton(studio_.getAutofocusManager().getAutofocusMethod() != null);
+         frame_.updateAutofocusButtons(studio_.getAutofocusManager().getAutofocusMethod() != null);
 
          ConfigGroupPad pad = frame_.getConfigPad();
          // state devices
@@ -358,7 +358,7 @@ public class MMUIManager {
 
          if (frame_ != null) {
             configureBinningCombo();
-            frame_.updateAutofocusButton(
+            frame_.updateAutofocusButtons(
                   studio_.getAutofocusManager().getAutofocusMethod() != null);
             // Since the load system configuration event already updated the cache,
             // we do not need to do it again.
