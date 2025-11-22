@@ -962,7 +962,7 @@ public final class MMStudio implements Studio {
       }
    }
 
-   public void setAutfocusEnabled(boolean enabled) {
+   public void setAutofocusEnabled(boolean enabled) {
       if (afMgr_.getAutofocusMethod() != null) {
          try {
             afMgr_.getAutofocusMethod().enableContinuousFocus(enabled);
