@@ -167,7 +167,7 @@ public final class DefaultAutofocusManager implements AutofocusManager {
             afDlg_.changeAFMethod(autofocusDevice);
          }
       }
-      if (exists & (afs_.size() > 0)) {
+      if (!exists && (!afs_.isEmpty())) {
          afDlg_.changeAFMethod(afs_.get(0).getName());
       }
       afDlg_.setVisible(true);
