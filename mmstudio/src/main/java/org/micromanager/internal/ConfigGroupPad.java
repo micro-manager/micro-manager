@@ -128,7 +128,8 @@ public final class ConfigGroupPad extends JScrollPane {
    public void refreshGroup(String groupName, String configName) {
       if (data_ != null) {
          data_.refreshGroup(groupName, configName);
-         data_.fireTableStructureChanged();
+         // Use fireTableDataChanged() to preserve selection during updates
+         data_.fireTableDataChanged();
          table_.repaint();
       }
    }

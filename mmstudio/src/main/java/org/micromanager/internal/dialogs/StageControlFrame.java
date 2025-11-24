@@ -48,6 +48,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -841,9 +842,14 @@ public final class StageControlFrame extends JFrame {
    }
 
    private void getXYPosLabelFromCore() throws Exception {
-      Point2D.Double pos = core_.getXYStagePosition(core_.getXYStageDevice());
+      String xyStageDevice = core_.getXYStageDevice();
+      // Check if XY stage device is valid before querying position
+      if (xyStageDevice == null || xyStageDevice.isEmpty()) {
+         return;
+      }
+      Point2D.Double pos = core_.getXYStagePosition(xyStageDevice);
       studio_.events().post(new DefaultXYStagePositionChangedEvent(
-               core_.getXYStageDevice(), pos.x, pos.y));
+               xyStageDevice, pos.x, pos.y));
    }
 
    private void setXYPosLabel(double x, double y) {
@@ -854,9 +860,13 @@ public final class StageControlFrame extends JFrame {
    }
 
    private void getZPosLabelFromCore(int idx) throws Exception {
-      double zPos = core_.getPosition((String) zDriveSelect_[idx].getSelectedItem());
-      studio_.events().post(new DefaultStagePositionChangedEvent(
-            (String) zDriveSelect_[idx].getSelectedItem(), zPos));
+      String zStageDevice = (String) zDriveSelect_[idx].getSelectedItem();
+      // Check if Z stage device is valid before querying position
+      if (zStageDevice == null || zStageDevice.isEmpty()) {
+         return;
+      }
+      double zPos = core_.getPosition(zStageDevice);
+      studio_.events().post(new DefaultStagePositionChangedEvent(zStageDevice, zPos));
    }
 
    private void setZPosLabel(double z, int idx) {
@@ -929,7 +939,15 @@ public final class StageControlFrame extends JFrame {
 
    @Subscribe
    public void onSystemConfigurationLoaded(SystemConfigurationLoadedEvent event) {
-      initialize();
+      // Stop polling immediately to avoid interfering with configuration reload
+      stopTimer();
+
+      // Defer initialization to allow hardware to stabilize and avoid EDT conflicts
+      SwingUtilities.invokeLater(() -> {
+         // Always reinitialize to reflect the current configuration state
+         // This will either show available stages or display "No drives" message
+         initialize();
+      });
    }
 
    /**
