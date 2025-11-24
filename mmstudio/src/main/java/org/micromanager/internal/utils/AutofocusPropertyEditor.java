@@ -52,6 +52,7 @@ import javax.swing.table.TableColumn;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.events.ChannelGroupChangedEvent;
+import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.internal.MMStudio;
 
 /**
@@ -279,6 +280,27 @@ public final class AutofocusPropertyEditor extends JDialog {
       }
    }
 
+   /**
+    * Handles Property Changed Event for autofocus properties.
+    * This enables automatic updates when properties change externally.
+    *
+    * @param event Holds information about the Property that changed.
+    */
+   @Subscribe
+   public void onPropertyChanged(PropertyChangedEvent event) {
+      String device = event.getDevice();
+      String property = event.getProperty();
+      String value = event.getValue();
+
+      // Only update if this is an autofocus device property
+      if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
+         String afDeviceName = afMgr_.getAutofocusMethod().getName();
+         if (device.equals(afDeviceName)) {
+            data_.updateProperty(property, value);
+         }
+      }
+   }
+
    private void handleException(Exception e) {
       ReportingUtils.showError(e, this);
    }
@@ -363,9 +385,11 @@ public final class AutofocusPropertyEditor extends JDialog {
                   afMgr_.getAutofocusMethod().setPropertyValue(item.name, value.toString());
                }
 
-               refresh();
-
+               // For C++ autofocus devices, PropertyChangedEvent will be triggered automatically
+               // For Java autofocus plugins, manually update the value since they don't trigger events
+               item.value = value.toString();
                fireTableCellUpdated(row, col);
+
                afMgr_.getAutofocusMethod().applySettings();
                afMgr_.getAutofocusMethod().saveSettings();
             } catch (Exception e) {
@@ -400,6 +424,25 @@ public final class AutofocusPropertyEditor extends JDialog {
             this.fireTableDataChanged();
          } catch (Exception e) {
             handleException(e);
+         }
+      }
+
+      /**
+       * Updates a single property value without refreshing the entire table.
+       * This is called in response to PropertyChangedEvent callbacks.
+       *
+       * @param propertyName Name of the property that changed
+       * @param newValue New value of the property
+       */
+      public void updateProperty(String propertyName, String newValue) {
+         // Find the property in the list and update it
+         for (int i = 0; i < propList_.size(); i++) {
+            PropertyItem item = propList_.get(i);
+            if (item.name.equals(propertyName)) {
+               item.value = newValue;
+               fireTableCellUpdated(i, 1); // Update value column (column 1)
+               return;
+            }
          }
       }
 
