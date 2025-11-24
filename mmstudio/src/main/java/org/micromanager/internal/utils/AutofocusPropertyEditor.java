@@ -386,7 +386,8 @@ public final class AutofocusPropertyEditor extends JDialog {
                }
 
                // For C++ autofocus devices, PropertyChangedEvent will be triggered automatically
-               // For Java autofocus plugins, manually update the value since they don't trigger events
+               // For Java autofocus plugins, manually update the value since they don't trigger
+               // events
                item.value = value.toString();
                fireTableCellUpdated(row, col);
 
