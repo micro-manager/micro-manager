@@ -113,6 +113,11 @@ public final class AnimationController<P> {
    // Track pending display task to enable coalescence at high frame rates
    private ScheduledFuture<?> pendingDisplayFuture_;
 
+   // Rate limiting for display updates to prevent overwhelming the display pipeline
+   // Even at 250 FPS camera speed, display can only update at ~60 FPS
+   private static final long MIN_DISPLAY_INTERVAL_NS = 16_000_000L; // 16ms = ~60 FPS
+   private long lastDisplayFiredNs_ = 0;
+
    private boolean didJumpToNewPosition_;
 
    private PerformanceMonitor perfMon_;
@@ -399,6 +404,13 @@ public final class AnimationController<P> {
             snapBackFuture_ = null;
          }
          snapBackPosition_ = (P) snapBackPosition;
+
+         // Calculate delay to rate-limit display updates to ~60 FPS
+         long now = System.nanoTime();
+         long timeSinceLastFire = now - lastDisplayFiredNs_;
+         long delayNs = Math.max(0, MIN_DISPLAY_INTERVAL_NS - timeSinceLastFire);
+         long delayMs = delayNs / 1_000_000L;
+
          pendingDisplayFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
@@ -406,6 +418,7 @@ public final class AnimationController<P> {
                synchronized (AnimationController.this) {
                   pendingDisplayFuture_ = null;
                   didJumpToNewPosition_ = true;
+                  lastDisplayFiredNs_ = System.nanoTime();
                }
                // Fire listeners without holding lock to avoid deadlock
                listeners_.fire().animationAcknowledgeDataPosition(newPosition);
@@ -413,7 +426,7 @@ public final class AnimationController<P> {
                listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
             }
-         }, 0, TimeUnit.MILLISECONDS);
+         }, delayMs, TimeUnit.MILLISECONDS);
          snapBackFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
@@ -454,6 +467,12 @@ public final class AnimationController<P> {
          }, newPositionFlashDurationMs_, TimeUnit.MILLISECONDS);
 
       } else if (foundAxisToBeIgnored) {
+         // Calculate delay to rate-limit display updates to ~60 FPS
+         long now = System.nanoTime();
+         long timeSinceLastFire = now - lastDisplayFiredNs_;
+         long delayNs = Math.max(0, MIN_DISPLAY_INTERVAL_NS - timeSinceLastFire);
+         long delayMs = delayNs / 1_000_000L;
+
          pendingDisplayFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
@@ -464,6 +483,7 @@ public final class AnimationController<P> {
                   if (positionChanged) {
                      sequencer_.setAnimationPosition((P) newDisplayPosition);
                      didJumpToNewPosition_ = true;
+                     lastDisplayFiredNs_ = System.nanoTime();
                   }
                }
                // Fire listeners without holding lock to avoid deadlock
@@ -476,8 +496,14 @@ public final class AnimationController<P> {
                   listeners_.fire().animationNewDataPositionExpired();
                }
             }
-         }, 0, TimeUnit.MILLISECONDS);
+         }, delayMs, TimeUnit.MILLISECONDS);
       } else { // no axis locked
+         // Calculate delay to rate-limit display updates to ~60 FPS
+         long now = System.nanoTime();
+         long timeSinceLastFire = now - lastDisplayFiredNs_;
+         long delayNs = Math.max(0, MIN_DISPLAY_INTERVAL_NS - timeSinceLastFire);
+         long delayMs = delayNs / 1_000_000L;
+
          pendingDisplayFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
@@ -486,13 +512,14 @@ public final class AnimationController<P> {
                   pendingDisplayFuture_ = null;
                   sequencer_.setAnimationPosition((P) newPosition);
                   didJumpToNewPosition_ = true;
+                  lastDisplayFiredNs_ = System.nanoTime();
                }
                // Fire listeners without holding lock to avoid deadlock
                listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
                listeners_.fire().animationShouldDisplayDataPosition(newPosition);
                listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
             }
-         }, 0, TimeUnit.MILLISECONDS);
+         }, delayMs, TimeUnit.MILLISECONDS);
       }
    }
 
