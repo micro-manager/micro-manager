@@ -32,7 +32,9 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.SwingUtilities;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
@@ -104,7 +106,18 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private final Set<String> playbackAxes_ = new HashSet<>();
 
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
-   private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
+
+   // Adaptive display throttling - reduce display rate during high-speed acquisition
+   // to minimize resource consumption and prevent circular buffer overflows
+   private static final long BASE_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0); // 60 FPS normal
+   private static final long HIGH_SPEED_REPAINT_PERIOD_NS =
+            Math.round(1e9 / 30.0); // 30 FPS high-speed
+   private static final long VERY_HIGH_SPEED_REPAINT_PERIOD_NS =
+            Math.round(1e9 / 15.0); // 15 FPS very high-speed
+
+   // Thresholds for switching display rates based on estimated camera FPS
+   private static final double HIGH_SPEED_THRESHOLD_FPS = 30.0;
+   private static final double VERY_HIGH_SPEED_THRESHOLD_FPS = 60.0;
 
    private final LinkManager linkManager_;
 
@@ -139,8 +152,44 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
 
+   // Track pending display runnables to prevent memory accumulation
+   private final AtomicInteger pendingDisplayRunnables_ = new AtomicInteger(0);
+   // Maximum number of pending display runnables to prevent memory accumulation.
+   // Set to 2 to enable aggressive frame dropping at high frame rates - ensures
+   // display shows newest frames instead of accumulating old ones.
+   // Works with AnimationController coalescence to keep display current.
+   private static final int MAX_PENDING_DISPLAYS = 2;
+
+   // Track when counter has been stuck at maximum to enable recovery.
+   // If counter stays at MAX for more than COUNTER_RESET_TIMEOUT_NS,
+   // we force a reset to allow at least one display update through.
+   // Using AtomicLong for thread-safe compareAndSet operations.
+   private final AtomicLong counterMaxSinceNs_ = new AtomicLong(0);
+   private static final long COUNTER_RESET_TIMEOUT_NS = 100_000_000L; // 100ms timeout (reduced from 500ms)
+
+   // Track image arrival times to estimate camera FPS for adaptive throttling
+   private static final int IMAGE_TIMING_WINDOW_SIZE = 10;
+   private final long[] imageArrivalTimes_ = new long[IMAGE_TIMING_WINDOW_SIZE];
+   private int imageTimingIndex_ = 0;
+   private volatile double estimatedCameraFps_ = 0.0;
+
    private PerformanceMonitor perfMon_
          = PerformanceMonitor.createWithTimeConstantMs(1000.0);
+
+   // Single-threaded executor for display position updates to prevent blocking
+   // AnimationController's scheduler thread with disk I/O operations
+   private final java.util.concurrent.ExecutorService displayPositionExecutor_ =
+         java.util.concurrent.Executors.newSingleThreadExecutor(
+               org.micromanager.internal.utils.ThreadFactoryFactory
+                     .createThreadFactory("Display Position Processor"));
+
+   // Track pending display position for coalescence - only process latest position
+   private final java.util.concurrent.atomic.AtomicReference<Coords> pendingDisplayPosition_ =
+         new java.util.concurrent.atomic.AtomicReference<>(null);
+
+   // Track if display position processor is currently running
+   private final java.util.concurrent.atomic.AtomicBoolean displayPositionProcessing_ =
+         new java.util.concurrent.atomic.AtomicBoolean(false);
 
 
    //This static counter makes sure that each object has it's own unique id during runtime.
@@ -158,12 +207,21 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void removeListener(DataViewerListener listener) {
-      for (Map.Entry<Integer, DataViewerListener> entry : listeners_.entrySet()) {
+      // Collect keys to remove (can't remove during iteration)
+      List<Integer> keysToRemove = new ArrayList<>();
+
+      // Copy entrySet to avoid ConcurrentModificationException
+      Set<Map.Entry<Integer, DataViewerListener>> entriesCopy =
+            new HashSet<>(listeners_.entrySet());
+      for (Map.Entry<Integer, DataViewerListener> entry : entriesCopy) {
          if (listener.equals(entry.getValue())) {
-            // if we remove the entry, we risk concurrent modification
-            // of the TreeMap.  Therefore, simply set the value to null
-            listeners_.put(entry.getKey(), null);
+            keysToRemove.add(entry.getKey());
          }
+      }
+
+      // Remove collected keys
+      for (Integer key : keysToRemove) {
+         listeners_.remove(key);
       }
    }
 
@@ -343,12 +401,111 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       scheduleDisplayInUI(stats);
 
-      // Throttle display scheduling
-      return MIN_REPAINT_PERIOD_NS;
+      // Return adaptive throttle period based on camera speed
+      long throttleNs = getAdaptiveRepaintPeriodNs();
+            + (throttleNs / 1_000_000) + "ms (cameraFps=" + estimatedCameraFps_ + ")");
+      return throttleNs;
+   }
+
+   /**
+    * Calculate estimated camera frame rate from recent image arrivals.
+    * Used for adaptive display throttling during high-speed acquisition.
+    *
+    * @return Estimated camera FPS, or 0 if insufficient data
+    */
+   private double calculateCameraFps() {
+      // Need at least 3 samples to calculate FPS
+      if (imageTimingIndex_ < 3) {
+         return 0.0;
+      }
+
+      // Calculate time span across the window
+      int count = Math.min(imageTimingIndex_, IMAGE_TIMING_WINDOW_SIZE);
+      long oldest = imageArrivalTimes_[0];
+      long newest = imageArrivalTimes_[(imageTimingIndex_ - 1 + IMAGE_TIMING_WINDOW_SIZE)
+                                        % IMAGE_TIMING_WINDOW_SIZE];
+
+      if (newest <= oldest) {
+         return 0.0; // Invalid timing data
+      }
+
+      long spanNs = newest - oldest;
+      if (spanNs == 0) {
+         return 0.0;
+      }
+
+      // FPS = (count - 1) / time_span_in_seconds
+      double spanSeconds = spanNs / 1e9;
+      return (count - 1) / spanSeconds;
+   }
+
+   /**
+    * Get display throttle period based on current camera acquisition speed.
+    * Automatically reduces display rate during high-speed acquisition to
+    * minimize resource consumption and prevent circular buffer overflows.
+    *
+    * @return Minimum period in nanoseconds between display updates
+    */
+   private long getAdaptiveRepaintPeriodNs() {
+      double cameraFps = estimatedCameraFps_;
+
+      if (cameraFps > VERY_HIGH_SPEED_THRESHOLD_FPS) {
+         // Very high speed (>60 FPS): Display at 15 FPS to minimize overhead
+         return VERY_HIGH_SPEED_REPAINT_PERIOD_NS;
+      } else if (cameraFps > HIGH_SPEED_THRESHOLD_FPS) {
+         // High speed (30-60 FPS): Display at 30 FPS for balance
+         return HIGH_SPEED_REPAINT_PERIOD_NS;
+      } else {
+         // Normal speed (<30 FPS): Display at full 60 FPS
+         return BASE_REPAINT_PERIOD_NS;
+      }
    }
 
    private void scheduleDisplayInUI(final ImagesAndStats images) {
       Preconditions.checkArgument(images.getRequest().getNumberOfImages() > 0);
+
+      // Check if too many display runnables are pending to prevent memory buildup
+      int currentPending = pendingDisplayRunnables_.get();
+
+      if (currentPending >= MAX_PENDING_DISPLAYS) {
+         long now = System.nanoTime();
+
+         // Thread-safe: Try to set timeout start time if not already set
+         // compareAndSet ensures only one thread sets the initial timeout value
+         long expectedZero = 0;
+         counterMaxSinceNs_.compareAndSet(expectedZero, now);
+
+         // Read the actual start time (either our value or another thread's)
+         long stuckSince = counterMaxSinceNs_.get();
+
+         // If counter has been at max for too long, reset it to allow recovery
+         if (now - stuckSince > COUNTER_RESET_TIMEOUT_NS) {
+            // Diagnostic logging for stuck counter
+            ReportingUtils.logMessage("WARNING: Display counter stuck at " + currentPending
+                  + " for " + TimeUnit.NANOSECONDS.toMillis(now - stuckSince)
+                  + "ms - forcing reset. This may indicate EDT issues.");
+
+            if (perfMon_ != null) {
+               perfMon_.sampleTimeInterval("Display counter forced reset after timeout");
+               perfMon_.sample("Pending count at timeout", currentPending);
+               perfMon_.sample("Display counter forced reset after timeout", 1);
+            }
+                  + currentPending + " to " + (MAX_PENDING_DISPLAYS - 1));
+            // Force reset to allow at least one display update through
+            pendingDisplayRunnables_.set(MAX_PENDING_DISPLAYS - 1);
+            counterMaxSinceNs_.set(0);  // Reset for next potential stuck state
+         } else {
+            if (perfMon_ != null) {
+               perfMon_.sampleTimeInterval("Display scheduling skipped - queue full");
+            }
+            return;  // Skip this display update to prevent memory accumulation
+         }
+      } else {
+         // Reset the timeout tracking when counter is below max
+         counterMaxSinceNs_.set(0);
+      }
+
+      int newPending = pendingDisplayRunnables_.incrementAndGet();
 
       // A note about congestion of event queue by excessive paint events:
       //
@@ -372,7 +529,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // One of the nice things about doing it this way is that we can
       // coalesce the displaying tasks for multiple display windows.
 
-      runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
+      // Use invokeLaterWithCoalescence instead of invokeAsLateAsPossibleWithCoalescence
+      // to avoid EDT congestion from skip-count callbacks during high-speed acquisition.
+      // Regular coalescing is sufficient since MIN_REPAINT_PERIOD_NS throttles display rate.
+      runnablePool_.invokeLaterWithCoalescence(new CoalescentRunnable() {
          @Override
          public Class<?> getCoalescenceClass() {
             return getClass();
@@ -389,67 +549,93 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
          @Override
          public void run() {
-            if (uiController_ == null) { // Closed
-               return;
-            }
+            try {
+               if (uiController_ == null) { // Closed
+                  return;
+               }
 
-            Image primaryImage = images.getRequest().getImage(0);
-            Coords nominalCoords = images.getRequest().getNominalCoords();
-            if (nominalCoords.hasAxis(Coords.CHANNEL)) {
-               int channel = nominalCoords.getChannel();
-               for (Image image : images.getRequest().getImages()) {
-                  if (image.getCoords().hasAxis(Coords.CHANNEL)
-                        && image.getCoords().getChannel() == channel) {
-                     primaryImage = image;
-                     break;
+               // Diagnostic logging for EDT congestion monitoring
+               if (perfMon_ != null) {
+                  perfMon_.sampleTimeInterval("Display runnable started on EDT");
+                  perfMon_.sample("Pending display count at start", pendingDisplayRunnables_.get());
+               }
+
+               Image primaryImage = images.getRequest().getImage(0);
+               Coords nominalCoords = images.getRequest().getNominalCoords();
+               if (nominalCoords.hasAxis(Coords.CHANNEL)) {
+                  int channel = nominalCoords.getChannel();
+                  for (Image image : images.getRequest().getImages()) {
+                     if (image.getCoords().hasAxis(Coords.CHANNEL)
+                           && image.getCoords().getChannel() == channel) {
+                        primaryImage = image;
+                        break;
+                     }
                   }
                }
-            }
 
-            boolean imagesDiffer = true;
-            if (displayedImages_ != null
-                  && images.getRequest().getNumberOfImages()
-                  == displayedImages_.getRequest().getNumberOfImages()) {
-               imagesDiffer = false;
-               for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
-                  if (images.getRequest().getImage(i)
-                        != displayedImages_.getRequest().getImage(i)) {
-                     imagesDiffer = true;
-                     break;
+               boolean imagesDiffer = true;
+               if (displayedImages_ != null
+                     && images.getRequest().getNumberOfImages()
+                     == displayedImages_.getRequest().getNumberOfImages()) {
+                  imagesDiffer = false;
+                  for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
+                     if (images.getRequest().getImage(i)
+                           != displayedImages_.getRequest().getImage(i)) {
+                        imagesDiffer = true;
+                        break;
+                     }
                   }
                }
-            }
 
-            if (perfMon_ != null) {
-               perfMon_.sample("Scheduling identical images (%)", imagesDiffer ? 0.0 : 100.0);
-            }
-            if (imagesDiffer || getDisplaySettings().isAutostretchEnabled()
-                  || getDisplaySettings().getColorMode()
-                  != DisplaySettings.ColorMode.COMPOSITE) {
-               uiController_.displayImages(images);
-            } else if (getDisplaySettings().getColorMode()
-                  == DisplaySettings.ColorMode.COMPOSITE) {
-               // in composite mode, keep the channel name in sync with the 
-               // channel set by the slider.  It would be even better to 
-               // disable the channel slider and display the names of all 
-               // channels, but that becomes very hacky
-               uiController_.updateSliders(images);
-               uiController_.setImageInfoLabel(images);
-            }
+               if (perfMon_ != null) {
+                  perfMon_.sample("Scheduling identical images (%)", imagesDiffer ? 0.0 : 100.0);
+               }
+               if (imagesDiffer || getDisplaySettings().isAutostretchEnabled()
+                     || getDisplaySettings().getColorMode()
+                     != DisplaySettings.ColorMode.COMPOSITE) {
+                  uiController_.displayImages(images);
+               } else if (getDisplaySettings().getColorMode()
+                     == DisplaySettings.ColorMode.COMPOSITE) {
+                  // in composite mode, keep the channel name in sync with the
+                  // channel set by the slider.  It would be even better to
+                  // disable the channel slider and display the names of all
+                  // channels, but that becomes very hacky
+                  uiController_.updateSliders(images);
+                  uiController_.setImageInfoLabel(images);
+               }
 
-            postEvent(DefaultDisplayDidShowImageEvent.create(
-                  DisplayController.this,
-                  images.getRequest().getImages(),
-                  primaryImage));
+               postEvent(DefaultDisplayDidShowImageEvent.create(
+                     DisplayController.this,
+                     images.getRequest().getImages(),
+                     primaryImage));
 
-            if (images.getStatsSequenceNumber() > latestStatsSeqNr_) {
-               postEvent(ImageStatsChangedEvent.create(images));
-               latestStatsSeqNr_ = images.getStatsSequenceNumber();
-            }
-            displayedImages_ = images;
+               if (images.getStatsSequenceNumber() > latestStatsSeqNr_) {
+                  postEvent(ImageStatsChangedEvent.create(images));
+                  latestStatsSeqNr_ = images.getStatsSequenceNumber();
+               }
+               // Clear old reference to allow GC to reclaim memory from previous images
+               displayedImages_ = null;
+               displayedImages_ = images;
 
-            if (perfMon_ != null) {
-               perfMon_.sampleTimeInterval("Scheduled repaint on EDT");
+               if (perfMon_ != null) {
+                  perfMon_.sampleTimeInterval("Scheduled repaint on EDT");
+               }
+            } catch (Exception e) {
+               // Log exception but don't rethrow - let EDT continue
+               ReportingUtils.logError(e, "Exception in display runnable - EDT protected");
+
+               if (perfMon_ != null) {
+                  perfMon_.sampleTimeInterval("Display runnable exception caught");
+               }
+            } finally {
+               // Decrement counter to allow new display updates
+               int newCount = pendingDisplayRunnables_.decrementAndGet();
+
+               // Safety check: if counter was stuck at max but we're completing,
+               // ensure timeout marker is reset to prevent permanent stuck state
+               if (newCount == MAX_PENDING_DISPLAYS - 1) {
+                  counterMaxSinceNs_.set(0);
+               }
             }
          }
       });
@@ -535,7 +721,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          });
       }
 
-      runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
+      runnablePool_.invokeLaterWithCoalescence(new CoalescentRunnable() {
          @Override
          public Class<?> getCoalescenceClass() {
             return getClass();
@@ -595,57 +781,78 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // During acquisition, do not search back in time if newest timepoint.
       // During acquisition, do not search in Z if newest timepoint.
 
-      try {
-         if (images.size() != dataProvider_.getNextIndex(Coords.CHANNEL)
-               && (!studio_.acquisitions().isAcquisitionRunning()
-               || position.getT() < dataProvider_.getNextIndex(Coords.T) - 1)) {
 
-            for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
-               Coords.CoordsBuilder cb = position.copyBuilder();
-               Coords targetCoord = cb.channel(c).build();
-               CHANNEL_SEARCH:
-               if (!dataProvider_.hasImage(targetCoord)) {
-                  // c is missing, first look in z
-                  int zOffset = 1;
-                  while (position.getZ() - zOffset > -1
-                        || position.getZ() + zOffset <= dataProvider_.getNextIndex(Coords.Z)) {
-                     Coords testPosition = cb.z(position.getZ() - zOffset).build();
-                     if (dataProvider_.hasImage(testPosition)) {
-                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
-                        break CHANNEL_SEARCH;
+      // CRITICAL FIX: Skip image filling during HIGH-SPEED acquisition to avoid lock contention
+      // The condition check calls dataProvider_.getNextIndex() which can block on locks
+      // held by the acquisition thread writing images at very high speed (>30 FPS).
+      // During high-speed acquisition, it's better to display whatever images we have rather
+      // than block waiting for locks to check for missing images.
+      // At slower speeds (<30 FPS), the image filling loop is safe and useful.
+      boolean isLiveAcquisition = false;
+      try {
+         isLiveAcquisition = studio_.acquisitions().isAcquisitionRunning();
+      } catch (Exception e) {
+      }
+
+      boolean isHighSpeedAcquisition = isLiveAcquisition && estimatedCameraFps_ > HIGH_SPEED_THRESHOLD_FPS;
+
+      if (isHighSpeedAcquisition && images.size() > 0) {
+               + String.format("%.1f", estimatedCameraFps_) + " FPS with " + images.size() + " images)");
+      } else {
+         try {
+            if (images.size() != dataProvider_.getNextIndex(Coords.CHANNEL)
+                    && (!isLiveAcquisition
+                    || position.getT() < dataProvider_.getNextIndex(Coords.T) - 1)) {
+                     + "(acquiring=" + isLiveAcquisition + ", fps=" + String.format("%.1f", estimatedCameraFps_) + ")");
+
+               for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
+                  Coords.CoordsBuilder cb = position.copyBuilder();
+                  Coords targetCoord = cb.channel(c).build();
+                  CHANNEL_SEARCH:
+                  if (!dataProvider_.hasImage(targetCoord)) {
+                     // c is missing, first look in z
+                     int zOffset = 1;
+                     while (position.getZ() - zOffset > -1
+                             || position.getZ() + zOffset <= dataProvider_.getNextIndex(Coords.Z)) {
+                        Coords testPosition = cb.z(position.getZ() - zOffset).build();
+                        if (dataProvider_.hasImage(testPosition)) {
+                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           break CHANNEL_SEARCH;
+                        }
+                        testPosition = cb.z(position.getZ() + zOffset).build();
+                        if (dataProvider_.hasImage(testPosition)) {
+                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           break CHANNEL_SEARCH;
+                        }
+                        zOffset++;
                      }
-                     testPosition = cb.z(position.getZ() + zOffset).build();
-                     if (dataProvider_.hasImage(testPosition)) {
-                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
-                        break CHANNEL_SEARCH;
-                     }
-                     zOffset++;
-                  }
-                  // not found in z, now look backwards in time
-                  cb = targetCoord.copyBuilder();
-                  for (int t = position.getT(); t > -1; t--) {
-                     Coords testPosition = cb.time(t).build();
-                     if (dataProvider_.hasImage(testPosition)) {
-                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
-                        break;
+                     // not found in z, now look backwards in time
+                     cb = targetCoord.copyBuilder();
+                     for (int t = position.getT(); t > -1; t--) {
+                        Coords testPosition = cb.time(t).build();
+                        if (dataProvider_.hasImage(testPosition)) {
+                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           break;
+                        }
                      }
                   }
                }
+            } else {
             }
+         } catch (IOException e) {
+            // TODO Should display error
+            images = Collections.emptyList();
          }
-      } catch (IOException e) {
-         // TODO Should display error
-         images = Collections.emptyList();
       }
+
 
       // Images are sorted by channel here, since we don't (yet) have any other
       // way to correctly recombine stats with newer images (when update rate
       // is finite).
       if (images.size() > 1) {
          images.sort((Image o1, Image o2) ->
-               Integer.compare(o1.getCoords().getChannel(), o2.getCoords().getChannel()));
+                  Integer.compare(o1.getCoords().getChannel(), o2.getCoords().getChannel()));
       }
-
 
       BoundsRectAndMask selection = BoundsRectAndMask.unselected();
       if (getDisplaySettings().isROIAutoscaleEnabled()) {
@@ -668,23 +875,78 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    //
    // Implementation of AnimationController.Listener<Coords>
    //
-
    @Override
    public void animationShouldDisplayDataPosition(Coords position) {
       if (perfMon_ != null) {
          perfMon_.sampleTimeInterval("Coords from animation controller");
       }
 
-      // We do not skip handling this position even if it equals the current
-      // position, because the image data may have changed (e.g. if we have
-      // been displaying a position that didn't yet have an image, or if this
-      // is a special datastore such as the one used for snap/live preview).
+      // CRITICAL: This callback runs on AnimationController's scheduler thread.
+      // We must NOT do blocking I/O here (like reading images from disk in handleDisplayPosition)
+      // because that would block the scheduler thread and freeze the entire animation pipeline.
+      //
+      // We use coalescence to ensure only the LATEST position is processed, skipping
+      // intermediate positions when disk I/O is slower than the update rate.
 
-      // Also, we do not throttle the processing rate here because that is done
-      // automatically by the compute queue based on result retrieval.
+      // Store the latest position (coalescence - overwrites any pending position)
+      pendingDisplayPosition_.set(position);
 
-      // Set the "official" position of this data viewer
-      setDisplayPosition(position, true);
+      // If not already processing, start the processing loop
+      if (displayPositionProcessing_.compareAndSet(false, true)) {
+         displayPositionExecutor_.submit(() -> {
+            try {
+               // Process positions in a loop until no more pending
+               while (true) {
+                  // Get and clear the pending position atomically
+                  Coords positionToDisplay = pendingDisplayPosition_.getAndSet(null);
+                  if (positionToDisplay == null) {
+                     break; // No more pending positions
+                  }
+
+
+                  // We do not skip handling this position even if it equals the current
+                  // position, because the image data may have changed (e.g. if we have
+                  // been displaying a position that didn't yet have an image, or if this
+                  // is a special datastore such as the one used for snap/live preview).
+
+                  // Set the "official" position of this data viewer
+                  setDisplayPosition(positionToDisplay, true);
+               }
+            } finally {
+               // Mark as not processing
+               displayPositionProcessing_.set(false);
+
+               // Check if a new position arrived while we were marking as not processing
+               if (pendingDisplayPosition_.get() != null) {
+                  // Restart processing if needed
+                  if (displayPositionProcessing_.compareAndSet(false, true)) {
+                     displayPositionExecutor_.submit(this::processDisplayPositions);
+                  }
+               }
+            }
+         });
+      } else {
+      }
+   }
+
+   private void processDisplayPositions() {
+      // This is a workaround to allow recursive submission - see finally block above
+      try {
+         while (true) {
+            Coords positionToDisplay = pendingDisplayPosition_.getAndSet(null);
+            if (positionToDisplay == null) {
+               break;
+            }
+            setDisplayPosition(positionToDisplay, true);
+         }
+      } finally {
+         displayPositionProcessing_.set(false);
+         if (pendingDisplayPosition_.get() != null) {
+            if (displayPositionProcessing_.compareAndSet(false, true)) {
+               displayPositionExecutor_.submit(this::processDisplayPositions);
+            }
+         }
+      }
    }
 
    @Override
@@ -927,9 +1189,19 @@ public final class DisplayController extends DisplayWindowAPIAdapter
     */
    @Subscribe
    public void onNewImage(final DataProviderHasNewImageEvent event) {
+
+      // Track image arrival time for adaptive display throttling
+      long now = System.nanoTime();
+      imageArrivalTimes_[imageTimingIndex_] = now;
+      imageTimingIndex_ = (imageTimingIndex_ + 1) % IMAGE_TIMING_WINDOW_SIZE;
+      estimatedCameraFps_ = calculateCameraFps();
+
       if (perfMon_ != null) {
          perfMon_.sampleTimeInterval("NewImageEvent");
+         perfMon_.sample("Estimated camera FPS", estimatedCameraFps_);
+         perfMon_.sample("Display throttle period (ms)", getAdaptiveRepaintPeriodNs() / 1000000.0);
       }
+
       synchronized (closeGuard_) {
          if (closeCompleted_) {
             return;
@@ -952,6 +1224,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private class ExpandDisplayRangeCoalescentRunnable
          implements CoalescentRunnable {
       private final List<Coords> coords_ = new ArrayList<>();
+      // Limit accumulation to prevent EDT blocking
+      private static final int MAX_COALESCED_COORDS = 100;
 
       ExpandDisplayRangeCoalescentRunnable(Coords coords) {
          coords_.add(coords);
@@ -964,9 +1238,21 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       @Override
       public CoalescentRunnable coalesceWith(CoalescentRunnable another) {
-         coords_.addAll(
-               ((ExpandDisplayRangeCoalescentRunnable) another).coords_);
-         return this;
+         List<Coords> otherCoords =
+               ((ExpandDisplayRangeCoalescentRunnable) another).coords_;
+
+         // Only add coords if we haven't exceeded the limit
+         // This prevents a single runnable from accumulating thousands of coords
+         // which would block EDT for 500ms+ when executed
+         if (coords_.size() + otherCoords.size() <= MAX_COALESCED_COORDS) {
+            coords_.addAll(otherCoords);
+            return this;
+         } else {
+            // Too many coords - don't coalesce, let the other runnable execute separately
+            ReportingUtils.logMessage("ExpandDisplayRangeCoalescentRunnable exceeded max coords ("
+                  + coords_.size() + " + " + otherCoords.size() + "), not coalescing");
+            return another;  // Return the OTHER runnable to execute it separately
+         }
       }
 
       @Override
@@ -1106,7 +1392,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          }
       }
 
-      for (DataViewerListener listener : listeners_.values()) {
+      // Copy values to avoid ConcurrentModificationException during window close
+      Collection<DataViewerListener> listenersCopy = new ArrayList<>(listeners_.values());
+      for (DataViewerListener listener : listenersCopy) {
          if (listener != null && !listener.canCloseViewer(this)) {
             return false;
          }
@@ -1143,6 +1431,15 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             computeQueue_.shutdown();
          } catch (InterruptedException ie) {
             // TODO: report exception
+         }
+         displayPositionExecutor_.shutdown();
+         try {
+            if (!displayPositionExecutor_.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+               displayPositionExecutor_.shutdownNow();
+            }
+         } catch (InterruptedException ie) {
+            displayPositionExecutor_.shutdownNow();
+            Thread.currentThread().interrupt();
          }
          perfMon_ = null;
          animationController_.shutdown();
