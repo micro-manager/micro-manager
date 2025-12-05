@@ -200,10 +200,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void addListener(DataViewerListener listener, int priority) {
       int tmpPriority = priority;
-      while (listeners_.containsKey(tmpPriority)) {
-         tmpPriority += 1;
+      synchronized (listeners_) {
+         while (listeners_.containsKey(tmpPriority)) {
+            tmpPriority += 1;
+         }
+         listeners_.put(tmpPriority, listener);
       }
-      listeners_.put(tmpPriority, listener);
    }
 
    @Override
@@ -212,17 +214,19 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       List<Integer> keysToRemove = new ArrayList<>();
 
       // Copy entrySet to avoid ConcurrentModificationException
-      Set<Map.Entry<Integer, DataViewerListener>> entriesCopy =
-            new HashSet<>(listeners_.entrySet());
-      for (Map.Entry<Integer, DataViewerListener> entry : entriesCopy) {
-         if (listener.equals(entry.getValue())) {
-            keysToRemove.add(entry.getKey());
+      synchronized (listeners_) {
+         Set<Map.Entry<Integer, DataViewerListener>> entriesCopy =
+                  new HashSet<>(listeners_.entrySet());
+         for (Map.Entry<Integer, DataViewerListener> entry : entriesCopy) {
+            if (listener.equals(entry.getValue())) {
+               keysToRemove.add(entry.getKey());
+            }
          }
-      }
 
-      // Remove collected keys
-      for (Integer key : keysToRemove) {
-         listeners_.remove(key);
+         // Remove collected keys
+         for (Integer key : keysToRemove) {
+            listeners_.remove(key);
+         }
       }
    }
 
@@ -612,8 +616,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                   postEvent(ImageStatsChangedEvent.create(images));
                   latestStatsSeqNr_ = images.getStatsSequenceNumber();
                }
-               // Clear old reference to allow GC to reclaim memory from previous images
-               displayedImages_ = null;
                displayedImages_ = images;
 
                if (perfMon_ != null) {
@@ -1394,7 +1396,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
 
       // Copy values to avoid ConcurrentModificationException during window close
-      Collection<DataViewerListener> listenersCopy = new ArrayList<>(listeners_.values());
+      Collection<DataViewerListener> listenersCopy;
+      synchronized (listeners_) {
+         listenersCopy = new ArrayList<>(listeners_.values());
+      }
       for (DataViewerListener listener : listenersCopy) {
          if (listener != null && !listener.canCloseViewer(this)) {
             return false;
@@ -1433,15 +1438,35 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          } catch (InterruptedException ie) {
             // TODO: report exception
          }
+
          displayPositionExecutor_.shutdown();
          try {
             if (!displayPositionExecutor_.awaitTermination(2, TimeUnit.SECONDS)) {
                displayPositionExecutor_.shutdownNow();
+               // Try again to await termination after shutdownNow
+               if (!displayPositionExecutor_.awaitTermination(2, TimeUnit.SECONDS)) {
+                  ReportingUtils.logError(
+                           "displayPositionExecutor_ did not terminate after shutdownNow(). "
+                           + "Possible resource leak.");
+               }
             }
          } catch (InterruptedException ie) {
             displayPositionExecutor_.shutdownNow();
             Thread.currentThread().interrupt();
+            // Try to await termination after interruption
+            try {
+               if (!displayPositionExecutor_.awaitTermination(2, TimeUnit.SECONDS)) {
+                  ReportingUtils.logError("displayPositionExecutor_ did not terminate "
+                           + "after shutdownNow() following InterruptedException. Possible "
+                           + "resource leak.");
+               }
+            } catch (InterruptedException ie2) {
+               ReportingUtils.logError("Interrupted again while waiting for "
+                        + "displayPositionExecutor_ to terminate. Possible resource leak.");
+               Thread.currentThread().interrupt();
+            }
          }
+
          perfMon_ = null;
          animationController_.shutdown();
          animationController_.removeListener(this);

@@ -922,8 +922,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
             }
          }
 
-         // Clear old reference to allow GC to reclaim memory from previous images
-         displayedImages_ = null;
          cachedDisplayedCoords_ = null; // Invalidate cached coords
          displayedImages_ = images;
          Coords nominalCoords = images.getRequest().getNominalCoords();
@@ -2022,8 +2020,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       List<Coords> ret = new ArrayList<>();
       for (Image image : displayedImages_.getRequest().getImages()) {
-         // not sure why, but I see  a null pointer originating from line 1895
-         // the only thing that can be null here is image
+         // Defensive: image can be null if displayedImages_ contains missing or unloaded images.
+         // Ensure we only add non-null image coords to the result.
          if (image != null) {
             ret.add(image.getCoords());
          }
