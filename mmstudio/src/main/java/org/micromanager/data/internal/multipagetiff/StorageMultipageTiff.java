@@ -396,13 +396,15 @@ public final class StorageMultipageTiff implements Storage {
          coordsToPendingImage_.put(coords, image);
       }
 
-      startWritingTask(image);
-
-      writingExecutor_.submit(() -> {
+      try {
+         startWritingTask(image);
+      } finally {
+         // Remove from pending immediately after write task completes
+         // to prevent memory accumulation (critical fix for OOM at ~49k images)
          synchronized (coordsToPendingImage_) {
             coordsToPendingImage_.remove(coords);
          }
-      });
+      }
    }
 
    /**
@@ -463,7 +465,8 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public Set<Coords> imageKeys() {
-      return coordsToReader_.keySet();
+      // Return a copy to avoid ConcurrentModificationException when caller iterates
+      return new HashSet<>(coordsToReader_.keySet());
    }
 
    /**
@@ -854,7 +857,9 @@ public final class StorageMultipageTiff implements Storage {
       if (maxIndices_ == null) {
          // Calculate max indices by examining all registered Readers.
          HashMap<String, Integer> maxIndices = new HashMap<>();
-         for (Coords coords : coordsToReader_.keySet()) {
+         // Copy keySet to avoid ConcurrentModificationException
+         Set<Coords> coordsSnapshot = new HashSet<>(coordsToReader_.keySet());
+         for (Coords coords : coordsSnapshot) {
             for (String axis : coords.getAxes()) {
                if (!maxIndices.containsKey(axis)
                      || coords.getIndex(axis) > maxIndices.get(axis)) {
@@ -886,7 +891,9 @@ public final class StorageMultipageTiff implements Storage {
       }
 
       int maxIndex = 0;
-      for (Coords coords : coordsToReader_.keySet()) {
+      // Copy keySet to avoid ConcurrentModificationException
+      Set<Coords> coordsSnapshot = new HashSet<>(coordsToReader_.keySet());
+      for (Coords coords : coordsSnapshot) {
          if (coords.getIndex(axis) > maxIndex) {
             maxIndex = coords.getIndex(axis);
          }
@@ -972,21 +979,27 @@ public final class StorageMultipageTiff implements Storage {
             }
          } else {
             // Brute force it.  This will be slow with large data sets
-            // Note that coordsToReader_ can be modified at the same time,
-            // catch ConcurrentModificationException rather than incur the cost
-            // of a lock that could slow down insertions
-            try {
-               for (Coords imageCoords : coordsToReader_.keySet()) {
+            // Collect matching readers while holding lock, then read outside lock
+            // to avoid copying 15k+ coords into a HashSet on every call
+            List<Map.Entry<Coords, MultipageTiffReader>> readersToProcess = new ArrayList<>();
+            synchronized (coordsToReader_) {
+               for (Map.Entry<Coords, MultipageTiffReader> entry : coordsToReader_.entrySet()) {
+                  Coords imageCoords = entry.getKey();
                   if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
-                     try {
-                        result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
-                     } catch (IOException ex) {
-                        ReportingUtils.logError("Failed to read image at " + imageCoords);
-                     }
+                     readersToProcess.add(entry);
                   }
                }
-            } catch (ConcurrentModificationException cme) {
-               ReportingUtils.logError(cme, "coordsToReader_ was modified while iterating");
+            }
+            // Read images outside the lock to avoid blocking during I/O
+            for (Map.Entry<Coords, MultipageTiffReader> entry : readersToProcess) {
+               try {
+                  MultipageTiffReader reader = entry.getValue();
+                  if (reader != null) {
+                     result.add(reader.readImage(entry.getKey()));
+                  }
+               } catch (IOException ex) {
+                  ReportingUtils.logError("Failed to read image at " + entry.getKey());
+               }
             }
          }
       }
@@ -1026,7 +1039,8 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Iterable<Coords> getUnorderedImageCoords() {
-      return coordsToReader_.keySet();
+      // Return a copy to avoid ConcurrentModificationException when caller iterates
+      return new HashSet<>(coordsToReader_.keySet());
    }
 
    @Override
@@ -1048,7 +1062,9 @@ public final class StorageMultipageTiff implements Storage {
       }
       // For files we read from disk.
       int errorCounter = 0;
-      for (MultipageTiffReader reader : coordsToReader_.values()) {
+      // Copy values to avoid ConcurrentModificationException during cleanup
+      Collection<MultipageTiffReader> readers = new ArrayList<>(coordsToReader_.values());
+      for (MultipageTiffReader reader : readers) {
          try {
             reader.close();
          } catch (IOException e) {
