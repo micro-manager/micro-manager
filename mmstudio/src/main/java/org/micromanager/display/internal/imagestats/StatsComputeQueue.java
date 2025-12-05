@@ -133,8 +133,8 @@ public final class StatsComputeQueue {
    }
 
    public synchronized void submitRequest(ImageStatsRequest request) {
-      long sequenceNumber = nextRequestSequenceNumber_++;
-      long nowNs = System.nanoTime();
+      final long sequenceNumber = nextRequestSequenceNumber_++;
+      final long nowNs = System.nanoTime();
       int priority = request.getNumberOfImages();
       Coords requestCoords = request.getNominalCoords();
 

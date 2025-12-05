@@ -199,11 +199,15 @@ public final class DisplayUIController implements Closeable, WindowListener,
    // controller's notion of what's current)
    private final List<String> displayedAxes_ = new ArrayList<>();
    private final List<Integer> displayedAxisLengths_ = new ArrayList<>();
-   private final Map<String, Integer> displayedAxesIndexMap_ = new HashMap<>(); // O(1) lookup for axis indices
+   // O(1) lookup for axis indices
+   private final Map<String, Integer> displayedAxesIndexMap_ = new HashMap<>();
    private ImagesAndStats displayedImages_;
-   private List<Coords> cachedDisplayedCoords_ = null; // Cache for getAllDisplayedCoords()
-   private List<String> lastScrollableAxes_ = null; // Cache for early exit in expandDisplayedRangeToInclude
-   private Map<String, Integer> lastScrollableLengths_ = null; // Cache for early exit in expandDisplayedRangeToInclude
+   // Cache for getAllDisplayedCoords()
+   private List<Coords> cachedDisplayedCoords_ = null;
+   // Cache for early exit in expandDisplayedRangeToInclude
+   private List<String> lastScrollableAxes_ = null;
+   // Cache for early exit in expandDisplayedRangeToInclude
+   private Map<String, Integer> lastScrollableLengths_ = null;
    private Double cachedPixelSize_ = -1.0;
    private boolean isPreview_ = false;
    private static ChannelColorEvent channelColorEvent_;
@@ -891,10 +895,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
          // Check if flag has been stuck for too long (> 2 seconds)
          // This can happen if EDT is saturated and paint never completes
-         if (repaintFlagSetTimeNs_ > 0 &&
-             now - repaintFlagSetTimeNs_ > 2_000_000_000L) {
+         if (repaintFlagSetTimeNs_ > 0 && now - repaintFlagSetTimeNs_ > 2_000_000_000L) {
             // Force reset stuck flag to allow display updates to resume
-            ReportingUtils.logMessage("WARNING: repaintScheduledForNewImages flag stuck for 2s - forcing reset");
+            ReportingUtils.logMessage(
+                     "WARNING: repaintScheduledForNewImages flag stuck for 2s - forcing reset");
             repaintScheduledForNewImages_.set(false);
             repaintFlagSetTimeNs_ = 0;
          } else {
@@ -965,7 +969,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          // changed (which can happen for the snap/live window) and only redraw the
          // info label if it changed.
          try {
-            Double currentPixelSize = images.getRequest().getImage(0).getMetadata().getPixelSizeUm();
+            Double currentPixelSize = images.getRequest().getImage(0).getMetadata()
+                     .getPixelSizeUm();
             if (currentPixelSize == null) {
                currentPixelSize = 0.0;
             }

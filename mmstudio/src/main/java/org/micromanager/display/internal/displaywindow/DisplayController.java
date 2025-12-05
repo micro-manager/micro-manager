@@ -165,7 +165,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // we force a reset to allow at least one display update through.
    // Using AtomicLong for thread-safe compareAndSet operations.
    private final AtomicLong counterMaxSinceNs_ = new AtomicLong(0);
-   private static final long COUNTER_RESET_TIMEOUT_NS = 100_000_000L; // 100ms timeout (reduced from 500ms)
+   // 100ms timeout (reduced from 500ms)
+   private static final long COUNTER_RESET_TIMEOUT_NS = 100_000_000L;
 
    // Track image arrival times to estimate camera FPS for adaptive throttling
    private static final int IMAGE_TIMING_WINDOW_SIZE = 10;
@@ -790,9 +791,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       try {
          isLiveAcquisition = studio_.acquisitions().isAcquisitionRunning();
       } catch (Exception e) {
+         studio_.logs().logError(e, "Failed to query acquisition status");
       }
 
-      boolean isHighSpeedAcquisition = isLiveAcquisition && estimatedCameraFps_ > HIGH_SPEED_THRESHOLD_FPS;
+      boolean isHighSpeedAcquisition =
+               isLiveAcquisition && estimatedCameraFps_ > HIGH_SPEED_THRESHOLD_FPS;
 
       // Skip image filling loop during high-speed acquisition to avoid lock contention
       if (!isHighSpeedAcquisition || images.size() == 0) {
@@ -812,12 +815,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                              || position.getZ() + zOffset <= dataProvider_.getNextIndex(Coords.Z)) {
                         Coords testPosition = cb.z(position.getZ() - zOffset).build();
                         if (dataProvider_.hasImage(testPosition)) {
-                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
                            break CHANNEL_SEARCH;
                         }
                         testPosition = cb.z(position.getZ() + zOffset).build();
                         if (dataProvider_.hasImage(testPosition)) {
-                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
                            break CHANNEL_SEARCH;
                         }
                         zOffset++;
@@ -827,17 +832,18 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                      for (int t = position.getT(); t > -1; t--) {
                         Coords testPosition = cb.time(t).build();
                         if (dataProvider_.hasImage(testPosition)) {
-                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
                            break;
                         }
                      }
                   }
                }
-            } else {
             }
          } catch (IOException e) {
             // TODO Should display error
             images = Collections.emptyList();
+            studio_.logs().showError(e, "Error reading image from data provider");
          }
       }
 
@@ -921,7 +927,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                }
             }
          });
-      } else {
       }
    }
 
@@ -1430,7 +1435,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          }
          displayPositionExecutor_.shutdown();
          try {
-            if (!displayPositionExecutor_.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+            if (!displayPositionExecutor_.awaitTermination(2, TimeUnit.SECONDS)) {
                displayPositionExecutor_.shutdownNow();
             }
          } catch (InterruptedException ie) {
