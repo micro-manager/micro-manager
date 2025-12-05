@@ -397,15 +397,15 @@ public final class StorageMultipageTiff implements Storage {
          coordsToPendingImage_.put(coords, image);
       }
 
-      try {
-         startWritingTask(image);
-      } finally {
-         // Remove from pending immediately after write task completes
-         // to prevent memory accumulation (critical fix for OOM at ~49k images)
+      startWritingTask(image);
+
+      // it is possible that the delayed removal of the coords causes a memory leak
+      // if true, try removing coords directly after writing task is submitted.
+      writingExecutor_.submit(() -> {
          synchronized (coordsToPendingImage_) {
             coordsToPendingImage_.remove(coords);
          }
-      }
+      });
    }
 
    /**
