@@ -199,7 +199,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
    // controller's notion of what's current)
    private final List<String> displayedAxes_ = new ArrayList<>();
    private final List<Integer> displayedAxisLengths_ = new ArrayList<>();
+   private final Map<String, Integer> displayedAxesIndexMap_ = new HashMap<>(); // O(1) lookup for axis indices
    private ImagesAndStats displayedImages_;
+   private List<Coords> cachedDisplayedCoords_ = null; // Cache for getAllDisplayedCoords()
+   private List<String> lastScrollableAxes_ = null; // Cache for early exit in expandDisplayedRangeToInclude
+   private Map<String, Integer> lastScrollableLengths_ = null; // Cache for early exit in expandDisplayedRangeToInclude
    private Double cachedPixelSize_ = -1.0;
    private boolean isPreview_ = false;
    private static ChannelColorEvent channelColorEvent_;
@@ -221,6 +225,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private static final int DISPLAY_INTERVAL_SMOOTH_N_SAMPLES = 50;
    private final AtomicBoolean repaintScheduledForNewImages_ =
          new AtomicBoolean(false);
+   private volatile long repaintFlagSetTimeNs_ = 0;  // Track when flag was set for timeout recovery
    private final AtomicReference<TimeIntervalRunningQuantile>
          displayIntervalEstimator_ =
          new AtomicReference<>(TimeIntervalRunningQuantile.create(
@@ -273,6 +278,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       skippedImageDisplayExecutor_ =
                new ScheduledThreadPoolExecutor(1);
       skippedImageDisplayExecutor_.setRemoveOnCancelPolicy(true);
+      // Limit queue to prevent memory accumulation during high-speed display
+      skippedImageDisplayExecutor_.setMaximumPoolSize(1);
+      skippedImageDisplayExecutor_.setCorePoolSize(1);
    }
 
    public void setPerformanceMonitor(PerformanceMonitor perfMon) {
@@ -772,23 +780,46 @@ public final class DisplayUIController implements Closeable, WindowListener,
          noImagesMessageLabel_.setText("Preparing to Display...");
       }
 
+      // Track if any axis actually changed
+      boolean axesChanged = false;
+
       for (Coords c : coords) {
          for (String axis : c.getAxes()) {
             if (axis != null) {
                int index = c.getIndex(axis);
-               int axisIndex = displayedAxes_.indexOf(axis);
-               if (axisIndex == -1) {
+               // Use O(1) HashMap lookup instead of O(N) ArrayList.indexOf()
+               Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+               if (axisIndexObj == null) {
+                  int newAxisIndex = displayedAxes_.size();
                   displayedAxes_.add(axis);
                   displayedAxisLengths_.add(index + 1);
+                  displayedAxesIndexMap_.put(axis, newAxisIndex);
+                  axesChanged = true;
                } else {
+                  int axisIndex = axisIndexObj;
                   int oldLength = displayedAxisLengths_.get(axisIndex);
                   int newLength = Math.max(oldLength, index + 1);
-                  displayedAxisLengths_.set(axisIndex, newLength);
+                  if (newLength != oldLength) {
+                     displayedAxisLengths_.set(axisIndex, newLength);
+                     axesChanged = true;
+                  }
                }
             } else {
                studio_.logs().logError("Null axis in Coords: " + c);
             }
          }
+      }
+
+      // Early exit if nothing changed - KEY OPTIMIZATION
+      if (!axesChanged && lastScrollableAxes_ != null) {
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("expandDisplayedRange early exit - no change");
+         }
+         // Even on early exit, ensure ImageJ bridge is synchronized
+         if (ijBridge_ != null) {
+            ijBridge_.mm2ijEnsureDisplayAxisExtents();
+         }
+         return; // Skip expensive sorting and UI updates
       }
 
       List<String> scrollableAxes = new ArrayList<>();
@@ -800,17 +831,19 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       // Reorder scrollable axes to match axis order of data provider
+      // Cache ordered axes lookup outside the comparator to avoid O(N²) HashMap creation
+      final List<String> orderedAxes = displayController_.getOrderedAxes();
+      final Map<String, Integer> axisOrderMap = new HashMap<>(orderedAxes.size());
+      for (int i = 0; i < orderedAxes.size(); i++) {
+         axisOrderMap.put(orderedAxes.get(i), i);
+      }
+
       scrollableAxes.sort((String o1, String o2) -> {
          if (o1.equals(o2)) {
             return 0;
          }
-         List<String> ordered = displayController_.getOrderedAxes();
-         Map<String, Integer> axisMap = new HashMap<>(ordered.size());
-         for (int i = 0; i < ordered.size(); i++) {
-            axisMap.put(ordered.get(i), i);
-         }
-         if (axisMap.containsKey(o1) && axisMap.containsKey(o2)) {
-            return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
+         if (axisOrderMap.containsKey(o1) && axisOrderMap.containsKey(o2)) {
+            return axisOrderMap.get(o1).compareTo(axisOrderMap.get(o2));
          }
          return 0; // Ugly, TODO: Report?
       });
@@ -828,6 +861,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (ijBridge_ != null) {
          ijBridge_.mm2ijEnsureDisplayAxisExtents();
       }
+
+      // Cache the result for early exit on next call
+      lastScrollableAxes_ = new ArrayList<>(scrollableAxes);
+      lastScrollableLengths_ = new HashMap<>(scrollableLengths);
    }
 
    private ScheduledFuture<?> scheduleSkippedImages(ImagesAndStats images) {
@@ -841,64 +878,147 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    void displayImages(ImagesAndStats images) {
       if (scheduledDisplayFuture_ != null && !scheduledDisplayFuture_.isDone()) {
-         scheduledDisplayFuture_.cancel(false);
+         // Use cancel(true) to ensure task is interrupted and removed from queue
+         scheduledDisplayFuture_.cancel(true);
+      }
+      // Purge cancelled tasks to prevent queue accumulation
+      // Use aggressive threshold (2 instead of 5) to reduce EDT saturation
+      if (skippedImageDisplayExecutor_.getQueue().size() > 2) {
+         skippedImageDisplayExecutor_.purge();
       }
       if (repaintScheduledForNewImages_.get()) {
-         scheduledDisplayFuture_ = scheduleSkippedImages(images);
-         return;
+         long now = System.nanoTime();
+
+         // Check if flag has been stuck for too long (> 2 seconds)
+         // This can happen if EDT is saturated and paint never completes
+         if (repaintFlagSetTimeNs_ > 0 &&
+             now - repaintFlagSetTimeNs_ > 2_000_000_000L) {
+            // Force reset stuck flag to allow display updates to resume
+            ReportingUtils.logMessage("WARNING: repaintScheduledForNewImages flag stuck for 2s - forcing reset");
+            repaintScheduledForNewImages_.set(false);
+            repaintFlagSetTimeNs_ = 0;
+         } else {
+            scheduledDisplayFuture_ = scheduleSkippedImages(images);
+            return;
+         }
       }
 
       repaintScheduledForNewImages_.set(true);
+      repaintFlagSetTimeNs_ = System.nanoTime();
 
-      boolean firstTime = false;
-      if (ijBridge_ == null) {
-         firstTime = true;
-         setupDisplayUI(images);  // creates ijBridge amongst other things
+      try {
+         boolean firstTime = false;
+         if (ijBridge_ == null) {
+            firstTime = true;
+            try {
+               setupDisplayUI(images);  // creates ijBridge amongst other things
+            } catch (Exception e) {
+               ReportingUtils.logError(e, "Exception in setupDisplayUI");
+               throw e;  // Re-throw to exit displayImages
+            }
+         }
+
+         // Clear old reference to allow GC to reclaim memory from previous images
+         displayedImages_ = null;
+         cachedDisplayedCoords_ = null; // Invalidate cached coords
+         displayedImages_ = images;
+         Coords nominalCoords = images.getRequest().getNominalCoords();
+
+         // A display request may come in ahead of an expand-range request, so
+         // make sure to update our range first
+         try {
+            // getAllDisplayedCoords() already includes nominalCoords,
+            // so we only need one call to expand the range (optimization)
+            List<Coords> allCoords = getAllDisplayedCoords();
+            if (!allCoords.isEmpty()) {
+               expandDisplayedRangeToInclude(allCoords);
+            }
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Exception expanding display range");
+            // Don't re-throw - continue with other operations
+         }
+
+         try {
+            updateSliders(images);
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Exception updating sliders");
+            // Don't re-throw - continue with other operations
+         }
+
+         if (firstTime) {
+            // We need to set the displaySettings after the ijBridge was created
+            // (in the setupDisplayUI function), and after the display range
+            // has been expanded to include all Coords in the "images"
+            // If we do not do so, only one channel will be shown
+            // If we call applyDisplaySettings every time, the Display fps
+            // will never be shown
+            try {
+               applyDisplaySettings(displayController_.getDisplaySettings());
+            } catch (Exception e) {
+               ReportingUtils.logError(e, "Exception applying display settings");
+               // Don't re-throw - continue with other operations
+            }
+         }
+
+         // info label: The only aspect that can change is pixel size.  To avoid
+         // redrawing the info line (which may be expensive), check if pixelsize
+         // changed (which can happen for the snap/live window) and only redraw the
+         // info label if it changed.
+         try {
+            Double currentPixelSize = images.getRequest().getImage(0).getMetadata().getPixelSizeUm();
+            if (currentPixelSize == null) {
+               currentPixelSize = 0.0;
+            }
+            if (!currentPixelSize.equals(cachedPixelSize_)) {
+               infoLabel_.setText(this.getInfoString(images));
+               ijBridge_.mm2ijSetMetadata();
+               cachedPixelSize_ = images.getRequest().getImage(0).getMetadata()
+                     .getPixelSizeUm();
+            }
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Exception updating info label");
+            // Don't re-throw - continue with other operations
+         }
+
+         try {
+            ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Exception setting display position");
+            // Don't re-throw - continue with other operations
+         }
+
+         try {
+            applyAutostretch(images, displayController_.getDisplaySettings());
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Exception applying autostretch");
+            // Don't re-throw - continue with other operations
+         }
+
+         if (mouseLocationOnImage_ != null) {
+            try {
+               updatePixelInformation(); // TODO Can skip if identical images
+            } catch (Exception e) {
+               ReportingUtils.logError(e, "Exception updating pixel information");
+               // Don't re-throw - continue with other operations
+            }
+         }
+
+         try {
+            imageInfoLabel_.setText(getImageInfoLabel(images));
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Exception updating image info label");
+            // Don't re-throw - continue with other operations
+         }
+
+      } finally {
+         // CRITICAL: Always reset flag to prevent permanent freeze
+         // This runs even if exception occurs or return is called
+         repaintScheduledForNewImages_.set(false);
+
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("displayImages completed");
+         }
       }
-
-      displayedImages_ = images;
-      Coords nominalCoords = images.getRequest().getNominalCoords();
-
-      // A display request may come in ahead of an expand-range request, so
-      // make sure to update our range first
-      expandDisplayedRangeToInclude(nominalCoords);
-      expandDisplayedRangeToInclude(getAllDisplayedCoords());
-
-      updateSliders(images);
-
-      if (firstTime) {
-         // We need to set the displaySettings after the ijBridge was created
-         // (in the setupDisplayUI function), and after the display range
-         // has been expanded to include all Coords in the "images"
-         // If we do not do so, only one channel will be shown
-         // If we call applyDisplaySettings every time, the Display fps 
-         // will never be shown
-         applyDisplaySettings(displayController_.getDisplaySettings());
-      }
-
-      // info label: The only aspect that can change is pixel size.  To avoid
-      // redrawing the info line (which may be expensive), check if pixelsize
-      // changed (which can happen for the snap/live window) and only redraw the 
-      // info label if it changed.
-      Double currentPixelSize = images.getRequest().getImage(0).getMetadata().getPixelSizeUm();
-      if (currentPixelSize == null) {
-         currentPixelSize = 0.0;
-      }
-      if (!currentPixelSize.equals(cachedPixelSize_)) {
-         infoLabel_.setText(this.getInfoString(images));
-         ijBridge_.mm2ijSetMetadata();
-         cachedPixelSize_ = images.getRequest().getImage(0).getMetadata()
-               .getPixelSizeUm();
-      }
-
-      ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
-      applyAutostretch(images, displayController_.getDisplaySettings());
-
-      if (mouseLocationOnImage_ != null) {
-         updatePixelInformation(); // TODO Can skip if identical images
-      }
-
-      imageInfoLabel_.setText(getImageInfoLabel(images));
 
    }
 
@@ -1237,11 +1357,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       int checkedLength = length;
       if (checkedLength < 0) {
-         int axisIndex = displayedAxes_.indexOf(axis);
-         if (axisIndex < 0) {
+         // Use O(1) HashMap lookup instead of O(N) ArrayList.indexOf()
+         Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+         if (axisIndexObj == null) {
             return;
          }
-         checkedLength = displayedAxisLengths_.get(axisIndex);
+         checkedLength = displayedAxisLengths_.get(axisIndexObj);
       }
       if (checkedLength <= 1) {
          return; // Not displayed
@@ -1338,7 +1459,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    public void updateTitle() {
       if (frame_ != null) {
 
-         runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
+         runnablePool_.invokeLaterWithCoalescence(new CoalescentRunnable() {
             @Override
             public Class<?> getCoalescenceClass() {
                return getClass();
@@ -1493,7 +1614,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    public void selectionMayHaveChanged(final BoundsRectAndMask selection) {
       if (selection != lastSeenSelection_) {
          if (selection == null || !selection.equals(lastSeenSelection_)) {
-            runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
+            runnablePool_.invokeLaterWithCoalescence(new CoalescentRunnable() {
                @Override
                public Class<?> getCoalescenceClass() {
                   return getClass();
@@ -1670,6 +1791,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       boolean countAsNewDisplayedImage =
             repaintScheduledForNewImages_.compareAndSet(true, false);
       if (countAsNewDisplayedImage) {
+         repaintFlagSetTimeNs_ = 0;  // Reset timeout tracking when flag is cleared
          if (perfMon_ != null) {
             perfMon_.sampleTimeInterval("Repaint counted as new display");
          }
@@ -1870,15 +1992,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    public boolean isAxisDisplayed(String axis) {
-      return displayedAxes_.contains(axis);
+      // Use O(1) HashMap lookup instead of O(N) ArrayList.contains()
+      return displayedAxesIndexMap_.containsKey(axis);
    }
 
    public int getDisplayedAxisLength(String axis) {
-      int axisIndex = displayedAxes_.indexOf(axis);
-      if (axisIndex == -1) {
+      // Use O(1) HashMap lookup instead of O(N) ArrayList.indexOf()
+      Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+      if (axisIndexObj == null) {
          return 0;
       }
-      return displayedAxisLengths_.get(axisIndex);
+      return displayedAxisLengths_.get(axisIndexObj);
    }
 
    public List<Coords> getAllDisplayedCoords() {
@@ -1886,10 +2010,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return Collections.emptyList();
       }
 
+      // Return cached result if available
+      if (cachedDisplayedCoords_ != null) {
+         return cachedDisplayedCoords_;
+      }
+
       List<Coords> ret = new ArrayList<>();
       for (Image image : displayedImages_.getRequest().getImages()) {
-         ret.add(image.getCoords());
+         // not sure why, but I see  a null pointer originating from line 1895
+         // the only thing that can be null here is image
+         if (image != null) {
+            ret.add(image.getCoords());
+         }
       }
+      cachedDisplayedCoords_ = ret;
       return ret;
    }
 
