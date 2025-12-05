@@ -29,7 +29,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class CoalescentEDTRunnablePool {
    // Guarded by monitor on this
    private final Map<Class<?>, CoalescentRunnable> coalescedRunnables_ = new HashMap<>();
-   private final Map<Class<?>, Long> coalescedTimestamps_ = new HashMap<>();  // Track entry creation time
+   // Track entry creation time
+   private final Map<Class<?>, Long> coalescedTimestamps_ = new HashMap<>();
    private final Map<Class<?>, Long> skipCounts_ = new HashMap<>();
    private static final long STALE_ENTRY_TIMEOUT_NS = 5_000_000_000L;  // 5 seconds
 
