@@ -470,6 +470,8 @@ public final class ImageJBridge {
    @MustCallOnEDT
    public void mm2ijRepaint() {
       if (canvas_ != null) {
+         org.micromanager.internal.utils.ReportingUtils.logMessage(
+               "DIAG: mm2ijRepaint() called");
          canvas_.setImageUpdated();
          canvas_.repaint();
       }

@@ -329,7 +329,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
 
       data_ = data;
 
-      runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
+      runnablePool_.invokeLaterWithCoalescence(new CoalescentRunnable() {
          @Override
          public Class<?> getCoalescenceClass() {
             return UpdateTag.class;

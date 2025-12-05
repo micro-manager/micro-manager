@@ -13,9 +13,12 @@
 
 package org.micromanager.internal.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.SwingUtilities;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Provide versions of SwingUtilities.invokeLater that coalesce with other
@@ -26,7 +29,9 @@ import javax.swing.SwingUtilities;
 public class CoalescentEDTRunnablePool {
    // Guarded by monitor on this
    private final Map<Class<?>, CoalescentRunnable> coalescedRunnables_ = new HashMap<>();
+   private final Map<Class<?>, Long> coalescedTimestamps_ = new HashMap<>();  // Track entry creation time
    private final Map<Class<?>, Long> skipCounts_ = new HashMap<>();
+   private static final long STALE_ENTRY_TIMEOUT_NS = 5_000_000_000L;  // 5 seconds
 
    public static CoalescentEDTRunnablePool create() {
       return new CoalescentEDTRunnablePool();
@@ -54,6 +59,9 @@ public class CoalescentEDTRunnablePool {
    public void invokeLaterWithCoalescence(CoalescentRunnable runnable) {
       final Class<?> coalescenceClass = runnable.getCoalescenceClass();
       synchronized (this) {
+         // Clean up stale entries that have been waiting > 5 seconds
+         cleanStaleEntries();
+
          CoalescentRunnable coalesced =
                coalescedRunnables_.get(coalescenceClass);
          if (coalesced != null) {
@@ -62,12 +70,14 @@ public class CoalescentEDTRunnablePool {
             coalesced = runnable;
          }
          coalescedRunnables_.put(coalescenceClass, coalesced);
+         coalescedTimestamps_.put(coalescenceClass, System.nanoTime());
       }
 
       SwingUtilities.invokeLater(() -> {
          final CoalescentRunnable coalesced;
          synchronized (CoalescentEDTRunnablePool.this) {
             coalesced = coalescedRunnables_.remove(coalescenceClass);
+            coalescedTimestamps_.remove(coalescenceClass);
          }
          if (coalesced == null) {
             return; // Already handled by previous invocations
@@ -103,6 +113,7 @@ public class CoalescentEDTRunnablePool {
             coalesced = runnable;
          }
          coalescedRunnables_.put(coalescenceClass, coalesced);
+         coalescedTimestamps_.put(coalescenceClass, System.nanoTime());
       }
 
       SwingUtilities.invokeLater(() -> {
@@ -110,10 +121,17 @@ public class CoalescentEDTRunnablePool {
          synchronized (CoalescentEDTRunnablePool.this) {
             Long skipCount = skipCounts_.get(coalescenceClass);
             if (skipCount != null && skipCount > 0) {
-               skipCounts_.put(coalescenceClass, skipCount - 1);
+               long newCount = skipCount - 1;
+               if (newCount == 0) {
+                  // Remove entry when count reaches 0 to prevent unbounded HashMap growth
+                  skipCounts_.remove(coalescenceClass);
+               } else {
+                  skipCounts_.put(coalescenceClass, newCount);
+               }
                return;
             }
             coalesced = coalescedRunnables_.remove(coalescenceClass);
+            coalescedTimestamps_.remove(coalescenceClass);
          }
          if (coalesced == null) {
             return; // Be defensive
@@ -121,6 +139,33 @@ public class CoalescentEDTRunnablePool {
 
          coalesced.run();
       });
+   }
+
+   /**
+    * Clean up stale entries that have been in the map for more than 5 seconds.
+    * This prevents HashMap accumulation when EDT is saturated and entries never
+    * get removed because SwingUtilities.invokeLater() never executes.
+    * Must be called while holding monitor on this.
+    */
+   private void cleanStaleEntries() {
+      long now = System.nanoTime();
+      List<Class<?>> staleKeys = new ArrayList<>();
+
+      for (Map.Entry<Class<?>, Long> entry : coalescedTimestamps_.entrySet()) {
+         if (now - entry.getValue() > STALE_ENTRY_TIMEOUT_NS) {
+            staleKeys.add(entry.getKey());
+         }
+      }
+
+      if (!staleKeys.isEmpty()) {
+         ReportingUtils.logMessage("CoalescentEDTRunnablePool: Removing " + staleKeys.size()
+               + " stale entries older than 5 seconds");
+         for (Class<?> key : staleKeys) {
+            coalescedRunnables_.remove(key);
+            coalescedTimestamps_.remove(key);
+            skipCounts_.remove(key);  // Also clean up skip counts
+         }
+      }
    }
 
    /**

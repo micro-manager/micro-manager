@@ -20,7 +20,10 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.event.EventListenerSupport;
+import org.micromanager.data.Coords;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
@@ -64,12 +67,13 @@ public final class StatsComputeQueue {
    private final List<Future<?>> bypassFutures_ =
          new ArrayList<Future<?>>();
 
-   // Outstanding results by priority. We keep 2 slots per priority, to provide
-   // some buffering (otherwise we'll always be as slow as downstream)
+   // Outstanding results by priority. Allow sufficient buffer to prevent
+   // slow stats computation from blocking bypass results during high-speed acquisition.
+   // Buffer of 3 allows: current executing + next bypass + next real stats
    // Guarded by monitor on this
    private final List<Deque<Future<?>>> resultFutures_ =
          new ArrayList<Deque<Future<?>>>();
-   private static final int RESULT_BUFFER_SIZE = 2;
+   private static final int RESULT_BUFFER_SIZE = 3;
 
    // Serial number for each request received
    private long nextRequestSequenceNumber_ = 0;
@@ -80,6 +84,16 @@ public final class StatsComputeQueue {
    // Guarded by monitor on this
    private final List<ImagesAndStats> storedStats_ =
          new ArrayList<ImagesAndStats>();
+
+   // Track the latest pending request coordinates by priority to enable skipping
+   // Guarded by monitor on this
+   private final List<Coords> pendingRequestCoords_ =
+         new ArrayList<Coords>();
+
+   // Track when each pending request started to detect stuck requests
+   // Guarded by monitor on this
+   private final List<Long> pendingRequestStartTime_ =
+         new ArrayList<Long>();
 
    // Guarded by monitor on this
    private long updateIntervalNs_ = 0;
@@ -122,6 +136,27 @@ public final class StatsComputeQueue {
       long sequenceNumber = nextRequestSequenceNumber_++;
       long nowNs = System.nanoTime();
       int priority = request.getNumberOfImages();
+      Coords requestCoords = request.getNominalCoords();
+
+            + ", coords=" + requestCoords + ", updateIntervalNs=" + updateIntervalNs_);
+
+      // Don't throttle here - let bypass mechanism and display throttling handle frame rate.
+      // Previously throttled at 33ms which caused old images to be processed instead of new ones
+      // during high-speed acquisition, making display appear frozen.
+
+      // Note: The bypass executor and result buffer coalescing will naturally drop old frames
+      // when we can't keep up, ensuring we always display the most recent data.
+
+      // Update the pending coords for this priority
+      while (pendingRequestCoords_.size() <= priority) {
+         pendingRequestCoords_.add(null);
+      }
+      pendingRequestCoords_.set(priority, requestCoords);
+
+      while (pendingRequestStartTime_.size() <= priority) {
+         pendingRequestStartTime_.add(null);
+      }
+      pendingRequestStartTime_.set(priority, nowNs);
 
       if (updateIntervalNs_ < Long.MAX_VALUE) {
          final long waitTargetNs = updateIntervalNs_ == Long.MAX_VALUE
@@ -179,11 +214,21 @@ public final class StatsComputeQueue {
                if (perfMon_ != null) {
                   perfMon_.sampleTimeInterval("Compute interrupted (!)");
                }
+               // Clear pending coords even on interruption
+               synchronized (StatsComputeQueue.this) {
+                  if (priority < pendingRequestCoords_.size()) {
+                     pendingRequestCoords_.set(priority, null);
+                  }
+                  if (priority < pendingRequestStartTime_.size()) {
+                     pendingRequestStartTime_.set(priority, null);
+                  }
+               }
                return;
             }
             if (perfMon_ != null) {
                perfMon_.sampleTimeInterval("Compute submitting result");
             }
+
             synchronized (StatsComputeQueue.this) {
                submitResult(sequenceNumber, priority, result);
 
@@ -194,6 +239,22 @@ public final class StatsComputeQueue {
                   storedStats_.set(p, null);
                }
                storedStats_.set(priority, result);
+
+               // Limit stored stats to prevent unbounded memory growth
+               // Keep only the most recent 10 priority levels
+               final int MAX_STORED_STATS = 10;
+               if (storedStats_.size() > MAX_STORED_STATS) {
+                  // Remove oldest entries (lowest indices)
+                  storedStats_.subList(0, storedStats_.size() - MAX_STORED_STATS).clear();
+               }
+
+               // Clear pending coords for this priority to allow new requests
+               if (priority < pendingRequestCoords_.size()) {
+                  pendingRequestCoords_.set(priority, null);
+               }
+               if (priority < pendingRequestStartTime_.size()) {
+                  pendingRequestStartTime_.set(priority, null);
+               }
             }
          }
       }));
@@ -273,6 +334,7 @@ public final class StatsComputeQueue {
             buffer.removeFirst().cancel(false);
          }
       }
+
       resultFutures_.get(priority).addLast(resultExecutor_.submit(new Runnable() {
          @Override
          public void run() {
@@ -280,6 +342,9 @@ public final class StatsComputeQueue {
             synchronized (StatsComputeQueue.this) {
                waitNs = nextStatsReadyCallAllowedNs_ - System.nanoTime();
             }
+
+                  + (Math.max(0, waitNs) / 1_000_000) + "ms before calling imageStatsReady");
+
             if (perfMon_ != null) {
                perfMon_.sample("Compute result pre-wait (ms)", Math.max(0, waitNs / 1000000));
             }
@@ -290,8 +355,10 @@ public final class StatsComputeQueue {
             } catch (InterruptedException unexpected) {
             }
 
+
             synchronized (StatsComputeQueue.this) {
                long intervalNs = listeners_.fire().imageStatsReady(result);
+                     + (intervalNs / 1_000_000) + "ms");
                nextStatsReadyCallAllowedNs_ = System.nanoTime() + intervalNs;
             }
          }

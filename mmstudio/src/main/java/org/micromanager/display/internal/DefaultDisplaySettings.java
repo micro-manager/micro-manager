@@ -681,7 +681,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     */
    public void save(File destination) {
       try {
-         if (toPropertyMap(this).saveJSON(destination, true, false)) {
+         if (!toPropertyMap(this).saveJSON(destination, true, false)) {
             ReportingUtils.logError("Failed to save Display Settings to: "
                   + destination.getPath());
          }
