@@ -138,8 +138,6 @@ public final class StatsComputeQueue {
       int priority = request.getNumberOfImages();
       Coords requestCoords = request.getNominalCoords();
 
-            + ", coords=" + requestCoords + ", updateIntervalNs=" + updateIntervalNs_);
-
       // Don't throttle here - let bypass mechanism and display throttling handle frame rate.
       // Previously throttled at 33ms which caused old images to be processed instead of new ones
       // during high-speed acquisition, making display appear frozen.
@@ -343,8 +341,6 @@ public final class StatsComputeQueue {
                waitNs = nextStatsReadyCallAllowedNs_ - System.nanoTime();
             }
 
-                  + (Math.max(0, waitNs) / 1_000_000) + "ms before calling imageStatsReady");
-
             if (perfMon_ != null) {
                perfMon_.sample("Compute result pre-wait (ms)", Math.max(0, waitNs / 1000000));
             }
@@ -358,7 +354,6 @@ public final class StatsComputeQueue {
 
             synchronized (StatsComputeQueue.this) {
                long intervalNs = listeners_.fire().imageStatsReady(result);
-                     + (intervalNs / 1_000_000) + "ms");
                nextStatsReadyCallAllowedNs_ = System.nanoTime() + intervalNs;
             }
          }

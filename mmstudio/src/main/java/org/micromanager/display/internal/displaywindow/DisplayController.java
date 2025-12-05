@@ -403,7 +403,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       // Return adaptive throttle period based on camera speed
       long throttleNs = getAdaptiveRepaintPeriodNs();
-            + (throttleNs / 1_000_000) + "ms (cameraFps=" + estimatedCameraFps_ + ")");
       return throttleNs;
    }
 
@@ -490,7 +489,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                perfMon_.sample("Pending count at timeout", currentPending);
                perfMon_.sample("Display counter forced reset after timeout", 1);
             }
-                  + currentPending + " to " + (MAX_PENDING_DISPLAYS - 1));
             // Force reset to allow at least one display update through
             pendingDisplayRunnables_.set(MAX_PENDING_DISPLAYS - 1);
             counterMaxSinceNs_.set(0);  // Reset for next potential stuck state
@@ -796,14 +794,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       boolean isHighSpeedAcquisition = isLiveAcquisition && estimatedCameraFps_ > HIGH_SPEED_THRESHOLD_FPS;
 
-      if (isHighSpeedAcquisition && images.size() > 0) {
-               + String.format("%.1f", estimatedCameraFps_) + " FPS with " + images.size() + " images)");
-      } else {
+      // Skip image filling loop during high-speed acquisition to avoid lock contention
+      if (!isHighSpeedAcquisition || images.size() == 0) {
          try {
             if (images.size() != dataProvider_.getNextIndex(Coords.CHANNEL)
                     && (!isLiveAcquisition
                     || position.getT() < dataProvider_.getNextIndex(Coords.T) - 1)) {
-                     + "(acquiring=" + isLiveAcquisition + ", fps=" + String.format("%.1f", estimatedCameraFps_) + ")");
 
                for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
                   Coords.CoordsBuilder cb = position.copyBuilder();

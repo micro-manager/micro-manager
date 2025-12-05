@@ -47,11 +47,6 @@ public final class MMImageCanvas extends ImageCanvas
 
    private Dimension preferredSize_;
 
-   // Diagnostic: Track repaint calls vs actual paint calls
-   private java.util.concurrent.atomic.AtomicLong repaintCallCount_ =
-         new java.util.concurrent.atomic.AtomicLong(0);
-   private long lastReportedRepaintCount_ = 0;
-
    @MustCallOnEDT
    static MMImageCanvas create(ImageJBridge parent) {
       final MMImageCanvas instance = new MMImageCanvas(parent);
@@ -100,30 +95,11 @@ public final class MMImageCanvas extends ImageCanvas
       // ij.gui.ImageCanvas is not written in a way that allows us to easily
       // override paint() without reimplementing a whole bunch of stuff.
 
-      // Diagnostic: Track if paint is being called during freeze
-      long paintStartNs = System.nanoTime();
-      long currentRepaintCount = repaintCallCount_.get();
-      long repaintsSinceLastPaint = currentRepaintCount - lastReportedRepaintCount_;
-      lastReportedRepaintCount_ = currentRepaintCount;
-
-      org.micromanager.internal.utils.ReportingUtils.logMessage(
-            "DIAG: MMImageCanvas.paint() ENTRY - repaints since last paint: " + repaintsSinceLastPaint
-            + ", total repaints: " + currentRepaintCount);
-
       // Let ImageJ draw the image, selection, zoom indicator, etc.
-      long superPaintStartNs = System.nanoTime();
       super.paint(g);
-      long superPaintDurationMs = (System.nanoTime() - superPaintStartNs) / 1_000_000;
-
-      org.micromanager.internal.utils.ReportingUtils.logMessage(
-            "DIAG: MMImageCanvas.paint() - super.paint() completed in " + superPaintDurationMs + "ms");
 
       parent_.paintMMOverlays((Graphics2D) g, getWidth(), getHeight(), srcRect);
       parent_.ijPaintDidFinish();
-
-      long totalDurationMs = (System.nanoTime() - paintStartNs) / 1_000_000;
-      org.micromanager.internal.utils.ReportingUtils.logMessage(
-            "DIAG: MMImageCanvas.paint() EXIT - total " + totalDurationMs + "ms");
    }
 
    @Override
@@ -407,11 +383,6 @@ public final class MMImageCanvas extends ImageCanvas
 
    @Override
    public void repaint() {
-      // Diagnostic: Track repaint call count (may be null during construction)
-      if (repaintCallCount_ != null) {
-         repaintCallCount_.incrementAndGet();
-      }
-
       // repaint is the easiest (and only practical) place to detect ImageJ
       // ROI change
       if (parent_ != null) {
@@ -422,11 +393,6 @@ public final class MMImageCanvas extends ImageCanvas
 
    @Override
    public void repaint(int x, int y, int w, int h) {
-      // Diagnostic: Track repaint call count (may be null during construction)
-      if (repaintCallCount_ != null) {
-         repaintCallCount_.incrementAndGet();
-      }
-
       if (parent_ != null) {
          parent_.ij2mmRoiMayHaveChanged();
       }
