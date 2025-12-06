@@ -892,9 +892,7 @@ public final class StorageMultipageTiff implements Storage {
       }
 
       int maxIndex = 0;
-      // Copy keySet to avoid ConcurrentModificationException
-      Set<Coords> coordsSnapshot = new HashSet<>(coordsToReader_.keySet());
-      for (Coords coords : coordsSnapshot) {
+      for (Coords coords : coordsToReader_.keySet()) {
          if (coords.getIndex(axis) > maxIndex) {
             maxIndex = coords.getIndex(axis);
          }
