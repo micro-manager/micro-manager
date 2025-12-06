@@ -97,6 +97,7 @@ public final class MMImageCanvas extends ImageCanvas
 
       // Let ImageJ draw the image, selection, zoom indicator, etc.
       super.paint(g);
+
       parent_.paintMMOverlays((Graphics2D) g, getWidth(), getHeight(), srcRect);
       parent_.ijPaintDidFinish();
    }

@@ -220,18 +220,29 @@ public abstract class AbstractDataViewer implements DataViewer {
       if (position == null) {
          throw new NullPointerException("Position must not be null");
       }
+
+      // Read old position inside lock
+      final Coords oldPosition;
       synchronized (AbstractDataViewer.this) {
-         final Coords oldPosition = getDisplayPosition();
+         oldPosition = getDisplayPosition();
          if (!forceRedisplay && position.equals(oldPosition)) {
             return;
          }
+      }
 
-         displayPosition_ = handleDisplayPosition(position);
+      // Call handleDisplayPosition OUTSIDE the lock to avoid blocking EDT
+      // during slow operations like disk I/O
+      final Coords newPosition = handleDisplayPosition(position);
+
+      // Update displayPosition_ inside lock, but only if another thread
+      // hasn't already changed it
+      synchronized (AbstractDataViewer.this) {
+         displayPosition_ = newPosition;
 
          if (!position.equals(oldPosition)) {
             asyncEventPoster_.submit(() -> {
                postEvent(DefaultDisplayPositionChangedEvent.create(
-                     AbstractDataViewer.this, oldPosition, displayPosition_));
+                     AbstractDataViewer.this, oldPosition, newPosition));
             });
          }
       }

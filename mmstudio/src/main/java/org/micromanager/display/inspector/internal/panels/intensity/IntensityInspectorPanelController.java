@@ -449,7 +449,7 @@ public class IntensityInspectorPanelController
 
    @MustCallOnEDT
    private void updateImageStats(final ImagesAndStats stats) {
-      runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
+      runnablePool_.invokeLaterWithCoalescence(new CoalescentRunnable() {
          @Override
          public Class<?> getCoalescenceClass() {
             return getClass();

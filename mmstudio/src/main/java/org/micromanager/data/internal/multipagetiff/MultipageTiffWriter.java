@@ -570,18 +570,33 @@ public final class MultipageTiffWriter {
    public void writeImage(Image img) throws IOException {
       if (writingExecutor_ != null) {
          int queueSize = writingExecutor_.getQueue().size();
-         int attemptCount = 0;
-         while (queueSize > 20) {
-            if (attemptCount == 0) {
-               ReportingUtils.logMessage("Warning: writing queue behind by "
-                     + queueSize + " images.");
-            }
-            ++attemptCount;
-            try {
-               Thread.sleep(5);
-               queueSize = writingExecutor_.getQueue().size();
-            } catch (InterruptedException ex) {
-               ReportingUtils.logError(ex);
+         // Use higher threshold (100 instead of 20) to reduce display impact
+         // and add timeout to prevent long blocks that cause display hiccups
+         if (queueSize > 100) {
+            ReportingUtils.logMessage("Warning: writing queue behind by "
+                  + queueSize + " images.");
+
+            // Wait briefly (max 50ms total) to provide some backpressure
+            // but don't block long enough to cause noticeable display hiccups
+            long startTime = System.nanoTime();
+            long maxWaitNs = 50_000_000L;  // 50ms max wait
+
+            while (queueSize > 100) {
+               long elapsed = System.nanoTime() - startTime;
+               if (elapsed >= maxWaitNs) {
+                  // Timeout - proceed anyway to avoid blocking display
+                  ReportingUtils.logMessage("Writing queue still at " + queueSize
+                        + " after 50ms timeout, proceeding to avoid display hiccup");
+                  break;
+               }
+
+               try {
+                  Thread.sleep(2);  // Shorter sleep (2ms instead of 5ms)
+                  queueSize = writingExecutor_.getQueue().size();
+               } catch (InterruptedException ex) {
+                  ReportingUtils.logError(ex);
+                  break;  // Exit on interrupt
+               }
             }
          }
       }
