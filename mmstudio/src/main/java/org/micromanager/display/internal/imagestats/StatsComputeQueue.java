@@ -240,11 +240,11 @@ public final class StatsComputeQueue {
 
                // Limit stored stats to prevent unbounded memory growth
                // Keep only the most recent 10 priority levels
-               final int MAX_STORED_STATS = 10;
-               if (storedStats_.size() > MAX_STORED_STATS) {
+               // final int MAX_STORED_STATS = 10;
+               //if (storedStats_.size() > MAX_STORED_STATS) {
                   // Remove oldest entries (lowest indices)
-                  storedStats_.subList(0, storedStats_.size() - MAX_STORED_STATS).clear();
-               }
+               //   storedStats_.subList(0, storedStats_.size() - MAX_STORED_STATS).clear();
+               // }
 
                // Clear pending coords for this priority to allow new requests
                if (priority < pendingRequestCoords_.size()) {
