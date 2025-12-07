@@ -846,10 +846,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
          if (o1.equals(o2)) {
             return 0;
          }
-         if (axisOrderMap.containsKey(o1) && axisOrderMap.containsKey(o2)) {
+         boolean o1InMap = axisOrderMap.containsKey(o1);
+         boolean o2InMap = axisOrderMap.containsKey(o2);
+         if (o1InMap && o2InMap) {
             return axisOrderMap.get(o1).compareTo(axisOrderMap.get(o2));
+         } else if (o1InMap) {
+            // o1 is known, o2 is unknown: known axes come first
+            return -1;
+         } else if (o2InMap) {
+            // o2 is known, o1 is unknown: known axes come first
+            return 1;
+         } else {
+            // Both unknown: sort alphabetically
+            return o1.compareTo(o2);
          }
-         return 0; // Ugly, TODO: Report?
       });
       scrollBarPanel_.setAxes(scrollableAxes);
       for (int i = 0; i < scrollableAxes.size(); ++i) {
@@ -918,6 +928,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                setupDisplayUI(images);  // creates ijBridge amongst other things
             } catch (Exception e) {
                ReportingUtils.logError(e, "Exception in setupDisplayUI");
+               repaintScheduledForNewImages_.set(false);
                throw e;  // Re-throw to exit displayImages
             }
          }

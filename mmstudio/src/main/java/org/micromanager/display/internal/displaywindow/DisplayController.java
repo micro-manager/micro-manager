@@ -897,38 +897,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       // If not already processing, start the processing loop
       if (displayPositionProcessing_.compareAndSet(false, true)) {
-         displayPositionExecutor_.submit(() -> {
-            try {
-               // Process positions in a loop until no more pending
-               while (true) {
-                  // Get and clear the pending position atomically
-                  Coords positionToDisplay = pendingDisplayPosition_.getAndSet(null);
-                  if (positionToDisplay == null) {
-                     break; // No more pending positions
-                  }
-
-
-                  // We do not skip handling this position even if it equals the current
-                  // position, because the image data may have changed (e.g. if we have
-                  // been displaying a position that didn't yet have an image, or if this
-                  // is a special datastore such as the one used for snap/live preview).
-
-                  // Set the "official" position of this data viewer
-                  setDisplayPosition(positionToDisplay, true);
-               }
-            } finally {
-               // Mark as not processing
-               displayPositionProcessing_.set(false);
-
-               // Check if a new position arrived while we were marking as not processing
-               if (pendingDisplayPosition_.get() != null) {
-                  // Restart processing if needed
-                  if (displayPositionProcessing_.compareAndSet(false, true)) {
-                     displayPositionExecutor_.submit(this::processDisplayPositions);
-                  }
-               }
-            }
-         });
+         displayPositionExecutor_.submit(() -> processDisplayPositions());
       }
    }
 
@@ -936,15 +905,25 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // This is a workaround to allow recursive submission - see finally block above
       try {
          while (true) {
+            // Get and clear the pending position atomically
             Coords positionToDisplay = pendingDisplayPosition_.getAndSet(null);
             if (positionToDisplay == null) {
                break;
             }
+            // We do not skip handling this position even if it equals the current
+            // position, because the image data may have changed (e.g. if we have
+            // been displaying a position that didn't yet have an image, or if this
+            // is a special datastore such as the one used for snap/live preview).
+
+            // Set the "official" position of this data viewer
             setDisplayPosition(positionToDisplay, true);
          }
       } finally {
+         // Mark as not processing
          displayPositionProcessing_.set(false);
+         // Check if a new position arrived while we were marking as not processing
          if (pendingDisplayPosition_.get() != null) {
+            // Restart processing if needed
             if (displayPositionProcessing_.compareAndSet(false, true)) {
                displayPositionExecutor_.submit(this::processDisplayPositions);
             }

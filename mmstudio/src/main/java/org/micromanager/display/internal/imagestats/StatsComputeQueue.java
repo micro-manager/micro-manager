@@ -242,7 +242,7 @@ public final class StatsComputeQueue {
                // Keep only the most recent 10 priority levels
                // final int MAX_STORED_STATS = 10;
                //if (storedStats_.size() > MAX_STORED_STATS) {
-                  // Remove oldest entries (lowest indices)
+               // Remove oldest entries (lowest indices)
                //   storedStats_.subList(0, storedStats_.size() - MAX_STORED_STATS).clear();
                // }
 
