@@ -1986,7 +1986,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onSettingsChanged(AcquisitionSettingsChangedEvent event) {
       if (this.isDisplayable()) {
-         updateGUIContents();
+         updateGUIFromSequenceSettings(event.getNewSettings());
       }
    }
 
