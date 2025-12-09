@@ -800,20 +800,23 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       // Reorder scrollable axes to match axis order of data provider
+      // Cache ordered axes lookup outside the comparator to avoid O(N²) HashMap creation
+      final List<String> orderedAxes = displayController_.getOrderedAxes();
+      final Map<String, Integer> axisOrderMap = new HashMap<>(orderedAxes.size());
+      for (int i = 0; i < orderedAxes.size(); i++) {
+         axisOrderMap.put(orderedAxes.get(i), i);
+      }
+
       scrollableAxes.sort((String o1, String o2) -> {
          if (o1.equals(o2)) {
             return 0;
          }
-         List<String> ordered = displayController_.getOrderedAxes();
-         Map<String, Integer> axisMap = new HashMap<>(ordered.size());
-         for (int i = 0; i < ordered.size(); i++) {
-            axisMap.put(ordered.get(i), i);
-         }
-         if (axisMap.containsKey(o1) && axisMap.containsKey(o2)) {
-            return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
+         if (axisOrderMap.containsKey(o1) && axisOrderMap.containsKey(o2)) {
+            return axisOrderMap.get(o1) > axisOrderMap.get(o2) ? 1 : -1;
          }
          return 0; // Ugly, TODO: Report?
       });
+
       scrollBarPanel_.setAxes(scrollableAxes);
       for (int i = 0; i < scrollableAxes.size(); ++i) {
          final String currentAxis = scrollableAxes.get(i);
