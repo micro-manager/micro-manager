@@ -1,5 +1,5 @@
 rm -rf mmcorej javadoc
 cp -R ../mmCoreAndDevices/MMCoreJ_wrap/gensrc/mmcorej .
 cp -R ../mmCoreAndDevices/MMCoreJ_wrap/src/main/java/mmcorej/org mmcorej/
-java -jar swig-doc-converter-0.0.1-standalone.jar ../doxygen/out/MMCore/html/class_c_m_m_core.html
+uv run swig_doc_converter.py ../doxygen/out/MMCore/html/class_c_m_m_core.html
 javadoc mmcorej/org/json/*.java mmcorej/*.java -d javadoc -use -notimestamp
