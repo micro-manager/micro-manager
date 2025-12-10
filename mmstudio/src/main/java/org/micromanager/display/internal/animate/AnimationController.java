@@ -276,14 +276,20 @@ public final class AnimationController<P> {
       scheduler_.schedule(new Runnable() {
          @Override
          public void run() {
+            // Capture state while holding lock, then fire listeners without lock
+            boolean shouldFireExpired;
             synchronized (AnimationController.this) {
+               shouldFireExpired = didJumpToNewPosition_;
                if (didJumpToNewPosition_) {
                   didJumpToNewPosition_ = false;
-                  listeners_.fire().animationNewDataPositionExpired();
                }
                sequencer_.setAnimationPosition(position);
-               listeners_.fire().animationShouldDisplayDataPosition(position);
             }
+            // Fire listeners without holding lock to avoid deadlock
+            if (shouldFireExpired) {
+               listeners_.fire().animationNewDataPositionExpired();
+            }
+            listeners_.fire().animationShouldDisplayDataPosition(position);
          }
       }, 0, TimeUnit.MILLISECONDS);
    }
@@ -310,9 +316,8 @@ public final class AnimationController<P> {
                if (Thread.interrupted()) {
                   return; // Canceled
                }
-               synchronized (AnimationController.this) {
-                  listeners_.fire().animationNewDataPositionExpired();
-               }
+               // Fire listener without holding lock to avoid deadlock
+               listeners_.fire().animationNewDataPositionExpired();
             }
          }, 1000, TimeUnit.MILLISECONDS);
       }
@@ -355,32 +360,48 @@ public final class AnimationController<P> {
          scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
+               // Update state while holding lock
                synchronized (AnimationController.this) {
-                  listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                  listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
-                  listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                   didJumpToNewPosition_ = true;
-                  listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
                }
+               // Fire listeners without holding lock to avoid deadlock
+               listeners_.fire().animationAcknowledgeDataPosition(newPosition);
+               listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
+               listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
+               listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
             }
          }, 0, TimeUnit.MILLISECONDS);
          snapBackFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
+               // Capture state while holding lock
+               boolean shouldFireExpired;
+               P capturedSnapBackPosition;
                synchronized (AnimationController.this) {
+                  capturedSnapBackPosition = snapBackPosition_;
+                  shouldFireExpired = false;
                   if (snapBackPosition_ != null) { // Be safe
                      if (didJumpToNewPosition_) {
                         didJumpToNewPosition_ = false;
-                        listeners_.fire().animationNewDataPositionExpired();
+                        shouldFireExpired = true;
                      }
-                     // Even if we have already moved away from the new data
-                     // position by other means (e.g. user click), we still
-                     // snap back if we are still in snap-back mode.
-                     //if (newPositionMode_ == NewPositionHandlingMode.FLASH_AND_SNAP_BACK) {
-                     listeners_.fire().animationShouldDisplayDataPosition(snapBackPosition_);
-                     //}
                      snapBackPosition_ = null;
                   }
+               }
+               // Fire listeners without holding lock to avoid deadlock
+               if (capturedSnapBackPosition != null) {
+                  if (shouldFireExpired) {
+                     listeners_.fire().animationNewDataPositionExpired();
+                  }
+                  // Even if we have already moved away from the new data
+                  // position by other means (e.g. user click), we still
+                  // snap back if we are still in snap-back mode.
+                  //if (newPositionMode_ == NewPositionHandlingMode.FLASH_AND_SNAP_BACK) {
+                  listeners_.fire().animationShouldDisplayDataPosition(capturedSnapBackPosition);
+                  //}
+               }
+               // Restart ticks and clear future if animation enabled
+               synchronized (AnimationController.this) {
                   if (animationEnabled_.get()) {
                      startTicks(tickIntervalMs_, tickIntervalMs_);
                   }
@@ -393,17 +414,22 @@ public final class AnimationController<P> {
          scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
+               // Update state while holding lock
+               boolean positionChanged = !newDisplayPosition.equals(oldPosition);
                synchronized (AnimationController.this) {
-                  listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                  if (!newDisplayPosition.equals(oldPosition)) {
-                     listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
+                  if (positionChanged) {
                      sequencer_.setAnimationPosition((P) newDisplayPosition);
-                     listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                      didJumpToNewPosition_ = true;
-                     listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
-                  } else {
-                     listeners_.fire().animationNewDataPositionExpired();
                   }
+               }
+               // Fire listeners without holding lock to avoid deadlock
+               listeners_.fire().animationAcknowledgeDataPosition(newPosition);
+               if (positionChanged) {
+                  listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
+                  listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
+                  listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
+               } else {
+                  listeners_.fire().animationNewDataPositionExpired();
                }
             }
          }, 0, TimeUnit.MILLISECONDS);
@@ -411,13 +437,15 @@ public final class AnimationController<P> {
          scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
+               // Update state while holding lock
                synchronized (AnimationController.this) {
-                  listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
                   sequencer_.setAnimationPosition((P) newPosition);
-                  listeners_.fire().animationShouldDisplayDataPosition(newPosition);
                   didJumpToNewPosition_ = true;
-                  listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
                }
+               // Fire listeners without holding lock to avoid deadlock
+               listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
+               listeners_.fire().animationShouldDisplayDataPosition(newPosition);
+               listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
             }
          }, 0, TimeUnit.MILLISECONDS);
       }
@@ -485,9 +513,8 @@ public final class AnimationController<P> {
             if (perfMon_ != null) {
                perfMon_.sampleTimeInterval("Animation position for tick (run)");
             }
-            synchronized (AnimationController.this) {
-               listeners_.fire().animationShouldDisplayDataPosition(newPosition);
-            }
+            // Fire listener without holding lock to avoid deadlock
+            listeners_.fire().animationShouldDisplayDataPosition(newPosition);
          }
       }, 0, TimeUnit.MILLISECONDS);
    }
