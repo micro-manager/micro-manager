@@ -42,6 +42,7 @@
 #include <iomanip>
 #include <map>
 #include <sstream>
+#include <utility>
 
 // common error messages
 const char* const g_Msg_ERR = "Unknown error in the device";
@@ -1835,30 +1836,59 @@ public:
       this->AddAllowedValue(MM::g_Keyword_Transpose_MirrorY, "1");
    }
 
-
-   virtual int SetPositionUm(double x, double y)
+   // This converts an absolute position (x_um, y_um), under the current
+   // adapter origin and x/y mirroring, to an absolute step position. Do not
+   // use for relative offsets.
+   std::pair<long, long> ConvertPositionUmToSteps(double x_um, double y_um)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
-      double xPos = x;
-      double yPos = y;
 
-      long xSteps = 0;
-      long ySteps = 0;
-
+      long xSteps, ySteps;
       if (mirrorX)
-         xSteps = originXSteps_ - nint (x / this->GetStepSizeXUm());
+         xSteps = originXSteps_ - nint (x_um / this->GetStepSizeXUm());
       else
-         xSteps = originXSteps_ + nint (x / this->GetStepSizeXUm());
+         xSteps = originXSteps_ + nint (x_um / this->GetStepSizeXUm());
       if (mirrorY)
-         ySteps = originYSteps_ - nint (y / this->GetStepSizeYUm());
+         ySteps = originYSteps_ - nint (y_um / this->GetStepSizeYUm());
       else
-         ySteps = originYSteps_ + nint (y / this->GetStepSizeYUm());
+         ySteps = originYSteps_ + nint (y_um / this->GetStepSizeYUm());
+
+      return std::make_pair(xSteps, ySteps);
+   }
+
+   // This converts an absolute position (xSteps, ySteps), under the current
+   // adapter origin and x/y mirroring, to an absolute um position. Do not use
+   // for relative offsets.
+   std::pair<double, double> ConvertPositionStepsToUm(long xSteps, long ySteps)
+   {
+      bool mirrorX, mirrorY;
+      GetOrientation(mirrorX, mirrorY);
+
+      double x_um, y_um;
+      if (mirrorX)
+         x_um = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
+      else
+         x_um =  - ((originXSteps_ - xSteps) * this->GetStepSizeXUm());
+
+      if (mirrorY)
+         y_um = (originYSteps_ - ySteps) * this->GetStepSizeYUm();
+      else
+         y_um = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
+
+      return std::make_pair(x_um, y_um);
+   }
+
+   virtual int SetPositionUm(double x_um, double y_um)
+   {
+      auto posSteps = ConvertPositionUmToSteps(x_um, y_um);
+      long xSteps = posSteps.first;
+      long ySteps = posSteps.second;
 
       int ret = this->SetPositionSteps(xSteps, ySteps);
       if (ret == DEVICE_OK) {
-         xPos_ = xPos;
-         yPos_ = yPos;
+         xPos_ = x_um;
+         yPos_ = y_um;
          this->OnXYStagePositionChanged(xPos_, yPos_);
       }
       return ret;
@@ -1917,28 +1947,19 @@ public:
       return DEVICE_OK;
    }
 
-   virtual int GetPositionUm(double& x, double& y)
+   virtual int GetPositionUm(double& x_um, double& y_um)
    {
-      bool mirrorX, mirrorY;
-      GetOrientation(mirrorX, mirrorY);
-
       long xSteps, ySteps;
       int ret = this->GetPositionSteps(xSteps, ySteps);
       if (ret != DEVICE_OK)
          return ret;
 
-      if (mirrorX)
-         x = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
-      else
-         x =  - ((originXSteps_ - xSteps) * this->GetStepSizeXUm());
+      auto pos_um = ConvertPositionStepsToUm(xSteps, ySteps);
+      x_um = pos_um.first;
+      y_um = pos_um.second;
 
-      if (mirrorY)
-         y = (originYSteps_ - ySteps) * this->GetStepSizeYUm();
-      else
-         y = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
-
-      xPos_ = x;
-      yPos_ = y;
+      xPos_ = x_um;
+      yPos_ = y_um;
 
       return DEVICE_OK;
    }

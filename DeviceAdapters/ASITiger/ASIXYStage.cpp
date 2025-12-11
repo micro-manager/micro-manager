@@ -723,7 +723,7 @@ int CXYStage::SendXYStageSequence()
    for (unsigned i=0; i< sequenceX_.size(); i++)  // send new points
    {
       command.str("");
-      command << "LD " << axisLetterX_ << "=" << sequenceX_[i]*unitMultX_ << " " << axisLetterY_ << "=" << sequenceY_[i]*unitMultY_;
+      command << "LD " << axisLetterX_ << "=" << sequenceX_[i] << " " << axisLetterY_ << "=" << sequenceY_[i];
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
 
@@ -750,8 +750,12 @@ int CXYStage::AddToXYStageSequence(double positionX, double positionY)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
-   sequenceX_.push_back(positionX);
-   sequenceY_.push_back(positionY);
+   
+   std::pair<long, long> positionSteps = ConvertPositionUmToSteps(positionX, positionY);
+   long positionXSteps = positionSteps.first;
+   long positionYSteps = positionSteps.second;
+   sequenceX_.push_back(positionXSteps*unitMultX_*stepSizeXUm_);
+   sequenceY_.push_back(positionYSteps*unitMultY_*stepSizeYUm_);
    return DEVICE_OK;
 }
 
@@ -1988,6 +1992,17 @@ int CXYStage::OnScanFastStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
+      // get in terms of MM's coordinate system and then convert to millimeters
+      // calculate for both X and Y and then decide which to use
+      std::pair<long, long> steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      long xSteps = steps.first;
+      long ySteps = steps.second;
+      char axisForScan[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_ScanFastAxisPropertyName, axisForScan) );
+      if (strcmp(axisForScan, g_ScanAxisY) == 0)
+         tmp = ySteps*stepSizeYUm_/1000;
+      else
+         tmp = xSteps*stepSizeXUm_/1000;
       command << addressChar_ << "NR X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
@@ -2010,6 +2025,17 @@ int CXYStage::OnScanFastStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
+      // get in terms of MM's coordinate system and then convert to millimeters
+      // calculate for both X and Y and then decide which to use
+      std::pair<long, long> steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      long xSteps = steps.first;
+      long ySteps = steps.second;
+      char axisForScan[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_ScanFastAxisPropertyName, axisForScan) );
+      if (strcmp(axisForScan, g_ScanAxisY) == 0)
+         tmp = ySteps*stepSizeYUm_/1000;
+      else
+         tmp = xSteps*stepSizeXUm_/1000;
       command << addressChar_ << "NR Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
@@ -2032,6 +2058,17 @@ int CXYStage::OnScanSlowStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
+      // get in terms of MM's coordinate system and then convert to millimeters
+      // calculate for both X and Y and then decide which to use
+      std::pair<long, long> steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      long xSteps = steps.first;
+      long ySteps = steps.second;
+      char axisForScan[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_ScanSlowAxisPropertyName, axisForScan) );
+      if (strcmp(axisForScan, g_ScanAxisY) == 0)
+         tmp = ySteps*stepSizeYUm_/1000;
+      else
+         tmp = xSteps*stepSizeXUm_/1000;
       command << addressChar_ << "NV X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
@@ -2054,6 +2091,17 @@ int CXYStage::OnScanSlowStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
+      // get in terms of MM's coordinate system and then convert to millimeters
+      // calculate for both X and Y and then decide which to use
+      std::pair<long, long> steps = ConvertPositionUmToSteps(tmp*1000, tmp*1000);
+      long xSteps = steps.first;
+      long ySteps = steps.second;
+      char axisForScan[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_ScanSlowAxisPropertyName, axisForScan) );
+      if (strcmp(axisForScan, g_ScanAxisY) == 0)
+         tmp = ySteps*stepSizeYUm_/1000;
+      else
+         tmp = xSteps*stepSizeXUm_/1000;
       command << addressChar_ << "NV Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
