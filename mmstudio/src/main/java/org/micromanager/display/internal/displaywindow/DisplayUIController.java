@@ -199,7 +199,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    // controller's notion of what's current)
    private final List<String> displayedAxes_ = new ArrayList<>();
    private final List<Integer> displayedAxisLengths_ = new ArrayList<>();
-   private final Map<String, Integer> displayedAxesIndexMap_ = new HashMap<>(); // O(1) lookup for axis indices
+   // O(1) lookup for axis indices
+   private final Map<String, Integer> displayedAxesIndexMap_ = new HashMap<>();
    private ImagesAndStats displayedImages_;
    private Double cachedPixelSize_ = -1.0;
    private boolean isPreview_ = false;
@@ -1240,7 +1241,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    void setNewImageIndicator(boolean show) {
       // NS: I am not sure what this means to the user in the snap/live window,
       // and it takes up space, so don't show in preview windows
-      if (!SwingUtilities.isEventDispatchThread()) { SwingUtilities.invokeLater(() -> {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
             newImageIndicator_.setVisible(show && !isPreview_);
          });
          return;

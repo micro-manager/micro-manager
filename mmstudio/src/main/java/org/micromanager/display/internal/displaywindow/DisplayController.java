@@ -362,7 +362,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private double calculateCameraFps() {
       // Need at least 3 samples to calculate FPS
       if (imageTimingIndex_ < 3) {
-         return 0.0;
+         // Not enough data yet; return previous estimate
+         // will be 0.0 initially
+         return estimatedCameraFps_;
       }
 
       // Calculate time span across the window
@@ -637,14 +639,16 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       try {
          isLiveAcquisition = studio_.acquisitions().isAcquisitionRunning();
       } catch (Exception e) {
-         ReportingUtils.logMessage("DIAG: handleDisplayPosition - exception checking isAcquisitionRunning: " + e);
+         ReportingUtils.logMessage(
+                  " handleDisplayPosition - exception checking isAcquisitionRunning: " + e);
       }
-      boolean isHighSpeedAcquisition = isLiveAcquisition && estimatedCameraFps_ > HIGH_SPEED_THRESHOLD_FPS;
+      boolean isHighSpeedAcquisition =
+               isLiveAcquisition && estimatedCameraFps_ > HIGH_SPEED_THRESHOLD_FPS;
 
       if (!(isHighSpeedAcquisition && images.size() > 0)) {
          try {
             if (images.size() != dataProvider_.getNextIndex(Coords.CHANNEL)
-                    && (!studio_.acquisitions().isAcquisitionRunning()
+                    && (!isLiveAcquisition
                     || position.getT() < dataProvider_.getNextIndex(Coords.T) - 1)) {
 
                for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
@@ -658,12 +662,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                              || position.getZ() + zOffset <= dataProvider_.getNextIndex(Coords.Z)) {
                         Coords testPosition = cb.z(position.getZ() - zOffset).build();
                         if (dataProvider_.hasImage(testPosition)) {
-                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
                            break CHANNEL_SEARCH;
                         }
                         testPosition = cb.z(position.getZ() + zOffset).build();
                         if (dataProvider_.hasImage(testPosition)) {
-                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
                            break CHANNEL_SEARCH;
                         }
                         zOffset++;
@@ -673,7 +679,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                      for (int t = position.getT(); t > -1; t--) {
                         Coords testPosition = cb.time(t).build();
                         if (dataProvider_.hasImage(testPosition)) {
-                           images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
                            break;
                         }
                      }

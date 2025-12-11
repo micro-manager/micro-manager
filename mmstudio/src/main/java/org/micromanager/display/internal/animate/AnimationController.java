@@ -116,7 +116,7 @@ public final class AnimationController<P> {
    // Rate limiting for display updates to prevent overwhelming the display pipeline
    // Even at 250 FPS camera speed, display can only update at ~60 FPS
    private static final long MIN_DISPLAY_INTERVAL_NS = 16_000_000L; // 16ms = ~60 FPS
-   private long lastDisplayFiredNs_ = 0;
+   private volatile long lastDisplayFiredNs_ = 0;
 
    private boolean didJumpToNewPosition_;
 
