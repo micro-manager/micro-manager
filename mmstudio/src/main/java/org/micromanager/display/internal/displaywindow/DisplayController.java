@@ -105,6 +105,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
+   private static final double HIGH_SPEED_THRESHOLD_FPS = 30.0;
 
    private final LinkManager linkManager_;
 
@@ -142,6 +143,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private PerformanceMonitor perfMon_
          = PerformanceMonitor.createWithTimeConstantMs(1000.0);
 
+   // Track image arrival times to estimate camera FPS for adaptive throttling
+   private static final int IMAGE_TIMING_WINDOW_SIZE = 10;
+   private final long[] imageArrivalTimes_ = new long[IMAGE_TIMING_WINDOW_SIZE];
+   private int imageTimingIndex_ = 0;
+   private volatile double estimatedCameraFps_ = 0.0;
 
    //This static counter makes sure that each object has it's own unique id during runtime.
    private static final AtomicInteger counter = new AtomicInteger();
@@ -346,6 +352,41 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // Throttle display scheduling
       return MIN_REPAINT_PERIOD_NS;
    }
+
+   /**
+    * Calculate estimated camera frame rate from recent image arrivals.
+    * Used for adaptive display throttling during high-speed acquisition.
+    *
+    * @return Estimated camera FPS, or 0 if insufficient data
+    */
+   private double calculateCameraFps() {
+      // Need at least 3 samples to calculate FPS
+      if (imageTimingIndex_ < 3) {
+         // Not enough data yet; return previous estimate
+         // will be 0.0 initially
+         return estimatedCameraFps_;
+      }
+
+      // Calculate time span across the window
+      int count = Math.min(imageTimingIndex_, IMAGE_TIMING_WINDOW_SIZE);
+      long oldest = imageArrivalTimes_[0];
+      long newest = imageArrivalTimes_[(imageTimingIndex_ - 1 + IMAGE_TIMING_WINDOW_SIZE)
+              % IMAGE_TIMING_WINDOW_SIZE];
+
+      if (newest <= oldest) {
+         return 0.0; // Invalid timing data
+      }
+
+      long spanNs = newest - oldest;
+      if (spanNs == 0) {
+         return 0.0;
+      }
+
+      // FPS = (count - 1) / time_span_in_seconds
+      double spanSeconds = spanNs / 1e9;
+      return (count - 1) / spanSeconds;
+   }
+
 
    private void scheduleDisplayInUI(final ImagesAndStats images) {
       Preconditions.checkArgument(images.getRequest().getNumberOfImages() > 0);
@@ -594,48 +635,62 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // about to be acquired! How do we know if this is the case?
       // During acquisition, do not search back in time if newest timepoint.
       // During acquisition, do not search in Z if newest timepoint.
-
+      boolean isLiveAcquisition = false;
       try {
-         if (images.size() != dataProvider_.getNextIndex(Coords.CHANNEL)
-               && (!studio_.acquisitions().isAcquisitionRunning()
-               || position.getT() < dataProvider_.getNextIndex(Coords.T) - 1)) {
+         isLiveAcquisition = studio_.acquisitions().isAcquisitionRunning();
+      } catch (Exception e) {
+         ReportingUtils.logMessage(
+                  " handleDisplayPosition - exception checking isAcquisitionRunning: " + e);
+      }
+      boolean isHighSpeedAcquisition =
+               isLiveAcquisition && estimatedCameraFps_ > HIGH_SPEED_THRESHOLD_FPS;
 
-            for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
-               Coords.CoordsBuilder cb = position.copyBuilder();
-               Coords targetCoord = cb.channel(c).build();
-               CHANNEL_SEARCH:
-               if (!dataProvider_.hasImage(targetCoord)) {
-                  // c is missing, first look in z
-                  int zOffset = 1;
-                  while (position.getZ() - zOffset > -1
-                        || position.getZ() + zOffset <= dataProvider_.getNextIndex(Coords.Z)) {
-                     Coords testPosition = cb.z(position.getZ() - zOffset).build();
-                     if (dataProvider_.hasImage(testPosition)) {
-                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
-                        break CHANNEL_SEARCH;
+      if (!(isHighSpeedAcquisition && images.size() > 0)) {
+         try {
+            if (images.size() != dataProvider_.getNextIndex(Coords.CHANNEL)
+                    && (!isLiveAcquisition
+                    || position.getT() < dataProvider_.getNextIndex(Coords.T) - 1)) {
+
+               for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
+                  Coords.CoordsBuilder cb = position.copyBuilder();
+                  Coords targetCoord = cb.channel(c).build();
+                  CHANNEL_SEARCH:
+                  if (!dataProvider_.hasImage(targetCoord)) {
+                     // c is missing, first look in z
+                     int zOffset = 1;
+                     while (position.getZ() - zOffset > -1
+                             || position.getZ() + zOffset <= dataProvider_.getNextIndex(Coords.Z)) {
+                        Coords testPosition = cb.z(position.getZ() - zOffset).build();
+                        if (dataProvider_.hasImage(testPosition)) {
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
+                           break CHANNEL_SEARCH;
+                        }
+                        testPosition = cb.z(position.getZ() + zOffset).build();
+                        if (dataProvider_.hasImage(testPosition)) {
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
+                           break CHANNEL_SEARCH;
+                        }
+                        zOffset++;
                      }
-                     testPosition = cb.z(position.getZ() + zOffset).build();
-                     if (dataProvider_.hasImage(testPosition)) {
-                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
-                        break CHANNEL_SEARCH;
-                     }
-                     zOffset++;
-                  }
-                  // not found in z, now look backwards in time
-                  cb = targetCoord.copyBuilder();
-                  for (int t = position.getT(); t > -1; t--) {
-                     Coords testPosition = cb.time(t).build();
-                     if (dataProvider_.hasImage(testPosition)) {
-                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
-                        break;
+                     // not found in z, now look backwards in time
+                     cb = targetCoord.copyBuilder();
+                     for (int t = position.getT(); t > -1; t--) {
+                        Coords testPosition = cb.time(t).build();
+                        if (dataProvider_.hasImage(testPosition)) {
+                           images.add(dataProvider_.getImage(testPosition)
+                                    .copyAtCoords(targetCoord));
+                           break;
+                        }
                      }
                   }
                }
             }
+         } catch (IOException e) {
+            // TODO Should display error
+            images = Collections.emptyList();
          }
-      } catch (IOException e) {
-         // TODO Should display error
-         images = Collections.emptyList();
       }
 
       // Images are sorted by channel here, since we don't (yet) have any other
@@ -927,8 +982,15 @@ public final class DisplayController extends DisplayWindowAPIAdapter
     */
    @Subscribe
    public void onNewImage(final DataProviderHasNewImageEvent event) {
+
+      // Track image arrival time for adaptive display throttling
+      long now = System.nanoTime();
+      imageArrivalTimes_[imageTimingIndex_] = now;
+      imageTimingIndex_ = (imageTimingIndex_ + 1) % IMAGE_TIMING_WINDOW_SIZE;
+      estimatedCameraFps_ = calculateCameraFps();
       if (perfMon_ != null) {
          perfMon_.sampleTimeInterval("NewImageEvent");
+         perfMon_.sample("Estimated camera FPS", estimatedCameraFps_);
       }
       synchronized (closeGuard_) {
          if (closeCompleted_) {
