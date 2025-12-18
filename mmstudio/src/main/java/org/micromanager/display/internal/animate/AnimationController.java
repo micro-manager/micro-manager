@@ -313,6 +313,11 @@ public final class AnimationController<P> {
     * @param position Position that should be displayed.
     */
    public synchronized void forceDataPosition(final P position) {
+      // Cancel any pending display task to prevent queue backlog at high frame rates
+      if (pendingDisplayFuture_ != null && !pendingDisplayFuture_.isDone()) {
+         pendingDisplayFuture_.cancel(false);
+         pendingDisplayFuture_ = null;
+      }
       // Always call listeners from scheduler thread
       scheduler_.schedule(new Runnable() {
          @Override
