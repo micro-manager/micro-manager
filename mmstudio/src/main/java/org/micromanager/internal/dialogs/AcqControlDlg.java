@@ -497,7 +497,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       JTextField field = ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField();
       field.setColumns(5);
       ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField().setFont(DEFAULT_FONT);
-      numFrames_.addChangeListener((ChangeEvent e) ->  applySettingsFromGUI());
+      numFrames_.addChangeListener((ChangeEvent e) -> applySettingsFromGUI());
 
       defaultTimesPanel_.add(numFrames_, "wrap");
 
