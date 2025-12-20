@@ -1670,8 +1670,25 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   }
                }
             }
-            double interval = Math.max(sequenceSettings_.intervalMs(), timePerFrameMs);
-            // we are not handling customIntervals here
+            double interval;
+            if (!sequenceSettings_.useCustomIntervals()) {
+               // Constant interval between time points: use the larger of interval and exposure.
+               interval = Math.max(sequenceSettings_.intervalMs(), timePerFrameMs);
+            } else {
+               // Custom intervals: intervals are between consecutive time points.
+               double delayMs = 0.0;
+               if (frame > 0) {
+                  List<Double> customIntervals = sequenceSettings_.customIntervalsMs();
+                  int idx = frame - 1;
+                  if (customIntervals != null && idx < customIntervals.size()) {
+                     delayMs = customIntervals.get(idx);
+                  } else {
+                     // Fallback to the regular interval if custom intervals are missing.
+                     delayMs = sequenceSettings_.intervalMs();
+                  }
+               }
+               interval = Math.max(delayMs, timePerFrameMs);
+            }
             totalDurationSec += interval / 1000.0;
          }
       } else { // use the current settings for acquisition
