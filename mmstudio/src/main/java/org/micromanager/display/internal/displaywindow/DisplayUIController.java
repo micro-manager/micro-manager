@@ -647,7 +647,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setPreferredSize(size);
          animateButton.setHorizontalAlignment(SwingConstants.LEFT);
          animateButton.setHorizontalTextPosition(SwingConstants.RIGHT);
-         // at least on Windows, the night skin foreground color is ignored by the look and feel
+         // At least on Windows, the night skin foreground color is ignored by the look and feel
          // set explicitly to white if we are on Windows in night mode, non-standard colors
          // appear to be ignored.
          if (JavaUtils.isWindows() && studio_.app().skin().getSkin().equals(
