@@ -77,6 +77,7 @@ import javax.swing.event.ChangeEvent;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
@@ -646,6 +647,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setPreferredSize(size);
          animateButton.setHorizontalAlignment(SwingConstants.LEFT);
          animateButton.setHorizontalTextPosition(SwingConstants.RIGHT);
+         // at least on Windows, the night skin foreground color is ignored by the look and feel
+         // set explicitly to white if we are on Windows in night mode, non-standard colors
+         // appear to be ignored.
+         if (JavaUtils.isWindows() && studio_.app().skin().getSkin().equals(
+               ApplicationSkin.SkinMode.NIGHT)) {
+            animateButton.setForeground(Color.WHITE);
+         }
          animateButton.setIcon(PLAY_ICON);
          animateButton.setSelectedIcon(PAUSE_ICON);
          animateButton.setMargin(buttonInsets_);
@@ -695,6 +703,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
          positionButton.setMaximumSize(size);
          positionButton.setPreferredSize(size);
          positionButton.setMargin(buttonInsets_);
+         // at least on Windows, the night skin foreground color is ignored by the look and feel
+         // set explicitly to white if we are on Windows in night mode
+         if (JavaUtils.isWindows() && studio_.app().skin().getSkin().equals(
+               ApplicationSkin.SkinMode.NIGHT)) {
+            positionButton.setForeground(Color.WHITE);
+         }
          axisPositionButtons_.add(new AbstractMap.SimpleEntry<>(
                axis, positionButton));
       }
