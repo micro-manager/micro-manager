@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.filechooser.FileFilter;
@@ -91,7 +92,7 @@ public class DefaultDatastore implements Datastore {
    protected PrioritizedEventBus bus_;
    // Some messages need to be sent synchronously, so we have a second bus
    protected PrioritizedEventBus syncBus_;
-   protected boolean isFrozen_ = false;
+   protected AtomicBoolean isFrozen_ = new AtomicBoolean(false);
    protected final Studio studio_;
 
    private String savePath_ = null;
@@ -227,7 +228,7 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public void putImage(Image image) throws IOException {
-      if (isFrozen_) {
+      if (isFrozen_.get()) {
          throw new DatastoreFrozenException();
       }
       if (image == null) {
@@ -311,7 +312,7 @@ public class DefaultDatastore implements Datastore {
    @Override
    public synchronized void setSummaryMetadata(SummaryMetadata metadata)
          throws DatastoreFrozenException, DatastoreRewriteException {
-      if (isFrozen_) {
+      if (isFrozen_.get()) {
          throw new DatastoreFrozenException();
       }
       if (haveSetSummary_ || getNumImages() > 0) {
@@ -387,10 +388,25 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   /**
+    * Concurrency note:
+    * <p>
+    * The AtomicBoolean {@code isFrozen_} is checked and set outside the
+    * {@code synchronized (this)} block so that only the first caller that
+    * observes the datastore as not yet frozen proceeds into the critical
+    * section. Any subsequent calls to {@code freeze()} will see
+    * {@code isFrozen_} as already true and return immediately without
+    * acquiring this monitor, while the first thread may still be executing
+    * the potentially long-running {@code storage_.freeze()} call.
+    * <p>
+    * This non-standard pattern is deliberate: it prevents UI and display
+    * threads from blocking (or deadlocking) on this monitor when closing
+    * windows or otherwise invoking {@code freeze()} during an ongoing
+    * storage freeze operation.
+    */
    public void freeze() throws IOException {
-      if (!isFrozen_) {
-         isFrozen_ = true;
-         synchronized(this) {
+      if (!isFrozen_.getAndSet(true)) {
+         synchronized (this) {
             if (storage_ != null) {
                storage_.freeze();
             }
@@ -401,7 +417,7 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public boolean isFrozen() {
-      return isFrozen_;
+      return isFrozen_.get();
    }
 
    @Override
