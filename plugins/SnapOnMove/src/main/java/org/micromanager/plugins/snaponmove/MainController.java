@@ -238,6 +238,9 @@ class MainController {
          monitorThread_.interrupt();
          try {
             monitorThread_.join(1000);
+            if (monitorThread_.isAlive()) {
+               studio_.logs().logError("Snap-on-Move monitor thread failed to exit");
+            }
          } catch (InterruptedException notOurs) {
             Thread.currentThread().interrupt();
          }
@@ -312,7 +315,8 @@ class MainController {
       if (Thread.interrupted()) {
          throw new InterruptedException();
       }
-      Thread.sleep(getPollingIntervalMs());
+      long pollingIntervalMs = getPollingIntervalMs();
+      Thread.sleep(pollingIntervalMs);
       long pollingDeadlineMs = 0; // The first poll should happen immediately
       for (; ; ) {
          if (waitForEvents(pollingDeadlineMs)) {
@@ -326,7 +330,7 @@ class MainController {
          if (pollDevices()) {
             return;
          }
-         pollingDeadlineMs = System.currentTimeMillis() + getPollingIntervalMs();
+         pollingDeadlineMs = System.currentTimeMillis() + pollingIntervalMs;
       }
    }
 
