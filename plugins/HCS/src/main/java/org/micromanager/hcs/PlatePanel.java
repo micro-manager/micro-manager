@@ -24,6 +24,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -894,7 +895,7 @@ public class PlatePanel extends JPanel {
     */
    @Subscribe
    public void stagePositionChanged(StagePositionChangedEvent stagePositionChangedEvent) {
-      if (stagePositionChangedEvent.getDeviceName().equals(
+      if (Objects.equals(stagePositionChangedEvent.getDeviceName(),
               plateGui_.getZStageName())) {
          zStagePos_ = stagePositionChangedEvent.getPos();
          Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);

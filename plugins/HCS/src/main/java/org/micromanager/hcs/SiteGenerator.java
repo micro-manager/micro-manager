@@ -772,15 +772,24 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       // Convert to Point2D.Double for compatibility with applyOffset
       Point2D.Double cursorPoint = cursorSnapshot.toPoint2D();
       Point2D.Double cursorOffsetPos = applyOffset(cursorPoint);
+      String zStagePart = "";
+      if (getZStageName() != null && !getZStageName().isEmpty()) {
+         zStagePart = ", " + getZStageName() + "="
+               + TextUtils.FMT2.format(zStagePos_) + "um";
+      }
       String statusTxt = "Cursor: X=" + TextUtils.FMT2.format(cursorOffsetPos.x) + "um, Y="
             + TextUtils.FMT2.format(cursorOffsetPos.y) + "um, " + cursorWell_
-            + ((useThreePtAF() && focusPlane_ != null) ? ", Z->"
-            + TextUtils.FMT2.format(focusPlane_.getZPos(cursorOffsetPos.x, cursorOffsetPos.y))
-            + "um" : "") + "     --      Stage: X="
+            + ((useThreePtAF() && focusPlane_ != null)
+               ? ", Z->"
+                  + TextUtils.FMT2.format(
+                           focusPlane_.getZPos(cursorOffsetPos.x, cursorOffsetPos.y))
+                  + "um"
+               : "")
+            + "     --      Stage: X="
             + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y="
-            + TextUtils.FMT2.format(xyStagePos_.y) + "um, "
-            + getZStageName() + "="
-            + TextUtils.FMT2.format(zStagePos_) + "um, " + stageWell_;
+            + TextUtils.FMT2.format(xyStagePos_.y) + "um"
+            + zStagePart
+            +  ", " + stageWell_;
       statusLabel_.setText(statusTxt);
    }
 
