@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -70,7 +72,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 class MainController {
    private final Studio studio_;
 
-   private long pollingIntervalMs_;
+   private final AtomicLong pollingIntervalMs_ = new AtomicLong();
 
    // Criteria for monitoring and change detection.
    // Although we frequently search for matching MonitoredItem, we just
@@ -122,8 +124,8 @@ class MainController {
    MainController(Studio studio) {
       studio_ = studio;
 
-      pollingIntervalMs_ = studio_.profile().getSettings(this.getClass())
-                  .getLong(PROFILE_KEY_POLLING_INTERVAL_MS, 100L);
+      pollingIntervalMs_.set(studio_.profile().getSettings(this.getClass())
+                  .getLong(PROFILE_KEY_POLLING_INTERVAL_MS, 100L));
       useSnap_ = studio_.profile().getSettings(this.getClass()).getBoolean(USE_SNAP, true);
       useTestAcq_ = studio_.profile().getSettings(this.getClass()).getBoolean(USE_TEST_ACQ, false);
 
@@ -152,15 +154,15 @@ class MainController {
       studio_.events().registerForEvents(this);
    }
 
-   synchronized void setPollingIntervalMs(long intervalMs) {
-      pollingIntervalMs_ = intervalMs;
+   void setPollingIntervalMs(long intervalMs) {
+      pollingIntervalMs_.set(intervalMs);
 
       studio_.profile().getSettings(this.getClass()).putLong(
             PROFILE_KEY_POLLING_INTERVAL_MS, intervalMs);
    }
 
-   synchronized long getPollingIntervalMs() {
-      return pollingIntervalMs_;
+   long getPollingIntervalMs() {
+      return pollingIntervalMs_.get();
    }
 
    synchronized void setChangeCriteria(Collection<ChangeCriterion> criteria) {
@@ -237,7 +239,7 @@ class MainController {
       } else {
          monitorThread_.interrupt();
          try {
-            monitorThread_.join();
+            monitorThread_.join(1000);
          } catch (InterruptedException notOurs) {
             Thread.currentThread().interrupt();
          }
