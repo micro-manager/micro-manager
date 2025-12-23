@@ -894,10 +894,14 @@ public class PlatePanel extends JPanel {
     */
    @Subscribe
    public void stagePositionChanged(StagePositionChangedEvent stagePositionChangedEvent) {
-      zStagePos_ = stagePositionChangedEvent.getPos();
-      Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
-      String well = plate_.getWellLabel(pt.x, pt.y);
-      plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+      if (stagePositionChangedEvent.getDeviceName().equals(
+              plateGui_.getZStageName())) {
+         zStagePos_ = stagePositionChangedEvent.getPos();
+         Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
+         String well = plate_.getWellLabel(pt.x, pt.y);
+         plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well,
+                 "undefined");
+      }
    }
 
    /**

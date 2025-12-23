@@ -776,8 +776,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             + TextUtils.FMT2.format(cursorOffsetPos.y) + "um, " + cursorWell_
             + ((useThreePtAF() && focusPlane_ != null) ? ", Z->"
             + TextUtils.FMT2.format(focusPlane_.getZPos(cursorOffsetPos.x, cursorOffsetPos.y))
-            + "um" : "") + " -- Stage: X=" + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y="
-            + TextUtils.FMT2.format(xyStagePos_.y) + "um, Z="
+            + "um" : "") + "     --      Stage: X="
+            + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y="
+            + TextUtils.FMT2.format(xyStagePos_.y) + "um, "
+            + getZStageName() + "="
             + TextUtils.FMT2.format(zStagePos_) + "um, " + stageWell_;
       statusLabel_.setText(statusTxt);
    }
