@@ -817,15 +817,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
 
-      // Early exit if nothing changed - KEY OPTIMIZATION
+      // Skip expensive UI rebuilding if axes haven't changed
+      // But always ensure ImageJ knows about axis extents (critical for display updates)
       if (!axesChanged) {
          if (perfMon_ != null) {
             perfMon_.sampleTimeInterval("expandDisplayedRange early exit - no change");
          }
-         return; // Skip expensive sorting and UI updates
+         // Still need to ensure ImageJ is informed about axis extents
+         if (ijBridge_ != null) {
+            ijBridge_.mm2ijEnsureDisplayAxisExtents();
+         }
+         return;
       }
 
-
+      // Axes changed - rebuild scrollbar panel and update UI
       List<String> scrollableAxes = new ArrayList<>();
       Map<String, Integer> scrollableLengths = new HashMap<>();
       for (int i = 0; i < displayedAxes_.size(); ++i) {
