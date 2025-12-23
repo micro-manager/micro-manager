@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
 import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -58,7 +57,6 @@ import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * The main control code for Snap-on-Move.
