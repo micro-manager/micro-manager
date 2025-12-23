@@ -24,6 +24,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -894,10 +895,14 @@ public class PlatePanel extends JPanel {
     */
    @Subscribe
    public void stagePositionChanged(StagePositionChangedEvent stagePositionChangedEvent) {
-      zStagePos_ = stagePositionChangedEvent.getPos();
-      Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
-      String well = plate_.getWellLabel(pt.x, pt.y);
-      plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+      if (Objects.equals(stagePositionChangedEvent.getDeviceName(),
+              plateGui_.getZStageName())) {
+         zStagePos_ = stagePositionChangedEvent.getPos();
+         Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
+         String well = plate_.getWellLabel(pt.x, pt.y);
+         plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well,
+                 "undefined");
+      }
    }
 
    /**

@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -73,9 +74,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private final Studio studio_;
    private final Point2D.Double xyStagePos_;
    private Point2D.Double offset_;
-   private Boolean isCalibratedXY_;
+   private boolean isCalibratedXY_ = false;
    private double zStagePos_;
-   private final Point2D.Double cursorPos_;
+   private final AtomicReference<ImmutablePoint> cursorPos_;
    private String stageWell_;
    private String cursorWell_;
    PositionList threePtList_;
@@ -105,6 +106,25 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private final JRadioButton overWriteMMList_;
    private final JRadioButton appendToMMList_;
 
+   /**
+    * Immutable point class for thread-safe cursor position tracking.
+    */
+   private static final class ImmutablePoint {
+      public final double x;
+      public final double y;
+
+      public ImmutablePoint(double x, double y) {
+         this.x = x;
+         this.y = y;
+      }
+
+      /**
+       * Creates a new Point2D.Double with the same coordinates.
+       */
+      public Point2D.Double toPoint2D() {
+         return new Point2D.Double(x, y);
+      }
+   }
 
    /**
     * Create the frame.
@@ -129,7 +149,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       plate_ = new SBSPlate();
 
       xyStagePos_ = new Point2D.Double(0.0, 0.0);
-      cursorPos_ = new Point2D.Double(0.0, 0.0);
+      cursorPos_ = new AtomicReference<>(new ImmutablePoint(0.0, 0.0));
 
       stageWell_ = "undef";
       cursorWell_ = "undef";
@@ -735,10 +755,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    @Override
-   public void updatePointerXYPosition(double x, double y, String wellLabel, 
+   public void updatePointerXYPosition(double x, double y, String wellLabel,
            String siteLabel) {
-      cursorPos_.x = x;
-      cursorPos_.y = y;
+      cursorPos_.set(new ImmutablePoint(x, y));
       cursorWell_ = wellLabel;
 
       displayStatus();
@@ -748,14 +767,29 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       if (statusLabel_ == null) {
          return;
       }
-      Point2D.Double cursorOffsetPos = applyOffset(cursorPos_);
+      // Get a thread-safe snapshot of the current cursor position
+      ImmutablePoint cursorSnapshot = cursorPos_.get();
+      // Convert to Point2D.Double for compatibility with applyOffset
+      Point2D.Double cursorPoint = cursorSnapshot.toPoint2D();
+      Point2D.Double cursorOffsetPos = applyOffset(cursorPoint);
+      String zStagePart = "";
+      if (getZStageName() != null && !getZStageName().isEmpty()) {
+         zStagePart = ", " + getZStageName() + "="
+               + TextUtils.FMT2.format(zStagePos_) + "um";
+      }
       String statusTxt = "Cursor: X=" + TextUtils.FMT2.format(cursorOffsetPos.x) + "um, Y="
             + TextUtils.FMT2.format(cursorOffsetPos.y) + "um, " + cursorWell_
-            + ((useThreePtAF() && focusPlane_ != null) ? ", Z->"
-            + TextUtils.FMT2.format(focusPlane_.getZPos(cursorOffsetPos.x, cursorOffsetPos.y))
-            + "um" : "") + " -- Stage: X=" + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y="
-            + TextUtils.FMT2.format(xyStagePos_.y) + "um, Z="
-            + TextUtils.FMT2.format(zStagePos_) + "um, " + stageWell_;
+            + ((useThreePtAF() && focusPlane_ != null)
+               ? ", Z->"
+                  + TextUtils.FMT2.format(
+                           focusPlane_.getZPos(cursorOffsetPos.x, cursorOffsetPos.y))
+                  + "um"
+               : "")
+            + "     --      Stage: X="
+            + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y="
+            + TextUtils.FMT2.format(xyStagePos_.y) + "um"
+            + zStagePart
+            +  ", " + stageWell_;
       statusLabel_.setText(statusTxt);
    }
 
