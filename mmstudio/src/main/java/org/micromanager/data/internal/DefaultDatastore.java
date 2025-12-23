@@ -387,23 +387,23 @@ public class DefaultDatastore implements Datastore {
       }
    }
 
-   @Override
    /**
     * Concurrency note:
-    * <p>
-    * The AtomicBoolean {@code isFrozen_} is checked and set outside the
-    * {@code synchronized (this)} block so that only the first caller that
+    *
+    * <p>The AtomicBoolean {@code isFrozen_} is checked and set outside
+    * the {@code synchronized (this)} block so that only the first caller that
     * observes the datastore as not yet frozen proceeds into the critical
     * section. Any subsequent calls to {@code freeze()} will see
     * {@code isFrozen_} as already true and return immediately without
     * acquiring this monitor, while the first thread may still be executing
     * the potentially long-running {@code storage_.freeze()} call.
-    * <p>
-    * This non-standard pattern is deliberate: it prevents UI and display
+    *
+    * <p>This non-standard pattern is deliberate: it prevents UI and display
     * threads from blocking (or deadlocking) on this monitor when closing
     * windows or otherwise invoking {@code freeze()} during an ongoing
     * storage freeze operation.
     */
+   @Override
    public void freeze() throws IOException {
       if (!isFrozen_.getAndSet(true)) {
          synchronized (this) {
