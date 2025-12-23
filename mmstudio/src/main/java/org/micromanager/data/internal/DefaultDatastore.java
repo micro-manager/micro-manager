@@ -387,13 +387,15 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public synchronized void freeze() throws IOException {
+   public void freeze() throws IOException {
       if (!isFrozen_) {
          isFrozen_ = true;
-         if (storage_ != null) {
-            storage_.freeze();
+         synchronized(this) {
+            if (storage_ != null) {
+               storage_.freeze();
+            }
+            bus_.post(new DefaultDatastoreFrozenEvent());
          }
-         bus_.post(new DefaultDatastoreFrozenEvent());
       }
    }
 
