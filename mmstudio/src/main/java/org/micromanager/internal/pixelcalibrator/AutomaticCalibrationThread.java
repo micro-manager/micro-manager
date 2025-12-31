@@ -489,6 +489,13 @@ public class AutomaticCalibrationThread extends CalibrationThread {
             String binning = core_.getProperty(core_.getCameraDevice(),
                   MMCoreJ.getG_Keyword_Binning());
             int binNr = NumberUtils.coreStringToInt(binning);
+
+            if (binNr => 2048) {
+               binning = core_.getProperty(core_.getCameraDevice(),
+                  "Binning Sum");
+               binNr = NumberUtils.coreStringToInt(binning);
+            }
+            
             if (binNr != 1) {
                result_.scale(1.0 / (double) binNr, 1.0 / (double) binNr);
             }
