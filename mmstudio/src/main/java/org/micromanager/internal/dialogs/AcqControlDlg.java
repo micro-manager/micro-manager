@@ -1205,7 +1205,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    public void propertyChange(PropertyChangeEvent e) {
       // update summary
       applySettingsFromGUI();
-      summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
    }
 
 
@@ -1680,7 +1679,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          double z = mmStudio_.core().getPosition();
          zEnd_.setText(NumberUtils.doubleToDisplayString(z));
          applySettingsFromGUI();
-         summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
       } catch (Exception e) {
          mmStudio_.logs().showError(e, "Error getting Z Position");
       }
@@ -1728,7 +1726,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          double z = mmStudio_.core().getPosition();
          zStart_.setText(NumberUtils.doubleToDisplayString(z));
          applySettingsFromGUI();
-         summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
       } catch (Exception e) {
          mmStudio_.logs().showError(e, "Error getting Z Position");
       }
@@ -2087,6 +2084,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                "Zero Z step size is not supported, resetting to 1 micron", this);
          getAcquisitionEngine().setSequenceSettings(ssb.sliceZStepUm(1.0).build());
       }
+      summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
 
       channelTable_.editCellAt(editingRow, editingColumn, null);
    }

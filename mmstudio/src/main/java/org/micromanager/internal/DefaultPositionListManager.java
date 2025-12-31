@@ -29,9 +29,6 @@ public final class DefaultPositionListManager implements PositionListManager {
     */
    @Override
    public void setPositionList(PositionList pl) {
-      if (posList_ == pl) {
-         return;
-      }
       posList_ = pl;
       studio_.events().post(new DefaultNewPositionListEvent(posList_));
    }

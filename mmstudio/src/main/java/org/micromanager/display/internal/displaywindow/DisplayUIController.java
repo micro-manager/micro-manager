@@ -77,6 +77,7 @@ import javax.swing.event.ChangeEvent;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
@@ -199,6 +200,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    // controller's notion of what's current)
    private final List<String> displayedAxes_ = new ArrayList<>();
    private final List<Integer> displayedAxisLengths_ = new ArrayList<>();
+   // O(1) lookup for axis indices
+   private final Map<String, Integer> displayedAxesIndexMap_ = new HashMap<>();
    private ImagesAndStats displayedImages_;
    private Double cachedPixelSize_ = -1.0;
    private boolean isPreview_ = false;
@@ -644,6 +647,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setPreferredSize(size);
          animateButton.setHorizontalAlignment(SwingConstants.LEFT);
          animateButton.setHorizontalTextPosition(SwingConstants.RIGHT);
+         // At least on Windows, the night skin foreground color is ignored by the look and feel
+         // set explicitly to white if we are on Windows in night mode, non-standard colors
+         // appear to be ignored.
+         if (JavaUtils.isWindows() && studio_.app().skin().getSkin().equals(
+               ApplicationSkin.SkinMode.NIGHT)) {
+            animateButton.setForeground(Color.WHITE);
+         }
          animateButton.setIcon(PLAY_ICON);
          animateButton.setSelectedIcon(PAUSE_ICON);
          animateButton.setMargin(buttonInsets_);
@@ -693,6 +703,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
          positionButton.setMaximumSize(size);
          positionButton.setPreferredSize(size);
          positionButton.setMargin(buttonInsets_);
+         // at least on Windows, the night skin foreground color is ignored by the look and feel
+         // Set explicitly to white if we are on Windows in night mode
+         if (JavaUtils.isWindows() && studio_.app().skin().getSkin().equals(
+               ApplicationSkin.SkinMode.NIGHT)) {
+            positionButton.setForeground(Color.WHITE);
+         }
          axisPositionButtons_.add(new AbstractMap.SimpleEntry<>(
                axis, positionButton));
       }
@@ -772,18 +788,28 @@ public final class DisplayUIController implements Closeable, WindowListener,
          noImagesMessageLabel_.setText("Preparing to Display...");
       }
 
+      boolean axesChanged = false;
+
       for (Coords c : coords) {
          for (String axis : c.getAxes()) {
             if (axis != null) {
                int index = c.getIndex(axis);
-               int axisIndex = displayedAxes_.indexOf(axis);
-               if (axisIndex == -1) {
+               // Use O(1) HashMap lookup instead of O(N) ArrayList.indexOf()
+               Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+               if (axisIndexObj == null) {
+                  int newAxisIndex = displayedAxes_.size();
                   displayedAxes_.add(axis);
                   displayedAxisLengths_.add(index + 1);
+                  displayedAxesIndexMap_.put(axis, newAxisIndex);
+                  axesChanged = true;
                } else {
+                  int axisIndex = axisIndexObj;
                   int oldLength = displayedAxisLengths_.get(axisIndex);
                   int newLength = Math.max(oldLength, index + 1);
-                  displayedAxisLengths_.set(axisIndex, newLength);
+                  if (newLength != oldLength) {
+                     displayedAxisLengths_.set(axisIndex, newLength);
+                     axesChanged = true;
+                  }
                }
             } else {
                studio_.logs().logError("Null axis in Coords: " + c);
@@ -791,6 +817,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
 
+      // Skip expensive UI rebuilding if axes haven't changed
+      // But always ensure ImageJ knows about axis extents (critical for display updates)
+      if (!axesChanged) {
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("expandDisplayedRange early exit - no change");
+         }
+         // Still need to ensure ImageJ is informed about axis extents
+         if (ijBridge_ != null) {
+            ijBridge_.mm2ijEnsureDisplayAxisExtents();
+         }
+         return;
+      }
+
+      // Axes changed - rebuild scrollbar panel and update UI
       List<String> scrollableAxes = new ArrayList<>();
       Map<String, Integer> scrollableLengths = new HashMap<>();
       for (int i = 0; i < displayedAxes_.size(); ++i) {
@@ -800,20 +840,23 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       // Reorder scrollable axes to match axis order of data provider
+      // Cache ordered axes lookup outside the comparator to avoid O(N²) HashMap creation
+      final List<String> orderedAxes = displayController_.getOrderedAxes();
+      final Map<String, Integer> axisOrderMap = new HashMap<>(orderedAxes.size());
+      for (int i = 0; i < orderedAxes.size(); i++) {
+         axisOrderMap.put(orderedAxes.get(i), i);
+      }
+
       scrollableAxes.sort((String o1, String o2) -> {
          if (o1.equals(o2)) {
             return 0;
          }
-         List<String> ordered = displayController_.getOrderedAxes();
-         Map<String, Integer> axisMap = new HashMap<>(ordered.size());
-         for (int i = 0; i < ordered.size(); i++) {
-            axisMap.put(ordered.get(i), i);
-         }
-         if (axisMap.containsKey(o1) && axisMap.containsKey(o2)) {
-            return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
+         if (axisOrderMap.containsKey(o1) && axisOrderMap.containsKey(o2)) {
+            return axisOrderMap.get(o1) > axisOrderMap.get(o2) ? 1 : -1;
          }
          return 0; // Ugly, TODO: Report?
       });
+
       scrollBarPanel_.setAxes(scrollableAxes);
       for (int i = 0; i < scrollableAxes.size(); ++i) {
          final String currentAxis = scrollableAxes.get(i);
@@ -1237,11 +1280,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       int checkedLength = length;
       if (checkedLength < 0) {
-         int axisIndex = displayedAxes_.indexOf(axis);
-         if (axisIndex < 0) {
+         // Use O(1) HashMap lookup instead of O(N) ArrayList.indexOf()
+         Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+         if (axisIndexObj == null) {
             return;
          }
-         checkedLength = displayedAxisLengths_.get(axisIndex);
+         checkedLength = displayedAxisLengths_.get(axisIndexObj);
       }
       if (checkedLength <= 1) {
          return; // Not displayed
@@ -1870,15 +1914,15 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    public boolean isAxisDisplayed(String axis) {
-      return displayedAxes_.contains(axis);
+      return displayedAxesIndexMap_.containsKey(axis);
    }
 
    public int getDisplayedAxisLength(String axis) {
-      int axisIndex = displayedAxes_.indexOf(axis);
-      if (axisIndex == -1) {
+      Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+      if (axisIndexObj == null) {
          return 0;
       }
-      return displayedAxisLengths_.get(axisIndex);
+      return displayedAxisLengths_.get(axisIndexObj);
    }
 
    public List<Coords> getAllDisplayedCoords() {

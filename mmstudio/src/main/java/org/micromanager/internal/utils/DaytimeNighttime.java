@@ -175,13 +175,15 @@ public final class DaytimeNighttime implements ApplicationSkin {
    @Override
    public void setSkin(SkinMode mode) {
       setMode(mode, true);
+      storeSkin(mode);
    }
 
    /**
-    * This version of the function allows us to specify whether or not the
-    * UI should be updated after changing modes. Not updating is only generally
-    * wanted in cases where a one-off component must be created that doesn't
-    * adhere to our custom look and feel; see suspendToMode() below.
+    * This version of the function allows us to specify whether the
+    * UI should be updated after changing modes.
+    * Not updating is only generally wanted in cases where a one-off
+    * component must be created that doesn't adhere to our custom
+    * look and feel; see suspendToMode() below.
     */
    private void setMode(SkinMode mode, boolean shouldUpdateUI) {
 

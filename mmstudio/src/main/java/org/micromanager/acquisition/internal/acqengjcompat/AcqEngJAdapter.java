@@ -1647,22 +1647,64 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       final int numChannels = getNumChannels(sequenceSettings_);
 
       double exposurePerTimePointMs = 0.0;
+      double totalDurationSec = 0;
       if (sequenceSettings_.useChannels()) {
-         for (ChannelSpec channel : sequenceSettings_.channels()) {
-            if (channel.useChannel()) {
-               double channelExposure = channel.exposure();
-               if (channel.doZStack()) {
-                  channelExposure *= getNumSlices(sequenceSettings_);
+         for (int frame = 0; frame < numFrames; frame++) {
+            double timePerFrameMs = 0.0;
+            for (ChannelSpec channel : sequenceSettings_.channels()) {
+               if (channel.useChannel()) {
+                  // correct for skipped frames
+                  boolean skip = false;
+                  if (channel.skipFactorFrame() > 0) {
+                     if (frame % (channel.skipFactorFrame() + 1) != 0) {
+                        skip = true;
+                     }
+                  }
+                  if (!skip) {
+                     double channelExposure = channel.exposure();
+                     if (channel.doZStack()) {
+                        channelExposure *= getNumSlices(sequenceSettings_);
+                     }
+                     channelExposure *= getNumPositions(sequenceSettings_, posList_);
+                     timePerFrameMs += channelExposure;
+                  }
                }
-               channelExposure *= getNumPositions(sequenceSettings_, posList_);
-               exposurePerTimePointMs += channelExposure;
             }
+            double interval;
+            if (!sequenceSettings_.useCustomIntervals()) {
+               // Constant interval between time points: use the larger of interval and exposure.
+               interval = Math.max(sequenceSettings_.intervalMs(), timePerFrameMs);
+            } else {
+               // Custom intervals: intervals are between consecutive time points.
+               double delayMs = 0.0;
+               if (frame > 0) {
+                  List<Double> customIntervals = sequenceSettings_.customIntervalsMs();
+                  int idx = frame - 1;
+                  if (customIntervals != null && idx < customIntervals.size()) {
+                     delayMs = customIntervals.get(idx);
+                  } else {
+                     // Fallback to the regular interval if custom intervals are missing.
+                     delayMs = sequenceSettings_.intervalMs();
+                  }
+               }
+               interval = Math.max(delayMs, timePerFrameMs);
+            }
+            totalDurationSec += interval / 1000.0;
          }
       } else { // use the current settings for acquisition
          try {
             exposurePerTimePointMs = core_.getExposure()
                   * getNumSlices(sequenceSettings_)
                   * getNumPositions(sequenceSettings_, posList_);
+            double interval = Math.max(sequenceSettings_.intervalMs(), exposurePerTimePointMs);
+            if (!sequenceSettings_.useCustomIntervals()) {
+               totalDurationSec = interval * (numFrames - 1) / 1000.0;
+            } else {
+               for (Double d : sequenceSettings_.customIntervalsMs()) {
+                  totalDurationSec += d / 1000.0;
+               }
+            }
+            totalDurationSec += exposurePerTimePointMs / 1000;
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Failed to get exposure time");
          }
@@ -1671,16 +1713,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       final int totalImages = getTotalImages(sequenceSettings_);
       final long totalMB = getTotalMemory() / (1024 * 1024);
 
-      double totalDurationSec = 0;
-      double interval = Math.max(sequenceSettings_.intervalMs(), exposurePerTimePointMs);
-      if (!sequenceSettings_.useCustomIntervals()) {
-         totalDurationSec = interval * (numFrames - 1) / 1000.0;
-      } else {
-         for (Double d : sequenceSettings_.customIntervalsMs()) {
-            totalDurationSec += d / 1000.0;
-         }
-      }
-      totalDurationSec += exposurePerTimePointMs / 1000;
       int hrs = (int) (totalDurationSec / 3600);
       double remainSec = totalDurationSec - hrs * 3600;
       int mins = (int) (remainSec / 60);
