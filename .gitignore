@@ -90,3 +90,4 @@ bin
 # macOS packaging (with the nightly script)
 /*.dmg
 /*.sparseimage
+.Xauthority/Xauthority
