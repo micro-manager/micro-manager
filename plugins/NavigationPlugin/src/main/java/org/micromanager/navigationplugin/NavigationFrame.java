@@ -41,6 +41,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 
 public class NavigationFrame extends JFrame {
 
+   private static final String LAST_IMAGE_PATH_KEY = "lastImagePath";
+
    private final Studio studio_;
    private final NavigationState state_;
    private final ImagePanel imagePanel_;
@@ -137,6 +139,16 @@ public class NavigationFrame extends JFrame {
             "Image files", "jpg", "jpeg", "png", "tif", "tiff", "bmp", "gif");
       fileChooser.setFileFilter(filter);
 
+      // Set starting directory from last opened image path
+      String lastImagePath = settings_.getString(LAST_IMAGE_PATH_KEY, null);
+      if (lastImagePath != null) {
+         File lastImageFile = new File(lastImagePath);
+         File parentDir = lastImageFile.getParentFile();
+         if (parentDir != null && parentDir.exists()) {
+            fileChooser.setCurrentDirectory(parentDir);
+         }
+      }
+
       int result = fileChooser.showOpenDialog(this);
       if (result == JFileChooser.APPROVE_OPTION) {
          File selectedFile = fileChooser.getSelectedFile();
@@ -150,6 +162,9 @@ public class NavigationFrame extends JFrame {
             currentImagePath_ = selectedFile.getAbsolutePath();
             state_.setReferenceImage(image);
             state_.clearAllPoints();
+
+            // Save last opened image path to profile
+            settings_.putString(LAST_IMAGE_PATH_KEY, currentImagePath_);
 
             // Try to load previously saved calibration for this image
             loadCalibrationFromProfile();
