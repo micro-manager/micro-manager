@@ -15,12 +15,23 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
@@ -42,6 +53,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class NavigationFrame extends JFrame {
 
    private static final String LAST_IMAGE_PATH_KEY = "lastImagePath";
+   private static final Set<String> SUPPORTED_EXTENSIONS = new HashSet<>(
+         Arrays.asList("jpg", "jpeg", "png", "tif", "tiff", "bmp", "gif"));
 
    private final Studio studio_;
    private final NavigationState state_;
@@ -71,6 +84,7 @@ public class NavigationFrame extends JFrame {
 
       initializeUI();
       setupEventHandlers();
+      setupDragAndDrop();
 
       // Register for events
       studio_.events().registerForEvents(this);
@@ -151,34 +165,130 @@ public class NavigationFrame extends JFrame {
 
       int result = fileChooser.showOpenDialog(this);
       if (result == JFileChooser.APPROVE_OPTION) {
-         File selectedFile = fileChooser.getSelectedFile();
-         try {
-            BufferedImage image = ImageIO.read(selectedFile);
-            if (image == null) {
-               showError("Failed to load image. The file may not be a valid image format.");
-               return;
-            }
-
-            currentImagePath_ = selectedFile.getAbsolutePath();
-            state_.setReferenceImage(image);
-            state_.clearAllPoints();
-
-            // Save last opened image path to profile
-            settings_.putString(LAST_IMAGE_PATH_KEY, currentImagePath_);
-
-            // Try to load previously saved calibration for this image
-            loadCalibrationFromProfile();
-
-            imagePanel_.repaint();
-            updateStatusDisplay();
-
-            studio_.logs().logMessage("Loaded reference image: " + selectedFile.getName());
-
-         } catch (IOException ex) {
-            showError("Error loading image: " + ex.getMessage());
-            studio_.logs().logError(ex);
-         }
+         loadImageFile(fileChooser.getSelectedFile());
       }
+   }
+
+   /**
+    * Load an image file as the reference image.
+    * This method is called both from the file chooser and from drag-and-drop.
+    *
+    * @param file the image file to load
+    */
+   private void loadImageFile(File file) {
+      try {
+         BufferedImage image = ImageIO.read(file);
+         if (image == null) {
+            showError("Failed to load image. The file may not be a valid image format.");
+            return;
+         }
+
+         currentImagePath_ = file.getAbsolutePath();
+         state_.setReferenceImage(image);
+         state_.clearAllPoints();
+
+         // Save last opened image path to profile
+         settings_.putString(LAST_IMAGE_PATH_KEY, currentImagePath_);
+
+         // Try to load previously saved calibration for this image
+         loadCalibrationFromProfile();
+
+         imagePanel_.repaint();
+         updateStatusDisplay();
+
+         studio_.logs().logMessage("Loaded reference image: " + file.getName());
+
+      } catch (IOException ex) {
+         showError("Error loading image: " + ex.getMessage());
+         studio_.logs().logError(ex);
+      }
+   }
+
+   /**
+    * Check if a file has a supported image extension.
+    *
+    * @param file the file to check
+    * @return true if the file extension is supported
+    */
+   private boolean isSupportedImageFile(File file) {
+      String name = file.getName().toLowerCase();
+      int dotIndex = name.lastIndexOf('.');
+      if (dotIndex < 0) {
+         return false;
+      }
+      String extension = name.substring(dotIndex + 1);
+      return SUPPORTED_EXTENSIONS.contains(extension);
+   }
+
+   /**
+    * Setup drag and drop support for loading reference images.
+    */
+   private void setupDragAndDrop() {
+      DropTargetListener dropListener = new DropTargetListener() {
+         @Override
+         public void dragEnter(DropTargetDragEvent dtde) {
+            if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+               dtde.acceptDrag(DnDConstants.ACTION_COPY);
+            } else {
+               dtde.rejectDrag();
+            }
+         }
+
+         @Override
+         public void dragOver(DropTargetDragEvent dtde) {
+            // No action needed
+         }
+
+         @Override
+         public void dropActionChanged(DropTargetDragEvent dtde) {
+            // No action needed
+         }
+
+         @Override
+         public void dragExit(DropTargetEvent dte) {
+            // No action needed
+         }
+
+         @Override
+         @SuppressWarnings("unchecked")
+         public void drop(DropTargetDropEvent dtde) {
+            try {
+               if (!dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                  dtde.rejectDrop();
+                  return;
+               }
+
+               dtde.acceptDrop(DnDConstants.ACTION_COPY);
+               Transferable transferable = dtde.getTransferable();
+               List<File> files = (List<File>) transferable
+                     .getTransferData(DataFlavor.javaFileListFlavor);
+
+               if (files.isEmpty()) {
+                  dtde.dropComplete(false);
+                  return;
+               }
+
+               // Take only the first file
+               File file = files.get(0);
+
+               if (!isSupportedImageFile(file)) {
+                  showError("Unsupported file type. Please drop an image file "
+                        + "(jpg, jpeg, png, tif, tiff, bmp, gif).");
+                  dtde.dropComplete(false);
+                  return;
+               }
+
+               loadImageFile(file);
+               dtde.dropComplete(true);
+
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Error handling dropped file");
+               dtde.dropComplete(false);
+            }
+         }
+      };
+
+      new DropTarget(this, dropListener);
    }
 
    private void clearCalibrationPoints() {
