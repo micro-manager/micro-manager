@@ -2,7 +2,7 @@
 
 # Micro-Manager launcher for running as ImageJ plugin.
 
-cd /home/engineer/ImageJ
+cd /root/ImageJ
 
 umask 0002 && java -Xmx1024M \
    -XX:MaxDirectMemorySize=1000G \
