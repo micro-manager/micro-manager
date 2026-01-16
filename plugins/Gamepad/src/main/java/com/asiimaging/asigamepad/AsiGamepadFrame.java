@@ -293,7 +293,7 @@ public class AsiGamepadFrame extends JFrame {
          Vector<? extends Vector<?>> rowData = (Vector<? extends Vector<?>>) in.readObject();
          DefaultTableModel model = (DefaultTableModel) btnTable.table.getModel();
          model.setDataVector(rowData, getColumnNames(btnTable.table));
-         rowData = (Vector<? extends Vector<?>>) in.readObject(); // cast must match the variable type
+         rowData = (Vector<? extends Vector<?>>) in.readObject();
          model = (DefaultTableModel) axisTable.table_.getModel();
          model.setDataVector(rowData, getColumnNames(axisTable.table_));
 
