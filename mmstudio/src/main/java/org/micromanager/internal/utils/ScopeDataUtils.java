@@ -28,6 +28,7 @@ import java.util.Set;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 
 /**
@@ -574,6 +575,115 @@ public final class ScopeDataUtils {
 
       return new ValidationResult(validProperties, missingDevices,
             missingProperties, readOnlyProperties, preInitProperties);
+   }
+
+   /**
+    * Filters ScopeData to only include properties that exist in the current
+    * hardware configuration and have different values from the current state.
+    *
+    * <p>This is useful for determining what would actually change if the
+    * ScopeData were applied, without actually applying it.</p>
+    *
+    * @param core      The CMMCore instance
+    * @param scopeData PropertyMap containing device properties
+    * @return PropertyMap containing only properties that exist and differ from current values
+    */
+   public static PropertyMap filterChangedProperties(CMMCore core, PropertyMap scopeData) {
+      if (scopeData == null || scopeData.isEmpty()) {
+         return PropertyMaps.emptyPropertyMap();
+      }
+
+      PropertyMap.Builder builder = PropertyMaps.builder();
+      Set<String> loadedDevices = getLoadedDeviceSet(core);
+
+      for (String key : scopeData.keySet()) {
+         String[] parts = parseKey(key);
+         if (parts == null) {
+            // Skip malformed keys
+            continue;
+         }
+
+         String device = parts[0];
+         String property = parts[1];
+         String targetValue = scopeData.getString(key, "");
+
+         try {
+            // Check if device exists
+            if (!loadedDevices.contains(device)) {
+               continue;
+            }
+
+            // Check if property exists
+            if (!core.hasProperty(device, property)) {
+               continue;
+            }
+
+            // Get current value and check if it differs
+            String currentValue = core.getProperty(device, property);
+            if (!currentValue.equals(targetValue)) {
+               builder.putString(key, targetValue);
+            }
+         } catch (Exception e) {
+            // Skip properties we can't read
+            continue;
+         }
+      }
+
+      return builder.build();
+   }
+
+   /**
+    * Filters ScopeData to only include properties that exist in the current
+    * hardware configuration and have different values, returning detailed
+    * information about each property difference.
+    *
+    * @param core      The CMMCore instance
+    * @param scopeData PropertyMap containing device properties
+    * @return List of PropertyChange objects describing each difference
+    */
+   public static List<PropertyChange> getChangedProperties(CMMCore core, PropertyMap scopeData) {
+      List<PropertyChange> changes = new ArrayList<>();
+
+      if (scopeData == null || scopeData.isEmpty()) {
+         return changes;
+      }
+
+      Set<String> loadedDevices = getLoadedDeviceSet(core);
+
+      for (String key : scopeData.keySet()) {
+         String[] parts = parseKey(key);
+         if (parts == null) {
+            // Skip malformed keys
+            continue;
+         }
+
+         String device = parts[0];
+         String property = parts[1];
+         String targetValue = scopeData.getString(key, "");
+
+         try {
+            // Check if device exists
+            if (!loadedDevices.contains(device)) {
+               continue;
+            }
+
+            // Check if property exists
+            if (!core.hasProperty(device, property)) {
+               continue;
+            }
+
+            // Get current value and check if it differs
+            String currentValue = core.getProperty(device, property);
+            if (!currentValue.equals(targetValue)) {
+               changes.add(new PropertyChange(device, property, targetValue, currentValue));
+            }
+         } catch (Exception e) {
+            // Skip properties we can't read
+            continue;
+         }
+      }
+
+      return changes;
    }
 
    /**
