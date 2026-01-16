@@ -687,6 +687,117 @@ public final class ScopeDataUtils {
    }
 
    /**
+    * Filters ScopeData to remove read-only properties.
+    *
+    * <p>Returns a new PropertyMap containing only properties that are writable.
+    * Properties for devices that don't exist in the current configuration are
+    * also removed.</p>
+    *
+    * @param core      The CMMCore instance
+    * @param scopeData PropertyMap containing device properties
+    * @return PropertyMap containing only writable properties
+    */
+   public static PropertyMap filterReadOnlyProperties(CMMCore core, PropertyMap scopeData) {
+      if (scopeData == null || scopeData.isEmpty()) {
+         return PropertyMaps.emptyPropertyMap();
+      }
+
+      PropertyMap.Builder builder = PropertyMaps.builder();
+      Set<String> loadedDevices = getLoadedDeviceSet(core);
+
+      for (String key : scopeData.keySet()) {
+         String[] parts = parseKey(key);
+         if (parts == null) {
+            // Skip malformed keys
+            continue;
+         }
+
+         String device = parts[0];
+         String property = parts[1];
+         String value = scopeData.getString(key, "");
+
+         try {
+            // Check if device exists
+            if (!loadedDevices.contains(device)) {
+               continue;
+            }
+
+            // Check if property exists
+            if (!core.hasProperty(device, property)) {
+               continue;
+            }
+
+            // Check if property is read-only
+            if (core.isPropertyReadOnly(device, property)) {
+               continue;
+            }
+
+            // Property is writable, include it
+            builder.putString(key, value);
+         } catch (Exception e) {
+            // Skip properties we can't check
+            continue;
+         }
+      }
+
+      return builder.build();
+   }
+
+   /**
+    * Filters ScopeData to remove "State" properties when the device also has
+    * a "Label" property.
+    *
+    * <p>State devices (like filter wheels, objectives, etc.) typically have both
+    * a numeric "State" property and a human-readable "Label" property. When both
+    * are present in the ScopeData, it's preferable to use "Label" since it's
+    * more meaningful and less error-prone if the state device configuration
+    * has changed.</p>
+    *
+    * @param scopeData PropertyMap containing device properties
+    * @return PropertyMap with redundant State properties removed
+    */
+   public static PropertyMap filterStateProperties(PropertyMap scopeData) {
+      if (scopeData == null || scopeData.isEmpty()) {
+         return PropertyMaps.emptyPropertyMap();
+      }
+
+      // First, find all devices that have a Label property
+      Set<String> devicesWithLabel = new HashSet<>();
+      for (String key : scopeData.keySet()) {
+         String[] parts = parseKey(key);
+         if (parts == null) {
+            continue;
+         }
+         if ("Label".equals(parts[1])) {
+            devicesWithLabel.add(parts[0]);
+         }
+      }
+
+      // Now build result, excluding State properties for devices that have Label
+      PropertyMap.Builder builder = PropertyMaps.builder();
+      for (String key : scopeData.keySet()) {
+         String[] parts = parseKey(key);
+         if (parts == null) {
+            // Keep malformed keys as-is
+            builder.putString(key, scopeData.getString(key, ""));
+            continue;
+         }
+
+         String device = parts[0];
+         String property = parts[1];
+
+         // Skip State property if this device has a Label property
+         if ("State".equals(property) && devicesWithLabel.contains(device)) {
+            continue;
+         }
+
+         builder.putString(key, scopeData.getString(key, ""));
+      }
+
+      return builder.build();
+   }
+
+   /**
     * Applies ScopeData to hardware with default options.
     *
     * @param studio    The Studio instance
