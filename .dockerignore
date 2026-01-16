@@ -1,4 +1,5 @@
 .git
 .github
 .vscode
-
+**/.ccache
+autom4te.cache
