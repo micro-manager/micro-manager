@@ -36,6 +36,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.Timer;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionEndedEvent;
 import org.micromanager.acquisition.SequenceSettings;
@@ -68,6 +69,7 @@ import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ScopeDataUtils;
 
 /**
  * This class is used to execute most of the acquisition and image display
@@ -136,10 +138,13 @@ public final class MMAcquisition extends DataViewerListener {
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       if (acquisitionSettings.save() && acquisitionSettings.root() != null) {
          // Set up saving to the target directory.
+         PropertyMap scopeState = ScopeDataUtils.configurationToPropertyMap(
+                  studio_.core().getSystemStateCache());
          try {
             String acqDirectory = createAcqDirectory(acquisitionSettings.root(),
                      acquisitionSettings.prefix());
-            summaryMetadata =  summaryMetadata.copyBuilder().prefix(acqDirectory).build();
+            summaryMetadata =  summaryMetadata.copyBuilder().prefix(acqDirectory)
+                     .initialScopeData(scopeState).build();
             String acqPath = acquisitionSettings.root() + File.separator + acqDirectory;
             store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
          } catch (Exception e) {

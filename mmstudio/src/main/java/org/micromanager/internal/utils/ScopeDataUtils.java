@@ -26,6 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -520,6 +522,33 @@ public final class ScopeDataUtils {
          return null;
       }
       return new String[] {key.substring(0, idx), key.substring(idx + 1)};
+   }
+
+   /**
+    * Converts a Configuration (from core.getSystemStateCache()) to a PropertyMap
+    * in the standard ScopeData format ("DeviceLabel-PropertyName" keys).
+    *
+    * @param config Configuration object from CMMCore
+    * @return PropertyMap with device properties
+    */
+   public static PropertyMap configurationToPropertyMap(Configuration config) {
+      if (config == null) {
+         return PropertyMaps.emptyPropertyMap();
+      }
+
+      PropertyMap.Builder builder = PropertyMaps.builder();
+      for (long i = 0; i < config.size(); ++i) {
+         try {
+            PropertySetting setting = config.getSetting(i);
+            builder.putString(
+                  setting.getDeviceLabel() + "-" + setting.getPropertyName(),
+                  setting.getPropertyValue());
+         } catch (Exception e) {
+            // Skip settings that can't be read
+            continue;
+         }
+      }
+      return builder.build();
    }
 
    /**

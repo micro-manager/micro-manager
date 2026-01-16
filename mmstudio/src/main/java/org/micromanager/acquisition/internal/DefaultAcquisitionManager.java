@@ -32,11 +32,8 @@ import java.util.Date;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
-import mmcorej.Configuration;
-import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
 import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.ChannelSpec;
@@ -51,6 +48,7 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.ScopeDataUtils;
 
 /**
  * TODO: this class still depends on MMStudio for access to its cache.
@@ -294,6 +292,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             .userName(System.getProperty("user.name"))
             .profileName(studio_.profile().getProfileName())
             .computerName(computerName)
+            .initialScopeData(ScopeDataUtils.configurationToPropertyMap(
+               studio_.core().getSystemStateCache()))
             .build();
    }
 
@@ -337,17 +337,9 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          // Again, this can fail if there is no camera.
       }
       if (includeHardwareState) {
-         PropertyMap.Builder scopeBuilder = PropertyMaps.builder();
-         Configuration config = studio_.core().getSystemStateCache();
-         for (long i = 0; i < config.size(); ++i) {
-            PropertySetting setting = config.getSetting(i);
-            // NOTE: this key format chosen to match that used by the current
-            // acquisition engine.
-            scopeBuilder.putString(
-                  setting.getDeviceLabel() + "-" + setting.getPropertyName(),
-                  setting.getPropertyValue());
-         }
-         result.scopeData(scopeBuilder.build());
+         PropertyMap scopeState = ScopeDataUtils.configurationToPropertyMap(
+                  studio_.core().getSystemStateCache());
+         result.scopeData(scopeState);
       }
       return result.build();
    }
