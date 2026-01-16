@@ -27,6 +27,7 @@ import static org.micromanager.data.internal.PropertyKey.COMPUTER_NAME;
 import static org.micromanager.data.internal.PropertyKey.CUSTOM_INTERVALS_MS;
 import static org.micromanager.data.internal.PropertyKey.DIRECTORY;
 import static org.micromanager.data.internal.PropertyKey.HEIGHT;
+import static org.micromanager.data.internal.PropertyKey.INITIAL_SCOPE_DATA;
 import static org.micromanager.data.internal.PropertyKey.INTENDED_DIMENSIONS;
 import static org.micromanager.data.internal.PropertyKey.INTERVAL_MS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS;
@@ -256,6 +257,12 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
+      public Builder initialScopeData(PropertyMap initialScopeData) {
+         b_.putPropertyMap(INITIAL_SCOPE_DATA.key(), initialScopeData);
+         return this;
+      }
+
+      @Override
       public Builder sequenceSettings(SequenceSettings sequenceSettings) {
          b_.putString(MDA_SETTINGS.key(), SequenceSettings.toJSONStream(sequenceSettings));
          return this;
@@ -473,6 +480,11 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public PropertyMap getUserData() {
       return pmap_.getPropertyMap(USER_DATA.key(), PropertyMaps.emptyPropertyMap());
+   }
+
+   @Override
+   public PropertyMap getInitialScopeData() {
+      return pmap_.getPropertyMap(INITIAL_SCOPE_DATA.key(), PropertyMaps.emptyPropertyMap());
    }
 
    @Override
