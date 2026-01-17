@@ -1617,8 +1617,14 @@ public enum PropertyKey {
 
       @Override
       public JsonElement convertToGson(PropertyMap pmap) {
-         return PropertyMapJSONSerializer
-               .toGson(pmap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
+         if (!pmap.containsKey(key())) {
+            return null;
+         }
+         PropertyMap scopeData = pmap.getPropertyMap(key(), null);
+         if (scopeData == null || scopeData.isEmpty()) {
+            return null;
+         }
+         return PropertyMapJSONSerializer.toGson(scopeData);
       }
    },
 

@@ -363,7 +363,7 @@ public final class ScopeDataUtils {
       public static class Builder {
          private boolean strictMode = false;
          private boolean skipReadOnly = true;
-         private boolean skipMissingDevices = false;
+         private boolean skipMissingDevices = true;
          private boolean skipUnchanged = true;
          private boolean validateFirst = true;
          private Set<String> excludedKeys = new HashSet<>();
