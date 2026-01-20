@@ -42,7 +42,7 @@ public class iSIM implements SciJavaPlugin, MenuPlugin {
     */
    @Override
    public String getSubMenu() {
-      return "Developer Tools";
+      return "Device Control";
    }
 
    /**
@@ -50,12 +50,12 @@ public class iSIM implements SciJavaPlugin, MenuPlugin {
     */
    @Override
    public String getName() {
-      return "iSIM Example Plugin";
+      return "iSIM";
    }
 
    @Override
    public String getHelpText() {
-      return "Help text to tell the user what the plugin does.";
+      return "iSIM timing and control.";
    }
 
    @Override
@@ -65,6 +65,6 @@ public class iSIM implements SciJavaPlugin, MenuPlugin {
 
    @Override
    public String getCopyright() {
-      return "EPFL, 2026";
+      return "The Laboratory of Experimental Biophysics (LEB), EPFL, 2026";
    }
 }

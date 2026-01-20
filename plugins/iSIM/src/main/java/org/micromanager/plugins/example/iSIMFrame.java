@@ -34,6 +34,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
 import org.micromanager.events.ExposureChangedEvent;
+import org.micromanager.events.LiveModeEvent;
 import org.micromanager.internal.utils.WindowPositioning;
 
 // Imports for MMStudio internal packages
@@ -46,77 +47,16 @@ import org.micromanager.internal.utils.WindowPositioning;
 public class iSIMFrame extends JFrame {
 
    private Studio studio_;
-   private JTextField userText_;
-   private final JLabel imageInfoLabel_;
-   private final JLabel exposureTimeLabel_;
 
    public iSIMFrame(Studio studio) {
-      super("Example Plugin GUI");
+      super("iSIM Control Panel");
       studio_ = studio;
 
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
 
-      JLabel title = new JLabel("I'm an example plugin!");
+      JLabel title = new JLabel("iSIM Controller");
       title.setFont(new Font("Arial", Font.BOLD, 14));
       super.add(title, "span, alignx center, wrap");
-
-      // Create a text field for the user to customize their alerts.
-      super.add(new JLabel("Alert text: "));
-      userText_ = new JTextField(30);
-      userText_.setText("Something happened!");
-      super.add(userText_);
-
-      JButton alertButton = new JButton("Alert me!");
-      // Clicking on this button will invoke the ActionListener, which in turn
-      // will show a text alert to the user.
-      alertButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // Use the contents of userText_ as the text.
-            studio_.alerts().postAlert("Example Alert!",
-                  iSIMFrame.class, userText_.getText());
-         }
-      });
-      super.add(alertButton, "wrap");
-
-      // Snap an image, show the image in the Snap/Live view, and show some
-      // stats on the image in our frame.
-      imageInfoLabel_ = new JLabel();
-      super.add(imageInfoLabel_, "growx, split, span");
-      JButton snapButton = new JButton("Snap Image");
-      snapButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // Multiple images are returned only if there are multiple
-            // cameras. We only care about the first image.
-            List<Image> images = studio_.live().snap(true);
-            Image firstImage = images.get(0);
-            showImageInfo(firstImage);
-         }
-      });
-      super.add(snapButton, "wrap");
-
-      exposureTimeLabel_ = new JLabel("");
-      super.add(exposureTimeLabel_, "split, span, growx");
-
-      // Run an acquisition using the current MDA parameters.
-      JButton acquireButton = new JButton("Run Acquisition");
-      acquireButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // All GUI event handlers are invoked on the EDT (Event Dispatch
-            // Thread). Acquisitions are not allowed to be started from the
-            // EDT. Therefore we must make a new thread to run this.
-            Thread acqThread = new Thread(new Runnable() {
-               @Override
-               public void run() {
-                  studio_.acquisitions().runAcquisition();
-               }
-            });
-            acqThread.start();
-         }
-      });
-      super.add(acquireButton, "wrap");
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -143,20 +83,23 @@ public class iSIMFrame extends JFrame {
     */
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
-      exposureTimeLabel_.setText(String.format("Camera %s exposure time set to %.2fms",
-            event.getCameraName(), event.getNewExposureTime()));
+      studio_.alerts().postAlert(
+         "",
+         iSIMFrame.class,
+         String.format(
+               "Camera %s exposure time set to %.2fms",
+               event.getCameraName(),
+               event.getNewExposureTime()
+         )
+      );
    }
 
-   /**
-    * Display some information on the data in the provided image.
-    */
-   private void showImageInfo(Image image) {
-      // See DisplayManager for information on these parameters.
-      //HistogramData data = studio_.displays().calculateHistogram(
-      //   image, 0, 16, 16, 0, true);
-      imageInfoLabel_.setText(String.format(
-            "Image size: %dx%d", // min: %d, max: %d, mean: %d, std: %.2f",
-            image.getWidth(), image.getHeight())); //, data.getMinVal(),
-      //data.getMaxVal(), data.getMean(), data.getStdDev()));
+   @Subscribe
+   public void onLiveModeChanged(LiveModeEvent event) {
+      if (event.isOn()) {
+         studio_.alerts().postAlert("", iSIMFrame.class, "Live mode started");
+      } else {
+         studio_.alerts().postAlert("", iSIMFrame.class, "Live mode stopped");
+      }
    }
 }
