@@ -32,6 +32,8 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionStartedEvent;
 import org.micromanager.data.Image;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.LiveModeEvent;
@@ -75,12 +77,25 @@ public class iSIMFrame extends JFrame {
       studio_.events().registerForEvents(this);
    }
 
-   /**
-    * To be invoked, this method must be public and take a single parameter
-    * which is the type of the event we care about.
-    *
-    * @param event
-    */
+   
+   @Subscribe
+   public void onAcquisitionEnded(AcquisitionEndedEvent event) {
+      studio_.alerts().postAlert(
+         "",
+         iSIMFrame.class,
+         "Acquisition ended"
+      );
+   }
+
+   @Subscribe
+   public void onAcquisitionStarted(AcquisitionStartedEvent event) {
+      studio_.alerts().postAlert(
+         "",
+         iSIMFrame.class,
+         "Acquisition started"
+      );
+   }
+
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
       studio_.alerts().postAlert(
