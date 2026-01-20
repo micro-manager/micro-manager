@@ -40,6 +40,8 @@ import javax.swing.KeyStroke;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.Studio;
+import org.micromanager.data.ScopeDataUtils;
 
 /**
  * Modal dialog for selecting properties from a PropertyMap.
@@ -89,6 +91,8 @@ public final class PropertySelectionDialog extends JDialog {
    // Original properties for building result
    private final PropertyMap originalProperties_;
 
+   private final Studio studio_;
+
    /**
     * Shows a property selection dialog and returns the selected properties.
     *
@@ -99,18 +103,21 @@ public final class PropertySelectionDialog extends JDialog {
     * @return PropertyMap with selected properties, or null if cancelled
     */
    public static PropertyMap showDialog(Frame parent, String title,
-                                         PropertyMap properties) {
+                                        Studio studio, PropertyMap properties) {
       if (properties == null || properties.isEmpty()) {
          return properties;
       }
 
-      PropertySelectionDialog dialog = new PropertySelectionDialog(parent, title, properties);
+      PropertySelectionDialog dialog = new PropertySelectionDialog(parent, title, studio,
+            properties);
       dialog.setVisible(true);  // Blocks until closed
       return dialog.cancelled_ ? null : dialog.result_;
    }
 
-   private PropertySelectionDialog(Frame parent, String title, PropertyMap properties) {
+   private PropertySelectionDialog(Frame parent, String title, Studio studio,
+                                   PropertyMap properties) {
       super(parent, title, true);  // Modal
+      this.studio_ = studio;
       this.originalProperties_ = properties;
 
       // Group properties by device
@@ -125,7 +132,7 @@ public final class PropertySelectionDialog extends JDialog {
 
    private void groupPropertiesByDevice(PropertyMap properties) {
       for (String key : properties.keySet()) {
-         String[] parts = ScopeDataUtils.parseKey(key);
+         String[] parts = studio_.data().scopeData().parseKey(key);
          if (parts == null) {
             continue;
          }
@@ -139,7 +146,7 @@ public final class PropertySelectionDialog extends JDialog {
       setLayout(new BorderLayout());
 
       // Main panel with scroll
-      JPanel mainPanel = new JPanel(new MigLayout("fillx, insets 10", "[grow]"));
+      final JPanel mainPanel = new JPanel(new MigLayout("fillx, insets 10", "[grow]"));
 
       // Master "Select All" checkbox
       selectAllCheckBox_ = new JCheckBox("Select All");
@@ -152,7 +159,7 @@ public final class PropertySelectionDialog extends JDialog {
       // Device groups
       for (Map.Entry<String, List<String>> entry : deviceToKeys_.entrySet()) {
          String device = entry.getKey();
-         List<String> keys = entry.getValue();
+         final List<String> keys = entry.getValue();
 
          // Device checkbox (bold, acts as group header)
          JCheckBox deviceCB = new JCheckBox(device);
@@ -164,7 +171,7 @@ public final class PropertySelectionDialog extends JDialog {
 
          // Property checkboxes (indented)
          for (String key : keys) {
-            String[] parts = ScopeDataUtils.parseKey(key);
+            String[] parts = studio_.data().scopeData().parseKey(key);
             String propName = parts[1];
             String value = originalProperties_.getString(key, "");
 

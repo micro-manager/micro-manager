@@ -48,7 +48,7 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.ScopeDataUtils;
+import org.micromanager.data.ScopeDataUtils;
 
 /**
  * TODO: this class still depends on MMStudio for access to its cache.
@@ -292,7 +292,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             .userName(System.getProperty("user.name"))
             .profileName(studio_.profile().getProfileName())
             .computerName(computerName)
-            .initialScopeData(ScopeDataUtils.configurationToPropertyMap(
+            .initialScopeData(studio_.data().scopeData().configurationToPropertyMap(
                studio_.core().getSystemStateCache()))
             .build();
    }
@@ -337,7 +337,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          // Again, this can fail if there is no camera.
       }
       if (includeHardwareState) {
-         PropertyMap scopeState = ScopeDataUtils.configurationToPropertyMap(
+         PropertyMap scopeState = studio_.data().scopeData().configurationToPropertyMap(
                   studio_.core().getSystemStateCache());
          result.scopeData(scopeState);
       }

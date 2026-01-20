@@ -606,4 +606,12 @@ public interface DataManager {
     * @return An implementation of the ImageJConverter interface.
     */
    ImageJConverter getImageJConverter();
+
+   /**
+    * Provide access to the ScopeDataUtils object for validating and applying
+    * hardware state from image metadata.
+    *
+    * @return An implementation of the ScopeDataUtils interface.
+    */
+   ScopeDataUtils scopeData();
 }

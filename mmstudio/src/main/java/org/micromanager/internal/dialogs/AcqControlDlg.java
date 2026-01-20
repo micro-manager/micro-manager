@@ -50,7 +50,6 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Objects;
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
@@ -95,6 +94,7 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
 import org.micromanager.acquisition.internal.testacquisition.TestAcqAdapter;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.ScopeDataUtils;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.ChannelDisplaySettings;
@@ -123,7 +123,6 @@ import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertySelectionDialog;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.ScopeDataUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -960,16 +959,18 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                }
             }
             if (oldSystemState != null && !oldSystemState.isEmpty()) {
+               ScopeDataUtils utils = mmStudio_.data().scopeData();
                ScopeDataUtils.ValidationResult validationResult =
-                        ScopeDataUtils.validateScopeData(mmStudio_.core(), oldSystemState);
+                        utils.validateScopeData(mmStudio_.core(), oldSystemState);
                if (validationResult.hasAnyValid()) {
                   PropertyMap propsToBeChanged = PropertySelectionDialog.showDialog(
                            this,
                            "Select properties to restore",
-                           ScopeDataUtils.filterChangedProperties(mmStudio_.core(),
+                           mmStudio_,
+                           utils.filterChangedProperties(mmStudio_.core(),
                                     oldSystemState));
-                  ScopeDataUtils.ApplyResult applyResult = ScopeDataUtils.applyScopeData(
-                           mmStudio_, propsToBeChanged);
+                  ScopeDataUtils.ApplyResult applyResult = utils.applyScopeData(
+                           propsToBeChanged);
                   if (!applyResult.isSuccess()) {
                      StringBuilder msg = new StringBuilder(
                               "Some settings could not be restored:\n");

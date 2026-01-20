@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
+//SUBSYSTEM:     Data API implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:        Nico Stuurman
@@ -18,7 +18,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.internal.utils;
+package org.micromanager.data.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,69 +32,69 @@ import mmcorej.StrVector;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.data.ScopeDataUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * Utility functions for validating and applying ScopeData (PropertyMap from
- * image metadata) to hardware.
- *
- * <p>ScopeData contains device properties in "DeviceLabel-PropertyName" format
- * with String values. This class provides methods to validate that all
- * properties exist in the current hardware configuration and to apply
- * the properties to restore hardware state.</p>
- *
- * <p>Example usage:</p>
- * <pre>{@code
- * PropertyMap scopeData = image.getMetadata().getScopeData();
- *
- * // Validate first
- * ValidationResult validation = ScopeDataUtils.validateScopeData(core, scopeData);
- * if (!validation.isFullyValid()) {
- *     ReportingUtils.logMessage("Issues: " + validation.getSummary());
- * }
- *
- * // Apply with default options
- * ApplyResult result = ScopeDataUtils.applyScopeData(studio, scopeData);
- * }</pre>
+ * Implementation of the ScopeDataUtils interface.
  */
-public final class ScopeDataUtils {
+public final class DefaultScopeDataUtils implements ScopeDataUtils {
 
-   private ScopeDataUtils() {
-      // Utility class - prevent instantiation
+   private final Studio studio_;
+
+   public DefaultScopeDataUtils(Studio studio) {
+      studio_ = studio;
    }
 
    // =========================================================================
-   // Helper Classes
+   // Static Factory Methods for ApplyOptions
    // =========================================================================
 
    /**
-    * Represents a single property entry from ScopeData.
+    * Create default ApplyOptions (used by interface static method).
     */
-   public static class PropertyEntry {
+   public static ApplyOptions createDefaultApplyOptions() {
+      return new DefaultApplyOptions.Builder().build();
+   }
+
+   /**
+    * Create ApplyOptions Builder (used by interface static method).
+    */
+   public static ApplyOptions.Builder createApplyOptionsBuilder() {
+      return new DefaultApplyOptions.Builder();
+   }
+
+   // =========================================================================
+   // Nested Implementation Classes
+   // =========================================================================
+
+   private static class DefaultPropertyEntry implements PropertyEntry {
       private final String device;
       private final String property;
       private final String value;
 
-      public PropertyEntry(String device, String property, String value) {
+      DefaultPropertyEntry(String device, String property, String value) {
          this.device = device;
          this.property = property;
          this.value = value;
       }
 
+      @Override
       public String getDevice() {
          return device;
       }
 
+      @Override
       public String getProperty() {
          return property;
       }
 
+      @Override
       public String getValue() {
          return value;
       }
 
-      /**
-       * Returns the key in "DeviceLabel-PropertyName" format.
-       */
+      @Override
       public String getKey() {
          return device + "-" + property;
       }
@@ -105,17 +105,16 @@ public final class ScopeDataUtils {
       }
    }
 
-   /**
-    * Represents a property change with both previous and new values.
-    */
-   public static class PropertyChange extends PropertyEntry {
+   private static class DefaultPropertyChange extends DefaultPropertyEntry
+         implements PropertyChange {
       private final String previousValue;
 
-      public PropertyChange(String device, String property, String value, String previousValue) {
+      DefaultPropertyChange(String device, String property, String value, String previousValue) {
          super(device, property, value);
          this.previousValue = previousValue;
       }
 
+      @Override
       public String getPreviousValue() {
          return previousValue;
       }
@@ -126,24 +125,23 @@ public final class ScopeDataUtils {
       }
    }
 
-   /**
-    * Represents a property that failed to apply with error information.
-    */
-   public static class PropertyError extends PropertyEntry {
+   private static class DefaultPropertyError extends DefaultPropertyEntry implements PropertyError {
       private final String errorMessage;
       private final Exception exception;
 
-      public PropertyError(String device, String property, String value,
+      DefaultPropertyError(String device, String property, String value,
                            String errorMessage, Exception exception) {
          super(device, property, value);
          this.errorMessage = errorMessage;
          this.exception = exception;
       }
 
+      @Override
       public String getErrorMessage() {
          return errorMessage;
       }
 
+      @Override
       public Exception getException() {
          return exception;
       }
@@ -154,25 +152,18 @@ public final class ScopeDataUtils {
       }
    }
 
-   // =========================================================================
-   // ValidationResult
-   // =========================================================================
-
-   /**
-    * Result of validating ScopeData against current hardware configuration.
-    */
-   public static class ValidationResult {
+   private static class DefaultValidationResult implements ValidationResult {
       private final List<PropertyEntry> validProperties;
       private final List<PropertyEntry> missingDevices;
       private final List<PropertyEntry> missingProperties;
       private final List<PropertyEntry> readOnlyProperties;
       private final List<PropertyEntry> preInitProperties;
 
-      private ValidationResult(List<PropertyEntry> validProperties,
-                               List<PropertyEntry> missingDevices,
-                               List<PropertyEntry> missingProperties,
-                               List<PropertyEntry> readOnlyProperties,
-                               List<PropertyEntry> preInitProperties) {
+      DefaultValidationResult(List<PropertyEntry> validProperties,
+                              List<PropertyEntry> missingDevices,
+                              List<PropertyEntry> missingProperties,
+                              List<PropertyEntry> readOnlyProperties,
+                              List<PropertyEntry> preInitProperties) {
          this.validProperties = Collections.unmodifiableList(validProperties);
          this.missingDevices = Collections.unmodifiableList(missingDevices);
          this.missingProperties = Collections.unmodifiableList(missingProperties);
@@ -180,9 +171,7 @@ public final class ScopeDataUtils {
          this.preInitProperties = Collections.unmodifiableList(preInitProperties);
       }
 
-      /**
-       * Returns true if all properties in ScopeData exist and are writable.
-       */
+      @Override
       public boolean isFullyValid() {
          return missingDevices.isEmpty()
                && missingProperties.isEmpty()
@@ -190,59 +179,43 @@ public final class ScopeDataUtils {
                && preInitProperties.isEmpty();
       }
 
-      /**
-       * Returns true if at least some properties can be applied.
-       */
+      @Override
       public boolean hasAnyValid() {
          return !validProperties.isEmpty();
       }
 
-      /**
-       * Returns list of properties that are valid and writable.
-       */
+      @Override
       public List<PropertyEntry> getValidProperties() {
          return validProperties;
       }
 
-      /**
-       * Returns list of properties where the device does not exist.
-       */
+      @Override
       public List<PropertyEntry> getMissingDevices() {
          return missingDevices;
       }
 
-      /**
-       * Returns list of properties where the property name does not exist.
-       */
+      @Override
       public List<PropertyEntry> getMissingProperties() {
          return missingProperties;
       }
 
-      /**
-       * Returns list of properties that are read-only.
-       */
+      @Override
       public List<PropertyEntry> getReadOnlyProperties() {
          return readOnlyProperties;
       }
 
-      /**
-       * Returns list of properties that are pre-initialization only.
-       */
+      @Override
       public List<PropertyEntry> getPreInitProperties() {
          return preInitProperties;
       }
 
-      /**
-       * Returns count of all issues.
-       */
+      @Override
       public int getIssueCount() {
          return missingDevices.size() + missingProperties.size()
                + readOnlyProperties.size() + preInitProperties.size();
       }
 
-      /**
-       * Returns a human-readable summary of validation results.
-       */
+      @Override
       public String getSummary() {
          if (isFullyValid()) {
             return "All " + validProperties.size() + " properties are valid";
@@ -268,14 +241,7 @@ public final class ScopeDataUtils {
       }
    }
 
-   // =========================================================================
-   // ApplyOptions
-   // =========================================================================
-
-   /**
-    * Options for controlling how ScopeData is applied to hardware.
-    */
-   public static class ApplyOptions {
+   private static class DefaultApplyOptions implements ApplyOptions {
       private final boolean strictMode;
       private final boolean skipReadOnly;
       private final boolean skipMissingDevices;
@@ -284,83 +250,53 @@ public final class ScopeDataUtils {
       private final Set<String> excludedKeys;
       private final Set<String> excludedDevices;
 
-      private ApplyOptions(Builder builder) {
+      private DefaultApplyOptions(Builder builder) {
          this.strictMode = builder.strictMode;
          this.skipReadOnly = builder.skipReadOnly;
          this.skipMissingDevices = builder.skipMissingDevices;
          this.skipUnchanged = builder.skipUnchanged;
          this.validateFirst = builder.validateFirst;
          this.excludedKeys = Collections.unmodifiableSet(new HashSet<>(builder.excludedKeys));
-         this.excludedDevices = Collections.unmodifiableSet(new HashSet<>(builder.excludedDevices));
+         this.excludedDevices = Collections.unmodifiableSet(
+               new HashSet<>(builder.excludedDevices));
       }
 
-      /**
-       * Returns default options: skip read-only, skip unchanged, validate first.
-       */
-      public static ApplyOptions defaults() {
-         return new Builder().build();
-      }
-
-      /**
-       * Returns a new builder for ApplyOptions.
-       */
-      public static Builder builder() {
-         return new Builder();
-      }
-
-      /**
-       * If true, stop on first error. If false, continue with remaining properties.
-       */
+      @Override
       public boolean isStrictMode() {
          return strictMode;
       }
 
-      /**
-       * If true, skip read-only properties instead of reporting errors.
-       */
+      @Override
       public boolean isSkipReadOnly() {
          return skipReadOnly;
       }
 
-      /**
-       * If true, skip properties for missing devices instead of reporting errors.
-       */
+      @Override
       public boolean isSkipMissingDevices() {
          return skipMissingDevices;
       }
 
-      /**
-       * If true, skip properties whose values already match current hardware.
-       */
+      @Override
       public boolean isSkipUnchanged() {
          return skipUnchanged;
       }
 
-      /**
-       * If true, validate before applying.
-       */
+      @Override
       public boolean isValidateFirst() {
          return validateFirst;
       }
 
-      /**
-       * Returns set of property keys to exclude (in "DeviceLabel-PropertyName" format).
-       */
+      @Override
       public Set<String> getExcludedKeys() {
          return excludedKeys;
       }
 
-      /**
-       * Returns set of device labels to exclude entirely.
-       */
+      @Override
       public Set<String> getExcludedDevices() {
          return excludedDevices;
       }
 
-      /**
-       * Builder for ApplyOptions.
-       */
-      public static class Builder {
+      static class Builder implements ApplyOptions.Builder {
          private boolean strictMode = false;
          private boolean skipReadOnly = true;
          private boolean skipMissingDevices = true;
@@ -369,125 +305,114 @@ public final class ScopeDataUtils {
          private Set<String> excludedKeys = new HashSet<>();
          private Set<String> excludedDevices = new HashSet<>();
 
+         @Override
          public Builder strictMode(boolean strict) {
             this.strictMode = strict;
             return this;
          }
 
+         @Override
          public Builder skipReadOnly(boolean skip) {
             this.skipReadOnly = skip;
             return this;
          }
 
+         @Override
          public Builder skipMissingDevices(boolean skip) {
             this.skipMissingDevices = skip;
             return this;
          }
 
+         @Override
          public Builder skipUnchanged(boolean skip) {
             this.skipUnchanged = skip;
             return this;
          }
 
+         @Override
          public Builder validateFirst(boolean validate) {
             this.validateFirst = validate;
             return this;
          }
 
+         @Override
          public Builder excludeKey(String key) {
             this.excludedKeys.add(key);
             return this;
          }
 
+         @Override
          public Builder excludeKeys(Set<String> keys) {
             this.excludedKeys.addAll(keys);
             return this;
          }
 
+         @Override
          public Builder excludeDevice(String deviceLabel) {
             this.excludedDevices.add(deviceLabel);
             return this;
          }
 
+         @Override
          public Builder excludeDevices(Set<String> deviceLabels) {
             this.excludedDevices.addAll(deviceLabels);
             return this;
          }
 
+         @Override
          public ApplyOptions build() {
-            return new ApplyOptions(this);
+            return new DefaultApplyOptions(this);
          }
       }
    }
 
-   // =========================================================================
-   // ApplyResult
-   // =========================================================================
-
-   /**
-    * Result of applying ScopeData to hardware.
-    */
-   public static class ApplyResult {
+   private static class DefaultApplyResult implements ApplyResult {
       private final List<PropertyChange> appliedProperties;
       private final List<PropertyEntry> skippedProperties;
       private final List<PropertyError> errors;
       private final ValidationResult validationResult;
 
-      private ApplyResult(List<PropertyChange> appliedProperties,
-                          List<PropertyEntry> skippedProperties,
-                          List<PropertyError> errors,
-                          ValidationResult validationResult) {
+      DefaultApplyResult(List<PropertyChange> appliedProperties,
+                         List<PropertyEntry> skippedProperties,
+                         List<PropertyError> errors,
+                         ValidationResult validationResult) {
          this.appliedProperties = Collections.unmodifiableList(appliedProperties);
          this.skippedProperties = Collections.unmodifiableList(skippedProperties);
          this.errors = Collections.unmodifiableList(errors);
          this.validationResult = validationResult;
       }
 
-      /**
-       * Returns true if all properties were applied successfully (no errors).
-       */
+      @Override
       public boolean isSuccess() {
          return errors.isEmpty();
       }
 
-      /**
-       * Returns true if at least some properties were applied.
-       */
+      @Override
       public boolean isPartialSuccess() {
          return !appliedProperties.isEmpty();
       }
 
-      /**
-       * Returns list of properties that were successfully applied.
-       */
+      @Override
       public List<PropertyChange> getAppliedProperties() {
          return appliedProperties;
       }
 
-      /**
-       * Returns list of properties that were skipped.
-       */
+      @Override
       public List<PropertyEntry> getSkippedProperties() {
          return skippedProperties;
       }
 
-      /**
-       * Returns list of properties that failed to apply.
-       */
+      @Override
       public List<PropertyError> getErrors() {
          return errors;
       }
 
-      /**
-       * Returns the validation result if validateFirst was true.
-       */
+      @Override
       public ValidationResult getValidationResult() {
          return validationResult;
       }
 
-      /**
-       * Returns a human-readable summary of apply results.
-       */
+      @Override
       public String getSummary() {
          StringBuilder sb = new StringBuilder();
          sb.append(appliedProperties.size()).append(" applied");
@@ -504,16 +429,11 @@ public final class ScopeDataUtils {
    }
 
    // =========================================================================
-   // Public Methods
+   // Public API Methods
    // =========================================================================
 
-   /**
-    * Parses a ScopeData key into device and property name.
-    *
-    * @param key Key in "DeviceLabel-PropertyName" format
-    * @return String array with [device, property], or null if invalid format
-    */
-   public static String[] parseKey(String key) {
+   @Override
+   public String[] parseKey(String key) {
       if (key == null) {
          return null;
       }
@@ -524,14 +444,8 @@ public final class ScopeDataUtils {
       return new String[] {key.substring(0, idx), key.substring(idx + 1)};
    }
 
-   /**
-    * Converts a Configuration (from core.getSystemStateCache()) to a PropertyMap
-    * in the standard ScopeData format ("DeviceLabel-PropertyName" keys).
-    *
-    * @param config Configuration object from CMMCore
-    * @return PropertyMap with device properties
-    */
-   public static PropertyMap configurationToPropertyMap(Configuration config) {
+   @Override
+   public PropertyMap configurationToPropertyMap(Configuration config) {
       if (config == null) {
          return PropertyMaps.emptyPropertyMap();
       }
@@ -551,14 +465,8 @@ public final class ScopeDataUtils {
       return builder.build();
    }
 
-   /**
-    * Validates that all properties in ScopeData exist in current hardware configuration.
-    *
-    * @param core      The CMMCore instance
-    * @param scopeData PropertyMap containing device properties
-    * @return ValidationResult with categorized properties
-    */
-   public static ValidationResult validateScopeData(CMMCore core, PropertyMap scopeData) {
+   @Override
+   public ValidationResult validateScopeData(CMMCore core, PropertyMap scopeData) {
       List<PropertyEntry> validProperties = new ArrayList<>();
       List<PropertyEntry> missingDevices = new ArrayList<>();
       List<PropertyEntry> missingProperties = new ArrayList<>();
@@ -566,7 +474,7 @@ public final class ScopeDataUtils {
       List<PropertyEntry> preInitProperties = new ArrayList<>();
 
       if (scopeData == null || scopeData.isEmpty()) {
-         return new ValidationResult(validProperties, missingDevices,
+         return new DefaultValidationResult(validProperties, missingDevices,
                missingProperties, readOnlyProperties, preInitProperties);
       }
 
@@ -582,7 +490,7 @@ public final class ScopeDataUtils {
          String device = parts[0];
          String property = parts[1];
          String value = scopeData.getString(key, "");
-         PropertyEntry entry = new PropertyEntry(device, property, value);
+         PropertyEntry entry = new DefaultPropertyEntry(device, property, value);
 
          try {
             if (!loadedDevices.contains(device)) {
@@ -602,22 +510,12 @@ public final class ScopeDataUtils {
          }
       }
 
-      return new ValidationResult(validProperties, missingDevices,
+      return new DefaultValidationResult(validProperties, missingDevices,
             missingProperties, readOnlyProperties, preInitProperties);
    }
 
-   /**
-    * Filters ScopeData to only include properties that exist in the current
-    * hardware configuration and have different values from the current state.
-    *
-    * <p>This is useful for determining what would actually change if the
-    * ScopeData were applied, without actually applying it.</p>
-    *
-    * @param core      The CMMCore instance
-    * @param scopeData PropertyMap containing device properties
-    * @return PropertyMap containing only properties that exist and differ from current values
-    */
-   public static PropertyMap filterChangedProperties(CMMCore core, PropertyMap scopeData) {
+   @Override
+   public PropertyMap filterChangedProperties(CMMCore core, PropertyMap scopeData) {
       if (scopeData == null || scopeData.isEmpty()) {
          return PropertyMaps.emptyPropertyMap();
       }
@@ -661,16 +559,8 @@ public final class ScopeDataUtils {
       return builder.build();
    }
 
-   /**
-    * Filters ScopeData to only include properties that exist in the current
-    * hardware configuration and have different values, returning detailed
-    * information about each property difference.
-    *
-    * @param core      The CMMCore instance
-    * @param scopeData PropertyMap containing device properties
-    * @return List of PropertyChange objects describing each difference
-    */
-   public static List<PropertyChange> getChangedProperties(CMMCore core, PropertyMap scopeData) {
+   @Override
+   public List<PropertyChange> getChangedProperties(CMMCore core, PropertyMap scopeData) {
       List<PropertyChange> changes = new ArrayList<>();
 
       if (scopeData == null || scopeData.isEmpty()) {
@@ -704,7 +594,7 @@ public final class ScopeDataUtils {
             // Get current value and check if it differs
             String currentValue = core.getProperty(device, property);
             if (!currentValue.equals(targetValue)) {
-               changes.add(new PropertyChange(device, property, targetValue, currentValue));
+               changes.add(new DefaultPropertyChange(device, property, targetValue, currentValue));
             }
          } catch (Exception e) {
             // Skip properties we can't read
@@ -715,18 +605,8 @@ public final class ScopeDataUtils {
       return changes;
    }
 
-   /**
-    * Filters ScopeData to remove read-only properties.
-    *
-    * <p>Returns a new PropertyMap containing only properties that are writable.
-    * Properties for devices that don't exist in the current configuration are
-    * also removed.</p>
-    *
-    * @param core      The CMMCore instance
-    * @param scopeData PropertyMap containing device properties
-    * @return PropertyMap containing only writable properties
-    */
-   public static PropertyMap filterReadOnlyProperties(CMMCore core, PropertyMap scopeData) {
+   @Override
+   public PropertyMap filterReadOnlyProperties(CMMCore core, PropertyMap scopeData) {
       if (scopeData == null || scopeData.isEmpty()) {
          return PropertyMaps.emptyPropertyMap();
       }
@@ -772,20 +652,8 @@ public final class ScopeDataUtils {
       return builder.build();
    }
 
-   /**
-    * Filters ScopeData to remove "State" properties when the device also has
-    * a "Label" property.
-    *
-    * <p>State devices (like filter wheels, objectives, etc.) typically have both
-    * a numeric "State" property and a human-readable "Label" property. When both
-    * are present in the ScopeData, it's preferable to use "Label" since it's
-    * more meaningful and less error-prone if the state device configuration
-    * has changed.</p>
-    *
-    * @param scopeData PropertyMap containing device properties
-    * @return PropertyMap with redundant State properties removed
-    */
-   public static PropertyMap filterStateProperties(PropertyMap scopeData) {
+   @Override
+   public PropertyMap filterStateProperties(PropertyMap scopeData) {
       if (scopeData == null || scopeData.isEmpty()) {
          return PropertyMaps.emptyPropertyMap();
       }
@@ -826,28 +694,14 @@ public final class ScopeDataUtils {
       return builder.build();
    }
 
-   /**
-    * Applies ScopeData to hardware with default options.
-    *
-    * @param studio    The Studio instance
-    * @param scopeData PropertyMap containing device properties
-    * @return ApplyResult with details of what was applied
-    */
-   public static ApplyResult applyScopeData(Studio studio, PropertyMap scopeData) {
-      return applyScopeData(studio, scopeData, ApplyOptions.defaults());
+   @Override
+   public ApplyResult applyScopeData(PropertyMap scopeData) {
+      return applyScopeData(scopeData, ApplyOptions.defaults());
    }
 
-   /**
-    * Applies ScopeData to hardware with configurable options.
-    *
-    * @param studio    The Studio instance
-    * @param scopeData PropertyMap containing device properties
-    * @param options   Options controlling apply behavior
-    * @return ApplyResult with details of what was applied
-    */
-   public static ApplyResult applyScopeData(Studio studio, PropertyMap scopeData,
-                                            ApplyOptions options) {
-      CMMCore core = studio.core();
+   @Override
+   public ApplyResult applyScopeData(PropertyMap scopeData, ApplyOptions options) {
+      CMMCore core = studio_.core();
 
       List<PropertyChange> applied = new ArrayList<>();
       List<PropertyEntry> skipped = new ArrayList<>();
@@ -855,11 +709,11 @@ public final class ScopeDataUtils {
       ValidationResult validationResult = null;
 
       if (scopeData == null || scopeData.isEmpty()) {
-         return new ApplyResult(applied, skipped, errors, null);
+         return new DefaultApplyResult(applied, skipped, errors, null);
       }
 
       // Suspend live mode
-      studio.live().setSuspended(true);
+      studio_.live().setSuspended(true);
 
       try {
          // Validate first if requested
@@ -867,7 +721,7 @@ public final class ScopeDataUtils {
             validationResult = validateScopeData(core, scopeData);
             if (options.isStrictMode() && !validationResult.isFullyValid()) {
                // Return early with validation result
-               return new ApplyResult(applied, skipped, errors, validationResult);
+               return new DefaultApplyResult(applied, skipped, errors, validationResult);
             }
          }
 
@@ -881,7 +735,7 @@ public final class ScopeDataUtils {
             } catch (Exception e) {
                String[] parts = parseKey(key);
                if (parts != null) {
-                  errors.add(new PropertyError(parts[0], parts[1],
+                  errors.add(new DefaultPropertyError(parts[0], parts[1],
                         scopeData.getString(key, ""), e.getMessage(), e));
                }
                if (options.isStrictMode()) {
@@ -899,17 +753,17 @@ public final class ScopeDataUtils {
 
          // Refresh GUI
          try {
-            studio.app().refreshGUIFromCache();
+            studio_.app().refreshGUIFromCache();
          } catch (Exception e) {
             ReportingUtils.logError(e, "Failed to refresh GUI");
          }
 
       } finally {
          // Resume live mode
-         studio.live().setSuspended(false);
+         studio_.live().setSuspended(false);
       }
 
-      return new ApplyResult(applied, skipped, errors, validationResult);
+      return new DefaultApplyResult(applied, skipped, errors, validationResult);
    }
 
    // =========================================================================
@@ -919,7 +773,7 @@ public final class ScopeDataUtils {
    /**
     * Gets the set of currently loaded device labels.
     */
-   private static Set<String> getLoadedDeviceSet(CMMCore core) {
+   private Set<String> getLoadedDeviceSet(CMMCore core) {
       Set<String> devices = new HashSet<>();
       try {
          StrVector deviceVector = core.getLoadedDevices();
@@ -935,11 +789,11 @@ public final class ScopeDataUtils {
    /**
     * Applies a single property from ScopeData to hardware.
     */
-   private static void applyProperty(CMMCore core, String key, PropertyMap scopeData,
-                                     ApplyOptions options, Set<String> loadedDevices,
-                                     List<PropertyChange> applied,
-                                     List<PropertyEntry> skipped,
-                                     List<PropertyError> errors) throws Exception {
+   private void applyProperty(CMMCore core, String key, PropertyMap scopeData,
+                              ApplyOptions options, Set<String> loadedDevices,
+                              List<PropertyChange> applied,
+                              List<PropertyEntry> skipped,
+                              List<PropertyError> errors) throws Exception {
       String[] parts = parseKey(key);
       if (parts == null) {
          // Skip malformed keys
@@ -949,7 +803,7 @@ public final class ScopeDataUtils {
       String device = parts[0];
       String property = parts[1];
       String targetValue = scopeData.getString(key, "");
-      PropertyEntry entry = new PropertyEntry(device, property, targetValue);
+      PropertyEntry entry = new DefaultPropertyEntry(device, property, targetValue);
 
       // Check exclusions
       if (options.getExcludedDevices().contains(device)
@@ -998,6 +852,6 @@ public final class ScopeDataUtils {
       core.setProperty(device, property, targetValue);
       core.waitForDevice(device);
 
-      applied.add(new PropertyChange(device, property, targetValue, currentValue));
+      applied.add(new DefaultPropertyChange(device, property, targetValue, currentValue));
    }
 }
