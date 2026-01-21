@@ -1,0 +1,467 @@
+/**
+ * Thorlabs PM100 Power Measurement Automation Script
+ *
+ * This script automates power measurements with the Thorlabs PM100 power meter.
+ * It cycles through channels, sweeps voltage/intensity settings, and measures
+ * power at each step. Outputs CSV data and a JPG graph.
+ *
+ * Author: Nico Stuurman
+ * Date: 2025-12-26
+ */
+
+// ==================== USER CONFIGURATION ====================
+
+// Output directory for CSV and JPG files
+String outputDir = "E:/Data/PowerMeasurements";
+
+// Power meter device name
+String powerMeterName = "ThorlabsPM100";
+
+// Channel group name
+String channelGroup = "Channels-Andor";
+
+// Channel configurations: {channel preset name, wavelength (nm), device name, property name}
+String[][] channelConfigs = {
+    {"405-DAPI", "405", "NIDAQAO-PXI1Slot2/ao0", "Voltage"},
+    {"488", "488", "NIDAQAO-PXI1Slot2/ao1", "Voltage"},
+    {"561", "561", "NIDAQAO-PXI1Slot2/ao2", "Voltage"},
+    {"647", "647", "NIDAQAO-PXI1Slot2/ao3", "Voltage"}
+};
+
+// Number of voltage steps (default 25)
+int numSteps = 25;
+
+// Number of measurements per voltage (default 10)
+int measurementsPerVoltage = 10;
+
+// Delay between measurements in ms (default 100)
+int measurementDelay = 100;
+
+// Wait time after voltage change in ms (default 1000)
+int stabilizationDelay = 1000;
+
+// Generate separate plots for each channel (in addition to combined plot)
+boolean generateSeparatePlots = true;
+
+// ==================== IMPORTS ====================
+
+import mmcorej.StrVector;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.awt.Color;
+import java.awt.geom.Ellipse2D;
+import java.awt.BasicStroke;
+
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Calculate mean of an array
+ */
+double calculateMean(double[] values) {
+    double sum = 0.0;
+    for (int i = 0; i < values.length; i++) {
+        sum += values[i];
+    }
+    return sum / values.length;
+}
+
+/**
+ * Calculate standard deviation of an array
+ */
+double calculateStdDev(double[] values, double mean) {
+    double sumSquares = 0.0;
+    for (int i = 0; i < values.length; i++) {
+        double diff = values[i] - mean;
+        sumSquares += diff * diff;
+    }
+    return Math.sqrt(sumSquares / values.length);
+}
+
+/**
+ * Get distinct color for each channel
+ */
+Color getChannelColor(int index) {
+    Color[] colors = {
+        new Color(0, 0, 255),      // Blue for DAPI
+        new Color(0, 200, 0),      // Green for FITC
+        new Color(255, 100, 0),    // Orange for TRITC
+        new Color(255, 0, 0)       // Red for Cy5
+    };
+    if (index < colors.length) {
+        return colors[index];
+    }
+    // Fallback to generated colors
+    return new Color((index * 50) % 255, (index * 100) % 255, (index * 150) % 255);
+}
+
+// ==================== VALIDATION PHASE ====================
+
+mm.scripter().message("=== Thorlabs PM100 Power Measurement Script ===");
+mm.scripter().message("Starting validation...");
+
+// Check if power meter exists
+mm.scripter().message("Checking power meter: " + powerMeterName);
+StrVector devices = mmc.getLoadedDevices();
+boolean powerMeterFound = false;
+for (int i = 0; i < devices.size(); i++) {
+    if (devices.get(i).equals(powerMeterName)) {
+        powerMeterFound = true;
+        break;
+    }
+}
+
+if (!powerMeterFound) {
+    mm.scripter().message("ERROR: Power meter '" + powerMeterName + "' not found in loaded devices!");
+    mm.scripter().message("Please check device name and configuration.");
+    return;
+}
+mm.scripter().message("Power meter found: OK");
+
+// Check if channel group exists
+mm.scripter().message("Checking channel group: " + channelGroup);
+StrVector configGroups = mmc.getAvailableConfigGroups();
+boolean channelGroupFound = false;
+for (int i = 0; i < configGroups.size(); i++) {
+    if (configGroups.get(i).equals(channelGroup)) {
+        channelGroupFound = true;
+        break;
+    }
+}
+
+if (!channelGroupFound) {
+    mm.scripter().message("ERROR: Channel group '" + channelGroup + "' not found!");
+    mm.scripter().message("Available groups:");
+    for (int i = 0; i < configGroups.size(); i++) {
+        mm.scripter().message("  - " + configGroups.get(i));
+    }
+    return;
+}
+mm.scripter().message("Channel group found: OK");
+
+// Check output directory
+mm.scripter().message("Checking output directory: " + outputDir);
+File outputDirFile = new File(outputDir);
+if (!outputDirFile.exists() || !outputDirFile.isDirectory()) {
+    mm.scripter().message("ERROR: Output directory does not exist or is not a directory!");
+    mm.scripter().message("Please create directory: " + outputDir);
+    return;
+}
+mm.scripter().message("Output directory: OK");
+
+// Validate channel configurations and get property limits
+mm.scripter().message("Validating channel configurations...");
+StrVector availableConfigs = mmc.getAvailableConfigs(channelGroup);
+double[][] propertyLimits = new double[channelConfigs.length][2]; // [channel][min/max]
+
+for (int i = 0; i < channelConfigs.length; i++) {
+    String channelName = channelConfigs[i][0];
+    String deviceName = channelConfigs[i][2];
+    String propertyName = channelConfigs[i][3];
+
+    // Check if channel preset exists
+    boolean presetFound = false;
+    for (int j = 0; j < availableConfigs.size(); j++) {
+        if (availableConfigs.get(j).equals(channelName)) {
+            presetFound = true;
+            break;
+        }
+    }
+
+    if (!presetFound) {
+        mm.scripter().message("ERROR: Channel preset '" + channelName + "' not found in group '" + channelGroup + "'!");
+        return;
+    }
+
+    // Check if device and property exist, and get limits
+    try {
+        // Test if we can get the property
+        mmc.getProperty(deviceName, propertyName);
+
+        // Get property limits
+        if (mmc.hasPropertyLimits(deviceName, propertyName)) {
+            propertyLimits[i][0] = mmc.getPropertyLowerLimit(deviceName, propertyName);
+            propertyLimits[i][1] = mmc.getPropertyUpperLimit(deviceName, propertyName);
+            mm.scripter().message("  " + channelName + ": " + deviceName + "." + propertyName +
+                " [" + propertyLimits[i][0] + " - " + propertyLimits[i][1] + "] OK");
+        } else {
+            mm.scripter().message("ERROR: Property '" + deviceName + "." + propertyName + "' does not have limits!");
+            return;
+        }
+    } catch (Exception e) {
+        mm.scripter().message("ERROR: Cannot access property '" + deviceName + "." + propertyName + "': " + e.getMessage());
+        return;
+    }
+}
+
+mm.scripter().message("Validation complete. Starting measurements...");
+mm.scripter().message("");
+
+// ==================== DATA COLLECTION ====================
+
+// Data structure: [channel][voltageStep][0=voltage, 1=avgPower, 2=stdDev]
+double[][][] data = new double[channelConfigs.length][numSteps][3];
+
+// XY Series collection for chart
+XYSeriesCollection dataset = new XYSeriesCollection();
+
+// Process each channel
+for (int channelIdx = 0; channelIdx < channelConfigs.length; channelIdx++) {
+    String channelName = channelConfigs[channelIdx][0];
+    String wavelength = channelConfigs[channelIdx][1];
+    String deviceName = channelConfigs[channelIdx][2];
+    String propertyName = channelConfigs[channelIdx][3];
+
+    mm.scripter().message("Processing channel: " + channelName + " (" + (channelIdx + 1) + "/" + channelConfigs.length + ")");
+    mm.scripter().message("  Wavelength: " + wavelength + " nm");
+
+    try {
+        // Set channel configuration
+        mmc.setConfig(channelGroup, channelName);
+        mmc.waitForConfig(channelGroup, channelName);
+        mmc.setShutterOpen(true);
+
+        // Set wavelength on power meter
+        mmc.setProperty(powerMeterName, "Wavelength", wavelength);
+
+        // Create XY series for this channel
+        XYSeries series = new XYSeries(channelName);
+
+        // Get voltage range
+        double minVoltage = propertyLimits[channelIdx][0];
+        double maxVoltage = propertyLimits[channelIdx][1];
+        double voltageStep = (maxVoltage - minVoltage) / (numSteps - 1);
+
+        // Sweep through voltage steps
+        for (int stepIdx = 0; stepIdx < numSteps; stepIdx++) {
+            double voltage = minVoltage + (voltageStep * stepIdx);
+
+            // Set voltage
+            mmc.setProperty(deviceName, propertyName, voltage);
+
+            // Wait for stabilization
+            Thread.sleep(stabilizationDelay);
+
+            // Take multiple measurements
+            double[] powers = new double[measurementsPerVoltage];
+            for (int measIdx = 0; measIdx < measurementsPerVoltage; measIdx++) {
+                String rawPowerStr = mmc.getProperty(powerMeterName, "RawPower");
+                powers[measIdx] = Double.parseDouble(rawPowerStr);
+                Thread.sleep(measurementDelay);
+            }
+
+            // Calculate statistics
+            double avgPower = calculateMean(powers);
+            double stdDev = calculateStdDev(powers, avgPower);
+
+            // Store data
+            data[channelIdx][stepIdx][0] = voltage;
+            data[channelIdx][stepIdx][1] = avgPower;
+            data[channelIdx][stepIdx][2] = stdDev;
+
+            // Add to series (convert to mW for plotting)
+            series.add(voltage, avgPower * 1000.0);
+
+            // Progress update every 5 steps
+            if ((stepIdx + 1) % 5 == 0 || stepIdx == numSteps - 1) {
+                mm.scripter().message("    Progress: " + (stepIdx + 1) + "/" + numSteps +
+                    " (Voltage: " + String.format("%.3f", new Object[]{voltage}) + " V)");
+            }
+        }
+
+        // Add series to dataset
+        dataset.addSeries(series);
+
+        // Turn off the light source
+        mmc.setProperty(deviceName, propertyName, minVoltage);
+        
+        mmc.setShutterOpen(false);
+
+        mm.scripter().message("  Channel " + channelName + " complete.");
+        mm.scripter().message("");
+
+    } catch (Exception e) {
+        mm.scripter().message("ERROR processing channel " + channelName + ": " + e.getMessage());
+        mm.scripter().message("Continuing with next channel...");
+        mm.scripter().message("");
+    }
+}
+
+// ==================== SAVE CSV FILE ====================
+
+mm.scripter().message("Generating CSV file...");
+
+try {
+    // Generate timestamp for filename
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd_HHmm");
+    String timestamp = dateFormat.format(new Date());
+    String csvFilename = outputDir + File.separator + "powerMeasurement_" + timestamp + ".csv";
+
+    PrintWriter csvWriter = new PrintWriter(new FileWriter(csvFilename));
+
+    // Write metadata header
+    SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    csvWriter.println("# Power Measurement Data");
+    csvWriter.println("# Date: " + fullDateFormat.format(new Date()));
+    csvWriter.println("# Channel Group: " + channelGroup);
+    csvWriter.println("# Power Meter: " + powerMeterName);
+    csvWriter.println("# Measurements per point: " + measurementsPerVoltage);
+    csvWriter.println("# Stabilization delay: " + stabilizationDelay + " ms");
+    csvWriter.println("# Measurement delay: " + measurementDelay + " ms");
+    csvWriter.println("#");
+
+    // Write column headers
+    csvWriter.print("Voltage");
+    for (int i = 0; i < channelConfigs.length; i++) {
+        String channelName = channelConfigs[i][0];
+        csvWriter.print("," + channelName + "_Power(W)," + channelName + "_StdDev");
+    }
+    csvWriter.println();
+
+    // Write data rows
+    for (int stepIdx = 0; stepIdx < numSteps; stepIdx++) {
+        csvWriter.print(String.format("%.6f", new Object[]{data[0][stepIdx][0]}));
+        for (int channelIdx = 0; channelIdx < channelConfigs.length; channelIdx++) {
+            csvWriter.print("," + String.format("%.9f", new Object[]{data[channelIdx][stepIdx][1]}));
+            csvWriter.print("," + String.format("%.9f", new Object[]{data[channelIdx][stepIdx][2]}));
+        }
+        csvWriter.println();
+    }
+
+    csvWriter.close();
+    mm.scripter().message("CSV saved to: " + csvFilename);
+
+} catch (Exception e) {
+    mm.scripter().message("ERROR saving CSV file: " + e.getMessage());
+}
+
+// ==================== GENERATE AND SAVE GRAPHS ====================
+
+mm.scripter().message("Generating graphs...");
+
+// Generate timestamp for filenames
+SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd_HHmm");
+String timestamp = dateFormat.format(new Date());
+
+// ========== Combined Plot (All Channels) ==========
+
+try {
+    mm.scripter().message("Creating combined plot...");
+
+    // Create chart
+    JFreeChart chart = ChartFactory.createScatterPlot(
+        "Power vs Voltage - All Channels",  // Title
+        "Voltage (V)",                      // X-axis label
+        "Power (mW)",                       // Y-axis label
+        dataset,                            // Data
+        PlotOrientation.VERTICAL,
+        true,                               // Show legend
+        true,                               // Use tooltips
+        false                               // Configure chart to generate URLs
+    );
+
+    // Customize plot
+    XYPlot plot = (XYPlot) chart.getPlot();
+    plot.setBackgroundPaint(Color.white);
+    plot.setRangeGridlinePaint(Color.lightGray);
+    plot.setDomainGridlinePaint(Color.lightGray);
+
+    // Customize renderer
+    XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+
+    // Style each series
+    for (int i = 0; i < channelConfigs.length; i++) {
+        renderer.setSeriesLinesVisible(i, true);
+        renderer.setSeriesShapesVisible(i, true);
+        renderer.setSeriesPaint(i, getChannelColor(i));
+        renderer.setSeriesStroke(i, new BasicStroke(2.0f));
+
+        // Set small circle shape
+        Ellipse2D.Double shape = new Ellipse2D.Double(-3.0, -3.0, 6.0, 6.0);
+        renderer.setSeriesShape(i, shape);
+    }
+
+    // Save as JPEG
+    String jpgFilename = outputDir + File.separator + "powerMeasurement_" + timestamp + "_combined.jpg";
+    File jpgFile = new File(jpgFilename);
+    ChartUtils.saveChartAsJPEG(jpgFile, chart, 800, 600);
+
+    mm.scripter().message("Combined graph saved to: " + jpgFilename);
+
+} catch (Exception e) {
+    mm.scripter().message("ERROR saving combined graph: " + e.getMessage());
+}
+
+// ========== Separate Plots (One Per Channel) ==========
+
+if (generateSeparatePlots) {
+    mm.scripter().message("Creating individual channel plots...");
+
+    for (int channelIdx = 0; channelIdx < channelConfigs.length; channelIdx++) {
+        try {
+            String channelName = channelConfigs[channelIdx][0];
+            String wavelength = channelConfigs[channelIdx][1];
+
+            // Create single-series dataset
+            XYSeriesCollection singleDataset = new XYSeriesCollection();
+            singleDataset.addSeries(dataset.getSeries(channelIdx));
+
+            // Create chart for this channel
+            JFreeChart channelChart = ChartFactory.createScatterPlot(
+                "Power vs Voltage - " + channelName + " (" + wavelength + " nm)",  // Title
+                "Voltage (V)",                                                      // X-axis label
+                "Power (mW)",                                                       // Y-axis label
+                singleDataset,                                                      // Data
+                PlotOrientation.VERTICAL,
+                false,                                                              // No legend needed
+                true,                                                               // Use tooltips
+                false                                                               // Configure chart to generate URLs
+            );
+
+            // Customize plot
+            XYPlot channelPlot = (XYPlot) channelChart.getPlot();
+            channelPlot.setBackgroundPaint(Color.white);
+            channelPlot.setRangeGridlinePaint(Color.lightGray);
+            channelPlot.setDomainGridlinePaint(Color.lightGray);
+
+            // Customize renderer
+            XYLineAndShapeRenderer channelRenderer = (XYLineAndShapeRenderer) channelPlot.getRenderer();
+            channelRenderer.setSeriesLinesVisible(0, true);
+            channelRenderer.setSeriesShapesVisible(0, true);
+            channelRenderer.setSeriesPaint(0, getChannelColor(channelIdx));
+            channelRenderer.setSeriesStroke(0, new BasicStroke(2.0f));
+
+            // Set small circle shape
+            Ellipse2D.Double shape = new Ellipse2D.Double(-3.0, -3.0, 6.0, 6.0);
+            channelRenderer.setSeriesShape(0, shape);
+
+            // Save as JPEG
+            String channelJpgFilename = outputDir + File.separator + "powerMeasurement_" +
+                timestamp + "_" + channelName + ".jpg";
+            File channelJpgFile = new File(channelJpgFilename);
+            ChartUtils.saveChartAsJPEG(channelJpgFile, channelChart, 800, 600);
+
+            mm.scripter().message("  " + channelName + " graph saved to: " + channelJpgFilename);
+
+        } catch (Exception e) {
+            mm.scripter().message("ERROR saving graph for channel " + channelConfigs[channelIdx][0] + ": " + e.getMessage());
+        }
+    }
+}
+
+// ==================== COMPLETE ====================
+
+mm.scripter().message("");
+mm.scripter().message("=== Measurement Complete ===");
+mm.scripter().message("Processed " + channelConfigs.length + " channels with " + numSteps + " voltage steps each.");
+mm.scripter().message("Output files saved to: " + outputDir);
