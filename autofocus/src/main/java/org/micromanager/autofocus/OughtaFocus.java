@@ -90,7 +90,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private boolean displayGraph_ = false;
    private double cropFactor_ = 1;
    private String optimizer_ = OPTIMIZERS[0];
-   private boolean keepShutterOpen_ = true;
+   private boolean keepShutterOpen_ = false;
 
    /**
     * Constructor for the OughtaFocus class. This is the most versatible autofocus plugin.
