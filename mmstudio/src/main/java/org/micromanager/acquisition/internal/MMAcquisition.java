@@ -69,7 +69,6 @@ import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.data.ScopeDataUtils;
 
 /**
  * This class is used to execute most of the acquisition and image display

@@ -48,7 +48,6 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.MMException;
-import org.micromanager.data.ScopeDataUtils;
 
 /**
  * TODO: this class still depends on MMStudio for access to its cache.
