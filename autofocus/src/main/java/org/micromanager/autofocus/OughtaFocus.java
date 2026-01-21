@@ -196,13 +196,13 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       core.setExposure(exposure_);
       boolean oldAutoShutter = core.getAutoShutter(); // remember old state of autoShutter
       boolean oldShutter = core.getShutterOpen(); // remember old state of Shutter
-      if(keepShutterOpen_){
+      if (keepShutterOpen_) {
          core.setAutoShutter(false); // turn off Auto shutter
          core.setShutterOpen(true);  // open shutter
       }
       final double z = focusOptimizer_.runAutofocusAlgorithm();
       core.setPosition(zDrive_, z);
-      if(keepShutterOpen_){  // revert shutter state
+      if (keepShutterOpen_) {  // revert shutter state
          core.setAutoShutter(oldAutoShutter);
          core.setShutterOpen(oldShutter);  
       }
