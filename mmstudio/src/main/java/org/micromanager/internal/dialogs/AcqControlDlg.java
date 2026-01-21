@@ -969,23 +969,37 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                            mmStudio_,
                            utils.filterChangedProperties(mmStudio_.core(),
                                     oldSystemState));
-                  ScopeDataUtils.ApplyResult applyResult = utils.applyScopeData(
-                           propsToBeChanged);
-                  if (!applyResult.isSuccess()) {
-                     StringBuilder msg = new StringBuilder(
-                              "Some settings could not be restored:\n");
-                     for (ScopeDataUtils.PropertyError propertyError : applyResult.getErrors()) {
-                        msg.append("- ").append(propertyError.getErrorMessage()).append("\n");
+                  if (propsToBeChanged != null) {
+                     ScopeDataUtils.ApplyResult applyResult = utils.applyScopeData(
+                              propsToBeChanged);
+                     if (!applyResult.isSuccess()) {
+                        StringBuilder msg = new StringBuilder(
+                                 "Some settings could not be restored:\n");
+                        final int maxErrorsToShow = 10;
+                        int errorIndex = 0;
+                        for (ScopeDataUtils.PropertyError propertyError
+                                 : applyResult.getErrors()) {
+                           errorIndex++;
+                           if (errorIndex <= maxErrorsToShow) {
+                              msg.append(errorIndex)
+                                    .append(". ")
+                                    .append(propertyError.getErrorMessage())
+                                    .append("\n");
+                           }
+                        }
+                        if (errorIndex > maxErrorsToShow) {
+                           msg.append("... and ")
+                                 .append(errorIndex - maxErrorsToShow)
+                                 .append(" more error(s) not shown.\n");
+                        }
+                        mmStudio_.logs().showMessage(msg.toString());
                      }
-                     mmStudio_.logs().showMessage(msg.toString());
                   }
-
-
                } else {
                   mmStudio_.logs().logMessage(
                         "The system state stored with this dataset "
                         + "is not compatible with the current microscope configuration. "
-                        + "Settings can not be restored.");
+                        + "Settings cannot be restored.");
                }
             }
          }

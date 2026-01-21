@@ -459,7 +459,6 @@ public final class DefaultScopeDataUtils implements ScopeDataUtils {
                   setting.getPropertyValue());
          } catch (Exception e) {
             // Skip settings that can't be read
-            continue;
          }
       }
       return builder.build();
@@ -552,7 +551,6 @@ public final class DefaultScopeDataUtils implements ScopeDataUtils {
             }
          } catch (Exception e) {
             // Skip properties we can't read
-            continue;
          }
       }
 
@@ -598,7 +596,6 @@ public final class DefaultScopeDataUtils implements ScopeDataUtils {
             }
          } catch (Exception e) {
             // Skip properties we can't read
-            continue;
          }
       }
 
@@ -645,7 +642,6 @@ public final class DefaultScopeDataUtils implements ScopeDataUtils {
             builder.putString(key, value);
          } catch (Exception e) {
             // Skip properties we can't check
-            continue;
          }
       }
 
