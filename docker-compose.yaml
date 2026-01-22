@@ -1,0 +1,16 @@
+services:
+  micro-manager:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: micromanager-container
+    network_mode: host # Required for many hardware device adapters (IP cameras, etc)
+    privileged: true   # Required for USB/Serial device access
+    environment:
+      - DISPLAY=${DISPLAY}
+      - XAUTHORITY=/tmp/.Xauthority
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./.Xauthority:/tmp/.Xauthority:ro
+      - /dev:/dev
+      - .:/workdir
