@@ -1,6 +1,6 @@
 services:
   micro-manager:
-    image: micro-manager-dev
+    image: micro-manager:latest
     build:
       context: .
       dockerfile: docker/Dockerfile

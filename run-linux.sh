@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # Configuration
-IMAGE_NAME="micro-manager-dev"
-CONTAINER_NAME="micromanager-container"
 PWD=$(pwd)
 
 echo "Setting up X11 authority..."
