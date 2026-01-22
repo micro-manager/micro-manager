@@ -27,10 +27,12 @@ This script automatically configures the X11 display authority and uses `docker 
 If your build requires proprietary drivers or SDKs for specific hardware adapters, you can include them without modifying the `Dockerfile`:
 
 1. Create a setup script at `docker/setup-drivers.sh`.
-2. Place your driver files in a local directory (e.g., `drivers/`).
+2. Place your driver files in the `SecretDeviceAdapters/` directory (which is ignored by git).
 3. In `setup-drivers.sh`, add commands to install the drivers, copy headers to `/usr/local/include`, and libraries to `/usr/local/lib`.
 
 The build process will automatically detect and execute this script if it exists.
+
+Note: the included `setup-drivers.sh` contains a build script for PVCAM drivers. If the PVCAM driver zip is present it will be installed.
 
 ## Build Optimization Strategy
 
