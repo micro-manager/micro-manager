@@ -1,87 +1,55 @@
-# Micro-Manager Docker Development Environment
+# Micro-Manager Docker Environment
 
-This Docker setup is optimized for developing features in mmCoreAndDevices with fast iteration cycles.
+This Docker setup provides a containerized environment to build and run Micro-Manager.
 
-## Building the Image
+## Getting Started
 
-Build the Docker image from the project root:
+The recommended way to run Micro-Manager is using Docker Compose, which handles the necessary configuration for hardware access (USB/Serial) and GUI display.
 
-```bash
-docker build -t micro-manager-dev -f docker/Dockerfile .
-```
+### Prerequisites
 
-**Note:** The initial build includes both Java and C++ components and may take considerable time.
+- Docker and Docker Compose installed.
+- (Linux) X11 server running (local display).
 
-## Running the Container
+### Running Micro-Manager
 
-**To run Micro-Manager:**
-```bash
-docker run -it micro-manager-dev
-```
-
-**To rebuild C++ components:**
-```bash
-docker run -it \
-  -v $(pwd)/mmCoreAndDevices:/root/mm-src/micro-manager/mmCoreAndDevices \
-  micro-manager-dev \
-  bash -c "cd /root/mm-src/micro-manager && make -j$(nproc) && make install"
-```
-
-**To run a custom command:**
-```bash
-docker run -it micro-manager-dev bash
-```
-
-## Development Workflow for mmCoreAndDevices
-
-### Interactive development
-
-For an interactive shell to work with the code:
+The easiest way to launch Micro-Manager is using the provided script at the project root:
 
 ```bash
-docker run -it \
-  -v $(pwd)/mmCoreAndDevices:/root/mm-src/micro-manager/mmCoreAndDevices \
-  micro-manager-dev \
-  bash
+./run-linux.sh
 ```
 
-Then inside the container:
-- Manual build commands as needed
+This script automatically configures the X11 display authority and uses `docker compose` to start the container.
 
-### Manual rebuild
 
-Inside the container:
+## Proprietary Drivers
 
-```bash
-cd /root/mm-src/micro-manager
-make clean
-./configure --without-java --enable-imagej-plugin=/root/ImageJ
-make -j8
-make install
-```
+If your build requires proprietary drivers or SDKs for specific hardware adapters, you can include them without modifying the `Dockerfile`:
+
+1. Create a setup script at `docker/setup-drivers.sh`.
+2. Place your driver files in a local directory (e.g., `drivers/`).
+3. In `setup-drivers.sh`, add commands to install the drivers, copy headers to `/usr/local/include`, and libraries to `/usr/local/lib`.
+
+The build process will automatically detect and execute this script if it exists.
 
 ## Build Optimization Strategy
 
-The Dockerfile uses layer caching to optimize rebuilds:
+The Docker environment uses layer caching to optimize rebuilds:
 
 1. **System dependencies** (rarely changes)
 2. **ImageJ download** (rarely changes)
-3. **Source copy** (changes with code)
-4. **Full build with Java** (initial build only)
-
-When you rebuild the image after source changes, Docker will use cached layers for steps 1-2, only rebuilding from step 3 onwards.
+3. **Source copy** (changes with code edits)
+4. **Proprietary Driver Hook** (optional)
+5. **Micromanager Build** (runs on code changes)
 
 ## Directory Structure
 
-- `/root/mm-src/micro-manager` - Source code
-- `/home/engineer/ImageJ` - ImageJ installation with Micro-Manager plugin
-- `/home/engineer/rebuild-cpp.sh` - Quick rebuild script for C++ only
-- `/home/engineer/entrypoint.sh` - Flexible entrypoint script
+- `/root/mm-src/micro-manager` - Micro-Manager source code
+- `/root/ImageJ` - Built ImageJ installation with Micro-Manager plugin
+- `/root/ImageJ/micromanager.sh` - Launch script
 
 ## Tips
 
-- Mount your local mmCoreAndDevices as a volume for live development
-- Use `rebuild-cpp` argument for fast C++ iterations
-- Run without arguments to start Micro-Manager
-- The Java components are built once during image creation
-- Only rebuild the full image when dependencies or system setup changes
+- The container runs in `privileged` mode with `/dev` mounted to allow access to cameras and controllers.
+- X11 socket and authority are shared with the host to enable the GUI.
+- The project root is mounted to `/workdir` inside the container for easy access to data and logs.

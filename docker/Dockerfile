@@ -56,6 +56,13 @@ ENV SWIG=/usr/bin/swig3.0
 WORKDIR $MM_SRC_DIR/micro-manager
 COPY . .
 
+# Optional hook for proprietary drivers or extra setup before build
+# To use: create a script at docker/setup-drivers.sh in your local machine
+RUN if [ -f ./docker/setup-drivers.sh ]; then \
+        chmod +x ./docker/setup-drivers.sh && \
+        ./docker/setup-drivers.sh; \
+    fi
+
 # Generate build files, configure, and fetch dependencies
 RUN ./autogen.sh && \
     ./configure --enable-imagej-plugin=$IMAGEJ_DIR && \
