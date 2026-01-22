@@ -2,4 +2,26 @@
 .github
 .vscode
 **/.ccache
-autom4te.cache
+autom4te.cache/
+
+# Autotools noise
+aclocal.m4
+compile
+config.guess
+config.log
+config.status
+config.sub
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+missing
+test-driver
+Makefile
+Makefile.in
+.deps/
+.libs/
+*.la
+*.lo
+*.o
