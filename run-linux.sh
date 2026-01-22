@@ -6,12 +6,13 @@ CONTAINER_NAME="micromanager-container"
 PWD=$(pwd)
 
 echo "Setting up X11 authority..."
-XAUTH_FILE=$(xauth info | grep "Authority file" | awk '{ print $3 }')
+XAUTH_FILE=$(xauth info 2>/dev/null | grep "Authority file" | awk '{ print $3 }')
+
 mkdir -p .Xauthority
-if [ -f "$XAUTH_FILE" ]; then
+if [ -n "$XAUTH_FILE" ] && [ -f "$XAUTH_FILE" ]; then
     cat "$XAUTH_FILE" > .Xauthority/Xauthority
 else
-    # Fallback to creating a dummy if not found, though this rarely works for X11
+    # If no xauth file, just ensure the folder exists. X11 might still work via /tmp/.X11-unix
     touch .Xauthority/Xauthority
 fi
 

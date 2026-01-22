@@ -1,5 +1,6 @@
 services:
   micro-manager:
+    image: micro-manager-dev
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -7,10 +8,10 @@ services:
     network_mode: host # Required for many hardware device adapters (IP cameras, etc)
     privileged: true   # Required for USB/Serial device access
     environment:
-      - DISPLAY=${DISPLAY}
-      - XAUTHORITY=/tmp/.Xauthority
+      - DISPLAY=${DISPLAY:-:0}
+      - XAUTHORITY=${XAUTHORITY:-/tmp/.Xauthority}
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ./.Xauthority:/tmp/.Xauthority:ro
+      - ${X11_UNIX_SOCKET:-/tmp/.X11-unix}:/tmp/.X11-unix
+      - ${XAUTH_PATH:-./.Xauthority}:/tmp/.Xauthority:ro
       - /dev:/dev
       - .:/workdir
