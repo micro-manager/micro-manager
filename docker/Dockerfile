@@ -26,6 +26,7 @@ RUN apt update && apt install -y --no-install-recommends \
     swig3.0 \
     ccache \
     unzip \
+    sudo \
     udev && \
     rm -rf /var/lib/apt/lists/*
 
@@ -96,6 +97,8 @@ RUN apt update && apt install -y --no-install-recommends \
     libboost-atomic-dev \
     libltdl7 \
     zlib1g \
+    libtiff5 \
+    libpng16-16 \
     x11-apps \
     && rm -rf /var/lib/apt/lists/*
 
