@@ -17,5 +17,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
       - /dev:/dev
-      - .:/workdir
-      - ${MM_DATA_DIR:-~/MicroManagerData}:/workdir/data
+      - ${MM_DATA_DIR:-~/MicroManagerData}:/data
+      - ${MM_CONFIG_DIR:-./configs}:/configs
+      - ${MM_PROFILE_DIR:-./profiles}:/root/.config/Micro-Manager
