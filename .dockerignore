@@ -13,8 +13,11 @@ README.md
 CodeOfConduct.md
 *.ipynb
 
-# Docker noise
+# Ignore docker setup files except necessary scripts and drivers
 docker/
+!docker/micromanager.sh
+!docker/setup-drivers.sh
+!docker/drivers/
 
 # Autotools noise
 aclocal.m4
