@@ -14,8 +14,7 @@ CodeOfConduct.md
 *.ipynb
 
 # Docker noise
-docker/Dockerfile
-docker-compose.yaml
+docker/
 
 # Autotools noise
 aclocal.m4
