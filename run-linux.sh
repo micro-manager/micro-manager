@@ -15,4 +15,4 @@ else
 fi
 
 echo "Starting Micro-Manager via Docker Compose..."
-docker compose run --build --rm micro-manager
+docker compose run --rm micro-manager
