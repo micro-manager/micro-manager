@@ -59,23 +59,22 @@ COPY buildscripts/ivy.xml buildscripts/ivysettings.xml buildscripts/fetchdeps.xm
 COPY 3rdpartypublic-revision 3rdparty-revision ./
 RUN ant -f buildscripts/fetchdeps.xml resolve
 
-COPY . .
-
-# Optional hook for proprietary drivers or extra setup before build
-# To use: create a script at docker/setup-drivers.sh in your local machine
+# Optional hook for proprietary drivers or extra setup before the bulk copy.
+# Using a wildcard ensures this COPY succeeds even if the script is missing.
+COPY docker/setup-drivers.sh* ./docker/
 RUN if [ -f ./docker/setup-drivers.sh ]; then \
         chmod +x ./docker/setup-drivers.sh && \
         ./docker/setup-drivers.sh; \
     fi
 
-# Generate build files, configure, and fetch dependencies
-RUN ./autogen.sh && \
+# Build and install (using bind mounts to keep the image clean and avoid COPY costs)
+# We use ccache for speed and skip 'make fetchdeps' as it's handled above.
+RUN --mount=type=bind,target=. \
+    --mount=type=cache,target=/root/.ccache \
+    ./autogen.sh && \
     ./configure --enable-imagej-plugin=$IMAGEJ_DIR && \
-    make fetchdeps
-
-# Build and install (using ccache for speed)
-RUN --mount=type=cache,target=/root/.ccache \
-    make -j$(nproc) && make install
+    make -j$(nproc) && \
+    make install
 
 # Copy helper scripts
 COPY ./docker/micromanager.sh $IMAGEJ_DIR/micromanager.sh
@@ -106,9 +105,12 @@ RUN apt update && apt install -y --no-install-recommends \
 # Copy the built ImageJ with Micro-Manager from the builder stage
 COPY --from=builder /opt/ImageJ /opt/ImageJ
 
+# Create directories for data, configs, and profiles to ensure correct permissions
+RUN mkdir -p /data /configs /root/.config/Micro-Manager
+
 ################################################################################
 #  setup environment
 ################################################################################
-WORKDIR /workdir
+WORKDIR /opt/ImageJ
 ENTRYPOINT [ "/opt/ImageJ/micromanager.sh" ]
 
