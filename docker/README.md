@@ -47,8 +47,8 @@ The Docker environment uses layer caching to optimize rebuilds:
 ## Directory Structure
 
 - `/root/mm-src/micro-manager` - Micro-Manager source code
-- `/root/ImageJ` - Built ImageJ installation with Micro-Manager plugin
-- `/root/ImageJ/micromanager.sh` - Launch script
+- `/opt/ImageJ` - Built ImageJ installation with Micro-Manager plugin
+- `/opt/ImageJ/micromanager.sh` - Launch script
 - `/data` - Default directory for saved images (mapped to `~/MicroManagerData` on host)
 
 ## Tips
@@ -56,4 +56,5 @@ The Docker environment uses layer caching to optimize rebuilds:
 - The container runs in `privileged` mode with `/dev` mounted to allow access to cameras and controllers.
 - X11 socket and authority are shared with the host to enable the GUI.
 - The project root is mounted to `/workdir` inside the container for easy access to data and logs.
+- The default working directory is `/workdir`, so any files saved will appear in your project root on the host.
 - Acquired images are saved to `~/MicroManagerData` by default. You can change this by setting the `MM_DATA_DIR` environment variable on your host.

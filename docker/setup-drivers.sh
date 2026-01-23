@@ -43,9 +43,9 @@ if [ -n "$INSTALLER" ]; then
 
     # Preparation for the Final Image Stage:
     echo "Staging libraries for final image..."
-    mkdir -p /root/ImageJ/drivers
+    mkdir -p /opt/ImageJ/drivers
     if [ -d "/opt/pvcam/lib" ]; then
-        cp -P /opt/pvcam/lib/*.so* /root/ImageJ/drivers/
+        cp -P /opt/pvcam/lib/*.so* /opt/ImageJ/drivers/
     fi
     echo "PVCAM SDK setup complete."
 else

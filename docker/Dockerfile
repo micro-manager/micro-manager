@@ -33,10 +33,10 @@ ENV PATH=/usr/lib/ccache:$PATH
 RUN mkdir -p /root/.ccache
     
     ### Download imageJ ###
-ARG IMAGEJ_DIR=/root/ImageJ
+ARG IMAGEJ_DIR=/opt/ImageJ
 RUN wget https://wsr.imagej.net/distros/linux/ij154-linux64-java8.zip \
 -O /tmp/ij154-linux64-java8.zip && unzip /tmp/ij154-linux64-java8.zip \
-    -d /root && rm -rf $IMAGEJ_DIR/jre && \
+    -d /opt && rm -rf $IMAGEJ_DIR/jre && \
     chmod a+Xr $IMAGEJ_DIR
 
 ### Setup Micromanager from local source ###  
@@ -52,6 +52,13 @@ ENV SWIG=/usr/bin/swig3.0
 # Build everything
 ################################################################################
 WORKDIR $MM_SRC_DIR/micro-manager
+
+### Pre-fetch Java dependencies ###
+# We copy only the files needed for dependency resolution to cache this slow step
+COPY buildscripts/ivy.xml buildscripts/ivysettings.xml buildscripts/fetchdeps.xml buildscripts/
+COPY 3rdpartypublic-revision 3rdparty-revision ./
+RUN ant -f buildscripts/fetchdeps.xml resolve
+
 COPY . .
 
 # Optional hook for proprietary drivers or extra setup before build
@@ -71,7 +78,7 @@ RUN --mount=type=cache,target=/root/.ccache \
     make -j$(nproc) && make install
 
 # Copy helper scripts
-COPY ./docker/micromanager.sh /root/ImageJ/micromanager.sh
+COPY ./docker/micromanager.sh $IMAGEJ_DIR/micromanager.sh
 
 ################################################################################
 # STAGE: Final Image
@@ -97,12 +104,11 @@ RUN apt update && apt install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the built ImageJ with Micro-Manager from the builder stage
-COPY --from=builder /root/ImageJ /root/ImageJ
+COPY --from=builder /opt/ImageJ /opt/ImageJ
 
 ################################################################################
 #  setup environment
 ################################################################################
-ENV ROOT_DIR=/workdir
-WORKDIR /root/ImageJ
-ENTRYPOINT [ "/root/ImageJ/micromanager.sh" ]
+WORKDIR /workdir
+ENTRYPOINT [ "/opt/ImageJ/micromanager.sh" ]
 

@@ -18,4 +18,4 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /dev:/dev
       - .:/workdir
-      - ${MM_DATA_DIR:-~/MicroManagerData}:/data
+      - ${MM_DATA_DIR:-~/MicroManagerData}:/workdir/data

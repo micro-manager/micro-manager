@@ -4,6 +4,19 @@
 **/.ccache
 autom4te.cache/
 
+# Documentation and metadata
+doc/
+governance/
+MMImprovementProposals/
+doxygen/
+README.md
+CodeOfConduct.md
+*.ipynb
+
+# Docker noise
+docker/Dockerfile
+docker-compose.yaml
+
 # Autotools noise
 aclocal.m4
 compile
