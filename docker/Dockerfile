@@ -39,7 +39,7 @@ RUN wget https://wsr.imagej.net/distros/linux/ij154-linux64-java8.zip \
     -d /opt && rm -rf $IMAGEJ_DIR/jre && \
     chmod a+Xr $IMAGEJ_DIR
 
-### Setup Micromanager from local source ###  
+### Setup Micromanager from local source
 ARG MM_SRC_DIR=/root/mm-src
 RUN mkdir -p $MM_SRC_DIR && \
     mkdir -p $MM_SRC_DIR/3rdpartypublic/classext && \
@@ -53,31 +53,40 @@ ENV SWIG=/usr/bin/swig3.0
 ################################################################################
 WORKDIR $MM_SRC_DIR/micro-manager
 
-### Pre-fetch Java dependencies ###
-# We copy only the files needed for dependency resolution to cache this slow step
+### Pre-fetch Java dependencies (cached) ###
 COPY buildscripts/ivy.xml buildscripts/ivysettings.xml buildscripts/fetchdeps.xml buildscripts/
 COPY 3rdpartypublic-revision 3rdparty-revision ./
 RUN ant -f buildscripts/fetchdeps.xml resolve
 
-# Optional hook for proprietary drivers or extra setup before the bulk copy.
-# Using a wildcard ensures this COPY succeeds even if the script is missing.
+# Optional hook for proprietary drivers
 COPY docker/setup-drivers.sh* ./docker/
 RUN if [ -f ./docker/setup-drivers.sh ]; then \
         chmod +x ./docker/setup-drivers.sh && \
         ./docker/setup-drivers.sh; \
     fi
 
-# Build and install (using bind mounts to keep the image clean and avoid COPY costs)
-# We use ccache for speed and skip 'make fetchdeps' as it's handled above.
-RUN --mount=type=bind,target=. \
-    --mount=type=cache,target=/root/.ccache \
+# Copy source code explicitly (avoiding the docker/ folder to prevent cache invalidation)
+COPY acqEngine/ acqEngine/
+COPY autofocus/ autofocus/
+COPY bindist/ bindist/
+COPY buildscripts/ buildscripts/
+COPY libraries/ libraries/
+COPY mmAsImageJMacros/ mmAsImageJMacros/
+COPY mmCoreAndDevices/ mmCoreAndDevices/
+COPY mmstudio/ mmstudio/
+COPY plugins/ plugins/
+COPY scripts/ scripts/
+COPY server/ server/
+COPY systemtest/ systemtest/
+COPY testing/ testing/
+COPY Makefile.am configure.ac autogen.sh version.txt ./
+
+# Build and install (using ccache for speed)
+RUN --mount=type=cache,target=/root/.ccache \
     ./autogen.sh && \
     ./configure --enable-imagej-plugin=$IMAGEJ_DIR && \
     make -j$(nproc) && \
     make install
-
-# Copy helper scripts
-COPY ./docker/micromanager.sh $IMAGEJ_DIR/micromanager.sh
 
 ################################################################################
 # STAGE: Final Image
@@ -104,6 +113,9 @@ RUN apt update && apt install -y --no-install-recommends \
 
 # Copy the built ImageJ with Micro-Manager from the builder stage
 COPY --from=builder /opt/ImageJ /opt/ImageJ
+
+# Copy helper scripts directly to the final image
+COPY ./docker/micromanager.sh /opt/ImageJ/micromanager.sh
 
 # Create directories for data, configs, and profiles to ensure correct permissions
 RUN mkdir -p /data /configs /root/.config/Micro-Manager
