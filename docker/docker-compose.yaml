@@ -2,7 +2,7 @@ services:
   micro-manager:
     image: micro-manager:latest
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile
     container_name: micromanager-container
     network_mode: host # Required for many hardware device adapters (IP cameras, etc)
@@ -13,10 +13,11 @@ services:
       - TZ=${TZ:-Europe/London}
     volumes:
       - ${X11_UNIX_SOCKET:-/tmp/.X11-unix}:/tmp/.X11-unix
-      - ${XAUTH_PATH:-./.Xauthority}:/tmp/.Xauthority:ro
+      - ${XAUTH_PATH:-../.Xauthority}:/tmp/.Xauthority:ro
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
       - /dev:/dev
       - ${MM_DATA_DIR:-~/MicroManagerData}:/data
-      - ${MM_CONFIG_DIR:-./configs}:/configs
-      - ${MM_PROFILE_DIR:-./profiles}:/root/.config/Micro-Manager
+      - ${MM_CONFIG_DIR:-../configs}:/configs
+      - ${MM_PROFILE_DIR:-../profiles}:/root/.config/Micro-Manager
+  
