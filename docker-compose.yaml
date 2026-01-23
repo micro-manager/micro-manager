@@ -9,9 +9,13 @@ services:
     privileged: true   # Required for USB/Serial device access
     environment:
       - DISPLAY=${DISPLAY:-:0}
-      - XAUTHORITY=${XAUTHORITY:-/tmp/.Xauthority}
+      - XAUTHORITY=/tmp/.Xauthority/Xauthority
+      - TZ=${TZ:-Europe/London}
     volumes:
       - ${X11_UNIX_SOCKET:-/tmp/.X11-unix}:/tmp/.X11-unix
       - ${XAUTH_PATH:-./.Xauthority}:/tmp/.Xauthority:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
       - /dev:/dev
       - .:/workdir
+      - ${MM_DATA_DIR:-~/MicroManagerData}:/data

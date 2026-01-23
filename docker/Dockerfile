@@ -3,9 +3,6 @@
 ################################################################################
 FROM ubuntu:22.04 AS builder
 
-ENV TZ=Europe/London
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
 ################################################################################
 #  Install micromanager dependencies
 ################################################################################
@@ -46,7 +43,7 @@ RUN wget https://wsr.imagej.net/distros/linux/ij154-linux64-java8.zip \
 ARG MM_SRC_DIR=/root/mm-src
 RUN mkdir -p $MM_SRC_DIR && \
     mkdir -p $MM_SRC_DIR/3rdpartypublic/classext && \
-    wget --no-check-certificate https://svn.micro-manager.org/3rdpartypublic/classext/iconloader.jar -P $MM_SRC_DIR/3rdpartypublic/classext/
+    wget https://svn.micro-manager.org/3rdpartypublic/classext/iconloader.jar -P $MM_SRC_DIR/3rdpartypublic/classext/
 
 # Set SWIG path
 ENV SWIG=/usr/bin/swig3.0
@@ -80,9 +77,6 @@ COPY ./docker/micromanager.sh /root/ImageJ/micromanager.sh
 # STAGE: Final Image
 ################################################################################
 FROM ubuntu:22.04
-
-ENV TZ=Europe/London
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install only runtime dependencies
 RUN apt update && apt install -y --no-install-recommends \
