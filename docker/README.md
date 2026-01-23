@@ -4,12 +4,12 @@ This Docker setup provides a containerized environment to build and run Micro-Ma
 
 ## Getting Started
 
-The recommended way to run Micro-Manager is using Docker Compose, which handles the necessary configuration for hardware access (USB/Serial) and GUI display.
+The recommended way to run Micro-Manager in Docker is using Docker Compose, which handles the necessary configuration for hardware access (USB/Serial) and GUI display.
 
 ### Prerequisites
 
 - Docker and Docker Compose installed.
-- (Linux) X11 server running (local display).
+- (Linux) X11 server running (local display). If you are using Wayland, the GUI will typically run via XWayland.
 
 ### Running Micro-Manager
 
@@ -27,7 +27,7 @@ This script automatically configures the X11 display authority and uses `docker 
 If your build requires proprietary drivers or SDKs for specific hardware adapters, you can include them without modifying the `Dockerfile`:
 
 1. Create a setup script at `docker/setup-drivers.sh`.
-2. Place your driver files in the `SecretDeviceAdapters/` directory (which is ignored by git).
+2. Place your driver files in the `docker/drivers/` directory (which is ignored by git).
 3. In `setup-drivers.sh`, add commands to install the drivers, copy headers to `/usr/local/include`, and libraries to `/usr/local/lib`.
 
 The build process will automatically detect and execute this script if it exists.
@@ -49,9 +49,11 @@ The Docker environment uses layer caching to optimize rebuilds:
 - `/root/mm-src/micro-manager` - Micro-Manager source code
 - `/root/ImageJ` - Built ImageJ installation with Micro-Manager plugin
 - `/root/ImageJ/micromanager.sh` - Launch script
+- `/data` - Default directory for saved images (mapped to `~/MicroManagerData` on host)
 
 ## Tips
 
 - The container runs in `privileged` mode with `/dev` mounted to allow access to cameras and controllers.
 - X11 socket and authority are shared with the host to enable the GUI.
 - The project root is mounted to `/workdir` inside the container for easy access to data and logs.
+- Acquired images are saved to `~/MicroManagerData` by default. You can change this by setting the `MM_DATA_DIR` environment variable on your host.

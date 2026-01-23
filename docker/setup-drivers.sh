@@ -4,7 +4,7 @@ set -e
 # This script is called by the Dockerfile during the builder stage.
 # It optionally installs the PVCAM SDK if the files are present.
 
-ZIP_FILE="./SecretDeviceAdapters/PVCAM-Linux-3-10-0-3.zip"
+ZIP_FILE="./docker/drivers/PVCAM-Linux-3-10-0-3.zip"
 
 if [ -f "$ZIP_FILE" ]; then
     echo "--- Unpacking PVCAM Driver Zip ---"
