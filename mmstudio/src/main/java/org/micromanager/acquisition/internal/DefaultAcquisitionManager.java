@@ -32,11 +32,8 @@ import java.util.Date;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
-import mmcorej.Configuration;
-import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
 import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.ChannelSpec;
@@ -294,6 +291,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             .userName(System.getProperty("user.name"))
             .profileName(studio_.profile().getProfileName())
             .computerName(computerName)
+            .initialScopeData(studio_.data().scopeData().configurationToPropertyMap(
+               studio_.core().getSystemStateCache()))
             .build();
    }
 
@@ -337,17 +336,9 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          // Again, this can fail if there is no camera.
       }
       if (includeHardwareState) {
-         PropertyMap.Builder scopeBuilder = PropertyMaps.builder();
-         Configuration config = studio_.core().getSystemStateCache();
-         for (long i = 0; i < config.size(); ++i) {
-            PropertySetting setting = config.getSetting(i);
-            // NOTE: this key format chosen to match that used by the current
-            // acquisition engine.
-            scopeBuilder.putString(
-                  setting.getDeviceLabel() + "-" + setting.getPropertyName(),
-                  setting.getPropertyValue());
-         }
-         result.scopeData(scopeBuilder.build());
+         PropertyMap scopeState = studio_.data().scopeData().configurationToPropertyMap(
+                  studio_.core().getSystemStateCache());
+         result.scopeData(scopeState);
       }
       return result.build();
    }

@@ -44,6 +44,7 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.data.RewritableDatastore;
+import org.micromanager.data.ScopeDataUtils;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
@@ -66,10 +67,12 @@ public final class DefaultDataManager implements DataManager {
 
    private final MMStudio studio_;
    private final ImageJConverter ijConverter_;
+   private final ScopeDataUtils scopeDataUtils_;
 
    public DefaultDataManager(MMStudio studio) {
       studio_ = studio;
       ijConverter_ = new DefaultImageJConverter(studio);
+      scopeDataUtils_ = new DefaultScopeDataUtils(studio);
    }
 
    @Override
@@ -468,5 +471,10 @@ public final class DefaultDataManager implements DataManager {
    @Override
    public ImageJConverter getImageJConverter() {
       return ij();
+   }
+
+   @Override
+   public ScopeDataUtils scopeData() {
+      return scopeDataUtils_;
    }
 }
