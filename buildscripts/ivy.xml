@@ -96,7 +96,11 @@
 
 
       <!-- ClearVolume dependencies -->
-      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3"/>
+      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3">
+         <!-- coremem 0.4.4 no longer available from maven.scijava.org
+         (0.4.5 wins anyway) -->
+         <exclude org="net.coremem" name="coremem"/>
+      </dependency>
       <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
       <!-- <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/> -->
       <dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
