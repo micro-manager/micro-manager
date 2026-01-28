@@ -21,6 +21,7 @@
 
 package org.micromanager.multichannelshading;
 
+import ij.IJ;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -95,6 +96,72 @@ public class ShadingTable extends JTable {
       @Override
       public void actionPerformed(ActionEvent e) {
          form_.flatFieldButtonActionPerformed(row_);
+         fireEditingStopped();
+         selectionModel.clearSelection();
+      }
+
+      @Override
+      public Object getCellEditorValue() {
+         return null;
+      }
+
+      @Override
+      public Component getTableCellEditorComponent(JTable table,
+                                                   Object someObject, boolean isSelected, int row,
+                                                   int column) {
+         row_ = row;
+         panel_.setBackground(table.getSelectionBackground());
+         return panel_;
+      }
+   }
+
+   private class ShowImageButtonCellRenderer implements TableCellRenderer {
+      private final JPanel panel_ = new JPanel();
+      private final JButton button_;
+
+      public ShowImageButtonCellRenderer(MultiChannelShadingMigForm form) {
+         button_ = form.mcsButton(form.getButtonDimension(),
+               form.getButtonFont());
+         button_.setText("Show");
+         panel_.setLayout(new MigLayout(BUTTONCELLLAYOUTCONSTRAINTS));
+         panel_.add(button_, "gapx push");
+      }
+
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value, boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row, int column) {
+         if (isSelected) {
+            panel_.setBackground(table.getSelectionBackground());
+         } else {
+            panel_.setBackground(table.getBackground());
+         }
+         return panel_;
+      }
+   }
+
+   private class ShowImageButtonCellEditor extends AbstractCellEditor
+         implements TableCellEditor, ActionListener {
+      private int row_;
+      private final MultiChannelShadingMigForm form_;
+      private final JPanel panel_ = new JPanel();
+
+      @SuppressWarnings("LeakingThisInConstructor")
+      public ShowImageButtonCellEditor(MultiChannelShadingMigForm form) {
+         form_ = form;
+         JButton button = form_.mcsButton(form_.getButtonDimension(),
+               form_.getButtonFont());
+         button.setText("Show");
+         row_ = -1;
+         panel_.setLayout(new MigLayout(BUTTONCELLLAYOUTCONSTRAINTS));
+         panel_.add(button, "gapx push");
+         button.addActionListener(this);
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+         form_.showFlatFieldImage(row_);
          fireEditingStopped();
          selectionModel.clearSelection();
       }
@@ -197,6 +264,7 @@ public class ShadingTable extends JTable {
 
    private final PresetCellEditor presetCellEditor_;
    private final LoadFileButtonCellEditor loadFileButtonCellEditor_;
+   private final ShowImageButtonCellEditor showImageButtonCellEditor_;
 
    ShadingTable(Studio gui, ShadingTableModel model, MultiChannelShadingMigForm form) {
       super(model);
@@ -226,6 +294,14 @@ public class ShadingTable extends JTable {
       buttonColumn.setPreferredWidth(40);
       buttonColumn.setMaxWidth(40);
 
+      // Renderer and Editor for column 3 (show image button)
+      TableColumn showColumn = super.getColumnModel().getColumn(3);
+      showColumn.setCellRenderer(new ShowImageButtonCellRenderer(form));
+      showImageButtonCellEditor_ = new ShowImageButtonCellEditor(form);
+      showColumn.setCellEditor(showImageButtonCellEditor_);
+      showColumn.setPreferredWidth(50);
+      showColumn.setMaxWidth(50);
+
       super.setRowHeight((int) (super.getRowHeight() * 1.5));
 
    }
@@ -233,6 +309,7 @@ public class ShadingTable extends JTable {
    public void stopCellEditing() {
       presetCellEditor_.stopCellEditing();
       loadFileButtonCellEditor_.stopCellEditing();
+      showImageButtonCellEditor_.stopCellEditing();
    }
 
 }

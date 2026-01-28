@@ -22,6 +22,7 @@
 package org.micromanager.multichannelshading;
 
 import com.google.common.eventbus.Subscribe;
+import ij.IJ;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -117,7 +118,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
       mcsPluginWindow = this;
       super.setLayout(new MigLayout("flowx, fill, insets 8",
-            "[][grow,fill][][]"));
+            "[][grow,fill][][][]"));
       String processorName = settings_.getString("ProcessorName", "");
       if (!processorName.isEmpty()) {
          super.setTitle(processorName);
@@ -229,7 +230,17 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
             darkFieldTextField.setText(backgroundFileName_);
          }
       });
-      super.add(darkFieldButton, "wrap");
+      super.add(darkFieldButton);
+
+      final JButton darkFieldShowButton = mcsButton(buttonSize_, arialSmallFont_);
+      darkFieldShowButton.setText("Show");
+      darkFieldShowButton.addActionListener(evt -> {
+         String path = darkFieldTextField.getText();
+         if (path != null && !path.isEmpty()) {
+            IJ.open(path);
+         }
+      });
+      super.add(darkFieldShowButton, "wrap");
 
       // Table with channel presets and files
       final JScrollPane scrollPane = new JScrollPane() {
@@ -238,7 +249,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
             return new Dimension(550, 150);
          }
       };
-      super.add(scrollPane, "span 4 2, grow, push");
+      super.add(scrollPane, "span 5 2, grow, push");
       shadingTableModel_ = new ShadingTableModel(studio_, imageCollection_);
       shadingTableModel_.setChannelGroup(groupName_);
       // Restore per-instance preset/file mappings from saved settings
@@ -285,7 +296,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       super.add(new JLabel(""), "growy, pushy, wrap");
 
       statusLabel_ = new JLabel(" ");
-      super.add(statusLabel_, "span 4, wrap");
+      super.add(statusLabel_, "span 5, wrap");
       updateAddAndRemoveButtons(addButton, removeButton);
       super.pack();
 
@@ -386,6 +397,18 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
    public ShadingTableModel getShadingTableModel() {
       return shadingTableModel_;
+   }
+
+   /**
+    * Opens the flatfield image for the given row in ImageJ.
+    *
+    * @param rowNumber Table row whose image to show
+    */
+   public void showFlatFieldImage(int rowNumber) {
+      String path = (String) shadingTableModel_.getValueAt(rowNumber, 1);
+      if (path != null && !path.isEmpty()) {
+         IJ.open(path);
+      }
    }
 
    /**

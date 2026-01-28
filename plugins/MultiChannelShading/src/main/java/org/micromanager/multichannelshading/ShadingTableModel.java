@@ -38,6 +38,7 @@ public class ShadingTableModel extends AbstractTableModel {
    public final String[] columnNames_ = new String[] {
          "Preset",
          "Image File",
+         "",
          ""
    };
    private String channelGroup_;
@@ -95,6 +96,8 @@ public class ShadingTableModel extends AbstractTableModel {
             }
          case 2:
             //return new JButton("...");
+            break;
+         case 3:
             break;
          default:
             break;
