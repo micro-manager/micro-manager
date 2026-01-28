@@ -33,6 +33,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 
@@ -113,9 +114,28 @@ public class ShadingTable extends JTable {
       }
    }
 
+   private class PresetCellRenderer implements TableCellRenderer {
+      private final JComboBox<String> comboBox_ = new JComboBox<>();
+
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                      Object value, boolean isSelected,
+                                                      boolean hasFocus,
+                                                      int row, int column) {
+         comboBox_.setModel(new DefaultComboBoxModel<>(
+               new String[] {value != null ? value.toString() : ""}));
+         comboBox_.setSelectedIndex(0);
+         if (isSelected) {
+            comboBox_.setBackground(table.getSelectionBackground());
+         } else {
+            comboBox_.setBackground(table.getBackground());
+         }
+         return comboBox_;
+      }
+   }
+
    private class PresetCellEditor extends AbstractCellEditor
          implements TableCellEditor, ActionListener {
-      private final JPanel panel_ = new JPanel();
       private final JComboBox<String> comboBox_ = new JComboBox<>();
       private final ShadingTableModel model_;
       private int row_;
@@ -125,8 +145,6 @@ public class ShadingTable extends JTable {
       public PresetCellEditor(Studio gui, ShadingTableModel model) {
          model_ = model;
          row_ = -1;
-         panel_.setLayout(new MigLayout("fill, insets 0, align center, center"));
-         panel_.add(comboBox_);
          comboBox_.addActionListener(this);
       }
 
@@ -163,7 +181,7 @@ public class ShadingTable extends JTable {
          comboBox_.setModel(new DefaultComboBoxModel<String>(comboPresets));
          String preset = (String) model_.getValueAt(row, column);
          comboBox_.setSelectedItem(preset);
-         return panel_;
+         return comboBox_;
       }
 
       @Override
@@ -185,19 +203,28 @@ public class ShadingTable extends JTable {
       studio_ = gui;
 
       super.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+      super.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
 
-      //Editor for column 0 (preset combobox)
+      // Renderer and Editor for column 0 (preset combobox)
       presetCellEditor_ = new PresetCellEditor(gui, model);
-      super.getColumnModel().getColumn(0).setCellEditor(presetCellEditor_);
+      TableColumn presetColumn = super.getColumnModel().getColumn(0);
+      presetColumn.setCellRenderer(new PresetCellRenderer());
+      presetColumn.setCellEditor(presetCellEditor_);
+      presetColumn.setPreferredWidth(120);
+      presetColumn.setMaxWidth(150);
+
+      // Column 1 (file path) gets remaining space by default
 
       // Renderer and Editor for column 2 (button)
+      TableColumn buttonColumn = super.getColumnModel().getColumn(2);
       LoadFileButtonCellRenderer loadFileButtonRenderer =
             new LoadFileButtonCellRenderer(form);
-      super.getColumnModel().getColumn(2).setCellRenderer(loadFileButtonRenderer);
-
+      buttonColumn.setCellRenderer(loadFileButtonRenderer);
       loadFileButtonCellEditor_ =
             new LoadFileButtonCellEditor(form);
-      super.getColumnModel().getColumn(2).setCellEditor(loadFileButtonCellEditor_);
+      buttonColumn.setCellEditor(loadFileButtonCellEditor_);
+      buttonColumn.setPreferredWidth(40);
+      buttonColumn.setMaxWidth(40);
 
       super.setRowHeight((int) (super.getRowHeight() * 1.5));
 

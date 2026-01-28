@@ -116,7 +116,8 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       final JButton removeButton = mcsButton(buttonSize_, arialSmallFont_);
 
       mcsPluginWindow = this;
-      super.setLayout(new MigLayout("flowx, fill, insets 8"));
+      super.setLayout(new MigLayout("flowx, fill, insets 8",
+            "[][grow,fill][][]"));
       String processorName = settings_.getString("ProcessorName", "");
       if (!processorName.isEmpty()) {
          super.setTitle(processorName);
@@ -146,7 +147,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       pixelSizeComboBox_.addActionListener(e -> {
          studio_.data().notifyPipelineChanged();
       });
-      super.add(pixelSizeComboBox_, "growx, wrap");
+      super.add(pixelSizeComboBox_, "wmax 200, wrap");
 
       JLabel channelGroupLabel = new JLabel("Channel Group:");
       channelGroupLabel.setFont(arialSmallFont_);
@@ -171,7 +172,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
             studio_.data().notifyPipelineChanged();
          }
       });
-      super.add(groupComboBox_, "growx");
+      super.add(groupComboBox_, "wmax 200");
 
       useOpenCLCheckBox_ = new JCheckBox("Use GPU");
       useOpenCLCheckBox_.setSelected(settings_.getBoolean(USEOPENCL,
@@ -214,7 +215,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       });
       darkFieldTextField.setText(processBackgroundImage(
             darkFieldTextField.getText()));
-      super.add(darkFieldTextField, "span 2");
+      super.add(darkFieldTextField, "span 2, growx");
 
 
       final JButton darkFieldButton = mcsButton(buttonSize_, arialSmallFont_);
@@ -237,7 +238,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
             return new Dimension(550, 150);
          }
       };
-      super.add(scrollPane, "span 5 2, grow, push");
+      super.add(scrollPane, "span 4 2, grow, push");
       shadingTableModel_ = new ShadingTableModel(studio_, imageCollection_);
       shadingTableModel_.setChannelGroup(groupName_);
       // Restore per-instance preset/file mappings from saved settings
@@ -284,7 +285,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       super.add(new JLabel(""), "growy, pushy, wrap");
 
       statusLabel_ = new JLabel(" ");
-      super.add(statusLabel_, "span 3, wrap");
+      super.add(statusLabel_, "span 4, wrap");
       updateAddAndRemoveButtons(addButton, removeButton);
       super.pack();
 
