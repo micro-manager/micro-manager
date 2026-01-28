@@ -36,6 +36,7 @@ public class MultiChannelShadingFactory implements ProcessorFactory {
    private final List presets_;
    private final String backgroundFile_;
    private final List files_;
+   private final String pixelSizeCalibration_;
 
    public MultiChannelShadingFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
@@ -47,11 +48,13 @@ public class MultiChannelShadingFactory implements ProcessorFactory {
       backgroundFile_ = settings.getString(
             MultiChannelShadingMigForm.DARKFIELDFILENAME, "");
       files_ = settings.getStringList("PresetFiles", "");
+      pixelSizeCalibration_ = settings.getString(
+            MultiChannelShadingMigForm.PIXELSIZECALIBRATION, "any");
    }
 
    @Override
    public Processor createProcessor() {
       return new ShadingProcessor(studio_, channelGroup_, useOpenCL_,
-            backgroundFile_, presets_, files_);
+            backgroundFile_, presets_, files_, pixelSizeCalibration_);
    }
 }
