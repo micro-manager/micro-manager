@@ -130,10 +130,6 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       WindowPositioning.setUpBoundsMemory(this, this.getClass(),
             processorName.isEmpty() ? null : processorName);
 
-      super.add(
-            new JLabel("Uncheck and Recheck Use checkboxes in Pipeline after changing settings"),
-            "span 5, wrap");
-
       JLabel pixelSizeLabel = new JLabel("Only use with Pixel Size Calibration:");
       pixelSizeLabel.setFont(arialSmallFont_);
       super.add(pixelSizeLabel);
@@ -267,6 +263,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       addButton.addActionListener(evt -> {
          shadingTableModel_.addRow();
          updateAddAndRemoveButtons(addButton, removeButton);
+         studio_.data().notifyPipelineChanged();
       });
       buttonPanel.add(addButton, "wrap");
 
@@ -279,6 +276,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
          shadingTable.stopCellEditing();
          shadingTableModel_.removeRow(shadingTable.getSelectedRows());
          updateAddAndRemoveButtons(addButton, removeButton);
+         studio_.data().notifyPipelineChanged();
       });
       buttonPanel.add(removeButton);
 
@@ -402,6 +400,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       );
       if (f != null) {
          shadingTableModel_.setValueAt(f.getAbsolutePath(), rowNumber, 1);
+         studio_.data().notifyPipelineChanged();
       }
    }
 
