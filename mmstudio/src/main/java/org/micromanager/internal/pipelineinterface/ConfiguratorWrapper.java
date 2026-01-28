@@ -112,6 +112,9 @@ public final class ConfiguratorWrapper {
          } catch (IOException ex) {
             throw new RuntimeException("Failed to parse pipeline config pmap JSON", ex);
          }
+         String name = json.getString("name");
+         settings = settings.copyBuilder()
+               .putString("ProcessorName", name).build();
          ProcessorConfigurator configurator = plugin.createConfigurator(settings);
          ConfiguratorWrapper result = new ConfiguratorWrapper(plugin,
                configurator, json.getString("name"));

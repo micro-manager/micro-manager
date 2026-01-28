@@ -161,6 +161,32 @@ public class ShadingTableModel extends AbstractTableModel {
       fireTableDataChanged();
    }
 
+   /**
+    * Replaces the current preset/file lists with the provided ones.
+    * Use this to restore per-instance settings that override profile defaults.
+    *
+    * @param presets list of preset names
+    * @param files list of flatfield file paths (parallel to presets)
+    */
+   public void loadPresets(List<String> presets, List<String> files) {
+      imageCollection_.clearFlatFields();
+      presetList_.clear();
+      fileList_.clear();
+      try {
+         for (int i = 0; i < presets.size() && i < files.size(); i++) {
+            String file = files.get(i);
+            presetList_.add(presets.get(i));
+            fileList_.add(file);
+            if (file != null && !file.isEmpty()) {
+               imageCollection_.addFlatField(presets.get(i), file);
+            }
+         }
+      } catch (ShadingException ex) {
+         studio_.logs().showError(ex);
+      }
+      fireTableDataChanged();
+   }
+
    public String getChannelGroup() {
       return channelGroup_;
    }
