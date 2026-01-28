@@ -197,17 +197,24 @@ public class ShadingProcessor implements Processor {
       }
 
       // Check pixel size calibration filter
-      if (!"any".equals(pixelSizeCalibration_)) {
+      if (!MultiChannelShadingMigForm.ANY_PIXELSIZE.equals(pixelSizeCalibration_)) {
          Double imagePixelSize = image.getMetadata().getPixelSizeUm();
          if (imagePixelSize != null && imagePixelSize > 0) {
             try {
                double calibrationPixelSize =
                      studio_.core().getPixelSizeUmByID(pixelSizeCalibration_);
-               // Use tolerance for floating point comparison (0.1% tolerance)
-               if (Math.abs(imagePixelSize - calibrationPixelSize)
-                     / calibrationPixelSize > 0.001) {
-                  context.outputImage(image);
-                  return;
+               if (calibrationPixelSize <= 0) {
+                  studio_.logs().logError(
+                        "Non-positive pixel size for calibration '"
+                              + pixelSizeCalibration_ + "': " + calibrationPixelSize
+                              + ". Skipping pixel-size calibration filter.");
+               } else {
+                  // Use tolerance for floating point comparison (0.1% tolerance)
+                  if (Math.abs(imagePixelSize - calibrationPixelSize)
+                        / calibrationPixelSize > 0.001) {
+                     context.outputImage(image);
+                     return;
+                  }
                }
             } catch (Exception e) {
                // If we can't get the calibration pixel size, skip filtering

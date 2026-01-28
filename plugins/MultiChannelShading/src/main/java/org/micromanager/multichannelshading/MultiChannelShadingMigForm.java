@@ -75,7 +75,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    public static final String USEOPENCL = "UseOpenCL";
    public static final String PIXELSIZECALIBRATION = "PixelSizeCalibration";
    private static final String EMPTY_FILENAME_INDICATOR = "None";
-   private static final String ANY_PIXELSIZE = "any";
+   public static final String ANY_PIXELSIZE = "any";
    private final String[] imageSuffixes = {"tif", "tiff", "jpg", "png"};
    private String backgroundFileName_;
    private String groupName_;

@@ -21,7 +21,6 @@
 
 package org.micromanager.multichannelshading;
 
-import ij.IJ;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -115,7 +114,7 @@ public class ShadingTable extends JTable {
       }
    }
 
-   private class ShowImageButtonCellRenderer implements TableCellRenderer {
+   private static class ShowImageButtonCellRenderer implements TableCellRenderer {
       private final JPanel panel_ = new JPanel();
       private final JButton button_;
 
@@ -181,7 +180,7 @@ public class ShadingTable extends JTable {
       }
    }
 
-   private class PresetCellRenderer implements TableCellRenderer {
+   private static class PresetCellRenderer implements TableCellRenderer {
       private final JComboBox<String> comboBox_ = new JComboBox<>();
 
       @Override
