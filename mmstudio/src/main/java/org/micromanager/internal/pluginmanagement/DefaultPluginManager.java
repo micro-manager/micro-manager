@@ -187,33 +187,11 @@ public final class DefaultPluginManager implements PluginManager {
          if (!subMenus.containsKey(subMenu)) {
             // Create a new menu.
             SortedMenu menu = new SortedMenu(subMenu);
-            // HACK: if this is the processor menu, add a couple of items
-            // to it first.
-            if (subMenu.equals(PROCESSOR_MENU)) {
-               JMenuItem configure = new JMenuItem("Configure Processors...");
-               configure.addActionListener(
-                     e -> ((MMStudio) studio_).uiManager().showPipelineFrame());
-               menu.addUnsorted(configure);
-               menu.addSeparator();
-            }
             rootMenu.add(menu);
             subMenus.put(subMenu, menu);
          }
          subMenus.get(subMenu).add(item);
       }
-   }
-
-   /**
-    * Add a new ProcessorPlugin entry in the Plugins menu. ProcessorPlugins,
-    * when selected, will bring up the Pipeline window and add the processor
-    * to the current pipeline.
-    */
-   private void addProcessorPluginToMenu(JMenu menu,
-                                         HashMap<String, JMenu> subMenus,
-                                         final ProcessorPlugin plugin) {
-      addSubMenuItem(menu, subMenus, PROCESSOR_MENU, plugin.getName(),
-            () -> studio_.data().addAndConfigureProcessor(plugin)
-      );
    }
 
    @Override
@@ -306,9 +284,10 @@ public final class DefaultPluginManager implements PluginManager {
                plugin::onPluginSelected
          );
       }
-      for (ProcessorPlugin plugin : getProcessorPlugins().values()) {
-         // Add it to the "On-the-fly image processing" sub-menu.
-         addProcessorPluginToMenu(menu, subMenus, plugin);
-      }
+      // Add a single menu item for On-The-Fly Image Processing that opens the Pipeline Frame
+      JMenuItem processorItem = new JMenuItem(PROCESSOR_MENU);
+      processorItem.addActionListener(
+            e -> ((MMStudio) studio_).uiManager().showPipelineFrame());
+      menu.add(processorItem);
    }
 }
