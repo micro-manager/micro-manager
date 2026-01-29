@@ -91,3 +91,6 @@ bin
 /*.dmg
 /*.sparseimage
 .Xauthority/Xauthority
+
+# User profiles generated at runtime
+profiles/UserProfiles/
