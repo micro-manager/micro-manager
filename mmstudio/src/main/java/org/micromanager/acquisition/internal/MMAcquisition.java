@@ -137,7 +137,7 @@ public final class MMAcquisition extends DataViewerListener {
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       if (acquisitionSettings.save() && acquisitionSettings.root() != null) {
          // Set up saving to the target directory.
-         PropertyMap scopeState = studio_.data().scopeData()
+         PropertyMap scopeState = studio_.acquisitions().scopeData()
                   .configurationToPropertyMap(studio_.core().getSystemStateCache());
          try {
             String acqDirectory = createAcqDirectory(acquisitionSettings.root(),

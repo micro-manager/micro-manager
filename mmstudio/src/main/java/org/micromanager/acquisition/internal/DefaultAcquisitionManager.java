@@ -37,6 +37,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.ChannelSpec;
+import org.micromanager.acquisition.ScopeDataUtils;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -59,6 +60,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
    private final Studio studio_;
    private final AcqControlDlg mdaDialog_;
+   private final ScopeDataUtils scopeDataUtils_;
 
    /**
     * Constructor only sets essential member values.
@@ -69,6 +71,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
    public DefaultAcquisitionManager(Studio studio, AcqControlDlg mdaDialog) {
       studio_ = studio;
       mdaDialog_ = mdaDialog;
+      scopeDataUtils_ = new DefaultScopeDataUtils(studio);
    }
 
    private AcquisitionEngine getAcquisitionEngine() {
@@ -291,7 +294,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             .userName(System.getProperty("user.name"))
             .profileName(studio_.profile().getProfileName())
             .computerName(computerName)
-            .initialScopeData(studio_.data().scopeData().configurationToPropertyMap(
+            .initialScopeData(scopeDataUtils_.configurationToPropertyMap(
                studio_.core().getSystemStateCache()))
             .build();
    }
@@ -336,7 +339,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          // Again, this can fail if there is no camera.
       }
       if (includeHardwareState) {
-         PropertyMap scopeState = studio_.data().scopeData().configurationToPropertyMap(
+         PropertyMap scopeState = scopeDataUtils_.configurationToPropertyMap(
                   studio_.core().getSystemStateCache());
          result.scopeData(scopeState);
       }
@@ -346,5 +349,10 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
    @Override
    public boolean isOurAcquisition(Object source) {
       return source == getAcquisitionEngine();
+   }
+
+   @Override
+   public ScopeDataUtils scopeData() {
+      return scopeDataUtils_;
    }
 }

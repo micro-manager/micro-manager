@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
+//SUBSYSTEM:     Acquisition API
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:        Nico Stuurman
@@ -18,7 +18,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data;
+package org.micromanager.acquisition;
 
 import java.util.List;
 import java.util.Set;
@@ -35,11 +35,11 @@ import org.micromanager.PropertyMap;
  * properties exist in the current hardware configuration and to apply
  * the properties to restore hardware state.</p>
  *
- * <p>Access this utility via {@code Studio.data().scopeData()}.</p>
+ * <p>Access this utility via {@code Studio.acquisitions().scopeData()}.</p>
  *
  * <p>Example usage:</p>
  * <pre>{@code
- * ScopeDataUtils utils = studio.data().scopeData();
+ * ScopeDataUtils utils = studio.acquisitions().scopeData();
  * PropertyMap scopeData = image.getMetadata().getScopeData();
  *
  * // Validate first
@@ -166,14 +166,16 @@ public interface ScopeDataUtils {
        * Returns default options: skip read-only, skip unchanged, validate first.
        */
       static ApplyOptions defaults() {
-         return org.micromanager.data.internal.DefaultScopeDataUtils.createDefaultApplyOptions();
+         return org.micromanager.acquisition.internal.DefaultScopeDataUtils
+                  .createDefaultApplyOptions();
       }
 
       /**
        * Returns a new builder for ApplyOptions.
        */
       static Builder builder() {
-         return org.micromanager.data.internal.DefaultScopeDataUtils.createApplyOptionsBuilder();
+         return org.micromanager.acquisition.internal.DefaultScopeDataUtils
+                  .createApplyOptionsBuilder();
       }
 
       /**

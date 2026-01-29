@@ -94,7 +94,7 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
 import org.micromanager.acquisition.internal.testacquisition.TestAcqAdapter;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.ScopeDataUtils;
+import org.micromanager.acquisition.ScopeDataUtils;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.ChannelDisplaySettings;
@@ -959,7 +959,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                }
             }
             if (oldSystemState != null && !oldSystemState.isEmpty()) {
-               ScopeDataUtils utils = mmStudio_.data().scopeData();
+               ScopeDataUtils utils = mmStudio_.acquisitions().scopeData();
                ScopeDataUtils.ValidationResult validationResult =
                         utils.validateScopeData(mmStudio_.core(), oldSystemState);
                if (validationResult.hasAnyValid()) {

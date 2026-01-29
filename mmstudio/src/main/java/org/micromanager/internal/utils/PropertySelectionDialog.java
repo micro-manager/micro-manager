@@ -41,7 +41,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
-import org.micromanager.data.ScopeDataUtils;
+import org.micromanager.acquisition.ScopeDataUtils;
 
 /**
  * Modal dialog for selecting properties from a PropertyMap.
@@ -132,7 +132,7 @@ public final class PropertySelectionDialog extends JDialog {
 
    private void groupPropertiesByDevice(PropertyMap properties) {
       for (String key : properties.keySet()) {
-         String[] parts = studio_.data().scopeData().parseKey(key);
+         String[] parts = studio_.acquisitions().scopeData().parseKey(key);
          if (parts == null) {
             continue;
          }
@@ -171,7 +171,7 @@ public final class PropertySelectionDialog extends JDialog {
 
          // Property checkboxes (indented)
          for (String key : keys) {
-            String[] parts = studio_.data().scopeData().parseKey(key);
+            String[] parts = studio_.acquisitions().scopeData().parseKey(key);
             String propName = parts[1];
             String value = originalProperties_.getString(key, "");
 

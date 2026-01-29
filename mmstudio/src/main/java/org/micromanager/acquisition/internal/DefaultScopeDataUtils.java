@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
+//SUBSYSTEM:     Acquisition API implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:        Nico Stuurman
@@ -18,7 +18,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data.internal;
+package org.micromanager.acquisition.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +32,7 @@ import mmcorej.StrVector;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
-import org.micromanager.data.ScopeDataUtils;
+import org.micromanager.acquisition.ScopeDataUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
