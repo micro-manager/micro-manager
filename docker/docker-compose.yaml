@@ -10,7 +10,6 @@ services:
     environment:
       - DISPLAY=${DISPLAY:-:0}
       - XAUTHORITY=/tmp/.Xauthority/Xauthority
-      - TZ=${TZ:-Europe/London}
     volumes:
       - ${X11_UNIX_SOCKET:-/tmp/.X11-unix}:/tmp/.X11-unix
       - ${XAUTH_PATH:-../.Xauthority}:/tmp/.Xauthority:ro
