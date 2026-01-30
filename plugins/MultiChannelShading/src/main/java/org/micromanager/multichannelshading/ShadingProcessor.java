@@ -66,6 +66,7 @@ public class ShadingProcessor implements Processor {
    private ClearCLContext cclContext_;
    private ClearCLProgram cclProgram_;
    private Boolean isAcqRunning_ = false;
+   private final String pixelSizeCalibration_;
 
    private final Set<Class<?>> alertSet_ = new HashSet<>();
 
@@ -79,10 +80,11 @@ public class ShadingProcessor implements Processor {
     * @param presets List of presets
     * @param files List of files, should be the same length as presets and provide the
     *              flatfield image corresponding to each preset
+    * @param pixelSizeCalibration Name of the pixel size calibration to filter on, or "any"
     */
    public ShadingProcessor(Studio studio, String channelGroup,
                            Boolean useOpenCL, String backgroundFile, List<String> presets,
-                           List<String> files) {
+                           List<String> files, String pixelSizeCalibration) {
       studio_ = studio;
       channelGroup_ = channelGroup;
       useOpenCL_ = useOpenCL;
@@ -110,6 +112,7 @@ public class ShadingProcessor implements Processor {
          }
       }
       presets_ = presets;
+      pixelSizeCalibration_ = pixelSizeCalibration;
       imageCollection_ = new ImageCollection(studio_);
       if (backgroundFile != null && !backgroundFile.isEmpty()) {
          try {
@@ -192,6 +195,35 @@ public class ShadingProcessor implements Processor {
          context.outputImage(image);
          return;
       }
+
+      // Check pixel size calibration filter
+      if (!MultiChannelShadingMigForm.ANY_PIXELSIZE.equals(pixelSizeCalibration_)) {
+         Double imagePixelSize = image.getMetadata().getPixelSizeUm();
+         if (imagePixelSize != null && imagePixelSize > 0) {
+            try {
+               double calibrationPixelSize =
+                     studio_.core().getPixelSizeUmByID(pixelSizeCalibration_);
+               if (calibrationPixelSize <= 0) {
+                  studio_.logs().logError(
+                        "Non-positive pixel size for calibration '"
+                              + pixelSizeCalibration_ + "': " + calibrationPixelSize
+                              + ". Skipping pixel-size calibration filter.");
+               } else {
+                  // Use tolerance for floating point comparison (0.1% tolerance)
+                  if (Math.abs(imagePixelSize - calibrationPixelSize)
+                        / calibrationPixelSize > 0.001) {
+                     context.outputImage(image);
+                     return;
+                  }
+               }
+            } catch (Exception e) {
+               // If we can't get the calibration pixel size, skip filtering
+               studio_.logs().logError(e,
+                     "Could not get pixel size for calibration: " + pixelSizeCalibration_);
+            }
+         }
+      }
+
       final int width = image.getWidth();
       final int height = image.getHeight();
 

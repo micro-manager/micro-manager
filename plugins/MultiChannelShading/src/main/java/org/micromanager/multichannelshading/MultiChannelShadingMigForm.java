@@ -22,6 +22,7 @@
 package org.micromanager.multichannelshading;
 
 import com.google.common.eventbus.Subscribe;
+import ij.IJ;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -57,7 +58,6 @@ import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Creates the dialog.
@@ -68,19 +68,22 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    private JDialog mcsPluginWindow;
    private final Studio studio_;
    private final PropertyMap settings_;
-   private final MutablePropertyMapView profileSettings_;
    private final mmcorej.CMMCore mmc_;
 
    public static final String DARKFIELDFILENAME = "BackgroundFileName";
    public static final String CHANNELGROUP = "ChannelGroup";
    public static final String USEOPENCL = "UseOpenCL";
+   public static final String PIXELSIZECALIBRATION = "PixelSizeCalibration";
    private static final String EMPTY_FILENAME_INDICATOR = "None";
+   public static final String ANY_PIXELSIZE = "any";
    private final String[] imageSuffixes = {"tif", "tiff", "jpg", "png"};
    private String backgroundFileName_;
    private String groupName_;
    private String statusMessage_;
    private final Font arialSmallFont_;
    private final JComboBox<String> groupComboBox_;
+   private final JComboBox<String> pixelSizeComboBox_;
+   private final JCheckBox useOpenCLCheckBox_;
    private final ShadingTableModel shadingTableModel_;
    private final Dimension buttonSize_;
    private final JLabel statusLabel_;
@@ -97,8 +100,6 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    public MultiChannelShadingMigForm(PropertyMap settings, Studio studio) {
       studio_ = studio;
       settings_ = settings;
-      profileSettings_ =
-            studio_.profile().getSettings(MultiChannelShadingMigForm.class);
       imageCollection_ = new ImageCollection(studio_);
       mmc_ = studio_.getCMMCore();
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -116,17 +117,38 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       final JButton removeButton = mcsButton(buttonSize_, arialSmallFont_);
 
       mcsPluginWindow = this;
-      super.setLayout(new MigLayout("flowx, fill, insets 8"));
-      super.setTitle(MultiChannelShading.MENUNAME);
+      super.setLayout(new MigLayout("flowx, fill, insets 8",
+            "[][grow,fill][][][]"));
+      String processorName = settings_.getString("ProcessorName", "");
+      if (!processorName.isEmpty()) {
+         super.setTitle(processorName);
+      } else {
+         super.setTitle(MultiChannelShading.MENUNAME);
+      }
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 375, 375);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(),
+            processorName.isEmpty() ? null : processorName);
 
-      super.add(
-            new JLabel("Uncheck and Recheck Use checkboxes in Pipeline after changing settings"),
-            "span 5, wrap");
+      JLabel pixelSizeLabel = new JLabel("Only use with Pixel Size Calibration:");
+      pixelSizeLabel.setFont(arialSmallFont_);
+      super.add(pixelSizeLabel);
+
+      pixelSizeComboBox_ = new JComboBox<>();
+      pixelSizeComboBox_.addItem(ANY_PIXELSIZE);
+      for (String pixelSizeConfig : mmc_.getAvailablePixelSizeConfigs()) {
+         pixelSizeComboBox_.addItem(pixelSizeConfig);
+      }
+      pixelSizeComboBox_.setSelectedItem(
+            settings_.getString(PIXELSIZECALIBRATION,
+                  studio_.profile().getSettings(MultiChannelShadingMigForm.class)
+                        .getString(PIXELSIZECALIBRATION, ANY_PIXELSIZE)));
+      pixelSizeComboBox_.addActionListener(e -> {
+         studio_.data().notifyPipelineChanged();
+      });
+      super.add(pixelSizeComboBox_, "wmax 200, wrap");
 
       JLabel channelGroupLabel = new JLabel("Channel Group:");
       channelGroupLabel.setFont(arialSmallFont_);
@@ -139,7 +161,8 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
          groupComboBox_.addItem(group);
       }
       groupName_ = settings_.getString(CHANNELGROUP,
-            profileSettings_.getString(CHANNELGROUP, ""));
+            studio_.profile().getSettings(MultiChannelShadingMigForm.class)
+                  .getString(CHANNELGROUP, ""));
       groupComboBox_.setSelectedItem(groupName_);
       groupComboBox_.addActionListener(new ActionListener() {
          @Override
@@ -147,20 +170,19 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
             groupName_ = (String) groupComboBox_.getSelectedItem();
             shadingTableModel_.setChannelGroup(groupName_);
             updateAddAndRemoveButtons(addButton, removeButton);
-            profileSettings_.putString(CHANNELGROUP, groupName_);
             studio_.data().notifyPipelineChanged();
          }
       });
-      super.add(groupComboBox_);
+      super.add(groupComboBox_, "wmax 200");
 
-
-      JCheckBox useOpenCLCheckBox = new JCheckBox("Use GPU");
-      useOpenCLCheckBox.setSelected(profileSettings_.getBoolean(USEOPENCL, false));
-      useOpenCLCheckBox.addActionListener(e -> {
-         profileSettings_.putBoolean(USEOPENCL, useOpenCLCheckBox.isSelected());
+      useOpenCLCheckBox_ = new JCheckBox("Use GPU");
+      useOpenCLCheckBox_.setSelected(settings_.getBoolean(USEOPENCL,
+            studio_.profile().getSettings(MultiChannelShadingMigForm.class)
+                  .getBoolean(USEOPENCL, false)));
+      useOpenCLCheckBox_.addActionListener(e -> {
          studio_.data().notifyPipelineChanged();
       });
-      super.add(useOpenCLCheckBox, "skip 2");
+      super.add(useOpenCLCheckBox_);
 
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(e ->
@@ -176,7 +198,8 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       darkFieldTextField.setFont(arialSmallFont_);
       //populate darkFieldName from profile and process it.
       darkFieldTextField.setText(settings_.getString(DARKFIELDFILENAME,
-            profileSettings_.getString(DARKFIELDFILENAME, "")));
+            studio_.profile().getSettings(MultiChannelShadingMigForm.class)
+                  .getString(DARKFIELDFILENAME, "")));
       darkFieldTextField.setHorizontalAlignment(JTextField.RIGHT);
       darkFieldTextField.addActionListener(evt ->
               processBackgroundImage(darkFieldTextField.getText()));
@@ -193,7 +216,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       });
       darkFieldTextField.setText(processBackgroundImage(
             darkFieldTextField.getText()));
-      super.add(darkFieldTextField, "span 2");
+      super.add(darkFieldTextField, "span 2, growx");
 
 
       final JButton darkFieldButton = mcsButton(buttonSize_, arialSmallFont_);
@@ -207,7 +230,17 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
             darkFieldTextField.setText(backgroundFileName_);
          }
       });
-      super.add(darkFieldButton, "wrap");
+      super.add(darkFieldButton);
+
+      final JButton darkFieldShowButton = mcsButton(buttonSize_, arialSmallFont_);
+      darkFieldShowButton.setText("Show");
+      darkFieldShowButton.addActionListener(evt -> {
+         String path = darkFieldTextField.getText();
+         if (path != null && !path.isEmpty()) {
+            IJ.open(path);
+         }
+      });
+      super.add(darkFieldShowButton, "wrap");
 
       // Table with channel presets and files
       final JScrollPane scrollPane = new JScrollPane() {
@@ -219,6 +252,12 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       super.add(scrollPane, "span 5 2, grow, push");
       shadingTableModel_ = new ShadingTableModel(studio_, imageCollection_);
       shadingTableModel_.setChannelGroup(groupName_);
+      // Restore per-instance preset/file mappings from saved settings
+      List<String> savedPresets = settings_.getStringList("Presets");
+      List<String> savedFiles = settings_.getStringList("PresetFiles");
+      if (!savedPresets.isEmpty() && savedPresets.size() == savedFiles.size()) {
+         shadingTableModel_.loadPresets(savedPresets, savedFiles);
+      }
       final ShadingTable shadingTable =
             new ShadingTable(studio_, shadingTableModel_, this);
       scrollPane.setViewportView(shadingTable);
@@ -236,6 +275,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       addButton.addActionListener(evt -> {
          shadingTableModel_.addRow();
          updateAddAndRemoveButtons(addButton, removeButton);
+         studio_.data().notifyPipelineChanged();
       });
       buttonPanel.add(addButton, "wrap");
 
@@ -248,6 +288,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
          shadingTable.stopCellEditing();
          shadingTableModel_.removeRow(shadingTable.getSelectedRows());
          updateAddAndRemoveButtons(addButton, removeButton);
+         studio_.data().notifyPipelineChanged();
       });
       buttonPanel.add(removeButton);
 
@@ -255,7 +296,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       super.add(new JLabel(""), "growy, pushy, wrap");
 
       statusLabel_ = new JLabel(" ");
-      super.add(statusLabel_, "span 3, wrap");
+      super.add(statusLabel_, "span 5, wrap");
       updateAddAndRemoveButtons(addButton, removeButton);
       super.pack();
 
@@ -279,10 +320,13 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       builder.putString(CHANNELGROUP, shadingTableModel_.getChannelGroup());
       builder.putStringList("Presets", shadingTableModel_.getUsedPresets());
       builder.putString(DARKFIELDFILENAME, imageCollection_.getBackgroundFile());
-      builder.putBoolean(USEOPENCL, profileSettings_.getBoolean(USEOPENCL, false));
+      builder.putBoolean(USEOPENCL, useOpenCLCheckBox_.isSelected());
+      builder.putString(PIXELSIZECALIBRATION,
+            (String) pixelSizeComboBox_.getSelectedItem());
       ArrayList<String> files = new ArrayList<>();
       for (String preset : shadingTableModel_.getUsedPresets()) {
-         files.add(imageCollection_.getFileForPreset(preset));
+         String file = imageCollection_.getFileForPreset(preset);
+         files.add(file != null ? file : "");
       }
       builder.putStringList("PresetFiles", files.toArray(new String[] {}));
       return builder.build();
@@ -343,7 +387,6 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       try {
          imageCollection_.setBackground(fileName);
          backgroundFileName_ = fileName;
-         profileSettings_.putString(DARKFIELDFILENAME, backgroundFileName_);
          studio_.data().notifyPipelineChanged();
       } catch (ShadingException ex) {
          studio_.logs().showError(ex, "Failed to set background image");
@@ -354,6 +397,18 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
    public ShadingTableModel getShadingTableModel() {
       return shadingTableModel_;
+   }
+
+   /**
+    * Opens the flatfield image for the given row in ImageJ.
+    *
+    * @param rowNumber Table row whose image to show
+    */
+   public void showFlatFieldImage(int rowNumber) {
+      String path = (String) shadingTableModel_.getValueAt(rowNumber, 1);
+      if (path != null && !path.isEmpty()) {
+         IJ.open(path);
+      }
    }
 
    /**
@@ -369,6 +424,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       );
       if (f != null) {
          shadingTableModel_.setValueAt(f.getAbsolutePath(), rowNumber, 1);
+         studio_.data().notifyPipelineChanged();
       }
    }
 
