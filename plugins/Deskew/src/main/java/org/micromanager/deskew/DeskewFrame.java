@@ -363,8 +363,19 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       }
       manageMDASync(syncWithMDA.isSelected());
 
+      // Explore Section
+      add(new JSeparator(), "span 5, growx, wrap");
+      JPanel explorePanel = new JPanel(new MigLayout("insets 4"));
+      explorePanel.setBorder(BorderFactory.createTitledBorder("Explore"));
+      JButton startExploreButton = new JButton("Start");
+      startExploreButton.setToolTipText(
+            "Start explore mode with tiled NDViewer. Click tiles to acquire deskewed projections.");
+      startExploreButton.addActionListener(e -> startExplore());
+      explorePanel.add(startExploreButton, "spanx, alignx right, pushx");
+
       add(new JSeparator(), "span 5, growx, wrap");
 
+      add(explorePanel, "span, growx, wrap");
       JButton processButton = new JButton("Process");
       processButton.addActionListener(e -> new Thread(this::processData).start());
       add(processButton, "split, spanx");
@@ -374,16 +385,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       refreshInputOptions();
       add(input_, "wrap");
 
-      // Explore Section
-      add(new JSeparator(), "span 5, growx, wrap");
-      JPanel explorePanel = new JPanel(new MigLayout("insets 4"));
-      explorePanel.setBorder(BorderFactory.createTitledBorder("Explore"));
-      JButton startExploreButton = new JButton("Start");
-      startExploreButton.setToolTipText(
-              "Start explore mode with tiled NDViewer. Click tiles to acquire deskewed projections.");
-      startExploreButton.addActionListener(e -> startExplore());
-      explorePanel.add(startExploreButton);
-      add(explorePanel, "span, growx, wrap");
 
       pack();
    }
