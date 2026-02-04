@@ -4,13 +4,20 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Stream;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
@@ -57,6 +64,11 @@ public class DeskewExploreManager {
    private String storageDir_;
    private String acqName_;
 
+   // Stage position tracking for multi-tile acquisition
+   private double initialStageX_ = 0;
+   private double initialStageY_ = 0;
+   private double pixelSizeUm_ = 1.0;
+
    public DeskewExploreManager(Studio studio, DeskewFrame frame, DeskewFactory deskewFactory) {
       studio_ = studio;
       frame_ = frame;
@@ -96,10 +108,16 @@ public class DeskewExploreManager {
          int imageWidth = (int) studio_.core().getImageWidth();
          int imageHeight = (int) studio_.core().getImageHeight();
          bitDepth_ = (int) studio_.core().getImageBitDepth();
-         double pixelSizeUm = studio_.core().getPixelSizeUm();
-         if (pixelSizeUm <= 0) {
-            pixelSizeUm = 1.0;
+         pixelSizeUm_ = studio_.core().getPixelSizeUm();
+         if (pixelSizeUm_ <= 0) {
+            pixelSizeUm_ = 1.0;
          }
+
+         // Store initial stage position for multi-tile acquisition
+         initialStageX_ = studio_.core().getXPosition();
+         initialStageY_ = studio_.core().getYPosition();
+         studio_.logs().logMessage("Deskew Explore: initial stage position = ("
+                 + initialStageX_ + ", " + initialStageY_ + ")");
 
          // Estimate tile dimensions based on camera size
          // (actual size will be determined after first deskew)
@@ -112,7 +130,7 @@ public class DeskewExploreManager {
          JSONObject summaryMetadata = new JSONObject();
          summaryMetadata.put("Width", imageWidth);
          summaryMetadata.put("Height", imageHeight);
-         summaryMetadata.put("PixelSize_um", pixelSizeUm);
+         summaryMetadata.put("PixelSize_um", pixelSizeUm_);
          summaryMetadata.put("BitDepth", bitDepth_);
          summaryMetadata.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
          summaryMetadata.put("GridPixelOverlapX", 0);
@@ -124,8 +142,8 @@ public class DeskewExploreManager {
          dataSource_.setStorage(storage_);
 
          // Create NDViewer
-         viewer_ = new NDViewer(dataSource_, dataSource_, summaryMetadata, pixelSizeUm, false);
-         viewer_.setWindowTitle("Deskew Explore - Right-click to select, Left-click to acquire");
+         viewer_ = new NDViewer(dataSource_, dataSource_, summaryMetadata, pixelSizeUm_, false);
+         viewer_.setWindowTitle("Deskew Explore - Right-click to select, Left-drag to extend, Left-click to acquire");
 
          // Set up overlayer and mouse listener
          viewer_.setOverlayerPlugin(dataSource_);
@@ -158,8 +176,18 @@ public class DeskewExploreManager {
 
    /**
     * Stops the explore session and cleans up resources.
+    * Deletes temporary storage by default.
     */
    public void stopExplore() {
+      stopExplore(true);
+   }
+
+   /**
+    * Stops the explore session and cleans up resources.
+    *
+    * @param deleteTempFiles If true, deletes the temporary storage directory
+    */
+   private void stopExplore(boolean deleteTempFiles) {
       exploring_ = false;
 
       if (displayExecutor_ != null) {
@@ -173,10 +201,14 @@ public class DeskewExploreManager {
       }
 
       if (storage_ != null) {
-         if (!storage_.isFinished()) {
-            storage_.finishedWriting();
+         try {
+            if (!storage_.isFinished()) {
+               storage_.finishedWriting();
+            }
+            storage_.close();
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Error closing storage");
          }
-         storage_.close();
          storage_ = null;
       }
 
@@ -186,13 +218,151 @@ public class DeskewExploreManager {
       }
 
       viewer_ = null;
+
+      if (deleteTempFiles) {
+         deleteTempStorage();
+      }
    }
 
    /**
     * Called when the viewer is closed by the user.
+    * Prompts to save data if any tiles were acquired.
     */
    public void onViewerClosed() {
-      stopExplore();
+      // Check if there's any data to save
+      boolean hasData = false;
+      try {
+         hasData = storage_ != null && !storage_.isFinished() && !storage_.getAxesSet().isEmpty();
+      } catch (Exception e) {
+         // Storage may already be in a bad state
+         studio_.logs().logMessage("Deskew Explore: could not check storage state: " + e.getMessage());
+      }
+
+      if (hasData) {
+         // Ask user what to do with the data
+         int choice = JOptionPane.showOptionDialog(
+                 null,
+                 "Save the acquired Deskew Explore data?",
+                 "Save Explore Data",
+                 JOptionPane.YES_NO_CANCEL_OPTION,
+                 JOptionPane.QUESTION_MESSAGE,
+                 null,
+                 new String[]{"Save", "Discard", "Cancel"},
+                 "Save");
+
+         if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
+            // Cancel - don't close (but we can't really prevent NDViewer from closing)
+            // At least don't delete the data
+            studio_.logs().logMessage("Deskew Explore: close cancelled, data remains in: " + storageDir_);
+            stopExplore(false);  // Don't delete temp files
+            return;
+         } else if (choice == 0) {
+            // Save - let user choose location
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Save Deskew Explore Data");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setSelectedFile(new File(acqName_));
+
+            if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+               File destDir = chooser.getSelectedFile();
+               saveDataTo(destDir);
+            } else {
+               // User cancelled save dialog - keep data in temp
+               studio_.logs().logMessage("Deskew Explore: save cancelled, data remains in: " + storageDir_);
+               stopExplore(false);
+               return;
+            }
+         }
+         // choice == 1 (Discard) falls through to delete
+      }
+
+      stopExplore(true);  // Delete temp files
+   }
+
+   /**
+    * Saves the explore data to the specified directory.
+    */
+   private void saveDataTo(File destDir) {
+      if (storageDir_ == null) {
+         return;
+      }
+
+      try {
+         // Finish writing to storage if it's still open
+         if (storage_ != null) {
+            try {
+               if (!storage_.isFinished()) {
+                  storage_.finishedWriting();
+               }
+               storage_.close();
+            } catch (Exception e) {
+               studio_.logs().logError(e, "Error closing storage before save");
+            }
+            storage_ = null;
+         }
+
+         // Source directory contains the NDTiff data
+         File sourceDir = new File(storageDir_, acqName_);
+         if (!sourceDir.exists()) {
+            sourceDir = new File(storageDir_);
+         }
+
+         // Create destination if it doesn't exist
+         if (!destDir.exists()) {
+            destDir.mkdirs();
+         }
+
+         // Copy all files from source to destination
+         Path sourcePath = sourceDir.toPath();
+         Path destPath = destDir.toPath();
+
+         try (Stream<Path> stream = Files.walk(sourcePath)) {
+            stream.forEach(source -> {
+               try {
+                  Path dest = destPath.resolve(sourcePath.relativize(source));
+                  if (Files.isDirectory(source)) {
+                     if (!Files.exists(dest)) {
+                        Files.createDirectories(dest);
+                     }
+                  } else {
+                     Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
+                  }
+               } catch (IOException e) {
+                  studio_.logs().logError(e, "Failed to copy file: " + source);
+               }
+            });
+         }
+
+         studio_.logs().logMessage("Deskew Explore: data saved to " + destDir.getAbsolutePath());
+         studio_.logs().showMessage("Data saved to: " + destDir.getAbsolutePath());
+
+      } catch (Exception e) {
+         studio_.logs().showError(e, "Failed to save Deskew Explore data");
+      }
+   }
+
+   /**
+    * Deletes the temporary storage directory and all its contents.
+    */
+   private void deleteTempStorage() {
+      if (storageDir_ == null) {
+         return;
+      }
+
+      try {
+         File dir = new File(storageDir_);
+         if (dir.exists()) {
+            // Delete directory recursively
+            try (Stream<Path> stream = Files.walk(dir.toPath())) {
+               stream.sorted(Comparator.reverseOrder())
+                       .map(Path::toFile)
+                       .forEach(File::delete);
+            }
+            studio_.logs().logMessage("Deskew Explore: deleted temp storage at " + storageDir_);
+         }
+      } catch (IOException e) {
+         studio_.logs().logError(e, "Failed to delete temp storage: " + storageDir_);
+      }
    }
 
    /**
@@ -313,6 +483,183 @@ public class DeskewExploreManager {
             studio_.logs().logError(e, "Deskew Explore: error acquiring tile");
          }
       });
+   }
+
+   /**
+    * Acquires multiple tiles sequentially, moving the stage between positions.
+    * Each tile position is calculated relative to the initial stage position when explore started.
+    *
+    * @param tiles List of tile positions as (row, col) Points
+    */
+   public void acquireMultipleTiles(List<Point> tiles) {
+      if (!exploring_ || acquisitionExecutor_ == null || tiles.isEmpty()) {
+         return;
+      }
+
+      acquisitionExecutor_.submit(() -> {
+         dataSource_.setAcquisitionInProgress(true);
+         redrawOverlay();
+
+         try {
+            studio_.logs().logMessage("Deskew Explore: starting multi-tile acquisition of "
+                    + tiles.size() + " tiles");
+
+            // Get the projected tile dimensions (use estimated if not yet determined)
+            int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
+            int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
+
+            // Calculate the stage movement per tile in microns
+            // Note: tile coordinates are in projected pixel space
+            double tileWidthUm = tileWidth * pixelSizeUm_;
+            double tileHeightUm = tileHeight * pixelSizeUm_;
+
+            studio_.logs().logMessage("Deskew Explore: tile size = " + tileWidth + "x" + tileHeight
+                    + " pixels, " + tileWidthUm + "x" + tileHeightUm + " um");
+
+            for (int i = 0; i < tiles.size(); i++) {
+               Point tile = tiles.get(i);
+               int row = tile.x;
+               int col = tile.y;
+
+               studio_.logs().logMessage("Deskew Explore: acquiring tile " + (i + 1) + "/" + tiles.size()
+                       + " at row=" + row + ", col=" + col);
+
+               // Calculate target stage position relative to initial position
+               // Tile (0,0) is at the initial position
+               // Positive col -> move stage in +X direction
+               // Positive row -> move stage in +Y direction
+               double targetX = initialStageX_ + col * tileWidthUm;
+               double targetY = initialStageY_ + row * tileHeightUm;
+
+               // Move stage to target position
+               studio_.logs().logMessage("Deskew Explore: moving stage to ("
+                       + targetX + ", " + targetY + ")");
+               studio_.core().setXYPosition(targetX, targetY);
+               studio_.core().waitForDevice(studio_.core().getXYStageDevice());
+
+               // Small delay to let stage settle
+               Thread.sleep(100);
+
+               // Acquire this tile (inline the acquisition logic to avoid executor issues)
+               acquireSingleTileBlocking(row, col);
+            }
+
+            // Return stage to initial position
+            studio_.logs().logMessage("Deskew Explore: returning stage to initial position");
+            studio_.core().setXYPosition(initialStageX_, initialStageY_);
+            studio_.core().waitForDevice(studio_.core().getXYStageDevice());
+
+            studio_.logs().logMessage("Deskew Explore: multi-tile acquisition complete");
+
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Deskew Explore: error during multi-tile acquisition");
+         } finally {
+            dataSource_.setAcquisitionInProgress(false);
+         }
+      });
+   }
+
+   /**
+    * Acquires a single tile synchronously (blocking).
+    * This is called from within the acquisition executor.
+    */
+   private void acquireSingleTileBlocking(int row, int col) {
+      try {
+         // Get Z settings from MDA
+         SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+         SequenceSettings.Builder sb = settings.copyBuilder();
+         sb.useFrames(false)
+                 .usePositionList(false)
+                 .save(false)
+                 .shouldDisplayImages(false)
+                 .isTestAcquisition(true);
+
+         if (!settings.useSlices()) {
+            studio_.logs().showError("Deskew Explore requires Z-stack acquisition settings.");
+            return;
+         }
+
+         SequenceSettings acqSettings = sb.build();
+
+         // Set explore mode flag so DeskewFactory creates a pass-through processor
+         frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, true);
+         deskewFactory_.setSettings(frame_.getSettings());
+
+         // Run acquisition in blocking mode
+         Datastore testStore = studio_.acquisitions().runAcquisitionWithSettings(
+                 acqSettings, true);
+
+         // Reset explore mode flag
+         frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, false);
+         deskewFactory_.setSettings(frame_.getSettings());
+
+         if (testStore == null) {
+            studio_.logs().showError("Test acquisition failed at row=" + row + ", col=" + col);
+            return;
+         }
+
+         int numImages = testStore.getNumImages();
+         studio_.logs().logMessage("Deskew Explore: test store has " + numImages + " images");
+
+         if (numImages == 0) {
+            studio_.logs().showError("Test acquisition produced no images at row=" + row + ", col=" + col);
+            try {
+               testStore.freeze();
+            } catch (IOException ignored) {
+            }
+            testStore.close();
+            return;
+         }
+
+         // Process through deskew to get XY projection
+         Image projectedImage = processStackThroughDeskew(testStore);
+
+         if (projectedImage == null) {
+            studio_.logs().showError("Deskew processing failed at row=" + row + ", col=" + col);
+            try {
+               testStore.freeze();
+            } catch (IOException ignored) {
+            }
+            testStore.close();
+            return;
+         }
+
+         // Update tile dimensions if this is first acquisition
+         if (projectedWidth_ < 0) {
+            projectedWidth_ = projectedImage.getWidth();
+            projectedHeight_ = projectedImage.getHeight();
+            dataSource_.setTileDimensions(projectedWidth_, projectedHeight_);
+            studio_.logs().logMessage("Deskew Explore: projected dimensions = "
+                    + projectedWidth_ + " x " + projectedHeight_);
+         }
+
+         // Store the projected image
+         storeProjectedImage(projectedImage, row, col);
+
+         // Mark tile as acquired
+         dataSource_.markTileAcquired(row, col);
+
+         // Notify viewer
+         if (displayExecutor_ != null && viewer_ != null) {
+            displayExecutor_.submit(() -> {
+               HashMap<String, Object> displayAxes = new HashMap<>();
+               viewer_.newImageArrived(displayAxes);
+               viewer_.update();
+            });
+         }
+
+         // Clean up
+         try {
+            testStore.freeze();
+         } catch (IOException ignored) {
+         }
+         testStore.close();
+
+         studio_.logs().logMessage("Deskew Explore: tile acquired at row=" + row + ", col=" + col);
+
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Deskew Explore: error acquiring tile at row=" + row + ", col=" + col);
+      }
    }
 
    /**

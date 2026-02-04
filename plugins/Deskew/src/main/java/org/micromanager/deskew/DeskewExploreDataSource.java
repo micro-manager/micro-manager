@@ -6,8 +6,10 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
@@ -37,9 +39,12 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
    private volatile boolean finished_ = false;
 
    // Mouse interaction state
-   private Point highlightedTile_ = null;  // row, col of highlighted tile
+   private Point selectionStart_ = null;   // First corner of selection (row, col)
+   private Point selectionEnd_ = null;     // Second corner of selection (row, col)
    private Point dragStart_ = null;
-   private boolean isDragging_ = false;
+   private boolean isRightDragging_ = false;
+   private boolean isLeftDragging_ = false;
+   private volatile boolean acquisitionInProgress_ = false;
 
    // Tile tracking
    private final Set<String> acquiredTiles_ = new HashSet<>();
@@ -71,7 +76,56 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    public void markTileAcquired(int row, int col) {
       acquiredTiles_.add(row + "," + col);
-      highlightedTile_ = null; // Clear highlight after acquisition
+   }
+
+   /**
+    * Clears the current tile selection.
+    */
+   public void clearSelection() {
+      selectionStart_ = null;
+      selectionEnd_ = null;
+      manager_.redrawOverlay();
+   }
+
+   /**
+    * Sets whether an acquisition is currently in progress.
+    * Used to prevent new selections during acquisition.
+    */
+   public void setAcquisitionInProgress(boolean inProgress) {
+      acquisitionInProgress_ = inProgress;
+      if (!inProgress) {
+         clearSelection();
+      }
+   }
+
+   /**
+    * Returns the list of selected tiles as (row, col) Points.
+    * Tiles are returned in row-major order.
+    */
+   public List<Point> getSelectedTiles() {
+      List<Point> tiles = new ArrayList<>();
+      if (selectionStart_ == null) {
+         return tiles;
+      }
+
+      int startRow = selectionStart_.x;
+      int startCol = selectionStart_.y;
+      int endRow = selectionEnd_ != null ? selectionEnd_.x : startRow;
+      int endCol = selectionEnd_ != null ? selectionEnd_.y : startCol;
+
+      int minRow = Math.min(startRow, endRow);
+      int maxRow = Math.max(startRow, endRow);
+      int minCol = Math.min(startCol, endCol);
+      int maxCol = Math.max(startCol, endCol);
+
+      for (int row = minRow; row <= maxRow; row++) {
+         for (int col = minCol; col <= maxCol; col++) {
+            if (!isTileAcquired(row, col)) {
+               tiles.add(new Point(row, col));
+            }
+         }
+      }
+      return tiles;
    }
 
    public boolean isTileAcquired(int row, int col) {
@@ -138,10 +192,9 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    @Override
    public void close() {
-      if (storage_ != null) {
-         storage_.close();
-         storage_ = null;
-      }
+      // Don't close storage here - let the manager handle it
+      // so it can prompt the user to save first
+      storage_ = null;
       manager_.onViewerClosed();
    }
 
@@ -165,7 +218,9 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    @Override
    public boolean isFinished() {
-      return finished_;
+      // Always return true so NDViewer doesn't show "Finish the Acquisition?" dialog
+      // Our close() method handles the save prompt
+      return true;
    }
 
    public void setFinished(boolean finished) {
@@ -175,7 +230,8 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
    @Override
    public void abort() {
       finished_ = true;
-      manager_.stopExplore();
+      // Don't call stopExplore here - let close() handle it
+      // so the save dialog can be shown
    }
 
    @Override
@@ -197,53 +253,95 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    @Override
    public void mousePressed(MouseEvent e) {
+      if (acquisitionInProgress_) {
+         return;
+      }
+
+      dragStart_ = e.getPoint();
       if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
-         dragStart_ = e.getPoint();
-         isDragging_ = false;
+         isRightDragging_ = false;
+      } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+         isLeftDragging_ = false;
       }
    }
 
    @Override
    public void mouseReleased(MouseEvent e) {
-      if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isDragging_) {
-         // Right-click without drag - highlight tile for acquisition
+      if (acquisitionInProgress_) {
+         // Ignore clicks during acquisition
+         dragStart_ = null;
+         isRightDragging_ = false;
+         isLeftDragging_ = false;
+         return;
+      }
+
+      if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
+         // Right-click without drag - start new selection
          if (tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
-            if (tile != null && !isTileAcquired(tile.x, tile.y)) {
-               highlightedTile_ = tile;
+            if (tile != null) {
+               selectionStart_ = tile;
+               selectionEnd_ = null;
                manager_.redrawOverlay();
             }
          }
-      } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
-         // Left-click - acquire highlighted tile if any
-         if (highlightedTile_ != null) {
-            int row = highlightedTile_.x;
-            int col = highlightedTile_.y;
-            highlightedTile_ = null;
-            manager_.acquireTile(row, col);
+      } else if (javax.swing.SwingUtilities.isLeftMouseButton(e) && !isLeftDragging_) {
+         // Left-click without drag - acquire selected tiles
+         List<Point> selectedTiles = getSelectedTiles();
+         if (!selectedTiles.isEmpty()) {
+            manager_.acquireMultipleTiles(selectedTiles);
          }
       }
 
       dragStart_ = null;
-      isDragging_ = false;
+      isRightDragging_ = false;
+      isLeftDragging_ = false;
+   }
+
+   @Override
+   public void mouseClicked(MouseEvent e) {
+      // Handled in mouseReleased
    }
 
    @Override
    public void mouseDragged(MouseEvent e) {
-      if (dragStart_ != null && javax.swing.SwingUtilities.isRightMouseButton(e)) {
-         Point current = e.getPoint();
-         int dx = dragStart_.x - current.x;
-         int dy = dragStart_.y - current.y;
+      if (acquisitionInProgress_ || dragStart_ == null) {
+         return;
+      }
 
+      Point current = e.getPoint();
+      int dx = dragStart_.x - current.x;
+      int dy = dragStart_.y - current.y;
+
+      if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
+         // Right-drag pans the view
          // Only consider it dragging if moved more than a few pixels
          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-            isDragging_ = true;
-            highlightedTile_ = null; // Clear highlight when dragging
+            isRightDragging_ = true;
+            // Clear selection when panning
+            selectionStart_ = null;
+            selectionEnd_ = null;
          }
 
-         if (isDragging_) {
+         if (isRightDragging_) {
             manager_.pan(dx, dy);
             dragStart_ = current;
+         }
+      } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+         // Left-drag extends the selection
+         if (selectionStart_ != null && tileWidth_ > 0 && tileHeight_ > 0) {
+            // Only consider it dragging if moved more than a few pixels
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+               isLeftDragging_ = true;
+            }
+
+            if (isLeftDragging_) {
+               Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
+               if (tile != null && !tile.equals(selectionEnd_)) {
+                  selectionEnd_ = tile;
+                  manager_.redrawOverlay();
+               }
+            }
          }
       }
    }
@@ -261,11 +359,6 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
    @Override
    public void mouseMoved(MouseEvent e) {
       // Could implement hover preview here
-   }
-
-   @Override
-   public void mouseClicked(MouseEvent e) {
-      // Handled in mouseReleased
    }
 
    @Override
@@ -309,45 +402,83 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
                            double downsampleFactor, Graphics g,
                            HashMap<String, Object> axes, double magnification,
                            Point2D.Double viewOffset) {
-      // Draw highlighted tile if any
-      if (highlightedTile_ != null && tileWidth_ > 0 && tileHeight_ > 0) {
-         int row = highlightedTile_.x;
-         int col = highlightedTile_.y;
-         String tileKey = row + "," + col;
+      if (tileWidth_ <= 0 || tileHeight_ <= 0) {
+         manager_.setOverlay(overlay);
+         return;
+      }
 
-         // Only show if not already acquired
-         if (!acquiredTiles_.contains(tileKey)) {
-            // Calculate tile position in full resolution coordinates
-            double tilePixelX = col * tileWidth_;
-            double tilePixelY = row * tileHeight_;
+      // Draw selection if any
+      if (selectionStart_ != null) {
+         int startRow = selectionStart_.x;
+         int startCol = selectionStart_.y;
+         int endRow = selectionEnd_ != null ? selectionEnd_.x : startRow;
+         int endCol = selectionEnd_ != null ? selectionEnd_.y : startCol;
 
-            // Convert to display/screen coordinates
-            int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
-            int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
-            int dispW = (int) (tileWidth_ * magnification);
-            int dispH = (int) (tileHeight_ * magnification);
+         int minRow = Math.min(startRow, endRow);
+         int maxRow = Math.max(startRow, endRow);
+         int minCol = Math.min(startCol, endCol);
+         int maxCol = Math.max(startCol, endCol);
 
-            // Create rectangle ROI at the tile position
-            Roi rectRoi = new Roi(dispX, dispY, dispW, dispH);
-            rectRoi.setStrokeColor(new Color(0, 100, 255));
-            rectRoi.setStrokeWidth(3);
-            rectRoi.setFillColor(new Color(0, 100, 255, 100));
-            overlay.add(rectRoi);
-
-            // Add text ROI for instructions
-            String text = "Left-click to acquire";
-            int textX = dispX + dispW / 4;
-            int textY = dispY + dispH / 2;
-            TextRoi textRoi = new TextRoi(textX, textY, text);
-            textRoi.setStrokeColor(Color.WHITE);
-            overlay.add(textRoi);
-
-            // Add text ROI for coordinates
-            String coordText = "Row: " + row + ", Col: " + col;
-            TextRoi coordRoi = new TextRoi(textX, textY + 20, coordText);
-            coordRoi.setStrokeColor(Color.YELLOW);
-            overlay.add(coordRoi);
+         // Count tiles to acquire
+         int tilesToAcquire = 0;
+         for (int row = minRow; row <= maxRow; row++) {
+            for (int col = minCol; col <= maxCol; col++) {
+               if (!isTileAcquired(row, col)) {
+                  tilesToAcquire++;
+               }
+            }
          }
+
+         // Draw each tile in the selection
+         for (int row = minRow; row <= maxRow; row++) {
+            for (int col = minCol; col <= maxCol; col++) {
+               if (isTileAcquired(row, col)) {
+                  continue; // Skip already acquired tiles
+               }
+
+               // Calculate tile position in full resolution coordinates
+               double tilePixelX = col * tileWidth_;
+               double tilePixelY = row * tileHeight_;
+
+               // Convert to display/screen coordinates
+               int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
+               int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
+               int dispW = (int) (tileWidth_ * magnification);
+               int dispH = (int) (tileHeight_ * magnification);
+
+               // Create rectangle ROI at the tile position
+               Roi rectRoi = new Roi(dispX, dispY, dispW, dispH);
+               rectRoi.setStrokeColor(new Color(0, 100, 255));
+               rectRoi.setStrokeWidth(3);
+               rectRoi.setFillColor(new Color(0, 100, 255, 100));
+               overlay.add(rectRoi);
+            }
+         }
+
+         // Add instruction text at the center of the selection
+         double centerPixelX = (minCol + maxCol + 1) * tileWidth_ / 2.0;
+         double centerPixelY = (minRow + maxRow + 1) * tileHeight_ / 2.0;
+         int textX = (int) ((centerPixelX - viewOffset.x) * magnification);
+         int textY = (int) ((centerPixelY - viewOffset.y) * magnification);
+
+         String instructions;
+         if (acquisitionInProgress_) {
+            instructions = "Acquiring...";
+         } else if (selectionEnd_ == null) {
+            instructions = "Left-drag to extend, left-click to acquire";
+         } else {
+            instructions = "Left-click to acquire " + tilesToAcquire + " tile(s)";
+         }
+         TextRoi textRoi = new TextRoi(textX - 100, textY - 20, instructions);
+         textRoi.setStrokeColor(Color.WHITE);
+         overlay.add(textRoi);
+
+         // Show selection bounds
+         String boundsText = "Selection: rows " + minRow + "-" + maxRow
+                 + ", cols " + minCol + "-" + maxCol;
+         TextRoi boundsRoi = new TextRoi(textX - 100, textY, boundsText);
+         boundsRoi.setStrokeColor(Color.YELLOW);
+         overlay.add(boundsRoi);
       }
 
       // Set the overlay on the viewer
