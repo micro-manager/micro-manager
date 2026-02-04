@@ -12,12 +12,14 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import javax.swing.ButtonGroup;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
@@ -90,6 +92,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private final DeskewFactory deskewFactory_;
    private final MutablePropertyMapView settings_;
    private final CLIJ2 clij2_;
+   private final DeskewExploreManager exploreManager_;
    private JComboBox<String> input_;
    private JRadioButton outputSingleplane_;
    private JRadioButton outputMultipage_;
@@ -116,6 +119,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       clij2_ = CLIJ2.getInstance();
       studio_.logs().logMessage(CLIJ2.clinfo());
       studio_.logs().logMessage(clij2_.getGPUName());
+      exploreManager_ = new DeskewExploreManager(studio, this, deskewFactory);
 
       initComponents();
 
@@ -359,6 +363,17 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       refreshInputOptions();
       add(input_, "wrap");
 
+      // Explore Section
+      add(new JSeparator(), "span 5, growx, wrap");
+      JPanel explorePanel = new JPanel(new MigLayout("insets 4"));
+      explorePanel.setBorder(BorderFactory.createTitledBorder("Explore"));
+      JButton startExploreButton = new JButton("Start");
+      startExploreButton.setToolTipText(
+              "Start explore mode with tiled NDViewer. Click tiles to acquire deskewed projections.");
+      startExploreButton.addActionListener(e -> startExplore());
+      explorePanel.add(startExploreButton);
+      add(explorePanel, "span, growx, wrap");
+
       pack();
    }
 
@@ -525,6 +540,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
             }
          }
       }
+   }
+
+   private void startExplore() {
+      exploreManager_.startExplore();
    }
 
    @Subscribe
