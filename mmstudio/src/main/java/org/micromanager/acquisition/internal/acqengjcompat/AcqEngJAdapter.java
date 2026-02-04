@@ -904,7 +904,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                      StagePosition sp = msp.get(i);
                      if (sp != null && sp.is1DStagePosition()) {
                         // here we adjust the Z position of the event
-                        // because at this point in code the event was already generated and event.zPos has already been set using old (un-adjusted)
+                        // because at this point in code the event was already generated
+                        // and event.zPos has already been set using old (un-adjusted)
                         // event's stage coordinate event.sp.get1DPosition()
                         // hence, adjusting coordinate using setStageCoordinate doesn't affect event's zPos
                         event.setZ(event.getZIndex(), event.getZPosition() - event.getStageSingleAxisStagePosition(sp.getStageDeviceLabel()) + sp.get1DPosition());
