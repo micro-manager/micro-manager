@@ -214,6 +214,7 @@ public class DeskewExploreManager {
             sb.useFrames(false)
                     .usePositionList(false)
                     .save(false)
+                    .shouldDisplayImages(false)  // Prevent display windows from appearing
                     .isTestAcquisition(true);
 
             if (!settings.useSlices()) {
@@ -224,8 +225,8 @@ public class DeskewExploreManager {
             SequenceSettings acqSettings = sb.build();
 
             // Run acquisition in blocking mode - this ensures completion
-            // The Deskew processor will also run and create its own windows,
-            // but we get the raw Z-stack in testStore
+            // shouldDisplayImages(false) prevents the normal acquisition display
+            // and any pipeline processors from creating display windows
             Datastore testStore = studio_.acquisitions().runAcquisitionWithSettings(
                     acqSettings, true);  // blocking = true
 
@@ -240,6 +241,10 @@ public class DeskewExploreManager {
 
             if (numImages == 0) {
                studio_.logs().showError("Test acquisition produced no images.");
+               try {
+                  testStore.freeze();
+               } catch (IOException ignored) {
+               }
                testStore.close();
                return;
             }
@@ -252,6 +257,10 @@ public class DeskewExploreManager {
 
             if (projectedImage == null) {
                studio_.logs().showError("Deskew processing failed.");
+               try {
+                  testStore.freeze();
+               } catch (IOException ignored) {
+               }
                testStore.close();
                return;
             }
@@ -281,7 +290,11 @@ public class DeskewExploreManager {
                });
             }
 
-            // Clean up test store
+            // Clean up test store - freeze first to prevent "save" dialogs
+            try {
+               testStore.freeze();
+            } catch (IOException ignored) {
+            }
             testStore.close();
 
             studio_.logs().logMessage("Deskew Explore: tile acquired at row=" + row + ", col=" + col);
