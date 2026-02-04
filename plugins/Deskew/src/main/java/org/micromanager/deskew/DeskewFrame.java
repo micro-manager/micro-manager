@@ -88,6 +88,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String OUTPUT_PATH = "Output path";
    static final String SHOW = "Show";
    static final String SYNC_WITH_MDA = "Sync with MDA";
+   public static final String EXPLORE_MODE = "ExploreMode";
    private final Studio studio_;
    private final DeskewFactory deskewFactory_;
    private final MutablePropertyMapView settings_;
@@ -142,6 +143,16 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    @Override
    public PropertyMap getSettings() {
       return settings_.toPropertyMap();
+   }
+
+   /**
+    * Returns the mutable settings view for direct modification.
+    * Used by DeskewExploreManager to temporarily set explore mode.
+    *
+    * @return The mutable property map view
+    */
+   MutablePropertyMapView getMutableSettings() {
+      return settings_;
    }
 
    private void initComponents() {

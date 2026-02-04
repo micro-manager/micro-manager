@@ -224,11 +224,21 @@ public class DeskewExploreManager {
 
             SequenceSettings acqSettings = sb.build();
 
+            // Set explore mode flag so DeskewFactory creates a pass-through processor
+            // This ensures raw images flow through to the test datastore even when
+            // "Keep Original Image Files" is unchecked
+            frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, true);
+            deskewFactory_.setSettings(frame_.getSettings());
+
             // Run acquisition in blocking mode - this ensures completion
             // shouldDisplayImages(false) prevents the normal acquisition display
             // and any pipeline processors from creating display windows
             Datastore testStore = studio_.acquisitions().runAcquisitionWithSettings(
                     acqSettings, true);  // blocking = true
+
+            // Reset explore mode flag
+            frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, false);
+            deskewFactory_.setSettings(frame_.getSettings());
 
             if (testStore == null) {
                studio_.logs().showError("Test acquisition failed.");
