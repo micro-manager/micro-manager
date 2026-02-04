@@ -311,7 +311,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
             // add a hook to update the Z drive positions based on the position found in the i
             // previous round after autofocussing.
-            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
          }
 
          // Hooks to keep shutter open between channel and/or slices if desired
@@ -363,7 +363,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             currentAcquisition_.addHook(restorePositionHook(msp),
                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
-            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
          // This hook is used to update the time of the next wake up call
          if (sequenceSettings.useFrames()) {
@@ -904,6 +903,11 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   for (int i = 0; i < msp.size(); i++) {
                      StagePosition sp = msp.get(i);
                      if (sp != null && sp.is1DStagePosition()) {
+                        // here we adjust the Z position of the event
+                        // because at this point in code the event was already generated and event.zPos has already been set using old (un-adjusted)
+                        // event's stage coordinate event.sp.get1DPosition()
+                        // hence, adjusting coordinate using setStageCoordinate doesn't affect event's zPos
+                        event.setZ(event.getZIndex(), event.getZPosition() - event.getStageSingleAxisStagePosition(sp.getStageDeviceLabel()) + sp.get1DPosition());
                         event.setStageCoordinate(sp.getStageDeviceLabel(), sp.get1DPosition());
                      }
                   }
