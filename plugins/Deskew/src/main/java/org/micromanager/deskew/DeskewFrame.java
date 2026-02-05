@@ -365,22 +365,22 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
       // Explore Section
       add(new JSeparator(), "span 5, growx, wrap");
-      JPanel explorePanel = new JPanel(new MigLayout("insets 4"));
+      JPanel explorePanel = new JPanel(new MigLayout("insets 4, fillx", "[grow, fill][grow, fill]"));
       explorePanel.setBorder(BorderFactory.createTitledBorder("Explore"));
-      JButton startExploreButton = new JButton("Start");
-      startExploreButton.setToolTipText(
-            "Start explore mode with tiled NDViewer. Click tiles to acquire deskewed projections.");
-      startExploreButton.addActionListener(e -> startExplore());
-      explorePanel.add(startExploreButton);
 
       JButton openExploreButton = new JButton("Open");
       openExploreButton.setToolTipText("Open a previously saved Deskew Explore dataset.");
       openExploreButton.addActionListener(e -> openExplore());
       explorePanel.add(openExploreButton);
 
-      add(new JSeparator(), "span 5, growx, wrap");
+      JButton startExploreButton = new JButton("Start");
+      startExploreButton.setToolTipText(
+            "Start explore mode with tiled NDViewer. Click tiles to acquire deskewed projections.");
+      startExploreButton.addActionListener(e -> startExplore());
+      explorePanel.add(startExploreButton);
 
       add(explorePanel, "span, growx, wrap");
+      add(new JSeparator(), "span 5, growx, wrap");
       JButton processButton = new JButton("Process");
       processButton.addActionListener(e -> new Thread(this::processData).start());
       add(processButton, "split, spanx");
