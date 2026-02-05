@@ -606,4 +606,5 @@ public interface DataManager {
     * @return An implementation of the ImageJConverter interface.
     */
    ImageJConverter getImageJConverter();
+
 }

@@ -20,6 +20,7 @@ import static org.micromanager.data.internal.PropertyKey.FRAMES;
 import static org.micromanager.data.internal.PropertyKey.FRAME_INDEX;
 import static org.micromanager.data.internal.PropertyKey.HEIGHT;
 import static org.micromanager.data.internal.PropertyKey.IMAGE_NUMBER;
+import static org.micromanager.data.internal.PropertyKey.INITIAL_SCOPE_DATA;
 import static org.micromanager.data.internal.PropertyKey.INTENDED_DIMENSIONS;
 import static org.micromanager.data.internal.PropertyKey.INTERVAL_MS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS;
@@ -278,7 +279,8 @@ public abstract class NonPropertyMapJSONFormats {
                KEEP_SHUTTER_OPEN_CHANNELS,
                MDA_SETTINGS,
                PIXEL_TYPE, // Needed due to MultipageTiffReader design
-               USER_DATA)) {
+               USER_DATA,
+               INITIAL_SCOPE_DATA)) {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }
          return builder.build();
@@ -315,7 +317,8 @@ public abstract class NonPropertyMapJSONFormats {
                PIXEL_TYPE, // compat
                WIDTH, // compat
                HEIGHT, // compat
-               USER_DATA)) {
+               USER_DATA,
+               INITIAL_SCOPE_DATA)) {
             try {
                key.storeInGsonObject(pmap, jo);
             } catch (NullPointerException npe) {

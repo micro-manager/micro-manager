@@ -258,4 +258,12 @@ public interface AcquisitionManager {
     *     code).
     */
    boolean isOurAcquisition(Object source);
+
+   /**
+    * Provide access to the ScopeDataUtils object for validating and applying
+    * hardware state from image metadata.
+    *
+    * @return An implementation of the ScopeDataUtils interface.
+    */
+   ScopeDataUtils scopeData();
 }

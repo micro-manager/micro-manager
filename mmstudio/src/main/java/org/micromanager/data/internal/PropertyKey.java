@@ -1600,6 +1600,34 @@ public enum PropertyKey {
       }
    },
 
+   INITIAL_SCOPE_DATA("InitialScopeData", SummaryMetadata.class) {
+      @Override
+      public String getDescription() {
+         return "Device properties at the start of the acquisition";
+      }
+
+      @Override
+      public void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         try {
+            dest.putPropertyMap(key(), PropertyMapJSONSerializer.fromGson(je));
+         } catch (Exception e) {
+            dest.putPropertyMap(key(), MM1JSONSerializer.fromGson(je));
+         }
+      }
+
+      @Override
+      public JsonElement convertToGson(PropertyMap pmap) {
+         if (!pmap.containsKey(key())) {
+            return null;
+         }
+         PropertyMap scopeData = pmap.getPropertyMap(key(), null);
+         if (scopeData == null || scopeData.isEmpty()) {
+            return null;
+         }
+         return PropertyMapJSONSerializer.toGson(scopeData);
+      }
+   },
+
    USER_NAME("UserName", SummaryMetadata.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
