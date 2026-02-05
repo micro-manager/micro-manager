@@ -371,7 +371,12 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       startExploreButton.setToolTipText(
             "Start explore mode with tiled NDViewer. Click tiles to acquire deskewed projections.");
       startExploreButton.addActionListener(e -> startExplore());
-      explorePanel.add(startExploreButton, "spanx, alignx right, pushx");
+      explorePanel.add(startExploreButton);
+
+      JButton openExploreButton = new JButton("Open");
+      openExploreButton.setToolTipText("Open a previously saved Deskew Explore dataset.");
+      openExploreButton.addActionListener(e -> openExplore());
+      explorePanel.add(openExploreButton);
 
       add(new JSeparator(), "span 5, growx, wrap");
 
@@ -556,6 +561,15 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    private void startExplore() {
       exploreManager_.startExplore();
+   }
+
+   private void openExplore() {
+      File result = FileDialogs.openDir(DeskewFrame.this,
+              "Select Deskew Explore Dataset",
+              FileDialogs.MM_DATA_SET);
+      if (result != null) {
+         exploreManager_.openExplore(result.getAbsolutePath());
+      }
    }
 
    @Subscribe

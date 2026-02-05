@@ -4,6 +4,8 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -28,6 +30,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
+import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.main.NDViewer;
@@ -61,6 +64,7 @@ public class DeskewExploreManager {
 
    // State tracking
    private volatile boolean exploring_ = false;
+   private boolean loadedData_ = false;  // True when viewing a loaded dataset
    private String storageDir_;
    private String acqName_;
 
@@ -102,7 +106,8 @@ public class DeskewExploreManager {
          tempDir.delete();
          tempDir.mkdir();
          storageDir_ = tempDir.getAbsolutePath();
-         acqName_ = "DeskewExplore_" + System.currentTimeMillis();
+         acqName_ = "DeskewExplore_" + LocalDateTime.now()
+                 .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 
          // Get camera info for initial setup
          int imageWidth = (int) studio_.core().getImageWidth();
@@ -175,6 +180,116 @@ public class DeskewExploreManager {
    }
 
    /**
+    * Opens an existing NDTiff explore dataset for viewing.
+    * The viewer shows the previously acquired tiles and allows acquiring new ones
+    * (which requires the stage to be at the same position as the original acquisition).
+    *
+    * @param dir Path to the NDTiff dataset directory
+    */
+   public void openExplore(String dir) {
+      if (exploring_) {
+         studio_.logs().showMessage("Explore session already running.");
+         return;
+      }
+
+      try {
+         exploring_ = true;
+         loadedData_ = true;
+
+         // Create executors
+         displayExecutor_ = Executors.newSingleThreadExecutor(r ->
+                 new Thread(r, "Deskew Explore viewer communication"));
+         acquisitionExecutor_ = Executors.newSingleThreadExecutor(r ->
+                 new Thread(r, "Deskew Explore acquisition"));
+
+         // Create data source
+         dataSource_ = new DeskewExploreDataSource(this);
+
+         // Open existing storage read-only
+         storage_ = new NDTiffStorage(dir);
+         storageDir_ = new File(dir).getParent();
+         acqName_ = new File(dir).getName();
+         dataSource_.setStorage(storage_);
+
+         // Read summary metadata from existing storage
+         JSONObject summaryMetadata = storage_.getSummaryMetadata();
+         int imageWidth = summaryMetadata.optInt("Width", 512);
+         int imageHeight = summaryMetadata.optInt("Height", 512);
+         bitDepth_ = summaryMetadata.optInt("BitDepth", 16);
+         pixelSizeUm_ = summaryMetadata.optDouble("PixelSize_um", 1.0);
+         if (pixelSizeUm_ <= 0) {
+            pixelSizeUm_ = 1.0;
+         }
+
+         // Store current stage position for potential new acquisitions
+         initialStageX_ = studio_.core().getXPosition();
+         initialStageY_ = studio_.core().getYPosition();
+
+         // Determine tile dimensions from the first stored image
+         for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+            EssentialImageMetadata meta = storage_.getEssentialImageMetadata(axes);
+            projectedWidth_ = meta.width;
+            projectedHeight_ = meta.height;
+            break;
+         }
+         if (projectedWidth_ > 0 && projectedHeight_ > 0) {
+            dataSource_.setTileDimensions(projectedWidth_, projectedHeight_);
+         } else {
+            dataSource_.setTileDimensions(imageWidth, imageHeight);
+         }
+
+         // Mark existing tiles as acquired
+         for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+            Object rowObj = axes.get("row");
+            Object colObj = axes.get("column");
+            if (rowObj instanceof Number && colObj instanceof Number) {
+               dataSource_.markTileAcquired(
+                       ((Number) rowObj).intValue(),
+                       ((Number) colObj).intValue());
+            }
+         }
+
+         // Create NDViewer
+         viewer_ = new NDViewer(dataSource_, dataSource_, summaryMetadata, pixelSizeUm_, false);
+         viewer_.setWindowTitle("Deskew Explore - " + acqName_);
+
+         // Set up overlayer and mouse listener
+         viewer_.setOverlayerPlugin(dataSource_);
+         viewer_.setCustomCanvasMouseListener(dataSource_);
+
+         // Set metadata functions
+         viewer_.setReadTimeMetadataFunction(tags -> {
+            try {
+               if (tags.has("ElapsedTime-ms")) {
+                  return tags.getLong("ElapsedTime-ms");
+               }
+            } catch (Exception e) {
+               // Ignore
+            }
+            return 0L;
+         });
+         viewer_.setReadZMetadataFunction(tags -> 0.0);
+
+         viewer_.setViewOffset(0, 0);
+
+         // Trigger initial display
+         if (displayExecutor_ != null && viewer_ != null) {
+            displayExecutor_.submit(() -> {
+               HashMap<String, Object> displayAxes = new HashMap<>();
+               viewer_.newImageArrived(displayAxes);
+               viewer_.update();
+            });
+         }
+
+         studio_.logs().logMessage("Deskew Explore: opened dataset from " + dir);
+
+      } catch (Exception e) {
+         studio_.logs().showError(e, "Failed to open Deskew Explore dataset.");
+         stopExplore();
+      }
+   }
+
+   /**
     * Stops the explore session and cleans up resources.
     * Deletes temporary storage by default.
     */
@@ -189,6 +304,7 @@ public class DeskewExploreManager {
     */
    private void stopExplore(boolean deleteTempFiles) {
       exploring_ = false;
+      loadedData_ = false;
 
       if (displayExecutor_ != null) {
          displayExecutor_.shutdown();
@@ -226,9 +342,15 @@ public class DeskewExploreManager {
 
    /**
     * Called when the viewer is closed by the user.
-    * Prompts to save data if any tiles were acquired.
+    * Prompts to save data if any tiles were acquired (only for new sessions, not loaded data).
     */
    public void onViewerClosed() {
+      // If we opened an existing dataset, just close without prompting
+      if (loadedData_) {
+         stopExplore(false);  // Don't delete the user's data
+         return;
+      }
+
       // Check if there's any data to save
       boolean hasData = false;
       try {
