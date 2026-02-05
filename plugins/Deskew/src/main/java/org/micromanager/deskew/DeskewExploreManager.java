@@ -865,4 +865,35 @@ public class DeskewExploreManager {
    public boolean isExploring() {
       return exploring_;
    }
+
+   /**
+    * Moves the stage so that the given pixel position (in the projected/tile coordinate
+    * space) becomes the center of the field of view.
+    * Pixel (0,0) corresponds to the initial stage position.
+    *
+    * @param pixelX X coordinate in full-resolution projected pixel space
+    * @param pixelY Y coordinate in full-resolution projected pixel space
+    */
+   public void moveStageToPixelPosition(double pixelX, double pixelY) {
+      if (!exploring_ || acquisitionExecutor_ == null) {
+         return;
+      }
+
+      acquisitionExecutor_.submit(() -> {
+         try {
+            double targetX = initialStageX_ + pixelX * pixelSizeUm_;
+            double targetY = initialStageY_ + pixelY * pixelSizeUm_;
+
+            studio_.logs().logMessage("Deskew Explore: moving stage to pixel ("
+                    + pixelX + ", " + pixelY + ") -> stage ("
+                    + targetX + ", " + targetY + ")");
+
+            studio_.core().setXYPosition(targetX, targetY);
+            studio_.core().waitForDevice(studio_.core().getXYStageDevice());
+
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Deskew Explore: error moving stage");
+         }
+      });
+   }
 }

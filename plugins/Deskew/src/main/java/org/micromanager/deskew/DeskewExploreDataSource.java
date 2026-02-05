@@ -120,9 +120,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
       for (int row = minRow; row <= maxRow; row++) {
          for (int col = minCol; col <= maxCol; col++) {
-            if (!isTileAcquired(row, col)) {
-               tiles.add(new Point(row, col));
-            }
+            tiles.add(new Point(row, col));
          }
       }
       return tiles;
@@ -286,10 +284,18 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
             }
          }
       } else if (javax.swing.SwingUtilities.isLeftMouseButton(e) && !isLeftDragging_) {
-         // Left-click without drag - acquire selected tiles
-         List<Point> selectedTiles = getSelectedTiles();
-         if (!selectedTiles.isEmpty()) {
-            manager_.acquireMultipleTiles(selectedTiles);
+         if (e.isControlDown()) {
+            // Ctrl+left-click - move stage to clicked position
+            Point2D.Double pixelPos = getFullResPixelCoords(e.getX(), e.getY());
+            if (pixelPos != null) {
+               manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
+            }
+         } else {
+            // Left-click without drag - acquire selected tiles
+            List<Point> selectedTiles = getSelectedTiles();
+            if (!selectedTiles.isEmpty()) {
+               manager_.acquireMultipleTiles(selectedTiles);
+            }
          }
       }
 
@@ -370,6 +376,22 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
    }
 
    /**
+    * Convert display coordinates to full-resolution pixel coordinates.
+    */
+   private Point2D.Double getFullResPixelCoords(int displayX, int displayY) {
+      Point2D.Double viewOffset = manager_.getViewOffset();
+      double mag = manager_.getMagnification();
+
+      if (viewOffset == null || mag <= 0) {
+         return null;
+      }
+
+      double fullResX = viewOffset.x + displayX / mag;
+      double fullResY = viewOffset.y + displayY / mag;
+      return new Point2D.Double(fullResX, fullResY);
+   }
+
+   /**
     * Convert display coordinates to tile row/col indices.
     */
    private Point getTileFromDisplayCoords(int displayX, int displayY) {
@@ -407,6 +429,38 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
          return;
       }
 
+      // Show usage instructions when nothing is selected, not acquiring,
+      // and no tiles have been acquired yet
+      if (selectionStart_ == null && !acquisitionInProgress_ && acquiredTiles_.isEmpty()) {
+         int centerX = (int) (displayImageSize.x / 2);
+         int centerY = (int) (displayImageSize.y / 2);
+
+         TextRoi line1 = new TextRoi(centerX - 120, centerY - 30,
+                 "Right-click: select tile");
+         line1.setStrokeColor(Color.WHITE);
+         overlay.add(line1);
+
+         TextRoi line2 = new TextRoi(centerX - 120, centerY - 10,
+                 "Left-drag: expand selection");
+         line2.setStrokeColor(Color.WHITE);
+         overlay.add(line2);
+
+         TextRoi line3 = new TextRoi(centerX - 120, centerY + 10,
+                 "Left-click: acquire selected tiles");
+         line3.setStrokeColor(Color.WHITE);
+         overlay.add(line3);
+
+         TextRoi line4 = new TextRoi(centerX - 120, centerY + 30,
+                 "Right-drag: pan view");
+         line4.setStrokeColor(Color.WHITE);
+         overlay.add(line4);
+
+         TextRoi line5 = new TextRoi(centerX - 120, centerY + 50,
+                 "Ctrl+left-click: move stage to position");
+         line5.setStrokeColor(Color.WHITE);
+         overlay.add(line5);
+      }
+
       // Draw selection if any
       if (selectionStart_ != null) {
          int startRow = selectionStart_.x;
@@ -419,23 +473,12 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
          int minCol = Math.min(startCol, endCol);
          int maxCol = Math.max(startCol, endCol);
 
-         // Count tiles to acquire
-         int tilesToAcquire = 0;
-         for (int row = minRow; row <= maxRow; row++) {
-            for (int col = minCol; col <= maxCol; col++) {
-               if (!isTileAcquired(row, col)) {
-                  tilesToAcquire++;
-               }
-            }
-         }
+         // Count tiles in selection
+         int tileCount = (maxRow - minRow + 1) * (maxCol - minCol + 1);
 
          // Draw each tile in the selection
          for (int row = minRow; row <= maxRow; row++) {
             for (int col = minCol; col <= maxCol; col++) {
-               if (isTileAcquired(row, col)) {
-                  continue; // Skip already acquired tiles
-               }
-
                // Calculate tile position in full resolution coordinates
                double tilePixelX = col * tileWidth_;
                double tilePixelY = row * tileHeight_;
@@ -467,7 +510,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
          } else if (selectionEnd_ == null) {
             instructions = "Left-drag to extend, left-click to acquire";
          } else {
-            instructions = "Left-click to acquire " + tilesToAcquire + " tile(s)";
+            instructions = "Left-click to acquire " + tileCount + " tile(s)";
          }
          TextRoi textRoi = new TextRoi(textX - 100, textY - 20, instructions);
          textRoi.setStrokeColor(Color.WHITE);
