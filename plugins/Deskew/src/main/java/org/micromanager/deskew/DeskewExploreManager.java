@@ -991,7 +991,11 @@ public class DeskewExploreManager {
    /**
     * Moves the stage so that the given pixel position (in the projected/tile coordinate
     * space) becomes the center of the field of view.
-    * Pixel (0,0) corresponds to the initial stage position.
+    *
+    * The coordinate system is:
+    * - Tile (0,0) has its center at pixel (tileWidth/2, tileHeight/2)
+    * - Tile (0,0) was acquired with stage at (initialStageX_, initialStageY_)
+    * - So pixel (tileWidth/2, tileHeight/2) corresponds to stage (initialStageX_, initialStageY_)
     *
     * @param pixelX X coordinate in full-resolution projected pixel space
     * @param pixelY Y coordinate in full-resolution projected pixel space
@@ -1003,8 +1007,18 @@ public class DeskewExploreManager {
 
       acquisitionExecutor_.submit(() -> {
          try {
-            double targetX = initialStageX_ + pixelX * pixelSizeUm_;
-            double targetY = initialStageY_ + pixelY * pixelSizeUm_;
+            // Get tile dimensions
+            int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
+            int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
+
+            // The center of tile (0,0) is at pixel (tileWidth/2, tileHeight/2)
+            // and corresponds to stage (initialStageX_, initialStageY_)
+            // So we need to offset by half a tile
+            double offsetPixelX = pixelX - tileWidth / 2.0;
+            double offsetPixelY = pixelY - tileHeight / 2.0;
+
+            double targetX = initialStageX_ + offsetPixelX * pixelSizeUm_;
+            double targetY = initialStageY_ + offsetPixelY * pixelSizeUm_;
 
             studio_.logs().logMessage("Deskew Explore: moving stage to pixel ("
                     + pixelX + ", " + pixelY + ") -> stage ("
