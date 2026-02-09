@@ -29,7 +29,6 @@ import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.events.internal.DefaultPixelSizeChangedEvent;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
@@ -53,7 +52,6 @@ public class MMCache {
    private String xyStageLabel_ = "";
    private String zStageLabel_ = "";
 
-   static Studio studio_;
    static CMMCore core_;
    static MainFrame frame_;
 
@@ -66,7 +64,6 @@ public class MMCache {
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMCache(Studio studio, MainFrame frame) {
-      studio_ = studio;
       core_ = studio.core();
       frame_ = frame;
       studio.events().registerForEvents(this);
@@ -186,11 +183,7 @@ public class MMCache {
          height_ = core_.getImageHeight();
          bytesPerPixel_ = core_.getBytesPerPixel();
          imageBitDepth_ = core_.getImageBitDepth();
-         double pixSizeUm = core_.getPixelSizeUm();
-         if (pixSizeUm_ != pixSizeUm) {
-            pixSizeUm_ = pixSizeUm;
-            studio_.events().post(new DefaultPixelSizeChangedEvent(pixSizeUm));
-         }
+         pixSizeUm_ = core_.getPixelSizeUm();
          affineTransform_ = AffineUtils.doubleToAffine(core_.getPixelSizeAffine());
          zPos_ = zPos;
          x_ = x[0];
