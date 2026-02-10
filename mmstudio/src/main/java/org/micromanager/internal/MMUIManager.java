@@ -280,7 +280,7 @@ public class MMUIManager {
          studio_.cache().refreshValues();
          studio_.getAutofocusManager().refresh();
          double pixSizeUmPost = studio_.cache().getPixelSizeUm();
-         if (pixSizeUmPre != pixSizeUmPost) {
+         if (Double.compare(pixSizeUmPre, pixSizeUmPost) != 0) {
             // Firing this event is only needed for devices that do not notify the core
             // of changed properties.  For those devices, the core will already fire the
             // event.  Since we have no way of knowing, better call one extra time.
