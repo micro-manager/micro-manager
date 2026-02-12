@@ -50,12 +50,6 @@
     :constructors {[org.micromanager.Studio] [] [mmcorej.CMMCore] []}
     :state state))
 
-;; test utils
-
-(defn random-error [prob]
-  (when (< (rand) prob)
-    (throw (Exception. "Simulated error"))))
-
 ;; globals
 
 (def ^:dynamic state nil)
@@ -447,10 +441,6 @@
     (assoc m k v)
     m))
 
-(defn show [x]
-  (do (prn x)
-      x))
-
 (defn tag-burst-image [image burst-events camera-channel-names camera-index-tag
                        image-number-offset]
   (swap! state assoc-if-nil :burst-time-offset
@@ -777,19 +767,14 @@
 
 (defn run-acquisition [settings out-queue cleanup? position-list autofocus-device]
     (try
-      (def acq-settings settings) ; for debugging
       (log "Starting MD Acquisition:" settings)
       (when gui
         (.. gui (live) (setLiveMode false))
         (.. gui uiManager frame (enableRoiButtons false)))
       (prepare-state state (when (:use-position-list settings) position-list) autofocus-device)
-      (def last-state state) ; for debugging
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
-        (def acq-sequence acq-seq) ; for debugging
         (execute (mapcat #(make-event-fns % out-queue settings) acq-seq)))
       (catch Throwable t
-             (def acq-error t) ; for debugging
-             ; XXX There ought to be a way to get errors programmatically...
              (future (ReportingUtils/showError t "Acquisition failed.")))
       (finally
         (when cleanup?
@@ -813,7 +798,6 @@
   ([^SequenceSettings settings]
     (convert-settings settings nil))
   ([^SequenceSettings settings ^PositionList position-list]
-  (def seqSettings settings)
   (into (sorted-map)
         (-> settings
             (data-object-to-map)
@@ -974,8 +958,6 @@
      })))
 
 (defn run [this settings cleanup? position-list autofocus-device]
-  (def last-acq this)
-  (def last-state (.state this)) ; for debugging
     (reset! (.state this) {:stop false :pause false :finished false})
     (let [out-queue (LinkedBlockingQueue. 10) ; Q: Why 10?
           acq-thread (Thread. #(binding [state (.state this)]
@@ -987,7 +969,6 @@
                :finished false
                :acq-thread acq-thread
                :summary-metadata (make-summary-metadata settings position-list)})
-      (def outq out-queue) ; for debugging
       (when-not (:stop @(.state this))
         (.start acq-thread)
         out-queue)))
@@ -1063,23 +1044,3 @@
 
 (defn -clearRunnables [this]
   (reset! attached-runnables (vec nil)))
-
-;; testing
-
-(defn stop []
-  (when-let [acq-thread (:acq-thread (.state last-acq))]
-    (.stop acq-thread)))
-
-(defn drain-queue [blocking-queue]
-  (future (loop [i 0]
-            (let [obj (.take blocking-queue)]
-              (when (zero? (mod i 100))
-                (println i (core getRemainingImageCount)))
-              (when (not= obj blocking-queue)
-                (recur (inc i)))))))
-
-(defn null-queue []
-  (doto (LinkedBlockingQueue.)
-    drain-queue))
-
-
