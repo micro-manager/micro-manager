@@ -139,6 +139,8 @@
         <junit fork="true" haltonfailure="true" printsummary="true"
             maxmemory="256m" failureproperty="mm.build.test.failed">
 			<sysproperty key="java.awt.headless" value="true"/>
+			<sysproperty key="mmcorej.library.path"
+				value="${mm.build.java.library.path}"/>
 			<classpath refid="project.test.classpath"/>
 			<formatter type="plain"/>
 			<!-- If test.class is set, run one test. Otherwise, run all -->
