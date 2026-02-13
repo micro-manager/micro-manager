@@ -128,7 +128,7 @@ public class SequenceGeneratorTest {
    @Test
    public void testMakeMainLoopsSingleEvent() {
       AcqSettings s = makeSettings(1, 0, 0, 0, false, false);
-      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s);
+      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s).toList();
       assertEquals(1, events.size());
       assertEquals(0, events.get(0).frameIndex);
    }
@@ -136,7 +136,7 @@ public class SequenceGeneratorTest {
    @Test
    public void testMakeMainLoopsFramesOnly() {
       AcqSettings s = makeSettings(3, 0, 0, 0, false, false);
-      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s);
+      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s).toList();
       assertEquals(3, events.size());
       for (int i = 0; i < 3; i++) {
          assertEquals(i, events.get(i).frameIndex);
@@ -148,7 +148,7 @@ public class SequenceGeneratorTest {
       // slices-first=true: inner order is [slice, channel]
       // 2 slices, 2 channels, 1 frame, 1 position
       AcqSettings s = makeSettings(1, 2, 2, 0, true, false);
-      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s);
+      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s).toList();
       assertEquals(4, events.size());
       // slices-first: slice varies fastest
       assertEquals(0, events.get(0).sliceIndex);
@@ -165,7 +165,7 @@ public class SequenceGeneratorTest {
    public void testMakeMainLoopsChannelsFirst() {
       // slices-first=false: inner order is [channel, slice]
       AcqSettings s = makeSettings(1, 2, 2, 0, false, false);
-      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s);
+      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s).toList();
       assertEquals(4, events.size());
       // channels-first: channel varies fastest
       assertEquals(0, events.get(0).channelIndex);
@@ -182,7 +182,7 @@ public class SequenceGeneratorTest {
    public void testMakeMainLoopsTimeFirst() {
       // time-first=true: outer order is [frame, position]
       AcqSettings s = makeSettings(2, 0, 0, 2, false, true);
-      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s);
+      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s).toList();
       assertEquals(4, events.size());
       // frame varies before position
       assertEquals(0, events.get(0).frameIndex);
@@ -199,7 +199,7 @@ public class SequenceGeneratorTest {
    public void testMakeMainLoopsPositionFirst() {
       // time-first=false: outer order is [position, frame]
       AcqSettings s = makeSettings(2, 0, 0, 2, false, false);
-      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s);
+      List<AcqEvent> events = SequenceGenerator.makeMainLoops(s).toList();
       assertEquals(4, events.size());
       // position varies before frame
       assertEquals(0, events.get(0).positionIndex);
@@ -244,9 +244,9 @@ public class SequenceGeneratorTest {
    @Test
    public void testProcessSkipZStackEmptySlices() {
       AcqEvent e = new AcqEvent();
-      List<AcqEvent> events = Collections.singletonList(e);
+      Seq<AcqEvent> events = Seq.cons(e, Seq.empty());
       List<AcqEvent> result = SequenceGenerator.processSkipZStack(
-            events, Collections.emptyList());
+            events, Collections.emptyList()).toList();
       assertEquals(1, result.size());
    }
 
@@ -265,10 +265,10 @@ public class SequenceGeneratorTest {
       AcqEvent e3 = new AcqEvent();
       e3.slice = 1.0;
       e3.channel = noZ;
-      List<AcqEvent> events = Arrays.asList(e1, e2, e3);
+      Seq<AcqEvent> events = Seq.fromList(Arrays.asList(e1, e2, e3));
       List<AcqEvent> result = SequenceGenerator.processSkipZStack(
-            events, slices);
-      // Middle slice is 0.0 (index 1), noZ channel → only middle kept
+            events, slices).toList();
+      // Middle slice is 0.0 (index 1), noZ channel -> only middle kept
       assertEquals(1, result.size());
       assertEquals(Double.valueOf(0.0), result.get(0).slice);
    }
@@ -288,9 +288,9 @@ public class SequenceGeneratorTest {
       AcqEvent e3 = new AcqEvent();
       e3.slice = 1.0;
       e3.channel = yesZ;
-      List<AcqEvent> events = Arrays.asList(e1, e2, e3);
+      Seq<AcqEvent> events = Seq.fromList(Arrays.asList(e1, e2, e3));
       List<AcqEvent> result = SequenceGenerator.processSkipZStack(
-            events, slices);
+            events, slices).toList();
       assertEquals(3, result.size());
    }
 
@@ -309,7 +309,8 @@ public class SequenceGeneratorTest {
          events.add(e);
       }
       List<AcqEvent> result =
-            SequenceGenerator.processChannelSkipFrames(events);
+            SequenceGenerator.processChannelSkipFrames(
+                  Seq.fromList(events)).toList();
       // skipFrames=2: keep frame 0, 3 (every 3rd frame)
       assertEquals(2, result.size());
       assertEquals(0, result.get(0).frameIndex);
@@ -329,7 +330,8 @@ public class SequenceGeneratorTest {
          events.add(e);
       }
       List<AcqEvent> result =
-            SequenceGenerator.processChannelSkipFrames(events);
+            SequenceGenerator.processChannelSkipFrames(
+                  Seq.fromList(events)).toList();
       assertEquals(3, result.size());
    }
 
@@ -338,17 +340,17 @@ public class SequenceGeneratorTest {
    @Test
    public void testProcessUseAutofocusOff() {
       AcqEvent e = new AcqEvent();
-      List<AcqEvent> events = Collections.singletonList(e);
-      SequenceGenerator.processUseAutofocus(events, false, 0);
-      assertFalse(e.autofocus);
+      List<AcqEvent> result = SequenceGenerator.processUseAutofocus(
+            Seq.cons(e, Seq.empty()), false, 0).toList();
+      assertFalse(result.get(0).autofocus);
    }
 
    @Test
    public void testProcessUseAutofocusFirstEvent() {
       AcqEvent e = new AcqEvent();
-      List<AcqEvent> events = Collections.singletonList(e);
-      SequenceGenerator.processUseAutofocus(events, true, 0);
-      assertTrue(e.autofocus);
+      List<AcqEvent> result = SequenceGenerator.processUseAutofocus(
+            Seq.cons(e, Seq.empty()), true, 0).toList();
+      assertTrue(result.get(0).autofocus);
    }
 
    @Test
@@ -359,11 +361,13 @@ public class SequenceGeneratorTest {
          e.frameIndex = f;
          events.add(e);
       }
-      SequenceGenerator.processUseAutofocus(events, true, 1);
-      assertTrue(events.get(0).autofocus);
-      assertFalse("Skip=1: skip frame 1", events.get(1).autofocus);
-      assertTrue("Skip=1: autofocus at frame 2", events.get(2).autofocus);
-      assertFalse("Skip=1: skip frame 3", events.get(3).autofocus);
+      List<AcqEvent> result = SequenceGenerator.processUseAutofocus(
+            Seq.fromList(events), true, 1).toList();
+      assertTrue(result.get(0).autofocus);
+      assertFalse("Skip=1: skip frame 1", result.get(1).autofocus);
+      assertTrue("Skip=1: autofocus at frame 2",
+            result.get(2).autofocus);
+      assertFalse("Skip=1: skip frame 3", result.get(3).autofocus);
    }
 
    // --- processNewPosition tests ---
@@ -379,11 +383,12 @@ public class SequenceGeneratorTest {
             events.add(e);
          }
       }
-      SequenceGenerator.processNewPosition(events);
-      assertTrue(events.get(0).newPosition);
-      assertFalse(events.get(1).newPosition);
-      assertTrue(events.get(2).newPosition);
-      assertFalse(events.get(3).newPosition);
+      List<AcqEvent> result = SequenceGenerator.processNewPosition(
+            Seq.fromList(events)).toList();
+      assertTrue(result.get(0).newPosition);
+      assertFalse(result.get(1).newPosition);
+      assertTrue(result.get(2).newPosition);
+      assertFalse(result.get(3).newPosition);
    }
 
    // --- processWaitTime tests ---
@@ -396,10 +401,11 @@ public class SequenceGeneratorTest {
          e.frameIndex = f;
          events.add(e);
       }
-      SequenceGenerator.processWaitTime(events, null, 1000.0);
-      assertEquals(0.0, events.get(0).waitTimeMs, 0.0);
-      assertEquals(1000.0, events.get(1).waitTimeMs, 0.0);
-      assertEquals(1000.0, events.get(2).waitTimeMs, 0.0);
+      List<AcqEvent> result = SequenceGenerator.processWaitTime(
+            Seq.fromList(events), null, 1000.0).toList();
+      assertEquals(0.0, result.get(0).waitTimeMs, 0.0);
+      assertEquals(1000.0, result.get(1).waitTimeMs, 0.0);
+      assertEquals(1000.0, result.get(2).waitTimeMs, 0.0);
    }
 
    @Test
@@ -411,15 +417,16 @@ public class SequenceGeneratorTest {
          events.add(e);
       }
       List<Double> custom = Arrays.asList(100.0, 200.0, 300.0);
-      SequenceGenerator.processWaitTime(events, custom, 0);
-      assertEquals(100.0, events.get(0).waitTimeMs, 0.0);
-      assertEquals(200.0, events.get(1).waitTimeMs, 0.0);
-      assertEquals(300.0, events.get(2).waitTimeMs, 0.0);
+      List<AcqEvent> result = SequenceGenerator.processWaitTime(
+            Seq.fromList(events), custom, 0).toList();
+      assertEquals(100.0, result.get(0).waitTimeMs, 0.0);
+      assertEquals(200.0, result.get(1).waitTimeMs, 0.0);
+      assertEquals(300.0, result.get(2).waitTimeMs, 0.0);
    }
 
    @Test
    public void testProcessWaitTimeNoChangeNoWait() {
-      // Same frame → no wait time set
+      // Same frame -> no wait time set
       AcqChannel ch1 = new AcqChannel();
       ch1.name = "Ch1";
       ch1.properties = Collections.emptyMap();
@@ -432,10 +439,10 @@ public class SequenceGeneratorTest {
       AcqEvent e2 = new AcqEvent();
       e2.frameIndex = 0;
       e2.channel = ch2;
-      List<AcqEvent> events = Arrays.asList(e1, e2);
-      SequenceGenerator.processWaitTime(events, null, 1000.0);
-      assertEquals(0.0, e1.waitTimeMs, 0.0);
-      assertNull("Same frame → no wait time", e2.waitTimeMs);
+      List<AcqEvent> result = SequenceGenerator.processWaitTime(
+            Seq.fromList(Arrays.asList(e1, e2)), null, 1000.0).toList();
+      assertEquals(0.0, result.get(0).waitTimeMs, 0.0);
+      assertNull("Same frame -> no wait time", result.get(1).waitTimeMs);
    }
 
    // --- attachRunnables tests ---
@@ -452,8 +459,9 @@ public class SequenceGeneratorTest {
       List<SequenceGenerator.AttachedRunnable> runnables =
             Collections.singletonList(
                   new SequenceGenerator.AttachedRunnable(-1, -1, -1, -1, r));
-      SequenceGenerator.attachRunnables(events, runnables);
-      for (AcqEvent e : events) {
+      List<AcqEvent> result = SequenceGenerator.attachRunnables(
+            Seq.fromList(events), runnables).toList();
+      for (AcqEvent e : result) {
          assertNotNull(e.runnables);
          assertEquals(1, e.runnables.size());
       }
@@ -471,10 +479,11 @@ public class SequenceGeneratorTest {
       List<SequenceGenerator.AttachedRunnable> runnables =
             Collections.singletonList(
                   new SequenceGenerator.AttachedRunnable(1, -1, -1, -1, r));
-      SequenceGenerator.attachRunnables(events, runnables);
-      assertNull(events.get(0).runnables);
-      assertEquals(1, events.get(1).runnables.size());
-      assertNull(events.get(2).runnables);
+      List<AcqEvent> result = SequenceGenerator.attachRunnables(
+            Seq.fromList(events), runnables).toList();
+      assertNull(result.get(0).runnables);
+      assertEquals(1, result.get(1).runnables.size());
+      assertNull(result.get(2).runnables);
    }
 
    // --- addNextTaskTags tests ---
@@ -488,10 +497,11 @@ public class SequenceGeneratorTest {
          e.task = "snap";
          events.add(e);
       }
-      SequenceGenerator.addNextTaskTags(events);
-      assertEquals(Integer.valueOf(1), events.get(0).nextFrameIndex);
-      assertEquals(Integer.valueOf(2), events.get(1).nextFrameIndex);
-      assertNull(events.get(2).nextFrameIndex);
+      List<AcqEvent> result = SequenceGenerator.addNextTaskTags(
+            Seq.fromList(events)).toList();
+      assertEquals(Integer.valueOf(1), result.get(0).nextFrameIndex);
+      assertEquals(Integer.valueOf(2), result.get(1).nextFrameIndex);
+      assertNull(result.get(2).nextFrameIndex);
    }
 
    // --- burstValid tests ---
@@ -607,7 +617,7 @@ public class SequenceGeneratorTest {
       s.keepShutterOpenChannels = false;
       List<AcqEvent> events =
             SequenceGenerator.generateDefaultAcqSequence(
-                  s, null, noBurst);
+                  s, null, noBurst).toList();
       assertNotNull(events);
       assertFalse(events.isEmpty());
       // With no bursting, all events should be snaps

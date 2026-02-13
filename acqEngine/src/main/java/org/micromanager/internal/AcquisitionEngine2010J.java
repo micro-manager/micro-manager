@@ -1238,7 +1238,7 @@ public class AcquisitionEngine2010J implements IAcquisitionEngine2010 {
          prepareState(settings.usePositionList ? positionList : null,
                autofocusDevice);
          CoreOps coreOps = CoreOps.fromCMMCore(mmc);
-         List<AcqEvent> acqSeq = SequenceGenerator.generateAcqSequence(
+         Iterable<AcqEvent> acqSeq = SequenceGenerator.generateAcqSequence(
                settings, attachedRunnables, coreOps);
          List<Runnable> allFns = new ArrayList<>();
          for (AcqEvent event : acqSeq) {
