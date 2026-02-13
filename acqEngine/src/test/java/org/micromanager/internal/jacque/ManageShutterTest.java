@@ -47,8 +47,9 @@ public class ManageShutterTest {
       AcqChannel ch = makeChannel("DAPI");
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch));
-      SequenceGenerator.manageShutter(events, false, false);
-      assertTrue(events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), false, false).toList();
+      assertTrue(result.get(0).closeShutter);
    }
 
    @Test
@@ -57,11 +58,12 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch));
       events.add(event(0, 1, 0, ch));
-      SequenceGenerator.manageShutter(events, true, true);
-      assertFalse("Same frame, keepOpenSlices=true → don't close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, true).toList();
+      assertFalse("Same frame, keepOpenSlices=true -> don't close",
+            result.get(0).closeShutter);
       assertTrue("Last event always closes",
-            events.get(1).closeShutter);
+            result.get(1).closeShutter);
    }
 
    @Test
@@ -71,9 +73,10 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch1));
       events.add(event(0, 0, 0, ch2));
-      SequenceGenerator.manageShutter(events, false, true);
-      assertTrue("Different channel, keepOpenChannels=false → close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), false, true).toList();
+      assertTrue("Different channel, keepOpenChannels=false -> close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -83,9 +86,10 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch1));
       events.add(event(0, 0, 0, ch2));
-      SequenceGenerator.manageShutter(events, true, true);
-      assertFalse("Different channel, keepOpenChannels=true → don't close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, true).toList();
+      assertFalse("Different channel, keepOpenChannels=true -> don't close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -94,9 +98,10 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch));
       events.add(event(0, 1, 0, ch));
-      SequenceGenerator.manageShutter(events, true, false);
-      assertTrue("Different slice, keepOpenSlices=false → close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, false).toList();
+      assertTrue("Different slice, keepOpenSlices=false -> close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -105,9 +110,10 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch));
       events.add(event(0, 1, 0, ch));
-      SequenceGenerator.manageShutter(events, true, true);
-      assertFalse("Different slice, keepOpenSlices=true → don't close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, true).toList();
+      assertFalse("Different slice, keepOpenSlices=true -> don't close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -116,9 +122,10 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch));
       events.add(event(1, 0, 0, ch));
-      SequenceGenerator.manageShutter(events, false, false);
-      assertTrue("Different frame → close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), false, false).toList();
+      assertTrue("Different frame -> close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -132,9 +139,10 @@ public class ManageShutterTest {
       AcqEvent e2 = event(1, 0, 0, ch1);
       e2.waitTimeMs = 0.0;
       events.add(e2);
-      SequenceGenerator.manageShutter(events, true, false);
-      assertFalse("Rapid channel cycling special case → don't close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, false).toList();
+      assertFalse("Rapid channel cycling special case -> don't close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -146,9 +154,10 @@ public class ManageShutterTest {
       AcqEvent e2 = event(1, 0, 0, ch1);
       e2.waitTimeMs = 5000.0;
       events.add(e2);
-      SequenceGenerator.manageShutter(events, true, false);
-      assertTrue("Wait time > 0 breaks rapid cycle → close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, false).toList();
+      assertTrue("Wait time > 0 breaks rapid cycle -> close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -160,9 +169,10 @@ public class ManageShutterTest {
       AcqEvent e2 = event(1, 0, 1, ch1);
       e2.waitTimeMs = 0.0;
       events.add(e2);
-      SequenceGenerator.manageShutter(events, true, false);
-      assertTrue("Different position breaks rapid cycle → close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, false).toList();
+      assertTrue("Different position breaks rapid cycle -> close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -171,9 +181,10 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch));
       events.add(event(0, 0, 1, ch));
-      SequenceGenerator.manageShutter(events, true, true);
-      assertTrue("Different position → close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, true).toList();
+      assertTrue("Different position -> close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -184,9 +195,10 @@ public class ManageShutterTest {
       AcqEvent e2 = event(0, 0, 0, ch);
       e2.autofocus = true;
       events.add(e2);
-      SequenceGenerator.manageShutter(events, true, true);
-      assertTrue("Autofocus on next event → close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, true).toList();
+      assertTrue("Autofocus on next event -> close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -196,9 +208,10 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch1));
       events.add(event(0, 0, 0, ch2));
-      SequenceGenerator.manageShutter(events, true, true);
-      assertTrue("Different Core-Shutter property → close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, true).toList();
+      assertTrue("Different Core-Shutter property -> close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -208,9 +221,10 @@ public class ManageShutterTest {
       List<AcqEvent> events = new ArrayList<>();
       events.add(event(0, 0, 0, ch1));
       events.add(event(0, 0, 0, ch2));
-      SequenceGenerator.manageShutter(events, true, true);
-      assertFalse("Same Core-Shutter, keepOpen=true → don't close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, true).toList();
+      assertFalse("Same Core-Shutter, keepOpen=true -> don't close",
+            result.get(0).closeShutter);
    }
 
    @Test
@@ -222,8 +236,9 @@ public class ManageShutterTest {
       AcqEvent e2 = event(1, 0, 0, ch1);
       e2.waitTimeMs = null;
       events.add(e2);
-      SequenceGenerator.manageShutter(events, true, false);
-      assertFalse("Null wait time counts as rapid cycle → don't close",
-            events.get(0).closeShutter);
+      List<AcqEvent> result = SequenceGenerator.manageShutter(
+            Seq.fromList(events), true, false).toList();
+      assertFalse("Null wait time counts as rapid cycle -> don't close",
+            result.get(0).closeShutter);
    }
 }

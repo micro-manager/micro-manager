@@ -184,8 +184,7 @@ public final class SequenceGenerator {
       }
    }
 
-   static List<AcqEvent> makeMainLoops(AcqSettings settings) {
-      // Build dimension order matching Clojure make-dimensions
+   static Seq<AcqEvent> makeMainLoops(AcqSettings settings) {
       DimKind[] innerPair;
       if (settings.slicesFirst) {
          innerPair = new DimKind[] { DimKind.SLICE, DimKind.CHANNEL };
@@ -202,26 +201,24 @@ public final class SequenceGenerator {
          innerPair[0], innerPair[1], outerPair[0], outerPair[1]
       };
 
-      List<AcqEvent> events = new ArrayList<>();
-      events.add(new AcqEvent());
+      Seq<AcqEvent> events = Seq.cons(new AcqEvent(), Seq.empty());
 
       for (DimKind kind : order) {
          List<?> values = dimValues(settings, kind);
          if (values != null && !values.isEmpty()) {
-            List<AcqEvent> next = new ArrayList<>(
-                  events.size() * values.size());
-            for (int i = 0; i < values.size(); i++) {
-               for (AcqEvent event : events) {
-                  AcqEvent e = event.copy();
-                  setDimFields(e, kind, i, values);
-                  next.add(e);
-               }
-            }
-            events = next;
+            final Seq<AcqEvent> prev = events;
+            events = Seq.range(values.size()).flatMap(i ->
+                  prev.map(event -> {
+                     AcqEvent e = event.copy();
+                     setDimFields(e, kind, i, values);
+                     return e;
+                  })
+            );
          } else {
-            for (AcqEvent event : events) {
+            events = events.map(event -> {
                setDimFields(event, kind, 0, null);
-            }
+               return event;
+            });
          }
       }
       return events;
@@ -246,42 +243,28 @@ public final class SequenceGenerator {
       event.relativeZ = settings.relativeSlices;
    }
 
-   static List<AcqEvent> processSkipZStack(List<AcqEvent> events,
+   static Seq<AcqEvent> processSkipZStack(Seq<AcqEvent> events,
          List<Double> slices) {
       if (slices == null || slices.isEmpty()) {
          return events;
       }
       Double middleSlice = slices.get(slices.size() / 2);
-      List<AcqEvent> result = new ArrayList<>();
-      for (AcqEvent e : events) {
-         if (Objects.equals(middleSlice, e.slice)
-               || e.channel == null
-               || e.channel.useZStack) {
-            result.add(e);
-         }
-      }
-      return result;
+      return events.filter(e ->
+            Objects.equals(middleSlice, e.slice)
+                  || e.channel == null
+                  || e.channel.useZStack);
    }
 
-   static List<AcqEvent> processChannelSkipFrames(List<AcqEvent> events) {
-      List<AcqEvent> result = new ArrayList<>();
-      for (AcqEvent e : events) {
-         if (e.channel == null
-               || e.channel.skipFrames == 0
-               || (e.frameIndex % (e.channel.skipFrames + 1)) == 0) {
-            result.add(e);
-         }
-      }
-      return result;
+   static Seq<AcqEvent> processChannelSkipFrames(Seq<AcqEvent> events) {
+      return events.filter(e ->
+            e.channel == null
+                  || e.channel.skipFrames == 0
+                  || (e.frameIndex % (e.channel.skipFrames + 1)) == 0);
    }
 
-   static List<AcqEvent> processUseAutofocus(List<AcqEvent> events,
+   static Seq<AcqEvent> processUseAutofocus(Seq<AcqEvent> events,
          boolean useAutofocus, int autofocusSkip) {
-      if (events.isEmpty()) {
-         return events;
-      }
-      AcqEvent prev = null;
-      for (AcqEvent curr : events) {
+      return events.mapWithPrev((prev, curr) -> {
          if (!useAutofocus) {
             curr.autofocus = false;
          } else if (prev == null) {
@@ -292,69 +275,58 @@ public final class SequenceGenerator {
                   && (prev.positionIndex != curr.positionIndex
                         || prev.frameIndex != curr.frameIndex);
          }
-         prev = curr;
-      }
-      return events;
+         return curr;
+      });
    }
 
-   static List<AcqEvent> processNewPosition(List<AcqEvent> events) {
-      if (events.isEmpty()) {
-         return events;
-      }
-      AcqEvent prev = null;
-      for (AcqEvent curr : events) {
+   static Seq<AcqEvent> processNewPosition(Seq<AcqEvent> events) {
+      return events.mapWithPrev((prev, curr) -> {
          curr.newPosition = (prev == null
                || prev.positionIndex != curr.positionIndex);
-         prev = curr;
-      }
-      return events;
+         return curr;
+      });
    }
 
-   static List<AcqEvent> processWaitTime(List<AcqEvent> events,
+   static Seq<AcqEvent> processWaitTime(Seq<AcqEvent> events,
          List<Double> customIntervalsMs, double intervalMs) {
-      if (events.isEmpty()) {
-         return events;
-      }
       boolean useCustom = customIntervalsMs != null
             && !customIntervalsMs.isEmpty()
             && customIntervalsMs.get(0) != null;
-      events.get(0).waitTimeMs = useCustom
-            ? customIntervalsMs.get(0) : 0.0;
-      for (int i = 1; i < events.size(); i++) {
-         AcqEvent prev = events.get(i - 1);
-         AcqEvent curr = events.get(i);
-         if (prev.frameIndex != curr.frameIndex) {
+      return events.mapWithPrev((prev, curr) -> {
+         if (prev == null) {
+            curr.waitTimeMs = useCustom
+                  ? customIntervalsMs.get(0) : 0.0;
+         } else if (prev.frameIndex != curr.frameIndex) {
             curr.waitTimeMs = useCustom
                   ? customIntervalsMs.get(curr.frameIndex)
                   : intervalMs;
          }
-      }
-      return events;
+         return curr;
+      });
    }
 
-   static List<AcqEvent> attachRunnables(List<AcqEvent> events,
+   static Seq<AcqEvent> attachRunnables(Seq<AcqEvent> events,
          List<AttachedRunnable> runnables) {
       if (runnables == null || runnables.isEmpty()) {
          return events;
       }
       for (AttachedRunnable ar : runnables) {
-         for (AcqEvent event : events) {
+         events = events.map(event -> {
             if (ar.matches(event)) {
                if (event.runnables == null) {
                   event.runnables = new ArrayList<>();
                }
                event.runnables.add(ar.runnable);
             }
-         }
+            return event;
+         });
       }
       return events;
    }
 
-   static List<AcqEvent> manageShutter(List<AcqEvent> events,
+   static Seq<AcqEvent> manageShutter(Seq<AcqEvent> events,
          boolean keepShutterOpenChannels, boolean keepShutterOpenSlices) {
-      for (int i = 0; i < events.size(); i++) {
-         AcqEvent e1 = events.get(i);
-         AcqEvent e2 = (i + 1 < events.size()) ? events.get(i + 1) : null;
+      return events.mapWithNext((e1, e2) -> {
          if (e2 == null) {
             e1.closeShutter = true;
          } else {
@@ -379,8 +351,8 @@ public final class SequenceGenerator {
                   || e2.autofocus
                   || diffCoreShutter;
          }
-      }
-      return events;
+         return e1;
+      });
    }
 
    private static String getCoreShutterProp(AcqEvent e) {
@@ -502,50 +474,48 @@ public final class SequenceGenerator {
       return ts;
    }
 
-   static List<AcqEvent> makeBursts(List<AcqEvent> events, CoreOps core) {
-      List<AcqEvent> result = new ArrayList<>();
-      int i = 0;
-      while (i < events.size()) {
-         int burstEnd = i + 1;
-         while (burstEnd < events.size()) {
-            AcqEvent eLast = events.get(burstEnd - 1);
-            AcqEvent eNext = events.get(burstEnd);
+   static Seq<AcqEvent> makeBursts(Seq<AcqEvent> events, CoreOps core) {
+      return Seq.lazy(() -> {
+         if (events.isEmpty()) {
+            return Seq.empty();
+         }
+         List<AcqEvent> burst = new ArrayList<>();
+         burst.add(events.first());
+         Seq<AcqEvent> remaining = events.rest();
+
+         while (!remaining.isEmpty()) {
+            AcqEvent eLast = burst.get(burst.size() - 1);
+            AcqEvent eNext = remaining.first();
             if (!burstValid(eLast, eNext)) {
                break;
             }
-            List<AcqEvent> burst = events.subList(i, burstEnd);
             if (!eventTriggerable(burst, eNext, core)) {
                break;
             }
-            burstEnd++;
+            burst.add(eNext);
+            remaining = remaining.rest();
          }
 
-         int burstLen = burstEnd - i;
-         AcqEvent burstEvent = events.get(i);
-         if (burstLen > 1) {
+         AcqEvent burstEvent = burst.get(0);
+         if (burst.size() > 1) {
             burstEvent.task = "burst";
-            burstEvent.burstData =
-                  new ArrayList<>(events.subList(i, burstEnd));
-            burstEvent.burstLength = burstLen;
-            burstEvent.triggerSequence =
-                  makeTriggers(events.subList(i, burstEnd), core);
+            burstEvent.burstData = burst;
+            burstEvent.burstLength = burst.size();
+            burstEvent.triggerSequence = makeTriggers(burst, core);
          } else {
             burstEvent.task = "snap";
          }
-         result.add(burstEvent);
-         i = burstEnd;
-      }
-      return result;
+         Seq<AcqEvent> tail = remaining;
+         return Seq.cons(burstEvent, () -> makeBursts(tail, core));
+      });
    }
 
-   static List<AcqEvent> addNextTaskTags(List<AcqEvent> events) {
-      for (int i = 0; i < events.size(); i++) {
-         AcqEvent next = (i + 1 < events.size())
-               ? events.get(i + 1) : null;
-         events.get(i).nextFrameIndex = (next != null)
+   static Seq<AcqEvent> addNextTaskTags(Seq<AcqEvent> events) {
+      return events.mapWithNext((curr, next) -> {
+         curr.nextFrameIndex = (next != null)
                ? next.frameIndex : null;
-      }
-      return events;
+         return curr;
+      });
    }
 
    // --- Metadata ---
@@ -566,12 +536,13 @@ public final class SequenceGenerator {
 
    // --- Top-level generators ---
 
-   static List<AcqEvent> generateDefaultAcqSequence(AcqSettings settings,
+   static Seq<AcqEvent> generateDefaultAcqSequence(AcqSettings settings,
          List<AttachedRunnable> runnables, CoreOps core) {
-      List<AcqEvent> events = makeMainLoops(settings);
-      for (AcqEvent e : events) {
+      Seq<AcqEvent> events = makeMainLoops(settings);
+      events = events.map(e -> {
          buildEvent(settings, e);
-      }
+         return e;
+      });
       events = processSkipZStack(events, settings.slices);
       events = processChannelSkipFrames(events);
       events = processUseAutofocus(events,
@@ -594,7 +565,7 @@ public final class SequenceGenerator {
       return events;
    }
 
-   static List<AcqEvent> generateSimpleBurstSequence(
+   static Seq<AcqEvent> generateSimpleBurstSequence(
          int numFrames, boolean useAutofocus,
          List<AcqChannel> channels, List<Double> slices,
          double defaultExposure,
@@ -602,45 +573,42 @@ public final class SequenceGenerator {
          boolean relativeSlices, CoreOps core) {
       int nChannels = Math.max(1, channels.size());
       int nSlices = Math.max(1, slices.size());
-      numFrames = Math.max(1, numFrames);
+      int nF = Math.max(1, numFrames);
       double exposure = !channels.isEmpty()
             ? channels.get(0).exposure : defaultExposure;
 
-      List<AcqEvent> rawEvents = new ArrayList<>(
-            numFrames * nSlices * nChannels);
-      for (int f = 0; f < numFrames; f++) {
-         for (int s = 0; s < nSlices; s++) {
-            for (int c = 0; c < nChannels; c++) {
-               AcqEvent e = new AcqEvent();
-               e.nextFrameIndex = f + 1;
-               e.waitTimeMs = 0.0;
-               e.exposure = exposure;
-               e.positionIndex = positionIndex;
-               e.position = positionIndex;
-               e.autofocus = (f == 0 && c == 0) && useAutofocus;
-               e.channelIndex = c;
-               e.channel = c < channels.size()
-                     ? channels.get(c) : null;
-               e.sliceIndex = s;
-               e.slice = s < slices.size() ? slices.get(s) : null;
-               e.frameIndex = f;
-               e.metadata = makeChannelMetadata(
-                     c < channels.size() ? channels.get(c) : null);
-               rawEvents.add(e);
-            }
-         }
-      }
+      Seq<AcqEvent> rawEvents = Seq.range(nF).flatMap(f ->
+            Seq.range(nSlices).flatMap(s ->
+                  Seq.range(nChannels).map(c -> {
+                     AcqEvent e = new AcqEvent();
+                     e.nextFrameIndex = f + 1;
+                     e.waitTimeMs = 0.0;
+                     e.exposure = exposure;
+                     e.positionIndex = positionIndex;
+                     e.position = positionIndex;
+                     e.autofocus = (f == 0 && c == 0) && useAutofocus;
+                     e.channelIndex = c;
+                     e.channel = c < channels.size()
+                           ? channels.get(c) : null;
+                     e.sliceIndex = s;
+                     e.slice = s < slices.size() ? slices.get(s) : null;
+                     e.frameIndex = f;
+                     e.metadata = makeChannelMetadata(
+                           c < channels.size() ? channels.get(c) : null);
+                     return e;
+                  })
+            )
+      );
 
-      // Partition by frame-index if multiple slices, else single group
-      List<List<AcqEvent>> partitions;
+      Seq<List<AcqEvent>> partitions;
       if (nSlices > 1) {
-         partitions = partitionByFrameIndex(rawEvents);
+         partitions = rawEvents.partitionBy(e -> e.frameIndex);
       } else {
-         partitions = Collections.singletonList(rawEvents);
+         partitions = Seq.lazy(() ->
+               Seq.cons(rawEvents.toList(), Seq.empty()));
       }
 
-      List<AcqEvent> result = new ArrayList<>(partitions.size());
-      for (List<AcqEvent> partition : partitions) {
+      return partitions.map(partition -> {
          AcqEvent burstEvent = partition.get(0);
          burstEvent.task = "burst";
          burstEvent.burstData = partition;
@@ -653,54 +621,31 @@ public final class SequenceGenerator {
             ts.properties = propertyTriggers.properties;
          }
          burstEvent.triggerSequence = ts;
-         result.add(burstEvent);
-      }
-      return result;
+         return burstEvent;
+      });
    }
 
-   private static List<List<AcqEvent>> partitionByFrameIndex(
-         List<AcqEvent> events) {
-      List<List<AcqEvent>> partitions = new ArrayList<>();
-      List<AcqEvent> current = new ArrayList<>();
-      int currentFrame = -1;
-      for (AcqEvent e : events) {
-         if (current.isEmpty() || e.frameIndex == currentFrame) {
-            current.add(e);
-         } else {
-            partitions.add(current);
-            current = new ArrayList<>();
-            current.add(e);
-         }
-         currentFrame = e.frameIndex;
-      }
-      if (!current.isEmpty()) {
-         partitions.add(current);
-      }
-      return partitions;
-   }
-
-   static List<AcqEvent> generateMultipositionBursts(
+   static Seq<AcqEvent> generateMultipositionBursts(
          List<Integer> positions, int numFrames, boolean useAutofocus,
          List<AcqChannel> channels, List<Double> slices,
          double defaultExposure, TriggerSequence triggers,
          boolean relativeSlices, CoreOps core) {
-      List<AcqEvent> allEvents = new ArrayList<>();
-      for (int posIndex = 0; posIndex < positions.size(); posIndex++) {
-         int posValue = positions.get(posIndex);
-         List<AcqEvent> posEvents = generateSimpleBurstSequence(
-               numFrames, useAutofocus, channels, slices,
-               defaultExposure, triggers, posIndex, relativeSlices,
-               core);
-         for (AcqEvent e : posEvents) {
-            e.positionIndex = posIndex;
-            e.position = posValue;
-         }
-         allEvents.addAll(posEvents);
-      }
+      Seq<AcqEvent> allEvents =
+            Seq.range(positions.size()).flatMap(posIndex -> {
+               int posValue = positions.get(posIndex);
+               return generateSimpleBurstSequence(
+                     numFrames, useAutofocus, channels, slices,
+                     defaultExposure, triggers, posIndex, relativeSlices,
+                     core).map(e -> {
+                        e.positionIndex = posIndex;
+                        e.position = posValue;
+                        return e;
+                     });
+            });
       return processNewPosition(allEvents);
    }
 
-   public static List<AcqEvent> generateAcqSequence(AcqSettings settings,
+   public static Seq<AcqEvent> generateAcqSequence(AcqSettings settings,
          List<AttachedRunnable> runnables, CoreOps core) {
       List<AcqChannel> channels = settings.channels;
       List<Double> slices = settings.slices;

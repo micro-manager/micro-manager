@@ -290,7 +290,7 @@ public class SequenceGeneratorComparisonTest {
       List<Object> cljEvents = realizeCljSeq(cljResult);
 
       List<AcqEvent> javaResult = SequenceGenerator.generateAcqSequence(
-            settings, null, noBurstCore);
+            settings, null, noBurstCore).toList();
 
       assertEquals("Event count", cljEvents.size(), javaResult.size());
       for (int i = 0; i < cljEvents.size(); i++) {
