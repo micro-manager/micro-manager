@@ -1,5 +1,7 @@
 <project name="MMAcqEngine" default="jar">
 	<property name="namespace" value="org.micromanager.acq-engine"/>
+	<property name="javasrcdir" value="src/main/java"/>
+	<property name="testdir" value="src/test/java"/>
 
 	<import file="../buildscripts/clojurebuild.xml"/>
 
@@ -13,4 +15,16 @@
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
 	</path>
+
+	<target name="compile" depends="prepare" description="Compile Java and Clojure sources">
+		<mkdir dir="${intdir}"/>
+		<mm-cljc namespace="${namespace}" srcdir="${srcdir}" destdir="${intdir}">
+			<clj-classpath>
+				<path refid="project.classpath"/>
+			</clj-classpath>
+		</mm-cljc>
+		<mm-javac srcdir="${javasrcdir}" destdir="${intdir}">
+			<classpath refid="project.classpath"/>
+		</mm-javac>
+	</target>
 </project>
