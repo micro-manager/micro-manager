@@ -312,7 +312,7 @@ public class SettingsPanel extends ListeningJPanel {
       
       // TODO create method to determine this instead of separate code here and in AcquisitionPanel
       if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
-            && false) { //props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
+            && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
          stageScanPanel.add(new JLabel("Relative acceleration time:"));
          final JSpinner stageAccelFactor = pu.makeSpinnerFloat(0.1, 1000, 1,
                  Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ACCEL_FACTOR, 1);
@@ -340,7 +340,7 @@ public class SettingsPanel extends ListeningJPanel {
       stageScanPanel.add(stageAnglePathA, "wrap");
 
       if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
-              && false) { // props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
+              && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
          final JCheckBox scanFromStart = pu.makeCheckBox("Scan from current position instead of center",
                Properties.Keys.PLUGIN_SCAN_FROM_START_POSITION, panelName_, false);
          stageScanPanel.add(scanFromStart, "span 2, wrap, alignx left");
