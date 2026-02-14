@@ -43,10 +43,10 @@ public class ASIdiSPIM implements MMPlugin {
    // - change the second parameter in the call to new ASIdiSPIMFrame() to true to use a different preference node
    
    public static final boolean oSPIM = false;
-   public static final boolean SCOPE = false;
+   public static final boolean SCOPE = false;  // when true also change AcquisitionModes setting for galvo scan text
    public static final boolean singleView = (oSPIM || SCOPE);  // true for SCOPE and oSPIM (and possibly other situations?)
    public static final boolean doubleXYZ = false;
-   public final static String versionString = " 20250528";
+   public final static String versionString = " 20260213";
    
    public final static String menuName = "ASI " 
          + (SCOPE ? "SCOPE" : (oSPIM ? "oSPIM" : "diSPIM") ) 
