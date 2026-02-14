@@ -18,6 +18,9 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
@@ -117,6 +120,10 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
 
       // Register with Studio so Inspector discovers us
       studio_.displays().addViewer(this);
+
+      // Notify the Inspector that this viewer is visible and active
+      postEvent(DataViewerDidBecomeVisibleEvent.create(this));
+      postEvent(DataViewerDidBecomeActiveEvent.create(this));
 
       // Initialize display position
       setDisplayPosition(Coordinates.builder().build());
@@ -284,6 +291,41 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       }
    }
 
+   // ---- New image notification ----
+
+   /**
+    * Notify this viewer that a new image has arrived at the given axes.
+    * Fetches the image directly by axes (avoiding the Coords round-trip
+    * that drops axes with value 0) and submits a stats computation request.
+    *
+    * <p>Call this from external code (e.g. DeskewExploreManager) after
+    * storing a new image, so the Inspector histogram updates.</p>
+    *
+    * @param axes the NDViewer axes of the new image
+    */
+   public void newImageArrived(HashMap<String, Object> axes) {
+      try {
+         final Image image = dataProvider_.getImageByAxes(axes);
+         if (image != null) {
+            // Delay stats submission to run after any pending EDT tasks
+            // (e.g. the histogram panel creation triggered by
+            // DataProviderHasNewImageEvent). This ensures the histogram
+            // panel exists before stats arrive.
+            SwingUtilities.invokeLater(() -> {
+               List<Image> images = new ArrayList<>();
+               images.add(image);
+               Coords position = image.getCoords();
+               setDisplayPosition(position);
+               ImageStatsRequest request = ImageStatsRequest.create(
+                     position, images, BoundsRectAndMask.unselected());
+               computeQueue_.submitRequest(request);
+            });
+         }
+      } catch (IOException e) {
+         // Non-critical — stats won't update for this image
+      }
+   }
+
    // ---- Viewer control ----
 
    /**
@@ -317,7 +359,9 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       }
-      studio_.displays().removeViewer(this);
+      // Post close event so the Inspector detaches and DataViewerCollection
+      // removes us (no need to call removeViewer separately)
+      postEvent(DataViewerWillCloseEvent.create(this));
       ndViewer_.close();
       dispose();
    }

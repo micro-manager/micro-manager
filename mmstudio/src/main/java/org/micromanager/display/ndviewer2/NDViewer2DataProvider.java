@@ -59,6 +59,22 @@ public final class NDViewer2DataProvider implements DataProvider {
       return new DefaultImage(ti, coords, null);
    }
 
+   /**
+    * Fetch an image directly using NDViewer axes, bypassing Coords round-trip.
+    * This avoids the problem where Coords drops axes with value 0.
+    *
+    * @param axes the NDViewer axes map
+    * @return the image, or null if not found
+    */
+   public Image getImageByAxes(HashMap<String, Object> axes) throws IOException {
+      TaggedImage ti = storage_.getImage(axes);
+      if (ti == null || ti.pix == null) {
+         return null;
+      }
+      Coords coords = axesBridge_.ndViewerToCoords(axes);
+      return new DefaultImage(ti, coords, null);
+   }
+
    @Override
    public Image getAnyImage() throws IOException {
       Set<HashMap<String, Object>> keys = storage_.getAxesSet();
@@ -221,9 +237,10 @@ public final class NDViewer2DataProvider implements DataProvider {
       if (ch != null) {
          axesBridge_.registerChannel(ch);
       }
-      Coords coords = axesBridge_.ndViewerToCoords(axes);
       try {
-         Image image = getImage(coords);
+         // Use direct axes lookup to avoid the Coords round-trip
+         // (Coords drops axes with value 0, losing e.g. row=0, column=0)
+         Image image = getImageByAxes(axes);
          if (image != null) {
             eventBus_.post(new DefaultNewImageEvent(image, this));
          }

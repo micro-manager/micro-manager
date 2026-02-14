@@ -30,9 +30,13 @@ import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
+import org.micromanager.display.ndviewer2.AxesBridge;
+import org.micromanager.display.ndviewer2.NDViewer2DataProvider;
+import org.micromanager.display.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.NDViewerAPI;
+import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.overlay.Overlay;
 
@@ -49,6 +53,8 @@ public class DeskewExploreManager {
    private final DeskewFactory deskewFactory_;
 
    private NDViewerAPI viewer_;
+   private NDViewer2DataViewer mm2Viewer_;
+   private NDViewer2DataProvider mm2DataProvider_;
    private NDTiffStorage storage_;
    private DeskewExploreDataSource dataSource_;
    private ExecutorService displayExecutor_;
@@ -146,9 +152,17 @@ public class DeskewExploreManager {
                  0, 0, true, null, SAVING_QUEUE_SIZE, null, true);
          dataSource_.setStorage(storage_);
 
-         // Create NDViewer
-         viewer_ = new NDViewer(dataSource_, dataSource_, summaryMetadata, pixelSizeUm_, false);
-         viewer_.setWindowTitle("Deskew Explore - Right-click to select, Left-drag to extend, Left-click to acquire");
+         // Create NDViewer2 (NDViewer + MM Inspector)
+         AxesBridge axesBridge = new AxesBridge();
+         mm2DataProvider_ = new NDViewer2DataProvider(
+               storage_, axesBridge, acqName_);
+         NDViewerAcqInterface acqInterface = createAcqInterface();
+         mm2Viewer_ = new NDViewer2DataViewer(
+               studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
+               summaryMetadata, pixelSizeUm_, false);
+         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_.setWindowTitle("Deskew Explore - Right-click to select, "
+               + "Left-drag to extend, Left-click to acquire");
 
          // Set up overlayer and mouse listener
          viewer_.setOverlayerPlugin(dataSource_);
@@ -249,8 +263,15 @@ public class DeskewExploreManager {
             }
          }
 
-         // Create NDViewer
-         viewer_ = new NDViewer(dataSource_, dataSource_, summaryMetadata, pixelSizeUm_, false);
+         // Create NDViewer2 (NDViewer + MM Inspector)
+         AxesBridge axesBridge = new AxesBridge();
+         mm2DataProvider_ = new NDViewer2DataProvider(
+               storage_, axesBridge, acqName_);
+         NDViewerAcqInterface acqInterface = createAcqInterface();
+         mm2Viewer_ = new NDViewer2DataViewer(
+               studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
+               summaryMetadata, pixelSizeUm_, false);
+         viewer_ = mm2Viewer_.getNDViewer();
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
          // Set up overlayer and mouse listener
@@ -287,6 +308,38 @@ public class DeskewExploreManager {
          studio_.logs().showError(e, "Failed to open Deskew Explore dataset.");
          stopExplore();
       }
+   }
+
+   /**
+    * Create an NDViewerAcqInterface for the explore session.
+    */
+   private NDViewerAcqInterface createAcqInterface() {
+      return new NDViewerAcqInterface() {
+         @Override
+         public boolean isFinished() {
+            return !exploring_;
+         }
+
+         @Override
+         public void abort() {
+            stopExplore();
+         }
+
+         @Override
+         public void setPaused(boolean paused) {
+            // Not applicable for Explore mode
+         }
+
+         @Override
+         public boolean isPaused() {
+            return false;
+         }
+
+         @Override
+         public void waitForCompletion() {
+            // Not applicable for Explore mode
+         }
+      };
    }
 
    /**
@@ -333,6 +386,11 @@ public class DeskewExploreManager {
          dataSource_ = null;
       }
 
+      if (mm2Viewer_ != null) {
+         mm2Viewer_.close();
+         mm2Viewer_ = null;
+      }
+      mm2DataProvider_ = null;
       viewer_ = null;
 
       if (deleteTempFiles) {
@@ -584,8 +642,18 @@ public class DeskewExploreManager {
 
             // Notify viewer of new image
             if (displayExecutor_ != null && viewer_ != null) {
+               final int tileRow = row;
+               final int tileCol = col;
                displayExecutor_.submit(() -> {
                   HashMap<String, Object> displayAxes = new HashMap<>();
+                  displayAxes.put("row", tileRow);
+                  displayAxes.put("column", tileCol);
+                  if (mm2DataProvider_ != null) {
+                     mm2DataProvider_.newImageArrived(displayAxes);
+                  }
+                  if (mm2Viewer_ != null) {
+                     mm2Viewer_.newImageArrived(displayAxes);
+                  }
                   viewer_.newImageArrived(displayAxes);
                   viewer_.update();
                   studio_.logs().logMessage("Deskew Explore: viewer notified of new image");
@@ -763,8 +831,18 @@ public class DeskewExploreManager {
 
          // Notify viewer
          if (displayExecutor_ != null && viewer_ != null) {
+            final int tileRow = row;
+            final int tileCol = col;
             displayExecutor_.submit(() -> {
                HashMap<String, Object> displayAxes = new HashMap<>();
+               displayAxes.put("row", tileRow);
+               displayAxes.put("column", tileCol);
+               if (mm2DataProvider_ != null) {
+                  mm2DataProvider_.newImageArrived(displayAxes);
+               }
+               if (mm2Viewer_ != null) {
+                  mm2Viewer_.newImageArrived(displayAxes);
+               }
                viewer_.newImageArrived(displayAxes);
                viewer_.update();
             });

@@ -1,6 +1,7 @@
 package org.micromanager.display.ndviewer2;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
@@ -8,6 +9,7 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultChannelDisplaySettings;
 import org.micromanager.display.internal.DefaultComponentDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  * Bidirectional translation between MM DisplaySettings and NDViewer's
@@ -33,7 +35,7 @@ public final class DisplaySettingsBridge {
    public void applyToNDViewer(
          DisplaySettings mmSettings,
          org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings) {
-      List<String> channelNames = axesBridge_.getChannelNames();
+      List<String> channelNames = getNDViewerChannelNames(ndSettings);
       for (int i = 0; i < mmSettings.getNumberOfChannels()
             && i < channelNames.size(); i++) {
          String chName = channelNames.get(i);
@@ -72,7 +74,7 @@ public final class DisplaySettingsBridge {
    public DisplaySettings readFromNDViewer(
          org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings,
          DisplaySettings existing) {
-      List<String> channelNames = axesBridge_.getChannelNames();
+      List<String> channelNames = getNDViewerChannelNames(ndSettings);
       DisplaySettings.Builder dsBuilder = existing.copyBuilder();
 
       for (int i = 0; i < channelNames.size(); i++) {
@@ -120,5 +122,30 @@ public final class DisplaySettingsBridge {
       }
 
       return dsBuilder.build();
+   }
+
+   /**
+    * Get the channel names to use for bridging.
+    *
+    * <p>When there are named channels in the AxesBridge, use those.
+    * Otherwise, fall back to NDViewer's internal channel names. NDViewer
+    * uses {@code "NO_CHANNEL_PRESENT"} as a synthetic channel name when
+    * there is no explicit channel axis (e.g. single-channel tiled data).</p>
+    *
+    * @param ndSettings the NDViewer display settings
+    * @return ordered list of channel names known to NDViewer
+    */
+   private List<String> getNDViewerChannelNames(
+         org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings) {
+      List<String> names = axesBridge_.getChannelNames();
+      if (!names.isEmpty()) {
+         return names;
+      }
+      // No explicit channels — check if NDViewer has its synthetic channel
+      List<String> fallback = new ArrayList<>();
+      if (ndSettings.containsChannel(NDViewer.NO_CHANNEL)) {
+         fallback.add(NDViewer.NO_CHANNEL);
+      }
+      return fallback;
    }
 }
