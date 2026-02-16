@@ -40,7 +40,8 @@
       "nextFrameIndex": 1,
       "channelName": null,
       "burstLength": 3,
-      "camera": null
+      "camera": null,
+      "channelProperties": null
     }
   ]
 }
