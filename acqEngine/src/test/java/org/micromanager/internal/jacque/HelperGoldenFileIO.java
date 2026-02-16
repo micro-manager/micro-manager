@@ -274,6 +274,8 @@ final class HelperGoldenFileIO {
             expected.channelIndex, actual.channelIndex);
       assertEquals(at + "positionIndex",
             expected.positionIndex, actual.positionIndex);
+      assertEquals(at + "position",
+            expected.position, actual.position);
       assertEquals(at + "exposure",
             expected.exposure, actual.exposure, 0.0001);
       assertDoubleEquals(at + "slice", expected.slice, actual.slice);
