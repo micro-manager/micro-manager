@@ -84,6 +84,8 @@ public class SequenceGeneratorGoldenTest {
          Keyword.intern("channel-index");
    private static final Keyword KW_POSITION_INDEX =
          Keyword.intern("position-index");
+   private static final Keyword KW_POSITION =
+         Keyword.intern("position");
    private static final Keyword KW_SLICE = Keyword.intern("slice");
    private static final Keyword KW_WAIT_TIME_MS =
          Keyword.intern("wait-time-ms");
@@ -380,6 +382,7 @@ public class SequenceGeneratorGoldenTest {
       e.sliceIndex = intVal(m.valAt(KW_SLICE_INDEX));
       e.channelIndex = intVal(m.valAt(KW_CHANNEL_INDEX));
       e.positionIndex = intVal(m.valAt(KW_POSITION_INDEX));
+      e.position = intVal(m.valAt(KW_POSITION));
       e.exposure = ((Number) m.valAt(KW_EXPOSURE)).doubleValue();
       e.slice = doubleOrNull(m.valAt(KW_SLICE));
       e.waitTimeMs = doubleOrNull(m.valAt(KW_WAIT_TIME_MS));
