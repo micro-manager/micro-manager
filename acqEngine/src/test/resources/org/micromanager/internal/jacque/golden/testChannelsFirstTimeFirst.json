@@ -64,7 +64,8 @@
       "nextFrameIndex": 0,
       "channelName": "Ch0",
       "burstLength": 2,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 0,
@@ -84,7 +85,8 @@
       "nextFrameIndex": 0,
       "channelName": "Ch0",
       "burstLength": 2,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 0,
@@ -104,7 +106,8 @@
       "nextFrameIndex": 1,
       "channelName": "Ch0",
       "burstLength": 2,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 1,
@@ -124,7 +127,8 @@
       "nextFrameIndex": 1,
       "channelName": "Ch0",
       "burstLength": 2,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 1,
@@ -144,7 +148,8 @@
       "nextFrameIndex": 1,
       "channelName": "Ch0",
       "burstLength": 2,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 1,
@@ -164,7 +169,8 @@
       "nextFrameIndex": null,
       "channelName": "Ch0",
       "burstLength": 2,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     }
   ]
 }

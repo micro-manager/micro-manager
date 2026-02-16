@@ -63,7 +63,8 @@
       "nextFrameIndex": 0,
       "channelName": "DAPI",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 0,
@@ -83,7 +84,8 @@
       "nextFrameIndex": 0,
       "channelName": "DAPI",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 0,
@@ -103,7 +105,8 @@
       "nextFrameIndex": 0,
       "channelName": "DAPI",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 0,
@@ -123,7 +126,8 @@
       "nextFrameIndex": null,
       "channelName": "BF",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     }
   ]
 }

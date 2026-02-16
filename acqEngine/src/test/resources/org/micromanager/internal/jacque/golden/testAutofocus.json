@@ -55,7 +55,8 @@
       "nextFrameIndex": 0,
       "channelName": "Ch0",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 0,
@@ -75,7 +76,8 @@
       "nextFrameIndex": 1,
       "channelName": "Ch0",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 1,
@@ -95,7 +97,8 @@
       "nextFrameIndex": 1,
       "channelName": "Ch0",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 1,
@@ -115,7 +118,8 @@
       "nextFrameIndex": 2,
       "channelName": "Ch0",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 2,
@@ -135,7 +139,8 @@
       "nextFrameIndex": 2,
       "channelName": "Ch0",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 2,
@@ -155,7 +160,8 @@
       "nextFrameIndex": 3,
       "channelName": "Ch0",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 3,
@@ -175,7 +181,8 @@
       "nextFrameIndex": 3,
       "channelName": "Ch0",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     },
     {
       "frameIndex": 3,
@@ -195,7 +202,8 @@
       "nextFrameIndex": null,
       "channelName": "Ch0",
       "burstLength": 0,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     }
   ]
 }

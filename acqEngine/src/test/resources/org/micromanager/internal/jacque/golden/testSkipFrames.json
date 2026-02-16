@@ -54,7 +54,8 @@
       "nextFrameIndex": 1,
       "channelName": "DAPI",
       "burstLength": 6,
-      "camera": null
+      "camera": null,
+      "channelProperties": {}
     }
   ]
 }

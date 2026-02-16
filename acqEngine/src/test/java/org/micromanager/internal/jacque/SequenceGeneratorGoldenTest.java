@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.BeforeClass;
@@ -398,8 +399,13 @@ public class SequenceGeneratorGoldenTest {
             ? Integer.valueOf(intVal(cljNext)) : null;
       Object cljChannel = m.valAt(KW_CHANNEL);
       if (cljChannel instanceof IPersistentMap) {
+         IPersistentMap cljChMap = (IPersistentMap) cljChannel;
          AcqChannel ch = new AcqChannel();
-         ch.name = (String) ((IPersistentMap) cljChannel).valAt(KW_NAME);
+         ch.name = (String) cljChMap.valAt(KW_NAME);
+         Object cljProps = cljChMap.valAt(KW_PROPERTIES);
+         if (cljProps instanceof IPersistentMap) {
+            ch.properties = cljPropsToJavaProps((IPersistentMap) cljProps);
+         }
          e.channel = ch;
       }
       Object cljBurst = m.valAt(KW_BURST_LENGTH);
@@ -407,6 +413,18 @@ public class SequenceGeneratorGoldenTest {
          e.burstLength = intVal(cljBurst);
       }
       return e;
+   }
+
+   @SuppressWarnings("unchecked")
+   private static Map<List<String>, String> cljPropsToJavaProps(
+         IPersistentMap cljProps) {
+      Map<List<String>, String> result = new LinkedHashMap<>();
+      for (Object obj : (Iterable<?>) cljProps) {
+         Map.Entry<List<String>, String> entry =
+               (Map.Entry<List<String>, String>) obj;
+         result.put(entry.getKey(), entry.getValue());
+      }
+      return result;
    }
 
    private static int intVal(Object o) {
