@@ -19,6 +19,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -295,6 +296,15 @@ public class SequenceGeneratorGoldenTest {
 
    // --- Clojure interop ---
 
+   private static IPersistentMap toClojureProperties(
+         Map<List<String>, String> props) {
+      IPersistentMap m = PersistentArrayMap.EMPTY;
+      for (Map.Entry<List<String>, String> e : props.entrySet()) {
+         m = m.assoc(PersistentVector.create(e.getKey()), e.getValue());
+      }
+      return m;
+   }
+
    private static Object toClojureChannel(AcqChannel ch) {
       return RT.map(
             KW_NAME, ch.name,
@@ -304,7 +314,7 @@ public class SequenceGeneratorGoldenTest {
             KW_SKIP_FRAMES, ch.skipFrames,
             KW_USE_CHANNEL, ch.useChannel,
             KW_COLOR, ch.color,
-            KW_PROPERTIES, PersistentArrayMap.EMPTY);
+            KW_PROPERTIES, toClojureProperties(ch.properties));
    }
 
    private static Object toClojureSettings(AcqSettings s) {
