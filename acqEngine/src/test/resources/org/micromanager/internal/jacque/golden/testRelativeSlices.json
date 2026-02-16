@@ -1,0 +1,99 @@
+{
+  "description": "Relative slices, slices first, 1 frame, 3 slices, 1 channel",
+  "settings": {
+    "numFrames": 1,
+    "frames": [
+      0
+    ],
+    "slices": [
+      0.0,
+      1.0,
+      2.0
+    ],
+    "channels": [
+      {
+        "name": "Ch0",
+        "exposure": 100.0,
+        "zOffset": 0.0,
+        "useZStack": true,
+        "useChannel": true,
+        "skipFrames": 0,
+        "color": null,
+        "properties": {}
+      }
+    ],
+    "positions": null,
+    "slicesFirst": true,
+    "timeFirst": false,
+    "keepShutterOpenSlices": false,
+    "keepShutterOpenChannels": false,
+    "useAutofocus": false,
+    "autofocusSkip": 0,
+    "relativeSlices": true,
+    "intervalMs": 0.0,
+    "defaultExposure": 10.0,
+    "customIntervalsMs": []
+  },
+  "expectedEvents": [
+    {
+      "frameIndex": 0,
+      "sliceIndex": 0,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 100.0,
+      "slice": 0.0,
+      "waitTimeMs": 0.0,
+      "autofocus": false,
+      "newPosition": true,
+      "closeShutter": true,
+      "relativeZ": true,
+      "task": "snap",
+      "nextFrameIndex": 0,
+      "channelName": "Ch0",
+      "burstLength": 0,
+      "camera": null
+    },
+    {
+      "frameIndex": 0,
+      "sliceIndex": 1,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 100.0,
+      "slice": 1.0,
+      "waitTimeMs": null,
+      "autofocus": false,
+      "newPosition": false,
+      "closeShutter": true,
+      "relativeZ": true,
+      "task": "snap",
+      "nextFrameIndex": 0,
+      "channelName": "Ch0",
+      "burstLength": 0,
+      "camera": null
+    },
+    {
+      "frameIndex": 0,
+      "sliceIndex": 2,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 100.0,
+      "slice": 2.0,
+      "waitTimeMs": null,
+      "autofocus": false,
+      "newPosition": false,
+      "closeShutter": true,
+      "relativeZ": true,
+      "task": "snap",
+      "nextFrameIndex": null,
+      "channelName": "Ch0",
+      "burstLength": 0,
+      "camera": null
+    }
+  ]
+}
