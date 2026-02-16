@@ -298,6 +298,9 @@ final class HelperGoldenFileIO {
             expected.channelName, actualChannelName);
       assertEquals(at + "burstLength",
             expected.burstLength, actual.burstLength);
+      assertEquals(at + "cameraChannelIndex",
+            expected.cameraChannelIndex, actual.cameraChannelIndex);
+      assertEquals(at + "camera", expected.camera, actual.camera);
    }
 
    private static void assertDoubleEquals(String msg,
