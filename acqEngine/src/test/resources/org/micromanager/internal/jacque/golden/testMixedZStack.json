@@ -64,7 +64,16 @@
       "channelName": "DAPI",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 0,
@@ -85,7 +94,16 @@
       "channelName": "DAPI",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 0,
@@ -106,7 +124,16 @@
       "channelName": "DAPI",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 0,
@@ -127,7 +154,16 @@
       "channelName": "BF",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": false,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     }
   ]
 }

@@ -39,7 +39,16 @@
       "channelName": null,
       "burstLength": 0,
       "camera": null,
-      "channelProperties": null
+      "channelProperties": null,
+      "channelExposure": null,
+      "channelZOffset": null,
+      "channelUseZStack": null,
+      "channelUseChannel": null,
+      "channelSkipFrames": null,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     }
   ]
 }

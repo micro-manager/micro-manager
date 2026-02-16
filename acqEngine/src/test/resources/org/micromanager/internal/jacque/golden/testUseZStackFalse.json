@@ -54,7 +54,16 @@
       "channelName": "BF",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 50.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": false,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     }
   ]
 }
