@@ -81,6 +81,7 @@ final class HelperGoldenFileIO {
       String channelName;
       int burstLength;
       String camera;
+      Map<String, Map<String, String>> channelProperties;
    }
 
    // --- Gson instance ---
@@ -256,6 +257,8 @@ final class HelperGoldenFileIO {
       ej.task = e.task;
       ej.nextFrameIndex = e.nextFrameIndex;
       ej.channelName = e.channel != null ? e.channel.name : null;
+      ej.channelProperties = e.channel != null
+            ? propsToJson(e.channel.properties) : null;
       ej.burstLength = e.burstLength;
       ej.camera = e.camera;
       return ej;
@@ -296,6 +299,11 @@ final class HelperGoldenFileIO {
             actual.channel != null ? actual.channel.name : null;
       assertEquals(at + "channelName",
             expected.channelName, actualChannelName);
+      Map<String, Map<String, String>> actualChannelProps =
+            actual.channel != null
+                  ? propsToJson(actual.channel.properties) : null;
+      assertEquals(at + "channelProperties",
+            expected.channelProperties, actualChannelProps);
       assertEquals(at + "burstLength",
             expected.burstLength, actual.burstLength);
       assertEquals(at + "cameraChannelIndex",
