@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -113,6 +114,33 @@ public class SequenceGeneratorGoldenTest {
    private static final Keyword KW_CAMERA_CHANNEL_INDEX =
          Keyword.intern("camera-channel-index");
    private static final Keyword KW_CAMERA = Keyword.intern("camera");
+   private static final Keyword KW_FRAME = Keyword.intern("frame");
+   private static final Keyword KW_RUNNABLES =
+         Keyword.intern("runnables");
+
+   private static final Set<Keyword> ALLOWED_EVENT_KEYS = Set.of(
+         KW_FRAME_INDEX, KW_SLICE_INDEX, KW_CHANNEL_INDEX,
+         KW_POSITION_INDEX, KW_POSITION, KW_EXPOSURE, KW_SLICE,
+         KW_WAIT_TIME_MS, KW_AUTOFOCUS, KW_NEW_POSITION,
+         KW_CLOSE_SHUTTER, KW_RELATIVE_Z, KW_TASK,
+         KW_NEXT_FRAME_INDEX, KW_CHANNEL, KW_BURST_LENGTH,
+         KW_CAMERA_CHANNEL_INDEX, KW_CAMERA, KW_BURST_DATA,
+         KW_TRIGGER_SEQUENCE, KW_METADATA, KW_FRAME, KW_RUNNABLES);
+
+   private static final Set<Keyword> ALLOWED_BURST_EVENT_KEYS = Set.of(
+         KW_FRAME_INDEX, KW_SLICE_INDEX, KW_CHANNEL_INDEX,
+         KW_POSITION_INDEX, KW_POSITION, KW_EXPOSURE, KW_SLICE,
+         KW_WAIT_TIME_MS, KW_AUTOFOCUS, KW_NEW_POSITION,
+         KW_CLOSE_SHUTTER, KW_RELATIVE_Z, KW_NEXT_FRAME_INDEX,
+         KW_CHANNEL, KW_CAMERA_CHANNEL_INDEX, KW_CAMERA,
+         KW_METADATA, KW_FRAME, KW_RUNNABLES);
+
+   private static final Set<Keyword> ALLOWED_CHANNEL_KEYS = Set.of(
+         KW_NAME, KW_EXPOSURE, KW_Z_OFFSET, KW_USE_Z_STACK,
+         KW_SKIP_FRAMES, KW_USE_CHANNEL, KW_COLOR, KW_PROPERTIES);
+
+   private static final Set<Keyword> ALLOWED_TRIGGER_SEQ_KEYS = Set.of(
+         KW_PROPERTIES, KW_SLICES);
 
    private static Object cljGenerate;
    private static CoreOps noBurstCore;
@@ -365,8 +393,9 @@ public class SequenceGeneratorGoldenTest {
    private static List<AcqEvent> cljSeqToAcqEvents(Object cljResult) {
       List<Object> raw = realizeCljSeq(cljResult);
       List<AcqEvent> result = new ArrayList<>(raw.size());
-      for (Object obj : raw) {
-         result.add(cljEventToAcqEvent((IPersistentMap) obj));
+      for (int i = 0; i < raw.size(); i++) {
+         result.add(cljEventToAcqEvent((IPersistentMap) raw.get(i),
+               ALLOWED_EVENT_KEYS, "event[" + i + "]"));
       }
       return result;
    }
@@ -386,7 +415,20 @@ public class SequenceGeneratorGoldenTest {
       return result;
    }
 
-   private static AcqEvent cljEventToAcqEvent(IPersistentMap m) {
+   @SuppressWarnings("unchecked")
+   private static void assertNoUnexpectedKeys(IPersistentMap m,
+         Set<Keyword> allowed, String context) {
+      for (Object obj : (Iterable<?>) m) {
+         Object key = ((Map.Entry<?, ?>) obj).getKey();
+         if (!allowed.contains(key)) {
+            fail(context + ": unexpected key " + key);
+         }
+      }
+   }
+
+   private static AcqEvent cljEventToAcqEvent(IPersistentMap m,
+         Set<Keyword> allowedKeys, String context) {
+      assertNoUnexpectedKeys(m, allowedKeys, context);
       AcqEvent e = new AcqEvent();
       e.frameIndex = intVal(m.valAt(KW_FRAME_INDEX));
       e.sliceIndex = intVal(m.valAt(KW_SLICE_INDEX));
@@ -409,6 +451,8 @@ public class SequenceGeneratorGoldenTest {
       Object cljChannel = m.valAt(KW_CHANNEL);
       if (cljChannel instanceof IPersistentMap) {
          IPersistentMap cljChMap = (IPersistentMap) cljChannel;
+         assertNoUnexpectedKeys(cljChMap, ALLOWED_CHANNEL_KEYS,
+               context + ".channel");
          AcqChannel ch = new AcqChannel();
          ch.name = (String) cljChMap.valAt(KW_NAME);
          Object cljProps = cljChMap.valAt(KW_PROPERTIES);
@@ -453,12 +497,18 @@ public class SequenceGeneratorGoldenTest {
       if (cljBurstData != null) {
          List<Object> rawBurst = realizeCljSeq(cljBurstData);
          e.burstData = new ArrayList<>(rawBurst.size());
-         for (Object sub : rawBurst) {
-            e.burstData.add(cljEventToAcqEvent((IPersistentMap) sub));
+         for (int j = 0; j < rawBurst.size(); j++) {
+            e.burstData.add(cljEventToAcqEvent(
+                  (IPersistentMap) rawBurst.get(j),
+                  ALLOWED_BURST_EVENT_KEYS,
+                  context + ".burst[" + j + "]"));
          }
       }
       Object cljTrigSeq = m.valAt(KW_TRIGGER_SEQUENCE);
       if (cljTrigSeq instanceof IPersistentMap) {
+         assertNoUnexpectedKeys((IPersistentMap) cljTrigSeq,
+               ALLOWED_TRIGGER_SEQ_KEYS,
+               context + ".trigger-sequence");
          e.triggerSequence = cljTriggerSeqToJava(
                (IPersistentMap) cljTrigSeq);
       }
