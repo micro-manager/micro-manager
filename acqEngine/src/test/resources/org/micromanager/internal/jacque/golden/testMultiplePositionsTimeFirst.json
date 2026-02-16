@@ -58,7 +58,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 0,
@@ -79,7 +88,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 1,
@@ -100,7 +118,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 1,
@@ -121,7 +148,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 0,
@@ -142,7 +178,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 0,
@@ -163,7 +208,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 1,
@@ -184,7 +238,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 1,
@@ -205,7 +268,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 0,
@@ -226,7 +298,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 0,
@@ -247,7 +328,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 1,
@@ -268,7 +358,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     },
     {
       "frameIndex": 1,
@@ -289,7 +388,16 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {}
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     }
   ]
 }

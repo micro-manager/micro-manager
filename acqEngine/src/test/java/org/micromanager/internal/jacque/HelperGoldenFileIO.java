@@ -62,6 +62,11 @@ final class HelperGoldenFileIO {
       Map<String, Map<String, String>> properties;
    }
 
+   static class TriggerSequenceJson {
+      Map<String, Map<String, List<String>>> properties;
+      List<Double> slices;
+   }
+
    static class EventJson {
       int frameIndex;
       int sliceIndex;
@@ -82,6 +87,15 @@ final class HelperGoldenFileIO {
       int burstLength;
       String camera;
       Map<String, Map<String, String>> channelProperties;
+      Double channelExposure;
+      Double channelZOffset;
+      Boolean channelUseZStack;
+      Boolean channelUseChannel;
+      Integer channelSkipFrames;
+      String channelColor;
+      List<EventJson> burstData;
+      TriggerSequenceJson triggerSequence;
+      Map<String, String> metadata;
    }
 
    // --- Gson instance ---
@@ -239,6 +253,26 @@ final class HelperGoldenFileIO {
       return result;
    }
 
+   private static TriggerSequenceJson triggerSeqToJson(
+         TriggerSequence ts) {
+      if (ts == null) {
+         return null;
+      }
+      TriggerSequenceJson tj = new TriggerSequenceJson();
+      tj.properties = new TreeMap<>();
+      if (ts.properties != null) {
+         for (Map.Entry<List<String>, List<String>> entry
+               : ts.properties.entrySet()) {
+            String device = entry.getKey().get(0);
+            String prop = entry.getKey().get(1);
+            tj.properties.computeIfAbsent(device, k -> new TreeMap<>())
+                  .put(prop, entry.getValue());
+         }
+      }
+      tj.slices = ts.slices;
+      return tj;
+   }
+
    static EventJson eventToJson(AcqEvent e) {
       EventJson ej = new EventJson();
       ej.frameIndex = e.frameIndex;
@@ -256,11 +290,26 @@ final class HelperGoldenFileIO {
       ej.relativeZ = e.relativeZ;
       ej.task = e.task;
       ej.nextFrameIndex = e.nextFrameIndex;
-      ej.channelName = e.channel != null ? e.channel.name : null;
-      ej.channelProperties = e.channel != null
-            ? propsToJson(e.channel.properties) : null;
+      if (e.channel != null) {
+         ej.channelName = e.channel.name;
+         ej.channelProperties = propsToJson(e.channel.properties);
+         ej.channelExposure = e.channel.exposure;
+         ej.channelZOffset = e.channel.zOffset;
+         ej.channelUseZStack = e.channel.useZStack;
+         ej.channelUseChannel = e.channel.useChannel;
+         ej.channelSkipFrames = e.channel.skipFrames;
+         ej.channelColor = formatColor(e.channel.color);
+      }
       ej.burstLength = e.burstLength;
       ej.camera = e.camera;
+      if (e.burstData != null) {
+         ej.burstData = new ArrayList<>();
+         for (AcqEvent sub : e.burstData) {
+            ej.burstData.add(eventToJson(sub));
+         }
+      }
+      ej.triggerSequence = triggerSeqToJson(e.triggerSequence);
+      ej.metadata = e.metadata;
       return ej;
    }
 
@@ -268,7 +317,12 @@ final class HelperGoldenFileIO {
 
    static void assertEventEquals(EventJson expected, AcqEvent actual,
          int idx) {
-      String at = "Event[" + idx + "] ";
+      assertEventEquals("", expected, actual, idx);
+   }
+
+   private static void assertEventEquals(String prefix,
+         EventJson expected, AcqEvent actual, int idx) {
+      String at = prefix + "Event[" + idx + "] ";
       assertEquals(at + "frameIndex",
             expected.frameIndex, actual.frameIndex);
       assertEquals(at + "sliceIndex",
@@ -309,6 +363,75 @@ final class HelperGoldenFileIO {
       assertEquals(at + "cameraChannelIndex",
             expected.cameraChannelIndex, actual.cameraChannelIndex);
       assertEquals(at + "camera", expected.camera, actual.camera);
+
+      // Channel fields beyond name/properties
+      if (actual.channel != null) {
+         assertDoubleEquals(at + "channelExposure",
+               expected.channelExposure, actual.channel.exposure);
+         assertDoubleEquals(at + "channelZOffset",
+               expected.channelZOffset, actual.channel.zOffset);
+         assertEquals(at + "channelUseZStack",
+               expected.channelUseZStack, actual.channel.useZStack);
+         assertEquals(at + "channelUseChannel",
+               expected.channelUseChannel, actual.channel.useChannel);
+         assertEquals(at + "channelSkipFrames",
+               expected.channelSkipFrames,
+               Integer.valueOf(actual.channel.skipFrames));
+         assertEquals(at + "channelColor",
+               expected.channelColor, formatColor(actual.channel.color));
+      } else {
+         assertNull(at + "channelExposure", expected.channelExposure);
+         assertNull(at + "channelZOffset", expected.channelZOffset);
+         assertNull(at + "channelUseZStack", expected.channelUseZStack);
+         assertNull(at + "channelUseChannel", expected.channelUseChannel);
+         assertNull(at + "channelSkipFrames", expected.channelSkipFrames);
+         assertNull(at + "channelColor", expected.channelColor);
+      }
+
+      // burstData
+      if (expected.burstData != null) {
+         assertNotNull(at + "burstData", actual.burstData);
+         assertEquals(at + "burstData.size",
+               expected.burstData.size(), actual.burstData.size());
+         for (int i = 0; i < expected.burstData.size(); i++) {
+            assertEventEquals(at + "burstData.",
+                  expected.burstData.get(i), actual.burstData.get(i), i);
+         }
+      } else {
+         assertNull(at + "burstData", actual.burstData);
+      }
+
+      // triggerSequence
+      assertTriggerSequenceEquals(at, expected.triggerSequence,
+            actual.triggerSequence);
+
+      // metadata
+      assertEquals(at + "metadata", expected.metadata, actual.metadata);
+   }
+
+   private static void assertTriggerSequenceEquals(String at,
+         TriggerSequenceJson expected, TriggerSequence actual) {
+      if (expected == null) {
+         assertNull(at + "triggerSequence", actual);
+         return;
+      }
+      assertNotNull(at + "triggerSequence", actual);
+      // Compare properties
+      TriggerSequenceJson actualJson = triggerSeqToJson(actual);
+      assertEquals(at + "triggerSequence.properties",
+            expected.properties, actualJson.properties);
+      // Compare slices
+      if (expected.slices == null) {
+         assertNull(at + "triggerSequence.slices", actual.slices);
+      } else {
+         assertNotNull(at + "triggerSequence.slices", actual.slices);
+         assertEquals(at + "triggerSequence.slices.size",
+               expected.slices.size(), actual.slices.size());
+         for (int i = 0; i < expected.slices.size(); i++) {
+            assertEquals(at + "triggerSequence.slices[" + i + "]",
+                  expected.slices.get(i), actual.slices.get(i), 0.0001);
+         }
+      }
    }
 
    private static void assertDoubleEquals(String msg,
