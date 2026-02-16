@@ -58,7 +58,16 @@
         "FilterWheel": {
           "Label": "DAPI"
         }
-      }
+      },
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null
     }
   ]
 }

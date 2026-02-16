@@ -104,6 +104,15 @@ public class SequenceGeneratorGoldenTest {
    private static final Keyword KW_CHANNEL = Keyword.intern("channel");
    private static final Keyword KW_BURST_LENGTH =
          Keyword.intern("burst-length");
+   private static final Keyword KW_BURST_DATA =
+         Keyword.intern("burst-data");
+   private static final Keyword KW_TRIGGER_SEQUENCE =
+         Keyword.intern("trigger-sequence");
+   private static final Keyword KW_METADATA =
+         Keyword.intern("metadata");
+   private static final Keyword KW_CAMERA_CHANNEL_INDEX =
+         Keyword.intern("camera-channel-index");
+   private static final Keyword KW_CAMERA = Keyword.intern("camera");
 
    private static Object cljGenerate;
    private static CoreOps noBurstCore;
@@ -406,11 +415,56 @@ public class SequenceGeneratorGoldenTest {
          if (cljProps instanceof IPersistentMap) {
             ch.properties = cljPropsToJavaProps((IPersistentMap) cljProps);
          }
+         Object cljExp = cljChMap.valAt(KW_EXPOSURE);
+         if (cljExp instanceof Number) {
+            ch.exposure = ((Number) cljExp).doubleValue();
+         }
+         Object cljZOff = cljChMap.valAt(KW_Z_OFFSET);
+         if (cljZOff instanceof Number) {
+            ch.zOffset = ((Number) cljZOff).doubleValue();
+         }
+         ch.useZStack = Boolean.TRUE.equals(
+               cljChMap.valAt(KW_USE_Z_STACK));
+         ch.useChannel = Boolean.TRUE.equals(
+               cljChMap.valAt(KW_USE_CHANNEL));
+         Object cljSkip = cljChMap.valAt(KW_SKIP_FRAMES);
+         if (cljSkip instanceof Number) {
+            ch.skipFrames = ((Number) cljSkip).intValue();
+         }
+         Object cljColor = cljChMap.valAt(KW_COLOR);
+         if (cljColor instanceof java.awt.Color) {
+            ch.color = (java.awt.Color) cljColor;
+         }
          e.channel = ch;
       }
       Object cljBurst = m.valAt(KW_BURST_LENGTH);
       if (cljBurst != null) {
          e.burstLength = intVal(cljBurst);
+      }
+      Object cljCamIdx = m.valAt(KW_CAMERA_CHANNEL_INDEX);
+      if (cljCamIdx != null) {
+         e.cameraChannelIndex = intVal(cljCamIdx);
+      }
+      Object cljCamera = m.valAt(KW_CAMERA);
+      if (cljCamera instanceof String) {
+         e.camera = (String) cljCamera;
+      }
+      Object cljBurstData = m.valAt(KW_BURST_DATA);
+      if (cljBurstData != null) {
+         List<Object> rawBurst = realizeCljSeq(cljBurstData);
+         e.burstData = new ArrayList<>(rawBurst.size());
+         for (Object sub : rawBurst) {
+            e.burstData.add(cljEventToAcqEvent((IPersistentMap) sub));
+         }
+      }
+      Object cljTrigSeq = m.valAt(KW_TRIGGER_SEQUENCE);
+      if (cljTrigSeq instanceof IPersistentMap) {
+         e.triggerSequence = cljTriggerSeqToJava(
+               (IPersistentMap) cljTrigSeq);
+      }
+      Object cljMeta = m.valAt(KW_METADATA);
+      if (cljMeta instanceof IPersistentMap) {
+         e.metadata = cljStringMapToJava((IPersistentMap) cljMeta);
       }
       return e;
    }
@@ -422,6 +476,50 @@ public class SequenceGeneratorGoldenTest {
       for (Object obj : (Iterable<?>) cljProps) {
          Map.Entry<List<String>, String> entry =
                (Map.Entry<List<String>, String>) obj;
+         result.put(entry.getKey(), entry.getValue());
+      }
+      return result;
+   }
+
+   @SuppressWarnings("unchecked")
+   private static TriggerSequence cljTriggerSeqToJava(
+         IPersistentMap cljTrigSeq) {
+      TriggerSequence ts = new TriggerSequence();
+      Object cljTrigProps = cljTrigSeq.valAt(KW_PROPERTIES);
+      if (cljTrigProps instanceof IPersistentMap) {
+         ts.properties = new LinkedHashMap<>();
+         for (Object obj : (Iterable<?>) (IPersistentMap) cljTrigProps) {
+            Map.Entry<?, ?> entry = (Map.Entry<?, ?>) obj;
+            List<?> key = (List<?>) entry.getKey();
+            String device = (String) key.get(0);
+            String prop = (String) key.get(1);
+            List<String> values = new ArrayList<>();
+            for (Object v : realizeCljSeq(entry.getValue())) {
+               values.add((String) v);
+            }
+            List<String> dpKey = new ArrayList<>(2);
+            dpKey.add(device);
+            dpKey.add(prop);
+            ts.properties.put(dpKey, values);
+         }
+      }
+      Object cljSlices = cljTrigSeq.valAt(KW_SLICES);
+      if (cljSlices != null) {
+         ts.slices = new ArrayList<>();
+         for (Object s : realizeCljSeq(cljSlices)) {
+            ts.slices.add(((Number) s).doubleValue());
+         }
+      }
+      return ts;
+   }
+
+   @SuppressWarnings("unchecked")
+   private static Map<String, String> cljStringMapToJava(
+         IPersistentMap cljMap) {
+      Map<String, String> result = new LinkedHashMap<>();
+      for (Object obj : (Iterable<?>) cljMap) {
+         Map.Entry<String, String> entry =
+               (Map.Entry<String, String>) obj;
          result.put(entry.getKey(), entry.getValue());
       }
       return result;

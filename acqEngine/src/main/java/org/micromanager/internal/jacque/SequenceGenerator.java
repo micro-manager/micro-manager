@@ -496,13 +496,15 @@ public final class SequenceGenerator {
             remaining = remaining.rest();
          }
 
-         AcqEvent burstEvent = burst.get(0);
+         AcqEvent burstEvent;
          if (burst.size() > 1) {
+            burstEvent = burst.get(0).copy();
             burstEvent.task = "burst";
             burstEvent.burstData = burst;
             burstEvent.burstLength = burst.size();
             burstEvent.triggerSequence = makeTriggers(burst, core);
          } else {
+            burstEvent = burst.get(0);
             burstEvent.task = "snap";
          }
          Seq<AcqEvent> tail = remaining;
@@ -521,8 +523,7 @@ public final class SequenceGenerator {
    // --- Metadata ---
 
    static Map<String, String> makeChannelMetadata(AcqChannel channel) {
-      if (channel == null || channel.properties == null
-            || channel.properties.isEmpty()) {
+      if (channel == null || channel.properties == null) {
          return null;
       }
       Map<String, String> result = new HashMap<>();
@@ -609,7 +610,7 @@ public final class SequenceGenerator {
       }
 
       return partitions.map(partition -> {
-         AcqEvent burstEvent = partition.get(0);
+         AcqEvent burstEvent = partition.get(0).copy();
          burstEvent.task = "burst";
          burstEvent.burstData = partition;
          burstEvent.burstLength = partition.size();
