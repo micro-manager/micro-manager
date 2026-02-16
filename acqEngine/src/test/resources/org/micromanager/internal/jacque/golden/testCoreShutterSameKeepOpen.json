@@ -1,0 +1,106 @@
+{
+  "description": "Same Core/Shutter per channel with keepShutterOpenChannels, 1 frame, 2 slices, 2 channels, channels first",
+  "settings": {
+    "numFrames": 1,
+    "frames": [
+      0
+    ],
+    "slices": [
+      0.0,
+      1.0
+    ],
+    "channels": [
+      {
+        "name": "Ch0",
+        "exposure": 100.0,
+        "zOffset": 0.0,
+        "useZStack": true,
+        "useChannel": true,
+        "skipFrames": 0,
+        "color": null,
+        "properties": {
+          "Core": {
+            "Shutter": "ShutterA"
+          }
+        }
+      },
+      {
+        "name": "Ch1",
+        "exposure": 100.0,
+        "zOffset": 0.0,
+        "useZStack": true,
+        "useChannel": true,
+        "skipFrames": 0,
+        "color": null,
+        "properties": {
+          "Core": {
+            "Shutter": "ShutterA"
+          }
+        }
+      }
+    ],
+    "positions": null,
+    "slicesFirst": false,
+    "timeFirst": false,
+    "keepShutterOpenSlices": false,
+    "keepShutterOpenChannels": true,
+    "useAutofocus": false,
+    "autofocusSkip": 0,
+    "relativeSlices": false,
+    "intervalMs": 0.0,
+    "defaultExposure": 10.0,
+    "customIntervalsMs": []
+  },
+  "expectedEvents": [
+    {
+      "frameIndex": 0,
+      "sliceIndex": 0,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 100.0,
+      "slice": 0.0,
+      "waitTimeMs": 0.0,
+      "autofocus": false,
+      "newPosition": true,
+      "closeShutter": false,
+      "relativeZ": false,
+      "task": "burst",
+      "nextFrameIndex": 0,
+      "channelName": "Ch0",
+      "burstLength": 2,
+      "camera": null,
+      "channelProperties": {
+        "Core": {
+          "Shutter": "ShutterA"
+        }
+      }
+    },
+    {
+      "frameIndex": 0,
+      "sliceIndex": 1,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 100.0,
+      "slice": 1.0,
+      "waitTimeMs": null,
+      "autofocus": false,
+      "newPosition": false,
+      "closeShutter": false,
+      "relativeZ": false,
+      "task": "burst",
+      "nextFrameIndex": null,
+      "channelName": "Ch0",
+      "burstLength": 2,
+      "camera": null,
+      "channelProperties": {
+        "Core": {
+          "Shutter": "ShutterA"
+        }
+      }
+    }
+  ]
+}
