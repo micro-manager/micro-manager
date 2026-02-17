@@ -98,8 +98,11 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
             summaryMetadata, pixelSizeUm, rgb);
 
       // Hide NDViewer's side controls (histogram/metadata panels).
-      // We use reflection to access the GuiManager's private displayWindow_
-      // field, since there is no public API for this yet.
+      // We use reflection because NDViewer does not yet expose a public API
+      // for this. This is coupled to NDViewer's internal GuiManager layout —
+      // if field/method names change in a future NDViewer version, the
+      // reflection will fail gracefully (side controls remain visible).
+      // TODO: add a public API to NDViewer and remove this reflection.
       try {
          Object guiManager = ndViewer_.getGUIManager();
          java.lang.reflect.Field displayWindowField =
@@ -150,6 +153,8 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       } catch (NullPointerException e) {
          // NDViewer internals may already be torn down during close
          // (async events from Inspector can arrive after data source is nulled)
+         studio_.logs().logDebugMessage("NDViewer2: NPE in handleDisplaySettings "
+               + "(likely async close race): " + e.getMessage());
       } finally {
          updatingFromInspector_ = false;
       }

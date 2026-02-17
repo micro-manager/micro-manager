@@ -60,7 +60,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
    private final int viewerType_;
 
    /**
-    * Adapter that allows LSM aquisitions to save to NDTiff, and
+    * Adapter that allows LSM acquisitions to save to NDTiff, and
     * to display using either an NDViewer or the MM2.0 display.
     *
     * @param studio              the Studio instance (needed for MM2 viewer)

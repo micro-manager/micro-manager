@@ -172,6 +172,11 @@ public final class AxesBridge {
       if (value instanceof Number) {
          return ((Number) value).intValue();
       }
-      return Integer.parseInt(value.toString());
+      try {
+         return Integer.parseInt(value.toString());
+      } catch (NumberFormatException e) {
+         System.err.println("AxesBridge: cannot parse axis value as integer: " + value);
+         return 0;
+      }
    }
 }

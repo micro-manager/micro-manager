@@ -109,10 +109,8 @@ public class DeskewExploreManager {
          dataSource_ = new DeskewExploreDataSource(this);
 
          // Create temporary storage directory
-         File tempDir = File.createTempFile("deskew_explore_", "");
-         tempDir.delete();
-         tempDir.mkdir();
-         storageDir_ = tempDir.getAbsolutePath();
+         Path tempDir = Files.createTempDirectory("deskew_explore_");
+         storageDir_ = tempDir.toFile().getAbsolutePath();
          acqName_ = "DeskewExplore_" + LocalDateTime.now()
                  .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 
@@ -370,12 +368,12 @@ public class DeskewExploreManager {
       loadedData_ = false;
 
       if (displayExecutor_ != null) {
-         displayExecutor_.shutdown();
+         displayExecutor_.shutdownNow();
          displayExecutor_ = null;
       }
 
       if (acquisitionExecutor_ != null) {
-         acquisitionExecutor_.shutdown();
+         acquisitionExecutor_.shutdownNow();
          acquisitionExecutor_ = null;
       }
 
@@ -401,7 +399,11 @@ public class DeskewExploreManager {
       storage_ = null;
       if (storageToClose != null || doDelete) {
          new Thread(() -> {
-            // Give NDViewer's async close thread time to finish
+            // Wait for NDViewer's async close thread ("NDViewer closing thread")
+            // to finish before touching storage. NDViewer does not provide a
+            // join/callback, so we use a best-effort delay. 500ms is sufficient
+            // in practice, but if NDViewer adds a close-completion callback
+            // this sleep should be replaced.
             try {
                Thread.sleep(500);
             } catch (InterruptedException ignored) {
@@ -545,6 +547,7 @@ public class DeskewExploreManager {
          Path sourcePath = sourceDir.toPath();
          Path destPath = destDir.toPath();
 
+         final int[] copyErrors = {0};
          try (Stream<Path> stream = Files.walk(sourcePath)) {
             stream.forEach(source -> {
                try {
@@ -557,13 +560,21 @@ public class DeskewExploreManager {
                      Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
                   }
                } catch (IOException e) {
+                  copyErrors[0]++;
                   studio_.logs().logError(e, "Failed to copy file: " + source);
                }
             });
          }
 
-         studio_.logs().logMessage("Deskew Explore: data saved to " + destDir.getAbsolutePath());
-         studio_.logs().showMessage("Data saved to: " + destDir.getAbsolutePath());
+         if (copyErrors[0] > 0) {
+            studio_.logs().showMessage("Data saved to " + destDir.getAbsolutePath()
+                  + " with " + copyErrors[0] + " file(s) failed to copy. "
+                  + "Check CoreLog for details.");
+         } else {
+            studio_.logs().logMessage(
+                  "Deskew Explore: data saved to " + destDir.getAbsolutePath());
+            studio_.logs().showMessage("Data saved to: " + destDir.getAbsolutePath());
+         }
 
       } catch (Exception e) {
          studio_.logs().showError(e, "Failed to save Deskew Explore data");
@@ -584,8 +595,14 @@ public class DeskewExploreManager {
             // Delete directory recursively
             try (Stream<Path> stream = Files.walk(dir.toPath())) {
                stream.sorted(Comparator.reverseOrder())
-                       .map(Path::toFile)
-                       .forEach(File::delete);
+                       .forEach(path -> {
+                          try {
+                             Files.delete(path);
+                          } catch (IOException e) {
+                             studio_.logs().logError(e,
+                                   "Failed to delete: " + path);
+                          }
+                       });
             }
             studio_.logs().logMessage("Deskew Explore: deleted temp storage at " + storageDir_);
          }
@@ -627,18 +644,20 @@ public class DeskewExploreManager {
             // Set explore mode flag so DeskewFactory creates a pass-through processor
             // This ensures raw images flow through to the test datastore even when
             // "Keep Original Image Files" is unchecked
+            Datastore testStore;
             frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, true);
             deskewFactory_.setSettings(frame_.getSettings());
-
-            // Run acquisition in blocking mode - this ensures completion
-            // shouldDisplayImages(false) prevents the normal acquisition display
-            // and any pipeline processors from creating display windows
-            Datastore testStore = studio_.acquisitions().runAcquisitionWithSettings(
-                    acqSettings, true);  // blocking = true
-
-            // Reset explore mode flag
-            frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, false);
-            deskewFactory_.setSettings(frame_.getSettings());
+            try {
+               // Run acquisition in blocking mode - this ensures completion
+               // shouldDisplayImages(false) prevents the normal acquisition display
+               // and any pipeline processors from creating display windows
+               testStore = studio_.acquisitions().runAcquisitionWithSettings(
+                       acqSettings, true);  // blocking = true
+            } finally {
+               // Always reset explore mode flag, even if acquisition throws
+               frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, false);
+               deskewFactory_.setSettings(frame_.getSettings());
+            }
 
             if (testStore == null) {
                studio_.logs().showError("Test acquisition failed.");
@@ -784,23 +803,31 @@ public class DeskewExploreManager {
                studio_.core().setXYPosition(targetX, targetY);
                studio_.core().waitForDevice(studio_.core().getXYStageDevice());
 
-               // Small delay to let stage settle
+               // Brief settle time after stage move. Most stages report
+               // "ready" before vibrations fully dampen; 100ms is a
+               // conservative default for piezo and motorized stages.
                Thread.sleep(100);
 
                // Acquire this tile (inline the acquisition logic to avoid executor issues)
                acquireSingleTileBlocking(row, col);
             }
 
-            // Return stage to initial position
-            studio_.logs().logMessage("Deskew Explore: returning stage to initial position");
-            studio_.core().setXYPosition(initialStageX_, initialStageY_);
-            studio_.core().waitForDevice(studio_.core().getXYStageDevice());
-
             studio_.logs().logMessage("Deskew Explore: multi-tile acquisition complete");
 
          } catch (Exception e) {
             studio_.logs().logError(e, "Deskew Explore: error during multi-tile acquisition");
          } finally {
+            // Always return stage to initial position, even if acquisition
+            // fails partway through, so the user is not stranded off-center.
+            try {
+               studio_.logs().logMessage(
+                     "Deskew Explore: returning stage to initial position");
+               studio_.core().setXYPosition(initialStageX_, initialStageY_);
+               studio_.core().waitForDevice(studio_.core().getXYStageDevice());
+            } catch (Exception e) {
+               studio_.logs().logError(e,
+                     "Deskew Explore: failed to return stage to initial position");
+            }
             dataSource_.setAcquisitionInProgress(false);
          }
       });
@@ -829,16 +856,18 @@ public class DeskewExploreManager {
          SequenceSettings acqSettings = sb.build();
 
          // Set explore mode flag so DeskewFactory creates a pass-through processor
+         Datastore testStore;
          frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, true);
          deskewFactory_.setSettings(frame_.getSettings());
-
-         // Run acquisition in blocking mode
-         Datastore testStore = studio_.acquisitions().runAcquisitionWithSettings(
-                 acqSettings, true);
-
-         // Reset explore mode flag
-         frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, false);
-         deskewFactory_.setSettings(frame_.getSettings());
+         try {
+            // Run acquisition in blocking mode
+            testStore = studio_.acquisitions().runAcquisitionWithSettings(
+                    acqSettings, true);
+         } finally {
+            // Always reset explore mode flag, even if acquisition throws
+            frame_.getMutableSettings().putBoolean(DeskewFrame.EXPLORE_MODE, false);
+            deskewFactory_.setSettings(frame_.getSettings());
+         }
 
          if (testStore == null) {
             studio_.logs().showError("Test acquisition failed at row=" + row + ", col=" + col);
