@@ -39,6 +39,8 @@
       1500.0
     ]
   },
+  "mockCore": null,
+  "runnables": null,
   "expectedEvents": [
     {
       "frameIndex": 0,
@@ -68,7 +70,8 @@
       "channelColor": null,
       "burstData": null,
       "triggerSequence": null,
-      "metadata": null
+      "metadata": null,
+      "runnableCount": null
     },
     {
       "frameIndex": 0,
@@ -98,7 +101,8 @@
       "channelColor": null,
       "burstData": null,
       "triggerSequence": null,
-      "metadata": null
+      "metadata": null,
+      "runnableCount": null
     },
     {
       "frameIndex": 1,
@@ -128,7 +132,8 @@
       "channelColor": null,
       "burstData": null,
       "triggerSequence": null,
-      "metadata": null
+      "metadata": null,
+      "runnableCount": null
     },
     {
       "frameIndex": 1,
@@ -158,7 +163,8 @@
       "channelColor": null,
       "burstData": null,
       "triggerSequence": null,
-      "metadata": null
+      "metadata": null,
+      "runnableCount": null
     },
     {
       "frameIndex": 2,
@@ -188,7 +194,8 @@
       "channelColor": null,
       "burstData": null,
       "triggerSequence": null,
-      "metadata": null
+      "metadata": null,
+      "runnableCount": null
     },
     {
       "frameIndex": 2,
@@ -218,7 +225,8 @@
       "channelColor": null,
       "burstData": null,
       "triggerSequence": null,
-      "metadata": null
+      "metadata": null,
+      "runnableCount": null
     }
   ]
 }

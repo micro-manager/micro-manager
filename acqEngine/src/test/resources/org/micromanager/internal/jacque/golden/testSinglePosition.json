@@ -1,5 +1,5 @@
 {
-  "description": "Single channel with non-empty properties, 1 frame, no slices",
+  "description": "Single position handled correctly, not counted as multiple positions",
   "settings": {
     "numFrames": 1,
     "frames": [
@@ -15,14 +15,12 @@
         "useChannel": true,
         "skipFrames": 0,
         "color": null,
-        "properties": {
-          "FilterWheel": {
-            "Label": "DAPI"
-          }
-        }
+        "properties": {}
       }
     ],
-    "positions": null,
+    "positions": [
+      0
+    ],
     "slicesFirst": false,
     "timeFirst": false,
     "keepShutterOpenSlices": false,
@@ -56,11 +54,7 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {
-        "FilterWheel": {
-          "Label": "DAPI"
-        }
-      },
+      "channelProperties": {},
       "channelExposure": 100.0,
       "channelZOffset": 0.0,
       "channelUseZStack": true,

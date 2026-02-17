@@ -35,6 +35,8 @@
     "defaultExposure": 10.0,
     "customIntervalsMs": []
   },
+  "mockCore": null,
+  "runnables": null,
   "expectedEvents": [
     {
       "frameIndex": 0,
@@ -91,7 +93,8 @@
           "channelColor": null,
           "burstData": null,
           "triggerSequence": null,
-          "metadata": {}
+          "metadata": {},
+          "runnableCount": null
         },
         {
           "frameIndex": 1,
@@ -121,7 +124,8 @@
           "channelColor": null,
           "burstData": null,
           "triggerSequence": null,
-          "metadata": {}
+          "metadata": {},
+          "runnableCount": null
         },
         {
           "frameIndex": 2,
@@ -151,7 +155,8 @@
           "channelColor": null,
           "burstData": null,
           "triggerSequence": null,
-          "metadata": {}
+          "metadata": {},
+          "runnableCount": null
         },
         {
           "frameIndex": 3,
@@ -181,7 +186,8 @@
           "channelColor": null,
           "burstData": null,
           "triggerSequence": null,
-          "metadata": {}
+          "metadata": {},
+          "runnableCount": null
         },
         {
           "frameIndex": 4,
@@ -211,7 +217,8 @@
           "channelColor": null,
           "burstData": null,
           "triggerSequence": null,
-          "metadata": {}
+          "metadata": {},
+          "runnableCount": null
         },
         {
           "frameIndex": 5,
@@ -241,14 +248,16 @@
           "channelColor": null,
           "burstData": null,
           "triggerSequence": null,
-          "metadata": {}
+          "metadata": {},
+          "runnableCount": null
         }
       ],
       "triggerSequence": {
         "properties": {},
         "slices": null
       },
-      "metadata": {}
+      "metadata": {},
+      "runnableCount": null
     }
   ]
 }

@@ -1,17 +1,31 @@
 {
-  "description": "Three frames, no slices, no channels, no positions",
+  "description": "Fast burst with one channel that has properties; burst sub-events have metadata from makeChannelMetadata",
   "settings": {
-    "numFrames": 3,
+    "numFrames": 2,
     "frames": [
       0,
-      1,
-      2
+      1
     ],
     "slices": [],
-    "channels": [],
+    "channels": [
+      {
+        "name": "DAPI",
+        "exposure": 100.0,
+        "zOffset": 0.0,
+        "useZStack": true,
+        "useChannel": true,
+        "skipFrames": 0,
+        "color": null,
+        "properties": {
+          "FilterWheel": {
+            "Position": "1"
+          }
+        }
+      }
+    ],
     "positions": null,
     "slicesFirst": false,
-    "timeFirst": false,
+    "timeFirst": true,
     "keepShutterOpenSlices": false,
     "keepShutterOpenChannels": false,
     "useAutofocus": false,
@@ -31,7 +45,7 @@
       "positionIndex": 0,
       "cameraChannelIndex": 0,
       "position": 0,
-      "exposure": 10.0,
+      "exposure": 100.0,
       "slice": null,
       "waitTimeMs": 0.0,
       "autofocus": false,
@@ -40,15 +54,19 @@
       "relativeZ": false,
       "task": "burst",
       "nextFrameIndex": 1,
-      "channelName": null,
-      "burstLength": 3,
+      "channelName": "DAPI",
+      "burstLength": 2,
       "camera": null,
-      "channelProperties": null,
-      "channelExposure": null,
-      "channelZOffset": null,
-      "channelUseZStack": null,
-      "channelUseChannel": null,
-      "channelSkipFrames": null,
+      "channelProperties": {
+        "FilterWheel": {
+          "Position": "1"
+        }
+      },
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
       "channelColor": null,
       "burstData": [
         {
@@ -58,7 +76,7 @@
           "positionIndex": 0,
           "cameraChannelIndex": 0,
           "position": 0,
-          "exposure": 10.0,
+          "exposure": 100.0,
           "slice": null,
           "waitTimeMs": 0.0,
           "autofocus": false,
@@ -67,19 +85,25 @@
           "relativeZ": false,
           "task": null,
           "nextFrameIndex": 1,
-          "channelName": null,
+          "channelName": "DAPI",
           "burstLength": 0,
           "camera": null,
-          "channelProperties": null,
-          "channelExposure": null,
-          "channelZOffset": null,
-          "channelUseZStack": null,
-          "channelUseChannel": null,
-          "channelSkipFrames": null,
+          "channelProperties": {
+            "FilterWheel": {
+              "Position": "1"
+            }
+          },
+          "channelExposure": 100.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
           "channelColor": null,
           "burstData": null,
           "triggerSequence": null,
-          "metadata": null,
+          "metadata": {
+            "FilterWheel-Position": "1"
+          },
           "runnableCount": null
         },
         {
@@ -89,7 +113,7 @@
           "positionIndex": 0,
           "cameraChannelIndex": 0,
           "position": 0,
-          "exposure": 10.0,
+          "exposure": 100.0,
           "slice": null,
           "waitTimeMs": 0.0,
           "autofocus": false,
@@ -98,50 +122,25 @@
           "relativeZ": false,
           "task": null,
           "nextFrameIndex": 2,
-          "channelName": null,
+          "channelName": "DAPI",
           "burstLength": 0,
           "camera": null,
-          "channelProperties": null,
-          "channelExposure": null,
-          "channelZOffset": null,
-          "channelUseZStack": null,
-          "channelUseChannel": null,
-          "channelSkipFrames": null,
+          "channelProperties": {
+            "FilterWheel": {
+              "Position": "1"
+            }
+          },
+          "channelExposure": 100.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
           "channelColor": null,
           "burstData": null,
           "triggerSequence": null,
-          "metadata": null,
-          "runnableCount": null
-        },
-        {
-          "frameIndex": 2,
-          "sliceIndex": 0,
-          "channelIndex": 0,
-          "positionIndex": 0,
-          "cameraChannelIndex": 0,
-          "position": 0,
-          "exposure": 10.0,
-          "slice": null,
-          "waitTimeMs": 0.0,
-          "autofocus": false,
-          "newPosition": false,
-          "closeShutter": false,
-          "relativeZ": false,
-          "task": null,
-          "nextFrameIndex": 3,
-          "channelName": null,
-          "burstLength": 0,
-          "camera": null,
-          "channelProperties": null,
-          "channelExposure": null,
-          "channelZOffset": null,
-          "channelUseZStack": null,
-          "channelUseChannel": null,
-          "channelSkipFrames": null,
-          "channelColor": null,
-          "burstData": null,
-          "triggerSequence": null,
-          "metadata": null,
+          "metadata": {
+            "FilterWheel-Position": "1"
+          },
           "runnableCount": null
         }
       ],
@@ -149,7 +148,9 @@
         "properties": {},
         "slices": null
       },
-      "metadata": null,
+      "metadata": {
+        "FilterWheel-Position": "1"
+      },
       "runnableCount": null
     }
   ]

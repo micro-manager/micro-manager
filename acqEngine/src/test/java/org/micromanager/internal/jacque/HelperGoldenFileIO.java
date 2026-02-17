@@ -27,9 +27,30 @@ final class HelperGoldenFileIO {
 
    // --- DTO classes matching JSON schema ---
 
+   static class MockCoreJson {
+      String focusDevice;
+      Boolean stageSequenceable;
+      Integer stageSequenceMaxLength;
+      Map<String, Map<String, PropertySeqJson>> propertySequencing;
+   }
+
+   static class PropertySeqJson {
+      Boolean sequenceable;
+      Integer maxLength;
+   }
+
+   static class RunnableSpecJson {
+      int frameIndex;
+      int positionIndex;
+      int channelIndex;
+      int sliceIndex;
+   }
+
    static class TestCase {
       String description;
       SettingsJson settings;
+      MockCoreJson mockCore;
+      List<RunnableSpecJson> runnables;
       List<EventJson> expectedEvents;
    }
 
@@ -96,6 +117,7 @@ final class HelperGoldenFileIO {
       List<EventJson> burstData;
       TriggerSequenceJson triggerSequence;
       Map<String, String> metadata;
+      Integer runnableCount;
    }
 
    // --- Gson instance ---
@@ -310,6 +332,9 @@ final class HelperGoldenFileIO {
       }
       ej.triggerSequence = triggerSeqToJson(e.triggerSequence);
       ej.metadata = e.metadata;
+      if (e.runnables != null && !e.runnables.isEmpty()) {
+         ej.runnableCount = e.runnables.size();
+      }
       return ej;
    }
 
@@ -407,6 +432,13 @@ final class HelperGoldenFileIO {
 
       // metadata
       assertEquals(at + "metadata", expected.metadata, actual.metadata);
+
+      // runnableCount
+      int expectedRc = expected.runnableCount != null
+            ? expected.runnableCount : 0;
+      int actualRc = actual.runnables != null
+            ? actual.runnables.size() : 0;
+      assertEquals(at + "runnableCount", expectedRc, actualRc);
    }
 
    private static void assertTriggerSequenceEquals(String at,
@@ -442,5 +474,12 @@ final class HelperGoldenFileIO {
          assertNotNull(msg, actual);
          assertEquals(msg, expected, actual, 0.0001);
       }
+   }
+
+   static HelperMockCore mockCoreFromJson(MockCoreJson mcj) {
+      if (mcj == null) {
+         return new HelperMockCore();
+      }
+      return new HelperMockCore(mcj);
    }
 }
