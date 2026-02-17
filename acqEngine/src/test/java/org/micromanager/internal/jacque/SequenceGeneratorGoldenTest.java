@@ -12,10 +12,12 @@ import clojure.lang.PersistentVector;
 import clojure.lang.RT;
 import clojure.lang.Symbol;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -159,19 +161,19 @@ public class SequenceGeneratorGoldenTest {
             .getResource(GOLDEN_RESOURCE_DIR);
       assertNotNull("Golden resource directory not found: "
             + GOLDEN_RESOURCE_DIR, dirUrl);
-      File dir = new File(dirUrl.getFile());
-      File[] files = dir.listFiles(new FileFilter() {
-         @Override
-         public boolean accept(File f) {
-            return f.getName().endsWith(".json");
-         }
-      });
-      assertNotNull("Could not list golden directory", files);
+      Path goldenDir = new File(dirUrl.getFile()).toPath();
 
       List<Object[]> params = new ArrayList<>();
-      for (File f : files) {
-         String name = f.getName().replaceFirst("\\.json$", "");
-         params.add(new Object[] { name, f.getName() });
+      try (Stream<Path> walk = Files.walk(goldenDir)) {
+         walk.filter(p -> p.toString().endsWith(".json"))
+               .forEach(p -> {
+                  String rel = goldenDir.relativize(p).toString()
+                        .replace(File.separatorChar, '/');
+                  String name = rel.replaceFirst("\\.json$", "");
+                  params.add(new Object[] { name, rel });
+               });
+      } catch (IOException e) {
+         fail("Failed to walk golden directory: " + e.getMessage());
       }
       params.sort((a, b) -> ((String) a[0]).compareTo((String) b[0]));
       return params;
