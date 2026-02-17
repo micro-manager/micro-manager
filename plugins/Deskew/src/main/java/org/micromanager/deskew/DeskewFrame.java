@@ -8,11 +8,10 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import javax.swing.ButtonGroup;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -365,7 +364,8 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
       // Explore Section
       add(new JSeparator(), "span 5, growx, wrap");
-      JPanel explorePanel = new JPanel(new MigLayout("insets 4, fillx", "[grow, fill][grow, fill]"));
+      JPanel explorePanel = new JPanel(new MigLayout(
+               "insets 4, fillx", "[grow, fill][grow, fill]"));
       explorePanel.setBorder(BorderFactory.createTitledBorder("Explore"));
 
       JButton openExploreButton = new JButton("Open");

@@ -4,12 +4,12 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,22 +22,21 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
-import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acqj.main.AcqEngMetadata;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.display.ndviewer2.AxesBridge;
 import org.micromanager.display.ndviewer2.NDViewer2DataProvider;
 import org.micromanager.display.ndviewer2.NDViewer2DataViewer;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.overlay.Overlay;
 
 /**
@@ -118,8 +117,8 @@ public class DeskewExploreManager {
                  .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 
          // Get camera info for initial setup
-         int imageWidth = (int) studio_.core().getImageWidth();
-         int imageHeight = (int) studio_.core().getImageHeight();
+         final int imageWidth = (int) studio_.core().getImageWidth();
+         final int imageHeight = (int) studio_.core().getImageHeight();
          bitDepth_ = (int) studio_.core().getImageBitDepth();
          pixelSizeUm_ = studio_.core().getPixelSizeUm();
          if (pixelSizeUm_ <= 0) {
@@ -230,8 +229,8 @@ public class DeskewExploreManager {
 
          // Read summary metadata from existing storage
          JSONObject summaryMetadata = storage_.getSummaryMetadata();
-         int imageWidth = summaryMetadata.optInt("Width", 512);
-         int imageHeight = summaryMetadata.optInt("Height", 512);
+         final int imageWidth = summaryMetadata.optInt("Width", 512);
+         final int imageHeight = summaryMetadata.optInt("Height", 512);
          bitDepth_ = summaryMetadata.optInt("BitDepth", 16);
          pixelSizeUm_ = summaryMetadata.optDouble("PixelSize_um", 1.0);
          if (pixelSizeUm_ <= 0) {
@@ -462,7 +461,8 @@ public class DeskewExploreManager {
          hasData = storage_ != null && !storage_.isFinished() && !storage_.getAxesSet().isEmpty();
       } catch (Exception e) {
          // Storage may already be in a bad state
-         studio_.logs().logMessage("Deskew Explore: could not check storage state: " + e.getMessage());
+         studio_.logs().logMessage("Deskew Explore: could not check storage state: "
+                  + e.getMessage());
       }
 
       if (hasData) {
@@ -480,7 +480,8 @@ public class DeskewExploreManager {
          if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
             // Cancel - don't close (but we can't really prevent NDViewer from closing)
             // At least don't delete the data
-            studio_.logs().logMessage("Deskew Explore: close cancelled, data remains in: " + storageDir_);
+            studio_.logs().logMessage("Deskew Explore: close cancelled, data remains in: "
+                     + storageDir_);
             stopExplore(false);  // Don't delete temp files
             return;
          } else if (choice == 0) {
@@ -495,7 +496,8 @@ public class DeskewExploreManager {
                saveDataTo(destDir);
             } else {
                // User cancelled save dialog - keep data in temp
-               studio_.logs().logMessage("Deskew Explore: save cancelled, data remains in: " + storageDir_);
+               studio_.logs().logMessage("Deskew Explore: save cancelled, data remains in: "
+                        + storageDir_);
                stopExplore(false);
                return;
             }
@@ -603,7 +605,8 @@ public class DeskewExploreManager {
 
       acquisitionExecutor_.submit(() -> {
          try {
-            studio_.logs().logMessage("Deskew Explore: acquiring tile at row=" + row + ", col=" + col);
+            studio_.logs().logMessage("Deskew Explore: acquiring tile at row=" + row + ", col="
+                     + col);
 
             // Get Z settings from MDA
             SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
@@ -651,6 +654,7 @@ public class DeskewExploreManager {
                try {
                   testStore.freeze();
                } catch (IOException ignored) {
+                  studio_.logs().logError("Ignoring IO Exception in DeskewExploreManager");
                }
                testStore.close();
                return;
@@ -660,13 +664,15 @@ public class DeskewExploreManager {
             studio_.logs().logMessage("Deskew Explore: calling processStackThroughDeskew");
             Image projectedImage = processStackThroughDeskew(testStore);
             studio_.logs().logMessage("Deskew Explore: processStackThroughDeskew returned: "
-                    + (projectedImage == null ? "null" : projectedImage.getWidth() + "x" + projectedImage.getHeight()));
+                    + (projectedImage == null ? "null" : projectedImage.getWidth() + "x"
+                     + projectedImage.getHeight()));
 
             if (projectedImage == null) {
                studio_.logs().showError("Deskew processing failed.");
                try {
                   testStore.freeze();
                } catch (IOException ignored) {
+                  studio_.logs().logError("Ignoring IO Exception in DeskewExploreManager");
                }
                testStore.close();
                return;
@@ -712,10 +718,12 @@ public class DeskewExploreManager {
             try {
                testStore.freeze();
             } catch (IOException ignored) {
+               studio_.logs().logError("Ignoring IO Exception in DeskewExploreManager");
             }
             testStore.close();
 
-            studio_.logs().logMessage("Deskew Explore: tile acquired at row=" + row + ", col=" + col);
+            studio_.logs().logMessage("Deskew Explore: tile acquired at row=" + row + ", col="
+                     + col);
 
          } catch (Exception e) {
             studio_.logs().logError(e, "Deskew Explore: error acquiring tile");
@@ -759,7 +767,8 @@ public class DeskewExploreManager {
                int row = tile.x;
                int col = tile.y;
 
-               studio_.logs().logMessage("Deskew Explore: acquiring tile " + (i + 1) + "/" + tiles.size()
+               studio_.logs().logMessage("Deskew Explore: acquiring tile " + (i + 1) + "/"
+                        + tiles.size()
                        + " at row=" + row + ", col=" + col);
 
                // Calculate target stage position relative to initial position
@@ -840,10 +849,12 @@ public class DeskewExploreManager {
          studio_.logs().logMessage("Deskew Explore: test store has " + numImages + " images");
 
          if (numImages == 0) {
-            studio_.logs().showError("Test acquisition produced no images at row=" + row + ", col=" + col);
+            studio_.logs().showError("Test acquisition produced no images at row=" + row + ", col="
+                     + col);
             try {
                testStore.freeze();
             } catch (IOException ignored) {
+               studio_.logs().logError("IOException ignored in DeskewExploreManager");
             }
             testStore.close();
             return;
@@ -857,6 +868,7 @@ public class DeskewExploreManager {
             try {
                testStore.freeze();
             } catch (IOException ignored) {
+               studio_.logs().logError("IOException ignored in DeskewExploreManager");
             }
             testStore.close();
             return;
@@ -901,13 +913,15 @@ public class DeskewExploreManager {
          try {
             testStore.freeze();
          } catch (IOException ignored) {
+            studio_.logs().logError("IOException ignored in DeskewExploreManager");
          }
          testStore.close();
 
          studio_.logs().logMessage("Deskew Explore: tile acquired at row=" + row + ", col=" + col);
 
       } catch (Exception e) {
-         studio_.logs().logError(e, "Deskew Explore: error acquiring tile at row=" + row + ", col=" + col);
+         studio_.logs().logError(e, "Deskew Explore: error acquiring tile at row=" + row + ", col="
+                  + col);
       }
    }
 
@@ -1119,7 +1133,7 @@ public class DeskewExploreManager {
     * Moves the stage so that the given pixel position (in the projected/tile coordinate
     * space) becomes the center of the field of view.
     *
-    * The coordinate system is:
+    * <p>The coordinate system is:
     * - Tile (0,0) has its center at pixel (tileWidth/2, tileHeight/2)
     * - Tile (0,0) was acquired with stage at (initialStageX_, initialStageY_)
     * - So pixel (tileWidth/2, tileHeight/2) corresponds to stage (initialStageX_, initialStageY_)
