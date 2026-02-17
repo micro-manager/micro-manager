@@ -127,7 +127,7 @@ public final class SequenceGenerator {
       }
       List<Double> exposures = new ArrayList<>(channels.size());
       for (AcqChannel ch : channels) {
-         exposures.add(ch.exposure);
+         exposures.add(ch != null ? ch.exposure : null);
       }
       return allEqual(exposures);
    }
