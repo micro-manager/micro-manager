@@ -248,4 +248,22 @@ public final class NDViewer2DataProvider implements DataProvider {
          // Image may not be written yet; ignore
       }
    }
+
+   /**
+    * Notify this data provider that a new image has arrived.
+    * Uses the provided Image directly instead of reading from storage,
+    * which avoids issues with storage indexing delays.
+    *
+    * @param image the image that arrived
+    * @param axes  the NDViewer axes of the new image
+    */
+   public void newImageArrived(Image image, HashMap<String, Object> axes) {
+      Object ch = axes.get(NDViewer.CHANNEL_AXIS);
+      if (ch != null) {
+         axesBridge_.registerChannel(ch);
+      }
+      if (image != null) {
+         eventBus_.post(new DefaultNewImageEvent(image, this));
+      }
+   }
 }

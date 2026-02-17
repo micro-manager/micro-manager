@@ -70,6 +70,7 @@ public class DeskewExploreManager {
 
    // State tracking
    private volatile boolean exploring_ = false;
+   private volatile boolean viewerClosing_ = false;  // Guard for onViewerClosed re-entrancy
    private boolean loadedData_ = false;  // True when viewing a loaded dataset
    private String storageDir_;
    private String acqName_;
@@ -97,6 +98,7 @@ public class DeskewExploreManager {
 
       try {
          exploring_ = true;
+         viewerClosing_ = false;
 
          // Create executors
          displayExecutor_ = Executors.newSingleThreadExecutor(r ->
@@ -208,6 +210,7 @@ public class DeskewExploreManager {
 
       try {
          exploring_ = true;
+         viewerClosing_ = false;
          loadedData_ = true;
 
          // Create executors
@@ -317,12 +320,17 @@ public class DeskewExploreManager {
       return new NDViewerAcqInterface() {
          @Override
          public boolean isFinished() {
-            return !exploring_;
+            // Always report finished so NDViewer does not show
+            // "Finish Acquisition?" dialog on close.
+            return true;
          }
 
          @Override
          public void abort() {
-            stopExplore();
+            // Don't call stopExplore() here — NDViewer calls abort()
+            // before dataSource.close(), which triggers onViewerClosed().
+            // If we called stopExplore() here, it would set exploring_=false
+            // and onViewerClosed() would skip the save prompt.
          }
 
          @Override
@@ -356,6 +364,9 @@ public class DeskewExploreManager {
     * @param deleteTempFiles If true, deletes the temporary storage directory
     */
    private void stopExplore(boolean deleteTempFiles) {
+      if (!exploring_) {
+         return; // Already stopped (re-entrant call)
+      }
       exploring_ = false;
       loadedData_ = false;
 
@@ -369,23 +380,7 @@ public class DeskewExploreManager {
          acquisitionExecutor_ = null;
       }
 
-      if (storage_ != null) {
-         try {
-            if (!storage_.isFinished()) {
-               storage_.finishedWriting();
-            }
-            storage_.close();
-         } catch (Exception e) {
-            studio_.logs().logError(e, "Error closing storage");
-         }
-         storage_ = null;
-      }
-
-      if (dataSource_ != null) {
-         dataSource_.setFinished(true);
-         dataSource_ = null;
-      }
-
+      // Close viewers BEFORE storage to avoid NPEs from pending repaints
       if (mm2Viewer_ != null) {
          mm2Viewer_.close();
          mm2Viewer_ = null;
@@ -393,8 +388,40 @@ public class DeskewExploreManager {
       mm2DataProvider_ = null;
       viewer_ = null;
 
-      if (deleteTempFiles) {
-         deleteTempStorage();
+      if (dataSource_ != null) {
+         dataSource_.setFinished(true);
+         dataSource_ = null;
+      }
+
+      // Close storage and optionally delete temp files on a background thread.
+      // NDViewer's close runs asynchronously on its own thread ("NDViewer closing
+      // thread"), so we must wait for it to finish before closing the storage or
+      // deleting files it may still be accessing.
+      final NDTiffStorage storageToClose = storage_;
+      final boolean doDelete = deleteTempFiles;
+      storage_ = null;
+      if (storageToClose != null || doDelete) {
+         new Thread(() -> {
+            // Give NDViewer's async close thread time to finish
+            try {
+               Thread.sleep(500);
+            } catch (InterruptedException ignored) {
+               Thread.currentThread().interrupt();
+            }
+            if (storageToClose != null) {
+               try {
+                  if (!storageToClose.isFinished()) {
+                     storageToClose.finishedWriting();
+                  }
+                  storageToClose.close();
+               } catch (Exception e) {
+                  studio_.logs().logError(e, "Error closing storage");
+               }
+            }
+            if (doDelete) {
+               deleteTempStorage();
+            }
+         }, "Deskew Explore cleanup").start();
       }
    }
 
@@ -403,6 +430,26 @@ public class DeskewExploreManager {
     * Prompts to save data if any tiles were acquired (only for new sessions, not loaded data).
     */
    public void onViewerClosed() {
+      // Guard against re-entrant calls:
+      // - stopExplore() closes the viewer, which triggers dataSource.close() → here
+      // - mm2Viewer_.close() below calls ndViewer_.close() → dataSource.close() → here
+      if (!exploring_ || viewerClosing_) {
+         return;
+      }
+      viewerClosing_ = true;
+
+      // The viewer is already closing (NDViewer triggered this via dataSource.close()).
+      // Only shut down MM2-specific resources (Inspector detach, stats queue) without
+      // calling ndViewer_.close() again — a second close would queue EDT runnables
+      // that NPE on NDViewer's partially-torn-down internal state.
+      if (mm2Viewer_ != null) {
+         mm2Viewer_.closeWithoutNDViewer();
+      }
+      // Null out viewer references so stopExplore() doesn't try to close them again.
+      mm2Viewer_ = null;
+      mm2DataProvider_ = null;
+      viewer_ = null;
+
       // If we opened an existing dataset, just close without prompting
       if (loadedData_) {
          stopExplore(false);  // Don't delete the user's data
@@ -644,15 +691,16 @@ public class DeskewExploreManager {
             if (displayExecutor_ != null && viewer_ != null) {
                final int tileRow = row;
                final int tileCol = col;
+               final Image tileImage = projectedImage;
                displayExecutor_.submit(() -> {
                   HashMap<String, Object> displayAxes = new HashMap<>();
                   displayAxes.put("row", tileRow);
                   displayAxes.put("column", tileCol);
                   if (mm2DataProvider_ != null) {
-                     mm2DataProvider_.newImageArrived(displayAxes);
+                     mm2DataProvider_.newImageArrived(tileImage, displayAxes);
                   }
                   if (mm2Viewer_ != null) {
-                     mm2Viewer_.newImageArrived(displayAxes);
+                     mm2Viewer_.newImageArrived(tileImage);
                   }
                   viewer_.newImageArrived(displayAxes);
                   viewer_.update();
@@ -833,15 +881,16 @@ public class DeskewExploreManager {
          if (displayExecutor_ != null && viewer_ != null) {
             final int tileRow = row;
             final int tileCol = col;
+            final Image tileImage = projectedImage;
             displayExecutor_.submit(() -> {
                HashMap<String, Object> displayAxes = new HashMap<>();
                displayAxes.put("row", tileRow);
                displayAxes.put("column", tileCol);
                if (mm2DataProvider_ != null) {
-                  mm2DataProvider_.newImageArrived(displayAxes);
+                  mm2DataProvider_.newImageArrived(tileImage, displayAxes);
                }
                if (mm2Viewer_ != null) {
-                  mm2Viewer_.newImageArrived(displayAxes);
+                  mm2Viewer_.newImageArrived(tileImage);
                }
                viewer_.newImageArrived(displayAxes);
                viewer_.update();

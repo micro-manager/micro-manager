@@ -190,9 +190,9 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    @Override
    public void close() {
-      // Don't close storage here - let the manager handle it
-      // so it can prompt the user to save first
-      storage_ = null;
+      // Don't close or null storage here - let the manager handle its lifecycle.
+      // NDViewer's async close thread may still access the data source after this
+      // returns, so storage_ must remain valid.
       manager_.onViewerClosed();
    }
 

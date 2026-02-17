@@ -60,6 +60,10 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // so that the resulting NDViewer repaint does not trigger a reverse sync.
    private volatile boolean updatingFromInspector_ = false;
 
+   // Feedback loop guard for position: true while we are pushing position
+   // to NDViewer, so that the resulting setImageHook does not recurse.
+   private volatile boolean updatingPosition_ = false;
+
    // Closed state
    private volatile boolean closed_ = false;
 
@@ -134,12 +138,18 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    @Override
    protected DisplaySettings handleDisplaySettings(
          DisplaySettings requestedSettings) {
+      if (closed_) {
+         return requestedSettings;
+      }
       // Apply MM settings to NDViewer contrast model
       updatingFromInspector_ = true;
       try {
          displaySettingsBridge_.applyToNDViewer(
                requestedSettings, ndViewer_.getDisplaySettingsObject());
          ndViewer_.update();
+      } catch (NullPointerException e) {
+         // NDViewer internals may already be torn down during close
+         // (async events from Inspector can arrive after data source is nulled)
       } finally {
          updatingFromInspector_ = false;
       }
@@ -148,14 +158,24 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
 
    @Override
    protected Coords handleDisplayPosition(Coords position) {
-      // Convert to NDViewer axes and move the viewer
-      HashMap<String, Object> axes = axesBridge_.coordsToNDViewer(position);
-      for (Map.Entry<String, Object> entry : axes.entrySet()) {
-         if (!NDViewer.CHANNEL_AXIS.equals(entry.getKey())
-               && entry.getValue() instanceof Number) {
-            ndViewer_.setAxisPosition(
-                  entry.getKey(), ((Number) entry.getValue()).intValue());
+      if (closed_) {
+         return position;
+      }
+      // Convert to NDViewer axes and move the viewer.
+      // Guard against recursion: setAxisPosition triggers setImageEvent
+      // which fires our setImageHook, calling setDisplayPosition again.
+      updatingPosition_ = true;
+      try {
+         HashMap<String, Object> axes = axesBridge_.coordsToNDViewer(position);
+         for (Map.Entry<String, Object> entry : axes.entrySet()) {
+            if (!NDViewer.CHANNEL_AXIS.equals(entry.getKey())
+                  && entry.getValue() instanceof Number) {
+               ndViewer_.setAxisPosition(
+                     entry.getKey(), ((Number) entry.getValue()).intValue());
+            }
          }
+      } finally {
+         updatingPosition_ = false;
       }
       return position;
    }
@@ -259,6 +279,10 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * Called by NDViewer whenever a new image is set (scrollbar moved, etc.).
     */
    private void onNDViewerImageChanged(HashMap<String, Object> axes) {
+      // Skip if we triggered this via handleDisplayPosition to avoid recursion
+      if (updatingPosition_) {
+         return;
+      }
       // Convert axes to Coords and update display position
       Coords newPosition = axesBridge_.ndViewerToCoords(axes);
       setDisplayPosition(newPosition);
@@ -307,23 +331,39 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       try {
          final Image image = dataProvider_.getImageByAxes(axes);
          if (image != null) {
-            // Delay stats submission to run after any pending EDT tasks
-            // (e.g. the histogram panel creation triggered by
-            // DataProviderHasNewImageEvent). This ensures the histogram
-            // panel exists before stats arrive.
-            SwingUtilities.invokeLater(() -> {
-               List<Image> images = new ArrayList<>();
-               images.add(image);
-               Coords position = image.getCoords();
-               setDisplayPosition(position);
-               ImageStatsRequest request = ImageStatsRequest.create(
-                     position, images, BoundsRectAndMask.unselected());
-               computeQueue_.submitRequest(request);
-            });
+            submitImageForStats(image);
          }
       } catch (IOException e) {
          // Non-critical — stats won't update for this image
       }
+   }
+
+   /**
+    * Notify this viewer that a new image has arrived.
+    * Uses the provided Image directly instead of reading from storage.
+    *
+    * @param image the image
+    */
+   public void newImageArrived(Image image) {
+      if (image != null) {
+         submitImageForStats(image);
+      }
+   }
+
+   private void submitImageForStats(final Image image) {
+      // Delay stats submission to run after any pending EDT tasks
+      // (e.g. the histogram panel creation triggered by
+      // DataProviderHasNewImageEvent). This ensures the histogram
+      // panel exists before stats arrive.
+      SwingUtilities.invokeLater(() -> {
+         List<Image> images = new ArrayList<>();
+         images.add(image);
+         Coords position = image.getCoords();
+         setDisplayPosition(position);
+         ImageStatsRequest request = ImageStatsRequest.create(
+               position, images, BoundsRectAndMask.unselected());
+         computeQueue_.submitRequest(request);
+      });
    }
 
    // ---- Viewer control ----
@@ -354,15 +394,41 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          return;
       }
       closed_ = true;
+      shutdownMM2Resources();
+      try {
+         ndViewer_.close();
+      } catch (Exception e) {
+         // NDViewer may already be closing/disposed — not critical
+      }
+   }
+
+   /**
+    * Shut down MM2-specific resources without touching NDViewer.
+    * Use this when NDViewer itself initiated the close (e.g. user clicked X)
+    * to avoid calling ndViewer_.close() a second time, which can queue
+    * additional EDT runnables that NPE on partially-torn-down state.
+    */
+   public void closeWithoutNDViewer() {
+      if (closed_) {
+         return;
+      }
+      closed_ = true;
+      shutdownMM2Resources();
+   }
+
+   private void shutdownMM2Resources() {
       try {
          computeQueue_.shutdown();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       }
       // Post close event so the Inspector detaches and DataViewerCollection
-      // removes us (no need to call removeViewer separately)
-      postEvent(DataViewerWillCloseEvent.create(this));
-      ndViewer_.close();
-      dispose();
+      // removes us. Defer to end of EDT queue so any already-queued Inspector
+      // events (e.g. newDisplaySettings iterating channelControllers_) finish
+      // before the detach modifies that list.
+      SwingUtilities.invokeLater(() -> {
+         postEvent(DataViewerWillCloseEvent.create(this));
+         dispose();
+      });
    }
 }
