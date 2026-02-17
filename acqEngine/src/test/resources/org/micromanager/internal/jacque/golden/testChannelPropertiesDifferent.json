@@ -48,6 +48,8 @@
     "defaultExposure": 10.0,
     "customIntervalsMs": []
   },
+  "mockCore": null,
+  "runnables": null,
   "expectedEvents": [
     {
       "frameIndex": 0,
@@ -81,7 +83,8 @@
       "channelColor": null,
       "burstData": null,
       "triggerSequence": null,
-      "metadata": null
+      "metadata": null,
+      "runnableCount": null
     },
     {
       "frameIndex": 0,
@@ -115,7 +118,8 @@
       "channelColor": null,
       "burstData": null,
       "triggerSequence": null,
-      "metadata": null
+      "metadata": null,
+      "runnableCount": null
     }
   ]
 }

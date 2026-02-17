@@ -1,11 +1,10 @@
 {
-  "description": "Autofocus with skip\u003d0 and positions, 3 frames, no slices, 1 channel, 2 positions, time first",
+  "description": "Property sequenceable but maxLength\u003d1 is less than 2 channels; blocks fast burst",
   "settings": {
-    "numFrames": 3,
+    "numFrames": 2,
     "frames": [
       0,
-      1,
-      2
+      1
     ],
     "slices": [],
     "channels": [
@@ -17,25 +16,52 @@
         "useChannel": true,
         "skipFrames": 0,
         "color": null,
-        "properties": {}
+        "properties": {
+          "FilterWheel": {
+            "Position": "1"
+          }
+        }
+      },
+      {
+        "name": "Ch1",
+        "exposure": 100.0,
+        "zOffset": 0.0,
+        "useZStack": true,
+        "useChannel": true,
+        "skipFrames": 0,
+        "color": null,
+        "properties": {
+          "FilterWheel": {
+            "Position": "2"
+          }
+        }
       }
     ],
-    "positions": [
-      0,
-      1
-    ],
+    "positions": null,
     "slicesFirst": false,
     "timeFirst": true,
     "keepShutterOpenSlices": false,
     "keepShutterOpenChannels": false,
-    "useAutofocus": true,
+    "useAutofocus": false,
     "autofocusSkip": 0,
     "relativeSlices": false,
     "intervalMs": 0.0,
     "defaultExposure": 10.0,
     "customIntervalsMs": []
   },
-  "mockCore": null,
+  "mockCore": {
+    "focusDevice": "",
+    "stageSequenceable": null,
+    "stageSequenceMaxLength": null,
+    "propertySequencing": {
+      "FilterWheel": {
+        "Position": {
+          "sequenceable": true,
+          "maxLength": 1
+        }
+      }
+    }
+  },
   "runnables": null,
   "expectedEvents": [
     {
@@ -48,70 +74,8 @@
       "exposure": 100.0,
       "slice": null,
       "waitTimeMs": 0.0,
-      "autofocus": true,
+      "autofocus": false,
       "newPosition": true,
-      "closeShutter": true,
-      "relativeZ": false,
-      "task": "snap",
-      "nextFrameIndex": 1,
-      "channelName": "Ch0",
-      "burstLength": 0,
-      "camera": null,
-      "channelProperties": {},
-      "channelExposure": 100.0,
-      "channelZOffset": 0.0,
-      "channelUseZStack": true,
-      "channelUseChannel": true,
-      "channelSkipFrames": 0,
-      "channelColor": null,
-      "burstData": null,
-      "triggerSequence": null,
-      "metadata": null,
-      "runnableCount": null
-    },
-    {
-      "frameIndex": 1,
-      "sliceIndex": 0,
-      "channelIndex": 0,
-      "positionIndex": 0,
-      "cameraChannelIndex": 0,
-      "position": 0,
-      "exposure": 100.0,
-      "slice": null,
-      "waitTimeMs": 0.0,
-      "autofocus": true,
-      "newPosition": false,
-      "closeShutter": true,
-      "relativeZ": false,
-      "task": "snap",
-      "nextFrameIndex": 2,
-      "channelName": "Ch0",
-      "burstLength": 0,
-      "camera": null,
-      "channelProperties": {},
-      "channelExposure": 100.0,
-      "channelZOffset": 0.0,
-      "channelUseZStack": true,
-      "channelUseChannel": true,
-      "channelSkipFrames": 0,
-      "channelColor": null,
-      "burstData": null,
-      "triggerSequence": null,
-      "metadata": null,
-      "runnableCount": null
-    },
-    {
-      "frameIndex": 2,
-      "sliceIndex": 0,
-      "channelIndex": 0,
-      "positionIndex": 0,
-      "cameraChannelIndex": 0,
-      "position": 0,
-      "exposure": 100.0,
-      "slice": null,
-      "waitTimeMs": 0.0,
-      "autofocus": true,
-      "newPosition": false,
       "closeShutter": true,
       "relativeZ": false,
       "task": "snap",
@@ -119,7 +83,11 @@
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {},
+      "channelProperties": {
+        "FilterWheel": {
+          "Position": "1"
+        }
+      },
       "channelExposure": 100.0,
       "channelZOffset": 0.0,
       "channelUseZStack": true,
@@ -134,23 +102,27 @@
     {
       "frameIndex": 0,
       "sliceIndex": 0,
-      "channelIndex": 0,
-      "positionIndex": 1,
+      "channelIndex": 1,
+      "positionIndex": 0,
       "cameraChannelIndex": 0,
-      "position": 1,
+      "position": 0,
       "exposure": 100.0,
       "slice": null,
-      "waitTimeMs": 0.0,
-      "autofocus": true,
-      "newPosition": true,
+      "waitTimeMs": null,
+      "autofocus": false,
+      "newPosition": false,
       "closeShutter": true,
       "relativeZ": false,
       "task": "snap",
       "nextFrameIndex": 1,
-      "channelName": "Ch0",
+      "channelName": "Ch1",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {},
+      "channelProperties": {
+        "FilterWheel": {
+          "Position": "2"
+        }
+      },
       "channelExposure": 100.0,
       "channelZOffset": 0.0,
       "channelUseZStack": true,
@@ -166,22 +138,26 @@
       "frameIndex": 1,
       "sliceIndex": 0,
       "channelIndex": 0,
-      "positionIndex": 1,
+      "positionIndex": 0,
       "cameraChannelIndex": 0,
-      "position": 1,
+      "position": 0,
       "exposure": 100.0,
       "slice": null,
       "waitTimeMs": 0.0,
-      "autofocus": true,
+      "autofocus": false,
       "newPosition": false,
       "closeShutter": true,
       "relativeZ": false,
       "task": "snap",
-      "nextFrameIndex": 2,
+      "nextFrameIndex": 1,
       "channelName": "Ch0",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {},
+      "channelProperties": {
+        "FilterWheel": {
+          "Position": "1"
+        }
+      },
       "channelExposure": 100.0,
       "channelZOffset": 0.0,
       "channelUseZStack": true,
@@ -194,25 +170,29 @@
       "runnableCount": null
     },
     {
-      "frameIndex": 2,
+      "frameIndex": 1,
       "sliceIndex": 0,
-      "channelIndex": 0,
-      "positionIndex": 1,
+      "channelIndex": 1,
+      "positionIndex": 0,
       "cameraChannelIndex": 0,
-      "position": 1,
+      "position": 0,
       "exposure": 100.0,
       "slice": null,
-      "waitTimeMs": 0.0,
-      "autofocus": true,
+      "waitTimeMs": null,
+      "autofocus": false,
       "newPosition": false,
       "closeShutter": true,
       "relativeZ": false,
       "task": "snap",
       "nextFrameIndex": null,
-      "channelName": "Ch0",
+      "channelName": "Ch1",
       "burstLength": 0,
       "camera": null,
-      "channelProperties": {},
+      "channelProperties": {
+        "FilterWheel": {
+          "Position": "2"
+        }
+      },
       "channelExposure": 100.0,
       "channelZOffset": 0.0,
       "channelUseZStack": true,

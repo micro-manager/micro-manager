@@ -143,7 +143,7 @@ public class SequenceGeneratorGoldenTest {
          KW_PROPERTIES, KW_SLICES);
 
    private static Object cljGenerate;
-   private static HelperMockCore mockCore;
+   private static clojure.lang.IFn storeMmcoreFn;
 
    private final String testName;
    private final String fileName;
@@ -179,12 +179,12 @@ public class SequenceGeneratorGoldenTest {
 
    @BeforeClass
    public static void setup() throws Exception {
-      mockCore = new HelperMockCore();
       Object require = RT.var("clojure.core", "require");
       ((clojure.lang.IFn) require).invoke(
             Symbol.intern("org.micromanager.mm"));
-      ((clojure.lang.IFn) RT.var("org.micromanager.mm",
-            "store-mmcore")).invoke(mockCore);
+      storeMmcoreFn = (clojure.lang.IFn) RT.var(
+            "org.micromanager.mm", "store-mmcore");
+      storeMmcoreFn.invoke(new HelperMockCore());
       ((clojure.lang.IFn) require).invoke(
             Symbol.intern("org.micromanager.sequence-generator"));
       cljGenerate = RT.var("org.micromanager.sequence-generator",
@@ -244,8 +244,12 @@ public class SequenceGeneratorGoldenTest {
       HelperGoldenFileIO.TestCase tc = loadTestCase();
       AcqSettings settings =
             HelperGoldenFileIO.settingsFromJson(tc.settings);
+      HelperMockCore core =
+            HelperGoldenFileIO.mockCoreFromJson(tc.mockCore);
+      List<SequenceGenerator.AttachedRunnable> runnables =
+            toJavaRunnables(tc.runnables);
       List<AcqEvent> javaResult = SequenceGenerator
-            .generateAcqSequence(settings, null, mockCore).toList();
+            .generateAcqSequence(settings, runnables, core).toList();
 
       if (isRecordMode()) {
          if (recordFromJava()) {
@@ -279,9 +283,14 @@ public class SequenceGeneratorGoldenTest {
       AcqSettings settings =
             HelperGoldenFileIO.settingsFromJson(tc.settings);
 
+      HelperMockCore core =
+            HelperGoldenFileIO.mockCoreFromJson(tc.mockCore);
+      storeMmcoreFn.invoke(core);
+
       Object cljSettings = toClojureSettings(settings);
+      Object cljRunnables = toCljRunnables(tc.runnables);
       Object cljResult = ((clojure.lang.IFn) cljGenerate)
-            .invoke(cljSettings, null);
+            .invoke(cljSettings, cljRunnables);
       List<AcqEvent> cljEvents = cljSeqToAcqEvents(cljResult);
 
       if (isRecordMode()) {
@@ -362,6 +371,53 @@ public class SequenceGeneratorGoldenTest {
             KW_INTERVAL_MS, s.intervalMs,
             KW_DEFAULT_EXPOSURE, s.defaultExposure,
             KW_CUSTOM_INTERVALS_MS, customIntervals);
+   }
+
+   // --- Runnables conversion ---
+
+   private static final Runnable NOOP = () -> { };
+
+   private static List<SequenceGenerator.AttachedRunnable>
+         toJavaRunnables(
+               List<HelperGoldenFileIO.RunnableSpecJson> specs) {
+      if (specs == null || specs.isEmpty()) {
+         return null;
+      }
+      List<SequenceGenerator.AttachedRunnable> result =
+            new ArrayList<>(specs.size());
+      for (HelperGoldenFileIO.RunnableSpecJson s : specs) {
+         result.add(new SequenceGenerator.AttachedRunnable(
+               s.frameIndex, s.positionIndex,
+               s.channelIndex, s.sliceIndex, NOOP));
+      }
+      return result;
+   }
+
+   private static Object toCljRunnables(
+         List<HelperGoldenFileIO.RunnableSpecJson> specs) {
+      if (specs == null || specs.isEmpty()) {
+         return null;
+      }
+      List<Object> pairs = new ArrayList<>();
+      for (HelperGoldenFileIO.RunnableSpecJson s : specs) {
+         IPersistentMap template = PersistentArrayMap.EMPTY;
+         if (s.frameIndex >= 0) {
+            template = template.assoc(KW_FRAME_INDEX, s.frameIndex);
+         }
+         if (s.positionIndex >= 0) {
+            template = template.assoc(KW_POSITION_INDEX,
+                  s.positionIndex);
+         }
+         if (s.channelIndex >= 0) {
+            template = template.assoc(KW_CHANNEL_INDEX,
+                  s.channelIndex);
+         }
+         if (s.sliceIndex >= 0) {
+            template = template.assoc(KW_SLICE_INDEX, s.sliceIndex);
+         }
+         pairs.add(PersistentVector.create(template, NOOP));
+      }
+      return PersistentVector.create(pairs);
    }
 
    private static List<AcqEvent> cljSeqToAcqEvents(Object cljResult) {
@@ -489,6 +545,16 @@ public class SequenceGeneratorGoldenTest {
       Object cljMeta = m.valAt(KW_METADATA);
       if (cljMeta instanceof IPersistentMap) {
          e.metadata = cljStringMapToJava((IPersistentMap) cljMeta);
+      }
+      Object cljRunnables = m.valAt(KW_RUNNABLES);
+      if (cljRunnables != null) {
+         List<Object> runnableItems = realizeCljSeq(cljRunnables);
+         if (!runnableItems.isEmpty()) {
+            e.runnables = new ArrayList<>();
+            for (Object ignored : runnableItems) {
+               e.runnables.add(() -> { });
+            }
+         }
       }
       return e;
    }
