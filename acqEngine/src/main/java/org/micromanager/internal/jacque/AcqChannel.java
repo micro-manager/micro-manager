@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -38,6 +39,27 @@ public final class AcqChannel {
       ch.properties = configToProperties(
             mmc.getConfigData(channelGroup, cs.config()));
       return ch;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof AcqChannel)) return false;
+      AcqChannel that = (AcqChannel) o;
+      return Double.compare(that.exposure, exposure) == 0
+            && Double.compare(that.zOffset, zOffset) == 0
+            && useZStack == that.useZStack
+            && skipFrames == that.skipFrames
+            && useChannel == that.useChannel
+            && Objects.equals(name, that.name)
+            && Objects.equals(color, that.color)
+            && Objects.equals(properties, that.properties);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(name, exposure, zOffset, useZStack, skipFrames,
+            useChannel, color, properties);
    }
 
    private static Map<List<String>, String> configToProperties(
