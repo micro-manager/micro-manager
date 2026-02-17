@@ -143,7 +143,7 @@ public class SequenceGeneratorGoldenTest {
          KW_PROPERTIES, KW_SLICES);
 
    private static Object cljGenerate;
-   private static CoreOps noBurstCore;
+   private static HelperMockCore mockCore;
 
    private final String testName;
    private final String fileName;
@@ -179,42 +179,16 @@ public class SequenceGeneratorGoldenTest {
 
    @BeforeClass
    public static void setup() throws Exception {
-      Object mmc = new mmcorej.CMMCore();
+      mockCore = new HelperMockCore();
       Object require = RT.var("clojure.core", "require");
       ((clojure.lang.IFn) require).invoke(
             Symbol.intern("org.micromanager.mm"));
       ((clojure.lang.IFn) RT.var("org.micromanager.mm",
-            "store-mmcore")).invoke(mmc);
+            "store-mmcore")).invoke(mockCore);
       ((clojure.lang.IFn) require).invoke(
             Symbol.intern("org.micromanager.sequence-generator"));
       cljGenerate = RT.var("org.micromanager.sequence-generator",
             "generate-acq-sequence");
-      noBurstCore = new CoreOps() {
-         @Override
-         public boolean isPropertySequenceable(String d, String p) {
-            return false;
-         }
-
-         @Override
-         public int getPropertySequenceMaxLength(String d, String p) {
-            return 0;
-         }
-
-         @Override
-         public String getFocusDevice() {
-            return "";
-         }
-
-         @Override
-         public boolean isStageSequenceable(String d) {
-            return false;
-         }
-
-         @Override
-         public int getStageSequenceMaxLength(String d) {
-            return 0;
-         }
-      };
    }
 
    private HelperGoldenFileIO.TestCase loadTestCase() throws IOException {
@@ -271,7 +245,7 @@ public class SequenceGeneratorGoldenTest {
       AcqSettings settings =
             HelperGoldenFileIO.settingsFromJson(tc.settings);
       List<AcqEvent> javaResult = SequenceGenerator
-            .generateAcqSequence(settings, null, noBurstCore).toList();
+            .generateAcqSequence(settings, null, mockCore).toList();
 
       if (isRecordMode()) {
          if (recordFromJava()) {
