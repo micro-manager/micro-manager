@@ -1,0 +1,157 @@
+{
+  "description": "Fast burst with one channel that has properties; burst sub-events have metadata from makeChannelMetadata",
+  "settings": {
+    "numFrames": 2,
+    "frames": [
+      0,
+      1
+    ],
+    "slices": [],
+    "channels": [
+      {
+        "name": "DAPI",
+        "exposure": 100.0,
+        "zOffset": 0.0,
+        "useZStack": true,
+        "useChannel": true,
+        "skipFrames": 0,
+        "color": null,
+        "properties": {
+          "FilterWheel": {
+            "Position": "1"
+          }
+        }
+      }
+    ],
+    "positions": null,
+    "slicesFirst": false,
+    "timeFirst": true,
+    "keepShutterOpenSlices": false,
+    "keepShutterOpenChannels": false,
+    "useAutofocus": false,
+    "autofocusSkip": 0,
+    "relativeSlices": false,
+    "intervalMs": 0.0,
+    "defaultExposure": 10.0,
+    "customIntervalsMs": []
+  },
+  "mockCore": null,
+  "runnables": null,
+  "expectedEvents": [
+    {
+      "frameIndex": 0,
+      "sliceIndex": 0,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 100.0,
+      "slice": null,
+      "waitTimeMs": 0.0,
+      "autofocus": false,
+      "newPosition": false,
+      "closeShutter": false,
+      "relativeZ": false,
+      "task": "burst",
+      "nextFrameIndex": 1,
+      "channelName": "DAPI",
+      "burstLength": 2,
+      "camera": null,
+      "channelProperties": {
+        "FilterWheel": {
+          "Position": "1"
+        }
+      },
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": [
+        {
+          "frameIndex": 0,
+          "sliceIndex": 0,
+          "channelIndex": 0,
+          "positionIndex": 0,
+          "cameraChannelIndex": 0,
+          "position": 0,
+          "exposure": 100.0,
+          "slice": null,
+          "waitTimeMs": 0.0,
+          "autofocus": false,
+          "newPosition": false,
+          "closeShutter": false,
+          "relativeZ": false,
+          "task": null,
+          "nextFrameIndex": 1,
+          "channelName": "DAPI",
+          "burstLength": 0,
+          "camera": null,
+          "channelProperties": {
+            "FilterWheel": {
+              "Position": "1"
+            }
+          },
+          "channelExposure": 100.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
+          "channelColor": null,
+          "burstData": null,
+          "triggerSequence": null,
+          "metadata": {
+            "FilterWheel-Position": "1"
+          },
+          "runnableCount": null
+        },
+        {
+          "frameIndex": 1,
+          "sliceIndex": 0,
+          "channelIndex": 0,
+          "positionIndex": 0,
+          "cameraChannelIndex": 0,
+          "position": 0,
+          "exposure": 100.0,
+          "slice": null,
+          "waitTimeMs": 0.0,
+          "autofocus": false,
+          "newPosition": false,
+          "closeShutter": false,
+          "relativeZ": false,
+          "task": null,
+          "nextFrameIndex": 2,
+          "channelName": "DAPI",
+          "burstLength": 0,
+          "camera": null,
+          "channelProperties": {
+            "FilterWheel": {
+              "Position": "1"
+            }
+          },
+          "channelExposure": 100.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
+          "channelColor": null,
+          "burstData": null,
+          "triggerSequence": null,
+          "metadata": {
+            "FilterWheel-Position": "1"
+          },
+          "runnableCount": null
+        }
+      ],
+      "triggerSequence": {
+        "properties": {},
+        "slices": null
+      },
+      "metadata": {
+        "FilterWheel-Position": "1"
+      },
+      "runnableCount": null
+    }
+  ]
+}
