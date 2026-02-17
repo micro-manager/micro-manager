@@ -1,14 +1,16 @@
 {
-  "description": "Runnable acts as burst boundary on the default path (customIntervalsMs blocks fast burst)",
+  "description": "Default path stage bursting via event-triggerable (autofocus blocks fast burst)",
   "settings": {
-    "numFrames": 4,
+    "numFrames": 2,
     "frames": [
       0,
-      1,
-      2,
-      3
+      1
     ],
-    "slices": [],
+    "slices": [
+      0.0,
+      1.0,
+      2.0
+    ],
     "channels": [
       {
         "name": "Ch0",
@@ -22,31 +24,24 @@
       }
     ],
     "positions": null,
-    "slicesFirst": false,
+    "slicesFirst": true,
     "timeFirst": true,
     "keepShutterOpenSlices": false,
     "keepShutterOpenChannels": false,
-    "useAutofocus": false,
+    "useAutofocus": true,
     "autofocusSkip": 0,
     "relativeSlices": false,
     "intervalMs": 0.0,
     "defaultExposure": 10.0,
-    "customIntervalsMs": [
-      0.0,
-      0.0,
-      0.0,
-      0.0
-    ]
+    "customIntervalsMs": []
   },
-  "mockCore": null,
-  "runnables": [
-    {
-      "frameIndex": 2,
-      "positionIndex": -1,
-      "channelIndex": -1,
-      "sliceIndex": -1
-    }
-  ],
+  "mockCore": {
+    "focusDevice": "ZStage",
+    "stageSequenceable": true,
+    "stageSequenceMaxLength": 100,
+    "propertySequencing": null
+  },
+  "runnables": null,
   "expectedEvents": [
     {
       "frameIndex": 0,
@@ -56,16 +51,16 @@
       "cameraChannelIndex": 0,
       "position": 0,
       "exposure": 100.0,
-      "slice": null,
+      "slice": 0.0,
       "waitTimeMs": 0.0,
-      "autofocus": false,
+      "autofocus": true,
       "newPosition": true,
       "closeShutter": true,
       "relativeZ": false,
       "task": "burst",
-      "nextFrameIndex": 2,
+      "nextFrameIndex": 1,
       "channelName": "Ch0",
-      "burstLength": 2,
+      "burstLength": 3,
       "camera": null,
       "channelProperties": {},
       "channelExposure": 100.0,
@@ -83,9 +78,9 @@
           "cameraChannelIndex": 0,
           "position": 0,
           "exposure": 100.0,
-          "slice": null,
+          "slice": 0.0,
           "waitTimeMs": 0.0,
-          "autofocus": false,
+          "autofocus": true,
           "newPosition": true,
           "closeShutter": true,
           "relativeZ": false,
@@ -107,15 +102,46 @@
           "runnableCount": null
         },
         {
-          "frameIndex": 1,
-          "sliceIndex": 0,
+          "frameIndex": 0,
+          "sliceIndex": 1,
           "channelIndex": 0,
           "positionIndex": 0,
           "cameraChannelIndex": 0,
           "position": 0,
           "exposure": 100.0,
-          "slice": null,
-          "waitTimeMs": 0.0,
+          "slice": 1.0,
+          "waitTimeMs": null,
+          "autofocus": false,
+          "newPosition": false,
+          "closeShutter": true,
+          "relativeZ": false,
+          "task": null,
+          "nextFrameIndex": null,
+          "channelName": "Ch0",
+          "burstLength": 0,
+          "camera": null,
+          "channelProperties": {},
+          "channelExposure": 100.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
+          "channelColor": null,
+          "burstData": null,
+          "triggerSequence": null,
+          "metadata": null,
+          "runnableCount": null
+        },
+        {
+          "frameIndex": 0,
+          "sliceIndex": 2,
+          "channelIndex": 0,
+          "positionIndex": 0,
+          "cameraChannelIndex": 0,
+          "position": 0,
+          "exposure": 100.0,
+          "slice": 2.0,
+          "waitTimeMs": null,
           "autofocus": false,
           "newPosition": false,
           "closeShutter": true,
@@ -140,29 +166,33 @@
       ],
       "triggerSequence": {
         "properties": {},
-        "slices": null
+        "slices": [
+          0.0,
+          1.0,
+          2.0
+        ]
       },
       "metadata": null,
       "runnableCount": null
     },
     {
-      "frameIndex": 2,
+      "frameIndex": 1,
       "sliceIndex": 0,
       "channelIndex": 0,
       "positionIndex": 0,
       "cameraChannelIndex": 0,
       "position": 0,
       "exposure": 100.0,
-      "slice": null,
+      "slice": 0.0,
       "waitTimeMs": 0.0,
-      "autofocus": false,
+      "autofocus": true,
       "newPosition": false,
       "closeShutter": true,
       "relativeZ": false,
       "task": "burst",
       "nextFrameIndex": null,
       "channelName": "Ch0",
-      "burstLength": 2,
+      "burstLength": 3,
       "camera": null,
       "channelProperties": {},
       "channelExposure": 100.0,
@@ -173,15 +203,46 @@
       "channelColor": null,
       "burstData": [
         {
-          "frameIndex": 2,
+          "frameIndex": 1,
           "sliceIndex": 0,
           "channelIndex": 0,
           "positionIndex": 0,
           "cameraChannelIndex": 0,
           "position": 0,
           "exposure": 100.0,
-          "slice": null,
+          "slice": 0.0,
           "waitTimeMs": 0.0,
+          "autofocus": true,
+          "newPosition": false,
+          "closeShutter": true,
+          "relativeZ": false,
+          "task": null,
+          "nextFrameIndex": null,
+          "channelName": "Ch0",
+          "burstLength": 0,
+          "camera": null,
+          "channelProperties": {},
+          "channelExposure": 100.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
+          "channelColor": null,
+          "burstData": null,
+          "triggerSequence": null,
+          "metadata": null,
+          "runnableCount": null
+        },
+        {
+          "frameIndex": 1,
+          "sliceIndex": 1,
+          "channelIndex": 0,
+          "positionIndex": 0,
+          "cameraChannelIndex": 0,
+          "position": 0,
+          "exposure": 100.0,
+          "slice": 1.0,
+          "waitTimeMs": null,
           "autofocus": false,
           "newPosition": false,
           "closeShutter": true,
@@ -201,18 +262,18 @@
           "burstData": null,
           "triggerSequence": null,
           "metadata": null,
-          "runnableCount": 1
+          "runnableCount": null
         },
         {
-          "frameIndex": 3,
-          "sliceIndex": 0,
+          "frameIndex": 1,
+          "sliceIndex": 2,
           "channelIndex": 0,
           "positionIndex": 0,
           "cameraChannelIndex": 0,
           "position": 0,
           "exposure": 100.0,
-          "slice": null,
-          "waitTimeMs": 0.0,
+          "slice": 2.0,
+          "waitTimeMs": null,
           "autofocus": false,
           "newPosition": false,
           "closeShutter": true,
@@ -237,10 +298,14 @@
       ],
       "triggerSequence": {
         "properties": {},
-        "slices": null
+        "slices": [
+          0.0,
+          1.0,
+          2.0
+        ]
       },
       "metadata": null,
-      "runnableCount": 1
+      "runnableCount": null
     }
   ]
 }
