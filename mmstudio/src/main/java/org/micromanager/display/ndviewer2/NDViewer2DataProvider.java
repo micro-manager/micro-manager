@@ -226,6 +226,50 @@ public final class NDViewer2DataProvider implements DataProvider {
    }
 
    /**
+    * Fetch a downsampled version of the image for histogram computation.
+    * Uses the coarsest available pyramid level. Falls back to full-res
+    * if the storage is not multi-resolution or has only one level.
+    *
+    * @param coords the image coordinates
+    * @return downsampled image, or full-res image as fallback, or null
+    */
+   public Image getDownsampledImage(Coords coords) throws IOException {
+      int numLevels = storage_.getNumResLevels();
+      if (numLevels <= 1) {
+         return getImage(coords);
+      }
+      HashMap<String, Object> axes = axesBridge_.coordsToNDViewer(coords);
+      int resLevel = numLevels - 1;
+      TaggedImage ti = storage_.getImage(axes, resLevel);
+      if (ti == null || ti.pix == null) {
+         return getImage(coords);
+      }
+      return new DefaultImage(ti, coords, null);
+   }
+
+   /**
+    * Fetch a downsampled version of the image by NDViewer axes.
+    * Uses the coarsest available pyramid level. Falls back to full-res
+    * if the storage has only one level or the pyramid level is missing.
+    *
+    * @param axes the NDViewer axes map
+    * @return downsampled image, or null if not found
+    */
+   public Image getDownsampledImageByAxes(HashMap<String, Object> axes)
+         throws IOException {
+      int numLevels = storage_.getNumResLevels();
+      int resLevel = Math.max(0, numLevels - 1);
+      TaggedImage ti = (numLevels > 1)
+            ? storage_.getImage(axes, resLevel)
+            : storage_.getImage(axes);
+      if (ti == null || ti.pix == null) {
+         return null;
+      }
+      Coords coords = axesBridge_.ndViewerToCoords(axes);
+      return new DefaultImage(ti, coords, null);
+   }
+
+   /**
     * Notify this data provider that a new image has arrived at the given axes.
     * Called by NDTiffAndViewerAdapter when putImage() is invoked.
     *

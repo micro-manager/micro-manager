@@ -360,7 +360,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
 
    private void submitStatsRequest(Coords position) {
       try {
-         List<Image> images = getDisplayedImages();
+         List<Image> images = getDownsampledImages(position);
          if (!images.isEmpty()) {
             ImageStatsRequest request = ImageStatsRequest.create(
                   position, images, BoundsRectAndMask.unselected());
@@ -369,6 +369,38 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       } catch (IOException e) {
          // Non-critical — stats won't update for this frame
       }
+   }
+
+   /**
+    * Fetch downsampled images for histogram computation at the given position.
+    * Mirrors getDisplayedImages() but uses the coarsest pyramid level.
+    */
+   private List<Image> getDownsampledImages(Coords position) throws IOException {
+      List<Image> images = new ArrayList<>();
+      if (position == null) {
+         return images;
+      }
+      List<String> channels = axesBridge_.getChannelNames();
+      DisplaySettings ds = getDisplaySettings();
+      for (int i = 0; i < channels.size(); i++) {
+         boolean visible = (i < ds.getNumberOfChannels())
+               ? ds.isChannelVisible(i) : true;
+         if (!visible) {
+            continue;
+         }
+         Coords chCoords = position.copyBuilder().channel(i).build();
+         Image img = dataProvider_.getDownsampledImage(chCoords);
+         if (img != null) {
+            images.add(img);
+         }
+      }
+      if (images.isEmpty()) {
+         Image img = dataProvider_.getDownsampledImage(position);
+         if (img != null) {
+            images.add(img);
+         }
+      }
+      return images;
    }
 
    // ---- New image notification ----
@@ -385,7 +417,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     */
    public void newImageArrived(HashMap<String, Object> axes) {
       try {
-         final Image image = dataProvider_.getImageByAxes(axes);
+         final Image image = dataProvider_.getDownsampledImageByAxes(axes);
          if (image != null) {
             submitImageForStats(image);
          }
