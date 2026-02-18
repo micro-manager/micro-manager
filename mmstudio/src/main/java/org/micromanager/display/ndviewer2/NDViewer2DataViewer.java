@@ -22,8 +22,10 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
+import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
@@ -63,6 +65,19 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // Feedback loop guard for position: true while we are pushing position
    // to NDViewer, so that the resulting setImageHook does not recurse.
    private volatile boolean updatingPosition_ = false;
+
+   // Accumulated stats across all tiles (null until first image arrives).
+   // Used by newImageArrived() path to build a global histogram.
+   private volatile ImageStats accumulatedStats_;
+
+   // When true, newImageArrived() stats are merged into accumulatedStats_
+   // and ALL stats results (including scrollbar navigation) post the
+   // accumulated histogram. Set to true for the entire explore session.
+   private volatile boolean accumulateMode_ = false;
+
+   // True when the current stats computation is for a newly arrived image
+   // (should be merged into the accumulator). Reset after processing.
+   private volatile boolean accumulateNext_ = false;
 
    // Closed state
    private volatile boolean closed_ = false;
@@ -144,15 +159,21 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       if (closed_) {
          return requestedSettings;
       }
-      // Apply MM settings to NDViewer contrast model
       updatingFromInspector_ = true;
       try {
+         // Read current NDViewer state BEFORE applying
+         DisplaySettings currentNDViewerSettings =
+               displaySettingsBridge_.readFromNDViewer(
+                     ndViewer_.getDisplaySettingsObject(), requestedSettings);
+
+         // Apply MM settings to NDViewer contrast model
          displaySettingsBridge_.applyToNDViewer(
                requestedSettings, ndViewer_.getDisplaySettingsObject());
-         ndViewer_.update();
+
+         if (!requestedSettings.equals(currentNDViewerSettings)) {
+            ndViewer_.update();
+         }
       } catch (NullPointerException e) {
-         // NDViewer internals may already be torn down during close
-         // (async events from Inspector can arrive after data source is nulled)
          studio_.logs().logDebugMessage("NDViewer2: NPE in handleDisplaySettings "
                + "(likely async close race): " + e.getMessage());
       } finally {
@@ -270,10 +291,35 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
 
    @Override
    public long imageStatsReady(ImagesAndStats result) {
-      currentImagesAndStats_ = result;
+      if (accumulateMode_) {
+         // Merge new-image stats into the accumulator
+         if (accumulateNext_ && result.isRealStats()) {
+            accumulateNext_ = false;
+            List<ImageStats> newStats = result.getResult();
+            if (!newStats.isEmpty()) {
+               ImageStats tileStats = newStats.get(0);
+               if (accumulatedStats_ == null) {
+                  accumulatedStats_ = tileStats;
+               } else {
+                  accumulatedStats_ = mergeImageStats(
+                        accumulatedStats_, tileStats);
+               }
+            }
+         }
+         // Always post accumulated stats while in accumulate mode,
+         // so scrollbar-triggered recomputes don't reset the histogram.
+         if (accumulatedStats_ != null) {
+            result = ImagesAndStats.create(
+                  result.getStatsSequenceNumber(),
+                  result.getRequest(),
+                  accumulatedStats_);
+         }
+      }
+      final ImagesAndStats finalResult = result;
+      currentImagesAndStats_ = finalResult;
       // Post the event on the EDT
       SwingUtilities.invokeLater(() -> {
-         postEvent(ImageStatsChangedEvent.create(result));
+         postEvent(ImageStatsChangedEvent.create(finalResult));
       });
       return MIN_REPAINT_PERIOD_NS;
    }
@@ -303,6 +349,11 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          }
       }
 
+      // Skip redundant stats when accumulate mode has a pending new-image
+      // request (newImageArrived already submitted one for this tile)
+      if (accumulateMode_ && accumulateNext_) {
+         return;
+      }
       // Submit stats computation request
       submitStatsRequest(newPosition);
    }
@@ -365,10 +416,46 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          images.add(image);
          Coords position = image.getCoords();
          setDisplayPosition(position);
+         accumulateNext_ = true;
          ImageStatsRequest request = ImageStatsRequest.create(
                position, images, BoundsRectAndMask.unselected());
          computeQueue_.submitRequest(request);
       });
+   }
+
+   // ---- Histogram accumulation ----
+
+   private static ImageStats mergeImageStats(ImageStats a, ImageStats b) {
+      int nComponents = Math.min(
+            a.getNumberOfComponents(), b.getNumberOfComponents());
+      IntegerComponentStats[] merged = new IntegerComponentStats[nComponents];
+      for (int c = 0; c < nComponents; c++) {
+         merged[c] = IntegerComponentStats.merge(
+               a.getComponentStats(c), b.getComponentStats(c));
+      }
+      return ImageStats.create(a.getIndex(), merged);
+   }
+
+   /**
+    * Enable accumulation mode and reset accumulated stats.
+    * While enabled, newImageArrived() stats are merged into a running
+    * total, and all stats results (including scrollbar-triggered ones)
+    * post the accumulated histogram to the Inspector.
+    *
+    * @param enabled true to enable accumulation, false to disable
+    */
+   public void setAccumulateStats(boolean enabled) {
+      accumulateMode_ = enabled;
+      if (!enabled) {
+         accumulatedStats_ = null;
+      }
+   }
+
+   /**
+    * Reset the accumulated histogram stats without changing the mode.
+    */
+   public void resetAccumulatedStats() {
+      accumulatedStats_ = null;
    }
 
    // ---- Viewer control ----

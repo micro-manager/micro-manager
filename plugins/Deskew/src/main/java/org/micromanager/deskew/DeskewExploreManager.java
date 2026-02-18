@@ -159,6 +159,7 @@ public class DeskewExploreManager {
          mm2Viewer_ = new NDViewer2DataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
                summaryMetadata, pixelSizeUm_, false);
+         mm2Viewer_.setAccumulateStats(true);
          viewer_ = mm2Viewer_.getNDViewer();
          viewer_.setWindowTitle("Deskew Explore - Right-click to select, "
                + "Left-drag to extend, Left-click to acquire");
@@ -271,6 +272,7 @@ public class DeskewExploreManager {
          mm2Viewer_ = new NDViewer2DataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
                summaryMetadata, pixelSizeUm_, false);
+         mm2Viewer_.setAccumulateStats(true);
          viewer_ = mm2Viewer_.getNDViewer();
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 

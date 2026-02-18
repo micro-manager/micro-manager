@@ -95,6 +95,28 @@ public final class DefaultComponentDisplaySettings
       return builder;
    }
 
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) {
+         return true;
+      }
+      if (!(obj instanceof DefaultComponentDisplaySettings)) {
+         return false;
+      }
+      DefaultComponentDisplaySettings o = (DefaultComponentDisplaySettings) obj;
+      return scalingMin_ == o.scalingMin_
+            && scalingMax_ == o.scalingMax_
+            && Double.compare(gamma_, o.gamma_) == 0;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = Long.hashCode(scalingMin_);
+      result = 31 * result + Long.hashCode(scalingMax_);
+      result = 31 * result + Double.hashCode(gamma_);
+      return result;
+   }
+
    /**
     * Builds the PropertyMap based on what the Builder knows.
     *

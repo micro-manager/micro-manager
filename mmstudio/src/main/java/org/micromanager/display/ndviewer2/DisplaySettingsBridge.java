@@ -96,21 +96,28 @@ public final class DisplaySettingsBridge {
                      .scalingGamma(gamma)
                      .build();
 
-         ChannelDisplaySettings chSettings =
-               DefaultChannelDisplaySettings.builder()
-                     .color(color)
-                     .visible(active)
-                     .component(0, comp)
-                     .build();
+         // Start from the existing channel settings to preserve metadata
+         // (name, groupName, histoRangeBits, etc.) that NDViewer doesn't track.
+         ChannelDisplaySettings chSettings = existing.getChannelSettings(i)
+               .copyBuilder()
+               .color(color)
+               .visible(active)
+               .component(0, comp)
+               .build();
 
          dsBuilder.channel(i, chSettings);
       }
 
+      // NDViewer only knows composite vs. non-composite. When non-composite,
+      // preserve the existing MM color mode (GRAYSCALE, COLOR, HIGHLIGHT_LIMITS)
+      // to avoid oscillation between modes that NDViewer can't distinguish.
       if (ndSettings.isCompositeMode()) {
          dsBuilder.colorMode(DisplaySettings.ColorMode.COMPOSITE);
-      } else {
+      } else if (existing.getColorMode() == DisplaySettings.ColorMode.COMPOSITE) {
+         // Was composite, NDViewer says not composite → switch to COLOR
          dsBuilder.colorMode(DisplaySettings.ColorMode.COLOR);
       }
+      // else: keep existing non-composite mode (GRAYSCALE, COLOR, etc.)
 
       dsBuilder.autostretch(ndSettings.getAutoscale());
       dsBuilder.histogramLogarithmic(ndSettings.isLogHistogram());
