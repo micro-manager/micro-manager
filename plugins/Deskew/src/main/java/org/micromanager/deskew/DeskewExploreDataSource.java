@@ -46,6 +46,9 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
    private boolean isLeftDragging_ = false;
    private volatile boolean acquisitionInProgress_ = false;
 
+   // Cache for getImageKeys() — invalidated by DeskewExploreManager after putImageMultiRes.
+   private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
+
    // Tile tracking
    private final Set<String> acquiredTiles_ = new HashSet<>();
 
@@ -59,6 +62,10 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    public void setStorage(MultiresNDTiffAPI storage) {
       storage_ = storage;
+   }
+
+   public void invalidateImageKeysCache() {
+      imageKeysCache_ = null;
    }
 
    public void setTileDimensions(int width, int height) {
@@ -154,8 +161,12 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       if (storage_ == null) {
          return new HashSet<>();
       }
+      Set<HashMap<String, Object>> cached = imageKeysCache_;
+      if (cached != null) {
+         return cached;
+      }
       // Remove row and column axes from keys - viewer sees single plane
-      return storage_.getAxesSet().stream()
+      Set<HashMap<String, Object>> fresh = storage_.getAxesSet().stream()
               .map(axes -> {
                  HashMap<String, Object> copy = new HashMap<>(axes);
                  copy.remove(NDTiffStorage.ROW_AXIS);
@@ -163,6 +174,8 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
                  return copy;
               })
               .collect(Collectors.toSet());
+      imageKeysCache_ = fresh;
+      return fresh;
    }
 
    @Override
@@ -216,9 +229,13 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    @Override
    public boolean isFinished() {
-      // Always return true so NDViewer doesn't show "Finish the Acquisition?" dialog
-      // Our close() method handles the save prompt
-      return true;
+      // Return false while exploring so NDViewer will call increaseMaxResolutionLevel()
+      // if the user zooms out further than the pre-built pyramid covers.
+      // setFinished(true) is called by the manager when the session stops.
+      // Note: the close dialog is controlled by the separate NDViewerAcqInterface
+      // (createAcqInterface()), which always returns isFinished()=true, so changing
+      // this does not affect the "Finish Acquisition?" dialog.
+      return finished_;
    }
 
    public void setFinished(boolean finished) {
@@ -251,10 +268,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    @Override
    public void mousePressed(MouseEvent e) {
-      if (acquisitionInProgress_) {
-         return;
-      }
-
+      // Always track drag start so pan/zoom work during acquisition.
       dragStart_ = e.getPoint();
       if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
          isRightDragging_ = false;
@@ -265,17 +279,9 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    @Override
    public void mouseReleased(MouseEvent e) {
-      if (acquisitionInProgress_) {
-         // Ignore clicks during acquisition
-         dragStart_ = null;
-         isRightDragging_ = false;
-         isLeftDragging_ = false;
-         return;
-      }
-
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
-         // Right-click without drag - start new selection
-         if (tileWidth_ > 0 && tileHeight_ > 0) {
+         // Right-click without drag - start new selection (blocked during acquisition)
+         if (!acquisitionInProgress_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
             if (tile != null) {
                selectionStart_ = tile;
@@ -290,8 +296,8 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
             if (pixelPos != null) {
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
-         } else {
-            // Left-click without drag - acquire selected tiles
+         } else if (!acquisitionInProgress_) {
+            // Left-click without drag - acquire selected tiles (blocked during acquisition)
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
@@ -311,7 +317,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    @Override
    public void mouseDragged(MouseEvent e) {
-      if (acquisitionInProgress_ || dragStart_ == null) {
+      if (dragStart_ == null) {
          return;
       }
 
@@ -320,8 +326,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       int dy = dragStart_.y - current.y;
 
       if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
-         // Right-drag pans the view
-         // Only consider it dragging if moved more than a few pixels
+         // Right-drag pans the view — always allowed, even during acquisition.
          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
             isRightDragging_ = true;
             // Clear selection when panning
@@ -334,9 +339,9 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
             dragStart_ = current;
          }
       } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
-         // Left-drag extends the selection
-         if (selectionStart_ != null && tileWidth_ > 0 && tileHeight_ > 0) {
-            // Only consider it dragging if moved more than a few pixels
+         // Left-drag extends the selection — blocked during acquisition.
+         if (!acquisitionInProgress_ && selectionStart_ != null
+                 && tileWidth_ > 0 && tileHeight_ > 0) {
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
                isLeftDragging_ = true;
             }

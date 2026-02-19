@@ -59,11 +59,11 @@ public class DeskewExploreManager {
    private ExecutorService displayExecutor_;
    private ExecutorService acquisitionExecutor_;
 
-   // Projected image dimensions (unknown until first deskew)
+   // Projected image dimensions (unknown until first deskew), stored pre-rotation
    private int projectedWidth_ = -1;
    private int projectedHeight_ = -1;
    private int bitDepth_ = 16;
-   // Estimated tile dimensions based on camera size (for first click)
+   // Estimated tile dimensions based on camera size (for first click), stored pre-rotation
    private int estimatedTileWidth_ = 512;
    private int estimatedTileHeight_ = 512;
 
@@ -134,7 +134,7 @@ public class DeskewExploreManager {
          estimatedTileWidth_ = imageWidth;
          estimatedTileHeight_ = imageHeight;
          // Set initial estimated dimensions on data source for first-click support
-         dataSource_.setTileDimensions(estimatedTileWidth_, estimatedTileHeight_);
+         updateTileDimensionsForRotation();
 
          // Create summary metadata for storage and viewer
          JSONObject summaryMetadata = new JSONObject();
@@ -247,11 +247,13 @@ public class DeskewExploreManager {
             projectedHeight_ = meta.height;
             break;
          }
-         if (projectedWidth_ > 0 && projectedHeight_ > 0) {
-            dataSource_.setTileDimensions(projectedWidth_, projectedHeight_);
-         } else {
-            dataSource_.setTileDimensions(imageWidth, imageHeight);
+         if (projectedWidth_ <= 0 || projectedHeight_ <= 0) {
+            projectedWidth_ = imageWidth;
+            projectedHeight_ = imageHeight;
          }
+         // Stored images are already in their final (post-rotation) orientation,
+         // so use their dimensions directly without re-applying rotation.
+         dataSource_.setTileDimensions(projectedWidth_, projectedHeight_);
 
          // Mark existing tiles as acquired
          for (HashMap<String, Object> axes : storage_.getAxesSet()) {
@@ -701,9 +703,18 @@ public class DeskewExploreManager {
 
             // If this is the first acquisition, update tile dimensions
             if (projectedWidth_ < 0) {
-               projectedWidth_ = projectedImage.getWidth();
-               projectedHeight_ = projectedImage.getHeight();
-               dataSource_.setTileDimensions(projectedWidth_, projectedHeight_);
+               // Store the pre-rotation dimensions so updateTileDimensionsForRotation
+               // can correctly swap them when rotation is 90° or 270°.
+               int rotateDegrees = frame_.getSettings().getInteger(
+                       DeskewFrame.EXPLORE_ROTATE, 0);
+               if (rotateDegrees == 90 || rotateDegrees == 270) {
+                  projectedWidth_ = projectedImage.getHeight();
+                  projectedHeight_ = projectedImage.getWidth();
+               } else {
+                  projectedWidth_ = projectedImage.getWidth();
+                  projectedHeight_ = projectedImage.getHeight();
+               }
+               updateTileDimensionsForRotation();
                studio_.logs().logMessage("Deskew Explore: projected dimensions = "
                        + projectedWidth_ + " x " + projectedHeight_);
             }
@@ -819,17 +830,6 @@ public class DeskewExploreManager {
          } catch (Exception e) {
             studio_.logs().logError(e, "Deskew Explore: error during multi-tile acquisition");
          } finally {
-            // Always return stage to initial position, even if acquisition
-            // fails partway through, so the user is not stranded off-center.
-            try {
-               studio_.logs().logMessage(
-                     "Deskew Explore: returning stage to initial position");
-               studio_.core().setXYPosition(initialStageX_, initialStageY_);
-               studio_.core().waitForDevice(studio_.core().getXYStageDevice());
-            } catch (Exception e) {
-               studio_.logs().logError(e,
-                     "Deskew Explore: failed to return stage to initial position");
-            }
             dataSource_.setAcquisitionInProgress(false);
          }
       });
@@ -1042,6 +1042,54 @@ public class DeskewExploreManager {
          int height = resampler.getResampledShapeY();
          studio_.logs().logMessage("Deskew Explore: projection size = " + width + "x" + height);
 
+         // Apply optional mirror and rotate transformations
+         boolean doMirror = frame_.getSettings().getBoolean(DeskewFrame.EXPLORE_MIRROR, false);
+         int rotateDegrees = frame_.getSettings().getInteger(DeskewFrame.EXPLORE_ROTATE, 0);
+
+         if (doMirror) {
+            for (int y = 0; y < height; y++) {
+               int rowStart = y * width;
+               for (int x = 0; x < width / 2; x++) {
+                  short tmp = projectionPixels[rowStart + x];
+                  projectionPixels[rowStart + x] = projectionPixels[rowStart + width - 1 - x];
+                  projectionPixels[rowStart + width - 1 - x] = tmp;
+               }
+            }
+         }
+         if (rotateDegrees == 90) {
+            // Rotate 90° clockwise: new[x][height-1-y] = old[y][x]
+            short[] rotated = new short[projectionPixels.length];
+            int newWidth = height;
+            int newHeight = width;
+            for (int y = 0; y < height; y++) {
+               for (int x = 0; x < width; x++) {
+                  rotated[x * newWidth + (newWidth - 1 - y)] = projectionPixels[y * width + x];
+               }
+            }
+            projectionPixels = rotated;
+            width = newWidth;
+            height = newHeight;
+         } else if (rotateDegrees == 180) {
+            for (int i = 0, j = projectionPixels.length - 1; i < j; i++, j--) {
+               short tmp = projectionPixels[i];
+               projectionPixels[i] = projectionPixels[j];
+               projectionPixels[j] = tmp;
+            }
+         } else if (rotateDegrees == 270) {
+            // Rotate 270° clockwise: new[height-1-x][y] = old[y][x]
+            short[] rotated = new short[projectionPixels.length];
+            int newWidth = height;
+            int newHeight = width;
+            for (int y = 0; y < height; y++) {
+               for (int x = 0; x < width; x++) {
+                  rotated[(newHeight - 1 - x) * newWidth + y] = projectionPixels[y * width + x];
+               }
+            }
+            projectionPixels = rotated;
+            width = newWidth;
+            height = newHeight;
+         }
+
          // Create output image
          Image result = studio_.data().createImage(
                  projectionPixels,
@@ -1107,6 +1155,12 @@ public class DeskewExploreManager {
 
          // Wait for storage to complete
          future.get();
+         // Pre-build pyramid levels for smooth zoom-out display.
+         // increaseMaxResolutionLevel is non-blocking (just enqueues work).
+         storage_.increaseMaxResolutionLevel(4);
+         if (dataSource_ != null) {
+            dataSource_.invalidateImageKeysCache();
+         }
 
          studio_.logs().logMessage("Deskew Explore: image stored, storage now has "
                  + storage_.getAxesSet().size() + " images");
@@ -1148,6 +1202,25 @@ public class DeskewExploreManager {
       if (viewer_ != null) {
          viewer_.setOverlay(overlay);
       }
+   }
+
+   /**
+    * Recomputes the tile dimensions shown in the overlay based on the current
+    * rotation setting, then redraws the overlay. Call this whenever the
+    * rotation setting changes (or after the first image is acquired).
+    * Uses pre-rotation projectedWidth_/Height_ (or estimated dims if not yet
+    * acquired) and swaps them for 90°/270° rotations.
+    */
+   public void updateTileDimensionsForRotation() {
+      int baseW = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
+      int baseH = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
+      int rotateDegrees = frame_.getSettings().getInteger(DeskewFrame.EXPLORE_ROTATE, 0);
+      if (rotateDegrees == 90 || rotateDegrees == 270) {
+         dataSource_.setTileDimensions(baseH, baseW);
+      } else {
+         dataSource_.setTileDimensions(baseW, baseH);
+      }
+      redrawOverlay();
    }
 
    public void redrawOverlay() {
