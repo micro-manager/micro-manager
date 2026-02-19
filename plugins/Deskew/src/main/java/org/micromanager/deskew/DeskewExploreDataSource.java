@@ -49,6 +49,10 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
    // Cache for getImageKeys() — invalidated by DeskewExploreManager after putImageMultiRes.
    private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
 
+   // Current stage position in full-resolution pixel coordinates (center of FOV).
+   // Null when unknown. Updated by the stage polling task in DeskewExploreManager.
+   private volatile Point2D.Double stagePositionPixel_ = null;
+
    // Tile tracking
    private final Set<String> acquiredTiles_ = new HashSet<>();
 
@@ -66,6 +70,10 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    public void invalidateImageKeysCache() {
       imageKeysCache_ = null;
+   }
+
+   public void setStagePositionPixel(Point2D.Double pos) {
+      stagePositionPixel_ = pos;
    }
 
    public void setTileDimensions(int width, int height) {
@@ -527,6 +535,21 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
          TextRoi boundsRoi = new TextRoi(textX - 100, textY, boundsText);
          boundsRoi.setStrokeColor(Color.YELLOW);
          overlay.add(boundsRoi);
+      }
+
+      // Draw red rectangle showing the current stage FOV position
+      Point2D.Double stagePixel = stagePositionPixel_;
+      if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
+         double tilePixelX = stagePixel.x - tileWidth_ / 2.0;
+         double tilePixelY = stagePixel.y - tileHeight_ / 2.0;
+         int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
+         int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
+         int dispW = (int) (tileWidth_ * magnification);
+         int dispH = (int) (tileHeight_ * magnification);
+         Roi stageRoi = new Roi(dispX, dispY, dispW, dispH);
+         stageRoi.setStrokeColor(Color.RED);
+         stageRoi.setStrokeWidth(2);
+         overlay.add(stageRoi);
       }
 
       // Set the overlay on the viewer

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -58,6 +60,7 @@ public class DeskewExploreManager {
    private DeskewExploreDataSource dataSource_;
    private ExecutorService displayExecutor_;
    private ExecutorService acquisitionExecutor_;
+   private ScheduledExecutorService stagePollingExecutor_;
 
    // Projected image dimensions (unknown until first deskew), stored pre-rotation
    private int projectedWidth_ = -1;
@@ -104,6 +107,8 @@ public class DeskewExploreManager {
                  new Thread(r, "Deskew Explore viewer communication"));
          acquisitionExecutor_ = Executors.newSingleThreadExecutor(r ->
                  new Thread(r, "Deskew Explore acquisition"));
+         stagePollingExecutor_ = Executors.newSingleThreadScheduledExecutor(r ->
+                 new Thread(r, "Deskew Explore stage polling"));
 
          // Create data source
          dataSource_ = new DeskewExploreDataSource(this);
@@ -193,6 +198,8 @@ public class DeskewExploreManager {
          // Set initial view offset
          viewer_.setViewOffset(0, 0);
 
+         startStagePositionPolling();
+
          studio_.logs().logMessage("Deskew Explore started. "
                  + "Dimensions will be determined after first acquisition.");
 
@@ -225,6 +232,8 @@ public class DeskewExploreManager {
                  new Thread(r, "Deskew Explore viewer communication"));
          acquisitionExecutor_ = Executors.newSingleThreadExecutor(r ->
                  new Thread(r, "Deskew Explore acquisition"));
+         stagePollingExecutor_ = Executors.newSingleThreadScheduledExecutor(r ->
+                 new Thread(r, "Deskew Explore stage polling"));
 
          // Create data source
          dataSource_ = new DeskewExploreDataSource(this);
@@ -315,6 +324,8 @@ public class DeskewExploreManager {
             });
          }
 
+         startStagePositionPolling();
+
          studio_.logs().logMessage("Deskew Explore: opened dataset from " + dir);
 
       } catch (Exception e) {
@@ -388,6 +399,11 @@ public class DeskewExploreManager {
       if (acquisitionExecutor_ != null) {
          acquisitionExecutor_.shutdownNow();
          acquisitionExecutor_ = null;
+      }
+
+      if (stagePollingExecutor_ != null) {
+         stagePollingExecutor_.shutdownNow();
+         stagePollingExecutor_ = null;
       }
 
       // Close viewers BEFORE storage to avoid NPEs from pending repaints
@@ -481,43 +497,43 @@ public class DeskewExploreManager {
       }
 
       if (hasData) {
-         // Ask user what to do with the data
-         int choice = JOptionPane.showOptionDialog(
-                 null,
-                 "Save the acquired Deskew Explore data?",
-                 "Save Explore Data",
-                 JOptionPane.YES_NO_CANCEL_OPTION,
-                 JOptionPane.QUESTION_MESSAGE,
-                 null,
-                 new String[]{"Save", "Discard", "Cancel"},
-                 "Save");
+         // Loop until the user makes a definitive choice (save completed, discard, or cancel).
+         // If the user picks "Save" but then cancels the file chooser, re-show this dialog.
+         while (true) {
+            int choice = JOptionPane.showOptionDialog(
+                    null,
+                    "Save the acquired Deskew Explore data?",
+                    "Save Explore Data",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    new String[]{"Save", "Discard", "Cancel"},
+                    "Save");
 
-         if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
-            // Cancel - don't close (but we can't really prevent NDViewer from closing)
-            // At least don't delete the data
-            studio_.logs().logMessage("Deskew Explore: close cancelled, data remains in: "
-                     + storageDir_);
-            stopExplore(false);  // Don't delete temp files
-            return;
-         } else if (choice == 0) {
-            // Save - let user choose location
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Save Deskew Explore Data");
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            chooser.setSelectedFile(new File(acqName_));
-
-            if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-               File destDir = chooser.getSelectedFile();
-               saveDataTo(destDir);
-            } else {
-               // User cancelled save dialog - keep data in temp
-               studio_.logs().logMessage("Deskew Explore: save cancelled, data remains in: "
+            if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
+               // Cancel — keep data in temp storage and stop without deleting
+               studio_.logs().logMessage("Deskew Explore: close cancelled, data remains in: "
                         + storageDir_);
                stopExplore(false);
                return;
+            } else if (choice == 0) {
+               // Save — let user choose location; loop back if they cancel the file chooser
+               JFileChooser chooser = new JFileChooser();
+               chooser.setDialogTitle("Save Deskew Explore Data");
+               chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+               chooser.setSelectedFile(new File(acqName_));
+
+               if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+                  File destDir = chooser.getSelectedFile();
+                  saveDataTo(destDir);
+                  break;  // Save completed — fall through to delete temp files
+               }
+               // File chooser cancelled — re-show the save/discard/cancel dialog
+            } else {
+               // Discard
+               break;  // Fall through to delete temp files
             }
          }
-         // choice == 1 (Discard) falls through to delete
       }
 
       stopExplore(true);  // Delete temp files
@@ -1177,6 +1193,45 @@ public class DeskewExploreManager {
       } catch (Exception e) {
          studio_.logs().logError(e, "Failed to store projected image");
       }
+   }
+
+   // ===================== Stage position overlay =====================
+
+   /**
+    * Starts a background task that polls the stage position every 500 ms and
+    * updates the red FOV rectangle in the overlay.
+    */
+   private void startStagePositionPolling() {
+      stagePollingExecutor_.scheduleWithFixedDelay(() -> {
+         if (dataSource_ == null) {
+            return;
+         }
+         try {
+            double stageX = studio_.core().getXPosition();
+            double stageY = studio_.core().getYPosition();
+            Point2D.Double pixel = stageToPixel(stageX, stageY);
+            dataSource_.setStagePositionPixel(pixel);
+            redrawOverlay();
+         } catch (Exception e) {
+            // Stage may not be available; silently skip this update
+         }
+      }, 0, 500, TimeUnit.MILLISECONDS);
+   }
+
+   /**
+    * Converts a stage position (in microns) to full-resolution pixel coordinates.
+    * Tile (0,0) center is at (initialStageX_, initialStageY_) in stage space and
+    * at pixel (tileWidth/2, tileHeight/2).
+    */
+   private Point2D.Double stageToPixel(double stageX, double stageY) {
+      int tileWidth = dataSource_.getTileWidth();
+      int tileHeight = dataSource_.getTileHeight();
+      if (tileWidth <= 0 || tileHeight <= 0 || pixelSizeUm_ <= 0) {
+         return null;
+      }
+      double pixelX = (stageX - initialStageX_) / pixelSizeUm_ + tileWidth / 2.0;
+      double pixelY = (stageY - initialStageY_) / pixelSizeUm_ + tileHeight / 2.0;
+      return new Point2D.Double(pixelX, pixelY);
    }
 
    // ===================== Viewer interaction methods =====================
