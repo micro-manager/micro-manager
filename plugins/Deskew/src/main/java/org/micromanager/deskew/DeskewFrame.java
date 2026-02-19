@@ -16,6 +16,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -88,6 +89,9 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String SHOW = "Show";
    static final String SYNC_WITH_MDA = "Sync with MDA";
    public static final String EXPLORE_MODE = "ExploreMode";
+   static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
+   static final String EXPLORE_MIRROR = "ExploreMirror";
+   static final String EXPLORE_ROTATE = "ExploreRotate";
    private final Studio studio_;
    private final DeskewFactory deskewFactory_;
    private final MutablePropertyMapView settings_;
@@ -368,6 +372,65 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
                "insets 4, fillx", "[grow, fill][grow, fill]"));
       explorePanel.setBorder(BorderFactory.createTitledBorder("Explore"));
 
+      explorePanel.add(new JLabel("Tmp Path:"), "span 2, split 3");
+      JTextField exploreTmpPathField = new JTextField(20);
+      exploreTmpPathField.setToolTipText(
+            "Directory for temporary explore data (uses system temp dir if empty)");
+      exploreTmpPathField.setText(settings_.getString(EXPLORE_TMP_PATH,
+            System.getProperty("java.io.tmpdir")));
+      exploreTmpPathField.getDocument().addDocumentListener(new DocumentListener() {
+         @Override
+         public void insertUpdate(DocumentEvent e) {
+            settings_.putString(EXPLORE_TMP_PATH, exploreTmpPathField.getText());
+         }
+
+         @Override
+         public void removeUpdate(DocumentEvent e) {
+            settings_.putString(EXPLORE_TMP_PATH, exploreTmpPathField.getText());
+         }
+
+         @Override
+         public void changedUpdate(DocumentEvent e) {
+            settings_.putString(EXPLORE_TMP_PATH, exploreTmpPathField.getText());
+         }
+      });
+      explorePanel.add(exploreTmpPathField, "growx");
+      JButton exploreTmpBrowseButton = new JButton("...");
+      exploreTmpBrowseButton.setToolTipText("Browse for a temporary storage directory");
+      exploreTmpBrowseButton.addActionListener(e -> {
+         JFileChooser chooser = new JFileChooser();
+         chooser.setDialogTitle("Select temporary storage directory");
+         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+         String current = exploreTmpPathField.getText().trim();
+         if (!current.isEmpty()) {
+            chooser.setCurrentDirectory(new File(current));
+         }
+         if (chooser.showOpenDialog(DeskewFrame.this) == JFileChooser.APPROVE_OPTION) {
+            String path = chooser.getSelectedFile().getAbsolutePath();
+            exploreTmpPathField.setText(path);
+            settings_.putString(EXPLORE_TMP_PATH, path);
+         }
+      });
+      explorePanel.add(exploreTmpBrowseButton, "wrap");
+
+      JCheckBox mirrorCheckBox = new JCheckBox("Mirror");
+      mirrorCheckBox.setToolTipText("Mirror the projected image horizontally (left-right).");
+      mirrorCheckBox.addActionListener(e -> settings_.putBoolean(EXPLORE_MIRROR, mirrorCheckBox.isSelected()));
+      mirrorCheckBox.setSelected(settings_.getBoolean(EXPLORE_MIRROR, false));
+      explorePanel.add(mirrorCheckBox, "span 2, split 4");
+
+      JComboBox<String> rotateComboBox = new JComboBox<>(
+               new String[]{"0\u00b0", "90\u00b0", "180\u00b0", "270\u00b0"});
+      rotateComboBox.setToolTipText("Rotate the projected image by the selected angle.");
+      rotateComboBox.setSelectedIndex(settings_.getInteger(EXPLORE_ROTATE, 0) / 90);
+      rotateComboBox.addActionListener(e -> {
+         settings_.putInteger(EXPLORE_ROTATE, rotateComboBox.getSelectedIndex() * 90);
+         exploreManager_.updateTileDimensionsForRotation();
+      });
+      explorePanel.add(rotateComboBox);
+      explorePanel.add(new JLabel(" "), "");
+      explorePanel.add(new JLabel("Rotate"), "growx, wrap");
+
       JButton openExploreButton = new JButton("Open");
       openExploreButton.setToolTipText("Open a previously saved Deskew Explore dataset.");
       openExploreButton.addActionListener(e -> openExplore());
@@ -377,7 +440,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       startExploreButton.setToolTipText(
             "Start explore mode with tiled NDViewer. Click tiles to acquire deskewed projections.");
       startExploreButton.addActionListener(e -> startExplore());
-      explorePanel.add(startExploreButton);
+      explorePanel.add(startExploreButton, "wrap");
 
       add(explorePanel, "span, growx, wrap");
       add(new JSeparator(), "span 5, growx, wrap");

@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
@@ -51,6 +53,12 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    private final AxesBridge axesBridge_;
    private final DisplaySettingsBridge displaySettingsBridge_;
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
+
+   // Single-threaded executor for off-render-thread stats fetching.
+   // Using a size-1 queue so in-flight fetches are superseded by the latest position.
+   private final ExecutorService statsExecutor_ =
+         Executors.newSingleThreadExecutor(
+               (Runnable r) -> new Thread(r, "NDViewer2 stats fetch thread"));
 
    private final TreeMap<Integer, DataViewerListener> listeners_ =
          new TreeMap<>();
@@ -339,14 +347,17 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       setDisplayPosition(newPosition);
 
       // If not in the middle of applying Inspector settings,
-      // sync NDViewer contrast back to MM DisplaySettings
+      // sync NDViewer contrast back to MM DisplaySettings.
+      // Capture the snapshot on the render thread; the actual sync runs async.
       if (!updatingFromInspector_) {
-         DisplaySettings currentDS = getDisplaySettings();
-         DisplaySettings fromNDViewer = displaySettingsBridge_.readFromNDViewer(
-               ndViewer_.getDisplaySettingsObject(), currentDS);
-         if (!fromNDViewer.equals(currentDS)) {
-            compareAndSetDisplaySettings(currentDS, fromNDViewer);
-         }
+         final DisplaySettings capturedDS = getDisplaySettings();
+         statsExecutor_.submit(() -> {
+            DisplaySettings fromNDViewer = displaySettingsBridge_.readFromNDViewer(
+                  ndViewer_.getDisplaySettingsObject(), capturedDS);
+            if (!fromNDViewer.equals(capturedDS)) {
+               compareAndSetDisplaySettings(capturedDS, fromNDViewer);
+            }
+         });
       }
 
       // Skip redundant stats when accumulate mode has a pending new-image
@@ -354,8 +365,10 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       if (accumulateMode_ && accumulateNext_) {
          return;
       }
-      // Submit stats computation request
-      submitStatsRequest(newPosition);
+      // Submit stats computation request asynchronously so disk I/O does not
+      // block NDViewer's render thread
+      final Coords statsPosition = newPosition;
+      statsExecutor_.submit(() -> submitStatsRequest(statsPosition));
    }
 
    private void submitStatsRequest(Coords position) {
@@ -541,6 +554,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    }
 
    private void shutdownMM2Resources() {
+      statsExecutor_.shutdownNow();
       try {
          computeQueue_.shutdown();
       } catch (InterruptedException e) {

@@ -109,7 +109,16 @@ public class DeskewExploreManager {
          dataSource_ = new DeskewExploreDataSource(this);
 
          // Create temporary storage directory
-         Path tempDir = Files.createTempDirectory("deskew_explore_");
+         String tmpPathSetting = frame_.getSettings().getString(
+                 DeskewFrame.EXPLORE_TMP_PATH, "").trim();
+         Path tempDir;
+         if (tmpPathSetting.isEmpty()) {
+            tempDir = Files.createTempDirectory("deskew_explore_");
+         } else {
+            Path base = new File(tmpPathSetting).toPath();
+            Files.createDirectories(base);
+            tempDir = Files.createTempDirectory(base, "deskew_explore_");
+         }
          storageDir_ = tempDir.toFile().getAbsolutePath();
          acqName_ = "DeskewExplore_" + LocalDateTime.now()
                  .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));

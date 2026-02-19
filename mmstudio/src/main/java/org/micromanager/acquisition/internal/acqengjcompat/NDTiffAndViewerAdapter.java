@@ -59,6 +59,10 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
    private volatile boolean finished_ = false;
    private final int viewerType_;
 
+   // Cache for getImageKeys() — recomputed only when a new image arrives.
+   // Volatile ensures the null write in putImage() is visible to the render thread.
+   private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
+
    /**
     * Adapter that allows LSM acquisitions to save to NDTiff, and
     * to display using either an NDViewer or the MM2.0 display.
@@ -96,7 +100,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
 
          storage_ = new NDTiffStorage(dir_, name_,
                summaryMetadata, 0, 0,
-               false, 0, savingQueueSize_,
+               true, null, savingQueueSize_,
                //Debug logging function without storage having to directly depend on core
                acq_.isDebugMode() ? ((Consumer<String>) s -> {
                   Engine.getCore().logMessage(s);
@@ -230,7 +234,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
                AcqEngMetadata.getBitDepth(taggedImg.tags),
                AcqEngMetadata.getHeight(taggedImg.tags),
                AcqEngMetadata.getWidth(taggedImg.tags));
-
+      imageKeysCache_ = null; // invalidate cache: new axes may have appeared
 
       if (viewerType_ != VIEWER_TYPE_NONE) {
          //put on different thread to not slow down acquisition
@@ -252,7 +256,9 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
    ///////// Data source interface for Viewer //////////
    @Override
    public int[] getBounds() {
-      return storage_.getImageBounds();
+      // Return null so NDViewer does not clamp zoom-out to the dataset extent.
+      // Magellan Explore and DeskewExplore both do the same.
+      return null;
    }
 
    @Override
@@ -266,7 +272,13 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
 
    @Override
    public Set<HashMap<String, Object>> getImageKeys() {
-      return storage_.getAxesSet();
+      Set<HashMap<String, Object>> cached = imageKeysCache_;
+      if (cached != null) {
+         return cached;
+      }
+      Set<HashMap<String, Object>> fresh = storage_.getAxesSet();
+      imageKeysCache_ = fresh;
+      return fresh;
    }
 
    @Override
