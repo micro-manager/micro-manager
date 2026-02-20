@@ -1,10 +1,10 @@
 /**
  * CalibrationPoint - Data class for storing correspondence pairs
  *
- * Represents a single correspondence between a point in the reference image
+ * <p>Represents a single correspondence between a point in the reference image
  * and a point in the microscope stage coordinate system.
  *
- * LICENSE:      This file is distributed under the BSD license.
+ * <p>LICENSE:      This file is distributed under the BSD license.
  */
 
 package org.micromanager.navigationplugin;

@@ -1,17 +1,16 @@
 /**
  * NavigationFrame - Main UI window for the Navigation Plugin
  *
- * Provides controls for loading reference images, managing calibration points,
+ * <p>Provides controls for loading reference images, managing calibration points,
  * and navigating the microscope stage.
  *
- * LICENSE:      This file is distributed under the BSD license.
+ * <p>LICENSE: This file is distributed under the BSD license.
  */
 
 package org.micromanager.navigationplugin;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
@@ -132,20 +131,21 @@ public class NavigationFrame extends JFrame {
    }
 
    private void showHelpDialog() {
-      String helpText =
-            "<html><body style='width: 320px; padding: 8px;'>" +
-            "<h2>Navigation Plugin Controls</h2>" +
-            "<table cellpadding='4'>" +
-            "<tr><td><b>Scroll wheel</b></td><td>Zoom in / out (anchored to cursor)</td></tr>" +
-            "<tr><td><b>Right-click drag</b></td><td>Pan the map</td></tr>" +
-            "<tr><td><b>Ctrl + Left-click</b></td><td>Add calibration point or navigate to location</td></tr>" +
-            "<tr><td><b>Shift + Left-click</b></td><td>Remove the nearest calibration point</td></tr>" +
-            "<tr><td><b>Double left-click</b></td><td>Reset zoom and pan</td></tr>" +
-            "</table>" +
-            "<br><b>Calibration:</b> Ctrl+click 3 or more known locations on the map while " +
-            "the stage is physically at each location. Once 3 points are set, the plugin " +
-            "computes a transform and Ctrl+clicking navigates the stage." +
-            "</body></html>";
+      String helpText = "<html><body style='width: 320px; padding: 8px;'>"
+               + "<h2>Navigation Plugin Controls</h2>"
+               + "<table cellpadding='4'>"
+               + "<tr><td><b>Scroll wheel</b></td><td>Zoom in / out (anchored to cursor)</td></tr>"
+               + "<tr><td><b>Right-click drag</b></td><td>Pan the map</td></tr>"
+               + "<tr><td><b>Ctrl + Left-click</b></td>"
+               + "<td>Add calibration point or navigate to location</td></tr>"
+               + "<tr><td><b>Shift + Left-click</b></td>"
+               + "<td>Remove the nearest calibration point</td></tr>"
+               + "<tr><td><b>Double left-click</b></td><td>Reset zoom and pan</td></tr>"
+               + "</table>"
+               + "<br><b>Calibration:</b> Ctrl+click 3 or more known locations on the map while "
+               + "the stage is physically at each location. Once 3 points are set, the plugin "
+               + "computes a transform and Ctrl+clicking navigates the stage."
+               + "</body></html>";
       JOptionPane.showMessageDialog(this, helpText, "Navigation Plugin Help",
             JOptionPane.INFORMATION_MESSAGE);
    }
@@ -351,7 +351,8 @@ public class NavigationFrame extends JFrame {
          // Check if XY stage is available
          String xyStage = core.getXYStageDevice();
          if (xyStage == null || xyStage.isEmpty()) {
-            showError("No XY stage device configured. Please configure an XY stage in the Hardware Configuration Wizard.");
+            showError("No XY stage device configured. "
+                     + "Please configure an XY stage in the Hardware Configuration Wizard.");
             return;
          }
 
@@ -376,8 +377,8 @@ public class NavigationFrame extends JFrame {
 
          // Check if transform calculation failed
          if (state_.getPointCount() >= 3 && !state_.isCalibrated()) {
-            showError("Could not calculate transformation. Points may be collinear. " +
-                  "Please ensure calibration points are not in a straight line.");
+            showError("Could not calculate transformation. Points may be collinear. "
+                     + "Please ensure calibration points are not in a straight line.");
          }
 
       } catch (Exception ex) {
@@ -433,25 +434,33 @@ public class NavigationFrame extends JFrame {
 
          case CALIBRATING:
             if (pointCount == 0) {
-               statusLabel_.setText("Status: Calibrating - Move stage to a feature, then Ctrl+click the corresponding point in the image");
+               statusLabel_.setText("Status: Calibrating - Move stage to a feature, "
+                        + "then Ctrl+click the corresponding point in the image");
             } else {
-               statusLabel_.setText(String.format("Status: Calibrating - Add %d more point(s) to enable navigation",
+               statusLabel_.setText(String.format("Status: Calibrating - "
+                        + "Add %d more point(s) to enable navigation",
                      Math.max(0, 3 - pointCount)));
             }
-            pointCountLabel_.setText(String.format("Calibration Points: %d (need at least 3)", pointCount));
+            pointCountLabel_.setText(String.format("Calibration Points: %d (need at least 3)",
+                     pointCount));
             clearButton_.setEnabled(pointCount > 0);
             break;
 
          case CALIBRATED:
-            statusLabel_.setText("Status: Calibrated - Ctrl+click to navigate, Shift+click to remove a calibration point");
+            statusLabel_.setText("Status: Calibrated - Ctrl+click to navigate, "
+                     + "Shift+click to remove a calibration point");
             pointCountLabel_.setText(String.format("Calibration Points: %d", pointCount));
             clearButton_.setEnabled(true);
             break;
+
+         default:
+            //ignore
       }
 
       updateStagePosition();
    }
 
+   @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
    private void updateStagePosition() {
       try {
          CMMCore core = studio_.getCMMCore();
@@ -460,7 +469,8 @@ public class NavigationFrame extends JFrame {
          if (xyStage != null && !xyStage.isEmpty()) {
             double x = core.getXPosition(xyStage);
             double y = core.getYPosition(xyStage);
-            stagePositionLabel_.setText(String.format("Stage Position: (%.2f, %.2f) \u00b5m", x, y));
+            stagePositionLabel_.setText(String.format("Stage Position: (%.2f, %.2f) \u00b5m",
+                     x, y));
 
             // Update stage position indicator in image panel
             imagePanel_.setCurrentStagePosition(new Point2D.Double(x, y));
@@ -492,7 +502,7 @@ public class NavigationFrame extends JFrame {
    }
 
    /**
-    * Save calibration points to the user profile
+    * Save calibration points to the user profile.
     */
    private void saveCalibrationToProfile() {
       if (currentImagePath_ == null) {
@@ -507,9 +517,9 @@ public class NavigationFrame extends JFrame {
       // Create keys based on the image path
       String imageKey = makeImageKey(currentImagePath_);
       String imageCoordXKey = imageKey + "_imageX";
-      String imageCoordYKey = imageKey + "_imageY";
-      String stageCoordXKey = imageKey + "_stageX";
-      String stageCoordYKey = imageKey + "_stageY";
+      final  String imageCoordYKey = imageKey + "_imageY";
+      final String stageCoordXKey = imageKey + "_stageX";
+      final String stageCoordYKey = imageKey + "_stageY";
 
       // Build lists of coordinates
       List<Double> imageXList = new ArrayList<>();
@@ -555,10 +565,10 @@ public class NavigationFrame extends JFrame {
 
       try {
          // Load coordinate lists
-         List<Double> imageXList = new ArrayList<>();
-         List<Double> imageYList = new ArrayList<>();
-         List<Double> stageXList = new ArrayList<>();
-         List<Double> stageYList = new ArrayList<>();
+         final List<Double> imageXList = new ArrayList<>();
+         final List<Double> imageYList = new ArrayList<>();
+         final List<Double> stageXList = new ArrayList<>();
+         final List<Double> stageYList = new ArrayList<>();
 
          for (Double val : settings_.getDoubleList(imageCoordXKey)) {
             imageXList.add(val);
@@ -574,9 +584,9 @@ public class NavigationFrame extends JFrame {
          }
 
          // Verify all lists have the same length
-         if (imageXList.size() != imageYList.size() ||
-             imageXList.size() != stageXList.size() ||
-             imageXList.size() != stageYList.size()) {
+         if (imageXList.size() != imageYList.size()
+                  || imageXList.size() != stageXList.size()
+                  || imageXList.size() != stageYList.size()) {
             studio_.logs().showError("Calibration data corrupted for this image");
             return;
          }

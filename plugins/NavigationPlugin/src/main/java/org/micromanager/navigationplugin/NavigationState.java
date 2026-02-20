@@ -1,10 +1,10 @@
 /**
  * NavigationState - Manages calibration points and coordinate transformations
  *
- * Stores the reference image, calibration points, and affine transformations
+ * <p>Stores the reference image, calibration points, and affine transformations
  * between image and stage coordinate systems.
  *
- * LICENSE:      This file is distributed under the BSD license.
+ * <p>LICENSE: This file is distributed under the BSD license.
  */
 
 package org.micromanager.navigationplugin;
@@ -44,7 +44,7 @@ public class NavigationState {
    }
 
    /**
-    * Set the reference image
+    * Set the reference image.
     */
    public void setReferenceImage(BufferedImage image) {
       this.referenceImage = image;
@@ -60,7 +60,7 @@ public class NavigationState {
    }
 
    /**
-    * Add a new calibration point
+    * Add a new calibration point.
     *
     * @param imageCoord Pixel coordinates in the reference image
     * @param stageCoord Stage coordinates in micrometers
@@ -78,10 +78,13 @@ public class NavigationState {
    /**
     * Removes the calibration point whose image coordinate is closest to the
     * given image-pixel location and recalculates the affine transform.
+    *
     * @return true if a point was removed, false if there were no points
     */
    public boolean removeClosestCalibrationPoint(Point2D.Double imageCoord) {
-      if (calibrationPoints.isEmpty()) return false;
+      if (calibrationPoints.isEmpty()) {
+         return false;
+      }
       int closestIdx = 0;
       double minDist = Double.MAX_VALUE;
       for (int i = 0; i < calibrationPoints.size(); i++) {
@@ -89,20 +92,24 @@ public class NavigationState {
          double dx = pt.x - imageCoord.x;
          double dy = pt.y - imageCoord.y;
          double dist = dx * dx + dy * dy;
-         if (dist < minDist) { minDist = dist; closestIdx = i; }
+         if (dist < minDist) {
+            minDist = dist;
+            closestIdx = i;
+         }
       }
       calibrationPoints.remove(closestIdx);
       // Re-index remaining points so indices stay consecutive
       for (int i = 0; i < calibrationPoints.size(); i++) {
          CalibrationPoint old = calibrationPoints.get(i);
-         calibrationPoints.set(i, new CalibrationPoint(old.getImageCoord(), old.getStageCoord(), i + 1));
+         calibrationPoints.set(i, new CalibrationPoint(old.getImageCoord(), old.getStageCoord(),
+                  i + 1));
       }
       recalculateTransform();
       return true;
    }
 
    /**
-    * Remove all calibration points
+    * Remove all calibration points.
     */
    public void clearAllPoints() {
       calibrationPoints.clear();
@@ -116,7 +123,7 @@ public class NavigationState {
    }
 
    /**
-    * Recalculate the affine transform from current calibration points
+    * Recalculate the affine transform from current calibration points.
     *
     * @return true if transform was successfully calculated, false otherwise
     */
@@ -176,8 +183,8 @@ public class NavigationState {
       // are [x,y,1] for each Point2D.Double:
       int i = 0;
       for (Map.Entry<Point2D.Double, Point2D.Double> pair : pointPairs.entrySet()) {
-         Point2D.Double uPt = pair.getKey();
-         Point2D.Double vPt = pair.getValue();
+         final Point2D.Double uPt = pair.getKey();
+         final Point2D.Double vPt = pair.getValue();
 
          // Set row to [x,y,1]:
          u.setEntry(i, 0, uPt.x);
@@ -202,7 +209,7 @@ public class NavigationState {
    }
 
    /**
-    * Transform image coordinates to stage coordinates
+    * Transform image coordinates to stage coordinates.
     *
     * @param imageCoord Coordinates in image pixel space
     * @return Coordinates in stage space (micrometers), or null if not calibrated
@@ -217,7 +224,7 @@ public class NavigationState {
    }
 
    /**
-    * Transform stage coordinates to image coordinates
+    * Transform stage coordinates to image coordinates.
     *
     * @param stageCoord Coordinates in stage space (micrometers)
     * @return Coordinates in image pixel space, or null if not calibrated
@@ -232,7 +239,7 @@ public class NavigationState {
    }
 
    /**
-    * Check if the system is calibrated and ready for navigation
+    * Check if the system is calibrated and ready for navigation.
     */
    public boolean isCalibrated() {
       return currentMode == Mode.CALIBRATED && imageToStageTransform != null;

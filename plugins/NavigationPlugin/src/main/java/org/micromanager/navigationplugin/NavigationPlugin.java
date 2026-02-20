@@ -1,24 +1,24 @@
 /**
  * Navigation Plugin for Micro-Manager
  *
- * Allows microscope operators to navigate using a low-resolution reference image.
+ * <p>Allows microscope operators to navigate using a low-resolution reference image.
  * The operator establishes correspondence between the reference image and the
  * microscope stage by defining at least 3 matching points, then can click anywhere
  * on the reference image to move the stage to that location.
  *
- * LICENSE:      This file is distributed under the BSD license.
+ * <p>LICENSE:This file is distributed under the BSD license.
  *               License text is included with the source distribution.
  *
- *               This file is distributed in the hope that it will be useful,
+ *               <p>This file is distributed in the hope that it will be useful,
  *               but WITHOUT ANY WARRANTY; without even the implied warranty
  *               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- *               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *               <p>IN NO EVENT SHALL THE COPYRIGHT OWNER OR
  *               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  *
- * @author Claude Code
- * @copyright 2026
+ * @author Nico Stuurman
+ * @copyright Regents of the University of California, 2026
  */
 
 package org.micromanager.navigationplugin;
@@ -80,10 +80,10 @@ public class NavigationPlugin implements SciJavaPlugin, MenuPlugin {
 
    @Override
    public String getHelpText() {
-      return "Navigate the microscope stage using a reference image. " +
-             "Load a low-resolution image of your sample, define at least 3 " +
-             "correspondence points, then click anywhere on the image to move " +
-             "the stage to that location.";
+      return "Navigate the microscope stage using a reference image. "
+               + "Load a low-resolution image of your sample, define at least 3 "
+               + "correspondence points, then click anywhere on the image to move "
+               + "the stage to that location.";
    }
 
    @Override
@@ -97,7 +97,7 @@ public class NavigationPlugin implements SciJavaPlugin, MenuPlugin {
    }
 
    /**
-    * Save the window visibility state when Micro-Manager is shutting down
+    * Save the window visibility state when Micro-Manager is shutting down.
     */
    @Subscribe
    public void closeRequested(ShutdownCommencingEvent sce) {
@@ -109,7 +109,7 @@ public class NavigationPlugin implements SciJavaPlugin, MenuPlugin {
    }
 
    /**
-    * Restore the window if it was open when Micro-Manager was last shut down
+    * Restore the window if it was open when Micro-Manager was last shut down.
     */
    @Subscribe
    public void onStartupComplete(StartupCompleteEvent event) {
