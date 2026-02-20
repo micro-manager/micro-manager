@@ -1084,8 +1084,8 @@ public class DeskewExploreManager {
          if (rotateDegrees == 90) {
             // Rotate 90° clockwise: new[x][height-1-y] = old[y][x]
             short[] rotated = new short[projectionPixels.length];
-            int newWidth = height;
-            int newHeight = width;
+            final int newWidth = height;
+            final int newHeight = width;
             for (int y = 0; y < height; y++) {
                for (int x = 0; x < width; x++) {
                   rotated[x * newWidth + (newWidth - 1 - y)] = projectionPixels[y * width + x];

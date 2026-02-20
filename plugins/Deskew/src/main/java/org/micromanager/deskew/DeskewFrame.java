@@ -415,12 +415,17 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
       JCheckBox mirrorCheckBox = new JCheckBox("Mirror");
       mirrorCheckBox.setToolTipText("Mirror the projected image horizontally (left-right).");
-      mirrorCheckBox.addActionListener(e -> settings_.putBoolean(EXPLORE_MIRROR, mirrorCheckBox.isSelected()));
+      mirrorCheckBox.addActionListener(e -> settings_.putBoolean(
+               EXPLORE_MIRROR, mirrorCheckBox.isSelected()));
       mirrorCheckBox.setSelected(settings_.getBoolean(EXPLORE_MIRROR, false));
       explorePanel.add(mirrorCheckBox, "span 2, split 4");
 
       JComboBox<String> rotateComboBox = new JComboBox<>(
-               new String[]{"0\u00b0", "90\u00b0", "180\u00b0", "270\u00b0"});
+               new String[]{"0\u00b0", // degree symbol
+                     "90\u00b0",  // degree symbol
+                     "180\u00b0", // degree symbol
+                     "270\u00b0"  // degree symbol
+               });
       rotateComboBox.setToolTipText("Rotate the projected image by the selected angle.");
       rotateComboBox.setSelectedIndex(settings_.getInteger(EXPLORE_ROTATE, 0) / 90);
       rotateComboBox.addActionListener(e -> {
