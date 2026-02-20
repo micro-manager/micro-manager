@@ -1,5 +1,7 @@
 package org.micromanager.plugins.isim;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import mmcorej.StrVector;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
@@ -28,6 +30,12 @@ public class iSIM implements SciJavaPlugin, MenuPlugin {
             return;
          }
          frame_ = new iSIMFrame(studio_, deviceLabel_);
+         frame_.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+               frame_ = null;
+            }
+         });
       }
       frame_.setVisible(true);
    }

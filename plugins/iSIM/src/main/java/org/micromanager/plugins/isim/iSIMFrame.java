@@ -53,6 +53,7 @@ public class iSIMFrame extends JFrame {
 
       alignmentPanel_.syncWithDeviceState();
 
+      setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       addWindowListener(new WindowAdapter() {

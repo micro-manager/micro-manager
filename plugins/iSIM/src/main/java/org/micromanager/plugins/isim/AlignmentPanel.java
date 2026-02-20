@@ -20,6 +20,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.events.LiveModeEvent;
 import org.micromanager.events.PropertyChangedEvent;
 
 /**
@@ -155,6 +156,10 @@ public class AlignmentPanel extends JPanel {
             inAlignmentMode_ = true;
             alignmentModeButton_.setText(EXIT_LABEL);
             frame_.setStatus(true);
+            if (studio_.live().getDisplay() != null) {
+               finishEnteringAlignmentMode();
+            }
+            // Otherwise onLiveMode() handles it when the user starts live view.
          }
       } catch (Exception e) {
          studio_.logs().logError(e);
@@ -173,33 +178,42 @@ public class AlignmentPanel extends JPanel {
       boolean needsToStart = !studio_.live().isLiveModeOn();
       if (needsToStart) {
          studio_.live().setLiveModeOn(true);
-         // Display creation goes: scheduler thread → invokeAndWait → EDT createDisplay().
-         // A single invokeLater doesn't work because the display doesn't exist yet.
-         // Poll on a background thread until getDisplay() returns non-null.
-         Thread t = new Thread(() -> {
-            long deadline = System.currentTimeMillis() + 5000;
-            while (System.currentTimeMillis() < deadline) {
-               if (studio_.live().getDisplay() != null) {
-                  SwingUtilities.invokeLater(this::finishEnteringAlignmentMode);
-                  return;
-               }
-               try {
-                  Thread.sleep(20);
-               } catch (InterruptedException ex) {
-                  Thread.currentThread().interrupt();
-                  return;
-               }
-            }
-            SwingUtilities.invokeLater(() ->
-                  studio_.alerts().postAlert("iSIM", AlignmentPanel.class,
-                        "Timed out waiting for live view to start. "
-                        + "Please ensure a camera is configured."));
-         }, "iSIM-wait-for-display");
-         t.setDaemon(true);
-         t.start();
+         waitForDisplayAndFinish();
       } else {
          finishEnteringAlignmentMode();
       }
+   }
+
+   /**
+    * Polls on a background thread until the live display exists, then calls
+    * finishEnteringAlignmentMode() on the EDT. Used when live mode is started
+    * but the display is not yet available.
+    *
+    * Display creation goes: scheduler thread → invokeAndWait → EDT createDisplay().
+    * A single invokeLater doesn't work because the display doesn't exist yet.
+    */
+   private void waitForDisplayAndFinish() {
+      Thread t = new Thread(() -> {
+         long deadline = System.currentTimeMillis() + 5000;
+         while (System.currentTimeMillis() < deadline) {
+            if (studio_.live().getDisplay() != null) {
+               SwingUtilities.invokeLater(this::finishEnteringAlignmentMode);
+               return;
+            }
+            try {
+               Thread.sleep(20);
+            } catch (InterruptedException ex) {
+               Thread.currentThread().interrupt();
+               return;
+            }
+         }
+         SwingUtilities.invokeLater(() ->
+               studio_.alerts().postAlert("iSIM", AlignmentPanel.class,
+                     "Timed out waiting for live view to start. "
+                     + "Please ensure a camera is configured."));
+      }, "iSIM-wait-for-display");
+      t.setDaemon(true);
+      t.start();
    }
 
    private void finishEnteringAlignmentMode() {
@@ -373,6 +387,22 @@ public class AlignmentPanel extends JPanel {
       if (overlay_ != null) {
          overlay_.notifyChanged();
       }
+   }
+
+   /**
+    * When live mode turns on while we are in alignment mode but the overlay is not
+    * yet attached (i.e. the window was opened while the device was already in
+    * alignment mode), wait for the display to appear and finish the setup.
+    */
+   @Subscribe
+   public void onLiveMode(LiveModeEvent event) {
+      if (!event.isOn()) {
+         return;
+      }
+      if (!inAlignmentMode_ || overlay_ != null) {
+         return;
+      }
+      waitForDisplayAndFinish();
    }
 
    /**
