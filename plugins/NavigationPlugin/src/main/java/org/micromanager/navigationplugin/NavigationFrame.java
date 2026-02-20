@@ -483,14 +483,17 @@ public class NavigationFrame extends JFrame {
    }
 
    /**
-    * Event handler for XY stage position changes
+    * Event handler for XY stage position changes.
     */
    @Subscribe
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
       SwingUtilities.invokeLater(() -> {
          double x = event.getXPos();
          double y = event.getYPos();
-         stagePositionLabel_.setText(String.format("Stage Position: (%.2f, %.2f) \u00b5m", x, y));
+         stagePositionLabel_.setText(String.format(
+                  "Stage Position: (%.2f, %.2f) \u00b5m",  // Micro-m (i.e. micron)
+                  x, y));
+         // Micro-m (i.e. micron)
 
          // Update stage position indicator in image panel
          imagePanel_.setCurrentStagePosition(new Point2D.Double(x, y));
@@ -545,7 +548,7 @@ public class NavigationFrame extends JFrame {
    }
 
    /**
-    * Load calibration points from the user profile
+    * Load calibration points from the user profile.
     */
    private void loadCalibrationFromProfile() {
       if (currentImagePath_ == null) {
@@ -607,7 +610,7 @@ public class NavigationFrame extends JFrame {
    }
 
    /**
-    * Clear calibration from the user profile
+    * Clear calibration from the user profile.
     */
    private void clearCalibrationFromProfile() {
       if (currentImagePath_ == null) {
@@ -624,7 +627,7 @@ public class NavigationFrame extends JFrame {
    }
 
    /**
-    * Create a safe key for profile storage from an image path
+    * Create a safe key for profile storage from an image path.
     */
    private String makeImageKey(String imagePath) {
       // Use a hash of the absolute path to create a unique but safe key
