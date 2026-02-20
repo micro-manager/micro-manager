@@ -76,6 +76,32 @@ public class NavigationState {
    }
 
    /**
+    * Removes the calibration point whose image coordinate is closest to the
+    * given image-pixel location and recalculates the affine transform.
+    * @return true if a point was removed, false if there were no points
+    */
+   public boolean removeClosestCalibrationPoint(Point2D.Double imageCoord) {
+      if (calibrationPoints.isEmpty()) return false;
+      int closestIdx = 0;
+      double minDist = Double.MAX_VALUE;
+      for (int i = 0; i < calibrationPoints.size(); i++) {
+         Point2D.Double pt = calibrationPoints.get(i).getImageCoord();
+         double dx = pt.x - imageCoord.x;
+         double dy = pt.y - imageCoord.y;
+         double dist = dx * dx + dy * dy;
+         if (dist < minDist) { minDist = dist; closestIdx = i; }
+      }
+      calibrationPoints.remove(closestIdx);
+      // Re-index remaining points so indices stay consecutive
+      for (int i = 0; i < calibrationPoints.size(); i++) {
+         CalibrationPoint old = calibrationPoints.get(i);
+         calibrationPoints.set(i, new CalibrationPoint(old.getImageCoord(), old.getStageCoord(), i + 1));
+      }
+      recalculateTransform();
+      return true;
+   }
+
+   /**
     * Remove all calibration points
     */
    public void clearAllPoints() {

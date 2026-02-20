@@ -124,7 +124,30 @@ public class NavigationFrame extends JFrame {
       clearButton_.setEnabled(false);
       panel.add(clearButton_);
 
+      JButton helpButton = new JButton("Help");
+      helpButton.addActionListener(e -> showHelpDialog());
+      panel.add(helpButton);
+
       return panel;
+   }
+
+   private void showHelpDialog() {
+      String helpText =
+            "<html><body style='width: 320px; padding: 8px;'>" +
+            "<h2>Navigation Plugin Controls</h2>" +
+            "<table cellpadding='4'>" +
+            "<tr><td><b>Scroll wheel</b></td><td>Zoom in / out (anchored to cursor)</td></tr>" +
+            "<tr><td><b>Right-click drag</b></td><td>Pan the map</td></tr>" +
+            "<tr><td><b>Ctrl + Left-click</b></td><td>Add calibration point or navigate to location</td></tr>" +
+            "<tr><td><b>Shift + Left-click</b></td><td>Remove the nearest calibration point</td></tr>" +
+            "<tr><td><b>Double left-click</b></td><td>Reset zoom and pan</td></tr>" +
+            "</table>" +
+            "<br><b>Calibration:</b> Ctrl+click 3 or more known locations on the map while " +
+            "the stage is physically at each location. Once 3 points are set, the plugin " +
+            "computes a transform and Ctrl+clicking navigates the stage." +
+            "</body></html>";
+      JOptionPane.showMessageDialog(this, helpText, "Navigation Plugin Help",
+            JOptionPane.INFORMATION_MESSAGE);
    }
 
    private JPanel createStatusPanel() {
@@ -410,7 +433,7 @@ public class NavigationFrame extends JFrame {
 
          case CALIBRATING:
             if (pointCount == 0) {
-               statusLabel_.setText("Status: Calibrating - Move stage to a feature, then click the corresponding point in the image");
+               statusLabel_.setText("Status: Calibrating - Move stage to a feature, then Ctrl+click the corresponding point in the image");
             } else {
                statusLabel_.setText(String.format("Status: Calibrating - Add %d more point(s) to enable navigation",
                      Math.max(0, 3 - pointCount)));
@@ -420,8 +443,8 @@ public class NavigationFrame extends JFrame {
             break;
 
          case CALIBRATED:
-            statusLabel_.setText("Status: Calibrated - Click anywhere on the image to move the stage");
-            pointCountLabel_.setText(String.format("Calibration Points: %d (add more to improve accuracy)", pointCount));
+            statusLabel_.setText("Status: Calibrated - Ctrl+click to navigate, Shift+click to remove a calibration point");
+            pointCountLabel_.setText(String.format("Calibration Points: %d", pointCount));
             clearButton_.setEnabled(true);
             break;
       }

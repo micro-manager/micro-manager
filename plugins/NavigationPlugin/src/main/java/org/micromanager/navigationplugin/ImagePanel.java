@@ -21,9 +21,11 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 public class ImagePanel extends JPanel {
 
@@ -31,6 +33,20 @@ public class ImagePanel extends JPanel {
    private Point2D.Double currentStagePosition_;
    private Rectangle imageDrawRect_;
    private ImageClickListener clickListener_;
+
+   // Zoom / pan state
+   private double zoomLevel_;             // 1.0 = fit-to-panel baseline
+   private double panOffsetX_;            // pan in panel-pixel units
+   private double panOffsetY_;
+   private Point dragStart_;              // where mouse went down
+   private double panOffsetXAtDragStart_;
+   private double panOffsetYAtDragStart_;
+   private boolean isDragging_;
+
+   private static final int DRAG_THRESHOLD = 5;
+   private static final double ZOOM_FACTOR = 1.15;
+   private static final double ZOOM_MIN = 0.5;
+   private static final double ZOOM_MAX = 32.0;
 
    public interface ImageClickListener {
       void onImageClicked(Point2D.Double imageCoord);
@@ -40,24 +56,39 @@ public class ImagePanel extends JPanel {
       this.state_ = state;
       this.currentStagePosition_ = null;
       this.imageDrawRect_ = new Rectangle();
+      this.zoomLevel_ = 1.0;
+      this.panOffsetX_ = 0;
+      this.panOffsetY_ = 0;
+      this.isDragging_ = false;
+      this.dragStart_ = null;
 
       setPreferredSize(new Dimension(800, 600));
       setBackground(Color.DARK_GRAY);
 
-      // Add mouse listener for clicks
-      addMouseListener(new MouseAdapter() {
+      // Unified handler (implements MouseListener + MouseMotionListener)
+      MouseAdapter interactionHandler = new MouseAdapter() {
          @Override
-         public void mouseClicked(MouseEvent e) {
-            handleMouseClick(e.getPoint());
-         }
+         public void mousePressed(MouseEvent e)  { handleMousePressed(e);  }
+         @Override
+         public void mouseDragged(MouseEvent e)  { handleMouseDragged(e);  }
+         @Override
+         public void mouseReleased(MouseEvent e) { handleMouseReleased(e); }
+         @Override
+         public void mouseEntered(MouseEvent e)  { updateCursor();         }
+      };
+      addMouseListener(interactionHandler);
+      addMouseMotionListener(interactionHandler);
+
+      // Zoom on scroll
+      addMouseWheelListener(new MouseAdapter() {
+         @Override
+         public void mouseWheelMoved(MouseWheelEvent e) { handleMouseWheel(e); }
       });
 
-      // Add mouse motion listener for cursor changes
-      addMouseListener(new MouseAdapter() {
+      // Reset zoom on resize (pan offset is in panel pixels, so reset on resize)
+      addComponentListener(new java.awt.event.ComponentAdapter() {
          @Override
-         public void mouseEntered(MouseEvent e) {
-            updateCursor();
-         }
+         public void componentResized(java.awt.event.ComponentEvent e) { resetZoomAndPan(); }
       });
    }
 
@@ -70,7 +101,99 @@ public class ImagePanel extends JPanel {
       repaint();
    }
 
+   private boolean isPanGesture(MouseEvent e) {
+      return SwingUtilities.isRightMouseButton(e);
+   }
+
+   private void handleMousePressed(MouseEvent e) {
+      dragStart_ = e.getPoint();
+      panOffsetXAtDragStart_ = panOffsetX_;
+      panOffsetYAtDragStart_ = panOffsetY_;
+      isDragging_ = false;
+   }
+
+   private void handleMouseDragged(MouseEvent e) {
+      if (dragStart_ == null || !isPanGesture(e)) return;
+      int dx = e.getX() - dragStart_.x;
+      int dy = e.getY() - dragStart_.y;
+      if (!isDragging_) {
+         if (Math.abs(dx) <= DRAG_THRESHOLD && Math.abs(dy) <= DRAG_THRESHOLD) return;
+         isDragging_ = true;
+      }
+      panOffsetX_ = panOffsetXAtDragStart_ + dx;
+      panOffsetY_ = panOffsetYAtDragStart_ + dy;
+      repaint();
+   }
+
+   private void handleMouseReleased(MouseEvent e) {
+      boolean wasDragging = isDragging_;
+      isDragging_ = false;
+      dragStart_  = null;
+      if (wasDragging) return;
+      if (!SwingUtilities.isLeftMouseButton(e)) return;
+
+      boolean ctrl  = (e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK)  != 0;
+      boolean shift = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) != 0;
+
+      if (e.getClickCount() == 2 && !ctrl && !shift) {
+         resetZoomAndPan();
+      } else if (ctrl && !shift) {
+         handleNavigationOrCalibrationClick(e.getPoint());
+      } else if (shift && !ctrl) {
+         handleRemoveCalibrationPoint(e.getPoint());
+      }
+      // plain single left-click: no action
+   }
+
+   private void handleRemoveCalibrationPoint(Point pixelPoint) {
+      BufferedImage image = state_.getReferenceImage();
+      if (image == null) return;
+      if (!imageDrawRect_.contains(pixelPoint)) return;
+      Point2D.Double imageCoord = pixelToImageCoord(pixelPoint);
+      if (imageCoord == null) return;
+      state_.removeClosestCalibrationPoint(imageCoord);
+      repaint();
+   }
+
+   private void handleMouseWheel(MouseWheelEvent e) {
+      BufferedImage image = state_.getReferenceImage();
+      if (image == null) return;
+      int notches = e.getWheelRotation();
+      double newZoom = zoomLevel_;
+      if (notches < 0) { for (int i = 0; i < -notches; i++) newZoom *= ZOOM_FACTOR; }
+      else             { for (int i = 0; i < notches; i++)  newZoom /= ZOOM_FACTOR; }
+      newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+
+      double fitScale = computeFitScale(image);
+      double dxOld = image.getWidth()  * fitScale * zoomLevel_;
+      double dyOld = image.getHeight() * fitScale * zoomLevel_;
+      double dxNew = image.getWidth()  * fitScale * newZoom;
+      double dyNew = image.getHeight() * fitScale * newZoom;
+      double cxOld = (getWidth()  - dxOld) / 2.0;
+      double cyOld = (getHeight() - dyOld) / 2.0;
+      double cxNew = (getWidth()  - dxNew) / 2.0;
+      double cyNew = (getHeight() - dyNew) / 2.0;
+      double drawXOld = cxOld + panOffsetX_;
+      double drawYOld = cyOld + panOffsetY_;
+      double ratio = newZoom / zoomLevel_;
+      panOffsetX_ = e.getX() - (e.getX() - drawXOld) * ratio - cxNew;
+      panOffsetY_ = e.getY() - (e.getY() - drawYOld) * ratio - cyNew;
+      zoomLevel_  = newZoom;
+      repaint();
+   }
+
+   private void resetZoomAndPan() {
+      zoomLevel_ = 1.0;
+      panOffsetX_ = 0;
+      panOffsetY_ = 0;
+      repaint();
+   }
+
    private void updateCursor() {
+      if (isDragging_) {
+         setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+         return;
+      }
       if (state_.getReferenceImage() != null) {
          if (state_.isCalibrated()) {
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -82,7 +205,7 @@ public class ImagePanel extends JPanel {
       }
    }
 
-   private void handleMouseClick(Point pixelPoint) {
+   private void handleNavigationOrCalibrationClick(Point pixelPoint) {
       BufferedImage image = state_.getReferenceImage();
       if (image == null || clickListener_ == null) {
          return;
@@ -146,6 +269,7 @@ public class ImagePanel extends JPanel {
       super.paintComponent(g);
       Graphics2D g2d = (Graphics2D) g;
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
       BufferedImage image = state_.getReferenceImage();
       if (image == null) {
@@ -168,28 +292,41 @@ public class ImagePanel extends JPanel {
       // Draw current stage position indicator (if calibrated)
       drawStagePositionIndicator(g2d);
 
+      // Draw zoom level indicator
+      drawZoomIndicator(g2d);
+
       updateCursor();
    }
 
    private void calculateImageDrawRect(BufferedImage image) {
-      int panelWidth = getWidth();
-      int panelHeight = getHeight();
-      int imageWidth = image.getWidth();
-      int imageHeight = image.getHeight();
-
-      // Calculate scale to fit image in panel while maintaining aspect ratio
-      double scaleX = (double) panelWidth / imageWidth;
-      double scaleY = (double) panelHeight / imageHeight;
-      double scale = Math.min(scaleX, scaleY) * 0.95; // 95% to leave margin
-
-      int drawWidth = (int) (imageWidth * scale);
-      int drawHeight = (int) (imageHeight * scale);
-
-      // Center the image
-      int drawX = (panelWidth - drawWidth) / 2;
-      int drawY = (panelHeight - drawHeight) / 2;
-
+      double fitScale = computeFitScale(image);
+      double drawScale = fitScale * zoomLevel_;
+      int drawWidth  = (int) (image.getWidth()  * drawScale);
+      int drawHeight = (int) (image.getHeight() * drawScale);
+      int drawX = (getWidth()  - drawWidth)  / 2 + (int) panOffsetX_;
+      int drawY = (getHeight() - drawHeight) / 2 + (int) panOffsetY_;
       imageDrawRect_.setBounds(drawX, drawY, drawWidth, drawHeight);
+   }
+
+   private double computeFitScale(BufferedImage image) {
+      double sx = (double) getWidth()  / image.getWidth();
+      double sy = (double) getHeight() / image.getHeight();
+      return Math.min(sx, sy) * 0.95;
+   }
+
+   private void drawZoomIndicator(Graphics2D g2d) {
+      if (Math.abs(zoomLevel_ - 1.0) < 0.01) return;
+      String text = (int) Math.round(zoomLevel_ * 100.0) + "%";
+      g2d.setFont(new Font("SansSerif", Font.BOLD, 13));
+      int tw = g2d.getFontMetrics().stringWidth(text);
+      int th = g2d.getFontMetrics().getAscent();
+      int margin = 8, px = 6, py = 4;
+      int bx = getWidth() - tw - margin - px * 2;
+      int by = getHeight() - th - margin - py * 2;
+      g2d.setColor(new Color(0, 0, 0, 160));
+      g2d.fillRoundRect(bx, by, tw + px * 2, th + py * 2, 6, 6);
+      g2d.setColor(Color.WHITE);
+      g2d.drawString(text, bx + px, by + py + th - 1);
    }
 
    private void drawNoImageMessage(Graphics2D g2d) {
