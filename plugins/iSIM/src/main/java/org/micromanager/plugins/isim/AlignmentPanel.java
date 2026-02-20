@@ -153,10 +153,39 @@ public class AlignmentPanel extends JPanel {
    }
 
    private void enterAlignmentMode() {
-      if (!studio_.live().isLiveModeOn()) {
+      boolean needsToStart = !studio_.live().isLiveModeOn();
+      if (needsToStart) {
          studio_.live().setLiveModeOn(true);
+         // Display creation goes: scheduler thread → invokeAndWait → EDT createDisplay().
+         // A single invokeLater doesn't work because the display doesn't exist yet.
+         // Poll on a background thread until getDisplay() returns non-null.
+         Thread t = new Thread(() -> {
+            long deadline = System.currentTimeMillis() + 5000;
+            while (System.currentTimeMillis() < deadline) {
+               if (studio_.live().getDisplay() != null) {
+                  SwingUtilities.invokeLater(this::finishEnteringAlignmentMode);
+                  return;
+               }
+               try {
+                  Thread.sleep(20);
+               } catch (InterruptedException ex) {
+                  Thread.currentThread().interrupt();
+                  return;
+               }
+            }
+            SwingUtilities.invokeLater(() ->
+                  studio_.alerts().postAlert("iSIM", AlignmentPanel.class,
+                        "Timed out waiting for live view to start. "
+                        + "Please ensure a camera is configured."));
+         }, "iSIM-wait-for-display");
+         t.setDaemon(true);
+         t.start();
+      } else {
+         finishEnteringAlignmentMode();
       }
+   }
 
+   private void finishEnteringAlignmentMode() {
       DisplayWindow dw = studio_.live().getDisplay();
       if (dw == null) {
          studio_.alerts().postAlert("iSIM", AlignmentPanel.class,
