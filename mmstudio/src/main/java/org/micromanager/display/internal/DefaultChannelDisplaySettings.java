@@ -260,6 +260,35 @@ public final class DefaultChannelDisplaySettings
       return copyBuilder().component(component, settings);
    }
 
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) {
+         return true;
+      }
+      if (!(obj instanceof DefaultChannelDisplaySettings)) {
+         return false;
+      }
+      DefaultChannelDisplaySettings o = (DefaultChannelDisplaySettings) obj;
+      return visible_ == o.visible_
+            && useUniformComponentScaling_ == o.useUniformComponentScaling_
+            && histoRangeBits_ == o.histoRangeBits_
+            && useCameraRange_ == o.useCameraRange_
+            && color_.equals(o.color_)
+            && name_.equals(o.name_)
+            && groupName_.equals(o.groupName_)
+            && componentSettings_.equals(o.componentSettings_);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = color_.hashCode();
+      result = 31 * result + name_.hashCode();
+      result = 31 * result + groupName_.hashCode();
+      result = 31 * result + Boolean.hashCode(visible_);
+      result = 31 * result + componentSettings_.hashCode();
+      return result;
+   }
+
    /**
     * Encodes these ChannelDisplaySettings into a PropertyMap.
     *

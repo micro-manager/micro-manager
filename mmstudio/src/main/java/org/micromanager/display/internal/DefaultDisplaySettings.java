@@ -413,6 +413,38 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
 
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) {
+         return true;
+      }
+      if (!(obj instanceof DefaultDisplaySettings)) {
+         return false;
+      }
+      DefaultDisplaySettings o = (DefaultDisplaySettings) obj;
+      return Double.compare(zoom_, o.zoom_) == 0
+            && Double.compare(fps_, o.fps_) == 0
+            && mode_ == o.mode_
+            && uniformChannelScaling_ == o.uniformChannelScaling_
+            && autostretch_ == o.autostretch_
+            && useROI_ == o.useROI_
+            && Double.compare(extremaQuantile_, o.extremaQuantile_) == 0
+            && histogramLogarithmic_ == o.histogramLogarithmic_
+            && ignoreZeros_ == o.ignoreZeros_
+            && channelSettings_.equals(o.channelSettings_);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = Double.hashCode(zoom_);
+      result = 31 * result + Double.hashCode(fps_);
+      result = 31 * result + (mode_ != null ? mode_.hashCode() : 0);
+      result = 31 * result + Boolean.hashCode(autostretch_);
+      result = 31 * result + Double.hashCode(extremaQuantile_);
+      result = 31 * result + channelSettings_.hashCode();
+      return result;
+   }
+
    /**
     * Store displaySettings in a propertyMap.
     *
