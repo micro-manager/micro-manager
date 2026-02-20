@@ -20,6 +20,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.events.PropertyChangedEvent;
 
 /**
  * Panel implementing alignment mode controls:
@@ -35,6 +36,7 @@ public class AlignmentPanel extends JPanel {
    private final Studio studio_;
    private final AlignmentModel model_;
    private final iSIMFrame frame_;
+   private final String deviceLabel_;
 
    // Alignment state
    private boolean inAlignmentMode_ = false;
@@ -55,10 +57,12 @@ public class AlignmentPanel extends JPanel {
    private final JSpinner thresholdSpinner_;
    private final JSpinner windowSpinner_;
 
-   public AlignmentPanel(Studio studio, AlignmentModel model, iSIMFrame frame) {
+   public AlignmentPanel(Studio studio, AlignmentModel model, iSIMFrame frame, String deviceLabel) {
       studio_ = studio;
       model_ = model;
       frame_ = frame;
+      deviceLabel_ = deviceLabel;
+      studio_.events().registerForEvents(this);
 
       setLayout(new MigLayout("fill, insets 8, gap 4"));
 
@@ -174,6 +178,11 @@ public class AlignmentPanel extends JPanel {
       inAlignmentMode_ = true;
       alignmentModeButton_.setText(EXIT_LABEL);
       frame_.setStatus(true);
+      try {
+         studio_.core().setProperty(deviceLabel_, "Alignment Mode Enabled", "Yes");
+      } catch (Exception e) {
+         studio_.logs().logError(e);
+      }
    }
 
    private void exitAlignmentMode() {
@@ -198,6 +207,11 @@ public class AlignmentPanel extends JPanel {
       inAlignmentMode_ = false;
       alignmentModeButton_.setText(ENTER_LABEL);
       frame_.setStatus(false);
+      try {
+         studio_.core().setProperty(deviceLabel_, "Alignment Mode Enabled", "No");
+      } catch (Exception e) {
+         studio_.logs().logError(e);
+      }
    }
 
    private void startDetection() {
@@ -316,12 +330,38 @@ public class AlignmentPanel extends JPanel {
    }
 
    /**
+    * Responds to device property changes from the studio event bus.
+    * Keeps the alignment mode state in sync with the iSIMWaveforms device property.
+    */
+   @Subscribe
+   public void onPropertyChanged(PropertyChangedEvent event) {
+      if (!event.getDevice().equals(deviceLabel_)) {
+         return;
+      }
+      if (!event.getProperty().equals("Alignment Mode Enabled")) {
+         return;
+      }
+      boolean requested = "Yes".equals(event.getValue());
+      if (requested == inAlignmentMode_) {
+         return;
+      }
+      SwingUtilities.invokeLater(() -> {
+         if (requested) {
+            enterAlignmentMode();
+         } else {
+            exitAlignmentMode();
+         }
+      });
+   }
+
+   /**
     * Called by the parent frame when the window is closing.
     */
    public void onWindowClosing() {
       if (inAlignmentMode_) {
          exitAlignmentMode();
       }
+      studio_.events().unregisterForEvents(this);
       model_.save();
    }
 }

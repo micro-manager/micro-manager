@@ -22,7 +22,7 @@ public class iSIMFrame extends JFrame {
    private final AlignmentPanel alignmentPanel_;
    private final JLabel statusLabel_;
 
-   public iSIMFrame(Studio studio) {
+   public iSIMFrame(Studio studio, String deviceLabel) {
       super("iSIM Control Panel");
       studio_ = studio;
 
@@ -32,7 +32,7 @@ public class iSIMFrame extends JFrame {
 
       AlignmentModel model = new AlignmentModel(
             studio_.profile().getSettings(AlignmentModel.class));
-      alignmentPanel_ = new AlignmentPanel(studio_, model, this);
+      alignmentPanel_ = new AlignmentPanel(studio_, model, this, deviceLabel);
 
       JPanel waveformsPlaceholder = new JPanel();
       waveformsPlaceholder.add(new JLabel("Waveforms — coming soon"));
