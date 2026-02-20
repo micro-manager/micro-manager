@@ -51,6 +51,8 @@ public class iSIMFrame extends JFrame {
       statusPanel.add(statusLabel_, "aligny center");
       add(statusPanel, "growx, pushx");
 
+      alignmentPanel_.syncWithDeviceState();
+
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       addWindowListener(new WindowAdapter() {

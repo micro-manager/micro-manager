@@ -144,6 +144,23 @@ public class AlignmentPanel extends JPanel {
       add(windowSpinner_, "width 80, wrap");
    }
 
+   /**
+    * Reads the current device state and updates the UI to match.
+    * Called once after the parent frame is fully constructed.
+    */
+   void syncWithDeviceState() {
+      try {
+         String value = studio_.core().getProperty(deviceLabel_, "Alignment Mode Enabled");
+         if ("Yes".equals(value) && !inAlignmentMode_) {
+            inAlignmentMode_ = true;
+            alignmentModeButton_.setText(EXIT_LABEL);
+            frame_.setStatus(true);
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e);
+      }
+   }
+
    private void onAlignmentModeButtonClicked() {
       if (inAlignmentMode_) {
          exitAlignmentMode();
