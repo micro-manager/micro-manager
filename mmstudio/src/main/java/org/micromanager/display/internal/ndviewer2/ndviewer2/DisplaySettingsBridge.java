@@ -1,4 +1,4 @@
-package org.micromanager.display.ndviewer2;
+package org.micromanager.display.internal.ndviewer2.ndviewer2;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -6,9 +6,7 @@ import java.util.List;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DefaultChannelDisplaySettings;
 import org.micromanager.display.internal.DefaultComponentDisplaySettings;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.ndviewer.main.NDViewer;
 
 /**
