@@ -86,6 +86,7 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.AcquisitionSettingsChangedEvent;
 import org.micromanager.acquisition.ChannelSpec;
@@ -972,6 +973,25 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                   if (propsToBeChanged != null) {
                      ScopeDataUtils.ApplyResult applyResult = utils.applyScopeData(
                               propsToBeChanged);
+                     // Some devices require properties to be set in a specific order.
+                     // Retry with only the failed properties; each pass may unblock others.
+                     final int maxRetries = 3;
+                     for (int retry = 0; retry < maxRetries
+                              && !applyResult.isSuccess()
+                              && applyResult.isPartialSuccess(); retry++) {
+                        PropertyMap.Builder retryBuilder = PropertyMaps.builder();
+                        for (ScopeDataUtils.PropertyError err : applyResult.getErrors()) {
+                           retryBuilder.putString(err.getKey(), err.getValue());
+                        }
+                        ScopeDataUtils.ApplyResult retryResult =
+                                 utils.applyScopeData(retryBuilder.build());
+                        // Stop if no progress was made in this pass
+                        if (retryResult.getErrors().size() >= applyResult.getErrors().size()) {
+                           applyResult = retryResult;
+                           break;
+                        }
+                        applyResult = retryResult;
+                     }
                      if (!applyResult.isSuccess()) {
                         StringBuilder msg = new StringBuilder(
                                  "Some settings could not be restored:\n");
