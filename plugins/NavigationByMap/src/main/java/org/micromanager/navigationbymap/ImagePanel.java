@@ -7,7 +7,7 @@
  * <p>lLICENSE: This file is distributed under the BSD license.
  */
 
-package org.micromanager.navigationplugin;
+package org.micromanager.navigationbymap;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

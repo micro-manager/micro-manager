@@ -21,7 +21,7 @@
  * @copyright Regents of the University of California, 2026
  */
 
-package org.micromanager.navigationplugin;
+package org.micromanager.navigationbymap;
 
 import com.google.common.eventbus.Subscribe;
 import org.micromanager.MenuPlugin;
@@ -32,7 +32,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
-public class NavigationPlugin implements SciJavaPlugin, MenuPlugin {
+public class NavigationByMap implements SciJavaPlugin, MenuPlugin {
    private static final String NAVIGATION_FRAME_OPEN = "NavigationFrameOpen";
 
    private Studio studio_;

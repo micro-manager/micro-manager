@@ -7,7 +7,7 @@
  * <p>LICENSE: This file is distributed under the BSD license.
  */
 
-package org.micromanager.navigationplugin;
+package org.micromanager.navigationbymap;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;

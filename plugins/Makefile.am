@@ -31,7 +31,7 @@ nobase_mmplugin_DATA = \
 	Mist.jar \
 	MultiAndor.jar \
 	MultiChannelShading.jar \
-	NavigationPlugin.jar
+	NavigationByMap.jar
 	PTCTools.jar \
 	PipelineSaver.jar \
 	PointAndShootAnalysis.jar \
