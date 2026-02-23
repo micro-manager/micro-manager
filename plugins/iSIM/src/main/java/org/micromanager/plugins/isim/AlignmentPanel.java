@@ -143,6 +143,7 @@ public class AlignmentPanel extends JPanel {
       windowSpinner_.addChangeListener(e ->
             model_.setWindowPx((Integer) windowSpinner_.getValue()));
       add(windowSpinner_, "width 80, wrap");
+      add(new JLabel(), "push");
    }
 
    /**

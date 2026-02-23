@@ -36,6 +36,10 @@ public class WaveformPanel extends JPanel {
    // Chart panels for MOD IN channels (may be hidden when channel is not active)
    private final ChartPanel[] modInChartPanels_ = new ChartPanel[N_MOD_IN];
 
+   // Chart panels for galvo and blanking (hidden when no MOD IN channels are enabled)
+   private final ChartPanel galvoChartPanel_;
+   private final ChartPanel blankingChartPanel_;
+
    // Inner panel holding all chart panels; hidemode 3 collapses invisible components
    private final JPanel chartsPanel_;
 
@@ -54,13 +58,13 @@ public class WaveformPanel extends JPanel {
 
       // Galvo
       galvoSeries_ = new XYSeries("Galvo", false);
-      chartsPanel_.add(makeChartPanel("Galvo", galvoSeries_),
-            "growx, pushx, wrap");
+      galvoChartPanel_ = makeChartPanel("Galvo", galvoSeries_);
+      chartsPanel_.add(galvoChartPanel_, "growx, pushx, wrap");
 
       // AOTF Blanking
       blankingSeries_ = new XYSeries("AOTF Blanking", false);
-      chartsPanel_.add(makeChartPanel("AOTF Blanking", blankingSeries_),
-            "growx, pushx, wrap");
+      blankingChartPanel_ = makeChartPanel("AOTF Blanking", blankingSeries_);
+      chartsPanel_.add(blankingChartPanel_, "growx, pushx, wrap");
 
       // AOTF MOD IN 1-4 (hidden until configured and enabled)
       for (int i = 0; i < N_MOD_IN; i++) {
@@ -99,15 +103,21 @@ public class WaveformPanel extends JPanel {
       }
 
       replaceSeries(cameraSeries_, WaveformReconstructor.cameraWaveform(p));
-      replaceSeries(galvoSeries_, WaveformReconstructor.galvoWaveform(p));
-      replaceSeries(blankingSeries_, WaveformReconstructor.blankingWaveform(p));
 
+      boolean anyEnabled = false;
       for (int i = 0; i < N_MOD_IN; i++) {
          boolean show = p.modInConfigured[i] && p.modInEnabled[i];
          modInChartPanels_[i].setVisible(show);
          if (show) {
+            anyEnabled = true;
             replaceSeries(modInSeries_[i], WaveformReconstructor.modInWaveform(p, i));
          }
+      }
+      galvoChartPanel_.setVisible(anyEnabled);
+      blankingChartPanel_.setVisible(anyEnabled);
+      if (anyEnabled) {
+         replaceSeries(galvoSeries_, WaveformReconstructor.galvoWaveform(p));
+         replaceSeries(blankingSeries_, WaveformReconstructor.blankingWaveform(p));
       }
       chartsPanel_.revalidate();
    }
