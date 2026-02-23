@@ -19,6 +19,7 @@ public class iSIMFrame extends JFrame {
    private static final Color STATUS_TEXT_FG = Color.WHITE;
 
    private final Studio studio_;
+   private final WaveformPanel waveformPanel_;
    private final AlignmentPanel alignmentPanel_;
    private final JLabel statusLabel_;
 
@@ -33,12 +34,10 @@ public class iSIMFrame extends JFrame {
       AlignmentModel model = new AlignmentModel(
             studio_.profile().getSettings(AlignmentModel.class));
       alignmentPanel_ = new AlignmentPanel(studio_, model, this, deviceLabel);
-
-      JPanel waveformsPlaceholder = new JPanel();
-      waveformsPlaceholder.add(new JLabel("Waveforms — coming soon"));
+      waveformPanel_ = new WaveformPanel(studio_, deviceLabel);
 
       JTabbedPane tabbedPane = new JTabbedPane();
-      tabbedPane.addTab("Waveforms", waveformsPlaceholder);
+      tabbedPane.addTab("Waveforms", waveformPanel_);
       tabbedPane.addTab("Alignment", alignmentPanel_);
       add(tabbedPane, "grow, push");
 
@@ -59,6 +58,7 @@ public class iSIMFrame extends JFrame {
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
+            waveformPanel_.close();
             alignmentPanel_.onWindowClosing();
             studio_.events().unregisterForEvents(iSIMFrame.this);
          }
