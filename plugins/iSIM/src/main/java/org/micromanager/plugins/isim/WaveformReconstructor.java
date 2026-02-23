@@ -105,13 +105,13 @@ class WaveformReconstructor {
     * Computes the galvo voltage at time {@code t} using the offset-rotated
     * two-frame triangle wave.
     *
-    * <p>std::rotate(begin, begin + n, end) moves the element at index n to
+    * <p>std::rotate(begin, end - n, end) moves the element at index (size - n) to
     * position 0, so the rotated value at t equals the original value at
-    * (t + waveformOffsetMs) mod period.
+    * (t - waveformOffsetMs) mod period.
     */
    private static double galvoVoltageAt(double t, WaveformParams p) {
       double period = p.waveformPeriodMs;
-      double tAdj = (t + p.waveformOffsetMs) % period;
+      double tAdj = ((t % period) - p.waveformOffsetMs + period) % period;
 
       // Determine which frame and position within that frame
       double tInFrame = tAdj % p.frameIntervalMs;
