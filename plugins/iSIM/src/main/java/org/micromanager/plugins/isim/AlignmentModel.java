@@ -31,8 +31,9 @@ public class AlignmentModel {
    private int offsetX_;
    private int offsetY_;
    private boolean detectionEnabled_;
-   private int threshold_;
-   private int windowPx_;
+   // Volatile: written from EDT (spinner listeners), read from detection thread.
+   private volatile int threshold_;
+   private volatile int windowPx_;
 
    public AlignmentModel(MutablePropertyMapView settings) {
       settings_ = settings;

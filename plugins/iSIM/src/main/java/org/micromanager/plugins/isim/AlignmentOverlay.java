@@ -78,6 +78,9 @@ public class AlignmentOverlay extends AbstractOverlay {
       if (primaryImage == null) {
          return;
       }
+      if (imageViewPort.width == 0 || imageViewPort.height == 0) {
+         return;
+      }
 
       int imageWidth = primaryImage.getWidth();
       int imageHeight = primaryImage.getHeight();

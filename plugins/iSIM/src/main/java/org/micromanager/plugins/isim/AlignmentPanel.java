@@ -230,6 +230,12 @@ public class AlignmentPanel extends JPanel {
       dw.addOverlay(overlay_);
 
       dataProvider_ = dw.getDataProvider();
+      if (dataProvider_ == null) {
+         studio_.alerts().postAlert("iSIM", AlignmentPanel.class,
+               "Could not obtain data provider from live view display.");
+         overlay_ = null;
+         return;
+      }
       dataProvider_.registerForEvents(this);
 
       if (model_.isDetectionEnabled()) {

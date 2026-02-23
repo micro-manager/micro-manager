@@ -56,6 +56,9 @@ class WaveformParams {
 
          p.frameIntervalMs     = p.exposureTimeMs + p.readoutTimeMs;
          p.parkingFraction     = getDouble(studio, deviceLabel, "Parking Fraction");
+         if (p.parkingFraction < 0.0 || p.parkingFraction > 1.0) {
+            throw new Exception("Parking Fraction must be in [0, 1], got: " + p.parkingFraction);
+         }
          p.parkingTimeMs       = p.readoutTimeMs * p.parkingFraction;
          p.rampTimeMs          = p.frameIntervalMs - p.parkingTimeMs;
          p.waveformOffsetMs    = p.parkingTimeMs + (p.readoutTimeMs - p.parkingTimeMs) / 2.0;

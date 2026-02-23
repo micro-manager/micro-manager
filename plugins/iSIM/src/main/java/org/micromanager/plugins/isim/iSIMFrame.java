@@ -60,7 +60,6 @@ public class iSIMFrame extends JFrame {
          public void windowClosing(WindowEvent e) {
             waveformPanel_.close();
             alignmentPanel_.onWindowClosing();
-            studio_.events().unregisterForEvents(iSIMFrame.this);
          }
       });
 
