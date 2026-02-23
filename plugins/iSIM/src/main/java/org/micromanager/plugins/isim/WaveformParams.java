@@ -76,7 +76,7 @@ class WaveformParams {
          for (int i = 0; i < N_MOD_IN; i++) {
             int ch = i + 1;
             String enabledProp = "AOTF MOD IN " + ch + " Enabled";
-            String voltageProp = "AOTF MOD IN " + ch + " Voltage";
+            String voltageProp = "AOTF MOD IN " + ch + " (V)";
             if (studio.core().hasProperty(deviceLabel, enabledProp)) {
                p.modInConfigured[i] = true;
                p.modInEnabled[i] = "Yes".equals(
