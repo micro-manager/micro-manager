@@ -16,6 +16,7 @@ import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
+import org.micromanager.internal.utils.AcqOrderMode;
 
 
 public class MDAAcqEventModules {
@@ -70,6 +71,8 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
+               Engine.getCore().logMessage("zStack Iterator Next, zIndex_: " + zIndex_);
+
                if (event == null) {
                   zIndex_++;
                   return null;
@@ -92,8 +95,22 @@ public class MDAAcqEventModules {
                      throw new RuntimeException(e);
                   }
                }
+               if (positionList == null) {
+                  Engine.getCore().logMessage("pos list empty, setting StageCoordinate to : " + zOrigin);
+                  event.setStageCoordinate(Engine.getCore().getFocusDevice(), zOrigin);
+               }
+               double zPos = 0.0;
 
-               double zPos = zIndex_ * zStep + zBegin;
+
+               if(acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE || 
+                  acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE){
+                  zPos = zIndex_ * zStep + zBegin + zPos; 
+
+               }else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL || 
+                         acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL){
+                  zPos = zIndex_ * zStep + zBegin;  // if Ch->Z then Ch iterator already defined Z
+
+               }
                // Do plus equals here in case z positions have been modified by
                // another function (e.g. channel specific focal offsets)
                Integer chIndex = (Integer) event.getAxisPosition("channel");
@@ -102,6 +119,8 @@ public class MDAAcqEventModules {
                      zPos = zBegin + ((stopSliceIndex - startSliceIndex) / 2) * zStep;
                   }
                }
+
+
                AcquisitionEvent sliceEvent = event.copy();
                sliceEvent.setZ(zIndex_,
                       (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
@@ -136,6 +155,8 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
+               Engine.getCore().logMessage("Timelapse Iterator Next, frameIndex_: " + frameIndex_);
+
                AcquisitionEvent timePointEvent = event.copy();
                timePointEvent.setMinimumStartTime((long) (intervalMs * frameIndex_));
                timePointEvent.setTimeIndex(frameIndex_);
@@ -177,6 +198,7 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
+               Engine.getCore().logMessage("Channel Iterator Next, index: " + index);
                // For Slice, Channel Acquisitions with channels not doing Z Stacks
                if (!channelList.get(index).doZStack()) {
                   if (event.getZIndex() != null) {
@@ -202,6 +224,7 @@ public class MDAAcqEventModules {
                boolean hasZOffsets = channelList.stream().map(t -> t.zOffset())
                            .filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
                Double zPos;
+               Engine.getCore().logMessage("Channel Iterator, event zPos: " + (event.getZPosition()==null ? "null" : event.getZPosition() + ", hasZOffsets: " + hasZOffsets)); 
                if (event.getZPosition() == null) {
                   if (hasZOffsets) {
                      try {
@@ -215,6 +238,15 @@ public class MDAAcqEventModules {
                } else {
                   zPos = event.getZPosition() + channelList.get(index).zOffset();
                }
+
+               // if getZposition is null then we are in channel->Z order
+               // if getZposition is not null then we are in Z->Channel order
+               if(event.getZPosition() == null){
+                  zPos = channelList.get(index).zOffset(); // Z iterator will add zPosition and Z steps
+               }else{
+                  zPos = event.getZPosition() + channelList.get(index).zOffset(); // z iterator alrady added z position from PosList and Z step
+               }
+
                channelEvent.setZ(channelEvent.getZIndex(), zPos);
                channelEvent.setExposure(channelList.get(index).exposure());
                HashMap<String, String> tags = channelEvent.getTags();
