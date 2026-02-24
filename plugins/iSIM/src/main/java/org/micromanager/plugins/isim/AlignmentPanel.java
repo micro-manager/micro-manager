@@ -152,7 +152,8 @@ public class AlignmentPanel extends JPanel {
     */
    void syncWithDeviceState() {
       try {
-         String value = studio_.core().getProperty(deviceLabel_, "Alignment Mode Enabled");
+         String value = studio_.core().getProperty(deviceLabel_,
+               DeviceAdapterProperties.ALIGNMENT_MODE_ENABLED);
          if ("Yes".equals(value) && !inAlignmentMode_) {
             inAlignmentMode_ = true;
             alignmentModeButton_.setText(EXIT_LABEL);
@@ -208,10 +209,14 @@ public class AlignmentPanel extends JPanel {
                return;
             }
          }
-         SwingUtilities.invokeLater(() ->
-               studio_.alerts().postAlert("iSIM", AlignmentPanel.class,
-                     "Timed out waiting for live view to start. "
-                     + "Please ensure a camera is configured."));
+         SwingUtilities.invokeLater(() -> {
+            studio_.alerts().postAlert("iSIM", AlignmentPanel.class,
+                  "Timed out waiting for live view to start. "
+                  + "Please ensure a camera is configured.");
+            inAlignmentMode_ = false;
+            alignmentModeButton_.setText(ENTER_LABEL);
+            frame_.setStatus(false);
+         });
       }, "iSIM-wait-for-display");
       t.setDaemon(true);
       t.start();
@@ -246,7 +251,8 @@ public class AlignmentPanel extends JPanel {
       alignmentModeButton_.setText(EXIT_LABEL);
       frame_.setStatus(true);
       try {
-         studio_.core().setProperty(deviceLabel_, "Alignment Mode Enabled", "Yes");
+         studio_.core().setProperty(deviceLabel_,
+               DeviceAdapterProperties.ALIGNMENT_MODE_ENABLED, "Yes");
       } catch (Exception e) {
          studio_.logs().logError(e);
       }
@@ -275,7 +281,8 @@ public class AlignmentPanel extends JPanel {
       alignmentModeButton_.setText(ENTER_LABEL);
       frame_.setStatus(false);
       try {
-         studio_.core().setProperty(deviceLabel_, "Alignment Mode Enabled", "No");
+         studio_.core().setProperty(deviceLabel_,
+               DeviceAdapterProperties.ALIGNMENT_MODE_ENABLED, "No");
       } catch (Exception e) {
          studio_.logs().logError(e);
       }
@@ -306,7 +313,9 @@ public class AlignmentPanel extends JPanel {
       if (img == null) {
          return;
       }
-      List<Point2D.Double> peaks = findLocalMaxima(img);
+      // Copy pixel data immediately so the Image reference is no longer needed during detection.
+      int[] pixels = toIntArray(img);
+      List<Point2D.Double> peaks = findLocalMaxima(img.getWidth(), img.getHeight(), pixels);
       SwingUtilities.invokeLater(() -> {
          if (overlay_ != null) {
             overlay_.updateSpots(peaks);
@@ -328,13 +337,10 @@ public class AlignmentPanel extends JPanel {
     * A pixel is a local maximum if it is strictly greater than all pixels
     * within the configured window size.
     */
-   private List<Point2D.Double> findLocalMaxima(Image image) {
-      int width = image.getWidth();
-      int height = image.getHeight();
+   private List<Point2D.Double> findLocalMaxima(int width, int height, int[] pixels) {
       int halfWindow = model_.getWindowPx() / 2;
       int threshold = model_.getThreshold();
 
-      int[] pixels = toIntArray(image);
       List<Point2D.Double> peaks = new ArrayList<>();
 
       for (int y = halfWindow; y < height - halfWindow; y++) {
@@ -383,6 +389,16 @@ public class AlignmentPanel extends JPanel {
          for (int i = 0; i < n; i++) {
             result[i] = bytes[i] & 0xFF;
          }
+      } else if (raw instanceof int[]) {
+         System.arraycopy(raw, 0, result, 0, n);
+      } else if (raw instanceof float[]) {
+         float[] floats = (float[]) raw;
+         for (int i = 0; i < n; i++) {
+            result[i] = (int) floats[i];
+         }
+      } else if (raw != null) {
+         studio_.logs().logError(
+               "toIntArray: unsupported pixel type: " + raw.getClass().getSimpleName());
       }
       return result;
    }
@@ -421,7 +437,7 @@ public class AlignmentPanel extends JPanel {
       if (!event.getDevice().equals(deviceLabel_)) {
          return;
       }
-      if (!event.getProperty().equals("Alignment Mode Enabled")) {
+      if (!event.getProperty().equals(DeviceAdapterProperties.ALIGNMENT_MODE_ENABLED)) {
          return;
       }
       boolean requested = "Yes".equals(event.getValue());

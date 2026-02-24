@@ -46,7 +46,8 @@ public class iSIM implements SciJavaPlugin, MenuPlugin {
          for (int i = 0; i < devices.size(); i++) {
             String label = devices.get(i);
             try {
-               if (studio_.core().getDeviceLibrary(label).equals("iSIMWaveforms")) {
+               if (studio_.core().getDeviceLibrary(label).equals(
+                     DeviceAdapterProperties.DEVICE_LIBRARY)) {
                   return label;
                }
             } catch (Exception ignored) { }

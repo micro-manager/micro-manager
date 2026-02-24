@@ -50,12 +50,12 @@ class WaveformParams {
       try {
          WaveformParams p = new WaveformParams();
 
-         p.exposureTimeMs      = getDouble(studio, deviceLabel, "ExposureTimeMs");
-         p.readoutTimeMs       = getDouble(studio, deviceLabel, "ReadoutTimeMs");
-         p.cameraPulseWidthMs  = getDouble(studio, deviceLabel, "Camera Pulse Width (ms)");
+         p.exposureTimeMs      = getDouble(studio, deviceLabel, DeviceAdapterProperties.EXPOSURE_TIME_MS);
+         p.readoutTimeMs       = getDouble(studio, deviceLabel, DeviceAdapterProperties.READOUT_TIME_MS);
+         p.cameraPulseWidthMs  = getDouble(studio, deviceLabel, DeviceAdapterProperties.CAMERA_PULSE_WIDTH_MS);
 
          p.frameIntervalMs     = p.exposureTimeMs + p.readoutTimeMs;
-         p.parkingFraction     = getDouble(studio, deviceLabel, "Parking Fraction");
+         p.parkingFraction     = getDouble(studio, deviceLabel, DeviceAdapterProperties.PARKING_FRACTION);
          if (p.parkingFraction < 0.0 || p.parkingFraction > 1.0) {
             throw new Exception("Parking Fraction must be in [0, 1], got: " + p.parkingFraction);
          }
@@ -64,22 +64,23 @@ class WaveformParams {
          p.waveformOffsetMs    = p.parkingTimeMs + (p.readoutTimeMs - p.parkingTimeMs) / 2.0;
          p.waveformPeriodMs    = 2.0 * p.frameIntervalMs;
 
-         p.exposurePpV         = getDouble(studio, deviceLabel, "Exposure Voltage (Vpp)");
-         p.galvoOffsetV        = getDouble(studio, deviceLabel, "Galvo Offset (V)");
+         p.exposurePpV         = getDouble(studio, deviceLabel, DeviceAdapterProperties.EXPOSURE_VOLTAGE_VPP);
+         p.galvoOffsetV        = getDouble(studio, deviceLabel, DeviceAdapterProperties.GALVO_OFFSET_V);
          if (p.exposureTimeMs > 0) {
             p.waveformPpV      = p.exposurePpV * (p.rampTimeMs / p.exposureTimeMs);
          }
          p.waveformHighV       = p.galvoOffsetV + p.waveformPpV / 2.0;
          p.waveformLowV        = p.galvoOffsetV - p.waveformPpV / 2.0;
-         p.aotfBlankingV       = getDouble(studio, deviceLabel, "AOTF Blanking (V)");
+         p.aotfBlankingV       = getDouble(studio, deviceLabel, DeviceAdapterProperties.AOTF_BLANKING_V);
 
-         String alignStr = studio.core().getProperty(deviceLabel, "Alignment Mode Enabled");
+         String alignStr = studio.core().getProperty(deviceLabel,
+               DeviceAdapterProperties.ALIGNMENT_MODE_ENABLED);
          p.alignmentModeEnabled = "Yes".equals(alignStr);
 
          for (int i = 0; i < N_MOD_IN; i++) {
             int ch = i + 1;
-            String enabledProp = "AOTF MOD IN " + ch + " Enabled";
-            String voltageProp = "AOTF MOD IN " + ch + " (V)";
+            String enabledProp = DeviceAdapterProperties.modInEnabledProp(ch);
+            String voltageProp = DeviceAdapterProperties.modInVoltageProp(ch);
             if (studio.core().hasProperty(deviceLabel, enabledProp)) {
                p.modInConfigured[i] = true;
                p.modInEnabled[i] = "Yes".equals(
@@ -96,6 +97,13 @@ class WaveformParams {
    }
 
    private static double getDouble(Studio studio, String device, String prop) throws Exception {
-      return Double.parseDouble(studio.core().getProperty(device, prop));
+      String value = studio.core().getProperty(device, prop);
+      try {
+         return Double.parseDouble(value);
+      } catch (NumberFormatException e) {
+         throw new Exception(
+               "Property '" + prop + "' on '" + device + "' returned non-numeric value: "
+               + value, e);
+      }
    }
 }
