@@ -12,6 +12,9 @@ import org.jfree.data.xy.XYSeries;
 class WaveformReconstructor {
    private static final int N_POINTS = 500;
 
+   /** Camera trigger output voltage when HIGH (standard 5 V TTL). */
+   private static final double CAMERA_TRIGGER_HIGH_V = 5.0;
+
    /**
     * Camera trigger waveform: two pulses of width {@code cameraPulseWidthMs}
     * at the start of each frame.
@@ -24,7 +27,7 @@ class WaveformReconstructor {
       for (int i = 0; i <= N_POINTS; i++) {
          double t = i * dt;
          double tInFrame = t % p.frameIntervalMs;
-         double v = tInFrame < pulse ? 5.0 : 0.0;
+         double v = tInFrame < pulse ? CAMERA_TRIGGER_HIGH_V : 0.0;
          series.add(t, v);
       }
       return series;
@@ -83,6 +86,11 @@ class WaveformReconstructor {
     * @param channelIndex 0-based index (0 = MOD IN 1, ..., 3 = MOD IN 4)
     */
    static XYSeries modInWaveform(WaveformParams p, int channelIndex) {
+      if (channelIndex < 0 || channelIndex >= p.modInVoltage.length) {
+         throw new IllegalArgumentException(
+               "channelIndex out of range: " + channelIndex
+               + " (expected 0–" + (p.modInVoltage.length - 1) + ")");
+      }
       double voltage = p.modInVoltage[channelIndex];
       XYSeries series = new XYSeries("AOTF MOD IN " + (channelIndex + 1), false);
       if (p.alignmentModeEnabled) {

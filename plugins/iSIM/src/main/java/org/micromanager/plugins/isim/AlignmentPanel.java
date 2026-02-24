@@ -297,13 +297,23 @@ public class AlignmentPanel extends JPanel {
          t.setDaemon(true);
          return t;
       });
-      executor_.scheduleAtFixedRate(
-            this::runDetection, 0, DETECTION_PERIOD_MS, TimeUnit.MILLISECONDS);
+      executor_.scheduleAtFixedRate(() -> {
+         try {
+            runDetection();
+         } catch (Exception e) {
+            studio_.logs().logError(e, "iSIM spot detection failed");
+         }
+      }, 0, DETECTION_PERIOD_MS, TimeUnit.MILLISECONDS);
    }
 
    private void stopDetection() {
       if (executor_ != null) {
          executor_.shutdownNow();
+         try {
+            executor_.awaitTermination(500, TimeUnit.MILLISECONDS);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
          executor_ = null;
       }
    }
@@ -459,6 +469,8 @@ public class AlignmentPanel extends JPanel {
    public void onWindowClosing() {
       if (inAlignmentMode_) {
          exitAlignmentMode();
+      } else {
+         stopDetection();
       }
       studio_.events().unregisterForEvents(this);
       model_.save();

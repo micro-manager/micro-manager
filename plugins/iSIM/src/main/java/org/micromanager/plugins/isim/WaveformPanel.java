@@ -22,7 +22,6 @@ import org.micromanager.events.PropertyChangedEvent;
  */
 public class WaveformPanel extends JPanel {
    private static final int CHART_HEIGHT_PX = 130;
-   private static final int N_MOD_IN = 4;
 
    private final Studio studio_;
    private final String deviceLabel_;
@@ -31,10 +30,10 @@ public class WaveformPanel extends JPanel {
    private final XYSeries cameraSeries_;
    private final XYSeries galvoSeries_;
    private final XYSeries blankingSeries_;
-   private final XYSeries[] modInSeries_ = new XYSeries[N_MOD_IN];
+   private final XYSeries[] modInSeries_ = new XYSeries[DeviceAdapterProperties.N_MOD_IN];
 
    // Chart panels for MOD IN channels (may be hidden when channel is not active)
-   private final ChartPanel[] modInChartPanels_ = new ChartPanel[N_MOD_IN];
+   private final ChartPanel[] modInChartPanels_ = new ChartPanel[DeviceAdapterProperties.N_MOD_IN];
 
    // Chart panels for galvo and blanking (hidden when no MOD IN channels are enabled)
    private final ChartPanel galvoChartPanel_;
@@ -67,7 +66,7 @@ public class WaveformPanel extends JPanel {
       chartsPanel_.add(blankingChartPanel_, "growx, pushx, wrap");
 
       // AOTF MOD IN 1-4 (hidden until configured and enabled)
-      for (int i = 0; i < N_MOD_IN; i++) {
+      for (int i = 0; i < DeviceAdapterProperties.N_MOD_IN; i++) {
          modInSeries_[i] = new XYSeries("AOTF MOD IN " + (i + 1), false);
          ChartPanel cp = makeChartPanel("AOTF MOD IN " + (i + 1), modInSeries_[i]);
          cp.setVisible(false);
@@ -99,13 +98,14 @@ public class WaveformPanel extends JPanel {
    private void updatePlots() {
       WaveformParams p = WaveformParams.fromDevice(studio_, deviceLabel_);
       if (p == null) {
+         studio_.logs().logDebugMessage("iSIM: waveform parameters unavailable; plots not updated");
          return;
       }
 
       replaceSeries(cameraSeries_, WaveformReconstructor.cameraWaveform(p));
 
       boolean anyEnabled = false;
-      for (int i = 0; i < N_MOD_IN; i++) {
+      for (int i = 0; i < DeviceAdapterProperties.N_MOD_IN; i++) {
          boolean show = p.modInConfigured[i] && p.modInEnabled[i];
          modInChartPanels_[i].setVisible(show);
          if (show) {

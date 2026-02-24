@@ -4,6 +4,9 @@ package org.micromanager.plugins.isim;
 final class DeviceAdapterProperties {
    private DeviceAdapterProperties() {}
 
+   /** Number of AOTF MOD IN channels supported by the device adapter. */
+   static final int N_MOD_IN = 4;
+
    static final String DEVICE_LIBRARY         = "iSIMWaveforms";
    static final String ALIGNMENT_MODE_ENABLED = "Alignment Mode Enabled";
    static final String EXPOSURE_TIME_MS       = "ExposureTimeMs";

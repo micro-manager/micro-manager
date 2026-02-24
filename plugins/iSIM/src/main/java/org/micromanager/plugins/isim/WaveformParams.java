@@ -7,8 +7,6 @@ import org.micromanager.Studio;
  * Populated by reading scalar properties from the iSIMWaveforms device adapter.
  */
 class WaveformParams {
-   private static final int N_MOD_IN = 4;
-
    // Timing (read from device properties)
    double exposureTimeMs;
    double readoutTimeMs;
@@ -34,9 +32,9 @@ class WaveformParams {
    boolean alignmentModeEnabled;
 
    // MOD IN channels (index 0 = MOD IN 1, ..., index 3 = MOD IN 4)
-   double[] modInVoltage   = new double[N_MOD_IN];
-   boolean[] modInEnabled  = new boolean[N_MOD_IN];
-   boolean[] modInConfigured = new boolean[N_MOD_IN];
+   double[] modInVoltage   = new double[DeviceAdapterProperties.N_MOD_IN];
+   boolean[] modInEnabled  = new boolean[DeviceAdapterProperties.N_MOD_IN];
+   boolean[] modInConfigured = new boolean[DeviceAdapterProperties.N_MOD_IN];
 
    /**
     * Reads all waveform parameters from the iSIMWaveforms device adapter and
@@ -77,7 +75,7 @@ class WaveformParams {
                DeviceAdapterProperties.ALIGNMENT_MODE_ENABLED);
          p.alignmentModeEnabled = "Yes".equals(alignStr);
 
-         for (int i = 0; i < N_MOD_IN; i++) {
+         for (int i = 0; i < DeviceAdapterProperties.N_MOD_IN; i++) {
             int ch = i + 1;
             String enabledProp = DeviceAdapterProperties.modInEnabledProp(ch);
             String voltageProp = DeviceAdapterProperties.modInVoltageProp(ch);
