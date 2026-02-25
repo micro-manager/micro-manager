@@ -46,6 +46,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -60,6 +61,7 @@ public class NavigationFrame extends JFrame {
    private final ImagePanel imagePanel_;
    private final ExecutorService executorService_;
    private final MutablePropertyMapView settings_;
+   private final CoalescentEDTRunnablePool edtPool_ = CoalescentEDTRunnablePool.create();
 
    private JLabel statusLabel_;
    private JLabel pointCountLabel_;
@@ -484,20 +486,45 @@ public class NavigationFrame extends JFrame {
 
    /**
     * Event handler for XY stage position changes.
+    *
+    * <p>Uses a {@link CoalescentEDTRunnablePool} to coalesce rapid position events
+    * (e.g. during joystick movement) into a single repaint, preventing EDT congestion
+    * that would otherwise stall live mode image display.
     */
    @Subscribe
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
-      SwingUtilities.invokeLater(() -> {
-         double x = event.getXPos();
-         double y = event.getYPos();
-         stagePositionLabel_.setText(String.format(
-                  "Stage Position: (%.2f, %.2f) \u00b5m",  // Micro-m (i.e. micron)
-                  x, y));
-         // Micro-m (i.e. micron)
+      edtPool_.invokeLaterWithCoalescence(
+            new RepaintPositionRunnable(event.getXPos(), event.getYPos()));
+   }
 
-         // Update stage position indicator in image panel
-         imagePanel_.setCurrentStagePosition(new Point2D.Double(x, y));
-      });
+   @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
+   private class RepaintPositionRunnable
+         implements CoalescentEDTRunnablePool.CoalescentRunnable {
+      private final double x_;
+      private final double y_;
+
+      RepaintPositionRunnable(double x, double y) {
+         x_ = x;
+         y_ = y;
+      }
+
+      @Override
+      public Class<?> getCoalescenceClass() {
+         return RepaintPositionRunnable.class;
+      }
+
+      @Override
+      public CoalescentEDTRunnablePool.CoalescentRunnable coalesceWith(
+            CoalescentEDTRunnablePool.CoalescentRunnable later) {
+         return later; // Always use the latest position
+      }
+
+      @Override
+      public void run() {
+         stagePositionLabel_.setText(String.format(
+               "Stage Position: (%.2f, %.2f) \u00b5m", x_, y_));
+         imagePanel_.setCurrentStagePosition(new Point2D.Double(x_, y_));
+      }
    }
 
    private void showError(String message) {
