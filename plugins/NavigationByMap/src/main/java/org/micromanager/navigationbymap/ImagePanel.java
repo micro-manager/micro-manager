@@ -45,10 +45,29 @@ public class ImagePanel extends JPanel {
    private double panOffsetYAtDragStart_;
    private boolean isDragging_;
 
+   private BufferedImage scaledImageCache_;
+   private ScaledImageKey scaledImageCacheKey_;
+
    private static final int DRAG_THRESHOLD = 5;
    private static final double ZOOM_FACTOR = 1.15;
    private static final double ZOOM_MIN = 0.5;
    private static final double ZOOM_MAX = 32.0;
+
+   private static final class ScaledImageKey {
+      final BufferedImage sourceImage;   // compared by identity
+      final int drawWidth;
+      final int drawHeight;
+
+      ScaledImageKey(BufferedImage sourceImage, int drawWidth, int drawHeight) {
+         this.sourceImage = sourceImage;
+         this.drawWidth   = drawWidth;
+         this.drawHeight  = drawHeight;
+      }
+
+      boolean matches(BufferedImage src, int w, int h) {
+         return sourceImage == src && drawWidth == w && drawHeight == h;
+      }
+   }
 
    public interface ImageClickListener {
       void onImageClicked(Point2D.Double imageCoord);
@@ -321,11 +340,14 @@ public class ImagePanel extends JPanel {
       // Calculate image draw rectangle (maintain aspect ratio, center in panel)
       calculateImageDrawRect(image);
 
-      // Draw the scaled reference image
-      g2d.drawImage(image,
-            imageDrawRect_.x, imageDrawRect_.y,
-            imageDrawRect_.width, imageDrawRect_.height,
-            null);
+      // Draw the scaled reference image (using cache to avoid expensive rescale every repaint)
+      if (scaledImageCacheKey_ == null
+            || !scaledImageCacheKey_.matches(image, imageDrawRect_.width, imageDrawRect_.height)) {
+         rebuildScaledCache(image);
+      }
+      g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+               RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+      g2d.drawImage(scaledImageCache_, imageDrawRect_.x, imageDrawRect_.y, null);
 
       // Draw calibration point overlays
       drawCalibrationPoints(g2d);
@@ -347,6 +369,23 @@ public class ImagePanel extends JPanel {
       int drawX = (getWidth()  - drawWidth)  / 2 + (int) panOffsetX_;
       int drawY = (getHeight() - drawHeight) / 2 + (int) panOffsetY_;
       imageDrawRect_.setBounds(drawX, drawY, drawWidth, drawHeight);
+   }
+
+   private void rebuildScaledCache(BufferedImage image) {
+      int w = imageDrawRect_.width;
+      int h = imageDrawRect_.height;
+      scaledImageCache_ = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+      Graphics2D cacheG2d = scaledImageCache_.createGraphics();
+      try {
+         cacheG2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                  RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+         cacheG2d.setRenderingHint(RenderingHints.KEY_RENDERING,
+                  RenderingHints.VALUE_RENDER_QUALITY);
+         cacheG2d.drawImage(image, 0, 0, w, h, null);
+      } finally {
+         cacheG2d.dispose();
+      }
+      scaledImageCacheKey_ = new ScaledImageKey(image, w, h);
    }
 
    private double computeFitScale(BufferedImage image) {

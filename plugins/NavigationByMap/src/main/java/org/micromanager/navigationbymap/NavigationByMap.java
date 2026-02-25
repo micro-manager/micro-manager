@@ -75,7 +75,7 @@ public class NavigationByMap implements SciJavaPlugin, MenuPlugin {
     */
    @Override
    public String getName() {
-      return "Navigation Plugin";
+      return "Navigation By Map";
    }
 
    @Override
