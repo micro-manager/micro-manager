@@ -12,6 +12,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.acqj.internal.ZAxis;
 import org.micromanager.magellan.internal.explore.ChannelGroupSettings;
+import org.micromanager.magellan.internal.explore.ExploreAcqUIAndStorage;
 import org.micromanager.magellan.internal.explore.ExploreAcquisition;
 import org.micromanager.ndviewer.api.ControlsPanelInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
@@ -27,17 +28,20 @@ public class ExploreControlsPanel extends JPanel implements ControlsPanelInterfa
    private HashMap<String, ExploreZSliders> zSlidersList_ = new HashMap<>();
    private OverlayerPlugin overlayer_;
    private final boolean useZ_;
+   private ExploreAcqUIAndStorage uiAndStorage_;
 
    /**
     * Creates new form ExploreChannelsPanel.
     */
    public ExploreControlsPanel(ExploreAcquisition acquisition, OverlayerPlugin overlayer,
                                boolean useZ, ChannelGroupSettings channels,
-                               HashMap<String, ZAxis> zAxes) {
+                               HashMap<String, ZAxis> zAxes,
+                               ExploreAcqUIAndStorage uiAndStorage) {
       channels_ = channels;
       overlayer_ = overlayer;
       acquisition_ = acquisition;
       useZ_ = useZ;
+      uiAndStorage_ = uiAndStorage;
       if (useZ_) {
          try {
             for (String name : zAxes.keySet()) {
@@ -113,6 +117,7 @@ public class ExploreControlsPanel extends JPanel implements ControlsPanelInterfa
    private void initComponents() {
 
       acquireAtCurrentButton_ = new javax.swing.JButton();
+      exportButton_ = new javax.swing.JButton();
       selectUseAllButton_ = new javax.swing.JButton();
       syncExposuresButton_ = new javax.swing.JButton();
       channelsScrollPane_ = new javax.swing.JScrollPane();
@@ -123,6 +128,13 @@ public class ExploreControlsPanel extends JPanel implements ControlsPanelInterfa
       acquireAtCurrentButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             acquireAtCurrentButtonActionPerformed(evt);
+         }
+      });
+
+      exportButton_.setText("Export Image...");
+      exportButton_.addActionListener(evt -> {
+         if (uiAndStorage_ != null) {
+            uiAndStorage_.startExportMode();
          }
       });
 
@@ -149,6 +161,7 @@ public class ExploreControlsPanel extends JPanel implements ControlsPanelInterfa
       setMaximumSize(new Dimension(getPreferredSize().width, getPreferredSize().height));
 
       this.add(acquireAtCurrentButton_, "wrap");
+      this.add(exportButton_, "wrap");
 
       if (useZ_) {
          JPanel sliderPanel = new JPanel(new MigLayout());
@@ -190,6 +203,7 @@ public class ExploreControlsPanel extends JPanel implements ControlsPanelInterfa
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton acquireAtCurrentButton_;
+   private javax.swing.JButton exportButton_;
    private javax.swing.JTable channelsTable_;
    private javax.swing.JPanel jPanel1;
    private javax.swing.JScrollPane channelsScrollPane_;
