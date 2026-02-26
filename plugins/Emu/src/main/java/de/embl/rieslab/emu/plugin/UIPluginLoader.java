@@ -3,6 +3,7 @@ package de.embl.rieslab.emu.plugin;
 import de.embl.rieslab.emu.controller.SystemController;
 import de.embl.rieslab.emu.controller.utils.GlobalSettings;
 import de.embl.rieslab.emu.plugin.examples.ibeamsmart.IBeamSmartPlugin;
+import de.embl.rieslab.emu.plugin.examples.laserui.LaserUIPlugin;
 import de.embl.rieslab.emu.plugin.examples.simpleui.SimpleUIPlugin;
 import de.embl.rieslab.emu.ui.ConfigurableMainFrame;
 import java.io.File;
@@ -41,8 +42,10 @@ public class UIPluginLoader {
       //////////// Adds known plugins
       UIPlugin ibeamsmart = new IBeamSmartPlugin();
       UIPlugin simpleui = new SimpleUIPlugin();
+      UIPlugin laserUI = new LaserUIPlugin();
       plugins_.put(ibeamsmart.getName(), ibeamsmart);
       plugins_.put(simpleui.getName(), simpleui);
+      plugins_.put(laserUI.getName(), laserUI);
 
       //////////// Discovers additional plugins
       File loc = new File(GlobalSettings.HOME);
