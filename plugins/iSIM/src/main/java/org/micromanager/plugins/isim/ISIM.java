@@ -9,9 +9,9 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
-public class iSIM implements SciJavaPlugin, MenuPlugin {
+public class ISIM implements SciJavaPlugin, MenuPlugin {
    private Studio studio_;
-   private iSIMFrame frame_;
+   private ISIMFrame frame_;
    private String deviceLabel_;
 
    @Override
@@ -29,7 +29,7 @@ public class iSIM implements SciJavaPlugin, MenuPlugin {
                   + "Please add the iSIMWaveforms adapter in the Hardware Configuration Wizard.");
             return;
          }
-         frame_ = new iSIMFrame(studio_, deviceLabel_);
+         frame_ = new ISIMFrame(studio_, deviceLabel_);
          frame_.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
@@ -50,7 +50,10 @@ public class iSIM implements SciJavaPlugin, MenuPlugin {
                      DeviceAdapterProperties.DEVICE_LIBRARY)) {
                   return label;
                }
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) {
+               studio_.logs().logError("Error getting device label: " + label);
+            }
+
          }
       } catch (Exception e) {
          studio_.logs().logError(e);

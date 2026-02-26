@@ -13,7 +13,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
 
-public class iSIMFrame extends JFrame {
+public class ISIMFrame extends JFrame {
    private static final Color STATUS_NORMAL_BG = new Color(0, 160, 0);
    private static final Color STATUS_ALIGNMENT_BG = new Color(0, 120, 200);
    private static final Color STATUS_TEXT_FG = Color.WHITE;
@@ -23,7 +23,7 @@ public class iSIMFrame extends JFrame {
    private final AlignmentPanel alignmentPanel_;
    private final JLabel statusLabel_;
 
-   public iSIMFrame(Studio studio, String deviceLabel) {
+   public ISIMFrame(Studio studio, String deviceLabel) {
       super("iSIM Control Panel");
       studio_ = studio;
 

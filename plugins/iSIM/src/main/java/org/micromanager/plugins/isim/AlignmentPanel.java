@@ -36,7 +36,7 @@ public class AlignmentPanel extends JPanel {
 
    private final Studio studio_;
    private final AlignmentModel model_;
-   private final iSIMFrame frame_;
+   private final ISIMFrame frame_;
    private final String deviceLabel_;
 
    // Alignment state
@@ -58,7 +58,7 @@ public class AlignmentPanel extends JPanel {
    private final JSpinner thresholdSpinner_;
    private final JSpinner windowSpinner_;
 
-   public AlignmentPanel(Studio studio, AlignmentModel model, iSIMFrame frame, String deviceLabel) {
+   public AlignmentPanel(Studio studio, AlignmentModel model, ISIMFrame frame, String deviceLabel) {
       studio_ = studio;
       model_ = model;
       frame_ = frame;
@@ -191,7 +191,7 @@ public class AlignmentPanel extends JPanel {
     * finishEnteringAlignmentMode() on the EDT. Used when live mode is started
     * but the display is not yet available.
     *
-    * Display creation goes: scheduler thread → invokeAndWait → EDT createDisplay().
+    * <p>Display creation goes: scheduler thread → invokeAndWait → EDT createDisplay().
     * A single invokeLater doesn't work because the display doesn't exist yet.
     */
    private void waitForDisplayAndFinish() {

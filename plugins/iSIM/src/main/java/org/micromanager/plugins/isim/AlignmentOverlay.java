@@ -8,13 +8,12 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.swing.SwingUtilities;
+import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.AbstractOverlay;
-import org.micromanager.data.Image;
 
 /**
- * Draws the iSIM alignment overlay on the live view:
+ * Draws the iSIM alignment overlay on the live view.
  * - Cyan diagonal reference lines representing the expected microlens/pinhole grid
  * - Red cross markers at detected spot positions
  */
@@ -218,9 +217,13 @@ public class AlignmentOverlay extends AbstractOverlay {
     * edge segment and adds it to the list if the intersection lies on the segment.
     *
     * @param intersections accumulator
-    * @param nx,ny line normal
+    * @param nx line normal
+    * @param ny line normal
     * @param lineD line offset
-    * @param x1,y1,x2,y2 edge segment endpoints (axis-aligned)
+    * @param x1 edge segment endpoints (axis-aligned)
+    * @param y1 edge segment endpoints (axis-aligned)
+    * @param x2 edge segment endpoints (axis-aligned)
+    * @param y2 edge segment endpoints (axis-aligned)
     */
    private void addEdgeIntersection(
          List<double[]> intersections,

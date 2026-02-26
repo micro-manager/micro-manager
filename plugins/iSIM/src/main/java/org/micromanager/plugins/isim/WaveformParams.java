@@ -48,12 +48,16 @@ class WaveformParams {
       try {
          WaveformParams p = new WaveformParams();
 
-         p.exposureTimeMs      = getDouble(studio, deviceLabel, DeviceAdapterProperties.EXPOSURE_TIME_MS);
-         p.readoutTimeMs       = getDouble(studio, deviceLabel, DeviceAdapterProperties.READOUT_TIME_MS);
-         p.cameraPulseWidthMs  = getDouble(studio, deviceLabel, DeviceAdapterProperties.CAMERA_PULSE_WIDTH_MS);
+         p.exposureTimeMs      = getDouble(studio, deviceLabel,
+                  DeviceAdapterProperties.EXPOSURE_TIME_MS);
+         p.readoutTimeMs       = getDouble(studio, deviceLabel,
+                  DeviceAdapterProperties.READOUT_TIME_MS);
+         p.cameraPulseWidthMs  = getDouble(studio, deviceLabel,
+                  DeviceAdapterProperties.CAMERA_PULSE_WIDTH_MS);
 
          p.frameIntervalMs     = p.exposureTimeMs + p.readoutTimeMs;
-         p.parkingFraction     = getDouble(studio, deviceLabel, DeviceAdapterProperties.PARKING_FRACTION);
+         p.parkingFraction     = getDouble(studio, deviceLabel,
+                  DeviceAdapterProperties.PARKING_FRACTION);
          if (p.parkingFraction < 0.0 || p.parkingFraction > 1.0) {
             throw new Exception("Parking Fraction must be in [0, 1], got: " + p.parkingFraction);
          }
@@ -62,14 +66,17 @@ class WaveformParams {
          p.waveformOffsetMs    = p.parkingTimeMs + (p.readoutTimeMs - p.parkingTimeMs) / 2.0;
          p.waveformPeriodMs    = 2.0 * p.frameIntervalMs;
 
-         p.exposurePpV         = getDouble(studio, deviceLabel, DeviceAdapterProperties.EXPOSURE_VOLTAGE_VPP);
-         p.galvoOffsetV        = getDouble(studio, deviceLabel, DeviceAdapterProperties.GALVO_OFFSET_V);
+         p.exposurePpV         = getDouble(studio, deviceLabel,
+                  DeviceAdapterProperties.EXPOSURE_VOLTAGE_VPP);
+         p.galvoOffsetV        = getDouble(studio, deviceLabel,
+                  DeviceAdapterProperties.GALVO_OFFSET_V);
          if (p.exposureTimeMs > 0) {
             p.waveformPpV      = p.exposurePpV * (p.rampTimeMs / p.exposureTimeMs);
          }
          p.waveformHighV       = p.galvoOffsetV + p.waveformPpV / 2.0;
          p.waveformLowV        = p.galvoOffsetV - p.waveformPpV / 2.0;
-         p.aotfBlankingV       = getDouble(studio, deviceLabel, DeviceAdapterProperties.AOTF_BLANKING_V);
+         p.aotfBlankingV       = getDouble(studio, deviceLabel,
+                  DeviceAdapterProperties.AOTF_BLANKING_V);
 
          String alignStr = studio.core().getProperty(deviceLabel,
                DeviceAdapterProperties.ALIGNMENT_MODE_ENABLED);
