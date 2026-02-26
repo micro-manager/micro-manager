@@ -1,0 +1,88 @@
+package org.micromanager.plugins.isim;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import mmcorej.StrVector;
+import org.micromanager.MenuPlugin;
+import org.micromanager.Studio;
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+@Plugin(type = MenuPlugin.class)
+public class ISIM implements SciJavaPlugin, MenuPlugin {
+   private Studio studio_;
+   private ISIMFrame frame_;
+   private String deviceLabel_;
+
+   @Override
+   public void setContext(Studio studio) {
+      studio_ = studio;
+   }
+
+   @Override
+   public void onPluginSelected() {
+      if (frame_ == null) {
+         deviceLabel_ = findDeviceLabel();
+         if (deviceLabel_ == null) {
+            studio_.logs().showError(
+                  "No iSIMWaveforms device adapter found.\n"
+                  + "Please add the iSIMWaveforms adapter in the Hardware Configuration Wizard.");
+            return;
+         }
+         frame_ = new ISIMFrame(studio_, deviceLabel_);
+         frame_.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+               frame_ = null;
+            }
+         });
+      }
+      frame_.setVisible(true);
+   }
+
+   private String findDeviceLabel() {
+      try {
+         StrVector devices = studio_.core().getLoadedDevices();
+         for (int i = 0; i < devices.size(); i++) {
+            String label = devices.get(i);
+            try {
+               if (studio_.core().getDeviceLibrary(label).equals(
+                     DeviceAdapterProperties.DEVICE_LIBRARY)) {
+                  return label;
+               }
+            } catch (Exception ignored) {
+               studio_.logs().logError("Error getting device label: " + label);
+            }
+
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e);
+      }
+      return null;
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "Device Control";
+   }
+
+   @Override
+   public String getName() {
+      return "iSIM";
+   }
+
+   @Override
+   public String getHelpText() {
+      return "iSIM timing and control.";
+   }
+
+   @Override
+   public String getVersion() {
+      return "0.0.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "The Laboratory of Experimental Biophysics (LEB), EPFL, 2026";
+   }
+}
