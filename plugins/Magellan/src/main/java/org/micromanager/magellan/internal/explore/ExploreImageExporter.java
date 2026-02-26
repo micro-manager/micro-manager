@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import javax.imageio.ImageIO;
 import mmcorej.TaggedImage;
-import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 
@@ -50,16 +49,18 @@ public class ExploreImageExporter {
       int dsW = Math.max(1, roiW / scale);
       int dsH = Math.max(1, roiH / scale);
 
-      JSONArray colors = displaySettings_.getJSONArray("ChColors");
-      JSONArray mins   = displaySettings_.getJSONArray("ChContrastMin");
-      JSONArray maxes  = displaySettings_.getJSONArray("ChContrastMax");
+      // NDViewer stores per-channel settings as top-level keys in the display settings
+      // JSON, where each key is the channel name and the value is a JSONObject with
+      // "Color", "Min", "Max", etc.  "All channel settings" is a separate global block.
 
       int numChannels = channelNames.size();
 
       // Special case: single channel → 16-bit TIFF
       if (numChannels == 1 && "TIFF".equals(format)) {
          HashMap<String, Object> axes = new HashMap<>(baseAxes);
-         axes.put("channel", channelNames.get(0));
+         if (channelNames.get(0) != null) {
+            axes.put("channel", channelNames.get(0));
+         }
          TaggedImage img = storage_.getDisplayImage(axes, resLevel, dsX, dsY, dsW, dsH);
          if (img != null && img.pix instanceof short[]) {
             writeSingleChannel16BitTiff((short[]) img.pix, dsW, dsH, outputPath);
@@ -73,9 +74,27 @@ public class ExploreImageExporter {
       float[] bAcc = new float[dsW * dsH];
 
       for (int c = 0; c < numChannels; c++) {
-         int color = colors.getInt(c);
-         int cMin  = mins.getInt(c);
-         int cMax  = maxes.getInt(c);
+         String chName = channelNames.get(c);
+         // NDViewer uses "NO_CHANNEL_PRESENT" as the display settings key when there is no channel axis
+         String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
+         int color = 0xFFFFFF; // default: white
+         int cMin  = 0;
+         int cMax  = 65535;
+         if (displaySettings_ != null) {
+            try {
+               // Each channel's settings are a top-level entry in the display settings JSON,
+               // keyed by the channel name as used by NDViewer.
+               JSONObject chSettings = displaySettings_.optJSONObject(displayKey);
+               if (chSettings != null) {
+                  // Color is stored as a signed int (e.g. -1 = 0xFFFFFFFF = white)
+                  color = chSettings.optInt("Color", 0xFFFFFF) & 0xFFFFFF;
+                  cMin  = chSettings.optInt("Min", 0);
+                  cMax  = chSettings.optInt("Max", 65535);
+               }
+            } catch (Exception e) {
+               // use defaults
+            }
+         }
          float range = Math.max(1, cMax - cMin);
 
          float chR = ((color >> 16) & 0xFF) / 255f;
@@ -83,7 +102,9 @@ public class ExploreImageExporter {
          float chB = ( color        & 0xFF) / 255f;
 
          HashMap<String, Object> axes = new HashMap<>(baseAxes);
-         axes.put("channel", channelNames.get(c));
+         if (chName != null) {
+            axes.put("channel", chName);
+         }
          TaggedImage img = storage_.getDisplayImage(axes, resLevel, dsX, dsY, dsW, dsH);
          if (img == null || img.pix == null) {
             continue;

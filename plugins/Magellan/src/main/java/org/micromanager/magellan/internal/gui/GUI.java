@@ -21,6 +21,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Toolkit;
 import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -114,6 +115,8 @@ public class GUI extends JFrame {
       settings_ = new GlobalSettings(studio.profile());
       studio_ = studio;
       this.setTitle("Micro-Magellan " + version);
+      this.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       multiAcqManager_ = new MagellanAcquisitionsManager(studio_, this);
       initComponents();
       moreInitialization();

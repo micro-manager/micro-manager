@@ -22,6 +22,8 @@ package org.micromanager.magellan.internal.explore;
 
 import java.awt.Cursor;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
@@ -53,6 +55,7 @@ import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
+import org.micromanager.magellan.internal.explore.gui.ExportControlsPanel;
 import org.micromanager.magellan.internal.explore.gui.ExploreMouseListener;
 import org.micromanager.magellan.internal.explore.gui.ExploreOverlayer;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
@@ -93,9 +96,11 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
    protected ExploreAcquisition acq_;
    protected ExploreMouseListener mouseListener_;
    protected ExploreControlsPanel exploreControlsPanel_;
+   protected ExportControlsPanel exportControlsPanel_;
    private Consumer<String> logger_;
    private ChannelGroupSettings channels_;
    private final boolean useZ_;
+   private ExportMouseListener exportListener_;
 
 
    public static ExploreAcqUIAndStorage create(Studio studio, String dir, String name,
@@ -331,10 +336,20 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
          display_.setOverlayerPlugin(overlayer_);
 
          exploreControlsPanel_ = new ExploreControlsPanel(acq_,
-                  overlayer_,  useZ_, channels_, acq_.getZAxes(), this);
+                  overlayer_, useZ_, channels_, acq_.getZAxes());
          display_.addControlPanel(exploreControlsPanel_);
+         exportControlsPanel_ = new ExportControlsPanel(this::startExportMode);
+         display_.addControlPanel(exportControlsPanel_);
 
          display_.setCustomCanvasMouseListener(mouseListener_);
+
+         SwingUtilities.invokeLater(() -> {
+            Window w = SwingUtilities.getWindowAncestor(display_.getCanvasJPanel());
+            if (w != null) {
+               w.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                       getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            }
+         });
 
          display_.addSetImageHook(new Consumer<HashMap<String, Object>>() {
             @Override
@@ -591,8 +606,11 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
     * the user can drag a rectangle to define the export ROI.
     */
    public void startExportMode() {
-      display_.getCanvasJPanel().setCursor(
-              Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      javax.swing.JPanel canvas = display_.getCanvasJPanel();
+      canvas.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      if (exportControlsPanel_ != null) {
+         exportControlsPanel_.setStatus("Draw a selection on the image");
+      }
 
       ExportSelectionOverlay exportOverlay = new ExportSelectionOverlay(display_);
       display_.setOverlayerPlugin(exportOverlay);
@@ -602,11 +620,23 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
                  // Restore normal state before showing the dialog
                  exportOverlay.setExportMouseListener(null);
                  display_.setOverlayerPlugin(overlayer_);
+                 canvas.removeMouseListener(exportListener_);
+                 canvas.removeMouseMotionListener(exportListener_);
+                 canvas.removeMouseWheelListener(exportListener_);
                  display_.setCustomCanvasMouseListener(mouseListener_);
-                 display_.getCanvasJPanel().setCursor(Cursor.getDefaultCursor());
+                 canvas.setCursor(Cursor.getDefaultCursor());
+                 if (exportControlsPanel_ != null) {
+                    exportControlsPanel_.setStatus(null);
+                 }
                  onExportRoiSelected(dragStart, dragEnd);
               });
+      exportListener_ = exportListener;
       exportOverlay.setExportMouseListener(exportListener);
+      // Manually remove the current listener since NDViewer's setCustomCanvasMouseListener
+      // does not track which listener is currently active after the first swap.
+      canvas.removeMouseListener(mouseListener_);
+      canvas.removeMouseMotionListener(mouseListener_);
+      canvas.removeMouseWheelListener(mouseListener_);
       display_.setCustomCanvasMouseListener(exportListener);
    }
 
@@ -640,6 +670,10 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
 
       JSONObject displaySettings = display_.getDisplaySettingsJSON();
       List<String> channels = new ArrayList<>(channelNames_);
+      // If no channel axis exists, use null to indicate single-channel no-name data
+      if (channels.isEmpty()) {
+         channels.add(null);
+      }
       final int x1f = x1, y1f = y1, roiWf = roiW, roiHf = roiH;
 
       new Thread(() -> {
