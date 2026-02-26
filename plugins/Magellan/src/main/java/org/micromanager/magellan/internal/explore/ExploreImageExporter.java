@@ -75,7 +75,8 @@ public class ExploreImageExporter {
 
       for (int c = 0; c < numChannels; c++) {
          String chName = channelNames.get(c);
-         // NDViewer uses "NO_CHANNEL_PRESENT" as the display settings key when there is no channel axis
+         // NDViewer uses "NO_CHANNEL_PRESENT" as the display settings key when
+         // there is no channel axis
          String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
          int color = 0xFFFFFF; // default: white
          int cMin  = 0;
@@ -99,7 +100,7 @@ public class ExploreImageExporter {
 
          float chR = ((color >> 16) & 0xFF) / 255f;
          float chG = ((color >>  8) & 0xFF) / 255f;
-         float chB = ( color        & 0xFF) / 255f;
+         float chB = (color         & 0xFF) / 255f;
 
          HashMap<String, Object> axes = new HashMap<>(baseAxes);
          if (chName != null) {

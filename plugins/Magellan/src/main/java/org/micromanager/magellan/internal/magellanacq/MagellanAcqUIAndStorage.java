@@ -551,7 +551,10 @@ public class MagellanAcqUIAndStorage
       }
 
       JSONObject displaySettings = display_.getDisplaySettingsJSON();
-      final int x1f = x1, y1f = y1, roiWf = roiW, roiHf = roiH;
+      final int x1f = x1;
+      final int y1f = y1;
+      final int roiWf = roiW;
+      final int roiHf = roiH;
 
       new Thread(() -> {
          try {

@@ -46,18 +46,18 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.magellan.internal.explore.gui.ExportDialog;
-import org.micromanager.magellan.internal.explore.gui.ExportMouseListener;
-import org.micromanager.magellan.internal.explore.gui.ExportSelectionOverlay;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
-import org.micromanager.magellan.internal.explore.gui.ExportControlsPanel;
 import org.micromanager.magellan.internal.explore.gui.ExploreMouseListener;
 import org.micromanager.magellan.internal.explore.gui.ExploreOverlayer;
+import org.micromanager.magellan.internal.explore.gui.ExportControlsPanel;
+import org.micromanager.magellan.internal.explore.gui.ExportDialog;
+import org.micromanager.magellan.internal.explore.gui.ExportMouseListener;
+import org.micromanager.magellan.internal.explore.gui.ExportSelectionOverlay;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.NDViewerAPI;
@@ -674,7 +674,10 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
       if (channels.isEmpty()) {
          channels.add(null);
       }
-      final int x1f = x1, y1f = y1, roiWf = roiW, roiHf = roiH;
+      final int x1f = x1;
+      final int y1f = y1;
+      final int roiWf = roiW;
+      final int roiHf = roiH;
 
       new Thread(() -> {
          try {
