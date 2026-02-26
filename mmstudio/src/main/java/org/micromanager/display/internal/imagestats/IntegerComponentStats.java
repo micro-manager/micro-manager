@@ -105,6 +105,49 @@ public final class IntegerComponentStats {
       return new Builder();
    }
 
+   /**
+    * Merge two stats objects by combining their histograms and scalar fields.
+    * Both must have the same bin layout (same bit depth / bin width).
+    *
+    * @param a first stats
+    * @param b second stats
+    * @return merged stats representing the union of both pixel populations
+    */
+   public static IntegerComponentStats merge(
+         IntegerComponentStats a, IntegerComponentStats b) {
+      long[] histA = getFullHistogram(a);
+      long[] histB = getFullHistogram(b);
+      long[] merged = new long[histA.length];
+      for (int i = 0; i < merged.length; i++) {
+         merged[i] = histA[i] + histB[i];
+      }
+      int binWidthPow2 = Integer.numberOfTrailingZeros(a.getHistogramBinWidth());
+      return builder()
+            .histogram(merged, binWidthPow2)
+            .pixelCount(a.getPixelCount() + b.getPixelCount())
+            .pixelCountExcludingZeros(
+                  a.getPixelCountExcludingZeros()
+                        + b.getPixelCountExcludingZeros())
+            .minimum(Math.min(a.getMinIntensity(), b.getMinIntensity()))
+            .minimumExcludingZeros(Math.min(
+                  a.getMinIntensityExcludingZeros(),
+                  b.getMinIntensityExcludingZeros()))
+            .maximum(Math.max(a.getMaxIntensity(), b.getMaxIntensity()))
+            .sum(a.getSum() + b.getSum())
+            .sumOfSquares(a.getSumOfSquares() + b.getSumOfSquares())
+            .usedROI(a.isROIStats() || b.isROIStats())
+            .build();
+   }
+
+   private static long[] getFullHistogram(IntegerComponentStats s) {
+      long[] inRange = s.getInRangeHistogram();
+      long[] full = new long[inRange.length + 2];
+      full[0] = s.getPixelCountBelowRange();
+      System.arraycopy(inRange, 0, full, 1, inRange.length);
+      full[full.length - 1] = s.getPixelCountAboveRange();
+      return full;
+   }
+
    private IntegerComponentStats(Builder b) {
       histogram_ = b.histogram_ != null
             ? Arrays.copyOf(b.histogram_, b.histogram_.length) :
@@ -370,6 +413,10 @@ public final class IntegerComponentStats {
       } else {
          return binarySearch(sorted, startIndex, middleIndex, value);
       }
+   }
+
+   public long getSum() {
+      return sum_;
    }
 
    public long getSumOfSquares() {
