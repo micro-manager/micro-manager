@@ -7,7 +7,7 @@ import org.jfree.data.xy.XYSeries;
  * Each method returns an XYSeries with time in ms on the x-axis and
  * voltage in V on the y-axis, spanning one complete waveform period.
  *
- * The waveform logic mirrors the C++ iSIMWaveforms device adapter.
+ * <p>The waveform logic mirrors the C++ iSIMWaveforms device adapter.
  */
 class WaveformReconstructor {
    private static final int N_POINTS = 500;
