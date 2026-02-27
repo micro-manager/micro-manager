@@ -165,10 +165,11 @@ public class DeskewExploreManager {
          summaryMetadata.put("PixelSize_um", pixelSizeUm_);
          summaryMetadata.put("BitDepth", bitDepth_);
          summaryMetadata.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
-         // Calculate pixel overlap based on estimated tile dimensions
-         // (will be updated after first acquisition with actual tile dimensions)
+         // Calculate pixel overlap based on camera dimensions
+         // For projected images: width = camera width, so overlapX is correct
+         // For height: use same overlap pixels as X for now (will be updated after first tile)
          int overlapX = (int) Math.round(estimatedTileWidth_ * overlapPercentage_ / 100.0);
-         int overlapY = (int) Math.round(estimatedTileHeight_ * overlapPercentage_ / 100.0);
+         int overlapY = overlapX; // Use same pixel overlap as X for now
 
          // Account for rotation: swap overlap if rotated 90° or 270°
          int rotateDegrees = studio_.profile().getSettings(DeskewFrame.class)
@@ -180,14 +181,18 @@ public class DeskewExploreManager {
             studio_.logs().logMessage("Deskew Explore: swapped overlap for "
                     + rotateDegrees + "° rotation");
          }
+         studio_.logs().logMessage("Deskew Explore: initial overlap = "
+                 + overlapX + "x" + overlapY + " pixels");
 
+         // Store metadata normally: X for X, Y for Y
          summaryMetadata.put("GridPixelOverlapX", overlapX);
          summaryMetadata.put("GridPixelOverlapY", overlapY);
 
          // Initialize storage immediately so NDViewer has something to work with
-         // NDTiffStorage constructor expects (row_overlap, column_overlap) = (Y, X)
+         // Pass overlap values in Magellan order: (overlapX, overlapY)
+         // Both values are based on camera width for now (height-based value unknown until first tile)
          storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
-                 overlapY, overlapX, true, null, SAVING_QUEUE_SIZE, null, true);
+                 overlapX, overlapY, true, null, SAVING_QUEUE_SIZE, null, true);
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
@@ -279,7 +284,7 @@ public class DeskewExploreManager {
             pixelSizeUm_ = 1.0;
          }
 
-         // Read overlap from metadata
+         // Read overlap from metadata normally
          int overlapX = summaryMetadata.optInt("GridPixelOverlapX", 0);
          int overlapY = summaryMetadata.optInt("GridPixelOverlapY", 0);
          // Calculate overlap percentage from pixel values (use X overlap)
@@ -997,11 +1002,11 @@ public class DeskewExploreManager {
                finalHeight = projectedWidth_;
             }
 
+            // Just update metadata - storage overlap params are already set to 0
             try {
                JSONObject summaryMetadata = storage_.getSummaryMetadata();
                summaryMetadata.put("GridPixelOverlapX", overlapX);
                summaryMetadata.put("GridPixelOverlapY", overlapY);
-               // Also update Width/Height to reflect actual tile dimensions for viewer (post-rotation)
                summaryMetadata.put("Width", finalWidth);
                summaryMetadata.put("Height", finalHeight);
                studio_.logs().logMessage("Deskew Explore: updated overlap metadata to "
