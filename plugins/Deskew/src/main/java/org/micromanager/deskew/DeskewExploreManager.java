@@ -81,6 +81,7 @@ public class DeskewExploreManager {
    private double initialStageX_ = 0;
    private double initialStageY_ = 0;
    private double pixelSizeUm_ = 1.0;
+   private double overlapPercentage_ = 10.0;  // Percentage overlap between tiles (0-50)
 
    public DeskewExploreManager(Studio studio, DeskewFrame frame, DeskewFactory deskewFactory) {
       studio_ = studio;
@@ -143,6 +144,12 @@ public class DeskewExploreManager {
          studio_.logs().logMessage("Deskew Explore: initial stage position = ("
                  + initialStageX_ + ", " + initialStageY_ + ")");
 
+         // Read overlap percentage from settings
+         overlapPercentage_ = studio_.profile().getSettings(DeskewFrame.class)
+                 .getInteger(DeskewFrame.EXPLORE_OVERLAP_PERCENT, 10);
+         studio_.logs().logMessage("Deskew Explore: tile overlap = "
+                 + overlapPercentage_ + "%");
+
          // Estimate tile dimensions based on camera size
          // (actual size will be determined after first deskew)
          estimatedTileWidth_ = imageWidth;
@@ -151,18 +158,36 @@ public class DeskewExploreManager {
          updateTileDimensionsForRotation();
 
          // Create summary metadata for storage and viewer
+         // Use estimated tile dimensions (will be updated after first acquisition)
          JSONObject summaryMetadata = new JSONObject();
-         summaryMetadata.put("Width", imageWidth);
-         summaryMetadata.put("Height", imageHeight);
+         summaryMetadata.put("Width", estimatedTileWidth_);
+         summaryMetadata.put("Height", estimatedTileHeight_);
          summaryMetadata.put("PixelSize_um", pixelSizeUm_);
          summaryMetadata.put("BitDepth", bitDepth_);
          summaryMetadata.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
-         summaryMetadata.put("GridPixelOverlapX", 0);
-         summaryMetadata.put("GridPixelOverlapY", 0);
+         // Calculate pixel overlap based on estimated tile dimensions
+         // (will be updated after first acquisition with actual tile dimensions)
+         int overlapX = (int) Math.round(estimatedTileWidth_ * overlapPercentage_ / 100.0);
+         int overlapY = (int) Math.round(estimatedTileHeight_ * overlapPercentage_ / 100.0);
+
+         // Account for rotation: swap overlap if rotated 90° or 270°
+         int rotateDegrees = studio_.profile().getSettings(DeskewFrame.class)
+                 .getInteger(DeskewFrame.EXPLORE_ROTATE, 0);
+         if (rotateDegrees == 90 || rotateDegrees == 270) {
+            int temp = overlapX;
+            overlapX = overlapY;
+            overlapY = temp;
+            studio_.logs().logMessage("Deskew Explore: swapped overlap for "
+                    + rotateDegrees + "° rotation");
+         }
+
+         summaryMetadata.put("GridPixelOverlapX", overlapX);
+         summaryMetadata.put("GridPixelOverlapY", overlapY);
 
          // Initialize storage immediately so NDViewer has something to work with
+         // NDTiffStorage constructor expects (row_overlap, column_overlap) = (Y, X)
          storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
-                 0, 0, true, null, SAVING_QUEUE_SIZE, null, true);
+                 overlapY, overlapX, true, null, SAVING_QUEUE_SIZE, null, true);
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
@@ -253,6 +278,19 @@ public class DeskewExploreManager {
          if (pixelSizeUm_ <= 0) {
             pixelSizeUm_ = 1.0;
          }
+
+         // Read overlap from metadata
+         int overlapX = summaryMetadata.optInt("GridPixelOverlapX", 0);
+         int overlapY = summaryMetadata.optInt("GridPixelOverlapY", 0);
+         // Calculate overlap percentage from pixel values (use X overlap)
+         // Note: Will get actual tile dimensions later; this is a first estimate
+         if (imageWidth > 0 && overlapX > 0) {
+            overlapPercentage_ = (overlapX * 100.0) / imageWidth;
+         } else {
+            overlapPercentage_ = 0.0;  // No overlap in this dataset
+         }
+         studio_.logs().logMessage("Deskew Explore: loaded dataset with "
+                 + overlapPercentage_ + "% overlap");
 
          // Store current stage position for potential new acquisitions
          initialStageX_ = studio_.core().getXPosition();
@@ -832,8 +870,11 @@ public class DeskewExploreManager {
                // Tile (0,0) is at the initial position
                // Positive col -> move stage in +X direction
                // Positive row -> move stage in +Y direction
-               double targetX = initialStageX_ + col * tileWidthUm;
-               double targetY = initialStageY_ + row * tileHeightUm;
+               // Account for overlap: effective spacing is reduced by overlap percentage
+               double effectiveTileWidthUm = tileWidthUm * (1.0 - overlapPercentage_ / 100.0);
+               double effectiveTileHeightUm = tileHeightUm * (1.0 - overlapPercentage_ / 100.0);
+               double targetX = initialStageX_ + col * effectiveTileWidthUm;
+               double targetY = initialStageY_ + row * effectiveTileHeightUm;
 
                // Move stage to target position
                studio_.logs().logMessage("Deskew Explore: moving stage to ("
@@ -937,6 +978,37 @@ public class DeskewExploreManager {
             dataSource_.setTileDimensions(projectedWidth_, projectedHeight_);
             studio_.logs().logMessage("Deskew Explore: projected dimensions = "
                     + projectedWidth_ + " x " + projectedHeight_);
+
+            // Update overlap metadata with actual tile dimensions
+            // Note: projectedWidth/Height are pre-rotation dimensions
+            int overlapX = (int) Math.round(projectedWidth_ * overlapPercentage_ / 100.0);
+            int overlapY = (int) Math.round(projectedHeight_ * overlapPercentage_ / 100.0);
+
+            // Account for rotation: swap overlap if rotated 90° or 270°
+            int rotateDegrees = frame_.getSettings().getInteger(DeskewFrame.EXPLORE_ROTATE, 0);
+            int finalWidth = projectedWidth_;
+            int finalHeight = projectedHeight_;
+            if (rotateDegrees == 90 || rotateDegrees == 270) {
+               int temp = overlapX;
+               overlapX = overlapY;
+               overlapY = temp;
+               // Also swap width/height for viewer
+               finalWidth = projectedHeight_;
+               finalHeight = projectedWidth_;
+            }
+
+            try {
+               JSONObject summaryMetadata = storage_.getSummaryMetadata();
+               summaryMetadata.put("GridPixelOverlapX", overlapX);
+               summaryMetadata.put("GridPixelOverlapY", overlapY);
+               // Also update Width/Height to reflect actual tile dimensions for viewer (post-rotation)
+               summaryMetadata.put("Width", finalWidth);
+               summaryMetadata.put("Height", finalHeight);
+               studio_.logs().logMessage("Deskew Explore: updated overlap metadata to "
+                       + overlapX + "x" + overlapY + " pixels");
+            } catch (Exception e) {
+               studio_.logs().logError(e, "Failed to update overlap metadata");
+            }
          }
 
          // Store the projected image
@@ -1260,6 +1332,10 @@ public class DeskewExploreManager {
          return viewer_.getMagnification();
       }
       return 1.0;
+   }
+
+   public double getOverlapPercentage() {
+      return overlapPercentage_;
    }
 
    public void setOverlay(Overlay overlay) {

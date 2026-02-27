@@ -508,9 +508,14 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       double fullResX = viewOffset.x + displayX / mag;
       double fullResY = viewOffset.y + displayY / mag;
 
-      // Convert to tile indices
-      int col = (int) Math.floor(fullResX / tileWidth_);
-      int row = (int) Math.floor(fullResY / tileHeight_);
+      // Calculate effective tile dimensions accounting for overlap
+      double overlapPercent = manager_.getOverlapPercentage();
+      double effectiveTileWidth = tileWidth_ * (1.0 - overlapPercent / 100.0);
+      double effectiveTileHeight = tileHeight_ * (1.0 - overlapPercent / 100.0);
+
+      // Convert to tile indices using effective spacing
+      int col = (int) Math.floor(fullResX / effectiveTileWidth);
+      int row = (int) Math.floor(fullResY / effectiveTileHeight);
 
       return new Point(row, col);
    }
@@ -575,15 +580,20 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
          int tileCount = (maxRow - minRow + 1) * (maxCol - minCol + 1);
 
          // Draw each tile in the selection
+         double overlapPercent = manager_.getOverlapPercentage();
+         double effectiveTileWidth = tileWidth_ * (1.0 - overlapPercent / 100.0);
+         double effectiveTileHeight = tileHeight_ * (1.0 - overlapPercent / 100.0);
+
          for (int row = minRow; row <= maxRow; row++) {
             for (int col = minCol; col <= maxCol; col++) {
-               // Calculate tile position in full resolution coordinates
-               double tilePixelX = col * tileWidth_;
-               double tilePixelY = row * tileHeight_;
+               // Calculate tile position based on effective spacing
+               double tilePixelX = col * effectiveTileWidth;
+               double tilePixelY = row * effectiveTileHeight;
 
                // Convert to display/screen coordinates
                int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
                int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
+               // Draw full tile size (including overlap) to show actual acquired area
                int dispW = (int) (tileWidth_ * magnification);
                int dispH = (int) (tileHeight_ * magnification);
 
