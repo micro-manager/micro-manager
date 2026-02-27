@@ -78,8 +78,9 @@ public class MDAAcqEventModules {
                   return null;
                }
                double zBegin = zOrigin;
-               if (positionList != null && (
-                        acquisitionSettings.relativeZSlice() || !acquisitionSettings.useSlices())) {
+               if (positionList != null
+                     && (acquisitionSettings.relativeZSlice()
+                        || !acquisitionSettings.useSlices())) {
                   // Get Z origin from position list if available
                   MultiStagePosition msp = positionList.getPosition(
                         (Integer) event.getAxisPosition(POSITION_AXIS));
@@ -96,20 +97,17 @@ public class MDAAcqEventModules {
                   }
                }
                if (positionList == null) {
-                  Engine.getCore().logMessage("pos list empty, setting StageCoordinate to : " + zOrigin);
+                  Engine.getCore().logMessage("pos list empty, setStageCoordinate to:" + zOrigin);
                   event.setStageCoordinate(Engine.getCore().getFocusDevice(), zOrigin);
                }
                double zPos = 0.0;
 
-
-               if(acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE || 
-                  acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE){
-                  zPos = zIndex_ * zStep + zBegin + zPos; 
-
-               }else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL || 
-                         acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL){
+               if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+                     || acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE) {
+                  zPos = zIndex_ * zStep + zBegin + zPos;
+               } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
+                     || acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
                   zPos = zIndex_ * zStep + zBegin;  // if Ch->Z then Ch iterator already defined Z
-
                }
                // Do plus equals here in case z positions have been modified by
                // another function (e.g. channel specific focal offsets)
@@ -224,7 +222,6 @@ public class MDAAcqEventModules {
                boolean hasZOffsets = channelList.stream().map(t -> t.zOffset())
                            .filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
                Double zPos;
-               Engine.getCore().logMessage("Channel Iterator, event zPos: " + (event.getZPosition()==null ? "null" : event.getZPosition() + ", hasZOffsets: " + hasZOffsets)); 
                if (event.getZPosition() == null) {
                   if (hasZOffsets) {
                      try {
@@ -241,10 +238,12 @@ public class MDAAcqEventModules {
 
                // if getZposition is null then we are in channel->Z order
                // if getZposition is not null then we are in Z->Channel order
-               if(event.getZPosition() == null){
-                  zPos = channelList.get(index).zOffset(); // Z iterator will add zPosition and Z steps
-               }else{
-                  zPos = event.getZPosition() + channelList.get(index).zOffset(); // z iterator alrady added z position from PosList and Z step
+               if (event.getZPosition() == null) {
+                  // Z iterator will add zPosition and Z steps
+                  zPos = channelList.get(index).zOffset();
+               } else {
+                  // z iterator already added z position from PosList and Z step
+                  zPos = event.getZPosition() + channelList.get(index).zOffset(); 
                }
 
                channelEvent.setZ(channelEvent.getZIndex(), zPos);
