@@ -29,6 +29,7 @@ import javax.swing.ToolTipManager;
 import mmcorej.MMCoreJ;
 import org.micromanager.PositionList;
 import org.micromanager.events.internal.DefaultGUIRefreshEvent;
+import org.micromanager.events.internal.DefaultPixelSizeChangedEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
@@ -275,8 +276,16 @@ public class MMUIManager {
       ReportingUtils.logMessage("Updating GUI; config pad = "
             + updateConfigPadStructure + "; from cache = " + fromCache);
       try {
+         double pixSizeUmPre = studio_.cache().getPixelSizeUm();
          studio_.cache().refreshValues();
          studio_.getAutofocusManager().refresh();
+         double pixSizeUmPost = studio_.cache().getPixelSizeUm();
+         if (Double.compare(pixSizeUmPre, pixSizeUmPost) != 0) {
+            // Firing this event is only needed for devices that do not notify the core
+            // of changed properties.  For those devices, the core will already fire the
+            // event.  Since we have no way of knowing, better call one extra time.
+            studio_.events().post(new DefaultPixelSizeChangedEvent(pixSizeUmPost));
+         }
 
          // The rest of this function uses the cached property values.
          // If `fromCache` is false, start by updating all properties in the cache.

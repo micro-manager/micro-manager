@@ -20,7 +20,10 @@
 
 package org.micromanager.magellan.internal.explore;
 
+import java.awt.Cursor;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +41,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
@@ -49,6 +54,10 @@ import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.explore.gui.ExploreMouseListener;
 import org.micromanager.magellan.internal.explore.gui.ExploreOverlayer;
+import org.micromanager.magellan.internal.explore.gui.ExportControlsPanel;
+import org.micromanager.magellan.internal.explore.gui.ExportDialog;
+import org.micromanager.magellan.internal.explore.gui.ExportMouseListener;
+import org.micromanager.magellan.internal.explore.gui.ExportSelectionOverlay;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.NDViewerAPI;
@@ -87,9 +96,11 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
    protected ExploreAcquisition acq_;
    protected ExploreMouseListener mouseListener_;
    protected ExploreControlsPanel exploreControlsPanel_;
+   protected ExportControlsPanel exportControlsPanel_;
    private Consumer<String> logger_;
    private ChannelGroupSettings channels_;
    private final boolean useZ_;
+   private ExportMouseListener exportListener_;
 
 
    public static ExploreAcqUIAndStorage create(Studio studio, String dir, String name,
@@ -325,10 +336,20 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
          display_.setOverlayerPlugin(overlayer_);
 
          exploreControlsPanel_ = new ExploreControlsPanel(acq_,
-                  overlayer_,  useZ_, channels_, acq_.getZAxes());
+                  overlayer_, useZ_, channels_, acq_.getZAxes());
          display_.addControlPanel(exploreControlsPanel_);
+         exportControlsPanel_ = new ExportControlsPanel(this::startExportMode);
+         display_.addControlPanel(exportControlsPanel_);
 
          display_.setCustomCanvasMouseListener(mouseListener_);
+
+         SwingUtilities.invokeLater(() -> {
+            Window w = SwingUtilities.getWindowAncestor(display_.getCanvasJPanel());
+            if (w != null) {
+               w.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                       getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            }
+         });
 
          display_.addSetImageHook(new Consumer<HashMap<String, Object>>() {
             @Override
@@ -578,6 +599,102 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
               (long) (display_.getViewOffset().x + display_.getFullResSourceDataSize().x / 2),
               (long) (display_.getViewOffset().y + display_.getFullResSourceDataSize().y / 2));
 
+   }
+
+   /**
+    * Switches the viewer into export-mode: cursor becomes a crosshair and
+    * the user can drag a rectangle to define the export ROI.
+    */
+   public void startExportMode() {
+      javax.swing.JPanel canvas = display_.getCanvasJPanel();
+      canvas.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      if (exportControlsPanel_ != null) {
+         exportControlsPanel_.setStatus("Draw a selection on the image");
+      }
+
+      ExportSelectionOverlay exportOverlay = new ExportSelectionOverlay(display_);
+      display_.setOverlayerPlugin(exportOverlay);
+
+      ExportMouseListener exportListener = new ExportMouseListener(display_,
+              (dragStart, dragEnd) -> {
+                 // Restore normal state before showing the dialog
+                 exportOverlay.setExportMouseListener(null);
+                 display_.setOverlayerPlugin(overlayer_);
+                 canvas.removeMouseListener(exportListener_);
+                 canvas.removeMouseMotionListener(exportListener_);
+                 canvas.removeMouseWheelListener(exportListener_);
+                 display_.setCustomCanvasMouseListener(mouseListener_);
+                 canvas.setCursor(Cursor.getDefaultCursor());
+                 if (exportControlsPanel_ != null) {
+                    exportControlsPanel_.setStatus(null);
+                 }
+                 onExportRoiSelected(dragStart, dragEnd);
+              });
+      exportListener_ = exportListener;
+      exportOverlay.setExportMouseListener(exportListener);
+      // Manually remove the current listener since NDViewer's setCustomCanvasMouseListener
+      // does not track which listener is currently active after the first swap.
+      canvas.removeMouseListener(mouseListener_);
+      canvas.removeMouseMotionListener(mouseListener_);
+      canvas.removeMouseWheelListener(mouseListener_);
+      display_.setCustomCanvasMouseListener(exportListener);
+   }
+
+   private void onExportRoiSelected(Point dragStart, Point dragEnd) {
+      // Convert canvas pixels → full-resolution pixel coordinates
+      Point2D.Double viewOffset = display_.getViewOffset();
+      double mag = display_.getMagnification();
+      int x1 = (int) (viewOffset.x + Math.min(dragStart.x, dragEnd.x) / mag);
+      int y1 = (int) (viewOffset.y + Math.min(dragStart.y, dragEnd.y) / mag);
+      int x2 = (int) (viewOffset.x + Math.max(dragStart.x, dragEnd.x) / mag);
+      int y2 = (int) (viewOffset.y + Math.max(dragStart.y, dragEnd.y) / mag);
+      int roiW = Math.max(1, x2 - x1);
+      int roiH = Math.max(1, y2 - y1);
+
+      // Show the export dialog on the EDT (we are already on EDT from mouse callback)
+      ExportDialog dialog = new ExportDialog(
+              SwingUtilities.getWindowAncestor(display_.getCanvasJPanel()),
+              storage_.getNumResLevels(), roiW, roiH);
+      ExportDialog.ExportOptions opts = dialog.showAndGet();
+      if (opts == null) {
+         return;
+      }
+
+      // Build non-channel axes (current Z position, etc.)
+      HashMap<String, Object> baseAxes = new HashMap<>();
+      if (acq_ != null) {
+         for (String zName : acq_.getZAxes().keySet()) {
+            baseAxes.put(zName, display_.getAxisPosition(zName));
+         }
+      }
+
+      JSONObject displaySettings = display_.getDisplaySettingsJSON();
+      List<String> channels = new ArrayList<>(channelNames_);
+      // If no channel axis exists, use null to indicate single-channel no-name data
+      if (channels.isEmpty()) {
+         channels.add(null);
+      }
+      final int x1f = x1;
+      final int y1f = y1;
+      final int roiWf = roiW;
+      final int roiHf = roiH;
+
+      new Thread(() -> {
+         try {
+            new ExploreImageExporter(storage_, displaySettings)
+                    .export(baseAxes, channels, x1f, y1f, roiWf, roiHf,
+                            opts.resolutionLevel, opts.format, opts.filePath);
+            SwingUtilities.invokeLater(() ->
+                    JOptionPane.showMessageDialog(null,
+                            "Export complete:\n" + opts.filePath));
+         } catch (Exception ex) {
+            ex.printStackTrace();
+            SwingUtilities.invokeLater(() ->
+                    JOptionPane.showMessageDialog(null,
+                            "Export failed: " + ex.getMessage(),
+                            "Export Error", JOptionPane.ERROR_MESSAGE));
+         }
+      }, "Magellan-Export").start();
    }
 
 }

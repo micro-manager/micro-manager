@@ -20,11 +20,17 @@
 
 package org.micromanager.magellan.internal.magellanacq;
 
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,6 +38,8 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngJDataSink;
@@ -41,7 +49,12 @@ import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.magellan.internal.explore.ChannelGroupSettings;
 import org.micromanager.magellan.internal.explore.ExploreAcquisition;
+import org.micromanager.magellan.internal.explore.ExploreImageExporter;
 import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
+import org.micromanager.magellan.internal.explore.gui.ExportControlsPanel;
+import org.micromanager.magellan.internal.explore.gui.ExportDialog;
+import org.micromanager.magellan.internal.explore.gui.ExportMouseListener;
+import org.micromanager.magellan.internal.explore.gui.ExportSelectionOverlay;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
 import org.micromanager.magellan.internal.gui.SurfaceGridPanel;
@@ -87,6 +100,7 @@ public class MagellanAcqUIAndStorage
    protected XYTiledAcquisition acq_;
    protected MagellanMouseListener mouseListener_;
    protected ExploreControlsPanel exploreControlsPanel_;
+   protected ExportControlsPanel exportControlsPanel_;
    private Consumer<String> logger_;
    private ChannelGroupSettings exploreChannels_;
 
@@ -253,9 +267,19 @@ public class MagellanAcqUIAndStorage
             exploreControlsPanel_ = new ExploreControlsPanel((ExploreAcquisition) acq_,
                     overlayer_, useZ_, exploreChannels_, acq_.getZAxes());
             display_.addControlPanel(exploreControlsPanel_);
+            exportControlsPanel_ = new ExportControlsPanel(this::startExportMode);
+            display_.addControlPanel(exportControlsPanel_);
          }
 
          display_.setCustomCanvasMouseListener(mouseListener_);
+
+         SwingUtilities.invokeLater(() -> {
+            Window w = SwingUtilities.getWindowAncestor(display_.getCanvasJPanel());
+            if (w != null) {
+               w.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                       getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            }
+         });
 
          display_.addSetImageHook(new Consumer<HashMap<String, Object>>() {
             @Override
@@ -451,5 +475,103 @@ public class MagellanAcqUIAndStorage
       update();
    }
 
+   public void startExportMode() {
+      javax.swing.JPanel canvas = display_.getCanvasJPanel();
+      canvas.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      if (exportControlsPanel_ != null) {
+         exportControlsPanel_.setStatus("Draw a selection on the image");
+      }
+
+      ExportSelectionOverlay exportOverlay = new ExportSelectionOverlay(display_);
+      display_.setOverlayerPlugin(exportOverlay);
+
+      ExportMouseListener exportListener = new ExportMouseListener(display_,
+              (dragStart, dragEnd) -> {
+                 exportOverlay.setExportMouseListener(null);
+                 display_.setOverlayerPlugin(overlayer_);
+                 canvas.removeMouseListener(exportListener_);
+                 canvas.removeMouseMotionListener(exportListener_);
+                 canvas.removeMouseWheelListener(exportListener_);
+                 display_.setCustomCanvasMouseListener(mouseListener_);
+                 canvas.setCursor(Cursor.getDefaultCursor());
+                 if (exportControlsPanel_ != null) {
+                    exportControlsPanel_.setStatus(null);
+                 }
+                 onExportRoiSelected(dragStart, dragEnd);
+              });
+      exportListener_ = exportListener;
+      exportOverlay.setExportMouseListener(exportListener);
+      // Manually remove the current listener since NDViewer's setCustomCanvasMouseListener
+      // does not track which listener is currently active after the first swap.
+      canvas.removeMouseListener(mouseListener_);
+      canvas.removeMouseMotionListener(mouseListener_);
+      canvas.removeMouseWheelListener(mouseListener_);
+      display_.setCustomCanvasMouseListener(exportListener);
+   }
+
+   private ExportMouseListener exportListener_;
+
+   private void onExportRoiSelected(Point dragStart, Point dragEnd) {
+      Point2D.Double viewOffset = display_.getViewOffset();
+      double mag = display_.getMagnification();
+      int x1 = (int) (viewOffset.x + Math.min(dragStart.x, dragEnd.x) / mag);
+      int y1 = (int) (viewOffset.y + Math.min(dragStart.y, dragEnd.y) / mag);
+      int x2 = (int) (viewOffset.x + Math.max(dragStart.x, dragEnd.x) / mag);
+      int y2 = (int) (viewOffset.y + Math.max(dragStart.y, dragEnd.y) / mag);
+      int roiW = Math.max(1, x2 - x1);
+      int roiH = Math.max(1, y2 - y1);
+
+      ExportDialog dialog = new ExportDialog(
+              SwingUtilities.getWindowAncestor(display_.getCanvasJPanel()),
+              storage_.getNumResLevels(), roiW, roiH);
+      ExportDialog.ExportOptions opts = dialog.showAndGet();
+      if (opts == null) {
+         return;
+      }
+
+      HashMap<String, Object> baseAxes = new HashMap<>();
+      if (acq_ instanceof ExploreAcquisition) {
+         for (String zName : ((ExploreAcquisition) acq_).getZAxes().keySet()) {
+            baseAxes.put(zName, display_.getAxisPosition(zName));
+         }
+      }
+
+      List<String> channels = new ArrayList<>();
+      for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+         if (axes.containsKey(MagellanMD.CHANNEL_AXIS)) {
+            String ch = (String) axes.get(MagellanMD.CHANNEL_AXIS);
+            if (!channels.contains(ch)) {
+               channels.add(ch);
+            }
+         }
+      }
+      // If no channel axis exists, use null to indicate single-channel no-name data
+      if (channels.isEmpty()) {
+         channels.add(null);
+      }
+
+      JSONObject displaySettings = display_.getDisplaySettingsJSON();
+      final int x1f = x1;
+      final int y1f = y1;
+      final int roiWf = roiW;
+      final int roiHf = roiH;
+
+      new Thread(() -> {
+         try {
+            new ExploreImageExporter(storage_, displaySettings)
+                    .export(baseAxes, channels, x1f, y1f, roiWf, roiHf,
+                            opts.resolutionLevel, opts.format, opts.filePath);
+            SwingUtilities.invokeLater(() ->
+                    JOptionPane.showMessageDialog(null,
+                            "Export complete:\n" + opts.filePath));
+         } catch (Exception ex) {
+            ex.printStackTrace();
+            SwingUtilities.invokeLater(() ->
+                    JOptionPane.showMessageDialog(null,
+                            "Export failed: " + ex.getMessage(),
+                            "Export Error", JOptionPane.ERROR_MESSAGE));
+         }
+      }, "Magellan-Export").start();
+   }
 
 }

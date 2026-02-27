@@ -117,7 +117,7 @@ public abstract class AbstractDataViewer implements DataViewer {
       }
       synchronized (this) {
          final DisplaySettings oldSettings = displaySettings_;
-         if (settings == oldSettings) {
+         if (settings == oldSettings || settings.equals(oldSettings)) {
             return;
          }
          displaySettings_ = handleDisplaySettings(settings);
@@ -166,7 +166,8 @@ public abstract class AbstractDataViewer implements DataViewer {
             // effort; spurious failures should not affect proper usage
             return false;
          }
-         if (newSettings == displaySettings_) {
+         if (newSettings == displaySettings_
+               || newSettings.equals(displaySettings_)) {
             return true;
          }
          displaySettings_ = handleDisplaySettings(newSettings);
