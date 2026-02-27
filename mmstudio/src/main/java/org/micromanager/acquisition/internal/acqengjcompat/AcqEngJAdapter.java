@@ -311,7 +311,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
             // add a hook to update the Z drive positions based on the position found in the i
             // previous round after autofocussing.
-            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
+            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
          // Hooks to keep shutter open between channel and/or slices if desired
@@ -363,7 +363,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             currentAcquisition_.addHook(restorePositionHook(msp),
                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
-            //currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
          // This hook is used to update the time of the next wake up call
          if (sequenceSettings.useFrames()) {
