@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.acqj.main.AcqEngMetadata;
@@ -189,6 +190,29 @@ public class DeskewExploreManager {
          summaryMetadata.put("GridPixelOverlapX", overlapX);
          summaryMetadata.put("GridPixelOverlapY", overlapY);
 
+         // Add channel metadata from MDA settings for Inspector display
+         SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+         studio_.logs().logMessage("Deskew Explore: settings.useChannels() = " + settings.useChannels());
+         if (settings.useChannels()) {
+            studio_.logs().logMessage("Deskew Explore: settings.channels().size() = " + settings.channels().size());
+         }
+         if (settings.useChannels() && settings.channels().size() > 0) {
+            JSONArray channelNames = new JSONArray();
+            for (int i = 0; i < settings.channels().size(); i++) {
+               channelNames.put(settings.channels().get(i).config());
+            }
+            summaryMetadata.put("ChNames", channelNames);
+            summaryMetadata.put("Channels", channelNames.length());
+            studio_.logs().logMessage("Deskew Explore: initialized with " + channelNames.length()
+                    + " channels from MDA settings");
+            studio_.logs().logMessage("Deskew Explore: summaryMetadata now contains ChNames = "
+                    + summaryMetadata.has("ChNames"));
+         } else {
+            studio_.logs().logMessage("Deskew Explore: NOT adding channel metadata - useChannels="
+                    + settings.useChannels() + ", size=" +
+                    (settings.useChannels() ? settings.channels().size() : "N/A"));
+         }
+
          // Initialize storage immediately so NDViewer has something to work with
          // Pass overlap values in Magellan order: (overlapX, overlapY)
          // Both values are based on camera width for now (height-based value unknown until first tile)
@@ -205,6 +229,29 @@ public class DeskewExploreManager {
                studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
+
+         // Initialize DisplaySettings with channels for Inspector and histogram support
+         if (settings.useChannels() && settings.channels().size() > 0) {
+            org.micromanager.display.DisplaySettings.Builder dsBuilder =
+                  studio_.displays().displaySettingsBuilder();
+            int nrChannels = settings.channels().size();
+            if (nrChannels == 1) {
+               dsBuilder.colorModeGrayscale();
+            } else {
+               dsBuilder.colorModeComposite();
+            }
+            for (int i = 0; i < nrChannels; i++) {
+               String channelName = settings.channels().get(i).config();
+               dsBuilder.channel(i,
+                     studio_.displays().channelDisplaySettingsBuilder()
+                           .color(java.awt.Color.WHITE)
+                           .build());
+            }
+            mm2Viewer_.setDisplaySettings(dsBuilder.build());
+            studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
+                  + nrChannels + " channels");
+         }
+
          viewer_ = mm2Viewer_.getNDViewer();
          viewer_.setWindowTitle("Deskew Explore - Right-click to select, "
                + "Left-drag to extend, Left-click to acquire");
@@ -337,6 +384,34 @@ public class DeskewExploreManager {
                studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
+
+         // Initialize DisplaySettings with channels from storage metadata
+         if (summaryMetadata.has("ChNames")) {
+            try {
+               JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
+               int nrChannels = chNames.length();
+               org.micromanager.display.DisplaySettings.Builder dsBuilder =
+                     studio_.displays().displaySettingsBuilder();
+               if (nrChannels == 1) {
+                  dsBuilder.colorModeGrayscale();
+               } else {
+                  dsBuilder.colorModeComposite();
+               }
+               for (int i = 0; i < nrChannels; i++) {
+                  String channelName = chNames.getString(i);
+                  dsBuilder.channel(i,
+                        studio_.displays().channelDisplaySettingsBuilder()
+                              .color(java.awt.Color.WHITE)
+                              .build());
+               }
+               mm2Viewer_.setDisplaySettings(dsBuilder.build());
+               studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
+                     + nrChannels + " channels from storage");
+            } catch (Exception e) {
+               studio_.logs().logError(e, "Failed to initialize DisplaySettings from storage metadata");
+            }
+         }
+
          viewer_ = mm2Viewer_.getNDViewer();
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
@@ -821,7 +896,8 @@ public class DeskewExploreManager {
                final List<HashMap<String, Object>> axesList = new ArrayList<>(storedAxes);
                displayExecutor_.submit(() -> {
                   // Notify viewer for each channel separately
-                  // Use axes from storage, removing row/column (tiled layout handles those automatically)
+                  // Use axes from storage with channel as string name
+                  // AxesBridge translates between string names (NDViewer) and integer indices (MM)
                   for (int i = 0; i < tileImages.size() && i < axesList.size(); i++) {
                      Image tileImage = tileImages.get(i);
                      HashMap<String, Object> displayAxes = new HashMap<>(axesList.get(i));
@@ -1043,15 +1119,15 @@ public class DeskewExploreManager {
                summaryMetadata.put("Width", finalWidth);
                summaryMetadata.put("Height", finalHeight);
 
-               // Add channel metadata if multiple channels
-               if (projectedImages.size() > 1 && settings.useChannels()) {
-                  List<String> channelNames = new ArrayList<>();
+               // Add channel metadata (for both single and multi-channel)
+               if (settings.useChannels() && settings.channels().size() > 0) {
+                  JSONArray channelNames = new JSONArray();
                   for (int i = 0; i < settings.channels().size(); i++) {
-                     channelNames.add(settings.channels().get(i).config());
+                     channelNames.put(settings.channels().get(i).config());
                   }
                   summaryMetadata.put("ChNames", channelNames);
-                  summaryMetadata.put("Channels", channelNames.size());
-                  studio_.logs().logMessage("Deskew Explore: added " + channelNames.size()
+                  summaryMetadata.put("Channels", channelNames.length());
+                  studio_.logs().logMessage("Deskew Explore: added " + channelNames.length()
                           + " channels to metadata");
                }
 
@@ -1087,7 +1163,8 @@ public class DeskewExploreManager {
             final List<HashMap<String, Object>> axesList = new ArrayList<>(storedAxes);
             displayExecutor_.submit(() -> {
                // Notify viewer for each channel separately
-               // Use axes from storage, removing row/column (tiled layout handles those automatically)
+               // Use axes from storage with channel as string name
+               // AxesBridge translates between string names (NDViewer) and integer indices (MM)
                for (int i = 0; i < tileImages.size() && i < axesList.size(); i++) {
                   Image tileImage = tileImages.get(i);
                   HashMap<String, Object> displayAxes = new HashMap<>(axesList.get(i));
@@ -1325,7 +1402,7 @@ public class DeskewExploreManager {
       try {
          studio_.logs().logMessage("Deskew Explore: storing image " + image.getWidth() + "x"
                  + image.getHeight() + " at row=" + row + ", col=" + col
-                 + ", channel=" + channelName);
+                 + ", channelName=" + channelName);
 
          // Create image metadata with row/col/channel axes
          JSONObject tags = new JSONObject();
@@ -1336,8 +1413,8 @@ public class DeskewExploreManager {
          tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
 
          // Set up axes using AcqEngMetadata
-         // Include channel axis for multi-channel support
-         // NDViewer expects channel to be a String (channel name), not Integer
+         // Store channel as STRING (channel name) for NDViewer
+         // AxesBridge will translate between string names and integer indices
          AcqEngMetadata.createAxes(tags);
          AcqEngMetadata.setAxisPosition(tags, "row", row);
          AcqEngMetadata.setAxisPosition(tags, "column", col);

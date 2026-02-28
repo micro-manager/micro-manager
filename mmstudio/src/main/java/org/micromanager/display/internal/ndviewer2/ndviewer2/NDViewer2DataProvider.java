@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import mmcorej.TaggedImage;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -137,10 +139,39 @@ public final class NDViewer2DataProvider implements DataProvider {
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
-      // Return a minimal SummaryMetadata — full parsing from NDTiff
-      // summary JSON would require additional work. For now, return a
-      // builder-created default, which is sufficient for the Inspector.
-      return new DefaultSummaryMetadata.Builder().build();
+      // Parse channel names from NDTiff storage for Inspector display
+      DefaultSummaryMetadata.Builder builder = new DefaultSummaryMetadata.Builder();
+
+      try {
+         JSONObject json = storage_.getSummaryMetadata();
+
+         // Parse channel names if present
+         if (json.has("ChNames")) {
+            JSONArray chNames = json.getJSONArray("ChNames");
+            List<String> channelNames = new ArrayList<>();
+            for (int i = 0; i < chNames.length(); i++) {
+               channelNames.add(chNames.getString(i));
+            }
+            String[] channelNamesArray = channelNames.toArray(new String[0]);
+            builder.channelNames(channelNamesArray);
+            System.out.println("NDViewer2DataProvider: Found " + channelNamesArray.length
+                  + " channel names in storage metadata");
+            for (int i = 0; i < channelNamesArray.length; i++) {
+               System.out.println("  Channel " + i + ": " + channelNamesArray[i]);
+            }
+         } else {
+            System.out.println("NDViewer2DataProvider: No ChNames found in storage metadata");
+         }
+      } catch (Exception e) {
+         // If parsing fails, return minimal metadata (no channel names)
+         System.out.println("NDViewer2DataProvider: Exception parsing metadata: " + e.getMessage());
+         e.printStackTrace();
+      }
+
+      SummaryMetadata result = builder.build();
+      System.out.println("NDViewer2DataProvider: Built SummaryMetadata, getChannelNameList() returns: "
+            + result.getChannelNameList());
+      return result;
    }
 
    @Override
