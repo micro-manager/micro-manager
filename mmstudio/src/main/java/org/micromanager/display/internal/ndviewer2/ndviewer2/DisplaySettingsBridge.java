@@ -98,6 +98,7 @@ public final class DisplaySettingsBridge {
          // (name, groupName, histoRangeBits, etc.) that NDViewer doesn't track.
          ChannelDisplaySettings chSettings = existing.getChannelSettings(i)
                .copyBuilder()
+               .name(chName)
                .color(color)
                .visible(active)
                .component(0, comp)
