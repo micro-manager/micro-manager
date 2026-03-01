@@ -24,7 +24,7 @@ import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
 
 /**
- * The class is the glue needed in order for AcqEngJ, NDViwer, and NDTiff
+ * The class is the glue needed in order for AcqEngJ, NDViewer2, and NDTiff
  * to be able to be used together, since they are independent libraries that do not know about one
  * another. It implements the Acquisition engine API for a {@link AcqEngJDataSink} interface,
  * dispatching acquired images to viewer and storage as appropriate. It implements NDviewer's

@@ -16,6 +16,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.display.AbstractDataViewer;
+import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
@@ -82,6 +83,12 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // and ALL stats results (including scrollbar navigation) post the
    // accumulated histogram. Set to true for the entire explore session.
    private volatile boolean accumulateMode_ = false;
+
+   // When true, color changes from NDViewer are NOT synced back to MM
+   // DisplaySettings. This allows external code (e.g. DeskewExploreManager)
+   // to set colors once and have them preserved even if NDViewer initializes
+   // channels with different default colors.
+   private volatile boolean preserveMMColors_ = false;
 
    // True when the current stats computation is for a newly arrived image
    // (should be merged into the accumulator). Reset after processing.
@@ -351,11 +358,40 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       // Capture the snapshot on the render thread; the actual sync runs async.
       if (!updatingFromInspector_) {
          final DisplaySettings capturedDS = getDisplaySettings();
+         final boolean preserveColors = preserveMMColors_;
          statsExecutor_.submit(() -> {
             DisplaySettings fromNDViewer = displaySettingsBridge_.readFromNDViewer(
                   ndViewer_.getDisplaySettingsObject(), capturedDS);
+
+            // If preserving MM colors, restore original colors from capturedDS
+            // while keeping contrast (min/max/gamma) from NDViewer
+            boolean colorsDiffered = false;
+            if (preserveColors && fromNDViewer.getNumberOfChannels() > 0) {
+               DisplaySettings.Builder builder = fromNDViewer.copyBuilder();
+               for (int i = 0; i < fromNDViewer.getNumberOfChannels(); i++) {
+                  if (i < capturedDS.getNumberOfChannels()) {
+                     // Keep contrast from NDViewer, but restore color from MM
+                     ChannelDisplaySettings ndCh = fromNDViewer.getChannelSettings(i);
+                     ChannelDisplaySettings mmCh = capturedDS.getChannelSettings(i);
+                     if (!ndCh.getColor().equals(mmCh.getColor())) {
+                        colorsDiffered = true;
+                     }
+                     builder.channel(i, ndCh.copyBuilder()
+                           .color(mmCh.getColor())
+                           .build());
+                  }
+               }
+               fromNDViewer = builder.build();
+            }
+
             if (!fromNDViewer.equals(capturedDS)) {
                compareAndSetDisplaySettings(capturedDS, fromNDViewer);
+            } else if (colorsDiffered) {
+               // Settings match after color restoration, but NDViewer has wrong colors.
+               // Force push MM colors to NDViewer.
+               displaySettingsBridge_.applyToNDViewer(
+                     capturedDS, ndViewer_.getDisplaySettingsObject());
+               ndViewer_.update();
             }
          });
       }
@@ -501,6 +537,22 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     */
    public void resetAccumulatedStats() {
       accumulatedStats_ = null;
+   }
+
+   /**
+    * Set whether MM DisplaySettings colors should be preserved, preventing
+    * NDViewer's colors from being synced back to MM.
+    *
+    * <p>When enabled, contrast changes (min/max/gamma) still sync from
+    * NDViewer to MM, but colors are not overwritten. This is useful when
+    * external code sets specific colors (e.g. from MDA channel settings)
+    * and wants them to persist even if NDViewer initializes channels with
+    * different default colors.</p>
+    *
+    * @param preserve true to preserve MM colors, false for normal bidirectional sync
+    */
+   public void setPreserveMMColors(boolean preserve) {
+      preserveMMColors_ = preserve;
    }
 
    // ---- Viewer control ----
