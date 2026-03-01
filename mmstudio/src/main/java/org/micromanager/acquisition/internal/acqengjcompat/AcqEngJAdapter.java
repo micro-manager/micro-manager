@@ -614,6 +614,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                      && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
                posList = posList_;
             }
+            // update settings to match fake Z stack
+            ArrayList<Double> slices = new ArrayList<>();
+            slices.add(0.0);
+            acquisitionSettings = acquisitionSettings.copyBuilder()
+                                                     .useSlices(true)
+                                                     .slices(slices)
+                                                     .relativeZSlice(true)
+                                                     .sliceZBottomUm(0.0)
+                                                     .sliceZTopUm(0.0)
+                                                     .sliceZStepUm(0.0)
+                                                     .zReference(0.0).build();
             zStack = MDAAcqEventModules.zStack(
                      acquisitionSettings,
                   studio_.core().getPosition(),
