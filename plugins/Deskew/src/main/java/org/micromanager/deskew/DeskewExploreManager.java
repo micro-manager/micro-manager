@@ -201,20 +201,19 @@ public class DeskewExploreManager {
          }
          if (settings.useChannels() && settings.channels().size() > 0) {
             JSONArray channelNames = new JSONArray();
+            // Only include enabled channels (useChannel() == true)
             for (int i = 0; i < settings.channels().size(); i++) {
-               channelNames.put(settings.channels().get(i).config());
+               if (settings.channels().get(i).useChannel()) {
+                  channelNames.put(settings.channels().get(i).config());
+               }
             }
-            summaryMetadata.put("ChNames", channelNames);
-            summaryMetadata.put("Channels", channelNames.length());
-            summaryMetadata.put("ChGroup", settings.channelGroup());
-            studio_.logs().logMessage("Deskew Explore: initialized with " + channelNames.length()
-                    + " channels from MDA settings");
-            studio_.logs().logMessage("Deskew Explore: summaryMetadata now contains ChNames = "
-                    + summaryMetadata.has("ChNames"));
-         } else {
-            studio_.logs().logMessage("Deskew Explore: NOT adding channel metadata - useChannels="
-                  + settings.useChannels() + ", size="
-                  + (settings.useChannels() ? settings.channels().size() : "N/A"));
+            if (channelNames.length() > 0) {
+               summaryMetadata.put("ChNames", channelNames);
+               summaryMetadata.put("Channels", channelNames.length());
+               summaryMetadata.put("ChGroup", settings.channelGroup());
+               studio_.logs().logMessage("Deskew Explore: initialized with " + channelNames.length()
+                       + " channels from MDA settings");
+            }
          }
 
          // Initialize storage immediately so NDViewer has something to work with
@@ -237,33 +236,40 @@ public class DeskewExploreManager {
          mm2Viewer_.setAccumulateStats(true);
 
          // Initialize DisplaySettings with channels for Inspector and histogram support
+         // Filter to only include enabled channels (useChannel() == true)
          if (settings.useChannels() && settings.channels().size() > 0) {
             org.micromanager.display.DisplaySettings.Builder dsBuilder =
                   studio_.displays().displaySettingsBuilder();
-            int nrChannels = settings.channels().size();
-            if (nrChannels == 1) {
+            // Count enabled channels and collect their settings
+            int displayChannelIndex = 0;
+            for (int i = 0; i < settings.channels().size(); i++) {
+               if (settings.channels().get(i).useChannel()) {
+                  String channelGroup = settings.channelGroup();
+                  String channelName = settings.channels().get(i).config();
+                  java.awt.Color channelColor = settings.channels().get(i).color();
+                  // Build ChannelDisplaySettings directly using MDA color,
+                  // bypassing RememberedDisplaySettings which prefers persisted colors
+                  dsBuilder.channel(displayChannelIndex,
+                        studio_.displays().channelDisplaySettingsBuilder()
+                              .groupName(channelGroup)
+                              .name(channelName)
+                              .color(channelColor)
+                              .build());
+                  displayChannelIndex++;
+               }
+            }
+            if (displayChannelIndex == 1) {
                dsBuilder.colorModeGrayscale();
-            } else {
+            } else if (displayChannelIndex > 1) {
                dsBuilder.colorModeComposite();
             }
-            for (int i = 0; i < nrChannels; i++) {
-               String channelGroup = settings.channelGroup();
-               String channelName = settings.channels().get(i).config();
-               java.awt.Color channelColor = settings.channels().get(i).color();
-               // Build ChannelDisplaySettings directly using MDA color,
-               // bypassing RememberedDisplaySettings which prefers persisted colors
-               dsBuilder.channel(i,
-                     studio_.displays().channelDisplaySettingsBuilder()
-                           .groupName(channelGroup)
-                           .name(channelName)
-                           .color(channelColor)
-                           .build());
+            if (displayChannelIndex > 0) {
+               mm2Viewer_.setDisplaySettings(dsBuilder.build());
+               // Prevent NDViewer's default/remembered colors from overriding MDA colors
+               mm2Viewer_.setPreserveMMColors(true);
+               studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
+                     + displayChannelIndex + " channels");
             }
-            mm2Viewer_.setDisplaySettings(dsBuilder.build());
-            // Prevent NDViewer's default/remembered colors from overriding MDA colors
-            mm2Viewer_.setPreserveMMColors(true);
-            studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
-                  + nrChannels + " channels");
          }
 
          viewer_ = mm2Viewer_.getNDViewer();
@@ -455,8 +461,12 @@ public class DeskewExploreManager {
          if (displayExecutor_ != null && viewer_ != null) {
             displayExecutor_.submit(() -> {
                HashMap<String, Object> displayAxes = new HashMap<>();
-               viewer_.newImageArrived(displayAxes);
-               viewer_.update();
+               try {
+                  viewer_.newImageArrived(displayAxes);
+                  viewer_.update();
+               } catch (NullPointerException e) {
+                  // NDViewer histogram not yet initialized - ignore
+               }
             });
          }
 
@@ -585,6 +595,13 @@ public class DeskewExploreManager {
                }
             }
             if (doDelete) {
+               // Additional delay after closing storage to allow memory-mapped
+               // file buffers to release (especially important on Windows)
+               try {
+                  Thread.sleep(500);
+               } catch (InterruptedException ignored) {
+                  Thread.currentThread().interrupt();
+               }
                deleteTempStorage();
             }
          }, "Deskew Explore cleanup").start();
@@ -748,6 +765,8 @@ public class DeskewExploreManager {
 
    /**
     * Deletes the temporary storage directory and all its contents.
+    * Uses retry with exponential backoff for files that may still be held
+    * by memory-mapped buffers (common on Windows).
     */
    private void deleteTempStorage() {
       if (storageDir_ == null) {
@@ -757,22 +776,51 @@ public class DeskewExploreManager {
       try {
          File dir = new File(storageDir_);
          if (dir.exists()) {
-            // Delete directory recursively
+            // Collect paths first, then delete in reverse order (files before directories)
+            List<Path> pathsToDelete;
             try (Stream<Path> stream = Files.walk(dir.toPath())) {
-               stream.sorted(Comparator.reverseOrder())
-                       .forEach(path -> {
-                          try {
-                             Files.delete(path);
-                          } catch (IOException e) {
-                             studio_.logs().logError(e,
-                                   "Failed to delete: " + path);
-                          }
-                       });
+               pathsToDelete = stream.sorted(Comparator.reverseOrder())
+                       .collect(java.util.stream.Collectors.toList());
+            }
+
+            // Delete each path with retry logic for locked files
+            for (Path path : pathsToDelete) {
+               deleteWithRetry(path);
             }
             studio_.logs().logMessage("Deskew Explore: deleted temp storage at " + storageDir_);
          }
       } catch (IOException e) {
          studio_.logs().logError(e, "Failed to delete temp storage: " + storageDir_);
+      }
+   }
+
+   /**
+    * Attempts to delete a file/directory with retry and exponential backoff.
+    * On Windows, memory-mapped files may hold locks briefly after close().
+    */
+   private void deleteWithRetry(Path path) {
+      int maxRetries = 5;
+      long delayMs = 500;
+
+      for (int attempt = 1; attempt <= maxRetries; attempt++) {
+         try {
+            Files.delete(path);
+            return; // Success
+         } catch (IOException e) {
+            if (attempt == maxRetries) {
+               studio_.logs().logError(e, "Failed to delete after " + maxRetries
+                     + " attempts: " + path);
+               return;
+            }
+            // Wait before retry, with exponential backoff
+            try {
+               Thread.sleep(delayMs);
+               delayMs *= 2; // Double the delay for next attempt
+            } catch (InterruptedException ie) {
+               Thread.currentThread().interrupt();
+               return;
+            }
+         }
       }
    }
 
@@ -928,9 +976,17 @@ public class DeskewExploreManager {
                      if (mm2Viewer_ != null) {
                         mm2Viewer_.newImageArrived(tileImage);
                      }
-                     viewer_.newImageArrived(displayAxes);
+                     try {
+                        viewer_.newImageArrived(displayAxes);
+                     } catch (NullPointerException e) {
+                        // NDViewer histogram not yet initialized - ignore
+                     }
                   }
-                  viewer_.update();
+                  try {
+                     viewer_.update();
+                  } catch (NullPointerException e) {
+                     // NDViewer histogram not yet initialized - ignore
+                  }
                   studio_.logs().logMessage("Deskew Explore: viewer notified of new image");
                });
             }
@@ -1138,15 +1194,20 @@ public class DeskewExploreManager {
                summaryMetadata.put("Height", finalHeight);
 
                // Add channel metadata (for both single and multi-channel)
+               // Only include enabled channels (useChannel() == true)
                if (settings.useChannels() && settings.channels().size() > 0) {
                   JSONArray channelNames = new JSONArray();
                   for (int i = 0; i < settings.channels().size(); i++) {
-                     channelNames.put(settings.channels().get(i).config());
+                     if (settings.channels().get(i).useChannel()) {
+                        channelNames.put(settings.channels().get(i).config());
+                     }
                   }
-                  summaryMetadata.put("ChNames", channelNames);
-                  summaryMetadata.put("Channels", channelNames.length());
-                  studio_.logs().logMessage("Deskew Explore: added " + channelNames.length()
-                          + " channels to metadata");
+                  if (channelNames.length() > 0) {
+                     summaryMetadata.put("ChNames", channelNames);
+                     summaryMetadata.put("Channels", channelNames.length());
+                     studio_.logs().logMessage("Deskew Explore: added " + channelNames.length()
+                             + " channels to metadata");
+                  }
                }
 
                studio_.logs().logMessage("Deskew Explore: updated overlap metadata to "
@@ -1196,9 +1257,17 @@ public class DeskewExploreManager {
                   if (mm2Viewer_ != null) {
                      mm2Viewer_.newImageArrived(tileImage);
                   }
-                  viewer_.newImageArrived(displayAxes);
+                  try {
+                     viewer_.newImageArrived(displayAxes);
+                  } catch (NullPointerException e) {
+                     // NDViewer histogram not yet initialized - ignore
+                  }
                }
-               viewer_.update();
+               try {
+                  viewer_.update();
+               } catch (NullPointerException e) {
+                  // NDViewer histogram not yet initialized - ignore
+               }
             });
          }
 

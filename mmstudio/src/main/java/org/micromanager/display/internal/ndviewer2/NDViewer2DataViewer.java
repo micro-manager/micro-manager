@@ -75,11 +75,12 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // to NDViewer, so that the resulting setImageHook does not recurse.
    private volatile boolean updatingPosition_ = false;
 
-   // Accumulated stats across all tiles (null until first image arrives).
-   // Used by newImageArrived() path to build a global histogram.
-   private volatile ImageStats accumulatedStats_;
+   // Accumulated stats per channel across all tiles.
+   // Used by newImageArrived() path to build per-channel histograms.
+   // Key is channel index, value is accumulated ImageStats for that channel.
+   private final Map<Integer, ImageStats> accumulatedStatsPerChannel_ = new HashMap<>();
 
-   // When true, newImageArrived() stats are merged into accumulatedStats_
+   // When true, newImageArrived() stats are merged into accumulatedStatsPerChannel_
    // and ALL stats results (including scrollbar navigation) post the
    // accumulated histogram. Set to true for the entire explore session.
    private volatile boolean accumulateMode_ = false;
@@ -307,27 +308,42 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    @Override
    public long imageStatsReady(ImagesAndStats result) {
       if (accumulateMode_) {
-         // Merge new-image stats into the accumulator
+         // Merge new-image stats into the per-channel accumulator
          if (accumulateNext_ && result.isRealStats()) {
             accumulateNext_ = false;
             List<ImageStats> newStats = result.getResult();
+            Coords position = result.getRequest().getNominalCoords();
+            int channelIndex = position != null ? position.getChannel() : 0;
+
             if (!newStats.isEmpty()) {
                ImageStats tileStats = newStats.get(0);
-               if (accumulatedStats_ == null) {
-                  accumulatedStats_ = tileStats;
-               } else {
-                  accumulatedStats_ = mergeImageStats(
-                        accumulatedStats_, tileStats);
+               synchronized (accumulatedStatsPerChannel_) {
+                  ImageStats existing = accumulatedStatsPerChannel_.get(channelIndex);
+                  if (existing == null) {
+                     accumulatedStatsPerChannel_.put(channelIndex, tileStats);
+                  } else {
+                     accumulatedStatsPerChannel_.put(channelIndex,
+                           mergeImageStats(existing, tileStats));
+                  }
                }
             }
          }
          // Always post accumulated stats while in accumulate mode,
          // so scrollbar-triggered recomputes don't reset the histogram.
-         if (accumulatedStats_ != null) {
-            result = ImagesAndStats.create(
-                  result.getStatsSequenceNumber(),
-                  result.getRequest(),
-                  accumulatedStats_);
+         // Build a list of stats for all accumulated channels.
+         synchronized (accumulatedStatsPerChannel_) {
+            if (!accumulatedStatsPerChannel_.isEmpty()) {
+               // Get channel index from the request to return correct channel's stats
+               Coords position = result.getRequest().getNominalCoords();
+               int channelIndex = position != null ? position.getChannel() : 0;
+               ImageStats channelStats = accumulatedStatsPerChannel_.get(channelIndex);
+               if (channelStats != null) {
+                  result = ImagesAndStats.create(
+                        result.getStatsSequenceNumber(),
+                        result.getRequest(),
+                        channelStats);
+               }
+            }
          }
       }
       final ImagesAndStats finalResult = result;
@@ -528,7 +544,9 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    public void setAccumulateStats(boolean enabled) {
       accumulateMode_ = enabled;
       if (!enabled) {
-         accumulatedStats_ = null;
+         synchronized (accumulatedStatsPerChannel_) {
+            accumulatedStatsPerChannel_.clear();
+         }
       }
    }
 
@@ -536,7 +554,9 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * Reset the accumulated histogram stats without changing the mode.
     */
    public void resetAccumulatedStats() {
-      accumulatedStats_ = null;
+      synchronized (accumulatedStatsPerChannel_) {
+         accumulatedStatsPerChannel_.clear();
+      }
    }
 
    /**
