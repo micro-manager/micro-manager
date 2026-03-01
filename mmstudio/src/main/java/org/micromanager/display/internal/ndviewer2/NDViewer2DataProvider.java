@@ -154,24 +154,12 @@ public final class NDViewer2DataProvider implements DataProvider {
             }
             String[] channelNamesArray = channelNames.toArray(new String[0]);
             builder.channelNames(channelNamesArray);
-            System.out.println("NDViewer2DataProvider: Found " + channelNamesArray.length
-                  + " channel names in storage metadata");
-            for (int i = 0; i < channelNamesArray.length; i++) {
-               System.out.println("  Channel " + i + ": " + channelNamesArray[i]);
-            }
-         } else {
-            System.out.println("NDViewer2DataProvider: No ChNames found in storage metadata");
          }
       } catch (Exception e) {
          // If parsing fails, return minimal metadata (no channel names)
-         System.out.println("NDViewer2DataProvider: Exception parsing metadata: " + e.getMessage());
-         e.printStackTrace();
       }
 
-      SummaryMetadata result = builder.build();
-      System.out.println("NDViewer2DataProvider: Built SummaryMetadata, getChannelNameList() returns: "
-            + result.getChannelNameList());
-      return result;
+      return builder.build();
    }
 
    @Override
