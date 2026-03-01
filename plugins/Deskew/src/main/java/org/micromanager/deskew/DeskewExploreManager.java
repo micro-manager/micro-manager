@@ -32,6 +32,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.ndviewer2.AxesBridge;
 import org.micromanager.display.internal.ndviewer2.NDViewer2DataProvider;
 import org.micromanager.display.internal.ndviewer2.NDViewer2DataViewer;
@@ -205,6 +206,7 @@ public class DeskewExploreManager {
             }
             summaryMetadata.put("ChNames", channelNames);
             summaryMetadata.put("Channels", channelNames.length());
+            summaryMetadata.put("ChGroup", settings.channelGroup());
             studio_.logs().logMessage("Deskew Explore: initialized with " + channelNames.length()
                     + " channels from MDA settings");
             studio_.logs().logMessage("Deskew Explore: summaryMetadata now contains ChNames = "
@@ -245,13 +247,21 @@ public class DeskewExploreManager {
                dsBuilder.colorModeComposite();
             }
             for (int i = 0; i < nrChannels; i++) {
+               String channelGroup = settings.channelGroup();
                String channelName = settings.channels().get(i).config();
+               java.awt.Color channelColor = settings.channels().get(i).color();
+               // Build ChannelDisplaySettings directly using MDA color,
+               // bypassing RememberedDisplaySettings which prefers persisted colors
                dsBuilder.channel(i,
                      studio_.displays().channelDisplaySettingsBuilder()
-                           .color(java.awt.Color.WHITE)
+                           .groupName(channelGroup)
+                           .name(channelName)
+                           .color(channelColor)
                            .build());
             }
             mm2Viewer_.setDisplaySettings(dsBuilder.build());
+            // Prevent NDViewer's default/remembered colors from overriding MDA colors
+            mm2Viewer_.setPreserveMMColors(true);
             studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
                   + nrChannels + " channels");
          }
@@ -403,10 +413,12 @@ public class DeskewExploreManager {
                }
                for (int i = 0; i < nrChannels; i++) {
                   String channelName = chNames.getString(i);
+                  String channelGroup = summaryMetadata.optString("ChGroup", "");
                   dsBuilder.channel(i,
-                        studio_.displays().channelDisplaySettingsBuilder()
-                              .color(java.awt.Color.WHITE)
-                              .build());
+                        RememberedDisplaySettings.loadChannel(studio_,
+                              channelGroup,
+                              channelName,
+                              java.awt.Color.WHITE));
                }
                mm2Viewer_.setDisplaySettings(dsBuilder.build());
                studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
