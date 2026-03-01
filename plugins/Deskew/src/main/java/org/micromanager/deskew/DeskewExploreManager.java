@@ -192,9 +192,11 @@ public class DeskewExploreManager {
 
          // Add channel metadata from MDA settings for Inspector display
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
-         studio_.logs().logMessage("Deskew Explore: settings.useChannels() = " + settings.useChannels());
+         studio_.logs().logMessage("Deskew Explore: settings.useChannels() = "
+               + settings.useChannels());
          if (settings.useChannels()) {
-            studio_.logs().logMessage("Deskew Explore: settings.channels().size() = " + settings.channels().size());
+            studio_.logs().logMessage("Deskew Explore: settings.channels().size() = "
+                  + settings.channels().size());
          }
          if (settings.useChannels() && settings.channels().size() > 0) {
             JSONArray channelNames = new JSONArray();
@@ -209,15 +211,17 @@ public class DeskewExploreManager {
                     + summaryMetadata.has("ChNames"));
          } else {
             studio_.logs().logMessage("Deskew Explore: NOT adding channel metadata - useChannels="
-                    + settings.useChannels() + ", size=" +
-                    (settings.useChannels() ? settings.channels().size() : "N/A"));
+                  + settings.useChannels() + ", size="
+                  + (settings.useChannels() ? settings.channels().size() : "N/A"));
          }
 
          // Initialize storage immediately so NDViewer has something to work with
          // Pass overlap values in Magellan order: (overlapX, overlapY)
-         // Both values are based on camera width for now (height-based value unknown until first tile)
+         // Both values are based on camera width for now (height-based value unknown
+         // until first tile)
          storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
-                 overlapX, overlapY, true, null, SAVING_QUEUE_SIZE, null, true);
+                 overlapX, overlapY, true, null,
+                 SAVING_QUEUE_SIZE, null, true);
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
@@ -408,7 +412,8 @@ public class DeskewExploreManager {
                studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
                      + nrChannels + " channels from storage");
             } catch (Exception e) {
-               studio_.logs().logError(e, "Failed to initialize DisplaySettings from storage metadata");
+               studio_.logs().logError(e,
+                     "Failed to initialize DisplaySettings from storage metadata");
             }
          }
 
@@ -549,11 +554,11 @@ public class DeskewExploreManager {
          new Thread(() -> {
             // Wait for NDViewer's async close thread ("NDViewer closing thread")
             // to finish before touching storage. NDViewer does not provide a
-            // join/callback, so we use a best-effort delay. 500ms is sufficient
+            // join/callback, so we use a best-effort delay. 1000ms is sufficient
             // in practice, but if NDViewer adds a close-completion callback
             // this sleep should be replaced.
             try {
-               Thread.sleep(500);
+               Thread.sleep(1000);
             } catch (InterruptedException ignored) {
                Thread.currentThread().interrupt();
             }
@@ -881,7 +886,8 @@ public class DeskewExploreManager {
                int channelIndex = projectedImage.getCoords().getChannel();
                // Get channel name from SummaryMetadata (with safe fallback)
                String channelName = summaryMeta.getSafeChannelName(channelIndex);
-               HashMap<String, Object> axes = storeProjectedImage(projectedImage, row, col, channelName);
+               HashMap<String, Object> axes = storeProjectedImage(projectedImage, row, col,
+                     channelName);
                if (axes != null) {
                   storedAxes.add(axes);
                }
@@ -1148,7 +1154,8 @@ public class DeskewExploreManager {
             int channelIndex = projectedImage.getCoords().getChannel();
             // Get channel name from SummaryMetadata (with safe fallback)
             String channelName = summaryMeta.getSafeChannelName(channelIndex);
-            HashMap<String, Object> axes = storeProjectedImage(projectedImage, row, col, channelName);
+            HashMap<String, Object> axes = storeProjectedImage(projectedImage, row, col,
+                  channelName);
             if (axes != null) {
                storedAxes.add(axes);
             }
@@ -1202,6 +1209,7 @@ public class DeskewExploreManager {
    /**
     * Processes a Z-stack through the deskew pipeline to produce an XY projection.
     * Handles multiple channels by processing each channel's Z-stack independently.
+    *
     * @return List of projected images, one per channel
     */
    private List<Image> processStackThroughDeskew(Datastore source) {
@@ -1250,7 +1258,8 @@ public class DeskewExploreManager {
             double zStepUm = summaryMetadata.getZStepUm();
 
             // Create resampler for this channel's XY projection
-            studio_.logs().logMessage("Deskew Explore: creating StackResampler for channel " + channelIndex);
+            studio_.logs().logMessage("Deskew Explore: creating StackResampler for channel "
+                  + channelIndex);
             StackResampler resampler;
             try {
                resampler = new StackResampler(
@@ -1262,9 +1271,11 @@ public class DeskewExploreManager {
                        nSlices,
                        firstImage.getHeight(),
                        firstImage.getWidth());
-               studio_.logs().logMessage("Deskew Explore: StackResampler created for channel " + channelIndex);
+               studio_.logs().logMessage("Deskew Explore: StackResampler created for channel "
+                     + channelIndex);
             } catch (Exception e) {
-               studio_.logs().logError(e, "Deskew Explore: failed to create StackResampler for channel " + channelIndex);
+               studio_.logs().logError(e,
+                     "Deskew Explore: failed to create StackResampler for channel " + channelIndex);
                throw e;
             }
 
@@ -1272,7 +1283,8 @@ public class DeskewExploreManager {
 
             // Start processing in background thread
             Runnable processing = resampler.startStackProcessing();
-            Thread processingThread = new Thread(processing, "Deskew Explore Processing Ch" + channelIndex);
+            Thread processingThread = new Thread(processing, "Deskew Explore Processing Ch"
+                  + channelIndex);
             processingThread.start();
 
             // Build Z-stack for this channel only
@@ -1370,7 +1382,8 @@ public class DeskewExploreManager {
                     1, // number of components
                     projectedCoords,
                     firstImage.getMetadata());
-            studio_.logs().logMessage("Deskew Explore: created result image for channel " + channelIndex);
+            studio_.logs().logMessage("Deskew Explore: created result image for channel "
+                  + channelIndex);
             projectedImages.add(result);
          }
 
@@ -1393,7 +1406,8 @@ public class DeskewExploreManager {
    /**
     * Stores a projected image at the specified tile position and channel.
     */
-   private HashMap<String, Object> storeProjectedImage(Image image, int row, int col, String channelName) {
+   private HashMap<String, Object> storeProjectedImage(Image image, int row, int col,
+                                                       String channelName) {
       if (storage_ == null) {
          studio_.logs().logError("Deskew Explore: storage is null, cannot store image");
          return null;
