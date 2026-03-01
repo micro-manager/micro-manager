@@ -24,8 +24,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.ProgressMonitor;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -440,12 +440,15 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
       // Tile overlap configuration
       JLabel overlapLabel = new JLabel("Tile overlap (%):");
-      overlapLabel.setToolTipText("Percentage of overlap between adjacent tiles for better stitching.");
+      overlapLabel.setToolTipText(
+            "Percentage of overlap between adjacent tiles for better stitching.");
       explorePanel.add(overlapLabel, "span 2, split 4");
 
       SpinnerNumberModel overlapModel = new SpinnerNumberModel(10, 0, 50, 5);
       JSpinner overlapSpinner = new JSpinner(overlapModel);
-      overlapSpinner.setToolTipText("Set overlap percentage (0-50%). Higher values improve stitching but increase acquisition time.");
+      overlapSpinner.setToolTipText(
+            "Set overlap percentage (0-50%). "
+            + "Higher values improve stitching but increase acquisition time.");
       overlapSpinner.setValue(settings_.getInteger(EXPLORE_OVERLAP_PERCENT, 10));
       overlapSpinner.addChangeListener(e ->
             settings_.putInteger(EXPLORE_OVERLAP_PERCENT, (Integer) overlapSpinner.getValue()));
