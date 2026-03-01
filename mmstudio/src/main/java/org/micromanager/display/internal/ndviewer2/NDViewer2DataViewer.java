@@ -1,4 +1,4 @@
-package org.micromanager.display.internal.ndviewer2.ndviewer2;
+package org.micromanager.display.internal.ndviewer2;
 
 import java.io.IOException;
 import java.util.ArrayList;
