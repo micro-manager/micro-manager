@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.acqj.main.AcqEngMetadata;
@@ -30,9 +32,10 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.internal.ndviewer2.ndviewer2.AxesBridge;
-import org.micromanager.display.internal.ndviewer2.ndviewer2.NDViewer2DataProvider;
-import org.micromanager.display.internal.ndviewer2.ndviewer2.NDViewer2DataViewer;
+import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.display.internal.ndviewer2.AxesBridge;
+import org.micromanager.display.internal.ndviewer2.NDViewer2DataProvider;
+import org.micromanager.display.internal.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
@@ -81,6 +84,7 @@ public class DeskewExploreManager {
    private double initialStageX_ = 0;
    private double initialStageY_ = 0;
    private double pixelSizeUm_ = 1.0;
+   private double overlapPercentage_ = 10.0;  // Percentage overlap between tiles (0-50)
 
    public DeskewExploreManager(Studio studio, DeskewFrame frame, DeskewFactory deskewFactory) {
       studio_ = studio;
@@ -143,6 +147,12 @@ public class DeskewExploreManager {
          studio_.logs().logMessage("Deskew Explore: initial stage position = ("
                  + initialStageX_ + ", " + initialStageY_ + ")");
 
+         // Read overlap percentage from settings
+         overlapPercentage_ = studio_.profile().getSettings(DeskewFrame.class)
+                 .getInteger(DeskewFrame.EXPLORE_OVERLAP_PERCENT, 10);
+         studio_.logs().logMessage("Deskew Explore: tile overlap = "
+                 + overlapPercentage_ + "%");
+
          // Estimate tile dimensions based on camera size
          // (actual size will be determined after first deskew)
          estimatedTileWidth_ = imageWidth;
@@ -151,18 +161,68 @@ public class DeskewExploreManager {
          updateTileDimensionsForRotation();
 
          // Create summary metadata for storage and viewer
+         // Use estimated tile dimensions (will be updated after first acquisition)
          JSONObject summaryMetadata = new JSONObject();
-         summaryMetadata.put("Width", imageWidth);
-         summaryMetadata.put("Height", imageHeight);
+         summaryMetadata.put("Width", estimatedTileWidth_);
+         summaryMetadata.put("Height", estimatedTileHeight_);
          summaryMetadata.put("PixelSize_um", pixelSizeUm_);
          summaryMetadata.put("BitDepth", bitDepth_);
          summaryMetadata.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
-         summaryMetadata.put("GridPixelOverlapX", 0);
-         summaryMetadata.put("GridPixelOverlapY", 0);
+         // Calculate pixel overlap based on camera dimensions
+         // For projected images: width = camera width, so overlapX is correct
+         // For height: use same overlap pixels as X for now (will be updated after first tile)
+         int overlapX = (int) Math.round(estimatedTileWidth_ * overlapPercentage_ / 100.0);
+         int overlapY = overlapX; // Use same pixel overlap as X for now
+
+         // Account for rotation: swap overlap if rotated 90° or 270°
+         int rotateDegrees = studio_.profile().getSettings(DeskewFrame.class)
+                 .getInteger(DeskewFrame.EXPLORE_ROTATE, 0);
+         if (rotateDegrees == 90 || rotateDegrees == 270) {
+            int temp = overlapX;
+            overlapX = overlapY;
+            overlapY = temp;
+            studio_.logs().logMessage("Deskew Explore: swapped overlap for "
+                    + rotateDegrees + "° rotation");
+         }
+         studio_.logs().logMessage("Deskew Explore: initial overlap = "
+                 + overlapX + "x" + overlapY + " pixels");
+
+         // Store metadata normally: X for X, Y for Y
+         summaryMetadata.put("GridPixelOverlapX", overlapX);
+         summaryMetadata.put("GridPixelOverlapY", overlapY);
+
+         // Add channel metadata from MDA settings for Inspector display
+         SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+         studio_.logs().logMessage("Deskew Explore: settings.useChannels() = "
+               + settings.useChannels());
+         if (settings.useChannels()) {
+            studio_.logs().logMessage("Deskew Explore: settings.channels().size() = "
+                  + settings.channels().size());
+         }
+         if (settings.useChannels() && settings.channels().size() > 0) {
+            JSONArray channelNames = new JSONArray();
+            // Only include enabled channels (useChannel() == true)
+            for (int i = 0; i < settings.channels().size(); i++) {
+               if (settings.channels().get(i).useChannel()) {
+                  channelNames.put(settings.channels().get(i).config());
+               }
+            }
+            if (channelNames.length() > 0) {
+               summaryMetadata.put("ChNames", channelNames);
+               summaryMetadata.put("Channels", channelNames.length());
+               summaryMetadata.put("ChGroup", settings.channelGroup());
+               studio_.logs().logMessage("Deskew Explore: initialized with " + channelNames.length()
+                       + " channels from MDA settings");
+            }
+         }
 
          // Initialize storage immediately so NDViewer has something to work with
+         // Pass overlap values in Magellan order: (overlapX, overlapY)
+         // Both values are based on camera width for now (height-based value unknown
+         // until first tile)
          storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
-                 0, 0, true, null, SAVING_QUEUE_SIZE, null, true);
+                 overlapX, overlapY, true, null,
+                 SAVING_QUEUE_SIZE, null, true);
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
@@ -174,6 +234,44 @@ public class DeskewExploreManager {
                studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
+
+         // Initialize DisplaySettings with channels for Inspector and histogram support
+         // Filter to only include enabled channels (useChannel() == true)
+         if (settings.useChannels() && settings.channels().size() > 0) {
+            org.micromanager.display.DisplaySettings.Builder dsBuilder =
+                  studio_.displays().displaySettingsBuilder();
+            // Count enabled channels and collect their settings
+            int displayChannelIndex = 0;
+            for (int i = 0; i < settings.channels().size(); i++) {
+               if (settings.channels().get(i).useChannel()) {
+                  String channelGroup = settings.channelGroup();
+                  String channelName = settings.channels().get(i).config();
+                  java.awt.Color channelColor = settings.channels().get(i).color();
+                  // Build ChannelDisplaySettings directly using MDA color,
+                  // bypassing RememberedDisplaySettings which prefers persisted colors
+                  dsBuilder.channel(displayChannelIndex,
+                        studio_.displays().channelDisplaySettingsBuilder()
+                              .groupName(channelGroup)
+                              .name(channelName)
+                              .color(channelColor)
+                              .build());
+                  displayChannelIndex++;
+               }
+            }
+            if (displayChannelIndex == 1) {
+               dsBuilder.colorModeGrayscale();
+            } else if (displayChannelIndex > 1) {
+               dsBuilder.colorModeComposite();
+            }
+            if (displayChannelIndex > 0) {
+               mm2Viewer_.setDisplaySettings(dsBuilder.build());
+               // Prevent NDViewer's default/remembered colors from overriding MDA colors
+               mm2Viewer_.setPreserveMMColors(true);
+               studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
+                     + displayChannelIndex + " channels");
+            }
+         }
+
          viewer_ = mm2Viewer_.getNDViewer();
          viewer_.setWindowTitle("Deskew Explore - Right-click to select, "
                + "Left-drag to extend, Left-click to acquire");
@@ -254,6 +352,19 @@ public class DeskewExploreManager {
             pixelSizeUm_ = 1.0;
          }
 
+         // Read overlap from metadata normally
+         int overlapX = summaryMetadata.optInt("GridPixelOverlapX", 0);
+         int overlapY = summaryMetadata.optInt("GridPixelOverlapY", 0);
+         // Calculate overlap percentage from pixel values (use X overlap)
+         // Note: Will get actual tile dimensions later; this is a first estimate
+         if (imageWidth > 0 && overlapX > 0) {
+            overlapPercentage_ = (overlapX * 100.0) / imageWidth;
+         } else {
+            overlapPercentage_ = 0.0;  // No overlap in this dataset
+         }
+         studio_.logs().logMessage("Deskew Explore: loaded dataset with "
+                 + overlapPercentage_ + "% overlap");
+
          // Store current stage position for potential new acquisitions
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
@@ -293,6 +404,37 @@ public class DeskewExploreManager {
                studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
+
+         // Initialize DisplaySettings with channels from storage metadata
+         if (summaryMetadata.has("ChNames")) {
+            try {
+               JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
+               int nrChannels = chNames.length();
+               org.micromanager.display.DisplaySettings.Builder dsBuilder =
+                     studio_.displays().displaySettingsBuilder();
+               if (nrChannels == 1) {
+                  dsBuilder.colorModeGrayscale();
+               } else {
+                  dsBuilder.colorModeComposite();
+               }
+               for (int i = 0; i < nrChannels; i++) {
+                  String channelName = chNames.getString(i);
+                  String channelGroup = summaryMetadata.optString("ChGroup", "");
+                  dsBuilder.channel(i,
+                        RememberedDisplaySettings.loadChannel(studio_,
+                              channelGroup,
+                              channelName,
+                              java.awt.Color.WHITE));
+               }
+               mm2Viewer_.setDisplaySettings(dsBuilder.build());
+               studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
+                     + nrChannels + " channels from storage");
+            } catch (Exception e) {
+               studio_.logs().logError(e,
+                     "Failed to initialize DisplaySettings from storage metadata");
+            }
+         }
+
          viewer_ = mm2Viewer_.getNDViewer();
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
@@ -319,8 +461,12 @@ public class DeskewExploreManager {
          if (displayExecutor_ != null && viewer_ != null) {
             displayExecutor_.submit(() -> {
                HashMap<String, Object> displayAxes = new HashMap<>();
-               viewer_.newImageArrived(displayAxes);
-               viewer_.update();
+               try {
+                  viewer_.newImageArrived(displayAxes);
+                  viewer_.update();
+               } catch (NullPointerException e) {
+                  // NDViewer histogram not yet initialized - ignore
+               }
             });
          }
 
@@ -430,11 +576,11 @@ public class DeskewExploreManager {
          new Thread(() -> {
             // Wait for NDViewer's async close thread ("NDViewer closing thread")
             // to finish before touching storage. NDViewer does not provide a
-            // join/callback, so we use a best-effort delay. 500ms is sufficient
+            // join/callback, so we use a best-effort delay. 1000ms is sufficient
             // in practice, but if NDViewer adds a close-completion callback
             // this sleep should be replaced.
             try {
-               Thread.sleep(500);
+               Thread.sleep(1000);
             } catch (InterruptedException ignored) {
                Thread.currentThread().interrupt();
             }
@@ -449,6 +595,13 @@ public class DeskewExploreManager {
                }
             }
             if (doDelete) {
+               // Additional delay after closing storage to allow memory-mapped
+               // file buffers to release (especially important on Windows)
+               try {
+                  Thread.sleep(500);
+               } catch (InterruptedException ignored) {
+                  Thread.currentThread().interrupt();
+               }
                deleteTempStorage();
             }
          }, "Deskew Explore cleanup").start();
@@ -612,6 +765,8 @@ public class DeskewExploreManager {
 
    /**
     * Deletes the temporary storage directory and all its contents.
+    * Uses retry with exponential backoff for files that may still be held
+    * by memory-mapped buffers (common on Windows).
     */
    private void deleteTempStorage() {
       if (storageDir_ == null) {
@@ -621,22 +776,51 @@ public class DeskewExploreManager {
       try {
          File dir = new File(storageDir_);
          if (dir.exists()) {
-            // Delete directory recursively
+            // Collect paths first, then delete in reverse order (files before directories)
+            List<Path> pathsToDelete;
             try (Stream<Path> stream = Files.walk(dir.toPath())) {
-               stream.sorted(Comparator.reverseOrder())
-                       .forEach(path -> {
-                          try {
-                             Files.delete(path);
-                          } catch (IOException e) {
-                             studio_.logs().logError(e,
-                                   "Failed to delete: " + path);
-                          }
-                       });
+               pathsToDelete = stream.sorted(Comparator.reverseOrder())
+                       .collect(java.util.stream.Collectors.toList());
+            }
+
+            // Delete each path with retry logic for locked files
+            for (Path path : pathsToDelete) {
+               deleteWithRetry(path);
             }
             studio_.logs().logMessage("Deskew Explore: deleted temp storage at " + storageDir_);
          }
       } catch (IOException e) {
          studio_.logs().logError(e, "Failed to delete temp storage: " + storageDir_);
+      }
+   }
+
+   /**
+    * Attempts to delete a file/directory with retry and exponential backoff.
+    * On Windows, memory-mapped files may hold locks briefly after close().
+    */
+   private void deleteWithRetry(Path path) {
+      int maxRetries = 5;
+      long delayMs = 500;
+
+      for (int attempt = 1; attempt <= maxRetries; attempt++) {
+         try {
+            Files.delete(path);
+            return; // Success
+         } catch (IOException e) {
+            if (attempt == maxRetries) {
+               studio_.logs().logError(e, "Failed to delete after " + maxRetries
+                     + " attempts: " + path);
+               return;
+            }
+            // Wait before retry, with exponential backoff
+            try {
+               Thread.sleep(delayMs);
+               delayMs *= 2; // Double the delay for next attempt
+            } catch (InterruptedException ie) {
+               Thread.currentThread().interrupt();
+               return;
+            }
+         }
       }
    }
 
@@ -666,6 +850,13 @@ public class DeskewExploreManager {
             if (!settings.useSlices()) {
                studio_.logs().showError("Deskew Explore requires Z-stack acquisition settings.");
                return;
+            }
+
+            // Preserve channel settings from MDA
+            if (settings.useChannels()) {
+               sb.useChannels(true);
+               studio_.logs().logMessage("Deskew Explore: acquiring "
+                       + settings.channels().size() + " channels per tile");
             }
 
             SequenceSettings acqSettings = sb.build();
@@ -708,14 +899,14 @@ public class DeskewExploreManager {
                return;
             }
 
-            // Process through our own deskew to get XY projection
+            // Process through our own deskew to get XY projection(s)
             studio_.logs().logMessage("Deskew Explore: calling processStackThroughDeskew");
-            Image projectedImage = processStackThroughDeskew(testStore);
-            studio_.logs().logMessage("Deskew Explore: processStackThroughDeskew returned: "
-                    + (projectedImage == null ? "null" : projectedImage.getWidth() + "x"
-                     + projectedImage.getHeight()));
+            List<Image> projectedImages = processStackThroughDeskew(testStore);
+            studio_.logs().logMessage("Deskew Explore: processStackThroughDeskew returned "
+                    + (projectedImages == null || projectedImages.isEmpty() ? "no images"
+                    : projectedImages.size() + " channel(s)"));
 
-            if (projectedImage == null) {
+            if (projectedImages == null || projectedImages.isEmpty()) {
                studio_.logs().showError("Deskew processing failed.");
                try {
                   testStore.freeze();
@@ -726,47 +917,76 @@ public class DeskewExploreManager {
                return;
             }
 
-            // If this is the first acquisition, update tile dimensions
+            // If this is the first acquisition, update tile dimensions (use first channel)
             if (projectedWidth_ < 0) {
+               Image firstChannel = projectedImages.get(0);
                // Store the pre-rotation dimensions so updateTileDimensionsForRotation
                // can correctly swap them when rotation is 90° or 270°.
                int rotateDegrees = frame_.getSettings().getInteger(
                        DeskewFrame.EXPLORE_ROTATE, 0);
                if (rotateDegrees == 90 || rotateDegrees == 270) {
-                  projectedWidth_ = projectedImage.getHeight();
-                  projectedHeight_ = projectedImage.getWidth();
+                  projectedWidth_ = firstChannel.getHeight();
+                  projectedHeight_ = firstChannel.getWidth();
                } else {
-                  projectedWidth_ = projectedImage.getWidth();
-                  projectedHeight_ = projectedImage.getHeight();
+                  projectedWidth_ = firstChannel.getWidth();
+                  projectedHeight_ = firstChannel.getHeight();
                }
                updateTileDimensionsForRotation();
                studio_.logs().logMessage("Deskew Explore: projected dimensions = "
                        + projectedWidth_ + " x " + projectedHeight_);
             }
 
-            // Store the projected image at the tile position
-            storeProjectedImage(projectedImage, row, col);
+            // Store each channel separately with channel axis
+            // Get channel names from source datastore's SummaryMetadata
+            SummaryMetadata summaryMeta = testStore.getSummaryMetadata();
+
+            // Collect axes from stored images for viewer notification
+            List<HashMap<String, Object>> storedAxes = new ArrayList<>();
+            for (Image projectedImage : projectedImages) {
+               int channelIndex = projectedImage.getCoords().getChannel();
+               // Get channel name from SummaryMetadata (with safe fallback)
+               String channelName = summaryMeta.getSafeChannelName(channelIndex);
+               HashMap<String, Object> axes = storeProjectedImage(projectedImage, row, col,
+                     channelName);
+               if (axes != null) {
+                  storedAxes.add(axes);
+               }
+            }
 
             // Mark tile as acquired
             dataSource_.markTileAcquired(row, col);
 
-            // Notify viewer of new image
-            if (displayExecutor_ != null && viewer_ != null) {
-               final int tileRow = row;
-               final int tileCol = col;
-               final Image tileImage = projectedImage;
+            // Notify viewer of new images (one per channel)
+            if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
+               final List<Image> tileImages = new ArrayList<>(projectedImages);
+               final List<HashMap<String, Object>> axesList = new ArrayList<>(storedAxes);
                displayExecutor_.submit(() -> {
-                  HashMap<String, Object> displayAxes = new HashMap<>();
-                  displayAxes.put("row", tileRow);
-                  displayAxes.put("column", tileCol);
-                  if (mm2DataProvider_ != null) {
-                     mm2DataProvider_.newImageArrived(tileImage, displayAxes);
+                  // Notify viewer for each channel separately
+                  // Use axes from storage with channel as string name
+                  // AxesBridge translates between string names (NDViewer) and integer indices (MM)
+                  for (int i = 0; i < tileImages.size() && i < axesList.size(); i++) {
+                     Image tileImage = tileImages.get(i);
+                     HashMap<String, Object> displayAxes = new HashMap<>(axesList.get(i));
+                     displayAxes.remove("row");
+                     displayAxes.remove("column");
+
+                     if (mm2DataProvider_ != null) {
+                        mm2DataProvider_.newImageArrived(tileImage, displayAxes);
+                     }
+                     if (mm2Viewer_ != null) {
+                        mm2Viewer_.newImageArrived(tileImage);
+                     }
+                     try {
+                        viewer_.newImageArrived(displayAxes);
+                     } catch (NullPointerException e) {
+                        // NDViewer histogram not yet initialized - ignore
+                     }
                   }
-                  if (mm2Viewer_ != null) {
-                     mm2Viewer_.newImageArrived(tileImage);
+                  try {
+                     viewer_.update();
+                  } catch (NullPointerException e) {
+                     // NDViewer histogram not yet initialized - ignore
                   }
-                  viewer_.newImageArrived(displayAxes);
-                  viewer_.update();
                   studio_.logs().logMessage("Deskew Explore: viewer notified of new image");
                });
             }
@@ -832,8 +1052,11 @@ public class DeskewExploreManager {
                // Tile (0,0) is at the initial position
                // Positive col -> move stage in +X direction
                // Positive row -> move stage in +Y direction
-               double targetX = initialStageX_ + col * tileWidthUm;
-               double targetY = initialStageY_ + row * tileHeightUm;
+               // Account for overlap: effective spacing is reduced by overlap percentage
+               double effectiveTileWidthUm = tileWidthUm * (1.0 - overlapPercentage_ / 100.0);
+               double effectiveTileHeightUm = tileHeightUm * (1.0 - overlapPercentage_ / 100.0);
+               double targetX = initialStageX_ + col * effectiveTileWidthUm;
+               double targetY = initialStageY_ + row * effectiveTileHeightUm;
 
                // Move stage to target position
                studio_.logs().logMessage("Deskew Explore: moving stage to ("
@@ -880,6 +1103,11 @@ public class DeskewExploreManager {
             return;
          }
 
+         // Preserve channel settings from MDA
+         if (settings.useChannels()) {
+            sb.useChannels(true);
+         }
+
          SequenceSettings acqSettings = sb.build();
 
          // Set explore mode flag so DeskewFactory creates a pass-through processor
@@ -916,10 +1144,10 @@ public class DeskewExploreManager {
             return;
          }
 
-         // Process through deskew to get XY projection
-         Image projectedImage = processStackThroughDeskew(testStore);
+         // Process through deskew to get XY projection(s)
+         List<Image> projectedImages = processStackThroughDeskew(testStore);
 
-         if (projectedImage == null) {
+         if (projectedImages == null || projectedImages.isEmpty()) {
             studio_.logs().showError("Deskew processing failed at row=" + row + ", col=" + col);
             try {
                testStore.freeze();
@@ -930,38 +1158,116 @@ public class DeskewExploreManager {
             return;
          }
 
-         // Update tile dimensions if this is first acquisition
+         // Update tile dimensions if this is first acquisition (use first channel)
          if (projectedWidth_ < 0) {
-            projectedWidth_ = projectedImage.getWidth();
-            projectedHeight_ = projectedImage.getHeight();
+            Image firstChannel = projectedImages.get(0);
+            projectedWidth_ = firstChannel.getWidth();
+            projectedHeight_ = firstChannel.getHeight();
             dataSource_.setTileDimensions(projectedWidth_, projectedHeight_);
             studio_.logs().logMessage("Deskew Explore: projected dimensions = "
                     + projectedWidth_ + " x " + projectedHeight_);
+
+            // Update overlap metadata with actual tile dimensions
+            // Note: projectedWidth/Height are pre-rotation dimensions
+            int overlapX = (int) Math.round(projectedWidth_ * overlapPercentage_ / 100.0);
+            int overlapY = (int) Math.round(projectedHeight_ * overlapPercentage_ / 100.0);
+
+            // Account for rotation: swap overlap if rotated 90° or 270°
+            int rotateDegrees = frame_.getSettings().getInteger(DeskewFrame.EXPLORE_ROTATE, 0);
+            int finalWidth = projectedWidth_;
+            int finalHeight = projectedHeight_;
+            if (rotateDegrees == 90 || rotateDegrees == 270) {
+               int temp = overlapX;
+               overlapX = overlapY;
+               overlapY = temp;
+               // Also swap width/height for viewer
+               finalWidth = projectedHeight_;
+               finalHeight = projectedWidth_;
+            }
+
+            // Update metadata with overlap and channel info
+            try {
+               JSONObject summaryMetadata = storage_.getSummaryMetadata();
+               summaryMetadata.put("GridPixelOverlapX", overlapX);
+               summaryMetadata.put("GridPixelOverlapY", overlapY);
+               summaryMetadata.put("Width", finalWidth);
+               summaryMetadata.put("Height", finalHeight);
+
+               // Add channel metadata (for both single and multi-channel)
+               // Only include enabled channels (useChannel() == true)
+               if (settings.useChannels() && settings.channels().size() > 0) {
+                  JSONArray channelNames = new JSONArray();
+                  for (int i = 0; i < settings.channels().size(); i++) {
+                     if (settings.channels().get(i).useChannel()) {
+                        channelNames.put(settings.channels().get(i).config());
+                     }
+                  }
+                  if (channelNames.length() > 0) {
+                     summaryMetadata.put("ChNames", channelNames);
+                     summaryMetadata.put("Channels", channelNames.length());
+                     studio_.logs().logMessage("Deskew Explore: added " + channelNames.length()
+                             + " channels to metadata");
+                  }
+               }
+
+               studio_.logs().logMessage("Deskew Explore: updated overlap metadata to "
+                       + overlapX + "x" + overlapY + " pixels");
+            } catch (Exception e) {
+               studio_.logs().logError(e, "Failed to update overlap metadata");
+            }
          }
 
-         // Store the projected image
-         storeProjectedImage(projectedImage, row, col);
+         // Store each channel separately with channel axis
+         // Get channel names from source datastore's SummaryMetadata
+         SummaryMetadata summaryMeta = testStore.getSummaryMetadata();
+
+         // Collect axes from stored images for viewer notification
+         List<HashMap<String, Object>> storedAxes = new ArrayList<>();
+         for (Image projectedImage : projectedImages) {
+            int channelIndex = projectedImage.getCoords().getChannel();
+            // Get channel name from SummaryMetadata (with safe fallback)
+            String channelName = summaryMeta.getSafeChannelName(channelIndex);
+            HashMap<String, Object> axes = storeProjectedImage(projectedImage, row, col,
+                  channelName);
+            if (axes != null) {
+               storedAxes.add(axes);
+            }
+         }
 
          // Mark tile as acquired
          dataSource_.markTileAcquired(row, col);
 
-         // Notify viewer
-         if (displayExecutor_ != null && viewer_ != null) {
-            final int tileRow = row;
-            final int tileCol = col;
-            final Image tileImage = projectedImage;
+         // Notify viewer of new images (one per channel)
+         if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
+            final List<Image> tileImages = new ArrayList<>(projectedImages);
+            final List<HashMap<String, Object>> axesList = new ArrayList<>(storedAxes);
             displayExecutor_.submit(() -> {
-               HashMap<String, Object> displayAxes = new HashMap<>();
-               displayAxes.put("row", tileRow);
-               displayAxes.put("column", tileCol);
-               if (mm2DataProvider_ != null) {
-                  mm2DataProvider_.newImageArrived(tileImage, displayAxes);
+               // Notify viewer for each channel separately
+               // Use axes from storage with channel as string name
+               // AxesBridge translates between string names (NDViewer) and integer indices (MM)
+               for (int i = 0; i < tileImages.size() && i < axesList.size(); i++) {
+                  Image tileImage = tileImages.get(i);
+                  HashMap<String, Object> displayAxes = new HashMap<>(axesList.get(i));
+                  displayAxes.remove("row");
+                  displayAxes.remove("column");
+
+                  if (mm2DataProvider_ != null) {
+                     mm2DataProvider_.newImageArrived(tileImage, displayAxes);
+                  }
+                  if (mm2Viewer_ != null) {
+                     mm2Viewer_.newImageArrived(tileImage);
+                  }
+                  try {
+                     viewer_.newImageArrived(displayAxes);
+                  } catch (NullPointerException e) {
+                     // NDViewer histogram not yet initialized - ignore
+                  }
                }
-               if (mm2Viewer_ != null) {
-                  mm2Viewer_.newImageArrived(tileImage);
+               try {
+                  viewer_.update();
+               } catch (NullPointerException e) {
+                  // NDViewer histogram not yet initialized - ignore
                }
-               viewer_.newImageArrived(displayAxes);
-               viewer_.update();
             });
          }
 
@@ -983,8 +1289,11 @@ public class DeskewExploreManager {
 
    /**
     * Processes a Z-stack through the deskew pipeline to produce an XY projection.
+    * Handles multiple channels by processing each channel's Z-stack independently.
+    *
+    * @return List of projected images, one per channel
     */
-   private Image processStackThroughDeskew(Datastore source) {
+   private List<Image> processStackThroughDeskew(Datastore source) {
       try {
          studio_.logs().logMessage("Deskew Explore: starting deskew processing");
 
@@ -997,162 +1306,200 @@ public class DeskewExploreManager {
          int nSlices = summaryMetadata.getIntendedDimensions().getZ();
          studio_.logs().logMessage("Deskew Explore: nSlices from metadata = " + nSlices);
 
-         // Get first image for dimensions - use the actual first coords, don't modify z
-         Coords firstCoords = source.getUnorderedImageCoords().iterator().next();
-         studio_.logs().logMessage("Deskew Explore: firstCoords = " + firstCoords);
-         Image firstImage = source.getImage(firstCoords);
-         studio_.logs().logMessage("Deskew Explore: firstImage size = "
-                 + firstImage.getWidth() + "x" + firstImage.getHeight());
+         // Detect channels present in the datastore and group coordinates by channel
+         List<Coords> allCoordsList = new ArrayList<>();
+         source.getUnorderedImageCoords().forEach(allCoordsList::add);
 
-         double pixelSizeUm = firstImage.getMetadata().getPixelSizeUm();
-         double zStepUm = summaryMetadata.getZStepUm();
-         studio_.logs().logMessage("Deskew Explore: pixelSize = " + pixelSizeUm
-                 + ", zStep = " + zStepUm);
-
-         // Create resampler for XY projection only
-         studio_.logs().logMessage("Deskew Explore: creating StackResampler");
-         StackResampler resampler;
-         try {
-            resampler = new StackResampler(
-                    StackResampler.YX_PROJECTION,
-                    true, // Max projection
-                    theta,
-                    pixelSizeUm,
-                    zStepUm,
-                    nSlices,
-                    firstImage.getHeight(),
-                    firstImage.getWidth());
-            studio_.logs().logMessage("Deskew Explore: StackResampler created");
-         } catch (Exception e) {
-            studio_.logs().logError(e, "Deskew Explore: failed to create StackResampler");
-            throw e;
+         Map<Integer, List<Coords>> coordsByChannel = new HashMap<>();
+         for (Coords c : allCoordsList) {
+            int channel = c.getChannel();
+            coordsByChannel.computeIfAbsent(channel, k -> new ArrayList<>()).add(c);
          }
 
-         resampler.initializeProjections();
-         studio_.logs().logMessage("Deskew Explore: projections initialized");
+         studio_.logs().logMessage("Deskew Explore: processing "
+                 + coordsByChannel.size() + " channels");
 
-         // Start processing in background thread - it will wait for images
-         Runnable processing = resampler.startStackProcessing();
-         Thread processingThread = new Thread(processing, "Deskew Explore Processing");
-         processingThread.start();
-         studio_.logs().logMessage("Deskew Explore: stack processing thread started");
+         List<Image> projectedImages = new ArrayList<>();
 
-         // Feed all Z slices to the resampler
-         Iterable<Coords> allCoords = source.getUnorderedImageCoords();
-         List<Image> zStack = new ArrayList<>();
-         for (Coords c : allCoords) {
-            zStack.add(source.getImage(c));
-         }
-         studio_.logs().logMessage("Deskew Explore: loaded " + zStack.size() + " images");
+         // Process each channel independently
+         for (Map.Entry<Integer, List<Coords>> entry : coordsByChannel.entrySet()) {
+            int channelIndex = entry.getKey();
+            List<Coords> channelCoords = entry.getValue();
 
-         // Sort by Z
-         zStack.sort((a, b) -> Integer.compare(a.getCoords().getZ(), b.getCoords().getZ()));
+            studio_.logs().logMessage("Deskew Explore: processing channel " + channelIndex
+                    + " with " + channelCoords.size() + " images");
 
-         for (int z = 0; z < zStack.size(); z++) {
-            Image img = zStack.get(z);
-            resampler.addToProcessImageQueue((short[]) img.getRawPixels(), z);
-         }
-         studio_.logs().logMessage("Deskew Explore: all images added to queue");
+            // Get first image of this channel for dimensions
+            Coords firstCoords = channelCoords.get(0);
+            Image firstImage = source.getImage(firstCoords);
+            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
+                    + " image size = " + firstImage.getWidth() + "x" + firstImage.getHeight());
 
-         // Wait for processing to complete
-         processingThread.join();
-         studio_.logs().logMessage("Deskew Explore: processing thread finished");
+            double pixelSizeUm = firstImage.getMetadata().getPixelSizeUm();
+            double zStepUm = summaryMetadata.getZStepUm();
 
-         resampler.finalizeProjections();
-         studio_.logs().logMessage("Deskew Explore: projections finalized");
+            // Create resampler for this channel's XY projection
+            studio_.logs().logMessage("Deskew Explore: creating StackResampler for channel "
+                  + channelIndex);
+            StackResampler resampler;
+            try {
+               resampler = new StackResampler(
+                       StackResampler.YX_PROJECTION,
+                       true, // Max projection
+                       theta,
+                       pixelSizeUm,
+                       zStepUm,
+                       nSlices,
+                       firstImage.getHeight(),
+                       firstImage.getWidth());
+               studio_.logs().logMessage("Deskew Explore: StackResampler created for channel "
+                     + channelIndex);
+            } catch (Exception e) {
+               studio_.logs().logError(e,
+                     "Deskew Explore: failed to create StackResampler for channel " + channelIndex);
+               throw e;
+            }
 
-         // Get the YX projection
-         short[] projectionPixels = resampler.getYXProjection();
-         int width = resampler.getResampledShapeX();
-         int height = resampler.getResampledShapeY();
-         studio_.logs().logMessage("Deskew Explore: projection size = " + width + "x" + height);
+            resampler.initializeProjections();
 
-         // Apply optional mirror and rotate transformations
-         boolean doMirror = frame_.getSettings().getBoolean(DeskewFrame.EXPLORE_MIRROR, false);
-         int rotateDegrees = frame_.getSettings().getInteger(DeskewFrame.EXPLORE_ROTATE, 0);
+            // Start processing in background thread
+            Runnable processing = resampler.startStackProcessing();
+            Thread processingThread = new Thread(processing, "Deskew Explore Processing Ch"
+                  + channelIndex);
+            processingThread.start();
 
-         if (doMirror) {
-            for (int y = 0; y < height; y++) {
-               int rowStart = y * width;
-               for (int x = 0; x < width / 2; x++) {
-                  short tmp = projectionPixels[rowStart + x];
-                  projectionPixels[rowStart + x] = projectionPixels[rowStart + width - 1 - x];
-                  projectionPixels[rowStart + width - 1 - x] = tmp;
+            // Build Z-stack for this channel only
+            List<Image> zStack = new ArrayList<>();
+            for (Coords c : channelCoords) {
+               zStack.add(source.getImage(c));
+            }
+            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
+                    + " loaded " + zStack.size() + " images");
+
+            // Sort by Z
+            zStack.sort((a, b) -> Integer.compare(a.getCoords().getZ(), b.getCoords().getZ()));
+
+            // Feed this channel's Z slices to the resampler
+            for (int z = 0; z < zStack.size(); z++) {
+               Image img = zStack.get(z);
+               resampler.addToProcessImageQueue((short[]) img.getRawPixels(), z);
+            }
+            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
+                    + " all images added to queue");
+
+            // Wait for processing to complete
+            processingThread.join();
+            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
+                    + " processing thread finished");
+
+            resampler.finalizeProjections();
+
+            // Get the YX projection for this channel
+            short[] projectionPixels = resampler.getYXProjection();
+            int width = resampler.getResampledShapeX();
+            int height = resampler.getResampledShapeY();
+            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
+                    + " projection size = " + width + "x" + height);
+
+            // Apply optional mirror and rotate transformations
+            boolean doMirror = frame_.getSettings().getBoolean(DeskewFrame.EXPLORE_MIRROR, false);
+            int rotateDegrees = frame_.getSettings().getInteger(DeskewFrame.EXPLORE_ROTATE, 0);
+
+            if (doMirror) {
+               for (int y = 0; y < height; y++) {
+                  int rowStart = y * width;
+                  for (int x = 0; x < width / 2; x++) {
+                     short tmp = projectionPixels[rowStart + x];
+                     projectionPixels[rowStart + x] = projectionPixels[rowStart + width - 1 - x];
+                     projectionPixels[rowStart + width - 1 - x] = tmp;
+                  }
                }
             }
-         }
-         if (rotateDegrees == 90) {
-            // Rotate 90° clockwise: new[x][height-1-y] = old[y][x]
-            short[] rotated = new short[projectionPixels.length];
-            final int newWidth = height;
-            final int newHeight = width;
-            for (int y = 0; y < height; y++) {
-               for (int x = 0; x < width; x++) {
-                  rotated[x * newWidth + (newWidth - 1 - y)] = projectionPixels[y * width + x];
+            if (rotateDegrees == 90) {
+               // Rotate 90° clockwise: new[x][height-1-y] = old[y][x]
+               short[] rotated = new short[projectionPixels.length];
+               final int newWidth = height;
+               final int newHeight = width;
+               for (int y = 0; y < height; y++) {
+                  for (int x = 0; x < width; x++) {
+                     rotated[x * newWidth + (newWidth - 1 - y)] = projectionPixels[y * width + x];
+                  }
                }
-            }
-            projectionPixels = rotated;
-            width = newWidth;
-            height = newHeight;
-         } else if (rotateDegrees == 180) {
-            for (int i = 0, j = projectionPixels.length - 1; i < j; i++, j--) {
-               short tmp = projectionPixels[i];
-               projectionPixels[i] = projectionPixels[j];
-               projectionPixels[j] = tmp;
-            }
-         } else if (rotateDegrees == 270) {
-            // Rotate 270° clockwise: new[height-1-x][y] = old[y][x]
-            short[] rotated = new short[projectionPixels.length];
-            int newWidth = height;
-            int newHeight = width;
-            for (int y = 0; y < height; y++) {
-               for (int x = 0; x < width; x++) {
-                  rotated[(newHeight - 1 - x) * newWidth + y] = projectionPixels[y * width + x];
+               projectionPixels = rotated;
+               width = newWidth;
+               height = newHeight;
+            } else if (rotateDegrees == 180) {
+               for (int i = 0, j = projectionPixels.length - 1; i < j; i++, j--) {
+                  short tmp = projectionPixels[i];
+                  projectionPixels[i] = projectionPixels[j];
+                  projectionPixels[j] = tmp;
                }
+            } else if (rotateDegrees == 270) {
+               // Rotate 270° clockwise: new[height-1-x][y] = old[y][x]
+               short[] rotated = new short[projectionPixels.length];
+               int newWidth = height;
+               int newHeight = width;
+               for (int y = 0; y < height; y++) {
+                  for (int x = 0; x < width; x++) {
+                     rotated[(newHeight - 1 - x) * newWidth + y] = projectionPixels[y * width + x];
+                  }
+               }
+               projectionPixels = rotated;
+               width = newWidth;
+               height = newHeight;
             }
-            projectionPixels = rotated;
-            width = newWidth;
-            height = newHeight;
+
+            // Create output image WITH channel coordinate preserved
+            Coords projectedCoords = firstImage.getCoords().copyBuilder()
+                    .z(0)
+                    .channel(channelIndex)
+                    .build();
+
+            Image result = studio_.data().createImage(
+                    projectionPixels,
+                    width,
+                    height,
+                    2, // bytes per pixel for 16-bit
+                    1, // number of components
+                    projectedCoords,
+                    firstImage.getMetadata());
+            studio_.logs().logMessage("Deskew Explore: created result image for channel "
+                  + channelIndex);
+            projectedImages.add(result);
          }
 
-         // Create output image
-         Image result = studio_.data().createImage(
-                 projectionPixels,
-                 width,
-                 height,
-                 2, // bytes per pixel for 16-bit
-                 1, // number of components
-                 firstImage.getCoords().copyBuilder().z(0).build(),
-                 firstImage.getMetadata());
-         studio_.logs().logMessage("Deskew Explore: created result image");
-         return result;
+         studio_.logs().logMessage("Deskew Explore: processed "
+                 + projectedImages.size() + " channels successfully");
+         return projectedImages;
 
       } catch (ParseException e) {
          studio_.logs().logError(e, "Failed to parse deskew angle");
-         return null;
+         return new ArrayList<>();
       } catch (IOException e) {
          studio_.logs().logError(e, "Failed to read image from datastore");
-         return null;
+         return new ArrayList<>();
       } catch (Exception e) {
          studio_.logs().logError(e, "Unexpected error in deskew processing");
-         return null;
+         return new ArrayList<>();
       }
    }
 
    /**
-    * Stores a projected image at the specified tile position.
+    * Stores a projected image at the specified tile position and channel.
     */
-   private void storeProjectedImage(Image image, int row, int col) {
+   private HashMap<String, Object> storeProjectedImage(Image image, int row, int col,
+                                                       String channelName) {
       if (storage_ == null) {
          studio_.logs().logError("Deskew Explore: storage is null, cannot store image");
-         return;
+         return null;
       }
 
       try {
          studio_.logs().logMessage("Deskew Explore: storing image " + image.getWidth() + "x"
-                 + image.getHeight() + " at row=" + row + ", col=" + col);
+                 + image.getHeight() + " at row=" + row + ", col=" + col
+                 + ", channelName=" + channelName);
 
-         // Create image metadata with row/col axes
+         // Create image metadata with row/col/channel axes
          JSONObject tags = new JSONObject();
          tags.put("ElapsedTime-ms", System.currentTimeMillis());
          tags.put("Width", image.getWidth());
@@ -1161,9 +1508,12 @@ public class DeskewExploreManager {
          tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
 
          // Set up axes using AcqEngMetadata
+         // Store channel as STRING (channel name) for NDViewer
+         // AxesBridge will translate between string names and integer indices
          AcqEngMetadata.createAxes(tags);
          AcqEngMetadata.setAxisPosition(tags, "row", row);
          AcqEngMetadata.setAxisPosition(tags, "column", col);
+         AcqEngMetadata.setAxisPosition(tags, "channel", channelName);
 
          HashMap<String, Object> axes = AcqEngMetadata.getAxes(tags);
          studio_.logs().logMessage("Deskew Explore: axes = " + axes);
@@ -1190,8 +1540,11 @@ public class DeskewExploreManager {
          studio_.logs().logMessage("Deskew Explore: image stored, storage now has "
                  + storage_.getAxesSet().size() + " images");
 
+         return axes;
+
       } catch (Exception e) {
          studio_.logs().logError(e, "Failed to store projected image");
+         return null;
       }
    }
 
@@ -1260,6 +1613,10 @@ public class DeskewExploreManager {
          return viewer_.getMagnification();
       }
       return 1.0;
+   }
+
+   public double getOverlapPercentage() {
+      return overlapPercentage_;
    }
 
    public void setOverlay(Overlay overlay) {

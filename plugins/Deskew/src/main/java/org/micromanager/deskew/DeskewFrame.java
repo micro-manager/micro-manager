@@ -25,6 +25,7 @@ import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.ProgressMonitor;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -92,6 +93,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
    static final String EXPLORE_MIRROR = "ExploreMirror";
    static final String EXPLORE_ROTATE = "ExploreRotate";
+   static final String EXPLORE_OVERLAP_PERCENT = "ExploreOverlapPercent";
    private final Studio studio_;
    private final DeskewFactory deskewFactory_;
    private final MutablePropertyMapView settings_;
@@ -435,6 +437,24 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       explorePanel.add(rotateComboBox);
       explorePanel.add(new JLabel(" "), "");
       explorePanel.add(new JLabel("Rotate"), "growx, wrap");
+
+      // Tile overlap configuration
+      JLabel overlapLabel = new JLabel("Tile overlap (%):");
+      overlapLabel.setToolTipText(
+            "Percentage of overlap between adjacent tiles for better stitching.");
+      explorePanel.add(overlapLabel, "span 2, split 4");
+
+      SpinnerNumberModel overlapModel = new SpinnerNumberModel(10, 0, 50, 5);
+      JSpinner overlapSpinner = new JSpinner(overlapModel);
+      overlapSpinner.setToolTipText(
+            "Set overlap percentage (0-50%). "
+            + "Higher values improve stitching but increase acquisition time.");
+      overlapSpinner.setValue(settings_.getInteger(EXPLORE_OVERLAP_PERCENT, 10));
+      overlapSpinner.addChangeListener(e ->
+            settings_.putInteger(EXPLORE_OVERLAP_PERCENT, (Integer) overlapSpinner.getValue()));
+      explorePanel.add(overlapSpinner);
+      explorePanel.add(new JLabel(" "), "");
+      explorePanel.add(new JLabel(" "), "growx, wrap");
 
       JButton openExploreButton = new JButton("Open");
       openExploreButton.setToolTipText("Open a previously saved Deskew Explore dataset.");

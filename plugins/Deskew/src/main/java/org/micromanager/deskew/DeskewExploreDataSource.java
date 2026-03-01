@@ -115,7 +115,10 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    /**
     * Returns the list of selected tiles as (row, col) Points.
-    * Tiles are returned in row-major order.
+    * Tiles are returned in serpentine order to minimize stage travel distance.
+    * The pattern starts from the corner closest to the current stage position
+    * and proceeds in a snake-like pattern, alternating direction for each row.
+    * Falls back to starting from the top-left corner if stage position is unknown.
     */
    public List<Point> getSelectedTiles() {
       List<Point> tiles = new ArrayList<>();
@@ -133,12 +136,94 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       int minCol = Math.min(startCol, endCol);
       int maxCol = Math.max(startCol, endCol);
 
-      for (int row = minRow; row <= maxRow; row++) {
-         for (int col = minCol; col <= maxCol; col++) {
-            tiles.add(new Point(row, col));
+      // Determine the closest corner to start acquisition from
+      Point2D.Double stagePixel = stagePositionPixel_;
+      Point closestCorner;
+
+      if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
+         // Convert stage pixel position to tile indices
+         int stageRow = (int) Math.floor(stagePixel.y / tileHeight_);
+         int stageCol = (int) Math.floor(stagePixel.x / tileWidth_);
+
+         // Find closest corner
+         closestCorner = findClosestCorner(stageRow, stageCol, minRow, maxRow, minCol, maxCol);
+      } else {
+         // Fallback: use top-left corner if stage position unknown
+         closestCorner = new Point(minRow, minCol);
+      }
+
+      // Determine scan directions based on closest corner
+      boolean startFromTop = (closestCorner.x == minRow);
+      boolean startFromLeft = (closestCorner.y == minCol);
+
+      // Generate serpentine path starting from the closest corner
+      if (startFromTop) {
+         // Scan from top to bottom
+         for (int row = minRow; row <= maxRow; row++) {
+            boolean scanRight = ((row - minRow) % 2 == 0) == startFromLeft;
+            if (scanRight) {
+               for (int col = minCol; col <= maxCol; col++) {
+                  tiles.add(new Point(row, col));
+               }
+            } else {
+               for (int col = maxCol; col >= minCol; col--) {
+                  tiles.add(new Point(row, col));
+               }
+            }
+         }
+      } else {
+         // Scan from bottom to top
+         for (int row = maxRow; row >= minRow; row--) {
+            boolean scanRight = ((maxRow - row) % 2 == 0) == startFromLeft;
+            if (scanRight) {
+               for (int col = minCol; col <= maxCol; col++) {
+                  tiles.add(new Point(row, col));
+               }
+            } else {
+               for (int col = maxCol; col >= minCol; col--) {
+                  tiles.add(new Point(row, col));
+               }
+            }
          }
       }
       return tiles;
+   }
+
+   /**
+    * Finds the corner of the tile selection that is closest to the given stage position.
+    *
+    * @param stageRow Current stage row position
+    * @param stageCol Current stage column position
+    * @param minRow Minimum row of selection
+    * @param maxRow Maximum row of selection
+    * @param minCol Minimum column of selection
+    * @param maxCol Maximum column of selection
+    * @return The closest corner as a Point(row, col)
+    */
+   private Point findClosestCorner(int stageRow, int stageCol,
+                                   int minRow, int maxRow,
+                                   int minCol, int maxCol) {
+      // Four corners
+      Point[] corners = {
+         new Point(minRow, minCol),  // top-left
+         new Point(minRow, maxCol),  // top-right
+         new Point(maxRow, minCol),  // bottom-left
+         new Point(maxRow, maxCol)   // bottom-right
+      };
+
+      // Find closest using Manhattan distance
+      Point closest = corners[0];
+      int minDistance = Integer.MAX_VALUE;
+
+      for (Point corner : corners) {
+         int distance = Math.abs(corner.x - stageRow) + Math.abs(corner.y - stageCol);
+         if (distance < minDistance) {
+            minDistance = distance;
+            closest = corner;
+         }
+      }
+
+      return closest;
    }
 
    public boolean isTileAcquired(int row, int col) {
@@ -423,9 +508,14 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       double fullResX = viewOffset.x + displayX / mag;
       double fullResY = viewOffset.y + displayY / mag;
 
-      // Convert to tile indices
-      int col = (int) Math.floor(fullResX / tileWidth_);
-      int row = (int) Math.floor(fullResY / tileHeight_);
+      // Calculate effective tile dimensions accounting for overlap
+      double overlapPercent = manager_.getOverlapPercentage();
+      double effectiveTileWidth = tileWidth_ * (1.0 - overlapPercent / 100.0);
+      double effectiveTileHeight = tileHeight_ * (1.0 - overlapPercent / 100.0);
+
+      // Convert to tile indices using effective spacing
+      int col = (int) Math.floor(fullResX / effectiveTileWidth);
+      int row = (int) Math.floor(fullResY / effectiveTileHeight);
 
       return new Point(row, col);
    }
@@ -490,15 +580,20 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
          int tileCount = (maxRow - minRow + 1) * (maxCol - minCol + 1);
 
          // Draw each tile in the selection
+         double overlapPercent = manager_.getOverlapPercentage();
+         double effectiveTileWidth = tileWidth_ * (1.0 - overlapPercent / 100.0);
+         double effectiveTileHeight = tileHeight_ * (1.0 - overlapPercent / 100.0);
+
          for (int row = minRow; row <= maxRow; row++) {
             for (int col = minCol; col <= maxCol; col++) {
-               // Calculate tile position in full resolution coordinates
-               double tilePixelX = col * tileWidth_;
-               double tilePixelY = row * tileHeight_;
+               // Calculate tile position based on effective spacing
+               double tilePixelX = col * effectiveTileWidth;
+               double tilePixelY = row * effectiveTileHeight;
 
                // Convert to display/screen coordinates
                int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
                int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
+               // Draw full tile size (including overlap) to show actual acquired area
                int dispW = (int) (tileWidth_ * magnification);
                int dispH = (int) (tileHeight_ * magnification);
 

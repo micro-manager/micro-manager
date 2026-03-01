@@ -1,4 +1,4 @@
-package org.micromanager.display.internal.ndviewer2.ndviewer2;
+package org.micromanager.display.internal.ndviewer2;
 
 import com.google.common.eventbus.EventBus;
 import java.io.IOException;
@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import mmcorej.TaggedImage;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -137,10 +139,27 @@ public final class NDViewer2DataProvider implements DataProvider {
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
-      // Return a minimal SummaryMetadata — full parsing from NDTiff
-      // summary JSON would require additional work. For now, return a
-      // builder-created default, which is sufficient for the Inspector.
-      return new DefaultSummaryMetadata.Builder().build();
+      // Parse channel names from NDTiff storage for Inspector display
+      DefaultSummaryMetadata.Builder builder = new DefaultSummaryMetadata.Builder();
+
+      try {
+         JSONObject json = storage_.getSummaryMetadata();
+
+         // Parse channel names if present
+         if (json.has("ChNames")) {
+            JSONArray chNames = json.getJSONArray("ChNames");
+            List<String> channelNames = new ArrayList<>();
+            for (int i = 0; i < chNames.length(); i++) {
+               channelNames.add(chNames.getString(i));
+            }
+            String[] channelNamesArray = channelNames.toArray(new String[0]);
+            builder.channelNames(channelNamesArray);
+         }
+      } catch (Exception e) {
+         // If parsing fails, return minimal metadata (no channel names)
+      }
+
+      return builder.build();
    }
 
    @Override
