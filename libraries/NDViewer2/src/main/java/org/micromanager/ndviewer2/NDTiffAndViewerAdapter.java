@@ -1,4 +1,4 @@
-package org.micromanager.acquisition.internal.acqengjcompat;
+package org.micromanager.ndviewer2;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -12,16 +12,16 @@ import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
-import org.micromanager.display.internal.ndviewer2.AxesBridge;
-import org.micromanager.display.internal.ndviewer2.NDViewer2DataProvider;
-import org.micromanager.display.internal.ndviewer2.NDViewer2DataViewer;
+import org.micromanager.ndviewer2.AxesBridge;
+import org.micromanager.ndviewer2.NDViewer2DataProvider;
+import org.micromanager.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer.api.NDViewerAPI;
-import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.api.NDViewerDataSource;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.api.NDViewerAPI;
+import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.api.NDViewerDataSource;
+import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
  * The class is the glue needed in order for AcqEngJ, NDViewer2, and NDTiff

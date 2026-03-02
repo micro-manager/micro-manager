@@ -1,4 +1,4 @@
-package org.micromanager.display.internal.ndviewer2;
+package org.micromanager.ndviewer2;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
  * Utility class translating between NDViewer's HashMap axes and MM's Coords.

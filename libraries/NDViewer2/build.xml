@@ -1,0 +1,3 @@
+<project name="NDViewer2" default="jar">
+	<import file="../javalibrarybuild.xml"/>
+</project>

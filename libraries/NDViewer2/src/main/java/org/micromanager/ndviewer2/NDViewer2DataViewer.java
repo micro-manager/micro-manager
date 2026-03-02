@@ -1,4 +1,4 @@
-package org.micromanager.display.internal.ndviewer2;
+package org.micromanager.ndviewer2;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,8 +19,13 @@ import org.micromanager.display.AbstractDataViewer;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
+// API gaps: the following are internal mmstudio classes that would need to be
+// promoted to public API for this library to be fully independent:
+//   - ImageStatsPublisher (display.inspector.internal.panels.intensity)
+//   - StatsComputeQueue and imagestats classes (display.internal.imagestats)
+//   - DataViewerWillCloseEvent, DataViewerDidBecomeActiveEvent,
+//     DataViewerDidBecomeVisibleEvent (display.internal.event)
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -30,9 +35,9 @@ import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
-import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.api.NDViewerDataSource;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.api.NDViewerDataSource;
+import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
  * NDViewer2 data viewer: combines NDViewer's pyramidal canvas with MM's
@@ -118,7 +123,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
                                JSONObject summaryMetadata,
                                double pixelSizeUm,
                                boolean rgb) {
-      super(DefaultDisplaySettings.builder().build());
+      super(studio.displays().displaySettingsBuilder().build());
       studio_ = studio;
       dataProvider_ = dataProvider;
       axesBridge_ = axesBridge;
@@ -127,28 +132,6 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       // Create NDViewer (the canvas/scrollbar viewer)
       ndViewer_ = new NDViewer(dataSource, acqInterface,
             summaryMetadata, pixelSizeUm, rgb);
-
-      // Hide NDViewer's side controls (histogram/metadata panels).
-      // We use reflection because NDViewer does not yet expose a public API
-      // for this. This is coupled to NDViewer's internal GuiManager layout —
-      // if field/method names change in a future NDViewer version, the
-      // reflection will fail gracefully (side controls remain visible).
-      // TODO: add a public API to NDViewer and remove this reflection.
-      try {
-         Object guiManager = ndViewer_.getGUIManager();
-         java.lang.reflect.Field displayWindowField =
-               guiManager.getClass().getDeclaredField("displayWindow_");
-         displayWindowField.setAccessible(true);
-         Object displayWindow = displayWindowField.get(guiManager);
-         java.lang.reflect.Method collapse =
-               displayWindow.getClass().getMethod(
-                     "collapseOrExpandSideControls", boolean.class);
-         collapse.invoke(displayWindow, false);
-      } catch (Exception e) {
-         // If reflection fails, side controls remain visible — not critical
-         studio_.logs().logError(e,
-               "Could not hide NDViewer side controls");
-      }
 
       // Set up stats computation
       computeQueue_.addListener(this);

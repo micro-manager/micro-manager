@@ -1,4 +1,4 @@
-package org.micromanager.display.internal.ndviewer2;
+package org.micromanager.ndviewer2;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultComponentDisplaySettings;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
  * Bidirectional translation between MM DisplaySettings and NDViewer's
@@ -32,7 +32,7 @@ public final class DisplaySettingsBridge {
     */
    public void applyToNDViewer(
          DisplaySettings mmSettings,
-         org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings) {
+         org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings ndSettings) {
       List<String> channelNames = getNDViewerChannelNames(ndSettings);
       for (int i = 0; i < mmSettings.getNumberOfChannels()
             && i < channelNames.size(); i++) {
@@ -70,7 +70,7 @@ public final class DisplaySettingsBridge {
     * @return new MM DisplaySettings reflecting NDViewer state
     */
    public DisplaySettings readFromNDViewer(
-         org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings,
+         org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings ndSettings,
          DisplaySettings existing) {
       List<String> channelNames = getNDViewerChannelNames(ndSettings);
       DisplaySettings.Builder dsBuilder = existing.copyBuilder();
@@ -142,7 +142,7 @@ public final class DisplaySettingsBridge {
     * @return ordered list of channel names known to NDViewer
     */
    private List<String> getNDViewerChannelNames(
-         org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings) {
+         org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings ndSettings) {
       List<String> names = axesBridge_.getChannelNames();
       if (!names.isEmpty()) {
          return names;

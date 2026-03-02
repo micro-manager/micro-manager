@@ -33,16 +33,16 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.internal.RememberedDisplaySettings;
-import org.micromanager.display.internal.ndviewer2.AxesBridge;
-import org.micromanager.display.internal.ndviewer2.NDViewer2DataProvider;
-import org.micromanager.display.internal.ndviewer2.NDViewer2DataViewer;
+import org.micromanager.ndviewer2.AxesBridge;
+import org.micromanager.ndviewer2.NDViewer2DataProvider;
+import org.micromanager.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer.api.NDViewerAPI;
-import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.overlay.Overlay;
+import org.micromanager.ndviewer2.api.NDViewerAPI;
+import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.overlay.Overlay;
 
 /**
  * Manages the Deskew Explore session.

@@ -1,6 +1,8 @@
-package org.micromanager.display.internal.ndviewer2;
+package org.micromanager.ndviewer2;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.SubscriberExceptionContext;
+import com.google.common.eventbus.SubscriberExceptionHandler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,14 +14,16 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+// API gap: DefaultImage, DefaultSummaryMetadata are internal mmstudio classes.
+// They would need to be promoted to public API for this library to be
+// fully independent. For now we depend on mmstudio internals.
 import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultNewImageEvent;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
-import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
  * Wraps NDTiffStorage (MultiresNDTiffAPI) as an MM DataProvider.
@@ -31,8 +35,13 @@ public final class NDViewer2DataProvider implements DataProvider {
 
    private final MultiresNDTiffAPI storage_;
    private final AxesBridge axesBridge_;
-   private final EventBus eventBus_ =
-         new EventBus(EventBusExceptionLogger.getInstance());
+   private static final SubscriberExceptionHandler EVENT_BUS_EXCEPTION_HANDLER =
+         (Throwable ex, SubscriberExceptionContext ctx) ->
+               System.err.println("NDViewer2DataProvider EventBus subscriber threw: "
+                     + ex + " [event=" + ctx.getEvent()
+                     + ", subscriber=" + ctx.getSubscriber() + "]");
+
+   private final EventBus eventBus_ = new EventBus(EVENT_BUS_EXCEPTION_HANDLER);
    private final String name_;
 
    /**
@@ -305,7 +314,7 @@ public final class NDViewer2DataProvider implements DataProvider {
          // (Coords drops axes with value 0, losing e.g. row=0, column=0)
          Image image = getImageByAxes(axes);
          if (image != null) {
-            eventBus_.post(new DefaultNewImageEvent(image, this));
+            eventBus_.post(newImageEvent(image));
          }
       } catch (IOException e) {
          // Image may not be written yet; ignore
@@ -326,7 +335,19 @@ public final class NDViewer2DataProvider implements DataProvider {
          axesBridge_.registerChannel(ch);
       }
       if (image != null) {
-         eventBus_.post(new DefaultNewImageEvent(image, this));
+         eventBus_.post(newImageEvent(image));
       }
+   }
+
+   private DataProviderHasNewImageEvent newImageEvent(final Image image) {
+      final DataProvider self = this;
+      return new DataProviderHasNewImageEvent() {
+         @Override
+         public Image getImage() { return image; }
+         @Override
+         public Coords getCoords() { return image.getCoords(); }
+         @Override
+         public DataProvider getDataProvider() { return self; }
+      };
    }
 }

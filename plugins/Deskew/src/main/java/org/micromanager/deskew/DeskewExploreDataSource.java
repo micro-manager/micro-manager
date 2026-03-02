@@ -16,13 +16,13 @@ import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.api.NDViewerDataSource;
-import org.micromanager.ndviewer.api.OverlayerPlugin;
-import org.micromanager.ndviewer.overlay.Overlay;
-import org.micromanager.ndviewer.overlay.Roi;
-import org.micromanager.ndviewer.overlay.TextRoi;
+import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.api.NDViewerDataSource;
+import org.micromanager.ndviewer2.api.OverlayerPlugin;
+import org.micromanager.ndviewer2.overlay.Overlay;
+import org.micromanager.ndviewer2.overlay.Roi;
+import org.micromanager.ndviewer2.overlay.TextRoi;
 
 /**
  * Data source for the Deskew Explore mode NDViewer.
