@@ -42,8 +42,6 @@ import org.micromanager.ndviewer2.NDViewer2DataProvider;
 import org.micromanager.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.ndviewer2.api.NDViewerAPI;
 import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer2.overlay.Overlay;
-
 /**
  * Manages the Deskew Explore session.
  * Coordinates between the GUI, NDViewer, storage, and acquisition.
@@ -273,6 +271,7 @@ public class DeskewExploreManager {
          }
 
          viewer_ = mm2Viewer_.getNDViewer();
+         dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Deskew Explore - Right-click to select, "
                + "Left-drag to extend, Left-click to acquire");
 
@@ -436,6 +435,7 @@ public class DeskewExploreManager {
          }
 
          viewer_ = mm2Viewer_.getNDViewer();
+         dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
          // Set up overlayer and mouse listener
@@ -1623,11 +1623,6 @@ public class DeskewExploreManager {
       return overlapPercentage_;
    }
 
-   public void setOverlay(Overlay overlay) {
-      if (viewer_ != null) {
-         viewer_.setOverlay(overlay);
-      }
-   }
 
    /**
     * Recomputes the tile dimensions shown in the overlay based on the current

@@ -16,7 +16,7 @@ public interface OverlayerPlugin {
     * Called whenever the overlay needs to be drawn. Once it is ready, it should
     * be passed to the viewer by calling
     * {@link org.micromanager.ndviewer2.main.NDViewer#setOverlay(Overlay)}
-    * This can happen multiple times within a call of this funtion
+    * This can happen multiple times within a call of this function
     * (i.e. to show intermediate rendering progress)
     *
     * @param defaultOverlay The base overlay which should be added onto

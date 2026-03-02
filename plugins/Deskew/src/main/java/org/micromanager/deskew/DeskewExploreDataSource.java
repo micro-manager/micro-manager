@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
-import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.api.NDViewerAPI;
 import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer2.api.NDViewerDataSource;
 import org.micromanager.ndviewer2.api.OverlayerPlugin;
@@ -35,6 +35,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
    private static final double ZOOM_FACTOR = 1.4;
 
    private final DeskewExploreManager manager_;
+   private volatile NDViewerAPI viewer_;
    private volatile MultiresNDTiffAPI storage_;
    private volatile boolean finished_ = false;
 
@@ -62,6 +63,10 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    public DeskewExploreDataSource(DeskewExploreManager manager) {
       manager_ = manager;
+   }
+
+   public void setViewer(NDViewerAPI viewer) {
+      viewer_ = viewer;
    }
 
    public void setStorage(MultiresNDTiffAPI storage) {
@@ -528,7 +533,9 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
                            HashMap<String, Object> axes, double magnification,
                            Point2D.Double viewOffset) {
       if (tileWidth_ <= 0 || tileHeight_ <= 0) {
-         manager_.setOverlay(overlay);
+         if (viewer_ != null) {
+            viewer_.setOverlay(overlay);
+         }
          return;
       }
 
@@ -648,6 +655,8 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       }
 
       // Set the overlay on the viewer
-      manager_.setOverlay(overlay);
+      if (viewer_ != null) {
+         viewer_.setOverlay(overlay);
+      }
    }
 }
