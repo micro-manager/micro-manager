@@ -860,7 +860,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                try {
                   Double focusZ = studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
                   studio_.core().setPosition(focusZ);
-                  core.waitForDevice(zDrive_);
+                  studio_.core().waitForDevice(studio_.core().getFocusDevice());
                   studio_.logs().logMessage("   Autofocus best Z + AF offset= " + focusZ);
                   studio_.core().updateSystemStateCache();
 
