@@ -1,7 +1,12 @@
 package org.micromanager.ndviewer2.overlay;
 
-import java.awt.geom.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.StringTokenizer;
@@ -12,7 +17,9 @@ import java.util.Vector;
  */
 public class TextRoi extends Roi {
 
-   public static final int LEFT = 0, CENTER = 1, RIGHT = 2;
+   public static final int LEFT = 0;
+   public static final int CENTER = 1;
+   public static final int RIGHT = 2;
    static final int MAX_LINES = 50;
 
    private static final String line1 = "Enter text, then press";
@@ -79,8 +86,6 @@ public class TextRoi extends Roi {
     * TextRoi(int x, int y, int width, int height, String text, Font font) {
     * super(x, y, width, height); init(text, font); }
     *
-    * /** Creates a TextRoi using the specified sub-pixel location, size and
-    * Font.
     */
    public TextRoi(double x, double y, double width, double height, String text, Font font) {
       super(x, y, width, height);
@@ -115,9 +120,10 @@ public class TextRoi extends Roi {
          }
          br.close();
       } catch (Exception e) {
+         System.out.println(e);
       }
       String[] lines = new String[v.size()];
-      v.copyInto((String[]) lines);
+      v.copyInto(lines);
       return lines;
    }
 
@@ -190,7 +196,7 @@ public class TextRoi extends Roi {
 
    void drawText(Graphics g) {
       g.setColor(strokeColor != null ? strokeColor : ROIColor);
-      double mag = 1;
+      final double mag = 1;
       int xi = (int) Math.round(getXBase());
       int yi = (int) Math.round(getYBase());
       double widthd = bounds != null ? bounds.width : width;
@@ -203,24 +209,20 @@ public class TextRoi extends Roi {
       int sh = nonScalable ? heighti : (int) (1 * heightd);
       Font font = getScaledFont();
       FontMetrics metrics = g.getFontMetrics(font);
-      int fontHeight = metrics.getHeight();
-      int descent = metrics.getDescent();
+      final int fontHeight = metrics.getHeight();
+      final int descent = metrics.getDescent();
       g.setFont(font);
       Graphics2D g2d = (Graphics2D) g;
       AffineTransform at = null;
       if (angle != 0.0) {
          at = g2d.getTransform();
-         double cx = sx, cy = sy;
+         double cx = sx;
+         double cy = sy;
          double theta = Math.toRadians(angle);
-//         if (drawStringMode) {
-//            cx = screenX(x);
-//            cy = screenY(y + height - descent);
-//         }
          g2d.rotate(-theta, cx, cy);
       }
       int i = 0;
       if (fillColor != null) {
-//         updateBounds(g);
          Color c = g.getColor();
          int alpha = fillColor.getAlpha();
          g.setColor(fillColor);
@@ -246,12 +248,14 @@ public class TextRoi extends Roi {
                tw = metrics.stringWidth(theText[i]);
                g.drawString(theText[i], sx + sw - tw, sy + fontHeight - descent);
                break;
+            default:
+               System.out.println("This should not be possible.");
          }
          i++;
          sy += fontHeight;
       }
-      if (at != null) // restore transformation matrix used to rotate text
-      {
+      if (at != null) {
+         // restore transformation matrix used to rotate text{
          g2d.setTransform(at);
       }
    }
@@ -317,7 +321,7 @@ public class TextRoi extends Roi {
    }
 
    /**
-    * Sets the 'justification' instance variable (must be LEFT, CENTER or RIGHT)
+    * Sets the 'justification' instance variable (must be LEFT, CENTER or RIGHT).
     */
    public static void setGlobalJustification(int justification) {
       if (justification < 0 || justification > RIGHT) {
@@ -335,7 +339,7 @@ public class TextRoi extends Roi {
    }
 
    /**
-    * Sets the 'justification' instance variable (must be LEFT, CENTER or RIGHT)
+    * Sets the 'justification' instance variable (must be LEFT, CENTER or RIGHT).
     */
    public void setJustification(int justification) {
       if (justification < 0 || justification > RIGHT) {

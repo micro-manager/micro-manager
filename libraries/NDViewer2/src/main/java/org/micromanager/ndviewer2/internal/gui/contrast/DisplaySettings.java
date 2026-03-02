@@ -112,6 +112,7 @@ public class DisplaySettings {
          try {
             return new Color(json_.getJSONObject(channelName).getInt("Color"));
          } catch (Exception ex) {
+            System.out.println("Caught JSON exception in DisplaySettings.getColor");
          }
          return Color.white;
       }
@@ -327,7 +328,8 @@ public class DisplaySettings {
    public boolean ignoreFractionOn() {
       synchronized (this) {
          try {
-            return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(IGNORE_OUTLIERS, false);
+            return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(
+                     IGNORE_OUTLIERS, false);
          } catch (JSONException ex) {
             System.err.println(ex);
             return false;

@@ -1,15 +1,14 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.ndviewer2.internal.gui;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Timer;
+import javax.swing.GroupLayout;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import mmcorej.org.json.JSONObject;
 
-import javax.swing.*;
 
 /**
  *
@@ -23,7 +22,7 @@ public class MetadataPanel extends javax.swing.JPanel {
    private JSONObject summaryMetadata_;
 
    /**
-    * Creates new form MetadataPanelNew
+    * Creates new form MetadataPanelNew.
     */
    public MetadataPanel() {
       imageMetadataModel_ = new MetadataTableModel();
@@ -67,30 +66,31 @@ public class MetadataPanel extends javax.swing.JPanel {
       jTable1.setModel(summaryMetadataModel_);
       jScrollPane2.setViewportView(jTable1);
 
-      javax.swing.GroupLayout summaryMDPanel_Layout = new javax.swing.GroupLayout(summaryMDPanel_);
-      summaryMDPanel_.setLayout(summaryMDPanel_Layout);
-      summaryMDPanel_Layout.setHorizontalGroup(
-         summaryMDPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
+      GroupLayout summaryMDPanelLayout = new javax.swing.GroupLayout(summaryMDPanel_);
+      summaryMDPanel_.setLayout(summaryMDPanelLayout);
+      summaryMDPanelLayout.setHorizontalGroup(
+            summaryMDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
       );
-      summaryMDPanel_Layout.setVerticalGroup(
-         summaryMDPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
+      summaryMDPanelLayout.setVerticalGroup(
+            summaryMDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
       );
 
 
       jTable2.setModel(imageMetadataModel_);
       jScrollPane1.setViewportView(jTable2);
 
-      javax.swing.GroupLayout imageMDPanel_Layout = new javax.swing.GroupLayout(imageMDPanel_);
-      imageMDPanel_.setLayout(imageMDPanel_Layout);
-      imageMDPanel_Layout.setHorizontalGroup(
-         imageMDPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
+      GroupLayout imageMDPanelLayout = new javax.swing.GroupLayout(imageMDPanel_);
+      imageMDPanel_.setLayout(imageMDPanelLayout);
+      imageMDPanelLayout.setHorizontalGroup(
+            imageMDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
       );
-      imageMDPanel_Layout.setVerticalGroup(
-         imageMDPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
+      imageMDPanelLayout.setVerticalGroup(
+            imageMDPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, GroupLayout.Alignment.TRAILING,
+                     GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
       );
 
       acqImageTabbedPane_.addTab("Image metadata", imageMDPanel_);
@@ -116,30 +116,30 @@ public class MetadataPanel extends javax.swing.JPanel {
       acqImageTabbedPane_.setForegroundAt(1, labelForeground);
 
 
-      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+      GroupLayout layout = new javax.swing.GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-            .addComponent(acqImageTabbedPane_)
-            .addContainerGap())
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+               .addComponent(acqImageTabbedPane_)
+               .addContainerGap())
       );
       layout.setVerticalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(acqImageTabbedPane_)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(acqImageTabbedPane_)
       );
 
       acqImageTabbedPane_.getAccessibleContext().setAccessibleName("");
-   }// </editor-fold>//GEN-END:initComponents
+   }
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JTabbedPane acqImageTabbedPane_;
-   private javax.swing.JPanel imageMDPanel_;
-   private javax.swing.JScrollPane jScrollPane1;
-   private javax.swing.JScrollPane jScrollPane2;
-   private javax.swing.JTable jTable1;
-   private javax.swing.JTable jTable2;
-   private javax.swing.JPanel summaryMDPanel_;
+   private JTabbedPane acqImageTabbedPane_;
+   private JPanel imageMDPanel_;
+   private JScrollPane jScrollPane1;
+   private JScrollPane jScrollPane2;
+   private JTable jTable1;
+   private JTable jTable2;
+   private JPanel summaryMDPanel_;
    // End of variables declaration//GEN-END:variables
 }

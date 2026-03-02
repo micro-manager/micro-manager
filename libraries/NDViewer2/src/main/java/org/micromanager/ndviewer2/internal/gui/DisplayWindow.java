@@ -16,7 +16,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.api.ControlsPanelInterface;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
@@ -198,12 +197,11 @@ public class DisplayWindow implements WindowListener {
          }
       };
 
-      //add keylistener to window and all subscomponenets so it will fire whenever
-      //focus in anywhere in the window
+      // add keylistener to window and all subscomponenets so it will fire whenever
+      // focus in anywhere in the window
       window_.addKeyListener(kl);
       addRecursively(window_, kl);
 
-//      recursiveRemoveFocus(window_);
    }
 
    private void addRecursively(Component c, KeyListener kl) {
@@ -258,10 +256,6 @@ public class DisplayWindow implements WindowListener {
       imageCanvas_.getCanvas().addMouseWheelListener(m);
       imageCanvas_.getCanvas().addMouseMotionListener(m);
       imageCanvas_.getCanvas().addMouseListener(m);
-   }
-
-   public void addControlPanel(ControlsPanelInterface panel) {
-      // No-op: side controls panel has been removed.
    }
 
 }

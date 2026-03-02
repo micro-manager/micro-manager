@@ -10,8 +10,8 @@ import java.util.concurrent.ThreadFactory;
 public class CoalescentExecutor {
 
    // Guarded by monitor on this
-   private final Map<Class<?>, CoalescentRunnable> coalescedRunnables_ = new HashMap<Class<?>, CoalescentRunnable>();
-   private final Map<Class<?>, Long> skipCounts_ = new HashMap<Class<?>, Long>();
+   private final Map<Class<?>, CoalescentRunnable> coalescedRunnables_ = new HashMap<>();
+   private final Map<Class<?>, Long> skipCounts_ = new HashMap<>();
 
    private ExecutorService executor_;
 
@@ -35,11 +35,9 @@ public class CoalescentExecutor {
    /**
     * Invoke the given runnable on the EDT, coalescing multiple invocations on
     * the event queue.
-    *
     * This is a mechanism to coalesce refresh-like tasks, in the manner of
     * Swing's {@code RepaintManager}, without having to replace the system
     * global event queue via EventQueue.push.
-    *
     * The given runnable is scheduled to run on the EDT, just as with
     * {@code SwingUtilities.invokeLater}, but when invoked, all outstanding
     * runnables with the same "coalescence class" (see
@@ -80,7 +78,6 @@ public class CoalescentExecutor {
    /**
     * Like {@code invokeLaterWithCoalescence}, but defers invocation until the
     * last scheduled task on the event queue is processed.
-    *
     * Note that if you keep calling this method at a higher rate than the EDT is
     * processing events, the runnable will not be executed until the EDT becomes
     * otherwise idle.

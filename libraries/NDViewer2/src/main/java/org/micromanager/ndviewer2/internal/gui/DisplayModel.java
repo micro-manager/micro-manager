@@ -1,21 +1,22 @@
 package org.micromanager.ndviewer2.internal.gui;
 
-import mmcorej.org.json.JSONObject;
-import org.micromanager.ndviewer2.api.NDViewerDataSource;
-import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
-import org.micromanager.ndviewer2.main.NDViewer;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.prefs.Preferences;
+import javax.swing.SwingUtilities;
+import mmcorej.org.json.JSONObject;
+import org.micromanager.ndviewer2.api.NDViewerDataSource;
+import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
+import org.micromanager.ndviewer2.main.NDViewer;
+
 
 /**
- * This class keeps track of the information about how to display the data the viewer is showing
+ * This class keeps track of the information about how to display the data the viewer is showing.
  */
 public class DisplayModel {
 
@@ -46,10 +47,10 @@ public class DisplayModel {
    }
 
    /**
-    * Need to call this when loading them from disk
+    * Need to call this when loading them from disk.
     */
-   public void setDisplaySettings_(DisplaySettings displaySettings_) {
-      this.displaySettings_ = displaySettings_;
+   public void setDisplaySettings(DisplaySettings displaySettings) {
+      this.displaySettings_ = displaySettings;
    }
 
    public int getIntegerPositionFromStringPosition(String axisName, String axisPosition) {
@@ -67,7 +68,8 @@ public class DisplayModel {
 
             //only one channel can be active so inacivate others
             for (String channel : display_.getDisplayModel().getDisplayedChannels()) {
-               displaySettings_.setActive(channel, channel.equals(viewCoords_.getAxisPosition(NDViewer.CHANNEL_AXIS)));
+               displaySettings_.setActive(channel, channel.equals(
+                        viewCoords_.getAxisPosition(NDViewer.CHANNEL_AXIS)));
             }
          } else {
             //if channel turns off, nothing will show, so dont let this happen
@@ -222,16 +224,18 @@ public class DisplayModel {
          }
       } else {
          for (String channel : getDisplayedChannels()) {
-         if (viewCoords_.getAxesPositions().containsKey(NDViewer.CHANNEL_AXIS)) {
-             displaySettings_.setActive(channel, viewCoords_.getAxesPositions().get(NDViewer.CHANNEL_AXIS).equals(channel));
-             display_.updateActiveChannelCheckboxes();
+            if (viewCoords_.getAxesPositions().containsKey(NDViewer.CHANNEL_AXIS)) {
+               displaySettings_.setActive(channel, viewCoords_.getAxesPositions()
+                        .get(NDViewer.CHANNEL_AXIS).equals(channel));
+               display_.updateActiveChannelCheckboxes();
             }
          }
       }
    }
 
    /**
-    * Displayed channels are the actual channels, or if there are no channels a dummy one is added
+    * Displayed channels are the actual channels, or if there are no channels a dummy one is added.
+    *
     * @return
     */
    public List<String> getDisplayedChannels() {
@@ -246,7 +250,7 @@ public class DisplayModel {
    }
 
    /**
-    * Called upon a new image arriving
+    * Called upon a new image arriving.
     */
    public void parseNewAxesToUpdateDisplayModel(HashMap<String, Object> axesPositions)  {
       // Update string valued axes, including channels
@@ -268,8 +272,8 @@ public class DisplayModel {
                         display_.readHistogramControlsStateFromGUI();
                         String channelName = (String) axesPositions.get(NDViewer.CHANNEL_AXIS);
 
-                        if (!channelName.equals(NDViewer.NO_CHANNEL) &&
-                                displaySettings_.containsChannel(NDViewer.NO_CHANNEL)) {
+                        if (!channelName.equals(NDViewer.NO_CHANNEL)
+                                 && displaySettings_.containsChannel(NDViewer.NO_CHANNEL)) {
                            // remove the dummy channel
                            displaySettings_.removeChannel(NDViewer.NO_CHANNEL);
                         }
@@ -327,7 +331,8 @@ public class DisplayModel {
       if (!displaySettings_.isCompositeMode()) {
          //set all channels inactive except current one
          if (viewCoords_.getAxesPositions().containsKey(NDViewer.CHANNEL_AXIS)) {
-            String activeChannel = (String) viewCoords_.getAxesPositions().get(NDViewer.CHANNEL_AXIS);
+            String activeChannel = (String) viewCoords_.getAxesPositions()
+                     .get(NDViewer.CHANNEL_AXIS);
             for (String c : getDisplayedChannels()) {
                displaySettings_.setActive(c, activeChannel.equals(c));
                display_.getGUIManager().updateGUIFromDisplaySettings();
@@ -365,8 +370,12 @@ public class DisplayModel {
       return displaySettings_;
    }
 
-   public void setHistogramSettings(boolean autostretch, boolean ignoreOutliers, boolean syncChannels,
-                                    boolean logHist, boolean composite, double percentToIgnore) {
+   public void setHistogramSettings(boolean autostretch,
+                                    boolean ignoreOutliers,
+                                    boolean syncChannels,
+                                    boolean logHist,
+                                    boolean composite,
+                                    double percentToIgnore) {
       displaySettings_.setAutoscale(autostretch);
       displaySettings_.setIgnoreOutliers(ignoreOutliers);
       displaySettings_.setSyncChannels(syncChannels);

@@ -1,16 +1,16 @@
 package org.micromanager.ndviewer2.internal.gui;
 
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import javax.swing.Timer;
 import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.api.ControlsPanelInterface;
 import org.micromanager.ndviewer2.api.OverlayerPlugin;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.HashMap;
+
 
 public class GuiManager {
 
@@ -122,7 +122,7 @@ public class GuiManager {
       displayWindow_ = null;
    }
 
-   public void displayNewImage(Image img, HashMap<String,int[]> hists, DataViewCoords view,
+   public void displayNewImage(Image img, HashMap<String, int[]> hists, DataViewCoords view,
                                OverlayerPlugin overlayerPlugin) {
       displayWindow_.displayImage(img, hists, view);
       overlayer_.createOverlay(view, overlayerPlugin);
@@ -137,18 +137,15 @@ public class GuiManager {
       return imageMaker_.getLatestTags();
    }
 
-   public HashMap<String,int[]> getHistograms() {
+   public HashMap<String, int[]> getHistograms() {
       return imageMaker_.getHistograms();
    }
 
-   public void expandDisplayedRangeToInclude(java.util.List<HashMap<String, Object>> newIamgeEvents, java.util.List<String> activeChannels) {
+   public void expandDisplayedRangeToInclude(java.util.List<HashMap<String,
+            Object>> newIamgeEvents, java.util.List<String> activeChannels) {
       if (displayWindow_ != null) {
          displayWindow_.expandDisplayedRangeToInclude(newIamgeEvents, activeChannels);
       }
-   }
-
-   public void addControlPanel(ControlsPanelInterface panel) {
-      // No-op: side controls panel has been removed.
    }
 
    public void setCustomCanvasMouseListener(CanvasMouseListenerInterface m) {

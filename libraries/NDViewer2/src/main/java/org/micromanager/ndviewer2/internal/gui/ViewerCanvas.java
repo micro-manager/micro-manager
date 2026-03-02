@@ -12,7 +12,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
@@ -22,7 +21,6 @@ public class ViewerCanvas {
 
    private volatile Image currentImage_;
    private volatile Overlay currentOverlay_ = new Overlay();
-   private int width_, height_;
    private double scale_;
    private NDViewer display_;
    private JPanel canvas_;
@@ -61,27 +59,14 @@ public class ViewerCanvas {
       display_ = null;
    }
 
-//   private void computeScale() {
-//      if (currentImage_ == null) {
-//         return;
-//      }
-//      double wScale = width_ / (double) currentImage_.getWidth();
-//      double hScale = height_ / (double) currentImage_.getHeight();
-//      //do the bigger scaling so image fills the whole canvas
-//      scale_ = Math.max(wScale, hScale);
-//   }
-   
    /**
     * Set the size of the image displayed on screen, which is not neccesarily
-    * the same as the image pixels read to create it
+    * the same as the image pixels read to create it.
     *
     * @param w
     * @param h
     */
    public void onCanvasResize(int w, int h) {
-      width_ = w;
-      height_ = h;
-//      computeScale();
    }
 
    void updateDisplayImage(Image img, double scale) {

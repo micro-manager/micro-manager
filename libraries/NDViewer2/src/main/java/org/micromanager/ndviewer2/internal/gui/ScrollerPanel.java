@@ -14,13 +14,13 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.ndviewer2.internal.gui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 import javax.swing.JPanel;
 import org.micromanager.ndviewer2.main.NDViewer;
 
@@ -60,11 +60,7 @@ class ScrollerPanel extends JPanel {
 
       AxisScroller scroller = new AxisScroller(this, axis, 1, true);
 
-//         if (max <= 1) {
       scroller.setVisible(false);
-//         } else {
-//            add(scroller, "wrap 0px, align center, growx");
-//         }
       scrollers_.add(scroller);
 
    }
@@ -100,7 +96,8 @@ class ScrollerPanel extends JPanel {
          Object position = scroller.getPosition();
          // Convert string positions to integer positions
          if (!display_.getDisplayModel().isIntegerAxis(axis)) {
-            position = display_.getDisplayModel().getStringPositionFromIntegerPosition(axis, (Integer) position);
+            position = display_.getDisplayModel().getStringPositionFromIntegerPosition(axis,
+                     (Integer) position);
          }
          if (!lastImagePosition_.containsKey(axis)
                  || !lastImagePosition_.get(axis).equals(position)) {
@@ -120,8 +117,6 @@ class ScrollerPanel extends JPanel {
     * timer.
     */
    public void onAnimationToggle(AxisScroller scoller, boolean isAnimated) {
-//      resetAnimationTimer();
-
       //turn off the other ones
       if (isAnimated) {
          for (AxisScroller sc : scrollers_) {
@@ -146,14 +141,10 @@ class ScrollerPanel extends JPanel {
    }
 
    void expandDisplayedRangeToInclude(List<HashMap<String, Object>> newIamgeEvents,
-                                      List<String> channels)
-   {
+                                      List<String> channels) {
       for (int i = 0; i < newIamgeEvents.size(); i++) {
          HashMap<String, Object> axes = newIamgeEvents.get(i);
-//         convert channel name to coords
-//         int cIndex = display_.getChannelIndex(channels.get(i));
-//         axes.put("c", cIndex);
-         
+
          boolean didShowNewScrollers = false;
          //create new scrollers for any axes not yet seen
          for (String axis : axes.keySet()) {
@@ -229,16 +220,5 @@ class ScrollerPanel extends JPanel {
       }
       return 0;
    }
-
-//   /**
-//    * Resize scroller to new maximum size
-//    */
-//   public void setMaxPosition(String axis, int max) {
-//      for (AxisScroller scroller : scrollers_) {
-//         if (scroller.getAxis().equals(axis)) {
-//            scroller.setMaximum(max);
-//         }
-//      }
-//   }
 
 }

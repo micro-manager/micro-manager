@@ -14,9 +14,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.ndviewer2.internal.gui;
 
-import org.micromanager.ndviewer2.internal.gui.DataViewCoords;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.geom.Point2D;
@@ -24,17 +24,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JPanel;
+import org.micromanager.ndviewer2.api.OverlayerPlugin;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
 import org.micromanager.ndviewer2.overlay.Roi;
 import org.micromanager.ndviewer2.overlay.TextRoi;
-import org.micromanager.ndviewer2.api.OverlayerPlugin;
 
 /**
- * Class that encapsulates calculation of overlays for DisplayPlus
+ * Class that encapsulates calculation of overlays for DisplayPlus.
  */
 public class BaseOverlayer {
 
@@ -43,7 +41,9 @@ public class BaseOverlayer {
    private ExecutorService taskExecutor_;
    private Future currentTask_;
    private NDViewer display_;
-   private volatile boolean showScalebar_ = false, showTimeLabel_ = false, showZLabel_ = false;
+   private volatile boolean showScalebar_ = false;
+   private volatile boolean showTimeLabel_ = false;
+   private volatile boolean showZLabel_ = false;
 
    public BaseOverlayer(NDViewer display) {
       display_ = display;
@@ -67,7 +67,8 @@ public class BaseOverlayer {
    
 
    //always try to cancel the previous task, assuming it is being replaced with a more current one
-   public synchronized void createOverlay(DataViewCoords viewCoords, OverlayerPlugin overlayerPlugin) {
+   public synchronized void createOverlay(DataViewCoords viewCoords,
+                                          OverlayerPlugin overlayerPlugin) {
       if (currentTask_ != null && !currentTask_.isDone()) {
          //cancel current surface calculation--this call does not block until complete
          currentTask_.cancel(true);
@@ -80,9 +81,13 @@ public class BaseOverlayer {
 
             if (overlayerPlugin != null) {
                try {
-                  overlayerPlugin.drawOverlay(defaultOverlay, viewCoords.getDisplayImageSize(),
-                          viewCoords.getDownsampleFactor(), display_.getCanvasJPanel().getGraphics(),
-                          viewCoords.getAxesPositions(), viewCoords.getMagnification(), viewCoords.getViewOffset());
+                  overlayerPlugin.drawOverlay(defaultOverlay,
+                           viewCoords.getDisplayImageSize(),
+                           viewCoords.getDownsampleFactor(),
+                           display_.getCanvasJPanel().getGraphics(),
+                           viewCoords.getAxesPositions(),
+                           viewCoords.getMagnification(),
+                           viewCoords.getViewOffset());
                } catch (InterruptedException ex) {
                   return; // Interrupted to start a new one
                }
@@ -103,7 +108,7 @@ public class BaseOverlayer {
       double pixelSize = display_.getPixelSize();
       pixelSize /= viewCoords.getMagnification();
       double barSize = pixelSize * scaleBarWidth;
-      String text = ((int) Math.round(barSize)) + " \u00B5" + "m";
+      String text = ((int) Math.round(barSize)) + " \u00B5" + "m"; //micron
 
       JPanel canvas = display_.getCanvasJPanel();
       textHeight = Math.max(textHeight, canvas.getGraphics().getFontMetrics(font
@@ -166,7 +171,8 @@ public class BaseOverlayer {
       float textWidth = 0;
       JPanel canvas = display_.getCanvasJPanel();
       for (String line : text) {
-         lineHeight = Math.max(lineHeight, canvas.getGraphics().getFontMetrics(font).getLineMetrics(line, canvas.getGraphics()).getHeight());
+         lineHeight = Math.max(lineHeight, canvas.getGraphics().getFontMetrics(font)
+                  .getLineMetrics(line, canvas.getGraphics()).getHeight());
          textWidth = Math.max(textWidth, canvas.getGraphics().getFontMetrics().stringWidth(line));
       }
       float textHeight = lineHeight * text.length;
@@ -182,7 +188,8 @@ public class BaseOverlayer {
 
       for (int i = 0; i < text.length; i++) {
          TextRoi troi = new TextRoi(canvas.getBounds().width / 2 - roiWidth / 2 + border,
-                 canvas.getBounds().height / 2 - roiHeight / 2 + border + lineHeight * i, text[i], font);
+                 canvas.getBounds().height / 2 - roiHeight / 2 + border
+                          + lineHeight * i, text[i], font);
          troi.setStrokeColor(Color.black);
          overlay.add(troi);
       }
@@ -215,8 +222,10 @@ public class BaseOverlayer {
       //draw outer rectangle representing full image
       Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
       outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
-      int innerX = (int) Math.round(((double) outerWidth / (double) fullResWidth) * (viewCoords.getViewOffset().x - viewCoords.xMin_));
-      int innerY = (int) Math.round(((double) outerHeight / (double) fullResHeight) * (viewCoords.getViewOffset().y - viewCoords.yMin_));
+      int innerX = (int) Math.round(((double) outerWidth / (double) fullResWidth)
+               * (viewCoords.getViewOffset().x - viewCoords.xMin_));
+      int innerY = (int) Math.round(((double) outerHeight / (double) fullResHeight)
+               * (viewCoords.getViewOffset().y - viewCoords.yMin_));
       //outer width * percentage of width of full images that is shown
       int innerWidth = (int) (outerWidth * ((double) sourceDataSize.x / fullResWidth));
       int innerHeight = (int) (outerHeight * ((double) sourceDataSize.y / fullResHeight));

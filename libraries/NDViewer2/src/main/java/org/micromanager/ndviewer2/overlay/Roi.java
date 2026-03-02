@@ -1,16 +1,26 @@
 package org.micromanager.ndviewer2.overlay;
 
-import java.awt.*;
-import java.util.*;
-import java.io.*;
-import java.awt.image.*;
-import java.awt.event.*;
-import java.awt.geom.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.Vector;
+
 
 /**
  * A rectangular region of interest and superclass for the other ROI classes.
  *
- * This class implements {@code Iterable<Point>} and can thus be used to iterate
+ * <p>This class implements {@code Iterable<Point>} and can thus be used to iterate
  * over the contained coordinates. Usage example:
  * <pre>
  * Roi roi = ...;
@@ -21,17 +31,36 @@ import java.awt.geom.*;
  */
 public class Roi extends Object implements Cloneable, java.io.Serializable {
 
-   public static final int CONSTRUCTING = 0, MOVING = 1, RESIZING = 2, NORMAL = 3, MOVING_HANDLE = 4; // States
-   public static final int RECTANGLE = 0, OVAL = 1, POLYGON = 2, FREEROI = 3, TRACED_ROI = 4, LINE = 5,
-           POLYLINE = 6, FREELINE = 7, ANGLE = 8, COMPOSITE = 9, POINT = 10; // Types
+   public static final int CONSTRUCTING = 0;
+   public static final int MOVING = 1;
+   public static final int RESIZING = 2;
+   public static final int NORMAL = 3;
+   public static final int MOVING_HANDLE = 4; // States
+   public static final int RECTANGLE = 0;
+   public static final int OVAL = 1;
+   public static final int POLYGON = 2;
+   public static final int FREEROI = 3;
+   public static final int TRACED_ROI = 4;
+   public static final int LINE = 5;
+   public static final int POLYLINE = 6; // Types
+   public static final int FREELINE = 7; // Types
+   public static final int ANGLE = 8; // Types
+   public static final int COMPOSITE = 9; // Types
+   public static final int POINT = 10; // Types
    public static final int HANDLE_SIZE = 5;
-   public static final int NOT_PASTING = -1;
 
-   static final int NO_MODS = 0, ADD_TO_ROI = 1, SUBTRACT_FROM_ROI = 2; // modification states
+   static final int NO_MODS = 0; // modification states
+   static final int ADD_TO_ROI = 1; // modification states
+   static final int SUBTRACT_FROM_ROI = 2; // modification states
 
-   int startX, startY, x, y;
-   int width, height;
-   double startXD, startYD;
+   int startX;
+   int startY;
+   int x;
+   int y;
+   int width;
+   int  height;
+   double startXD;
+   double startYD;
    Rectangle2D.Double bounds;
    int activeHandle;
    int state;
@@ -46,19 +75,26 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
    protected static Color ROIColor = Color.yellow;
 
    protected int type;
-   protected int xMax, yMax;
+   protected int xMax;
+   protected int yMax;
    private int imageID;
-   protected int oldX, oldY, oldWidth, oldHeight;
-   protected int clipX, clipY, clipWidth, clipHeight;
+   protected int oldX;
+   protected int oldY;
+   protected int oldWidth;
+   protected int oldHeight;
+   protected int clipX;
+   protected int clipY;
+   protected int clipWidth;
+   protected int clipHeight;
    protected boolean constrain; // to be square
    protected boolean center;
    protected boolean aspect;
    protected boolean updateFullWindow;
    protected double mag = 1.0;
-   protected double asp_bk; //saves aspect ratio if resizing takes roi very small
+   protected double aspBk; //saves aspect ratio if resizing takes roi very small
    protected Color handleColor = Color.white;
    protected Color strokeColor;
-   protected Color instanceColor; //obsolete; replaced by	strokeColor
+   protected Color instanceColor; //obsolete; replaced by strokeColor
    protected Color fillColor;
    protected BasicStroke stroke;
    protected boolean nonScalable;
@@ -67,7 +103,9 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
    protected boolean ignoreClipRect;
    private String name;
    private int position;
-   private int channel, slice, frame;
+   private int channel;
+   private int slice;
+   private int frame;
    private Overlay prototypeOverlay;
    private boolean subPixel;
    private boolean activeOverlayRoi;
@@ -100,12 +138,6 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
       if (height < 1) {
          height = 1;
       }
-//      if (width > xMax) {
-//         width = xMax;
-//      }
-//      if (height > yMax) {
-//         height = yMax;
-//      }
       this.cornerDiameter = cornerDiameter;
       this.x = x;
       this.y = y;
@@ -200,17 +232,6 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
       Shape s = at.createTransformedShape(shape);
       Rectangle2D r = s.getBounds2D();
       return Math.min(r.getWidth(), r.getHeight());
-      /*
-		ShapeRoi roi2 = new ShapeRoi(s);
-		Roi[] rois = roi2.getRois();
-		if (rois!=null && rois.length>0) {
-			Polygon p = rois[0].getPolygon();
-			ImageProcessor ip = imp.getProcessor();
-			for (int i=0; i<p.npoints-1; i++)
-				ip.drawLine(p.xpoints[i], p.ypoints[i], p.xpoints[i+1], p.ypoints[i+1]);
-			imp.updateAndDraw();
-		}
-       */
    }
 
    /**
@@ -337,7 +358,8 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
 
    void drawPreviousRoi(Graphics g) {
       if (previousRoi != null && previousRoi != this && previousRoi.modState != NO_MODS) {
-         if (type != POINT && previousRoi.getType() == POINT && previousRoi.modState != SUBTRACT_FROM_ROI) {
+         if (type != POINT && previousRoi.getType() == POINT
+                  && previousRoi.modState != SUBTRACT_FROM_ROI) {
             return;
          }
          previousRoi.draw(g);
@@ -374,7 +396,8 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
       if (cornerDiameter == 0 || contains == false) {
          return contains;
       }
-      RoundRectangle2D rr = new RoundRectangle2D.Float(this.x, this.y, width, height, cornerDiameter, cornerDiameter);
+      RoundRectangle2D rr = new RoundRectangle2D.Float(this.x, this.y, width, height,
+               cornerDiameter, cornerDiameter);
       return rr.contains(x, y);
    }
 
@@ -430,8 +453,8 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
    }
 
    /**
-    * Copy the attributes (outline color, fill color, outline width) of	'roi2'
-    * to the this selection.
+    * Copy the attributes (outline color, fill color, outline width) of 'roi2'
+    * to this selection.
     */
    public void copyAttributes(Roi roi2) {
       this.strokeColor = roi2.strokeColor;
@@ -559,16 +582,6 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
    }
 
    /**
-    * Returns the stack position (image number) of this ROI, or zero if the ROI
-    * is not associated with a particular stack image.
-    *
-    * @see Overlay
-    */
-   public int getPosition() {
-      return position;
-   }
-
-   /**
     * Sets the hyperstack position of this ROI. In an overlay, this ROI is only
     * displayed when the hyperstack is at the specified position.
     *
@@ -588,6 +601,16 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
       }
       this.frame = frame;
       position = 0;
+   }
+
+   /**
+    * Returns the stack position (image number) of this ROI, or zero if the ROI
+    * is not associated with a particular stack image.
+    *
+    * @see Overlay
+    */
+   public int getPosition() {
+      return position;
    }
 
    /**
@@ -828,7 +851,8 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
    }
 
    public String toString() {
-      return ("Roi[" + getTypeAsString() + ", x=" + x + ", y=" + y + ", width=" + width + ", height=" + height + "]");
+      return ("Roi[" + getTypeAsString() + ", x=" + x + ", y=" + y + ", width=" + width
+               + ", height=" + height + "]");
    }
 
    /**

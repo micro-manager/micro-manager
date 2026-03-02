@@ -14,6 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.ndviewer2.internal.gui;
 
 import java.awt.BorderLayout;
@@ -29,13 +30,13 @@ import org.micromanager.ndviewer2.main.NDViewer;
 
 
 /**
- * Scrollbars + optional controls for explor acquisitons
+ * Scrollbars + optional controls for explor acquisitons.
  *
  * @author Henry
  */
 class SubImageControls extends JPanel {
 
-   private final static int DEFAULT_FPS = 7;
+   private static final int DEFAULT_FPS = 7;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
    private NDViewer display_;
    private ScrollerPanel scrollerPanel_;
@@ -54,7 +55,7 @@ class SubImageControls extends JPanel {
    }
    
    public void onScollPositionChanged(AxisScroller scroller, int value) {
-      scrollerPanel_.onScrollPositionChanged( scroller,  value);
+      scrollerPanel_.onScrollPositionChanged(scroller, value);
    }
    
    public void onDisplayClose() {
@@ -87,6 +88,7 @@ class SubImageControls extends JPanel {
          throw new RuntimeException(ex);
       }
    }
+
    private void initComponents() {
       controlsPanel_ = new JPanel(new MigLayout("insets 0, fillx, align center", "", "[]0[]0[]"));
 
@@ -111,7 +113,8 @@ class SubImageControls extends JPanel {
          if (axisPosition instanceof Integer) {
             a.setPosition((Integer) axisPosition);
          } else {
-            a.setPosition(display_.getDisplayModel().getIntegerPositionFromStringPosition(a.getAxis(), (String) axisPosition));
+            a.setPosition(display_.getDisplayModel().getIntegerPositionFromStringPosition(
+                     a.getAxis(), (String) axisPosition));
          }
       }
    }

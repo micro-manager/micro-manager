@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.ndviewer2.internal.gui;
 
 import java.util.Arrays;
@@ -18,7 +13,7 @@ import mmcorej.org.json.JSONObject;
  */
 public class MetadataTableModel extends AbstractTableModel {
 
-   private final String[] COLUMN_NAMES = {"Property", "Value"};
+   private final String[] columnNames = {"Property", "Value"};
    Vector<Vector<String>> data_;
 
    MetadataTableModel() {
@@ -59,7 +54,7 @@ public class MetadataTableModel extends AbstractTableModel {
 
    @Override
    public String getColumnName(int colIndex) {
-      return COLUMN_NAMES[colIndex];
+      return columnNames[colIndex];
    }
 
    public synchronized void setMetadata(JSONObject md) {

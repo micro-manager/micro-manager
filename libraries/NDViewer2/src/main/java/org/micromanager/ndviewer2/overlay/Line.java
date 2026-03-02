@@ -1,24 +1,31 @@
 package org.micromanager.ndviewer2.overlay;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.awt.event.*;
-import java.awt.geom.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 
 /**
  * This class represents a straight line selection.
  */
 public class Line extends Roi {
 
-   public int x1, y1, x2, y2;	// the line
-   public double x1d, y1d, x2d, y2d;	// the line using sub-pixel coordinates
-   protected double x1R, y1R, x2R, y2R;  // the line, relative to base of bounding rect
-   private double xHandleOffset, yHandleOffset;
-   protected double startxd, startyd;
+   public int x1; // the line
+   public int y1; // the line
+   public int x2; // the line
+   public int y2; // the line
+   public double x1d; // the line using sub-pixel coordinates
+   public double y1d; // the line using sub-pixel coordinates
+   public double x2d; // the line using sub-pixel coordinates
+   public double y2d; // the line using sub-pixel coordinates
+   protected double x1R; // the line, relative to base of bounding rect
+   protected double y1R; // the line, relative to base of bounding rect
+   protected double x2R; // the line, relative to base of bounding rect
+   protected double y2R; // the line, relative to base of bounding rect
    static boolean widthChanged;
    private boolean drawOffset;
-   private boolean dragged;
-   private int mouseUpCount;
 
    /**
     * Creates a new straight line selection using the specified starting and
@@ -51,9 +58,6 @@ public class Line extends Roi {
       y2R = y2d - y;
       width = (int) Math.abs(x2R - x1R);
       height = (int) Math.abs(y2R - y1R);
-//		if (!(this instanceof Arrow) && lineWidth>1)
-//			updateWideLine(lineWidth);
-//		updateClipRect();
       oldX = x;
       oldY = y;
       oldWidth = width;
@@ -63,7 +67,6 @@ public class Line extends Roi {
 
    protected void grow(int sx, int sy) { //mouseDragged
       drawLine(sx, sy);
-      dragged = true;
    }
 
    public void mouseMoved(MouseEvent e) {
@@ -85,7 +88,8 @@ public class Line extends Roi {
       if (yend > yMax) {
          yend = yMax;
       }
-      double xstart = x + x1R, ystart = y + y1R;
+      double xstart = x + x1R;
+      double ystart = y + y1R;
       if (constrain) {
          int i = 0;
          double dy = Math.abs(yend - ystart);
@@ -131,7 +135,7 @@ public class Line extends Roi {
    }
 
    /**
-    * Used for angle searches in line ROI creation
+    * Used for angle searches in line ROI creation.
     */
    private static final double[] PI_SEARCH = {Math.tan(Math.PI / 8), Math.tan((3 * Math.PI) / 8)};
    private static final double[] PI_MULT = {0, Math.tan((2 * Math.PI) / 8)};
@@ -166,8 +170,6 @@ public class Line extends Roi {
       int sy1 = (int) (y1d + offset);
       int sx2 = (int) (x2d + offset);
       int sy2 = (int) (y2d + offset);
-      int sx3 = sx1 + (sx2 - sx1) / 2;
-      int sy3 = sy1 + (sy2 - sy1) / 2;
       Graphics2D g2d = (Graphics2D) g;
       if (stroke != null && !isActiveOverlayRoi) {
          g2d.setStroke(stroke);
@@ -178,6 +180,8 @@ public class Line extends Roi {
          g.setColor(getColor());
          g.drawLine(sx1, sy1, sx2, sy2);
       }
+      int sx3 = sx1 + (sx2 - sx1) / 2;
+      int sy3 = sy1 + (sy2 - sy1) / 2;
       if (!overlay) {
          int size2 = HANDLE_SIZE / 2;
          mag = 1;

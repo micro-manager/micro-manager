@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.ndviewer2.api;
 
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
@@ -20,8 +14,11 @@ public interface OverlayerPlugin {
 
    /**
     * Called whenever the overlay needs to be drawn. Once it is ready, it should
-    * be passed to the viewer by calling {@link org.micromanager.ndviewer2.main.NDViewer#setOverlay(Overlay)}
-    * This can happen multiple times within a call of this funtion (i.e. to show intermediate rendering progress)
+    * be passed to the viewer by calling
+    * {@link org.micromanager.ndviewer2.main.NDViewer#setOverlay(Overlay)}
+    * This can happen multiple times within a call of this funtion
+    * (i.e. to show intermediate rendering progress)
+    *
     * @param defaultOverlay The base overlay which should be added onto
     * @param displayImageSize 
     * @param downsampleFactor

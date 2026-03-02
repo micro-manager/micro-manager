@@ -5,7 +5,6 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.swing.JPanel;
@@ -34,7 +33,8 @@ public interface NDViewerAPI {
 
    /**
     * Add a hook function that runs whenever setImage gets called,
-    * either programatically or by someone moving the scrollbars
+    * either programatically or by someone moving the scrollbars.
+    *
     * @param hook
     */
    void addSetImageHook(Consumer<HashMap<String, Object>> hook);
@@ -42,16 +42,16 @@ public interface NDViewerAPI {
    /**
     * Set display settings for channel with the given name.
     *
-    * @param chName
-    * @param c
+    * @param chName Channel name
+    * @param c Desired color
     */
    void setChannelColor(String chName, Color c);
 
    /**
     * Set the scrollbar with a given axis label to a position.
     *
-    * @param axis
-    * @param pos
+    * @param axis axis name
+    * @param pos position to set it to
     */
    void setAxisPosition(String axis, int pos);
 
@@ -66,7 +66,7 @@ public interface NDViewerAPI {
    /**
     * Initialize all controls needed for a dataset loaded from disk
     * where you're not calling newImageArrived each time.
-    * 
+    *
     * @param channelNames names of all channels
     * @param axisMins map of axis names to miniumum extents (can be negative)
     * @param axisMaxs map of axis names to maximum extents
@@ -158,7 +158,7 @@ public interface NDViewerAPI {
     *
     * @param factor
     * @param location location in display pixel coordinates, or null to zoom in
-    * on center
+    *     on center
     */
    void zoom(double factor, Point location);
 
@@ -211,13 +211,5 @@ public interface NDViewerAPI {
     * trigger redraw of the image overlay.
     */
    void redrawOverlay();
-
-   /**
-    * Add a custom JPanel containing controls to the JTabbedPane on the right
-    * side of the image.
-    *
-    * @param panel
-    */
-   void addControlPanel(ControlsPanelInterface panel);
 
 }

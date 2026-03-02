@@ -35,7 +35,6 @@ import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
-import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer2.api.NDViewerDataSource;
 import org.micromanager.ndviewer2.main.NDViewer;
@@ -498,7 +497,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
             }
          }
          Coords coords = Coordinates.builder().channel(channelIndex).build();
-         tagged.add(new DefaultImage(img, coords, img.getMetadata()));
+         tagged.add(img.copyWith(coords, img.getMetadata()));
          if (accumulateMode_) {
             accumulateNextChannels_.add(channelIndex);
          }

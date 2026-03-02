@@ -33,7 +33,6 @@ import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.api.ControlsPanelInterface;
 import org.micromanager.ndviewer2.api.NDViewerDataSource;
 import org.micromanager.ndviewer2.api.OverlayerPlugin;
 import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
@@ -152,7 +151,7 @@ public class NDViewer implements NDViewerAPI {
 
    public void initializeViewerToLoaded(JSONObject dispSettings) {
 
-      displayModel_.setDisplaySettings_(new DisplaySettings(dispSettings, getPreferences()));
+      displayModel_.setDisplaySettings(new DisplaySettings(dispSettings, getPreferences()));
       Set<HashMap<String, Object>> axesList = dataSource_.getImageKeys();
 //      //Hide row and column axes form the viewer
 //      if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
@@ -452,11 +451,6 @@ public class NDViewer implements NDViewerAPI {
    @Override
    public void setOverlayerPlugin(OverlayerPlugin overlayer) {
       overlayerPlugin_ = overlayer;
-   }
-
-   @Override
-   public void addControlPanel(ControlsPanelInterface panel) {
-      guiManager_.addControlPanel(panel);
    }
 
    public GuiManager getGUIManager() {

@@ -1,16 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.ndviewer2.internal.gui;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import javax.swing.SwingUtilities;
-import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
  *
@@ -23,7 +18,9 @@ public class CanvasMouseListener implements CanvasMouseListenerInterface {
    private static final double ZOOM_FACTOR_MOUSE = 1.4;
 
    //all these are volatile because they are accessed by overlayer
-   private volatile Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
+   private volatile Point mouseDragStartPointLeft_;
+   private volatile Point mouseDragStartPointRight_;
+   private volatile Point currentMouseLocation_;
    private volatile long lastMouseWheelZoomTime_ = 0;
    private volatile boolean mouseDragging_ = false;
 
@@ -100,7 +97,8 @@ public class CanvasMouseListener implements CanvasMouseListenerInterface {
       mouseDragging_ = true;
       if (SwingUtilities.isLeftMouseButton(e)) {
          //pan
-         display_.pan(mouseDragStartPointLeft_.x - currentPoint.x, mouseDragStartPointLeft_.y - currentPoint.y);
+         display_.pan(mouseDragStartPointLeft_.x - currentPoint.x,
+                  mouseDragStartPointLeft_.y - currentPoint.y);
          mouseDragStartPointLeft_ = currentPoint;
       } 
       display_.redrawOverlay();

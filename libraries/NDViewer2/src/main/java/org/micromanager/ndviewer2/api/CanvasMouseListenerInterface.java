@@ -7,9 +7,10 @@ import java.awt.event.MouseWheelListener;
 /**
  * Interface for all three types of mouse listeners in one. A custom object
  * implementing these can be added to the viewer canvas
- * 
+ *
  * @author henrypinkard
  */
-public interface CanvasMouseListenerInterface extends MouseListener, MouseWheelListener, MouseMotionListener{
+public interface CanvasMouseListenerInterface extends MouseListener,
+         MouseWheelListener, MouseMotionListener{
    
 }

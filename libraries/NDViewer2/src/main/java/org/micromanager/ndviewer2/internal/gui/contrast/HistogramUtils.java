@@ -14,6 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.ndviewer2.internal.gui.contrast;
 
 /**
@@ -34,7 +35,7 @@ public class HistogramUtils {
       fractionToReject_ = 0.0027; // corresponds to 3 sigma
    }
 
-      public HistogramUtils(int[] histogram, int totalPoints, double f) {
+   public HistogramUtils(int[] histogram, int totalPoints, double f) {
       histogram_ = histogram;
       totalPoints_ = totalPoints;
       fractionToReject_ = f;
@@ -62,7 +63,7 @@ public class HistogramUtils {
 
    public int getMax() {
       int ret = 0;
-      if (null!=histogram_ ) {
+      if (null != histogram_) {
          for (int i = histogram_.length - 1; 0 <= i; --i) {
             if (0 < histogram_[i]) {
                ret = i;
@@ -121,12 +122,12 @@ public class HistogramUtils {
       return ret;
    }
 
-   public double getFractionToReject(){
+   public double getFractionToReject() {
       return fractionToReject_;
    }
 
-   public int getTotalPoints(){
-      if( null!= histogram_){
+   public int getTotalPoints() {
+      if (null != histogram_) {
          if (totalPoints_ < 1) {
             totalPoints_ = sumTotalPoints();
          }
@@ -134,7 +135,7 @@ public class HistogramUtils {
       return totalPoints_;
    }
 
-   public void setFractionToReject(double f){
+   public void setFractionToReject(double f) {
       fractionToReject_ = f;
    }
 

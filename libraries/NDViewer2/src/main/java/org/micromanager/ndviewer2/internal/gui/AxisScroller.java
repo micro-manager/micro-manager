@@ -14,16 +14,16 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.ndviewer2.internal.gui;
 
 import java.awt.Dimension;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-
-import javax.swing.event.MouseInputAdapter;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.event.MouseInputAdapter;
 
 /**
  * This class provides a scrollbar and associated buttons for navigating
@@ -162,7 +162,6 @@ public class AxisScroller extends JPanel {
          // Disable the lock. 
          lock_.setLockedState(ScrollbarLockIcon.LockedState.UNLOCKED);
       }
-//      display_.postEvent(new AnimationToggleEvent(this, isAnimated_));
    }
 
    public boolean getIsSuperlocked() {

@@ -14,9 +14,14 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.ndviewer2.internal.gui;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JComponent;
@@ -38,13 +43,14 @@ public class ScrollbarLockIcon extends JComponent   {
    }
 
 
-   private static final int WIDTH = 17, HEIGHT = 14;
+   private static final int HEIGHT = 14;
+   private static final int WIDTH = 17;
    private LockedState lockedState_;
    private String axis_;
-   private final Color BACKGROUND_COLOR = Color.white;
-   private final Color LOCK_COLOR = Color.black;
-   private final Color SUPERLOCK_COLOR = Color.red;
-   private Color foreground_ = LOCK_COLOR;
+   private final Color backgroundColor = Color.white;
+   private final Color lockColor = Color.black;
+   private final Color superlockColor = Color.red;
+   private Color foreground_ = lockColor;
    private AxisScroller scoller_;
    
    public ScrollbarLockIcon(AxisScroller scoller, final String axis) {
@@ -82,7 +88,7 @@ public class ScrollbarLockIcon extends JComponent   {
 
    public void setLockedState(LockedState state) {
       lockedState_ = state;
-      foreground_ = (lockedState_ == LockedState.SUPERLOCKED) ? SUPERLOCK_COLOR : LOCK_COLOR;
+      foreground_ = (lockedState_ == LockedState.SUPERLOCKED) ? superlockColor : lockColor;
       scoller_.onLockToggle(axis_, lockedState_);
       repaint();
    }
@@ -108,12 +114,12 @@ public class ScrollbarLockIcon extends JComponent   {
    
    @Override
    public Dimension getMinimumSize() {
-       return new Dimension(WIDTH, HEIGHT);
+      return new Dimension(WIDTH, HEIGHT);
    }
    
    @Override
-    public Dimension getMaximumSize() {
-       return new Dimension(WIDTH, HEIGHT);
+   public Dimension getMaximumSize() {
+      return new Dimension(WIDTH, HEIGHT);
    }
 
    @Override
@@ -127,8 +133,7 @@ public class ScrollbarLockIcon extends JComponent   {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       if (lockedState_ == LockedState.UNLOCKED) {
          drawUnlocked(g2d);
-      } 
-      else {
+      } else {
          drawLocked(g2d);
       }
    }
@@ -143,7 +148,7 @@ public class ScrollbarLockIcon extends JComponent   {
       g.fillRect(14, 4, 2, 3);
 
       g.fillArc(8, 1, 8, 8, 0, 180);
-      g.setColor(BACKGROUND_COLOR);
+      g.setColor(backgroundColor);
       g.fillArc(10, 3, 4, 4, 0, 180);
    }
 
@@ -157,7 +162,7 @@ public class ScrollbarLockIcon extends JComponent   {
       g.fillRect(8, 4, 2, 3);
       
       g.fillArc(2, 1, 8, 8, 0, 180);
-      g.setColor(BACKGROUND_COLOR);
+      g.setColor(backgroundColor);
       g.fillArc(4, 3, 4, 4, 0, 180);
    }
 }

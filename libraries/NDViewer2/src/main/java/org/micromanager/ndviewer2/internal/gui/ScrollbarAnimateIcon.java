@@ -32,7 +32,8 @@ import java.awt.geom.GeneralPath;
  * and is used for handling animation of an AxisScroller.
  */
 public class ScrollbarAnimateIcon extends Canvas {
-   private static final int WIDTH = 24, HEIGHT = 14;
+   private static final int WIDTH = 24;
+   private static final int HEIGHT = 14;
    private BasicStroke stroke = new BasicStroke(2f);
    private String label_;
    private boolean isAnimated_;
@@ -59,7 +60,7 @@ public class ScrollbarAnimateIcon extends Canvas {
    public void paint(Graphics g) {
       g.setColor(Color.white);
       g.fillRect(0, 0, WIDTH, HEIGHT);
-      Graphics2D g2d = (Graphics2D)g;
+      Graphics2D g2d = (Graphics2D) g;
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       drawPlayPauseButton(g2d);
       drawLetter(g);
@@ -86,7 +87,7 @@ public class ScrollbarAnimateIcon extends Canvas {
          g.drawLine(20, 3, 20, 11);
       } else {
          // Draw a play button
-         g.setColor(new Color(0,150,0));
+         g.setColor(new Color(0, 150, 0));
          GeneralPath path = new GeneralPath();
          path.moveTo(15f, 2f);
          path.lineTo(22f, 7f);
@@ -95,6 +96,4 @@ public class ScrollbarAnimateIcon extends Canvas {
          g.fill(path);
       }
    }
-   }
-
-
+}

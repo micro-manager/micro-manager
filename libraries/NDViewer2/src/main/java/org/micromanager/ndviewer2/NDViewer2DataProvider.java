@@ -343,11 +343,20 @@ public final class NDViewer2DataProvider implements DataProvider {
       final DataProvider self = this;
       return new DataProviderHasNewImageEvent() {
          @Override
-         public Image getImage() { return image; }
+         public Image getImage() {
+            return image;
+         }
+
          @Override
-         public Coords getCoords() { return image.getCoords(); }
+         public Coords getCoords() {
+            return image.getCoords();
+         }
+
          @Override
-         public DataProvider getDataProvider() { return self; }
+         public DataProvider getDataProvider() {
+            return self;
+         }
+
       };
    }
 }

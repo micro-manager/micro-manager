@@ -1,15 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.ndviewer2.internal.gui;
 
 import java.awt.geom.Point2D;
 import java.util.HashMap;
-
 import org.micromanager.ndviewer2.api.NDViewerDataSource;
-import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
  *
@@ -19,9 +12,12 @@ public class DataViewCoords {
 
    private volatile int overlayMode_;
 
-   private double displayImageWidth_, displayImageHeight_; //resolution of the image to be displayed 
-   private double sourceDataFullResWidth_, sourceDataFullResHeight_; //resolution in pixels of the display image at full res
-   private double xView_, yView_; //top left pixel in full res coordinates
+   private double displayImageWidth_;
+   private double displayImageHeight_; //resolution of the image to be displayed
+   private double sourceDataFullResWidth_;
+   private double  sourceDataFullResHeight_; //resolution in pixels of the display image at full res
+   private double xView_;
+   private double yView_; //top left pixel in full res coordinates
    private HashMap<String, Object> axes_ = new HashMap<String, Object>();
    private int resolutionIndex_;
    private NDViewerDataSource data_;
@@ -29,10 +25,14 @@ public class DataViewCoords {
    private boolean sourceDataWidthInitialized_ = false;
 
    //Parameters that track what part of the dataset is being viewed
-   public int xMax_, yMax_, xMin_, yMin_;
+   public int xMax_;
+   public int yMax_;
+   public int xMin_;
+   public int yMin_;
 
    public DataViewCoords(NDViewerDataSource data, double xView, double yView,
-                         Double initialWidth, Double initialHeight, int[] imageBounds, boolean rgb) {
+                         Double initialWidth, Double initialHeight, int[] imageBounds,
+                         boolean rgb) {
       data_ = data;
       xView_ = 0;
       yView_ = 0;
@@ -73,7 +73,8 @@ public class DataViewCoords {
     * @return
     */
    public Point2D.Double getSourceImageSizeAtResLevel() {
-      return new Point2D.Double(sourceDataFullResWidth_ / getDownsampleFactor(), sourceDataFullResHeight_ / getDownsampleFactor());
+      return new Point2D.Double(sourceDataFullResWidth_ / getDownsampleFactor(),
+               sourceDataFullResHeight_ / getDownsampleFactor());
    }
 
    public boolean isRGB() {
@@ -96,7 +97,7 @@ public class DataViewCoords {
 
    /**
     * Computes the scaling between display pixels and whatever pixels they were
-    * derived from
+    * derived from.
     */
    public double getMagnificationFromResLevel() {
       //need this floor because it happens along the way to image creation
@@ -108,7 +109,8 @@ public class DataViewCoords {
    }
 
    private void updateResIndex() {
-      double resIndexFloat = Math.log(sourceDataFullResWidth_ / (double) displayImageWidth_) / Math.log(2);
+      double resIndexFloat = Math.log(sourceDataFullResWidth_ / (double) displayImageWidth_)
+               / Math.log(2);
       int newResIndex = (int) Math.max(0, Math.ceil(resIndexFloat));
 
       // Let the storage know the viewer will be requesting data at this resolution
@@ -162,7 +164,8 @@ public class DataViewCoords {
 
    public DataViewCoords copy() {
       DataViewCoords view = new DataViewCoords(data_, xView_, yView_,
-              sourceDataFullResWidth_, sourceDataFullResHeight_, new int[]{xMin_, yMin_, xMax_, yMax_}, rgb_);
+              sourceDataFullResWidth_, sourceDataFullResHeight_,
+               new int[]{xMin_, yMin_, xMax_, yMax_}, rgb_);
       for (String axisName : axes_.keySet()) {
          view.axes_.put(axisName, axes_.get(axisName));
       }
@@ -177,17 +180,9 @@ public class DataViewCoords {
       return view;
    }
 
-//   public String getActiveChannel() {
-//      return axes_.get("channel") != null ? "" + axes_.get("channel") : "" ;
-//   }
-
    public HashMap<String, Object> getAxesPositions() {
       return axes_;
    }
-
-//   public void setActiveChannel(String channelName) {
-//      axes_.put(NDViewer.CHANNEL_AXIS, channelName);
-//   }
 
    public int[] getBounds() {
       return new int[]{xMin_, yMin_, xMax_, yMax_};
