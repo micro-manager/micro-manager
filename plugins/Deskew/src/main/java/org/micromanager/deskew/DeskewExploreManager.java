@@ -959,28 +959,30 @@ public class DeskewExploreManager {
             // Notify viewer of new images (one per channel)
             if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
                final List<Image> tileImages = new ArrayList<>(projectedImages);
-               final List<HashMap<String, Object>> axesList = new ArrayList<>(storedAxes);
+               // Strip row/col from axes — channel name is what NDViewer/AxesBridge needs
+               final List<HashMap<String, Object>> displayAxesList = new ArrayList<>();
+               for (HashMap<String, Object> axes : storedAxes) {
+                  HashMap<String, Object> displayAxes = new HashMap<>(axes);
+                  displayAxes.remove("row");
+                  displayAxes.remove("column");
+                  displayAxesList.add(displayAxes);
+               }
                displayExecutor_.submit(() -> {
-                  // Notify viewer for each channel separately
-                  // Use axes from storage with channel as string name
-                  // AxesBridge translates between string names (NDViewer) and integer indices (MM)
-                  for (int i = 0; i < tileImages.size() && i < axesList.size(); i++) {
-                     Image tileImage = tileImages.get(i);
-                     HashMap<String, Object> displayAxes = new HashMap<>(axesList.get(i));
-                     displayAxes.remove("row");
-                     displayAxes.remove("column");
-
+                  // Notify data provider per-channel (needed for DataProviderHasNewImageEvent)
+                  for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
                      if (mm2DataProvider_ != null) {
-                        mm2DataProvider_.newImageArrived(tileImage, displayAxes);
-                     }
-                     if (mm2Viewer_ != null) {
-                        mm2Viewer_.newImageArrived(tileImage);
+                        mm2DataProvider_.newImageArrived(tileImages.get(i), displayAxesList.get(i));
                      }
                      try {
-                        viewer_.newImageArrived(displayAxes);
+                        viewer_.newImageArrived(displayAxesList.get(i));
                      } catch (NullPointerException e) {
                         // NDViewer histogram not yet initialized - ignore
                      }
+                  }
+                  // Notify viewer with all channels at once so they are submitted
+                  // as a single stats request (avoids sequence-number conflicts)
+                  if (mm2Viewer_ != null) {
+                     mm2Viewer_.newTileArrived(tileImages, displayAxesList);
                   }
                   try {
                      viewer_.update();
@@ -1240,28 +1242,30 @@ public class DeskewExploreManager {
          // Notify viewer of new images (one per channel)
          if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
             final List<Image> tileImages = new ArrayList<>(projectedImages);
-            final List<HashMap<String, Object>> axesList = new ArrayList<>(storedAxes);
+            // Strip row/col from axes — channel name is what NDViewer/AxesBridge needs
+            final List<HashMap<String, Object>> displayAxesList = new ArrayList<>();
+            for (HashMap<String, Object> axes : storedAxes) {
+               HashMap<String, Object> displayAxes = new HashMap<>(axes);
+               displayAxes.remove("row");
+               displayAxes.remove("column");
+               displayAxesList.add(displayAxes);
+            }
             displayExecutor_.submit(() -> {
-               // Notify viewer for each channel separately
-               // Use axes from storage with channel as string name
-               // AxesBridge translates between string names (NDViewer) and integer indices (MM)
-               for (int i = 0; i < tileImages.size() && i < axesList.size(); i++) {
-                  Image tileImage = tileImages.get(i);
-                  HashMap<String, Object> displayAxes = new HashMap<>(axesList.get(i));
-                  displayAxes.remove("row");
-                  displayAxes.remove("column");
-
+               // Notify data provider per-channel (needed for DataProviderHasNewImageEvent)
+               for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
                   if (mm2DataProvider_ != null) {
-                     mm2DataProvider_.newImageArrived(tileImage, displayAxes);
-                  }
-                  if (mm2Viewer_ != null) {
-                     mm2Viewer_.newImageArrived(tileImage);
+                     mm2DataProvider_.newImageArrived(tileImages.get(i), displayAxesList.get(i));
                   }
                   try {
-                     viewer_.newImageArrived(displayAxes);
+                     viewer_.newImageArrived(displayAxesList.get(i));
                   } catch (NullPointerException e) {
                      // NDViewer histogram not yet initialized - ignore
                   }
+               }
+               // Notify viewer with all channels at once so they are submitted
+               // as a single stats request (avoids sequence-number conflicts)
+               if (mm2Viewer_ != null) {
+                  mm2Viewer_.newTileArrived(tileImages, displayAxesList);
                }
                try {
                   viewer_.update();
