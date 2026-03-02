@@ -1,4 +1,4 @@
-package org.micromanager.display.internal.ndviewer2.ndviewer2;
+package org.micromanager.display.internal.ndviewer2;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -98,6 +98,7 @@ public final class DisplaySettingsBridge {
          // (name, groupName, histoRangeBits, etc.) that NDViewer doesn't track.
          ChannelDisplaySettings chSettings = existing.getChannelSettings(i)
                .copyBuilder()
+               .name(chName)
                .color(color)
                .visible(active)
                .component(0, comp)
