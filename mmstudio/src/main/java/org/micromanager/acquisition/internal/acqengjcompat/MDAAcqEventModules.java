@@ -71,8 +71,6 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
-               Engine.getCore().logMessage("zStack Iterator Next, zIndex_: " + zIndex_);
-
                if (event == null) {
                   zIndex_++;
                   return null;
@@ -97,7 +95,6 @@ public class MDAAcqEventModules {
                   }
                }
                if (positionList == null) {
-                  Engine.getCore().logMessage("pos list empty, setStageCoordinate to:" + zOrigin);
                   event.setStageCoordinate(Engine.getCore().getFocusDevice(), zOrigin);
                }
                double zPos = 0.0;
@@ -153,8 +150,6 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
-               Engine.getCore().logMessage("Timelapse Iterator Next, frameIndex_: " + frameIndex_);
-
                AcquisitionEvent timePointEvent = event.copy();
                timePointEvent.setMinimumStartTime((long) (intervalMs * frameIndex_));
                timePointEvent.setTimeIndex(frameIndex_);
@@ -196,7 +191,6 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
-               Engine.getCore().logMessage("Channel Iterator Next, index: " + index);
                // For Slice, Channel Acquisitions with channels not doing Z Stacks
                if (!channelList.get(index).doZStack()) {
                   if (event.getZIndex() != null) {
