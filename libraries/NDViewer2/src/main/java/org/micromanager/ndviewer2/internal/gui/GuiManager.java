@@ -5,8 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 import javax.swing.Timer;
-import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.api.OverlayerPlugin;
+import org.micromanager.ndviewer2.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.OverlayerPlugin;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
 

@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2;
+package org.micromanager.ndviewer2.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,8 +35,9 @@ import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
-import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer2.api.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
+import org.micromanager.ndviewer2.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.NDViewerDataSource;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
@@ -49,7 +50,7 @@ import org.micromanager.ndviewer2.main.NDViewer;
  * histogram computation callbacks.</p>
  */
 public final class NDViewer2DataViewer extends AbstractDataViewer
-      implements ImageStatsPublisher, StatsComputeQueue.Listener {
+      implements NDViewer2DataViewerAPI, ImageStatsPublisher, StatsComputeQueue.Listener {
 
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
 
@@ -474,6 +475,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * @param images list of images (one per channel)
     * @param axesList list of NDViewer axes maps (one per image, same order)
     */
+   @Override
    public void newTileArrived(final List<Image> images,
                               final List<HashMap<String, Object>> axesList) {
       if (images == null || images.isEmpty()) {
@@ -600,6 +602,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     *
     * @param enabled true to enable accumulation, false to disable
     */
+   @Override
    public void setAccumulateStats(boolean enabled) {
       accumulateMode_ = enabled;
       if (!enabled) {
@@ -632,6 +635,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     *
     * @param preserve true to preserve MM colors, false for normal bidirectional sync
     */
+   @Override
    public void setPreserveMMColors(boolean preserve) {
       preserveMMColors_ = preserve;
    }
@@ -643,6 +647,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     *
     * @return the NDViewer
     */
+   @Override
    public NDViewer getNDViewer() {
       return ndViewer_;
    }
@@ -659,6 +664,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    /**
     * Close the viewer and release resources.
     */
+   @Override
    public void close() {
       if (closed_) {
          return;
@@ -678,6 +684,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * to avoid calling ndViewer_.close() a second time, which can queue
     * additional EDT runnables that NPE on partially-torn-down state.
     */
+   @Override
    public void closeWithoutNDViewer() {
       if (closed_) {
          return;

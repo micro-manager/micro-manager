@@ -4,7 +4,7 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import javax.swing.SwingUtilities;
-import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**

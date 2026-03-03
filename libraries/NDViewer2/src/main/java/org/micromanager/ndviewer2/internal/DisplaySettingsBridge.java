@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2;
+package org.micromanager.ndviewer2.internal;
 
 import java.awt.Color;
 import java.util.ArrayList;

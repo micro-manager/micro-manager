@@ -37,10 +37,11 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.NDViewer2DataProvider;
-import org.micromanager.ndviewer2.NDViewer2DataViewer;
-import org.micromanager.ndviewer2.api.NDViewerAPI;
-import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.NDViewer2Factory;
+import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
+import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
+import org.micromanager.ndviewer2.NDViewerAPI;
+import org.micromanager.ndviewer2.NDViewerAcqInterface;
 /**
  * Manages the Deskew Explore session.
  * Coordinates between the GUI, NDViewer, storage, and acquisition.
@@ -54,8 +55,8 @@ public class DeskewExploreManager {
    private final DeskewFactory deskewFactory_;
 
    private NDViewerAPI viewer_;
-   private NDViewer2DataViewer mm2Viewer_;
-   private NDViewer2DataProvider mm2DataProvider_;
+   private NDViewer2DataViewerAPI mm2Viewer_;
+   private NDViewer2DataProviderAPI mm2DataProvider_;
    private NDTiffStorage storage_;
    private DeskewExploreDataSource dataSource_;
    private ExecutorService displayExecutor_;
@@ -223,9 +224,9 @@ public class DeskewExploreManager {
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = new NDViewer2DataProvider(storage_, acqName_);
+         mm2DataProvider_ = NDViewer2Factory.createDataProvider(storage_, acqName_);
          NDViewerAcqInterface acqInterface = createAcqInterface();
-         mm2Viewer_ = new NDViewer2DataViewer(
+         mm2Viewer_ = NDViewer2Factory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
@@ -392,9 +393,9 @@ public class DeskewExploreManager {
          }
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = new NDViewer2DataProvider(storage_, acqName_);
+         mm2DataProvider_ = NDViewer2Factory.createDataProvider(storage_, acqName_);
          NDViewerAcqInterface acqInterface = createAcqInterface();
-         mm2Viewer_ = new NDViewer2DataViewer(
+         mm2Viewer_ = NDViewer2Factory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);

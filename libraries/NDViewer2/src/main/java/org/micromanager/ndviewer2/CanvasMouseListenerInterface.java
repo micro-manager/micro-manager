@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2.api;
+package org.micromanager.ndviewer2;
 
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -12,5 +12,5 @@ import java.awt.event.MouseWheelListener;
  */
 public interface CanvasMouseListenerInterface extends MouseListener,
          MouseWheelListener, MouseMotionListener{
-   
+
 }

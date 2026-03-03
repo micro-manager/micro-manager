@@ -1,9 +1,9 @@
-package org.micromanager.ndviewer2.api;
+package org.micromanager.ndviewer2;
 
 /**
  * This interface is used to pass an acquisition to the viewer, so
  * that its controls for pausing, aborting, and close can be used
- * This is optional functionality, as the viewer doesn't need 
+ * This is optional functionality, as the viewer doesn't need
  * an acquisition to work
  *
  * @author henrypinkard
@@ -19,5 +19,5 @@ public interface NDViewerAcqInterface {
    public boolean isPaused();
 
    public void waitForCompletion();
-   
+
 }

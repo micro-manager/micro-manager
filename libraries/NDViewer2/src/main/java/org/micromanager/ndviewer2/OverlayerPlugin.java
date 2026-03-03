@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2.api;
+package org.micromanager.ndviewer2;
 
 import java.awt.Graphics;
 import java.awt.geom.Point2D;
@@ -20,13 +20,13 @@ public interface OverlayerPlugin {
     * (i.e. to show intermediate rendering progress)
     *
     * @param defaultOverlay The base overlay which should be added onto
-    * @param displayImageSize 
+    * @param displayImageSize
     * @param downsampleFactor
     * @param g
     * @param axes
     * @param magnification
     * @param viewOffset
-    * @throws InterruptedException 
+    * @throws InterruptedException
     */
    public void drawOverlay(Overlay defaultOverlay, Point2D.Double displayImageSize,
            double downsampleFactor, Graphics g, HashMap<String, Object> axes,

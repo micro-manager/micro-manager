@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.ndviewer2.api.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewerDataSource;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.internal.gui.contrast.HistogramUtils;
 import org.micromanager.ndviewer2.internal.gui.contrast.LUT;

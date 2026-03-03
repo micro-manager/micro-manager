@@ -32,11 +32,11 @@ import javax.swing.SwingUtilities;
 
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.api.NDViewerDataSource;
-import org.micromanager.ndviewer2.api.OverlayerPlugin;
-import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer2.api.NDViewerAPI;
+import org.micromanager.ndviewer2.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.NDViewerDataSource;
+import org.micromanager.ndviewer2.OverlayerPlugin;
+import org.micromanager.ndviewer2.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.NDViewerAPI;
 import org.micromanager.ndviewer2.internal.gui.AxisScroller;
 import org.micromanager.ndviewer2.internal.gui.CoalescentExecutor;
 import org.micromanager.ndviewer2.internal.gui.CoalescentRunnable;

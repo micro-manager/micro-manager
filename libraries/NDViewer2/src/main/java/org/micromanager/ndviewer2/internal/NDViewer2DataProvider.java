@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2;
+package org.micromanager.ndviewer2.internal;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.SubscriberExceptionContext;
@@ -23,6 +23,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
+import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
@@ -31,7 +32,7 @@ import org.micromanager.ndviewer2.main.NDViewer;
  * <p>This allows the MM Inspector and other DataProvider consumers to
  * interact with NDTiff datasets that are being displayed through NDViewer2.</p>
  */
-public final class NDViewer2DataProvider implements DataProvider {
+public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
 
    private final MultiresNDTiffAPI storage_;
    private final AxesBridge axesBridge_;
@@ -337,6 +338,7 @@ public final class NDViewer2DataProvider implements DataProvider {
     * @param image the image that arrived
     * @param axes  the NDViewer axes of the new image
     */
+   @Override
    public void newImageArrived(Image image, HashMap<String, Object> axes) {
       Object ch = axes.get(NDViewer.CHANNEL_AXIS);
       if (ch != null) {

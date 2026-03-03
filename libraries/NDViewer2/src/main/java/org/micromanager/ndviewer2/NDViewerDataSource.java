@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2.api;
+package org.micromanager.ndviewer2;
 
 import java.util.HashMap;
 import java.util.Set;

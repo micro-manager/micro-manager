@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2;
+package org.micromanager.ndviewer2.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;

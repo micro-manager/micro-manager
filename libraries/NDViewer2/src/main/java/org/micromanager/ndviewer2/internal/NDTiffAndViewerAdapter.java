@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2;
+package org.micromanager.ndviewer2.internal;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -15,9 +15,9 @@ import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.api.NDViewerAPI;
-import org.micromanager.ndviewer2.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer2.api.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewerAPI;
+import org.micromanager.ndviewer2.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.NDViewerDataSource;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**

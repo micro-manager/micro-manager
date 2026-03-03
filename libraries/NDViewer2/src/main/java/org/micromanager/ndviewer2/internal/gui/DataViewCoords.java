@@ -2,7 +2,7 @@ package org.micromanager.ndviewer2.internal.gui;
 
 import java.awt.geom.Point2D;
 import java.util.HashMap;
-import org.micromanager.ndviewer2.api.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewerDataSource;
 
 /**
  *

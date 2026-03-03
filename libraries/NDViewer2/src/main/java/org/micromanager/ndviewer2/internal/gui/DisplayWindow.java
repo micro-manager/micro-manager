@@ -15,7 +15,7 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
-import org.micromanager.ndviewer2.api.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
 

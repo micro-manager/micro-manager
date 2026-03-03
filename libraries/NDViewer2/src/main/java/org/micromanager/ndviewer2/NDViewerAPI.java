@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2.api;
+package org.micromanager.ndviewer2;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -19,10 +19,10 @@ import org.micromanager.ndviewer2.overlay.Overlay;
  * be helpful to call {@link #setChannelColor(String, Color)}
  * bitDepth} before each image arrives to initialize preferred
  * contrast controls
- * 
+ *
  */
 public interface NDViewerAPI {
-   
+
    /**
     * Call this whenever a new image arrives to optionally show it, and also so
     * that the size of the scrollbars expands.
@@ -77,7 +77,7 @@ public interface NDViewerAPI {
               HashMap<String, Object> axisMins,
               HashMap<String, Object> axisMaxs);
 
-   
+
    /**
     * Set the text in the windows frame.
     *
