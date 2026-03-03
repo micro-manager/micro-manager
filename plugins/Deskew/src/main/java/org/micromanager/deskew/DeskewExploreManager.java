@@ -37,7 +37,6 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.AxesBridge;
 import org.micromanager.ndviewer2.NDViewer2DataProvider;
 import org.micromanager.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.ndviewer2.api.NDViewerAPI;
@@ -224,12 +223,10 @@ public class DeskewExploreManager {
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         AxesBridge axesBridge = new AxesBridge();
-         mm2DataProvider_ = new NDViewer2DataProvider(
-               storage_, axesBridge, acqName_);
+         mm2DataProvider_ = new NDViewer2DataProvider(storage_, acqName_);
          NDViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = new NDViewer2DataViewer(
-               studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
+               studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
 
@@ -395,12 +392,10 @@ public class DeskewExploreManager {
          }
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         AxesBridge axesBridge = new AxesBridge();
-         mm2DataProvider_ = new NDViewer2DataProvider(
-               storage_, axesBridge, acqName_);
+         mm2DataProvider_ = new NDViewer2DataProvider(storage_, acqName_);
          NDViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = new NDViewer2DataViewer(
-               studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
+               studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
 

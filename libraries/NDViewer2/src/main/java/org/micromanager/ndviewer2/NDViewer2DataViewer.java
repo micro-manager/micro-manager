@@ -112,7 +112,6 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * @param dataSource      NDViewer data source (typically NDTiffAndViewerAdapter)
     * @param acqInterface    acquisition control interface (may be null)
     * @param dataProvider    the MM DataProvider wrapping NDTiff storage
-    * @param axesBridge      shared axes bridge
     * @param summaryMetadata NDTiff summary metadata JSON
     * @param pixelSizeUm     pixel size in micrometers
     * @param rgb             whether images are RGB
@@ -121,15 +120,14 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
                                NDViewerDataSource dataSource,
                                NDViewerAcqInterface acqInterface,
                                NDViewer2DataProvider dataProvider,
-                               AxesBridge axesBridge,
                                JSONObject summaryMetadata,
                                double pixelSizeUm,
                                boolean rgb) {
       super(studio.displays().displaySettingsBuilder().build());
       studio_ = studio;
       dataProvider_ = dataProvider;
-      axesBridge_ = axesBridge;
-      displaySettingsBridge_ = new DisplaySettingsBridge(axesBridge_);
+      axesBridge_ = dataProvider.getAxesBridge();
+      displaySettingsBridge_ = new DisplaySettingsBridge(studio_.displays(), axesBridge_);
 
       // Create NDViewer (the canvas/scrollbar viewer)
       ndViewer_ = new NDViewer(dataSource, acqInterface,

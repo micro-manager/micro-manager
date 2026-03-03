@@ -47,17 +47,25 @@ public final class NDViewer2DataProvider implements DataProvider {
    /**
     * Construct a data provider wrapping the given NDTiff storage.
     *
-    * @param storage    the NDTiff storage backend
-    * @param axesBridge shared axes bridge for coordinate translation
-    * @param name       display name for this data provider
+    * @param storage the NDTiff storage backend
+    * @param name    display name for this data provider
     */
-   public NDViewer2DataProvider(MultiresNDTiffAPI storage,
-                                AxesBridge axesBridge, String name) {
+   public NDViewer2DataProvider(MultiresNDTiffAPI storage, String name) {
       storage_ = storage;
-      axesBridge_ = axesBridge;
+      axesBridge_ = new AxesBridge();
       name_ = name;
       // Discover existing channels
       axesBridge_.discoverChannels(storage_.getAxesSet());
+   }
+
+   /**
+    * Return the shared axes bridge used by this provider.
+    * Package-private: only NDViewer2DataViewer should need this.
+    *
+    * @return the axes bridge
+    */
+   AxesBridge getAxesBridge() {
+      return axesBridge_;
    }
 
    @Override

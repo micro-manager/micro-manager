@@ -18,7 +18,7 @@ import org.micromanager.ndviewer2.main.NDViewer;
  * bridge maintains an ordered list mapping between the two representations,
  * and preserves the original value type for round-trip fidelity.</p>
  */
-public final class AxesBridge {
+final class AxesBridge {
 
    // Ordered list of channel values as they appear in NDViewer.
    // Index in this list == MM channel index.

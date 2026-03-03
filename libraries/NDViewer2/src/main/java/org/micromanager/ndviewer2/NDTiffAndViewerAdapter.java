@@ -135,9 +135,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
                + "Use the constructor that accepts Studio.");
       }
 
-      AxesBridge axesBridge = new AxesBridge();
-      mm2DataProvider_ = new NDViewer2DataProvider(
-            storage_, axesBridge, name_);
+      mm2DataProvider_ = new NDViewer2DataProvider(storage_, name_);
 
       NDViewerAcqInterface vai = new NDViewerAcqInterface() {
          @Override
@@ -167,7 +165,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
       };
 
       mm2Viewer_ = new NDViewer2DataViewer(
-            studio_, this, vai, mm2DataProvider_, axesBridge,
+            studio_, this, vai, mm2DataProvider_,
             summaryMetadata,
             AcqEngMetadata.getPixelSizeUm(summaryMetadata),
             AcqEngMetadata.isRGB(summaryMetadata));

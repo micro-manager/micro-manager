@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
+import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DefaultComponentDisplaySettings;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
@@ -16,12 +16,14 @@ import org.micromanager.ndviewer2.main.NDViewer;
  * <p>Uses the fully-qualified name for NDViewer's DisplaySettings to avoid
  * collision with MM's DisplaySettings interface.</p>
  */
-public final class DisplaySettingsBridge {
+final class DisplaySettingsBridge {
 
    private final AxesBridge axesBridge_;
+   private final DisplayManager displayManager_;
 
-   public DisplaySettingsBridge(AxesBridge axesBridge) {
+   public DisplaySettingsBridge(DisplayManager displayManager, AxesBridge axesBridge) {
       axesBridge_ = axesBridge;
+      displayManager_ = displayManager;
    }
 
    /**
@@ -88,7 +90,7 @@ public final class DisplaySettingsBridge {
          boolean active = ndSettings.isActive(chName);
 
          ComponentDisplaySettings comp =
-               DefaultComponentDisplaySettings.builder()
+                  displayManager_.componentDisplaySettingsBuilder()
                      .scalingMinimum(contrastMin)
                      .scalingMaximum(contrastMax)
                      .scalingGamma(gamma)
