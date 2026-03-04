@@ -16,6 +16,7 @@ import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
+import org.micromanager.internal.utils.AcqOrderMode;
 
 
 public class MDAAcqEventModules {
@@ -75,8 +76,9 @@ public class MDAAcqEventModules {
                   return null;
                }
                double zBegin = zOrigin;
-               if (positionList != null && (
-                        acquisitionSettings.relativeZSlice() || !acquisitionSettings.useSlices())) {
+               if (positionList != null
+                     && (acquisitionSettings.relativeZSlice()
+                        || !acquisitionSettings.useSlices())) {
                   // Get Z origin from position list if available
                   MultiStagePosition msp = positionList.getPosition(
                         (Integer) event.getAxisPosition(POSITION_AXIS));
@@ -92,8 +94,18 @@ public class MDAAcqEventModules {
                      throw new RuntimeException(e);
                   }
                }
+               if (positionList == null) {
+                  event.setStageCoordinate(Engine.getCore().getFocusDevice(), zOrigin);
+               }
+               double zPos = 0.0;
 
-               double zPos = zIndex_ * zStep + zBegin;
+               if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+                     || acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE) {
+                  zPos = zIndex_ * zStep + zBegin + zPos;
+               } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
+                     || acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
+                  zPos = zIndex_ * zStep + zBegin;  // if Ch->Z then Ch iterator already defined Z
+               }
                // Do plus equals here in case z positions have been modified by
                // another function (e.g. channel specific focal offsets)
                Integer chIndex = (Integer) event.getAxisPosition("channel");
@@ -102,6 +114,8 @@ public class MDAAcqEventModules {
                      zPos = zBegin + ((stopSliceIndex - startSliceIndex) / 2) * zStep;
                   }
                }
+
+
                AcquisitionEvent sliceEvent = event.copy();
                sliceEvent.setZ(zIndex_,
                       (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
@@ -215,6 +229,17 @@ public class MDAAcqEventModules {
                } else {
                   zPos = event.getZPosition() + channelList.get(index).zOffset();
                }
+
+               // if getZposition is null then we are in channel->Z order
+               // if getZposition is not null then we are in Z->Channel order
+               if (event.getZPosition() == null) {
+                  // Z iterator will add zPosition and Z steps
+                  zPos = channelList.get(index).zOffset();
+               } else {
+                  // z iterator already added z position from PosList and Z step
+                  zPos = event.getZPosition() + channelList.get(index).zOffset(); 
+               }
+
                channelEvent.setZ(channelEvent.getZIndex(), zPos);
                channelEvent.setExposure(channelList.get(index).exposure());
                HashMap<String, String> tags = channelEvent.getTags();
