@@ -605,21 +605,18 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                posList,
                chSpecs,
                null);
-      } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
-         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
-         if (hasZOffsets) {
-            // add a fake z stack so that the channel z-offsets are handles correctly
-            if (acquisitionSettings.usePositionList()
-                     && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
-               posList = posList_;
-            }
-            zStack = MDAAcqEventModules.zStack(
-                     acquisitionSettings,
-                  studio_.core().getPosition(),
-                  posList,
-                  chSpecs,
-                  null);
+      } else if ((acquisitionSettings.useChannels() && !chSpecs.isEmpty()) || acquisitionSettings.useAutofocus() ) {
+         // add a fake z stack so that the channel z-offsets and AF are handles correctly
+         if (acquisitionSettings.usePositionList()
+                  && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
+            posList = posList_;
          }
+         zStack = MDAAcqEventModules.zStack(
+                  acquisitionSettings,
+               studio_.core().getPosition(),
+               posList,
+               chSpecs,
+               null);
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
