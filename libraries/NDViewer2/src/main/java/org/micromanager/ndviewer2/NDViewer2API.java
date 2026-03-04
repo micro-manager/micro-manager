@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.swing.JPanel;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
@@ -168,13 +167,6 @@ public interface NDViewer2API {
     *
     */
    void setViewOffset(double newX, double newY);
-
-   /**
-    * Get reference to the JPanel on which image drawing takes place.
-    *
-    * @return
-    */
-   JPanel getCanvasJPanel();
 
    /**
     * Add a custom object to respond to different types of mouse events on the
