@@ -15,9 +15,9 @@ import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.NDViewerAPI;
-import org.micromanager.ndviewer2.NDViewerAcqInterface;
-import org.micromanager.ndviewer2.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewer2API;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
@@ -25,14 +25,14 @@ import org.micromanager.ndviewer2.main.NDViewer;
  * to be able to be used together, since they are independent libraries that do not know about one
  * another. It implements the Acquisition engine API for a {@link AcqEngJDataSink} interface,
  * dispatching acquired images to viewer and storage as appropriate. It implements NDviewer's
- * {@link NDViewerDataSource}, so that images in storage can be requested by the viewer for
+ * {@link NDViewer2DataSource}, so that images in storage can be requested by the viewer for
  * display. Each time it recieves an image it will pass it to storage and alert the display that
  * a new image has arrived. There are analogous classes to this one in Micro-Magellan
  * (MagellanDatasetAndAcquisition) and the Java side of pycro-manger (RemoteViewerStorageAdapter).
  *
  * @author henrypinkard
  */
-public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSink {
+public class NDTiffAndViewerAdapter implements NDViewer2DataSource, AcqEngJDataSink {
 
    public static final int VIEWER_TYPE_NONE = 0;
    public static final int VIEWER_TYPE_NDVIEWER = 1;
@@ -42,7 +42,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
 
    private ExecutorService displayCommunicationExecutor_;
 
-   private volatile NDViewerAPI viewer_;
+   private volatile NDViewer2API viewer_;
    private volatile NDViewer2DataViewer mm2Viewer_;
    private volatile NDViewer2DataProvider mm2DataProvider_;
    private volatile Acquisition acq_;
@@ -137,7 +137,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
 
       mm2DataProvider_ = new NDViewer2DataProvider(storage_, name_);
 
-      NDViewerAcqInterface vai = new NDViewerAcqInterface() {
+      NDViewer2AcqInterface vai = new NDViewer2AcqInterface() {
          @Override
          public boolean isFinished() {
             return acq_.areEventsFinished();
@@ -183,7 +183,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
 
    private void createNDViewer(JSONObject summaryMetadata) {
       // simple class that allows viewer to start and stop acquisition
-      NDViewerAcqInterface vai = new NDViewerAcqInterface() {
+      NDViewer2AcqInterface vai = new NDViewer2AcqInterface() {
          @Override
          public boolean isFinished() {
             return acq_.areEventsFinished();

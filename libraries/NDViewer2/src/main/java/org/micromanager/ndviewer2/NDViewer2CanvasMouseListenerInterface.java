@@ -10,7 +10,7 @@ import java.awt.event.MouseWheelListener;
  *
  * @author henrypinkard
  */
-public interface CanvasMouseListenerInterface extends MouseListener,
+public interface NDViewer2CanvasMouseListenerInterface extends MouseListener,
          MouseWheelListener, MouseMotionListener{
 
 }

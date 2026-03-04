@@ -5,7 +5,7 @@ package org.micromanager.ndviewer2;
  *
  * @author henrypinkard
  */
-public interface ControlsPanelInterface {
+public interface NDViewer2ControlsPanelInterface {
 
    /**
     * The tab containing this panel was selected.

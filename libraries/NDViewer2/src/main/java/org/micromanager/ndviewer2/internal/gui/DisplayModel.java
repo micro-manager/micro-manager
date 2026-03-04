@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.prefs.Preferences;
 import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.ndviewer2.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.main.NDViewer;
 
@@ -22,7 +22,7 @@ public class DisplayModel {
 
    private DisplaySettings displaySettings_;
    protected DataViewCoords viewCoords_;
-   private NDViewerDataSource data_;
+   private NDViewer2DataSource data_;
    private NDViewer display_;
 
    // Axes may use integer or string positions. Keep track of which
@@ -33,7 +33,7 @@ public class DisplayModel {
 
 
 
-   public DisplayModel(NDViewer display, NDViewerDataSource data, Preferences prefs, boolean rgb) {
+   public DisplayModel(NDViewer display, NDViewer2DataSource data, Preferences prefs, boolean rgb) {
       rgb_ = rgb;
       display_ = display;
       displaySettings_ = new DisplaySettings(prefs);

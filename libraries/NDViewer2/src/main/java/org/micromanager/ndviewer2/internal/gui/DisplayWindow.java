@@ -15,7 +15,7 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
-import org.micromanager.ndviewer2.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
@@ -34,7 +34,7 @@ public class DisplayWindow implements WindowListener {
 
    private NDViewer display_;
    JFrame window_;
-   private CanvasMouseListenerInterface listener_;
+   private NDViewer2CanvasMouseListenerInterface listener_;
 
    public DisplayWindow(NDViewer display, boolean nullAcq) {
       window_ = new JFrame();
@@ -247,7 +247,7 @@ public class DisplayWindow implements WindowListener {
       return subImageControls_.isScrollerLocked(axis);
    }
 
-   public void setCustomCanvasMouseListener(CanvasMouseListenerInterface m) {
+   public void setCustomCanvasMouseListener(NDViewer2CanvasMouseListenerInterface m) {
       //out with the old
       imageCanvas_.getCanvas().removeMouseListener(listener_);
       imageCanvas_.getCanvas().removeMouseMotionListener(listener_);

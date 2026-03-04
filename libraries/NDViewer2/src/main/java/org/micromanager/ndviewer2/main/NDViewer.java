@@ -32,11 +32,11 @@ import javax.swing.SwingUtilities;
 
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.ndviewer2.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.NDViewerDataSource;
-import org.micromanager.ndviewer2.OverlayerPlugin;
-import org.micromanager.ndviewer2.NDViewerAcqInterface;
-import org.micromanager.ndviewer2.NDViewerAPI;
+import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
+import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2API;
 import org.micromanager.ndviewer2.internal.gui.AxisScroller;
 import org.micromanager.ndviewer2.internal.gui.CoalescentExecutor;
 import org.micromanager.ndviewer2.internal.gui.CoalescentRunnable;
@@ -48,7 +48,7 @@ import org.micromanager.ndviewer2.internal.gui.ViewerCanvas;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
-public class NDViewer implements NDViewerAPI {
+public class NDViewer implements NDViewer2API {
 
    public static String NO_CHANNEL = "NO_CHANNEL_PRESENT";
    public static String CHANNEL_AXIS = "channel";
@@ -64,7 +64,7 @@ public class NDViewer implements NDViewerAPI {
 
 
 
-   private volatile NDViewerAcqInterface acq_;
+   private volatile NDViewer2AcqInterface acq_;
    private JSONObject summaryMetadata_;
    private volatile boolean closed_ = false;
 
@@ -75,17 +75,17 @@ public class NDViewer implements NDViewerAPI {
    private volatile JSONObject currentMetadata_;
    private LinkedList<Consumer<HashMap<String, Object>>> setImageHooks_ = new LinkedList<Consumer<HashMap<String, Object>>>();
 
-   private OverlayerPlugin overlayerPlugin_;
+   private NDViewer2OverlayerPlugin overlayerPlugin_;
    private String preferencesKey_ = "";
-   private NDViewerDataSource dataSource_;
+   private NDViewer2DataSource dataSource_;
    private DisplayModel displayModel_;
 
-   public NDViewer(NDViewerDataSource cache, NDViewerAcqInterface acq, JSONObject summaryMD,
+   public NDViewer(NDViewer2DataSource cache, NDViewer2AcqInterface acq, JSONObject summaryMD,
                    double pixelSize, boolean rgb) {
       this(cache, acq, summaryMD, pixelSize, rgb, null);
    }
 
-   public NDViewer(NDViewerDataSource dataSource, NDViewerAcqInterface acq, JSONObject summaryMD,
+   public NDViewer(NDViewer2DataSource dataSource, NDViewer2AcqInterface acq, JSONObject summaryMD,
                    double pixelSize, boolean rgb, String preferencesKey) {
       dataSource_ = dataSource;
       pixelSizeUm_ = pixelSize; //TODO: Could be replaced later with per image pixel size
@@ -439,7 +439,7 @@ public class NDViewer implements NDViewerAPI {
    }
 
    @Override
-   public void setCustomCanvasMouseListener(CanvasMouseListenerInterface m) {
+   public void setCustomCanvasMouseListener(NDViewer2CanvasMouseListenerInterface m) {
       guiManager_.setCustomCanvasMouseListener(m);
    }
 
@@ -449,7 +449,7 @@ public class NDViewer implements NDViewerAPI {
    }
 
    @Override
-   public void setOverlayerPlugin(OverlayerPlugin overlayer) {
+   public void setOverlayerPlugin(NDViewer2OverlayerPlugin overlayer) {
       overlayerPlugin_ = overlayer;
    }
 
@@ -469,7 +469,7 @@ public class NDViewer implements NDViewerAPI {
       return displayModel_;
    }
 
-   public NDViewerDataSource getDataSource() {
+   public NDViewer2DataSource getDataSource() {
       return dataSource_;
    }
 

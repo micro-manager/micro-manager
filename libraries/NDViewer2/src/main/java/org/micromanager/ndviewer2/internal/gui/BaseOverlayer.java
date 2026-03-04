@@ -25,7 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JPanel;
-import org.micromanager.ndviewer2.OverlayerPlugin;
+import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
 import org.micromanager.ndviewer2.overlay.Roi;
@@ -68,7 +68,7 @@ public class BaseOverlayer {
 
    //always try to cancel the previous task, assuming it is being replaced with a more current one
    public synchronized void createOverlay(DataViewCoords viewCoords,
-                                          OverlayerPlugin overlayerPlugin) {
+                                          NDViewer2OverlayerPlugin overlayerPlugin) {
       if (currentTask_ != null && !currentTask_.isDone()) {
          //cancel current surface calculation--this call does not block until complete
          currentTask_.cancel(true);

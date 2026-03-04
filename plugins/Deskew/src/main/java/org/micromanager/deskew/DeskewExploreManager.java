@@ -40,8 +40,9 @@ import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer2.NDViewer2Factory;
 import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
-import org.micromanager.ndviewer2.NDViewerAPI;
-import org.micromanager.ndviewer2.NDViewerAcqInterface;
+import org.micromanager.ndviewer2.NDViewer2API;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+
 /**
  * Manages the Deskew Explore session.
  * Coordinates between the GUI, NDViewer, storage, and acquisition.
@@ -54,7 +55,7 @@ public class DeskewExploreManager {
    private final DeskewFrame frame_;
    private final DeskewFactory deskewFactory_;
 
-   private NDViewerAPI viewer_;
+   private NDViewer2API viewer_;
    private NDViewer2DataViewerAPI mm2Viewer_;
    private NDViewer2DataProviderAPI mm2DataProvider_;
    private NDTiffStorage storage_;
@@ -225,7 +226,7 @@ public class DeskewExploreManager {
 
          // Create NDViewer2 (NDViewer + MM Inspector)
          mm2DataProvider_ = NDViewer2Factory.createDataProvider(storage_, acqName_);
-         NDViewerAcqInterface acqInterface = createAcqInterface();
+         NDViewer2AcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = NDViewer2Factory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
@@ -394,7 +395,7 @@ public class DeskewExploreManager {
 
          // Create NDViewer2 (NDViewer + MM Inspector)
          mm2DataProvider_ = NDViewer2Factory.createDataProvider(storage_, acqName_);
-         NDViewerAcqInterface acqInterface = createAcqInterface();
+         NDViewer2AcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = NDViewer2Factory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
@@ -477,10 +478,10 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Create an NDViewerAcqInterface for the explore session.
+    * Create an NDViewer2AcqInterface for the explore session.
     */
-   private NDViewerAcqInterface createAcqInterface() {
-      return new NDViewerAcqInterface() {
+   private NDViewer2AcqInterface createAcqInterface() {
+      return new NDViewer2AcqInterface() {
          @Override
          public boolean isFinished() {
             // Always report finished so NDViewer does not show

@@ -32,9 +32,9 @@ public interface NDViewer2DataViewerAPI extends DataViewer {
    /**
     * Get the underlying NDViewer instance for direct NDViewer API access.
     *
-    * @return the NDViewerAPI instance
+    * @return the NDViewer2API instance
     */
-   NDViewerAPI getNDViewer();
+   NDViewer2API getNDViewer();
 
    /**
     * Close the viewer and release all resources.

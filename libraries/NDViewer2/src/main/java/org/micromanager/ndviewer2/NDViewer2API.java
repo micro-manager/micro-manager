@@ -21,7 +21,7 @@ import org.micromanager.ndviewer2.overlay.Overlay;
  * contrast controls
  *
  */
-public interface NDViewerAPI {
+public interface NDViewer2API {
 
    /**
     * Call this whenever a new image arrives to optionally show it, and also so
@@ -182,7 +182,7 @@ public interface NDViewerAPI {
     *
     * @param m
     */
-   void setCustomCanvasMouseListener(CanvasMouseListenerInterface m);
+   void setCustomCanvasMouseListener(NDViewer2CanvasMouseListenerInterface m);
 
    /**
     * Get the size of the ge displayed on screen.
@@ -194,7 +194,7 @@ public interface NDViewerAPI {
    /**
     * Set a custom overlay object to be displayed on top of the image. This
     * method can be called an arbitrary number of times by a custom.
-    * {@link OverlayerPlugin}
+    * {@link NDViewer2OverlayerPlugin}
     *
     * @param overlay
     */
@@ -205,7 +205,7 @@ public interface NDViewerAPI {
     *
     * @param overlayer
     */
-   void setOverlayerPlugin(OverlayerPlugin overlayer);
+   void setOverlayerPlugin(NDViewer2OverlayerPlugin overlayer);
 
    /**
     * trigger redraw of the image overlay.

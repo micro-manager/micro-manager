@@ -2,7 +2,7 @@ package org.micromanager.ndviewer2.internal.gui;
 
 import java.awt.geom.Point2D;
 import java.util.HashMap;
-import org.micromanager.ndviewer2.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
 
 /**
  *
@@ -20,7 +20,7 @@ public class DataViewCoords {
    private double yView_; //top left pixel in full res coordinates
    private HashMap<String, Object> axes_ = new HashMap<String, Object>();
    private int resolutionIndex_;
-   private NDViewerDataSource data_;
+   private NDViewer2DataSource data_;
    private boolean rgb_;
    private boolean sourceDataWidthInitialized_ = false;
 
@@ -30,7 +30,7 @@ public class DataViewCoords {
    public int xMin_;
    public int yMin_;
 
-   public DataViewCoords(NDViewerDataSource data, double xView, double yView,
+   public DataViewCoords(NDViewer2DataSource data, double xView, double yView,
                          Double initialWidth, Double initialHeight, int[] imageBounds,
                          boolean rgb) {
       data_ = data;

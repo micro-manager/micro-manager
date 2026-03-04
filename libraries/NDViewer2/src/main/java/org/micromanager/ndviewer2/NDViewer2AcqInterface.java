@@ -8,7 +8,7 @@ package org.micromanager.ndviewer2;
  *
  * @author henrypinkard
  */
-public interface NDViewerAcqInterface {
+public interface NDViewer2AcqInterface {
 
    public boolean isFinished();
 

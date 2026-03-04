@@ -4,14 +4,14 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import javax.swing.SwingUtilities;
-import org.micromanager.ndviewer2.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
  *
  * @author henrypinkard
  */
-public class CanvasMouseListener implements CanvasMouseListenerInterface {
+public class CanvasMouseListener implements NDViewer2CanvasMouseListenerInterface {
 
    private static final int MOUSE_WHEEL_ZOOM_INTERVAL_MS = 100;
 

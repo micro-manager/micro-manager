@@ -5,8 +5,8 @@ import org.micromanager.Studio;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
-import org.micromanager.ndviewer2.NDViewerAcqInterface;
-import org.micromanager.ndviewer2.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.NDViewer2DataProvider;
 import org.micromanager.ndviewer2.internal.NDViewer2DataViewer;
 
@@ -49,8 +49,8 @@ public final class NDViewer2Factory {
     */
    public static NDViewer2DataViewerAPI createDataViewer(
          Studio studio,
-         NDViewerDataSource dataSource,
-         NDViewerAcqInterface acqInterface,
+         NDViewer2DataSource dataSource,
+         NDViewer2AcqInterface acqInterface,
          NDViewer2DataProviderAPI dataProvider,
          JSONObject summaryMetadata,
          double pixelSizeUm,

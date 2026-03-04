@@ -10,7 +10,7 @@ import mmcorej.TaggedImage;
  *
  * @author henrypinkard
  */
-public interface NDViewerDataSource {
+public interface NDViewer2DataSource {
 
 
    /**

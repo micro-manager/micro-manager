@@ -5,8 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 import javax.swing.Timer;
-import org.micromanager.ndviewer2.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.OverlayerPlugin;
+import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
 import org.micromanager.ndviewer2.main.NDViewer;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
@@ -123,7 +123,7 @@ public class GuiManager {
    }
 
    public void displayNewImage(Image img, HashMap<String, int[]> hists, DataViewCoords view,
-                               OverlayerPlugin overlayerPlugin) {
+                               NDViewer2OverlayerPlugin overlayerPlugin) {
       displayWindow_.displayImage(img, hists, view);
       overlayer_.createOverlay(view, overlayerPlugin);
       displayWindow_.repaintCanvas();
@@ -148,7 +148,7 @@ public class GuiManager {
       }
    }
 
-   public void setCustomCanvasMouseListener(CanvasMouseListenerInterface m) {
+   public void setCustomCanvasMouseListener(NDViewer2CanvasMouseListenerInterface m) {
       displayWindow_.setCustomCanvasMouseListener(m);
    }
 

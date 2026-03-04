@@ -36,8 +36,8 @@ import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
-import org.micromanager.ndviewer2.NDViewerAcqInterface;
-import org.micromanager.ndviewer2.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**
@@ -118,8 +118,8 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * @param rgb             whether images are RGB
     */
    public NDViewer2DataViewer(Studio studio,
-                               NDViewerDataSource dataSource,
-                               NDViewerAcqInterface acqInterface,
+                               NDViewer2DataSource dataSource,
+                               NDViewer2AcqInterface acqInterface,
                                NDViewer2DataProvider dataProvider,
                                JSONObject summaryMetadata,
                                double pixelSizeUm,

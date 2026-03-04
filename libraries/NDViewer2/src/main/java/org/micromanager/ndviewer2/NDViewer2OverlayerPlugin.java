@@ -10,7 +10,7 @@ import org.micromanager.ndviewer2.overlay.Overlay;
  * Interface for a plugin to draw customized overlays on the image window.
  * Register it using the setOverlayPlugin method in {@link NDViewer}
  */
-public interface OverlayerPlugin {
+public interface NDViewer2OverlayerPlugin {
 
    /**
     * Called whenever the overlay needs to be drawn. Once it is ready, it should

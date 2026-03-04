@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.ndviewer2.NDViewerDataSource;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.internal.gui.contrast.HistogramUtils;
 import org.micromanager.ndviewer2.internal.gui.contrast.LUT;
@@ -36,7 +36,7 @@ public class ImageMaker {
    private int imageWidth_;
    private int imageHeight_;
    private int[] rgbPixels_;
-   private NDViewerDataSource data_;
+   private NDViewer2DataSource data_;
    private Image displayImage_;
    private MemoryImageSource imageSource_;
    DirectColorModel rgbCM_ = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
@@ -44,7 +44,7 @@ public class ImageMaker {
    private NDViewer display_;
    private boolean closed_ = false;
 
-   public ImageMaker(NDViewer c, NDViewerDataSource data) {
+   public ImageMaker(NDViewer c, NDViewer2DataSource data) {
       display_ = c;
       data_ = data;
    }
