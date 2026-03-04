@@ -225,7 +225,7 @@ public class DeskewExploreManager {
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = NDViewer2Factory.createDataProvider(storage_, acqName_);
+         mm2DataProvider_ = NDViewer2Factory.createDataProvider(studio_.data(), storage_, acqName_);
          NDViewer2AcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = NDViewer2Factory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
@@ -394,7 +394,7 @@ public class DeskewExploreManager {
          }
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = NDViewer2Factory.createDataProvider(storage_, acqName_);
+         mm2DataProvider_ = NDViewer2Factory.createDataProvider(studio_.data(), storage_, acqName_);
          NDViewer2AcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = NDViewer2Factory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,

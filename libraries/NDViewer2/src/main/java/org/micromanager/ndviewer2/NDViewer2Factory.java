@@ -2,6 +2,7 @@ package org.micromanager.ndviewer2;
 
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
+import org.micromanager.data.DataManager;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
@@ -26,13 +27,14 @@ public final class NDViewer2Factory {
    /**
     * Create a new NDViewer2 data provider wrapping the given NDTiff storage.
     *
-    * @param storage the NDTiff storage backend
-    * @param name    display name for this data provider
+    * @param dataManager the MM DataManager for creating Image and SummaryMetadata objects
+    * @param storage     the NDTiff storage backend
+    * @param name        display name for this data provider
     * @return a new NDViewer2DataProviderAPI instance
     */
    public static NDViewer2DataProviderAPI createDataProvider(
-         MultiresNDTiffAPI storage, String name) {
-      return new NDViewer2DataProvider(storage, name);
+         DataManager dataManager, MultiresNDTiffAPI storage, String name) {
+      return new NDViewer2DataProvider(dataManager, storage, name);
    }
 
    /**

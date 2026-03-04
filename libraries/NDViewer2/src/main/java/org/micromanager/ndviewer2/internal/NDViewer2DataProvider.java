@@ -10,18 +10,15 @@ import java.util.List;
 import java.util.Set;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataManager;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-// API gap: DefaultImage, DefaultSummaryMetadata are internal mmstudio classes.
-// They would need to be promoted to public API for this library to be
-// fully independent. For now we depend on mmstudio internals.
-import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
 import org.micromanager.ndviewer2.main.NDViewer;
@@ -35,6 +32,7 @@ import org.micromanager.ndviewer2.main.NDViewer;
 public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
 
    private final MultiresNDTiffAPI storage_;
+   private final DataManager dataManager_;
    private final AxesBridge axesBridge_;
    private static final SubscriberExceptionHandler EVENT_BUS_EXCEPTION_HANDLER =
          (Throwable ex, SubscriberExceptionContext ctx) ->
@@ -48,10 +46,12 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
    /**
     * Construct a data provider wrapping the given NDTiff storage.
     *
-    * @param storage the NDTiff storage backend
-    * @param name    display name for this data provider
+    * @param dataManager the MM DataManager for creating Image and SummaryMetadata objects
+    * @param storage     the NDTiff storage backend
+    * @param name        display name for this data provider
     */
-   public NDViewer2DataProvider(MultiresNDTiffAPI storage, String name) {
+   public NDViewer2DataProvider(DataManager dataManager, MultiresNDTiffAPI storage, String name) {
+      dataManager_ = dataManager;
       storage_ = storage;
       axesBridge_ = new AxesBridge();
       name_ = name;
@@ -76,7 +76,11 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
       if (ti == null || ti.pix == null) {
          return null;
       }
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    /**
@@ -92,7 +96,11 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
          return null;
       }
       Coords coords = axesBridge_.ndViewerToCoords(axes);
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    @Override
@@ -107,7 +115,11 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
          return null;
       }
       Coords coords = axesBridge_.ndViewerToCoords(firstKey);
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    @Override
@@ -158,7 +170,7 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
    @Override
    public SummaryMetadata getSummaryMetadata() {
       // Parse channel names from NDTiff storage for Inspector display
-      DefaultSummaryMetadata.Builder builder = new DefaultSummaryMetadata.Builder();
+      SummaryMetadata.Builder builder = dataManager_.summaryMetadataBuilder();
 
       try {
          JSONObject json = storage_.getSummaryMetadata();
@@ -281,7 +293,11 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
       if (ti == null || ti.pix == null) {
          return getImage(coords);
       }
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    /**
@@ -303,7 +319,11 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
          return null;
       }
       Coords coords = axesBridge_.ndViewerToCoords(axes);
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    /**
