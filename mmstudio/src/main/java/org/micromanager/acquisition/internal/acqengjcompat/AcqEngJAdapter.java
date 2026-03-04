@@ -639,6 +639,19 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // TODO: What about Z positions in position list
          // Yes: First move all stages in the MSP to their desired location, then do
          // whatever is asked to do.
+      }else if(acquisitionSettings.useAutofocus()){
+         // if no position list is used, add a dummy position function to make sure the
+         // acquisition event has a position axis for the metadata to work correctly
+         posList_ = new PositionList();
+         MultiStagePosition msp = new MultiStagePosition();
+         String zDevice = core_.getFocusDevice();
+         if (zDevice != null && !zDevice.isEmpty()) {
+            msp.add(StagePosition.create1D(zDevice, core_.getPosition(zDevice)));
+         }
+         posList_.addPosition(msp);
+         positions = MDAAcqEventModules.positions(posList_, null, core_);
+         // update acquisiton settings to include position
+         acquisitionSettings = acquisitionSettings.copyBuilder().usePositionList(true).build();
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
