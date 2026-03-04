@@ -54,7 +54,13 @@ public final class CoreEventCallback extends MMEventCallback {
       studio_ = studio;
       core_ = studio.core();
       acquisitionManager_ = acquisitionManager;
-      core_.registerCallback(this);
+      try {
+         core_.registerCallback(this);
+      } catch (Exception e) {
+         // registerCallback() throws only if we're in a callback (since MMCore
+         // 12.0), which we shouldn't be, so this shouldn't happen.
+         throw new RuntimeException(e);
+      }
    }
 
    @Override
