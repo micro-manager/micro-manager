@@ -605,32 +605,29 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                posList,
                chSpecs,
                null);
-      } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
-         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
-         if (hasZOffsets) {
-            // add a fake z stack so that the channel z-offsets are handles correctly
-            if (acquisitionSettings.usePositionList()
-                     && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
-               posList = posList_;
-            }
-            // update settings to match fake Z stack
-            ArrayList<Double> slices = new ArrayList<>();
-            slices.add(0.0);
-            acquisitionSettings = acquisitionSettings.copyBuilder()
-                                                     .useSlices(true)
-                                                     .slices(slices)
-                                                     .relativeZSlice(true)
-                                                     .sliceZBottomUm(0.0)
-                                                     .sliceZTopUm(0.0)
-                                                     .sliceZStepUm(0.0)
-                                                     .zReference(0.0).build();
-            zStack = MDAAcqEventModules.zStack(
-                     acquisitionSettings,
-                  studio_.core().getPosition(),
-                  posList,
-                  chSpecs,
-                  null);
+      } else if ((acquisitionSettings.useChannels() && !chSpecs.isEmpty()) || acquisitionSettings.useAutofocus()) {
+         // add a fake z stack so that the channel z-offsets and AF are handles correctly
+         if (acquisitionSettings.usePositionList()
+                  && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
+            posList = posList_;
          }
+         // update settings to match fake Z stack
+         ArrayList<Double> slices = new ArrayList<>();
+         slices.add(0.0);
+         acquisitionSettings = acquisitionSettings.copyBuilder()
+                                                   .useSlices(true)
+                                                   .slices(slices)
+                                                   .relativeZSlice(true)
+                                                   .sliceZBottomUm(0.0)
+                                                   .sliceZTopUm(0.0)
+                                                   .sliceZStepUm(0.0)
+                                                   .zReference(0.0).build();
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
+               studio_.core().getPosition(),
+               posList,
+               chSpecs,
+               null);
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
