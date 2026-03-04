@@ -167,7 +167,8 @@ public class CliJDeskewProcessor implements Processor {
                   ImageProcessor ip1 = resultStack.getProcessor(i + 1);
                   Image image1 = studio_.data().ij().createImage(ip1,
                            coordsNoZPossiblyNoT.copyBuilder().z(i).build(),
-                           image.getMetadata());
+                           image.getMetadata().copyBuilderWithNewUUID()
+                                    .zPositionUm(i * newZSizeUm_).build());
                   if (fullVolumeStore_ == null) {
                      String prefix = inputSummaryMetadata_.getPrefix().isEmpty()
                               ? "Untitled" : inputSummaryMetadata_.getPrefix();

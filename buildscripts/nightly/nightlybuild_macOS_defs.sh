@@ -10,8 +10,7 @@ MM_STAGEDIR="$MM_BUILDDIR/stage"
 # backward-compatible binaries. Omitting this will produce binaries that will
 # only run on the macOS version of the build host or newer. Also, mixing
 # different minimum versions may cause C++ linking issues.
-# 10.9 is the oldest deployment target that uses libc++ (vs libstdc++).
-MM_MACOSX_VERSION_MIN=10.9
+MM_MACOSX_VERSION_MIN=11.0
 
 # We don't use a fixed macOS SDK version, but need a fixed path to the SDK.
 MM_MACOSX_SDKROOT=$(xcode-select --print-path)/SDKs/MacOSX.sdk

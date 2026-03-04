@@ -33,6 +33,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.image.BufferedImage;
 import javax.swing.SwingUtilities;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
@@ -46,6 +47,7 @@ public final class MMImageCanvas extends ImageCanvas
    private ImageJBridge parent_;
 
    private Dimension preferredSize_;
+   private BufferedImage offscreenBuffer_;
 
    @MustCallOnEDT
    static MMImageCanvas create(ImageJBridge parent) {
@@ -91,13 +93,31 @@ public final class MMImageCanvas extends ImageCanvas
 
    @Override
    public void paint(Graphics g) {
-      // Really, this should be implemented using VolatileImage. Unfortunately,
-      // ij.gui.ImageCanvas is not written in a way that allows us to easily
-      // override paint() without reimplementing a whole bunch of stuff.
+      int w = getWidth();
+      int h = getHeight();
+      if (w <= 0 || h <= 0) {
+         return;
+      }
 
-      // Let ImageJ draw the image, selection, zoom indicator, etc.
-      super.paint(g);
-      parent_.paintMMOverlays((Graphics2D) g, getWidth(), getHeight(), srcRect);
+      // Use an off-screen buffer so the image and overlays are composited
+      // before being shown on screen, eliminating the flicker that would
+      // otherwise occur between super.paint() and paintMMOverlays().
+      if (offscreenBuffer_ == null
+            || offscreenBuffer_.getWidth() != w
+            || offscreenBuffer_.getHeight() != h) {
+         offscreenBuffer_ = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+      }
+      Graphics2D offG = offscreenBuffer_.createGraphics();
+      try {
+         // Let ImageJ draw the image, selection, zoom indicator, etc. into the buffer
+         super.paint(offG);
+         // Paint MM overlays on top, still into the buffer
+         parent_.paintMMOverlays(offG, w, h, srcRect);
+      } finally {
+         offG.dispose();
+      }
+      // Blit the complete composite to the screen in one operation — no flicker
+      g.drawImage(offscreenBuffer_, 0, 0, null);
       parent_.ijPaintDidFinish();
    }
 

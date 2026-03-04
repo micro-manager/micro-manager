@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FileDialog;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -114,6 +115,8 @@ public class GUI extends JFrame {
       settings_ = new GlobalSettings(studio.profile());
       studio_ = studio;
       this.setTitle("Micro-Magellan " + version);
+      this.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       multiAcqManager_ = new MagellanAcquisitionsManager(studio_, this);
       initComponents();
       moreInitialization();

@@ -210,6 +210,10 @@ public class DefaultApplication implements Application {
          ((MMStudio) studio_).setConfigChanged(false);
       } catch (MMConfigFileException e) {
          ReportingUtils.showError(e);
+      } catch (Exception e) {
+         // Catch any other exceptions (e.g., NumberFormatException from malformed
+         // config files) so the user sees an error message instead of silent failure.
+         ReportingUtils.showError(e, "Failed to save configuration file");
       }
    }
 

@@ -294,9 +294,12 @@ public class DeskewProcessor implements Processor {
             try {
                short[][] reconstructedVolume = fullVolumeResamplers_.get(coordsNoZ)
                         .getReconstructedVolumeZYX();
+               double newZStep = fullVolumeResamplers_.get(
+                        coordsNoZ).getReconstructionVoxelSizeUm();
                for (int z = 0; z < reconstructedVolume.length; z++) {
                   Image img = new DefaultImage(reconstructedVolume[z], format, cb.z(z).build(),
-                           image.getMetadata().copyBuilderWithNewUUID().build());
+                           image.getMetadata().copyBuilderWithNewUUID()
+                                    .zPositionUm(z * newZStep).build());
                   fullVolumeStore_.putImage(img);
                }
             } catch (IOException e) {

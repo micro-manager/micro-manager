@@ -26,6 +26,12 @@ public class DeskewFactory implements ProcessorFactory {
    @Override
    public Processor createProcessor() {
       try {
+         // For Explore mode acquisitions, return a pass-through processor
+         // that doesn't interfere with the raw image flow
+         if (settings_.getBoolean(DeskewFrame.EXPLORE_MODE, false)) {
+            return new PassThroughProcessor();
+         }
+
          if (settings_.getString(DeskewFrame.MODE, "").equals(DeskewFrame.QUALITY)) {
             return new CliJDeskewProcessor(studio_, deskewAcqManager_, settings_);
          }

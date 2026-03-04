@@ -31,6 +31,7 @@ nobase_mmplugin_DATA = \
 	Mist.jar \
 	MultiAndor.jar \
 	MultiChannelShading.jar \
+	NavigationByMap.jar
 	PTCTools.jar \
 	PipelineSaver.jar \
 	PointAndShootAnalysis.jar \
@@ -47,6 +48,7 @@ nobase_mmplugin_DATA = \
 	SplitView.jar \
 	WhiteBalance.jar \
 	ZProjector.jar \
+	iSIM.jar \
 	pgFocus.jar
 
 .PHONY: plugins.stamp
