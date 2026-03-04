@@ -367,7 +367,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             currentAcquisition_.addHook(restorePositionHook(msp),
                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
-            //currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
          // This hook is used to update the time of the next wake up call
          if (sequenceSettings.useFrames()) {
@@ -610,21 +609,29 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                posList,
                chSpecs,
                null);
-      } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
-         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
-         if (hasZOffsets) {
-            // add a fake z stack so that the channel z-offsets are handles correctly
-            if (acquisitionSettings.usePositionList()
-                     && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
-               posList = posList_;
-            }
-            zStack = MDAAcqEventModules.zStack(
-                     acquisitionSettings,
-                  studio_.core().getPosition(),
-                  posList,
-                  chSpecs,
-                  null);
+      } else if ((acquisitionSettings.useChannels() && !chSpecs.isEmpty()) || acquisitionSettings.useAutofocus()) {
+         // add a fake z stack so that the channel z-offsets and AF are handles correctly
+         if (acquisitionSettings.usePositionList()
+                  && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
+            posList = posList_;
          }
+         // update settings to match fake Z stack
+         ArrayList<Double> slices = new ArrayList<>();
+         slices.add(0.0);
+         acquisitionSettings = acquisitionSettings.copyBuilder()
+                                                   .useSlices(true)
+                                                   .slices(slices)
+                                                   .relativeZSlice(true)
+                                                   .sliceZBottomUm(0.0)
+                                                   .sliceZTopUm(0.0)
+                                                   .sliceZStepUm(0.0)
+                                                   .zReference(0.0).build();
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
+               studio_.core().getPosition(),
+               posList,
+               chSpecs,
+               null);
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
@@ -644,6 +651,19 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // TODO: What about Z positions in position list
          // Yes: First move all stages in the MSP to their desired location, then do
          // whatever is asked to do.
+      }else if(acquisitionSettings.useAutofocus()){
+         // if no position list is used, add a dummy position function to make sure the
+         // acquisition event has a position axis for the metadata to work correctly
+         posList_ = new PositionList();
+         MultiStagePosition msp = new MultiStagePosition();
+         String zDevice = core_.getFocusDevice();
+         if (zDevice != null && !zDevice.isEmpty()) {
+            msp.add(StagePosition.create1D(zDevice, core_.getPosition(zDevice)));
+         }
+         posList_.addPosition(msp);
+         positions = MDAAcqEventModules.positions(posList_, null, core_);
+         // update acquisiton settings to include position
+         acquisitionSettings = acquisitionSettings.copyBuilder().usePositionList(true).build();
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
