@@ -852,6 +852,7 @@ public final class SequenceSettings {
     * 1 - {@link org.micromanager.internal.utils.AcqOrderMode#TIME_POS_CHANNEL_SLICE}
     * 2 - {@link org.micromanager.internal.utils.AcqOrderMode#POS_TIME_SLICE_CHANNEL}
     * 3 - {@link org.micromanager.internal.utils.AcqOrderMode#POS_TIME_CHANNEL_SLICE}
+    * 4 - {@link org.micromanager.internal.utils.AcqOrderMode#POS_CHANNEL_SLICE_TIME}
     *
     * @return integer representing enum {@link org.micromanager.internal.utils.AcqOrderMode}
     */

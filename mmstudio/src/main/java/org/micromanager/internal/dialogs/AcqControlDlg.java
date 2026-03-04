@@ -187,6 +187,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private final MutablePropertyMapView settings_;
    private final NumberFormat numberFormat_;
    private JRadioButton singleButton_;
+   private JRadioButton singleChButton_;
    private JRadioButton multiButton_;
    private JRadioButton ndtiffButton_;
    private JCheckBox stackKeepShutterOpenCheckBox_;
@@ -723,15 +724,17 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       acquisitionOrderText_.setFont(new Font("", Font.PLAIN, 9));
       acquisitionOrderPanel_.add(acquisitionOrderText_, "alignx center");
 
-      acqOrderModes_ = new AcqOrderMode[4];
+      acqOrderModes_ = new AcqOrderMode[5];
       acqOrderModes_[0] = new AcqOrderMode(AcqOrderMode.TIME_POS_SLICE_CHANNEL);
       acqOrderModes_[1] = new AcqOrderMode(AcqOrderMode.TIME_POS_CHANNEL_SLICE);
       acqOrderModes_[2] = new AcqOrderMode(AcqOrderMode.POS_TIME_SLICE_CHANNEL);
       acqOrderModes_[3] = new AcqOrderMode(AcqOrderMode.POS_TIME_CHANNEL_SLICE);
+      acqOrderModes_[4] = new AcqOrderMode(AcqOrderMode.POS_CHANNEL_SLICE_TIME);
       acqOrderBox_.addItem(acqOrderModes_[0]);
       acqOrderBox_.addItem(acqOrderModes_[1]);
       acqOrderBox_.addItem(acqOrderModes_[2]);
       acqOrderBox_.addItem(acqOrderModes_[3]);
+      acqOrderBox_.addItem(acqOrderModes_[4]);
       return acquisitionOrderPanel_;
    }
 
@@ -1164,6 +1167,15 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       saveTypeLabel.setFont(DEFAULT_FONT);
       savePanel_.add(saveTypeLabel, "alignx label");
 
+      singleChButton_ = new JRadioButton("Separate image files split by channel");
+      singleChButton_.setFont(DEFAULT_FONT);
+      singleChButton_.addActionListener(e -> {
+         DefaultDatastore.setPreferredSaveMode(mmStudio_,
+               Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES_CHANNELS);
+         applySettingsFromGUI();
+      });
+      savePanel_.add(singleChButton_, "spanx, split");
+
       singleButton_ = new JRadioButton("Separate image files");
       singleButton_.setFont(DEFAULT_FONT);
       singleButton_.addActionListener(e -> {
@@ -1220,6 +1232,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       savePanel_.add(helpButton, "gapafter push");
 
       ButtonGroup buttonGroup = new ButtonGroup();
+      buttonGroup.add(singleChButton_);
       buttonGroup.add(singleButton_);
       buttonGroup.add(multiButton_);
       buttonGroup.add(ndtiffButton_);
@@ -1227,6 +1240,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       Datastore.SaveMode mode = mmStudio_.data().getPreferredSaveMode();
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          singleButton_.setSelected(true);
+      } else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES_CHANNELS) {
+         singleChButton_.setSelected(true);
       } else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          multiButton_.setSelected(true);
       } else if (mode == Datastore.SaveMode.ND_TIFF) {
@@ -1534,6 +1549,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             acqOrderBox_.addItem(acqOrderModes_[1]);
             acqOrderBox_.addItem(acqOrderModes_[2]);
             acqOrderBox_.addItem(acqOrderModes_[3]);
+            acqOrderBox_.addItem(acqOrderModes_[4]);
          } else if (framesPanel_.isSelected() && positionsPanel_.isSelected()) {
             if (selectedIndex == 0 || selectedIndex == 2) {
                acqOrderBox_.addItem(acqOrderModes_[0]);
@@ -1566,6 +1582,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          DefaultDatastore.setPreferredSaveMode(mmStudio_, sequenceSettings.saveMode());
          if (sequenceSettings.saveMode() == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
             singleButton_.setSelected(true);
+         } else if (sequenceSettings.saveMode() == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES_CHANNELS) {
+            singleChButton_.setSelected(true);
          } else if (sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF) {
             multiButton_.setSelected(true);
          } else if (sequenceSettings.saveMode() == Datastore.SaveMode.ND_TIFF) {
@@ -2141,6 +2159,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (singleButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
                Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+      } else if (singleChButton_.isSelected()) {
+         DefaultDatastore.setPreferredSaveMode(mmStudio_,
+               Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES_CHANNELS);
       } else if (multiButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
                  Datastore.SaveMode.MULTIPAGE_TIFF);

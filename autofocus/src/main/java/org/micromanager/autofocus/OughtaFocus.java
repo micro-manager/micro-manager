@@ -78,6 +78,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private static final String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private static final String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
    private static final String KEEP_SHUTTER_OPEN = "KeepShutterOpen";
+   private static final String OFFSET_FROM_FOCUS_POSITION = "Offset from focus position (um)";
    private final ImgSharpnessAnalysis fcsAnalysis_ = new ImgSharpnessAnalysis();
    private final BrentFocusOptimizer brentFocusOptimizer_;
    private final ZStackFocusOptimizer zStackFocusOptimizer_;
@@ -91,6 +92,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private double cropFactor_ = 1;
    private String optimizer_ = OPTIMIZERS[0];
    private boolean keepShutterOpen_ = false;
+   private double offsetFromFocusPosition_ = 0.0;
 
    /**
     * Constructor for the OughtaFocus class. This is the most versatible autofocus plugin.
@@ -125,6 +127,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       );
       super.createProperty(CHANNEL, "");
       super.createProperty(KEEP_SHUTTER_OPEN, SHOWVALUES[1], SHOWVALUES);
+      super.createProperty(OFFSET_FROM_FOCUS_POSITION,
+              NumberUtils.doubleToDisplayString(offsetFromFocusPosition_));
    }
 
    @Override
@@ -162,6 +166,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          displayImages_ = getPropertyValue(SHOW_IMAGES).contentEquals("Yes");
          displayGraph_ = getPropertyValue(SHOW_GRAPH).contentEquals("Yes");
          keepShutterOpen_ = getPropertyValue(KEEP_SHUTTER_OPEN).contentEquals("Yes");
+         offsetFromFocusPosition_ = 
+                  NumberUtils.displayStringToDouble(getPropertyValue(OFFSET_FROM_FOCUS_POSITION));
          // Only the zStack optimizer can display a graph
          zStackFocusOptimizer_.setDisplayGraph(displayGraph_);
          focusOptimizer_.setDisplayImages(displayImages_);
@@ -200,7 +206,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          core.setAutoShutter(false); // turn off Auto shutter
          core.setShutterOpen(true);  // open shutter
       }
-      final double z = focusOptimizer_.runAutofocusAlgorithm();
+      final double z = focusOptimizer_.runAutofocusAlgorithm() + offsetFromFocusPosition_;
       core.setPosition(zDrive_, z);
       if (keepShutterOpen_) {  // revert shutter state
          core.setAutoShutter(oldAutoShutter);

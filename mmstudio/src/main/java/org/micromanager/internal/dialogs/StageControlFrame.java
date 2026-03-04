@@ -140,7 +140,8 @@ public final class StageControlFrame extends JFrame {
          new JFormattedTextField[MAX_NUM_Z_PANELS];
    private final JButton[] plusButtons_ = new JButton[MAX_NUM_Z_PANELS];
    private final JButton[] minusButtons_ = new JButton[MAX_NUM_Z_PANELS];
-
+   private static final String WORK_POSITION = "WORK_POSITION";
+   private double workPosition = 0.0;
    /**
     * Shows the stage control UI.  Creates it if necessary.
     *
@@ -657,11 +658,75 @@ public final class StageControlFrame extends JFrame {
          }
       }
 
+      // add Home/Work button
+      workPosition = settings_.getDouble(WORK_POSITION, 0.0);
+      JButton home_button = new JButton("Go Home");
+      JButton work_button = new JButton("Go Work @ " + NumberUtils.doubleToDisplayString(workPosition));
+      
+      home_button.addActionListener((ActionEvent e) -> {
+         try{
+            setRelativeStagePosition(-1 * core_.getPosition((String) zDriveSelect_[idx].getSelectedItem()) , idx);
+            zDriveActiveButtons_[idx].setSelected(true);
+         }catch(Exception ex){
+            studio_.logs().showError(ex, "Error while moving to home position for stage: " + zDriveSelect_[idx].getSelectedItem());
+         }
+      });
+
+      work_button.addActionListener((ActionEvent e) -> {
+         try{
+            int response = JOptionPane.showConfirmDialog(null,
+                  "Move stage " + zDriveSelect_[idx].getSelectedItem() + " to working position?" + NumberUtils.doubleToDisplayString(workPosition),
+                  "Move stage to working position?", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+               setRelativeStagePosition(workPosition + -1 * core_.getPosition((String) zDriveSelect_[idx].getSelectedItem()) , idx);
+               zDriveActiveButtons_[idx].setSelected(true);
+            }
+         }catch(Exception ex){
+            studio_.logs().showError(ex, "Error while moving to work position for stage: " + zDriveSelect_[idx].getSelectedItem());
+         }
+      });
+
+      work_button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // Check for right-click (button 3)
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    String input = JOptionPane.showInputDialog(
+                            null,
+                            "Set new Work position:",
+                            NumberUtils.doubleToDisplayString(workPosition)
+                    );
+
+                    if (input != null) {  // user did not cancel
+                        try {
+                            
+                            workPosition = Double.parseDouble(input.trim());
+                            work_button.setText("Go Work @ " + NumberUtils.doubleToDisplayString(workPosition));
+                            settings_.putDouble(WORK_POSITION, workPosition);
+                        } catch (NumberFormatException ex) {
+                            JOptionPane.showMessageDialog(
+                                    null,
+                                    "Please enter a valid integer.",
+                                    "Invalid Input",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+                        }
+                    }
+                }
+            }
+        });
+
+
       // Spacer to vertically align stepsize controls with the XY panel.
       // Encompasses one chevron (height 30) and the gap the XY panel has
       // (height 20).
-      result.add(new JLabel(), "height 50!");
-
+      if(idx==0){
+         result.add(home_button, "alignx center, growx");
+         result.add(work_button, "alignx center, growx");
+         result.add(new JLabel(), "height 30!");
+      }else{
+         result.add(new JLabel(), "height 75!");
+      }
       // Create the controls for setting the step size.
       // These heights again must match those of the corresponding stepsize
       // controls in the XY panel.
