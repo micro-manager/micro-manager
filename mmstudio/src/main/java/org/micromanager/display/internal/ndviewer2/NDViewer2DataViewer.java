@@ -1,4 +1,4 @@
-package org.micromanager.display.internal.ndviewer2.ndviewer2;
+package org.micromanager.display.internal.ndviewer2;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,6 +16,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.display.AbstractDataViewer;
+import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
@@ -74,14 +75,21 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // to NDViewer, so that the resulting setImageHook does not recurse.
    private volatile boolean updatingPosition_ = false;
 
-   // Accumulated stats across all tiles (null until first image arrives).
-   // Used by newImageArrived() path to build a global histogram.
-   private volatile ImageStats accumulatedStats_;
+   // Accumulated stats per channel across all tiles.
+   // Used by newImageArrived() path to build per-channel histograms.
+   // Key is channel index, value is accumulated ImageStats for that channel.
+   private final Map<Integer, ImageStats> accumulatedStatsPerChannel_ = new HashMap<>();
 
-   // When true, newImageArrived() stats are merged into accumulatedStats_
+   // When true, newImageArrived() stats are merged into accumulatedStatsPerChannel_
    // and ALL stats results (including scrollbar navigation) post the
    // accumulated histogram. Set to true for the entire explore session.
    private volatile boolean accumulateMode_ = false;
+
+   // When true, color changes from NDViewer are NOT synced back to MM
+   // DisplaySettings. This allows external code (e.g. DeskewExploreManager)
+   // to set colors once and have them preserved even if NDViewer initializes
+   // channels with different default colors.
+   private volatile boolean preserveMMColors_ = false;
 
    // True when the current stats computation is for a newly arrived image
    // (should be merged into the accumulator). Reset after processing.
@@ -300,27 +308,42 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    @Override
    public long imageStatsReady(ImagesAndStats result) {
       if (accumulateMode_) {
-         // Merge new-image stats into the accumulator
+         // Merge new-image stats into the per-channel accumulator
          if (accumulateNext_ && result.isRealStats()) {
             accumulateNext_ = false;
             List<ImageStats> newStats = result.getResult();
+            Coords position = result.getRequest().getNominalCoords();
+            int channelIndex = position != null ? position.getChannel() : 0;
+
             if (!newStats.isEmpty()) {
                ImageStats tileStats = newStats.get(0);
-               if (accumulatedStats_ == null) {
-                  accumulatedStats_ = tileStats;
-               } else {
-                  accumulatedStats_ = mergeImageStats(
-                        accumulatedStats_, tileStats);
+               synchronized (accumulatedStatsPerChannel_) {
+                  ImageStats existing = accumulatedStatsPerChannel_.get(channelIndex);
+                  if (existing == null) {
+                     accumulatedStatsPerChannel_.put(channelIndex, tileStats);
+                  } else {
+                     accumulatedStatsPerChannel_.put(channelIndex,
+                           mergeImageStats(existing, tileStats));
+                  }
                }
             }
          }
          // Always post accumulated stats while in accumulate mode,
          // so scrollbar-triggered recomputes don't reset the histogram.
-         if (accumulatedStats_ != null) {
-            result = ImagesAndStats.create(
-                  result.getStatsSequenceNumber(),
-                  result.getRequest(),
-                  accumulatedStats_);
+         // Build a list of stats for all accumulated channels.
+         synchronized (accumulatedStatsPerChannel_) {
+            if (!accumulatedStatsPerChannel_.isEmpty()) {
+               // Get channel index from the request to return correct channel's stats
+               Coords position = result.getRequest().getNominalCoords();
+               int channelIndex = position != null ? position.getChannel() : 0;
+               ImageStats channelStats = accumulatedStatsPerChannel_.get(channelIndex);
+               if (channelStats != null) {
+                  result = ImagesAndStats.create(
+                        result.getStatsSequenceNumber(),
+                        result.getRequest(),
+                        channelStats);
+               }
+            }
          }
       }
       final ImagesAndStats finalResult = result;
@@ -351,11 +374,40 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       // Capture the snapshot on the render thread; the actual sync runs async.
       if (!updatingFromInspector_) {
          final DisplaySettings capturedDS = getDisplaySettings();
+         final boolean preserveColors = preserveMMColors_;
          statsExecutor_.submit(() -> {
             DisplaySettings fromNDViewer = displaySettingsBridge_.readFromNDViewer(
                   ndViewer_.getDisplaySettingsObject(), capturedDS);
+
+            // If preserving MM colors, restore original colors from capturedDS
+            // while keeping contrast (min/max/gamma) from NDViewer
+            boolean colorsDiffered = false;
+            if (preserveColors && fromNDViewer.getNumberOfChannels() > 0) {
+               DisplaySettings.Builder builder = fromNDViewer.copyBuilder();
+               for (int i = 0; i < fromNDViewer.getNumberOfChannels(); i++) {
+                  if (i < capturedDS.getNumberOfChannels()) {
+                     // Keep contrast from NDViewer, but restore color from MM
+                     ChannelDisplaySettings ndCh = fromNDViewer.getChannelSettings(i);
+                     ChannelDisplaySettings mmCh = capturedDS.getChannelSettings(i);
+                     if (!ndCh.getColor().equals(mmCh.getColor())) {
+                        colorsDiffered = true;
+                     }
+                     builder.channel(i, ndCh.copyBuilder()
+                           .color(mmCh.getColor())
+                           .build());
+                  }
+               }
+               fromNDViewer = builder.build();
+            }
+
             if (!fromNDViewer.equals(capturedDS)) {
                compareAndSetDisplaySettings(capturedDS, fromNDViewer);
+            } else if (colorsDiffered) {
+               // Settings match after color restoration, but NDViewer has wrong colors.
+               // Force push MM colors to NDViewer.
+               displaySettingsBridge_.applyToNDViewer(
+                     capturedDS, ndViewer_.getDisplaySettingsObject());
+               ndViewer_.update();
             }
          });
       }
@@ -492,7 +544,9 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    public void setAccumulateStats(boolean enabled) {
       accumulateMode_ = enabled;
       if (!enabled) {
-         accumulatedStats_ = null;
+         synchronized (accumulatedStatsPerChannel_) {
+            accumulatedStatsPerChannel_.clear();
+         }
       }
    }
 
@@ -500,7 +554,25 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * Reset the accumulated histogram stats without changing the mode.
     */
    public void resetAccumulatedStats() {
-      accumulatedStats_ = null;
+      synchronized (accumulatedStatsPerChannel_) {
+         accumulatedStatsPerChannel_.clear();
+      }
+   }
+
+   /**
+    * Set whether MM DisplaySettings colors should be preserved, preventing
+    * NDViewer's colors from being synced back to MM.
+    *
+    * <p>When enabled, contrast changes (min/max/gamma) still sync from
+    * NDViewer to MM, but colors are not overwritten. This is useful when
+    * external code sets specific colors (e.g. from MDA channel settings)
+    * and wants them to persist even if NDViewer initializes channels with
+    * different default colors.</p>
+    *
+    * @param preserve true to preserve MM colors, false for normal bidirectional sync
+    */
+   public void setPreserveMMColors(boolean preserve) {
+      preserveMMColors_ = preserve;
    }
 
    // ---- Viewer control ----

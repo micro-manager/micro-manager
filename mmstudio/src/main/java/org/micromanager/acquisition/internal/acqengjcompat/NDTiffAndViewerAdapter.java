@@ -12,9 +12,9 @@ import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
-import org.micromanager.display.internal.ndviewer2.ndviewer2.AxesBridge;
-import org.micromanager.display.internal.ndviewer2.ndviewer2.NDViewer2DataProvider;
-import org.micromanager.display.internal.ndviewer2.ndviewer2.NDViewer2DataViewer;
+import org.micromanager.display.internal.ndviewer2.AxesBridge;
+import org.micromanager.display.internal.ndviewer2.NDViewer2DataProvider;
+import org.micromanager.display.internal.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
@@ -24,7 +24,7 @@ import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
 
 /**
- * The class is the glue needed in order for AcqEngJ, NDViwer, and NDTiff
+ * The class is the glue needed in order for AcqEngJ, NDViewer2, and NDTiff
  * to be able to be used together, since they are independent libraries that do not know about one
  * another. It implements the Acquisition engine API for a {@link AcqEngJDataSink} interface,
  * dispatching acquired images to viewer and storage as appropriate. It implements NDviewer's
