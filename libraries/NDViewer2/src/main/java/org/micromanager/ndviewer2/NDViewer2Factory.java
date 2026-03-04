@@ -4,10 +4,6 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.data.DataManager;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
-import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
-import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
-import org.micromanager.ndviewer2.NDViewer2AcqInterface;
-import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.NDViewer2DataProvider;
 import org.micromanager.ndviewer2.internal.NDViewer2DataViewer;
 

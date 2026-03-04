@@ -35,9 +35,9 @@ import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
-import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
 import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
+import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
 import org.micromanager.ndviewer2.main.NDViewer;
 
 /**

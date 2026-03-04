@@ -14,7 +14,9 @@
 
 package org.micromanager.ndviewer2.main;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
@@ -29,14 +31,13 @@ import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.ndviewer2.NDViewer2API;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
-import org.micromanager.ndviewer2.NDViewer2AcqInterface;
-import org.micromanager.ndviewer2.NDViewer2API;
 import org.micromanager.ndviewer2.internal.gui.AxisScroller;
 import org.micromanager.ndviewer2.internal.gui.CoalescentExecutor;
 import org.micromanager.ndviewer2.internal.gui.CoalescentRunnable;
@@ -73,7 +74,7 @@ public class NDViewer implements NDViewer2API {
 
    private double pixelSizeUm_;
    private volatile JSONObject currentMetadata_;
-   private LinkedList<Consumer<HashMap<String, Object>>> setImageHooks_ = new LinkedList<Consumer<HashMap<String, Object>>>();
+   private LinkedList<Consumer<HashMap<String, Object>>> setImageHooks_ = new LinkedList<>();
 
    private NDViewer2OverlayerPlugin overlayerPlugin_;
    private String preferencesKey_ = "";
@@ -96,7 +97,7 @@ public class NDViewer implements NDViewer2API {
          preferencesKey_ = "Default";
       }
       displayModel_ = new DisplayModel(this, dataSource_, getPreferences(), rgb);
-      guiManager_ = new GuiManager(this, acq_ !=null);
+      guiManager_ = new GuiManager(this, acq_ != null);
    }
 
    public void setReadTimeMetadataFunction(Function<JSONObject, Long> fn) {
@@ -145,7 +146,10 @@ public class NDViewer implements NDViewer2API {
    }
 
    @Override
-   public void initializeViewerToLoaded(List<String> channelNames, JSONObject displaySettings, HashMap<String, Object> axisMins, HashMap<String, Object> axisMaxs) {
+   public void initializeViewerToLoaded(List<String> channelNames,
+                                        JSONObject displaySettings,
+                                        HashMap<String, Object> axisMins,
+                                        HashMap<String, Object> axisMaxs) {
       throw new UnsupportedOperationException("This method is deprecated");
    }
 
@@ -153,13 +157,13 @@ public class NDViewer implements NDViewer2API {
 
       displayModel_.setDisplaySettings(new DisplaySettings(dispSettings, getPreferences()));
       Set<HashMap<String, Object>> axesList = dataSource_.getImageKeys();
-//      //Hide row and column axes form the viewer
-//      if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
-//         axesNames.remove(MagellanMD.AXES_GRID_ROW);
-//      }
-//      if (axesNames.contains(MagellanMD.AXES_GRID_COL)) {
-//         axesNames.remove(MagellanMD.AXES_GRID_COL);
-//      }
+      //      //Hide row and column axes form the viewer
+      //      if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
+      //         axesNames.remove(MagellanMD.AXES_GRID_ROW);
+      //      }
+      //      if (axesNames.contains(MagellanMD.AXES_GRID_COL)) {
+      //         axesNames.remove(MagellanMD.AXES_GRID_COL);
+      //      }
 
       for (HashMap<String, Object> axesPositions : axesList) {
          if (axesPositions.keySet().contains(NDViewer.CHANNEL_AXIS)) {
@@ -243,7 +247,7 @@ public class NDViewer implements NDViewer2API {
    }
 
    /**
-    * Called when scrollbars move
+    * Called when scrollbars move.
     */
    public void setImageEvent(HashMap<String, Object> axes, boolean fromHuman) {
       if (axes != null && guiManager_ != null) {
@@ -281,7 +285,8 @@ public class NDViewer implements NDViewer2API {
       if (displayCalculationExecutor_ == null) {
          return; // Not yet initialized
       }
-      displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(new DisplayImageComputationRunnable());
+      displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(
+               new DisplayImageComputationRunnable());
    }
 
    public ViewerCanvas getCanvas() {
@@ -415,11 +420,11 @@ public class NDViewer implements NDViewer2API {
 
          minutes = minutes % 60;
          seconds = seconds % 60;
-         double s_frac = (elapsed % 1000) / 1000.0;
+         double sFrac = (elapsed % 1000) / 1000.0;
          String h = ("0" + hours).substring(("0" + hours).length() - 2);
          String m = ("0" + (minutes)).substring(("0" + minutes).length() - 2);
          String s = ("0" + (seconds)).substring(("0" + seconds).length() - 2);
-         String label = h + ":" + m + ":" + s + String.format("%.3f", s_frac).substring(1)
+         String label = h + ":" + m + ":" + s + String.format("%.3f", sFrac).substring(1)
                + " (H:M:S)";
 
          return label;
@@ -431,7 +436,7 @@ public class NDViewer implements NDViewer2API {
          return "Z metadata reader undefined";
       } else {
          try {
-            return "" + readZFunction_.apply(currentMetadata_) + " \u00B5" + "m";
+            return readZFunction_.apply(currentMetadata_) + " \u00B5" + "m"; //micron
          } catch (Exception e) {
             return  "";
          }
@@ -479,7 +484,7 @@ public class NDViewer implements NDViewer2API {
 
    /**
     * A coalescent runnable to avoid excessively frequent update of the data
-    * coords range in the UI
+    * coords range in the UI.
     */
    private class ExpandDisplayRangeCoalescentRunnable
            implements CoalescentRunnable {

@@ -37,11 +37,11 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.NDViewer2Factory;
-import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
-import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
 import org.micromanager.ndviewer2.NDViewer2API;
 import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
+import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
+import org.micromanager.ndviewer2.NDViewer2Factory;
 
 /**
  * Manages the Deskew Explore session.
