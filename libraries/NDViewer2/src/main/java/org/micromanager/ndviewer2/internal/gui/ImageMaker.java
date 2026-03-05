@@ -16,14 +16,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.internal.gui.contrast.HistogramUtils;
 import org.micromanager.ndviewer2.internal.gui.contrast.LUT;
-import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * This Class essentially replaces CompositeImage in ImageJ, and uses low level
- * classes to build a multicolor Image from pixels and contrast settings
+ * classes to build a multicolor Image from pixels and contrast settings.
  */
 public class ImageMaker {
 
@@ -91,9 +91,9 @@ public class ImageMaker {
    }
 
    /**
-    * Do neccesary calcualtion to get image for display
+    * Do necessary calculation to get image for display.
     *
-    * @return
+    * @return Image for display
     */
    public synchronized Image makeOrGetImage(DataViewCoords viewCoords) {
       if (closed_) {
@@ -533,7 +533,7 @@ public class ImageMaker {
       }
 
       /**
-       * split LUT in RGB for fast lookup
+       * split LUT in RGB for fast lookup.
        */
       private void splitLUTRGB() {
          IndexColorModel icm = (IndexColorModel) lut;

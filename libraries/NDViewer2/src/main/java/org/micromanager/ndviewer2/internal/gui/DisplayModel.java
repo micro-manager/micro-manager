@@ -11,8 +11,8 @@ import java.util.prefs.Preferences;
 import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
-import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.internal.NDViewer2;
+import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 
 
 /**
@@ -33,7 +33,8 @@ public class DisplayModel {
 
 
 
-   public DisplayModel(NDViewer2 display, NDViewer2DataSource data, Preferences prefs, boolean rgb) {
+   public DisplayModel(NDViewer2 display, NDViewer2DataSource data, Preferences prefs,
+                       boolean rgb) {
       rgb_ = rgb;
       display_ = display;
       displaySettings_ = new DisplaySettings(prefs);
@@ -234,9 +235,9 @@ public class DisplayModel {
    }
 
    /**
-    * Displayed channels are the actual channels, or if there are no channels a dummy one is added.
+    * Displayed channels are the actual channels, or if there are no channels, a dummy one is added.
     *
-    * @return
+    * @return Displayed Channel names, or a dummy if there are no channels.
     */
    public List<String> getDisplayedChannels() {
       List<String> channels = new LinkedList<>();
