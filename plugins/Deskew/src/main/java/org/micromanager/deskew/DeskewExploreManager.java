@@ -937,8 +937,9 @@ public class DeskewExploreManager {
             // Get channel names from source datastore's SummaryMetadata
             SummaryMetadata summaryMeta = testStore.getSummaryMetadata();
 
-            // Collect axes from stored images for viewer notification
+            // Collect axes and images from stored images for viewer notification
             List<HashMap<String, Object>> storedAxes = new ArrayList<>();
+            List<Image> storedImages = new ArrayList<>();
             for (Image projectedImage : projectedImages) {
                int channelIndex = projectedImage.getCoords().getChannel();
                // Get channel name from SummaryMetadata (with safe fallback)
@@ -947,6 +948,7 @@ public class DeskewExploreManager {
                      channelName);
                if (axes != null) {
                   storedAxes.add(axes);
+                  storedImages.add(projectedImage);
                }
             }
 
@@ -955,7 +957,7 @@ public class DeskewExploreManager {
 
             // Notify viewer of new images (one per channel)
             if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
-               final List<Image> tileImages = new ArrayList<>(projectedImages);
+               final List<Image> tileImages = storedImages;
                // Strip row/col from axes — channel name is what NDViewer/AxesBridge needs
                final List<HashMap<String, Object>> displayAxesList = new ArrayList<>();
                for (HashMap<String, Object> axes : storedAxes) {
@@ -1220,8 +1222,9 @@ public class DeskewExploreManager {
          // Get channel names from source datastore's SummaryMetadata
          SummaryMetadata summaryMeta = testStore.getSummaryMetadata();
 
-         // Collect axes from stored images for viewer notification
+         // Collect axes and images from stored images for viewer notification
          List<HashMap<String, Object>> storedAxes = new ArrayList<>();
+         List<Image> storedImages = new ArrayList<>();
          for (Image projectedImage : projectedImages) {
             int channelIndex = projectedImage.getCoords().getChannel();
             // Get channel name from SummaryMetadata (with safe fallback)
@@ -1230,6 +1233,7 @@ public class DeskewExploreManager {
                   channelName);
             if (axes != null) {
                storedAxes.add(axes);
+               storedImages.add(projectedImage);
             }
          }
 
@@ -1238,7 +1242,7 @@ public class DeskewExploreManager {
 
          // Notify viewer of new images (one per channel)
          if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
-            final List<Image> tileImages = new ArrayList<>(projectedImages);
+            final List<Image> tileImages = storedImages;
             // Strip row/col from axes — channel name is what NDViewer/AxesBridge needs
             final List<HashMap<String, Object>> displayAxesList = new ArrayList<>();
             for (HashMap<String, Object> axes : storedAxes) {

@@ -63,8 +63,13 @@ public class GuiManager {
          animationTimer_ = new Timer((int) (1000 / animationFPS_), new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               int newPos = (scoller.getPosition() + 1)
-                       % (scoller.getMaximum() - scoller.getMinimum());
+               int min = scoller.getMinimum();
+               int max = scoller.getMaximum();
+               int range = max - min + 1;
+               if (range <= 1) {
+                  return;
+               }
+               int newPos = (scoller.getPosition() - min + 1) % range + min;
                display_.setAxisPosition(scoller.getAxis(), newPos);
             }
          });

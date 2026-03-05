@@ -58,7 +58,7 @@ public class ScrollbarLockIcon extends JComponent   {
       scoller_ = scoller;
       axis_ = axis;
       setSize(WIDTH, HEIGHT);
-      this.setToolTipText("Lock the scrollbar to its current postion");
+      this.setToolTipText("Lock the scrollbar to its current position");
       this.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {

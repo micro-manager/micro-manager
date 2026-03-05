@@ -404,7 +404,7 @@ public class TextRoi extends Roi {
             break;
          }
          text += theText[i];
-         if (theText[i + 1] != null) {
+         if (i + 1 < MAX_LINES && theText[i + 1] != null) {
             text += "\\n";
          }
       }

@@ -108,7 +108,7 @@ public class DisplayModel {
       //compute centroid of the zoom in full res coordinates
       if (mouseLocation == null) {
          //if mouse not over image zoom to center
-         zoomCenter = new Point2D.Double(viewOffset.x + sourceDataSize.y / 2,
+         zoomCenter = new Point2D.Double(viewOffset.x + sourceDataSize.x / 2,
                  viewOffset.y + sourceDataSize.y / 2);
       } else {
          zoomCenter = new Point2D.Double(

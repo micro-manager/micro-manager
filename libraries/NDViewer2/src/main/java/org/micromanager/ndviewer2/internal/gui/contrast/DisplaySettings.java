@@ -354,7 +354,7 @@ public class DisplaySettings {
          JSONObject first = json_.getJSONObject(firstChannel);
          int max = first.getInt("Max");
          int min = first.getInt("Min");
-         double gamma = first.getInt("Gamma");
+         double gamma = first.getDouble("Gamma");
 
          json_.keys().forEachRemaining((String t) -> {
             if (!t.equals(ALL_CHANNELS_SETTINGS_KEY)) {
