@@ -21,7 +21,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 /**
  * Wraps NDTiffStorage (MultiresNDTiffAPI) as an MM DataProvider.
@@ -134,7 +134,7 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
          for (String axis : key.keySet()) {
             String mmAxis = axis;
             // NDViewer "channel" axis maps to Coords.CHANNEL
-            if (NDViewer.CHANNEL_AXIS.equals(axis)) {
+            if (NDViewer2.CHANNEL_AXIS.equals(axis)) {
                mmAxis = Coords.CHANNEL;
             }
             if (!axes.contains(mmAxis)) {
@@ -334,7 +334,7 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
     */
    public void newImageArrived(HashMap<String, Object> axes) {
       // Register any new channel
-      Object ch = axes.get(NDViewer.CHANNEL_AXIS);
+      Object ch = axes.get(NDViewer2.CHANNEL_AXIS);
       if (ch != null) {
          axesBridge_.registerChannel(ch);
       }
@@ -360,7 +360,7 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
     */
    @Override
    public void newImageArrived(Image image, HashMap<String, Object> axes) {
-      Object ch = axes.get(NDViewer.CHANNEL_AXIS);
+      Object ch = axes.get(NDViewer2.CHANNEL_AXIS);
       if (ch != null) {
          axesBridge_.registerChannel(ch);
       }

@@ -18,7 +18,7 @@ import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer2.NDViewer2API;
 import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 /**
  * The class is the glue needed in order for AcqEngJ, NDViewer2, and NDTiff
@@ -213,7 +213,7 @@ public class NDTiffAndViewerAdapter implements NDViewer2DataSource, AcqEngJDataS
          }
       };
 
-      viewer_ = new NDViewer(this, vai,
+      viewer_ = new NDViewer2(this, vai,
             summaryMetadata, AcqEngMetadata.getPixelSizeUm(summaryMetadata),
             AcqEngMetadata.isRGB(summaryMetadata));
 

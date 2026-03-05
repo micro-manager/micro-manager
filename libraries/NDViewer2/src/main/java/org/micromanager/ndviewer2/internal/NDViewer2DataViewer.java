@@ -38,7 +38,7 @@ import org.micromanager.display.internal.imagestats.StatsComputeQueue;
 import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 /**
  * NDViewer2 data viewer: combines NDViewer's pyramidal canvas with MM's
@@ -55,7 +55,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
 
    private final Studio studio_;
-   private final NDViewer ndViewer_;
+   private final NDViewer2 ndViewer2_;
    private final NDViewer2DataProvider dataProvider_;
    private final AxesBridge axesBridge_;
    private final DisplaySettingsBridge displaySettingsBridge_;
@@ -131,14 +131,14 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       displaySettingsBridge_ = new DisplaySettingsBridge(studio_.displays(), axesBridge_);
 
       // Create NDViewer (the canvas/scrollbar viewer)
-      ndViewer_ = new NDViewer(dataSource, acqInterface,
+      ndViewer2_ = new NDViewer2(dataSource, acqInterface,
             summaryMetadata, pixelSizeUm, rgb);
 
       // Set up stats computation
       computeQueue_.addListener(this);
 
       // Hook into NDViewer to detect image changes
-      ndViewer_.addSetImageHook(axes -> onNDViewerImageChanged(axes));
+      ndViewer2_.addSetImageHook(axes -> onNDViewerImageChanged(axes));
 
       // Register with Studio so Inspector discovers us
       studio_.displays().addViewer(this);
@@ -164,14 +164,14 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          // Read current NDViewer state BEFORE applying
          DisplaySettings currentNDViewerSettings =
                displaySettingsBridge_.readFromNDViewer(
-                     ndViewer_.getDisplaySettingsObject(), requestedSettings);
+                     ndViewer2_.getDisplaySettingsObject(), requestedSettings);
 
          // Apply MM settings to NDViewer contrast model
          displaySettingsBridge_.applyToNDViewer(
-               requestedSettings, ndViewer_.getDisplaySettingsObject());
+               requestedSettings, ndViewer2_.getDisplaySettingsObject());
 
          if (!requestedSettings.equals(currentNDViewerSettings)) {
-            ndViewer_.update();
+            ndViewer2_.update();
          }
       } catch (NullPointerException e) {
          studio_.logs().logDebugMessage("NDViewer2: NPE in handleDisplaySettings "
@@ -194,9 +194,9 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       try {
          HashMap<String, Object> axes = axesBridge_.coordsToNDViewer(position);
          for (Map.Entry<String, Object> entry : axes.entrySet()) {
-            if (!NDViewer.CHANNEL_AXIS.equals(entry.getKey())
+            if (!NDViewer2.CHANNEL_AXIS.equals(entry.getKey())
                   && entry.getValue() instanceof Number) {
-               ndViewer_.setAxisPosition(
+               ndViewer2_.setAxisPosition(
                      entry.getKey(), ((Number) entry.getValue()).intValue());
             }
          }
@@ -249,8 +249,8 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    public boolean isVisible() {
       // NDViewer window visibility
       try {
-         return ndViewer_.getCanvasJPanel() != null
-               && ndViewer_.getCanvasJPanel().isShowing();
+         return ndViewer2_.getCanvasJPanel() != null
+               && ndViewer2_.getCanvasJPanel().isShowing();
       } catch (Exception e) {
          return false;
       }
@@ -365,7 +365,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          final boolean preserveColors = preserveMMColors_;
          statsExecutor_.submit(() -> {
             DisplaySettings fromNDViewer = displaySettingsBridge_.readFromNDViewer(
-                  ndViewer_.getDisplaySettingsObject(), capturedDS);
+                  ndViewer2_.getDisplaySettingsObject(), capturedDS);
 
             // If preserving MM colors, restore original colors from capturedDS
             // while keeping contrast (min/max/gamma) from NDViewer
@@ -394,8 +394,8 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
                // Settings match after color restoration, but NDViewer has wrong colors.
                // Force push MM colors to NDViewer.
                displaySettingsBridge_.applyToNDViewer(
-                     capturedDS, ndViewer_.getDisplaySettingsObject());
-               ndViewer_.update();
+                     capturedDS, ndViewer2_.getDisplaySettingsObject());
+               ndViewer2_.update();
             }
          });
       }
@@ -491,7 +491,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          }
          int channelIndex = 0;
          if (i < axesList.size() && axesList.get(i) != null) {
-            Object chValue = axesList.get(i).get(NDViewer.CHANNEL_AXIS);
+            Object chValue = axesList.get(i).get(NDViewer2.CHANNEL_AXIS);
             if (chValue != null) {
                channelIndex = axesBridge_.registerChannel(chValue);
             }
@@ -536,7 +536,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          if (image != null) {
             int channelIndex = 0;
             if (axes != null) {
-               Object chValue = axes.get(NDViewer.CHANNEL_AXIS);
+               Object chValue = axes.get(NDViewer2.CHANNEL_AXIS);
                if (chValue != null) {
                   channelIndex = axesBridge_.registerChannel(chValue);
                }
@@ -648,8 +648,8 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * @return the NDViewer
     */
    @Override
-   public NDViewer getNDViewer() {
-      return ndViewer_;
+   public NDViewer2 getNDViewer() {
+      return ndViewer2_;
    }
 
    /**
@@ -658,7 +658,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * @param title the title to set
     */
    public void setWindowTitle(String title) {
-      ndViewer_.setWindowTitle(title);
+      ndViewer2_.setWindowTitle(title);
    }
 
    /**
@@ -672,7 +672,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       closed_ = true;
       shutdownMM2Resources();
       try {
-         ndViewer_.close();
+         ndViewer2_.close();
       } catch (Exception e) {
          // NDViewer may already be closing/disposed — not critical
       }

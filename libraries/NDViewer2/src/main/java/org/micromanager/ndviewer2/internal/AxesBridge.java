@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 /**
  * Utility class translating between NDViewer's HashMap axes and MM's Coords.
@@ -107,7 +107,7 @@ final class AxesBridge {
       for (Map.Entry<String, Object> entry : axes.entrySet()) {
          String key = entry.getKey();
          Object value = entry.getValue();
-         if (NDViewer.CHANNEL_AXIS.equals(key)) {
+         if (NDViewer2.CHANNEL_AXIS.equals(key)) {
             // Register the raw value (Integer or String) and map to index
             b.channel(registerChannel(value));
          } else if (Coords.Z_SLICE.equals(key)) {
@@ -148,7 +148,7 @@ final class AxesBridge {
       if (coords.hasChannelAxis()) {
          Object chValue = getChannelValue(coords.getChannel());
          if (chValue != null) {
-            axes.put(NDViewer.CHANNEL_AXIS, chValue);
+            axes.put(NDViewer2.CHANNEL_AXIS, chValue);
          }
       }
       return axes;
@@ -161,7 +161,7 @@ final class AxesBridge {
     */
    public void discoverChannels(Set<HashMap<String, Object>> axesSet) {
       for (HashMap<String, Object> axes : axesSet) {
-         Object ch = axes.get(NDViewer.CHANNEL_AXIS);
+         Object ch = axes.get(NDViewer2.CHANNEL_AXIS);
          if (ch != null) {
             registerChannel(ch);
          }

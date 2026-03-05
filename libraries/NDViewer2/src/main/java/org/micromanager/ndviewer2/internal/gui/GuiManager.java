@@ -7,7 +7,7 @@ import java.util.HashMap;
 import javax.swing.Timer;
 import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
 
@@ -21,14 +21,14 @@ public class GuiManager {
    private Timer animationTimer_;
    private double animationFPS_ = 7;
 
-   private NDViewer display_;
+   private NDViewer2 display_;
 
-   public GuiManager(NDViewer ndViewer, boolean acquisition) {
-      displayWindow_ = new DisplayWindow(ndViewer, !acquisition);
+   public GuiManager(NDViewer2 ndViewer2, boolean acquisition) {
+      displayWindow_ = new DisplayWindow(ndViewer2, !acquisition);
 
-      overlayer_ = new BaseOverlayer(ndViewer);
-      imageMaker_ = new ImageMaker(ndViewer, ndViewer.getDataSource());
-      display_ = ndViewer;
+      overlayer_ = new BaseOverlayer(ndViewer2);
+      imageMaker_ = new ImageMaker(ndViewer2, ndViewer2.getDataSource());
+      display_ = ndViewer2;
 
    }
 

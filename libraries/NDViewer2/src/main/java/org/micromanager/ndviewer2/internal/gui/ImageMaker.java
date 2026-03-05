@@ -19,7 +19,7 @@ import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.internal.gui.contrast.HistogramUtils;
 import org.micromanager.ndviewer2.internal.gui.contrast.LUT;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 /**
  * This Class essentially replaces CompositeImage in ImageJ, and uses low level
@@ -41,10 +41,10 @@ public class ImageMaker {
    private MemoryImageSource imageSource_;
    DirectColorModel rgbCM_ = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
    private JSONObject latestTags_;
-   private NDViewer display_;
+   private NDViewer2 display_;
    private boolean closed_ = false;
 
-   public ImageMaker(NDViewer c, NDViewer2DataSource data) {
+   public ImageMaker(NDViewer2 c, NDViewer2DataSource data) {
       display_ = c;
       data_ = data;
    }
@@ -150,18 +150,18 @@ public class ImageMaker {
                // is set. But we actually want to display all channels at once, so replace this
                // with the one we are currently adding UNLESS the one we are currently adding
                // is actually a dummy channel name because there are no channels
-               if (!channel.equals(NDViewer.NO_CHANNEL)) {
-                  axes.put(NDViewer.CHANNEL_AXIS, channel);
+               if (!channel.equals(NDViewer2.NO_CHANNEL)) {
+                  axes.put(NDViewer2.CHANNEL_AXIS, channel);
                } else {
-                  axes.remove(NDViewer.CHANNEL_AXIS);
+                  axes.remove(NDViewer2.CHANNEL_AXIS);
                }
 
                TaggedImage imageForDisplay = getDisplayImage(axes, viewCoords.getResolutionIndex(),
                        viewOffsetAtResX, viewOffsetAtResY, imagePixelWidth, imagePixelHeight);
 
                if (latestTags_ == null
-                        || (viewCoords.getAxesPositions().containsKey(NDViewer.CHANNEL_AXIS)
-                        && viewCoords.getAxesPositions().get(NDViewer.CHANNEL_AXIS)
+                        || (viewCoords.getAxesPositions().containsKey(NDViewer2.CHANNEL_AXIS)
+                        && viewCoords.getAxesPositions().get(NDViewer2.CHANNEL_AXIS)
                         .equals(channel))) {
                   latestTags_ = imageForDisplay.tags;
                }

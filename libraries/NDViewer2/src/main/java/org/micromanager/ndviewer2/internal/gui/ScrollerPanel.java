@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import javax.swing.JPanel;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 /**
  * This class is responsible for containing and managing groups of
@@ -44,9 +44,9 @@ class ScrollerPanel extends JPanel {
    private Timer snapBackTimer_ = null;
    // Rate at which we update images when animating. Defaults to 10.
    private double framesPerSec_;
-   private NDViewer display_;
+   private NDViewer2 display_;
 
-   public ScrollerPanel(NDViewer display, double framesPerSec) {
+   public ScrollerPanel(NDViewer2 display, double framesPerSec) {
       // Minimize whitespace around our components.
       super(new net.miginfocom.swing.MigLayout("insets 0, fillx"));
       display_ = display;

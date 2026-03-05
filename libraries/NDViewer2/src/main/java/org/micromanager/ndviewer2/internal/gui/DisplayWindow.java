@@ -16,7 +16,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
 /**
@@ -32,11 +32,11 @@ public class DisplayWindow implements WindowListener {
    private SubImageControls subImageControls_;
    private JPanel leftPanel_;
 
-   private NDViewer display_;
+   private NDViewer2 display_;
    JFrame window_;
    private NDViewer2CanvasMouseListenerInterface listener_;
 
-   public DisplayWindow(NDViewer display, boolean nullAcq) {
+   public DisplayWindow(NDViewer2 display, boolean nullAcq) {
       window_ = new JFrame();
       // Closing controlled by dialog
       window_.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);

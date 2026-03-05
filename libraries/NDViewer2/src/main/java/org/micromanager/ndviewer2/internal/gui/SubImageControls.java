@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 
 /**
@@ -38,12 +38,12 @@ class SubImageControls extends JPanel {
 
    private static final int DEFAULT_FPS = 7;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
-   private NDViewer display_;
+   private NDViewer2 display_;
    private ScrollerPanel scrollerPanel_;
    private int displayHeight_ = -1;
    private JPanel controlsPanel_;
 
-   public SubImageControls(NDViewer disp) {
+   public SubImageControls(NDViewer2 disp) {
       super(new FlowLayout(FlowLayout.LEADING));
       display_ = disp;
       try {

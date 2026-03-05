@@ -49,7 +49,7 @@ import org.micromanager.ndviewer2.internal.gui.ViewerCanvas;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
-public class NDViewer implements NDViewer2API {
+public class NDViewer2 implements NDViewer2API {
 
    public static String NO_CHANNEL = "NO_CHANNEL_PRESENT";
    public static String CHANNEL_AXIS = "channel";
@@ -81,13 +81,13 @@ public class NDViewer implements NDViewer2API {
    private NDViewer2DataSource dataSource_;
    private DisplayModel displayModel_;
 
-   public NDViewer(NDViewer2DataSource cache, NDViewer2AcqInterface acq, JSONObject summaryMD,
-                   double pixelSize, boolean rgb) {
+   public NDViewer2(NDViewer2DataSource cache, NDViewer2AcqInterface acq, JSONObject summaryMD,
+                    double pixelSize, boolean rgb) {
       this(cache, acq, summaryMD, pixelSize, rgb, null);
    }
 
-   public NDViewer(NDViewer2DataSource dataSource, NDViewer2AcqInterface acq, JSONObject summaryMD,
-                   double pixelSize, boolean rgb, String preferencesKey) {
+   public NDViewer2(NDViewer2DataSource dataSource, NDViewer2AcqInterface acq, JSONObject summaryMD,
+                    double pixelSize, boolean rgb, String preferencesKey) {
       dataSource_ = dataSource;
       pixelSizeUm_ = pixelSize; //TODO: Could be replaced later with per image pixel size
       summaryMetadata_ = summaryMD;
@@ -118,7 +118,7 @@ public class NDViewer implements NDViewer2API {
    }
 
    public Preferences getPreferences() {
-      return Preferences.userNodeForPackage(NDViewer.class).node(preferencesKey_);
+      return Preferences.userNodeForPackage(NDViewer2.class).node(preferencesKey_);
    }
 
    public void pan(int dx, int dy) {
@@ -166,13 +166,13 @@ public class NDViewer implements NDViewer2API {
       //      }
 
       for (HashMap<String, Object> axesPositions : axesList) {
-         if (axesPositions.keySet().contains(NDViewer.CHANNEL_AXIS)) {
-            String channel = (String) axesPositions.get(NDViewer.CHANNEL_AXIS);
+         if (axesPositions.keySet().contains(NDViewer2.CHANNEL_AXIS)) {
+            String channel = (String) axesPositions.get(NDViewer2.CHANNEL_AXIS);
             if (!displayModel_.getDisplayedChannels().contains(channel)) {
                getGUIManager().addContrastControlsIfNeeded(channel);
                // Make this channel option appear on scrollbars
                edtRunnablePool_.invokeLaterWithCoalescence(
-                       new NDViewer.ExpandDisplayRangeCoalescentRunnable(axesPositions));
+                       new NDViewer2.ExpandDisplayRangeCoalescentRunnable(axesPositions));
             }
          }
          displayModel_.parseNewAxesToUpdateDisplayModel(axesPositions);
@@ -199,9 +199,9 @@ public class NDViewer implements NDViewer2API {
 
       //maximum scrollbar extents
       edtRunnablePool_.invokeLaterWithCoalescence(
-              new NDViewer.ExpandDisplayRangeCoalescentRunnable(axisMaxs));
+              new NDViewer2.ExpandDisplayRangeCoalescentRunnable(axisMaxs));
       edtRunnablePool_.invokeLaterWithCoalescence(
-              new NDViewer.ExpandDisplayRangeCoalescentRunnable(axisMins));
+              new NDViewer2.ExpandDisplayRangeCoalescentRunnable(axisMins));
    }
 
    public void channelSetActiveByCheckbox(String channelName, boolean selected) {
@@ -228,7 +228,7 @@ public class NDViewer implements NDViewer2API {
 
          //expand the scrollbars with new images
          edtRunnablePool_.invokeLaterWithCoalescence(
-                 new NDViewer.ExpandDisplayRangeCoalescentRunnable(axesPositions));
+                 new NDViewer2.ExpandDisplayRangeCoalescentRunnable(axesPositions));
          //move scrollbars to new position
       } catch (Exception e) {
          e.printStackTrace();
@@ -494,8 +494,8 @@ public class NDViewer implements NDViewer2API {
 
       ExpandDisplayRangeCoalescentRunnable(HashMap<String, Object> axisPosisitons) {
          newIamgeEvents.add(axisPosisitons);
-         if (axisPosisitons.containsKey(NDViewer.CHANNEL_AXIS)) {
-            activeChannels.add((String) axisPosisitons.get(NDViewer.CHANNEL_AXIS));
+         if (axisPosisitons.containsKey(NDViewer2.CHANNEL_AXIS)) {
+            activeChannels.add((String) axisPosisitons.get(NDViewer2.CHANNEL_AXIS));
          }
       }
 

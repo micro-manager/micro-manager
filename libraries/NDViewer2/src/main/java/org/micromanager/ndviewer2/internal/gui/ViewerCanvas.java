@@ -13,7 +13,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import javax.swing.JPanel;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 import org.micromanager.ndviewer2.overlay.Overlay;
 import org.micromanager.ndviewer2.overlay.Roi;
 
@@ -22,10 +22,10 @@ public class ViewerCanvas {
    private volatile Image currentImage_;
    private volatile Overlay currentOverlay_ = new Overlay();
    private double scale_;
-   private NDViewer display_;
+   private NDViewer2 display_;
    private JPanel canvas_;
 
-   public ViewerCanvas(NDViewer display) {
+   public ViewerCanvas(NDViewer2 display) {
       canvas_ = createCanvas();
       display_ = display;
 

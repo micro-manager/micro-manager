@@ -5,7 +5,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import javax.swing.SwingUtilities;
 import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 /**
  *
@@ -24,9 +24,9 @@ public class CanvasMouseListener implements NDViewer2CanvasMouseListenerInterfac
    private volatile long lastMouseWheelZoomTime_ = 0;
    private volatile boolean mouseDragging_ = false;
 
-   private NDViewer display_;
+   private NDViewer2 display_;
 
-   public CanvasMouseListener(NDViewer display) {
+   public CanvasMouseListener(NDViewer2 display) {
       display_ = display;
    }
 

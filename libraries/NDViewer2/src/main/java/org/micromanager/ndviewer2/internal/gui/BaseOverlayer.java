@@ -26,7 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JPanel;
 import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 import org.micromanager.ndviewer2.overlay.Overlay;
 import org.micromanager.ndviewer2.overlay.Roi;
 import org.micromanager.ndviewer2.overlay.TextRoi;
@@ -40,12 +40,12 @@ public class BaseOverlayer {
 
    private ExecutorService taskExecutor_;
    private Future currentTask_;
-   private NDViewer display_;
+   private NDViewer2 display_;
    private volatile boolean showScalebar_ = false;
    private volatile boolean showTimeLabel_ = false;
    private volatile boolean showZLabel_ = false;
 
-   public BaseOverlayer(NDViewer display) {
+   public BaseOverlayer(NDViewer2 display) {
       display_ = display;
       taskExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
 

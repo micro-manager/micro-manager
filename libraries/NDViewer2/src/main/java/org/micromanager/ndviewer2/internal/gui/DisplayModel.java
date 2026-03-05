@@ -12,7 +12,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 
 /**
@@ -23,7 +23,7 @@ public class DisplayModel {
    private DisplaySettings displaySettings_;
    protected DataViewCoords viewCoords_;
    private NDViewer2DataSource data_;
-   private NDViewer display_;
+   private NDViewer2 display_;
 
    // Axes may use integer or string positions. Keep track of which
    // uses which ones do this here, and which string values map to which
@@ -33,7 +33,7 @@ public class DisplayModel {
 
 
 
-   public DisplayModel(NDViewer display, NDViewer2DataSource data, Preferences prefs, boolean rgb) {
+   public DisplayModel(NDViewer2 display, NDViewer2DataSource data, Preferences prefs, boolean rgb) {
       rgb_ = rgb;
       display_ = display;
       displaySettings_ = new DisplaySettings(prefs);
@@ -64,12 +64,12 @@ public class DisplayModel {
    public void channelWasSetActiveByCheckbox(String channelName, boolean selected) {
       if (!displaySettings_.isCompositeMode()) {
          if (selected) {
-            viewCoords_.setAxisPosition(NDViewer.CHANNEL_AXIS, channelName);
+            viewCoords_.setAxisPosition(NDViewer2.CHANNEL_AXIS, channelName);
 
             //only one channel can be active so inacivate others
             for (String channel : display_.getDisplayModel().getDisplayedChannels()) {
                displaySettings_.setActive(channel, channel.equals(
-                        viewCoords_.getAxisPosition(NDViewer.CHANNEL_AXIS)));
+                        viewCoords_.getAxisPosition(NDViewer2.CHANNEL_AXIS)));
             }
          } else {
             //if channel turns off, nothing will show, so dont let this happen
@@ -224,9 +224,9 @@ public class DisplayModel {
          }
       } else {
          for (String channel : getDisplayedChannels()) {
-            if (viewCoords_.getAxesPositions().containsKey(NDViewer.CHANNEL_AXIS)) {
+            if (viewCoords_.getAxesPositions().containsKey(NDViewer2.CHANNEL_AXIS)) {
                displaySettings_.setActive(channel, viewCoords_.getAxesPositions()
-                        .get(NDViewer.CHANNEL_AXIS).equals(channel));
+                        .get(NDViewer2.CHANNEL_AXIS).equals(channel));
                display_.updateActiveChannelCheckboxes();
             }
          }
@@ -240,11 +240,11 @@ public class DisplayModel {
     */
    public List<String> getDisplayedChannels() {
       List<String> channels = new LinkedList<>();
-      if (stringAxes_.containsKey(NDViewer.CHANNEL_AXIS)) {
-         channels = stringAxes_.get(NDViewer.CHANNEL_AXIS);
+      if (stringAxes_.containsKey(NDViewer2.CHANNEL_AXIS)) {
+         channels = stringAxes_.get(NDViewer2.CHANNEL_AXIS);
       }
       if (channels.size() == 0) {
-         channels.add(NDViewer.NO_CHANNEL);
+         channels.add(NDViewer2.NO_CHANNEL);
       }
       return channels;
    }
@@ -263,19 +263,19 @@ public class DisplayModel {
          }
          if (!stringAxes_.get(axis).contains(axesPositions.get(axis))) {
             stringAxes_.get(axis).add((String) axesPositions.get(axis));
-            if (axis.equals(NDViewer.CHANNEL_AXIS)) {
+            if (axis.equals(NDViewer2.CHANNEL_AXIS)) {
                try {
                   SwingUtilities.invokeAndWait(new Runnable() {
                      @Override
                      public void run() {
                         // make sure GUI and display settings are in sync
                         display_.readHistogramControlsStateFromGUI();
-                        String channelName = (String) axesPositions.get(NDViewer.CHANNEL_AXIS);
+                        String channelName = (String) axesPositions.get(NDViewer2.CHANNEL_AXIS);
 
-                        if (!channelName.equals(NDViewer.NO_CHANNEL)
-                                 && displaySettings_.containsChannel(NDViewer.NO_CHANNEL)) {
+                        if (!channelName.equals(NDViewer2.NO_CHANNEL)
+                                 && displaySettings_.containsChannel(NDViewer2.NO_CHANNEL)) {
                            // remove the dummy channel
-                           displaySettings_.removeChannel(NDViewer.NO_CHANNEL);
+                           displaySettings_.removeChannel(NDViewer2.NO_CHANNEL);
                         }
 
                         int bitDepth = display_.getDataSource().getImageBitDepth(axesPositions);
@@ -285,7 +285,7 @@ public class DisplayModel {
                         }
                         if (!displaySettings_.isCompositeMode()) {
                            // set only this new channel active
-                           for (String cName : stringAxes_.get(NDViewer.CHANNEL_AXIS)) {
+                           for (String cName : stringAxes_.get(NDViewer2.CHANNEL_AXIS)) {
                               displaySettings_.setActive(channelName, cName.equals(channelName));
                            }
                         }
@@ -330,9 +330,9 @@ public class DisplayModel {
       // so that the checkbox changes
       if (!displaySettings_.isCompositeMode()) {
          //set all channels inactive except current one
-         if (viewCoords_.getAxesPositions().containsKey(NDViewer.CHANNEL_AXIS)) {
+         if (viewCoords_.getAxesPositions().containsKey(NDViewer2.CHANNEL_AXIS)) {
             String activeChannel = (String) viewCoords_.getAxesPositions()
-                     .get(NDViewer.CHANNEL_AXIS);
+                     .get(NDViewer2.CHANNEL_AXIS);
             for (String c : getDisplayedChannels()) {
                displaySettings_.setActive(c, activeChannel.equals(c));
                display_.getGUIManager().updateGUIFromDisplaySettings();

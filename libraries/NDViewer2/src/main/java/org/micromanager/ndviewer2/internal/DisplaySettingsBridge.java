@@ -7,7 +7,7 @@ import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.ndviewer2.main.NDViewer;
+import org.micromanager.ndviewer2.main.NDViewer2;
 
 /**
  * Bidirectional translation between MM DisplaySettings and NDViewer's
@@ -151,8 +151,8 @@ final class DisplaySettingsBridge {
       }
       // No explicit channels — check if NDViewer has its synthetic channel
       List<String> fallback = new ArrayList<>();
-      if (ndSettings.containsChannel(NDViewer.NO_CHANNEL)) {
-         fallback.add(NDViewer.NO_CHANNEL);
+      if (ndSettings.containsChannel(NDViewer2.NO_CHANNEL)) {
+         fallback.add(NDViewer2.NO_CHANNEL);
       }
       return fallback;
    }
