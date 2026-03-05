@@ -53,7 +53,7 @@ public class ExportTiles {
          try {
             new ExportImageExporter(storage, displaySettings)
                     .export(baseAxes, channels, roiX, roiY, roiW, roiH,
-                            opts.resolutionLevel, opts.format, opts.filePath);
+                            opts.resolutionLevel, opts.format, opts.filePath, opts.blend);
             SwingUtilities.invokeLater(() ->
                     JOptionPane.showMessageDialog(null,
                             "Export complete:\n" + opts.filePath));

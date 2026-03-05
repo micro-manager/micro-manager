@@ -4,6 +4,7 @@ import java.awt.Window;
 import java.io.File;
 import java.util.prefs.Preferences;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -23,11 +24,13 @@ public class ExportDialog extends JDialog {
       public final int resolutionLevel;
       public final String format;
       public final String filePath;
+      public final boolean blend;
 
-      public ExportOptions(int resolutionLevel, String format, String filePath) {
+      public ExportOptions(int resolutionLevel, String format, String filePath, boolean blend) {
          this.resolutionLevel = resolutionLevel;
          this.format = format;
          this.filePath = filePath;
+         this.blend = blend;
       }
    }
 
@@ -35,6 +38,7 @@ public class ExportDialog extends JDialog {
    private static final String PREF_FORMAT = "ExportFormat";
    private static final String PREF_RES    = "ExportResLevel";
    private static final String PREF_PATH   = "ExportPath";
+   private static final String PREF_BLEND  = "ExportBlend";
 
    private static final Preferences PREFS =
            Preferences.userNodeForPackage(ExportDialog.class);
@@ -46,6 +50,7 @@ public class ExportDialog extends JDialog {
    private JComboBox<String> resolutionCombo_;
    private JLabel outputSizeLabel_;
    private JComboBox<String> formatCombo_;
+   private JCheckBox blendCheckBox_;
    private JTextField pathField_;
 
    private ExportOptions result_ = null;
@@ -98,6 +103,12 @@ public class ExportDialog extends JDialog {
       add(new JLabel("Format:"));
       add(formatCombo_, "span 2, wrap");
 
+      // Blend checkbox
+      blendCheckBox_ = new JCheckBox("Blend tile overlaps");
+      blendCheckBox_.setSelected(PREFS.getBoolean(PREF_BLEND, true));
+      add(new JLabel(""));
+      add(blendCheckBox_, "span 2, wrap");
+
       // Path field + browse button
       pathField_ = new JTextField(30);
       pathField_.setText(PREFS.get(PREF_PATH, ""));
@@ -141,10 +152,12 @@ public class ExportDialog extends JDialog {
                return;
             }
          }
+         boolean blend = blendCheckBox_.isSelected();
          PREFS.putInt(PREF_RES, level);
          PREFS.put(PREF_FORMAT, format);
          PREFS.put(PREF_PATH, path);
-         result_ = new ExportOptions(level, format, path);
+         PREFS.putBoolean(PREF_BLEND, blend);
+         result_ = new ExportOptions(level, format, path, blend);
          dispose();
       });
       JButton cancelButton = new JButton("Cancel");

@@ -42,7 +42,19 @@ public class ExportImageExporter {
     */
    public void export(HashMap<String, Object> baseAxes, List<String> channelNames,
                       int roiX, int roiY, int roiW, int roiH,
-                      int resLevel, String format, String outputPath) throws Exception {
+                      int resLevel, String format, String outputPath, boolean blend)
+           throws Exception {
+      if (blend) {
+         JSONObject summaryMD = storage_.getSummaryMetadata();
+         if (summaryMD != null) {
+            BufferedImage blended = new TileBlender(storage_, displaySettings_,
+                    baseAxes, channelNames, summaryMD)
+                    .composite(roiX, roiY, roiW, roiH, resLevel);
+            writeImage(blended, format, outputPath);
+            return;
+         }
+      }
+
       int scale = 1 << resLevel;
       int dsX = roiX / scale;
       int dsY = roiY / scale;
