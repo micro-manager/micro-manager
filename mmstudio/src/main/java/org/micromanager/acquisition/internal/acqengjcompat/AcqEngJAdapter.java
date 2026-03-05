@@ -948,8 +948,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                if (msp != null) {
                   for (int i = 0; i < msp.size(); i++) {
                      StagePosition sp = msp.get(i);
-                     if (sp != null && sp.is1DStagePosition()) {
-                        // TODO check that we are only updating FocusDevice in case there are > 2 Z stages
+                     if (sp != null && sp.is1DStagePosition() && sp.getStageDeviceLabel().equals(studio_.core().getFocusDevice())) {
                         // here we adjust the Z position of the event
                         // because at this point in code the event was already generated
                         // and event.zPos has already been set using old (un-adjusted)
