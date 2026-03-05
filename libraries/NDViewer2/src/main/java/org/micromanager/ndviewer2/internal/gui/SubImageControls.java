@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 
 /**

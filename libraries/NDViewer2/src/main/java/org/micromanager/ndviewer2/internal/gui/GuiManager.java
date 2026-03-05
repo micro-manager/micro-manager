@@ -7,7 +7,7 @@ import java.util.HashMap;
 import javax.swing.Timer;
 import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
 

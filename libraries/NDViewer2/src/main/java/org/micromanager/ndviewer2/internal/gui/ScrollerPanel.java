@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import javax.swing.JPanel;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * This class is responsible for containing and managing groups of

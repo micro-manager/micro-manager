@@ -5,7 +5,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import javax.swing.SwingUtilities;
 import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  *

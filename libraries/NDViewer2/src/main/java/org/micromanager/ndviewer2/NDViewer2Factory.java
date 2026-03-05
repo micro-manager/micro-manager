@@ -4,14 +4,13 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.data.DataManager;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
-import org.micromanager.ndviewer2.internal.NDViewer2DataProvider;
-import org.micromanager.ndviewer2.internal.NDViewer2DataViewer;
 
 /**
  * Factory for creating NDViewer2 data providers and viewers.
  *
  * <p>External code should use this factory rather than constructing
- * {@code NDViewer2DataProvider} or {@code NDViewer2DataViewer} directly,
+ * {@code org.micromanager.ndviewer2.internal.NDViewer2DataProvider} or
+ * {@code org.micromanager.ndviewer2.internal.NDViewer2DataViewer} directly,
  * so that the concrete implementations can change without breaking callers.</p>
  */
 public final class NDViewer2Factory {
@@ -30,7 +29,8 @@ public final class NDViewer2Factory {
     */
    public static NDViewer2DataProviderAPI createDataProvider(
          DataManager dataManager, MultiresNDTiffAPI storage, String name) {
-      return new NDViewer2DataProvider(dataManager, storage, name);
+      return new org.micromanager.ndviewer2.internal.NDViewer2DataProvider(
+               dataManager, storage, name);
    }
 
    /**
@@ -53,8 +53,13 @@ public final class NDViewer2Factory {
          JSONObject summaryMetadata,
          double pixelSizeUm,
          boolean rgb) {
-      return new NDViewer2DataViewer(studio, dataSource, acqInterface,
-            (NDViewer2DataProvider) dataProvider,
-            summaryMetadata, pixelSizeUm, rgb);
+      return new org.micromanager.ndviewer2.internal.NDViewer2DataViewer(
+               studio,
+               dataSource,
+               acqInterface,
+               (org.micromanager.ndviewer2.internal.NDViewer2DataProvider) dataProvider,
+               summaryMetadata,
+               pixelSizeUm,
+               rgb);
    }
 }

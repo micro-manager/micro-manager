@@ -38,7 +38,7 @@ import org.micromanager.display.internal.imagestats.StatsComputeQueue;
 import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * NDViewer2 data viewer: combines NDViewer's pyramidal canvas with MM's

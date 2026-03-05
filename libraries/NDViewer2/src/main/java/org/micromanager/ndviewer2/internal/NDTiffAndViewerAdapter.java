@@ -18,7 +18,7 @@ import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer2.NDViewer2API;
 import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * The class is the glue needed in order for AcqEngJ, NDViewer2, and NDTiff

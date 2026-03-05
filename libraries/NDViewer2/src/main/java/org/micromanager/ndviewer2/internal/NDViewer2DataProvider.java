@@ -21,7 +21,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * Wraps NDTiffStorage (MultiresNDTiffAPI) as an MM DataProvider.

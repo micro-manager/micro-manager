@@ -19,7 +19,7 @@ import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.internal.gui.contrast.HistogramUtils;
 import org.micromanager.ndviewer2.internal.gui.contrast.LUT;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * This Class essentially replaces CompositeImage in ImageJ, and uses low level

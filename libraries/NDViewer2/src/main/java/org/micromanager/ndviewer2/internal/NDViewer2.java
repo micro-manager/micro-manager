@@ -12,7 +12,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.ndviewer2.main;
+package org.micromanager.ndviewer2.internal;
 
 import java.awt.Color;
 import java.awt.Image;

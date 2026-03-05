@@ -12,7 +12,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 
 /**

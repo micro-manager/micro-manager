@@ -26,7 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JPanel;
 import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 import org.micromanager.ndviewer2.overlay.Overlay;
 import org.micromanager.ndviewer2.overlay.Roi;
 import org.micromanager.ndviewer2.overlay.TextRoi;

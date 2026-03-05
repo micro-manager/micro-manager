@@ -3,19 +3,18 @@ package org.micromanager.ndviewer2;
 import java.awt.Graphics;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
-import org.micromanager.ndviewer2.main.NDViewer2;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
 /**
  * Interface for a plugin to draw customized overlays on the image window.
- * Register it using the setOverlayPlugin method in {@link NDViewer2}
+ * Register it using the setOverlayPlugin method in {@link NDViewer2API}
  */
 public interface NDViewer2OverlayerPlugin {
 
    /**
     * Called whenever the overlay needs to be drawn. Once it is ready, it should
     * be passed to the viewer by calling
-    * {@link NDViewer2#setOverlay(Overlay)}
+    * {@link NDViewer2API#setOverlay(Overlay)}
     * This can happen multiple times within a call of this function
     * (i.e. to show intermediate rendering progress)
     *

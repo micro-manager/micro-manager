@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * Utility class translating between NDViewer's HashMap axes and MM's Coords.

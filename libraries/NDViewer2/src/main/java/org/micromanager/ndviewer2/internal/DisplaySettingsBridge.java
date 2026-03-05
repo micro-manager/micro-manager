@@ -7,7 +7,7 @@ import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * Bidirectional translation between MM DisplaySettings and NDViewer's

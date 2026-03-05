@@ -13,7 +13,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import javax.swing.JPanel;
-import org.micromanager.ndviewer2.main.NDViewer2;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 import org.micromanager.ndviewer2.overlay.Overlay;
 import org.micromanager.ndviewer2.overlay.Roi;
 
