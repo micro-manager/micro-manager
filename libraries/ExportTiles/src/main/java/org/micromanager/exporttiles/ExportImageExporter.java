@@ -1,4 +1,4 @@
-package org.micromanager.magellan.internal.explore;
+package org.micromanager.exporttiles;
 
 import ij.ImagePlus;
 import ij.io.FileSaver;
@@ -17,12 +17,12 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
  * Retrieves tiles from a MultiresNDTiffAPI storage, composites channel data
  * with per-channel color/contrast settings, and writes the result to disk.
  */
-public class ExploreImageExporter {
+public class ExportImageExporter {
 
    private final MultiresNDTiffAPI storage_;
    private final JSONObject displaySettings_;
 
-   public ExploreImageExporter(MultiresNDTiffAPI storage, JSONObject displaySettings) {
+   public ExportImageExporter(MultiresNDTiffAPI storage, JSONObject displaySettings) {
       storage_ = storage;
       displaySettings_ = displaySettings;
    }
@@ -36,7 +36,7 @@ public class ExploreImageExporter {
     * @param roiY          Top edge of ROI in full-resolution pixels.
     * @param roiW          Width of ROI in full-resolution pixels.
     * @param roiH          Height of ROI in full-resolution pixels.
-    * @param resLevel      Resolution level (0 = full res, 1 = half res, …).
+    * @param resLevel      Resolution level (0 = full res, 1 = half res, ...).
     * @param format        "TIFF", "JPEG", "PNG", or "GIF".
     * @param outputPath    Destination file path (extension appended if absent).
     */
@@ -49,13 +49,9 @@ public class ExploreImageExporter {
       int dsW = Math.max(1, roiW / scale);
       int dsH = Math.max(1, roiH / scale);
 
-      // NDViewer stores per-channel settings as top-level keys in the display settings
-      // JSON, where each key is the channel name and the value is a JSONObject with
-      // "Color", "Min", "Max", etc.  "All channel settings" is a separate global block.
-
       int numChannels = channelNames.size();
 
-      // Special case: single channel → 16-bit TIFF
+      // Special case: single channel -> 16-bit TIFF
       if (numChannels == 1 && "TIFF".equals(format)) {
          HashMap<String, Object> axes = new HashMap<>(baseAxes);
          if (channelNames.get(0) != null) {
@@ -75,19 +71,14 @@ public class ExploreImageExporter {
 
       for (int c = 0; c < numChannels; c++) {
          String chName = channelNames.get(c);
-         // NDViewer uses "NO_CHANNEL_PRESENT" as the display settings key when
-         // there is no channel axis
          String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
-         int color = 0xFFFFFF; // default: white
+         int color = 0xFFFFFF;
          int cMin  = 0;
          int cMax  = 65535;
          if (displaySettings_ != null) {
             try {
-               // Each channel's settings are a top-level entry in the display settings JSON,
-               // keyed by the channel name as used by NDViewer.
                JSONObject chSettings = displaySettings_.optJSONObject(displayKey);
                if (chSettings != null) {
-                  // Color is stored as a signed int (e.g. -1 = 0xFFFFFFFF = white)
                   color = chSettings.optInt("Color", 0xFFFFFF) & 0xFFFFFF;
                   cMin  = chSettings.optInt("Min", 0);
                   cMax  = chSettings.optInt("Max", 65535);
@@ -163,5 +154,4 @@ public class ExploreImageExporter {
       File f = new File(path.endsWith(ext) ? path : path + ext);
       ImageIO.write(img, ioFormat, f);
    }
-
 }

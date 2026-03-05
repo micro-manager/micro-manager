@@ -1,4 +1,4 @@
-package org.micromanager.magellan.internal.explore.gui;
+package org.micromanager.exporttiles;
 
 import java.awt.Window;
 import java.io.File;
@@ -14,7 +14,7 @@ import net.miginfocom.swing.MigLayout;
 
 /**
  * Modal dialog that lets the user choose a resolution level, image format,
- * and output file path for an export operation.  Settings are persisted via
+ * and output file path for an export operation. Settings are persisted via
  * java.util.prefs.Preferences across sessions.
  */
 public class ExportDialog extends JDialog {
@@ -32,9 +32,9 @@ public class ExportDialog extends JDialog {
    }
 
    private static final String[] FORMATS = {"TIFF", "JPEG", "PNG", "GIF"};
-   private static final String PREF_FORMAT   = "ExportFormat";
-   private static final String PREF_RES      = "ExportResLevel";
-   private static final String PREF_PATH     = "ExportPath";
+   private static final String PREF_FORMAT = "ExportFormat";
+   private static final String PREF_RES    = "ExportResLevel";
+   private static final String PREF_PATH   = "ExportPath";
 
    private static final Preferences PREFS =
            Preferences.userNodeForPackage(ExportDialog.class);
@@ -66,7 +66,7 @@ public class ExportDialog extends JDialog {
       // Resolution combo
       String[] resItems = new String[numResLevels_];
       for (int i = 0; i < numResLevels_; i++) {
-         resItems[i] = "Level " + i + "  (" + (roiW_ >> i) + " \u00d7 " // x
+         resItems[i] = "Level " + i + "  (" + (roiW_ >> i) + " \u00d7 " // micron
             + (roiH_ >> i) + " px)";
       }
       resolutionCombo_ = new JComboBox<>(resItems);
@@ -130,7 +130,6 @@ public class ExportDialog extends JDialog {
          }
          int level = resolutionCombo_.getSelectedIndex();
          String format = (String) formatCombo_.getSelectedItem();
-         // Resolve the extension the same way the exporter will
          String ext = formatToExt(format);
          File resolvedFile = new File(path.endsWith(ext) ? path : path + ext);
          if (resolvedFile.exists()) {
@@ -166,7 +165,7 @@ public class ExportDialog extends JDialog {
    }
 
    private String outputSizeText(int level) {
-      return "Output size: " + (roiW_ >> level) + " \u00d7 "  // x
+      return "Output size: " + (roiW_ >> level) + " \u00d7 " // micron
                + (roiH_ >> level) + " px";
    }
 
@@ -179,5 +178,4 @@ public class ExportDialog extends JDialog {
       setVisible(true);
       return result_;
    }
-
 }
