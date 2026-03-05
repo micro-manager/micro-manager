@@ -8,7 +8,7 @@ import java.util.Vector;
 
 /** An Overlay is a list of ROIs that can be drawn non-destructively on an Image. */
 public class Overlay {
-   private Vector list;
+   private Vector<Roi> list;
    private boolean label;
    private boolean drawNames;
    private boolean drawBackgrounds;
@@ -18,12 +18,12 @@ public class Overlay {
     
    /** Constructs an empty Overlay. */
    public Overlay() {
-      list = new Vector();
+      list = new Vector<Roi>();
    }
 
    /** Constructs an Overlay and adds the specified ROI. */
    public Overlay(Roi roi) {
-      list = new Vector();
+      list = new Vector<Roi>();
       list.add(roi);
    }
 
@@ -77,7 +77,7 @@ public class Overlay {
    /** Returns the ROI with the specified index or null if the index is invalid. */
    public Roi get(int index) {
       try {
-         return (Roi) list.get(index);
+         return list.get(index);
       } catch (Exception e) {
          return null;
       }
@@ -110,7 +110,7 @@ public class Overlay {
    /** Returns on array containing the ROIs in this Overlay. */
    public Roi[] toArray() {
       Roi[] array = new Roi[list.size()];
-      return (Roi[]) list.toArray(array);
+      return list.toArray(array);
    }
 
    /** Sets the stroke color of all the ROIs in this overlay. */
@@ -292,11 +292,11 @@ public class Overlay {
       return isCalibrationBar;
    }
 
-   void setVector(Vector v) {
+   void setVector(Vector<Roi> v) {
       list = v;
    }
 
-   Vector getVector() {
+   Vector<Roi> getVector() {
       return list;
    }
 

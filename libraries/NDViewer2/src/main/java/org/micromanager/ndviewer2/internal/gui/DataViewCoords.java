@@ -105,11 +105,11 @@ public class DataViewCoords {
    }
 
    public double getMagnification() {
-      return displayImageWidth_ / (double) sourceDataFullResWidth_;
+      return displayImageWidth_ / sourceDataFullResWidth_;
    }
 
    private void updateResIndex() {
-      double resIndexFloat = Math.log(sourceDataFullResWidth_ / (double) displayImageWidth_)
+      double resIndexFloat = Math.log(sourceDataFullResWidth_ / displayImageWidth_)
                / Math.log(2);
       int newResIndex = (int) Math.max(0, Math.ceil(resIndexFloat));
 

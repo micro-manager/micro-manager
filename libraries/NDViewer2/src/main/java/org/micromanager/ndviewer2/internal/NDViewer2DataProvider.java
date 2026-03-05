@@ -217,6 +217,7 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
       return storage_.hasImage(axes);
    }
 
+   @Deprecated
    @Override
    public List<Image> getImagesMatching(Coords coords) throws IOException {
       return getImagesIgnoringAxes(coords);

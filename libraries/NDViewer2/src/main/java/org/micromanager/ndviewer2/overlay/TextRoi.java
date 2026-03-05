@@ -107,7 +107,7 @@ public class TextRoi extends Roi {
    }
 
    static String[] splitLines(String str) {
-      Vector v = new Vector();
+      Vector<String> v = new Vector<String>();
       try {
          BufferedReader br = new BufferedReader(new StringReader(str));
          String line;

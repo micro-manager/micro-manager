@@ -408,11 +408,11 @@ public class ImageMaker {
          pixelMin_ = -1;
          pixelMax_ = 0;
          int binSize = rawHistogram.length / 256;
-         int numBins = (int) Math.min(rawHistogram.length / binSize,
+         int numBins = Math.min(rawHistogram.length / binSize,
                   DisplaySettings.NUM_DISPLAY_HIST_BINS);
          for (int i = 0; i < numBins; i++) {
             for (int j = 0; j < binSize; j++) {
-               int rawHistIndex = (int) (i * binSize + j);
+               int rawHistIndex = i * binSize + j;
                int rawHistVal = rawHistogram[rawHistIndex];
                if (rawHistVal > 0) {
                   pixelMax_ = rawHistIndex;
@@ -422,7 +422,7 @@ public class ImageMaker {
                }
             }
          }
-         maxAfterRejectingOutliers_ = (int) totalPixels;
+         maxAfterRejectingOutliers_ = totalPixels;
          // specified percent of pixels are ignored in the automatic contrast setting
          double percentToIgnore = 0.0;
          try  {
@@ -504,11 +504,11 @@ public class ImageMaker {
          pixelMin_ = -1;
          pixelMax_ = 0;
          int binSize = rawHistogram.length / 256;
-         int numBins = (int) Math.min(rawHistogram.length / binSize,
+         int numBins = Math.min(rawHistogram.length / binSize,
                   DisplaySettings.NUM_DISPLAY_HIST_BINS);
          for (int i = 0; i < numBins; i++) {
             for (int j = 0; j < binSize; j++) {
-               int rawHistIndex = (int) (i * binSize + j);
+               int rawHistIndex = i * binSize + j;
                int rawHistVal = rawHistogram[rawHistIndex];
                if (rawHistVal > 0) {
                   pixelMax_ = rawHistIndex;
@@ -518,7 +518,7 @@ public class ImageMaker {
                }
             }
          }
-         maxAfterRejectingOutliers_ = (int) totalPixels;
+         maxAfterRejectingOutliers_ = totalPixels;
          // specified percent of pixels are ignored in the automatic contrast setting
          double percentToIgnore = 0.0;
          try  {

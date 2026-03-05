@@ -180,8 +180,8 @@ public class DisplayModel {
             newSourceY = newSourceY / Math.max(overzoomXFactor, overzoomYFactor);
          }
       } else if (displaySizeOld.x != 0 && displaySizeOld.y != 0) {
-         newSourceX = source.x * (w / (double) displaySizeOld.x);
-         newSourceY = source.y * (h / (double) displaySizeOld.y);
+         newSourceX = source.x * (w / displaySizeOld.x);
+         newSourceY = source.y * (h / displaySizeOld.y);
       } else {
          newSourceX = source.x / sourceAspect * canvasAspect;
          newSourceY = source.y;

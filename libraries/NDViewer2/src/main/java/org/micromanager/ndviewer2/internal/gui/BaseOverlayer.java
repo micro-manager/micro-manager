@@ -39,7 +39,7 @@ public class BaseOverlayer {
    private static final Color LIGHT_BLUE = new Color(200, 200, 255);
 
    private ExecutorService taskExecutor_;
-   private Future currentTask_;
+   private Future<?> currentTask_;
    private NDViewer2 display_;
    private volatile boolean showScalebar_ = false;
    private volatile boolean showTimeLabel_ = false;
@@ -227,8 +227,8 @@ public class BaseOverlayer {
       int innerY = (int) Math.round(((double) outerHeight / (double) fullResHeight)
                * (viewCoords.getViewOffset().y - viewCoords.yMin_));
       //outer width * percentage of width of full images that is shown
-      int innerWidth = (int) (outerWidth * ((double) sourceDataSize.x / fullResWidth));
-      int innerHeight = (int) (outerHeight * ((double) sourceDataSize.y / fullResHeight));
+      int innerWidth = (int) (outerWidth * (sourceDataSize.x / fullResWidth));
+      int innerHeight = (int) (outerHeight * (sourceDataSize.y / fullResHeight));
       Roi innerRect = new Roi(10 + innerX, 10 + innerY, innerWidth, innerHeight);
       innerRect.setStrokeColor(new Color(255, 0, 255));
       if (outerWidth != innerWidth || outerHeight != innerHeight) { //dont draw if fully zoomed out

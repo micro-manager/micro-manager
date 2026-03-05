@@ -71,7 +71,7 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
    public static final BasicStroke onePixelWide = new BasicStroke(1);
    protected static int lineWidth = 1;
    protected static Color defaultFillColor;
-   private static Vector listeners = new Vector();
+   private static Vector<Object> listeners = new Vector<Object>();
    protected static Color ROIColor = Color.yellow;
 
    protected int type;
@@ -255,6 +255,7 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
    /**
     * @deprecated replaced by getBounds()
     */
+   @Deprecated
    public Rectangle getBoundingRect() {
       return getBounds();
    }
@@ -823,8 +824,8 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
       if (props == null) {
          return null;
       }
-      Vector v = new Vector();
-      for (Enumeration en = props.keys(); en.hasMoreElements();) {
+      Vector<Object> v = new Vector<Object>();
+      for (Enumeration<Object> en = props.keys(); en.hasMoreElements();) {
          v.addElement(en.nextElement());
       }
       String[] keys = new String[v.size()];

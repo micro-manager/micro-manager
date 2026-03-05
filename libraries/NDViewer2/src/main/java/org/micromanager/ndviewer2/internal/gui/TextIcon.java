@@ -250,7 +250,8 @@ public class TextIcon implements Icon, PropertyChangeListener {
       //  The "desktophints" is supported in JDK6
 
       Toolkit toolkit = Toolkit.getDefaultToolkit();
-      Map map = (Map) (toolkit.getDesktopProperty("awt.font.desktophints"));
+      @SuppressWarnings("unchecked")
+      Map<?, ?> map = (Map<?, ?>) (toolkit.getDesktopProperty("awt.font.desktophints"));
 
       if (map != null) {
          g2.addRenderingHints(map);

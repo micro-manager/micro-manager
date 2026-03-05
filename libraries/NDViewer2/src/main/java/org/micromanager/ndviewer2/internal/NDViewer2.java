@@ -145,6 +145,7 @@ public class NDViewer2 implements NDViewer2API {
       update();
    }
 
+   @Deprecated
    @Override
    public void initializeViewerToLoaded(List<String> channelNames,
                                         JSONObject displaySettings,
