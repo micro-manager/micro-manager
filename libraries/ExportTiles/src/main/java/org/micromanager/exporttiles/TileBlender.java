@@ -87,17 +87,39 @@ public class TileBlender {
       int dsRoiW = Math.max(1, roiW / scale);
       int dsRoiH = Math.max(1, roiH / scale);
 
-      // Tile step (advance per tile) at full resolution
-      int stepX = tileWidth_ - overlapX_;
-      int stepY = tileHeight_ - overlapY_;
-
-      // Downsampled tile dimensions (storage returns tiles of this size at resLevel)
+      // Downsampled tile dimensions (storage returns tiles of this size at resLevel).
+      // Summary metadata Width/Height may be wrong (e.g. Height=212 when actual tile
+      // is 3544x2396). Always validate against actual pixel count from the first image.
       int dsTileW = tileWidth_ / scale;
       int dsTileH = tileHeight_ / scale;
-      int dsStepX = stepX / scale;
-      int dsStepY = stepY / scale;
+      // Probe at full resolution (level 0) to get actual tile dimensions.
+      // "Width" tag stores full-res value; divide by scale for downsampled dimensions.
+      outer:
+      for (HashMap<String, Object> stored : storage_.getAxesSet()) {
+         TaggedImage probe = storage_.getImage(stored, 0);
+         if (probe != null && probe.pix instanceof short[]) {
+            int nPix = ((short[]) probe.pix).length;
+            int twFull = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
+            if (twFull > 0 && nPix % twFull == 0) {
+               dsTileW = twFull / scale;
+               dsTileH = (nPix / twFull) / scale;
+               break outer;
+            }
+            int sq = (int) Math.round(Math.sqrt(nPix));
+            if (sq * sq == nPix) {
+               dsTileW = sq / scale;
+               dsTileH = sq / scale;
+               break outer;
+            }
+         }
+      }
       int dsOverlapX = overlapX_ / scale;
       int dsOverlapY = overlapY_ / scale;
+      // dsStepX/Y: distance between adjacent tile origins in downsampled pixels.
+      // Always derive from probed tile dimensions minus overlap (summary metadata step
+      // values are unreliable when Width/Height in metadata are wrong).
+      int dsStepX = Math.max(1, dsTileW - dsOverlapX);
+      int dsStepY = Math.max(1, dsTileH - dsOverlapY);
 
       // Guard against zero-overlap case
       int halfOX = Math.max(1, dsOverlapX / 2);
@@ -113,32 +135,24 @@ public class TileBlender {
       Set<Point> tilesWithData = getTilesWithData();
 
       // Build the list of (tile, tileOriginX, tileOriginY) to process.
-      // When corrected origins are provided, iterate all tiles with data directly —
-      // the nominal grid range cannot be trusted to contain all corrected positions.
-      // Otherwise use the fast nominal range loop.
+      // Always iterate tilesWithData directly — the nominal grid range is unreliable
+      // when tile indices are negative (Magellan explore) or when tileWidth_/tileHeight_
+      // are zero in the summary metadata.  The intersection check below filters to ROI.
       java.util.List<int[]> tileList = new java.util.ArrayList<>();
-      if (tileOrigins != null) {
-         for (Point tile : tilesWithData) {
-            int col = tile.x;
-            int row = tile.y;
+      for (Point tile : tilesWithData) {
+         int col = tile.x;
+         int row = tile.y;
+         int ox;
+         int oy;
+         if (tileOrigins != null) {
             Point2D.Float corrected = tileOrigins.get(tile);
-            int ox = corrected != null ? (int) (corrected.x / scale) : col * dsStepX;
-            int oy = corrected != null ? (int) (corrected.y / scale) : row * dsStepY;
-            tileList.add(new int[]{row, col, ox, oy});
+            ox = corrected != null ? (int) (corrected.x / scale) : col * dsStepX;
+            oy = corrected != null ? (int) (corrected.y / scale) : row * dsStepY;
+         } else {
+            ox = col * dsStepX;
+            oy = row * dsStepY;
          }
-      } else {
-         // Tile indices are signed; use floor division so negatives round toward -infinity.
-         int colMin = dsStepX > 0 ? Math.floorDiv(dsRoiX, dsStepX) : 0;
-         int rowMin = dsStepY > 0 ? Math.floorDiv(dsRoiY, dsStepY) : 0;
-         int colMax = dsStepX > 0 ? Math.floorDiv(dsRoiX + dsRoiW - 1, dsStepX) : 0;
-         int rowMax = dsStepY > 0 ? Math.floorDiv(dsRoiY + dsRoiH - 1, dsStepY) : 0;
-         for (int row = rowMin; row <= rowMax; row++) {
-            for (int col = colMin; col <= colMax; col++) {
-               if (hasTile(tilesWithData, row, col)) {
-                  tileList.add(new int[]{row, col, col * dsStepX, row * dsStepY});
-               }
-            }
-         }
+         tileList.add(new int[]{row, col, ox, oy});
       }
 
       int numChannels = channelNames_.size();
@@ -200,11 +214,18 @@ public class TileBlender {
                continue;
             }
 
-            TaggedImage taggedImage = storage_.getImage(axes, resLevel);
+            // Always read at level 0; sample with stride=scale to produce downsampled output.
+            TaggedImage taggedImage = storage_.getImage(axes, 0);
             if (taggedImage == null || !(taggedImage.pix instanceof short[])) {
                continue;
             }
             short[] tilePix = (short[]) taggedImage.pix;
+            // Determine full-resolution tile width from tags or pixel count.
+            int fullTileW = (taggedImage.tags != null) ? taggedImage.tags.optInt("Width", 0) : 0;
+            if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
+               int sq = (int) Math.round(Math.sqrt(tilePix.length));
+               fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
+            }
 
             for (int py = interY0; py < interY1; py++) {
                for (int px = interX0; px < interX1; px++) {
@@ -214,9 +235,10 @@ public class TileBlender {
                   float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
                   float w = wx * wy;
 
-                  int tileIdx = ty * dsTileW + tx;
+                  // Map downsampled pixel coords to full-res tile coords via stride
+                  int tileIdx = (ty * scale) * fullTileW + (tx * scale);
                   if (tileIdx < 0 || tileIdx >= tilePix.length) {
-                     continue; // safety guard for edge tiles with non-standard sizes
+                     continue; // safety guard for edge tiles
                   }
                   float norm = Math.min(1f, Math.max(0f,
                           ((tilePix[tileIdx] & 0xFFFF) - cMin) / range));

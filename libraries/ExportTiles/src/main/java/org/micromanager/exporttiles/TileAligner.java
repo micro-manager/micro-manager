@@ -85,10 +85,36 @@ public class TileAligner {
       // Corrections are then scaled up to full-resolution pixel coords for TileBlender.
       int alignResLevel = storage_.getNumResLevels() - 1;
       int alignScale = 1 << alignResLevel;
-      int dsStepX = (tileWidth_ - overlapX_) / alignScale;
-      int dsStepY = (tileHeight_ - overlapY_) / alignScale;
       int dsOverlapX = overlapX_ / alignScale;
       int dsOverlapY = overlapY_ / alignScale;
+
+      // Probe the first available tile at full resolution (level 0) to get actual tile
+      // dimensions — summary metadata Width/Height can be wrong (e.g. Height=212 when
+      // the actual tile is 3544x2396). Most tiles exist at level 0; higher levels may
+      // have sparse data only near the centre.
+      int actualTileW = tileWidth_;
+      int actualTileH = tileHeight_;
+      outer:
+      for (Point t : tiles) {
+         for (String chName : channelNames_) {
+            HashMap<String, Object> axes = buildAxesForTile(t.y, t.x, chName);
+            if (axes == null) {
+               continue;
+            }
+            TaggedImage probe = storage_.getImage(axes, 0);  // always probe at full res
+            if (probe != null && probe.pix instanceof short[]) {
+               int nPix = ((short[]) probe.pix).length;
+               int tw = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
+               if (tw > 0 && nPix % tw == 0) {
+                  actualTileW = tw;            // already full-res
+                  actualTileH = nPix / tw;
+                  break outer;
+               }
+            }
+         }
+      }
+      int dsStepX = Math.max(1, (actualTileW - overlapX_) / alignScale);
+      int dsStepY = Math.max(1, (actualTileH - overlapY_) / alignScale);
 
       List<TranslationResult> translations = computePairwiseTranslations(
               tiles, alignResLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, alignScale);
@@ -136,23 +162,23 @@ public class TileAligner {
          if (ti == null || !(ti.pix instanceof short[])) {
             continue;
          }
-         // Read actual dimensions from the image tags rather than trusting summary metadata.
+         // "Width"/"Height" tags store full-resolution values; divide by scale.
+         int scale = 1 << resLevel;
          int w = 0;
          int h = 0;
          if (ti.tags != null) {
-            w = ti.tags.optInt("Width", 0);
-            h = ti.tags.optInt("Height", 0);
+            int wFull = ti.tags.optInt("Width", 0);
+            int hFull = ti.tags.optInt("Height", 0);
+            w = (wFull > 0) ? wFull / scale : 0;
+            h = (hFull > 0) ? hFull / scale : 0;
          }
          short[] src = (short[]) ti.pix;
-         // Fall back: derive height from pixel count when tags are missing/zero.
+         // Fall back: derive from pixel count when tags are missing/wrong.
          if (w <= 0 || h <= 0 || w * h != src.length) {
-            // Use summary-metadata width at this res level; derive height from pixel count.
-            int scale = 1 << resLevel;
             w = tileWidth_ / scale;
             if (w > 0 && src.length % w == 0) {
                h = src.length / w;
             } else {
-               // Cannot determine dimensions — skip.
                continue;
             }
          }
@@ -168,11 +194,15 @@ public class TileAligner {
    }
 
    /**
-    * Returns the next power of two >= n (minimum 2).
+    * Returns the next power of two >= n, capped at 4096 to keep FHT manageable.
+    * Returns 0 if n <= 0.
     */
    private static int nextPow2(int n) {
+      if (n <= 0) {
+         return 0;
+      }
       int p = 2;
-      while (p < n) {
+      while (p < n && p < 4096) {
          p <<= 1;
       }
       return p;
@@ -182,14 +212,38 @@ public class TileAligner {
     * Cross-correlates two image strips using FHT (Fast Hartley Transform).
     * Both strips must have the same dimensions (stripW x stripH).
     * Pads to the next power-of-two square before computing.
+    * Strips wider/taller than 4096 px are centre-cropped to 4096 before correlation.
     *
     * @return float[] pixel data of the correlation map (padW x padH, after swapQuadrants).
-    *         Returns null on failure.
+    *         Returns null if strip dimensions are degenerate.
     */
    private static float[] crossCorrelateStrip(float[] pix1, float[] pix2,
                                                int stripW, int stripH,
                                                int[] outSize) {
+      if (stripW <= 0 || stripH <= 0) {
+         return null;
+      }
+      // Cap strip dimensions to keep the FHT square manageable.
+      final int MAX_DIM = 512;
+      if (stripW > MAX_DIM || stripH > MAX_DIM) {
+         // Centre-crop both strips to MAX_DIM x MAX_DIM.
+         int cropW = Math.min(stripW, MAX_DIM);
+         int cropH = Math.min(stripH, MAX_DIM);
+         int offX = (stripW - cropW) / 2;
+         int offY = (stripH - cropH) / 2;
+         float[] c1 = new float[cropW * cropH];
+         float[] c2 = new float[cropW * cropH];
+         for (int y = 0; y < cropH; y++) {
+            System.arraycopy(pix1, (offY + y) * stripW + offX, c1, y * cropW, cropW);
+            System.arraycopy(pix2, (offY + y) * stripW + offX, c2, y * cropW, cropW);
+         }
+         return crossCorrelateStrip(c1, c2, cropW, cropH, outSize);
+      }
+
       int padN = nextPow2(Math.max(stripW, stripH));
+      if (padN <= 0) {
+         return null;
+      }
       outSize[0] = padN;
 
       // Copy strips into padded square arrays
