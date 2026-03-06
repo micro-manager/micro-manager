@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntConsumer;
 import javax.imageio.ImageIO;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
@@ -47,17 +48,30 @@ public class ExportImageExporter {
                       int roiX, int roiY, int roiW, int roiH,
                       int resLevel, String format, String outputPath, boolean blend, boolean align)
            throws Exception {
+      export(baseAxes, channelNames, roiX, roiY, roiW, roiH,
+              resLevel, format, outputPath, blend, align, pct -> {});
+   }
+
+   public void export(HashMap<String, Object> baseAxes, List<String> channelNames,
+                      int roiX, int roiY, int roiW, int roiH,
+                      int resLevel, String format, String outputPath, boolean blend, boolean align,
+                      IntConsumer progress)
+           throws Exception {
       if (blend || align) {
          JSONObject summaryMD = storage_.getSummaryMetadata();
          if (summaryMD != null) {
             Map<Point, Point2D.Float> origins = null;
             if (align) {
+               progress.accept(0);
                origins = new TileAligner(storage_, baseAxes, channelNames, summaryMD)
-                       .computeAlignedOrigins(resLevel);
+                       .computeAlignedOrigins(resLevel, pct -> progress.accept(pct / 2));
+               progress.accept(50);
             }
             BufferedImage blended = new TileBlender(storage_, displaySettings_,
                     baseAxes, channelNames, summaryMD)
-                    .composite(roiX, roiY, roiW, roiH, resLevel, origins);
+                    .composite(roiX, roiY, roiW, roiH, resLevel, origins,
+                            pct -> progress.accept(align ? 50 + pct / 2 : pct));
+            progress.accept(100);
             writeImage(blended, format, outputPath);
             return;
          }

@@ -4,9 +4,15 @@ import java.awt.Window;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.awt.Dialog;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import mmcorej.org.json.JSONObject;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 
 /**
@@ -49,21 +55,47 @@ public class ExportTiles {
       List<String> channels = channelNames.isEmpty()
               ? Collections.singletonList(null) : channelNames;
 
+      // Build a non-modal progress dialog
+      JDialog progressDialog = new JDialog(owner, "Exporting…", Dialog.ModalityType.MODELESS);
+      progressDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      JProgressBar bar = new JProgressBar(0, 100);
+      bar.setStringPainted(true);
+      JLabel label = new JLabel("Preparing…");
+      progressDialog.getContentPane().setLayout(new MigLayout("insets 12, gap 8", "[grow]"));
+      progressDialog.getContentPane().add(label, "wrap");
+      progressDialog.getContentPane().add(bar, "growx, wrap");
+      progressDialog.pack();
+      progressDialog.setLocationRelativeTo(owner);
+      progressDialog.setVisible(true);
+
       new Thread(() -> {
          try {
             new ExportImageExporter(storage, displaySettings)
                     .export(baseAxes, channels, roiX, roiY, roiW, roiH,
                             opts.resolutionLevel, opts.format, opts.filePath,
-                            opts.blend, opts.align);
-            SwingUtilities.invokeLater(() ->
-                    JOptionPane.showMessageDialog(null,
-                            "Export complete:\n" + opts.filePath));
+                            opts.blend, opts.align,
+                            pct -> SwingUtilities.invokeLater(() -> {
+                               bar.setValue(pct);
+                               if (opts.align && pct < 50) {
+                                  label.setText("Aligning tiles… " + (pct * 2) + "%");
+                               } else {
+                                  int blendPct = opts.align ? (pct - 50) * 2 : pct;
+                                  label.setText("Compositing… " + blendPct + "%");
+                               }
+                            }));
+            SwingUtilities.invokeLater(() -> {
+               progressDialog.dispose();
+               JOptionPane.showMessageDialog(owner,
+                       "Export complete:\n" + opts.filePath);
+            });
          } catch (Exception ex) {
             ex.printStackTrace();
-            SwingUtilities.invokeLater(() ->
-                    JOptionPane.showMessageDialog(null,
-                            "Export failed: " + ex.getMessage(),
-                            "Export Error", JOptionPane.ERROR_MESSAGE));
+            SwingUtilities.invokeLater(() -> {
+               progressDialog.dispose();
+               JOptionPane.showMessageDialog(owner,
+                       "Export failed: " + ex.getMessage(),
+                       "Export Error", JOptionPane.ERROR_MESSAGE);
+            });
          }
       }, "ExportTiles-Export").start();
    }

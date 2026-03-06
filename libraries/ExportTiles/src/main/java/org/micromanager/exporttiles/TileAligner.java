@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
@@ -72,6 +73,10 @@ public class TileAligner {
     *         Returns null if alignment cannot be performed (zero overlap, single tile).
     */
    public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel) {
+      return computeAlignedOrigins(resLevel, pct -> {});
+   }
+
+   public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel, IntConsumer progress) {
       if (overlapX_ <= 0 && overlapY_ <= 0) {
          return null;
       }
@@ -117,7 +122,7 @@ public class TileAligner {
       int dsStepY = Math.max(1, (actualTileH - overlapY_) / alignScale);
 
       List<TranslationResult> translations = computePairwiseTranslations(
-              tiles, alignResLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, alignScale);
+              tiles, alignResLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, alignScale, progress);
 
       // propagateOrigins returns full-resolution pixel coords regardless of alignResLevel.
       return propagateOrigins(tiles, translations, dsStepX, dsStepY, alignScale);
@@ -354,14 +359,19 @@ public class TileAligner {
 
    private List<TranslationResult> computePairwiseTranslations(
            Set<Point> tiles, int resLevel,
-           int dsStepX, int dsStepY, int dsOverlapX, int dsOverlapY, int scale) {
+           int dsStepX, int dsStepY, int dsOverlapX, int dsOverlapY, int scale,
+           IntConsumer progress) {
 
       List<TranslationResult> results = new ArrayList<>();
 
       // Cache loaded tile pixels keyed by (col, row) Point
       Map<Point, TilePixels> pixCache = new HashMap<>();
 
+      int total = tiles.size();
+      int done = 0;
       for (Point tile : tiles) {
+         progress.accept(total > 0 ? (done * 100 / total) : 0);
+         done++;
          int col = tile.x;
          int row = tile.y;
 

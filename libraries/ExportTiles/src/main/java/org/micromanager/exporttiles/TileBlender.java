@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
@@ -64,7 +65,7 @@ public class TileBlender {
     * @return 8-bit RGB BufferedImage with blended tile seams.
     */
    public BufferedImage composite(int roiX, int roiY, int roiW, int roiH, int resLevel) {
-      return composite(roiX, roiY, roiW, roiH, resLevel, null);
+      return composite(roiX, roiY, roiW, roiH, resLevel, null, pct -> {});
    }
 
    /**
@@ -81,6 +82,11 @@ public class TileBlender {
     */
    public BufferedImage composite(int roiX, int roiY, int roiW, int roiH, int resLevel,
                                   Map<Point, Point2D.Float> tileOrigins) {
+      return composite(roiX, roiY, roiW, roiH, resLevel, tileOrigins, pct -> {});
+   }
+
+   public BufferedImage composite(int roiX, int roiY, int roiW, int roiH, int resLevel,
+                                  Map<Point, Point2D.Float> tileOrigins, IntConsumer progress) {
       int scale = 1 << resLevel;
       int dsRoiX = roiX / scale;
       int dsRoiY = roiY / scale;
@@ -156,8 +162,12 @@ public class TileBlender {
       }
 
       int numChannels = channelNames_.size();
+      int totalTiles = tileList.size();
+      int doneTiles = 0;
 
       for (int[] entry : tileList) {
+         progress.accept(totalTiles > 0 ? (doneTiles * 100 / totalTiles) : 0);
+         doneTiles++;
          int row = entry[0];
          int col = entry[1];
          int tileOriginX = entry[2];
