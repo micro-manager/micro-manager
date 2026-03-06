@@ -1,8 +1,10 @@
 package org.micromanager.projector;
 
 import ij.gui.EllipseRoi;
+import ij.gui.Line;
 import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.FloatPolygon;
 import java.awt.Polygon;
@@ -302,6 +304,9 @@ public abstract class ProjectorActions {
                         poly.ypoints[i]));
                }
                break;
+            case Roi.LINE:
+               roiList.add(lineRoiToPolygon(roi));
+               break;
             case Roi.OVAL:
                roiList.add(asEllipseRoi((OvalRoi) roi));
                break;
@@ -311,6 +316,58 @@ public abstract class ProjectorActions {
          }
       }
       return roiList.toArray(new Roi[roiList.size()]);
+   }
+
+   // Converts a Line ROI to a PolygonRoi.
+   // Uses Roi.getStrokeWidth() as the line thickness (defaults to 1 if unset).
+   // Stroke width <= 1: returns a 2-point degenerate polygon (thin trace).
+   // Stroke width > 1: returns the 4-corner rectangle of the thick line.
+   private static Roi lineRoiToPolygon(Roi roi) {
+      Line lineRoi = (Line) roi;
+      double x1 = lineRoi.x1d;
+      double y1 = lineRoi.y1d;
+      double x2 = lineRoi.x2d;
+      double y2 = lineRoi.y2d;
+      double strokeWidth = roi.getStrokeWidth();
+      if (strokeWidth < 1.0) {
+         strokeWidth = 1.0;
+      }
+
+      if (strokeWidth <= 1.0) {
+         float[] xs = {(float) x1, (float) x2};
+         float[] ys = {(float) y1, (float) y2};
+         return new PolygonRoi(xs, ys, 2, Roi.POLYGON);
+      }
+
+      double dx = x2 - x1;
+      double dy = y2 - y1;
+      double len = Math.sqrt(dx * dx + dy * dy);
+      if (len == 0.0) {
+         // Zero-length line: single point.
+         float[] xs = {(float) x1};
+         float[] ys = {(float) y1};
+         return new PolygonRoi(xs, ys, 1, Roi.POLYGON);
+      }
+
+      // Unit perpendicular vector (90 degrees CCW from line direction).
+      double perpX = -dy / len;
+      double perpY =  dx / len;
+      double halfWidth = strokeWidth / 2.0;
+
+      // 4 corners: start-left, start-right, end-right, end-left
+      float[] xs = {
+         (float) (x1 + perpX * halfWidth),
+         (float) (x1 - perpX * halfWidth),
+         (float) (x2 - perpX * halfWidth),
+         (float) (x2 + perpX * halfWidth)
+      };
+      float[] ys = {
+         (float) (y1 + perpY * halfWidth),
+         (float) (y1 - perpY * halfWidth),
+         (float) (y2 - perpY * halfWidth),
+         (float) (y2 + perpY * halfWidth)
+      };
+      return new PolygonRoi(xs, ys, 4, Roi.POLYGON);
    }
 
    // Convert an OvalRoi to an EllipseRoi.
