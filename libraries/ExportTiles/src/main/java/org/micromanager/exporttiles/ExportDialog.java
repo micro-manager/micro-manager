@@ -25,12 +25,15 @@ public class ExportDialog extends JDialog {
       public final String format;
       public final String filePath;
       public final boolean blend;
+      public final boolean align;
 
-      public ExportOptions(int resolutionLevel, String format, String filePath, boolean blend) {
+      public ExportOptions(int resolutionLevel, String format, String filePath,
+                           boolean blend, boolean align) {
          this.resolutionLevel = resolutionLevel;
          this.format = format;
          this.filePath = filePath;
          this.blend = blend;
+         this.align = align;
       }
    }
 
@@ -39,6 +42,7 @@ public class ExportDialog extends JDialog {
    private static final String PREF_RES    = "ExportResLevel";
    private static final String PREF_PATH   = "ExportPath";
    private static final String PREF_BLEND  = "ExportBlend";
+   private static final String PREF_ALIGN  = "ExportAlign";
 
    private static final Preferences PREFS =
            Preferences.userNodeForPackage(ExportDialog.class);
@@ -51,6 +55,7 @@ public class ExportDialog extends JDialog {
    private JLabel outputSizeLabel_;
    private JComboBox<String> formatCombo_;
    private JCheckBox blendCheckBox_;
+   private JCheckBox alignCheckBox_;
    private JTextField pathField_;
 
    private ExportOptions result_ = null;
@@ -109,6 +114,15 @@ public class ExportDialog extends JDialog {
       add(new JLabel(""));
       add(blendCheckBox_, "span 2, wrap");
 
+      // Align checkbox (only active when blend is on)
+      alignCheckBox_ = new JCheckBox("Align tiles (phase correlation)");
+      alignCheckBox_.setSelected(PREFS.getBoolean(PREF_ALIGN, true));
+      alignCheckBox_.setEnabled(blendCheckBox_.isSelected());
+      blendCheckBox_.addActionListener(e ->
+              alignCheckBox_.setEnabled(blendCheckBox_.isSelected()));
+      add(new JLabel(""));
+      add(alignCheckBox_, "span 2, wrap");
+
       // Path field + browse button
       pathField_ = new JTextField(30);
       pathField_.setText(PREFS.get(PREF_PATH, ""));
@@ -153,11 +167,13 @@ public class ExportDialog extends JDialog {
             }
          }
          boolean blend = blendCheckBox_.isSelected();
+         boolean align = blend && alignCheckBox_.isSelected();
          PREFS.putInt(PREF_RES, level);
          PREFS.put(PREF_FORMAT, format);
          PREFS.put(PREF_PATH, path);
          PREFS.putBoolean(PREF_BLEND, blend);
-         result_ = new ExportOptions(level, format, path, blend);
+         PREFS.putBoolean(PREF_ALIGN, alignCheckBox_.isSelected());
+         result_ = new ExportOptions(level, format, path, blend, align);
          dispose();
       });
       JButton cancelButton = new JButton("Cancel");

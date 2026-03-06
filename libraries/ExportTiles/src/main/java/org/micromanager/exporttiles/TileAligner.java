@@ -1,0 +1,467 @@
+package org.micromanager.exporttiles;
+
+import ij.process.FHT;
+import ij.process.FloatProcessor;
+import java.awt.Point;
+import java.awt.geom.Point2D;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import mmcorej.TaggedImage;
+import mmcorej.org.json.JSONObject;
+import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
+import org.micromanager.ndtiffstorage.NDTiffStorage;
+
+/**
+ * Computes sub-pixel translation corrections for a grid of overlapping tiles
+ * using pairwise phase-correlation alignment followed by BFS global optimisation.
+ *
+ * <p>Phase correlation is performed on the overlap strips between adjacent tiles.
+ * Accepted pairwise translations are propagated via BFS from an anchor tile to
+ * produce globally-consistent pixel origins for every tile in the grid.</p>
+ */
+public class TileAligner {
+
+   private static final double CORRELATION_THRESHOLD = 0.5;
+
+   private final MultiresNDTiffAPI storage_;
+   private final HashMap<String, Object> baseAxes_;
+   private final List<String> channelNames_;
+   private final int tileWidth_;
+   private final int tileHeight_;
+   private final int overlapX_;
+   private final int overlapY_;
+
+   private static class TranslationResult {
+      final Point from;  // (col, row) in Point convention (x=col, y=row)
+      final Point to;
+      final float dx;
+      final float dy;
+
+      TranslationResult(Point from, Point to, float dx, float dy) {
+         this.from = from;
+         this.to = to;
+         this.dx = dx;
+         this.dy = dy;
+      }
+   }
+
+   public TileAligner(MultiresNDTiffAPI storage, HashMap<String, Object> baseAxes,
+                      List<String> channelNames, JSONObject summaryMetadata) {
+      storage_ = storage;
+      baseAxes_ = baseAxes;
+      channelNames_ = channelNames;
+      tileWidth_ = summaryMetadata.optInt("Width", 0);
+      tileHeight_ = summaryMetadata.optInt("Height", 0);
+      overlapX_ = summaryMetadata.optInt("GridPixelOverlapX", 0);
+      overlapY_ = summaryMetadata.optInt("GridPixelOverlapY", 0);
+   }
+
+   /**
+    * Computes corrected pixel origins for each (col, row) tile at the given resolution level.
+    * Falls back to the nominal grid position for tiles that cannot be reached via accepted
+    * pairwise translations.
+    *
+    * @param resLevel Resolution level (0 = full res, 1 = half res, …).
+    * @return Map from Point(col, row) to corrected pixel origin at full resolution.
+    *         Returns null if alignment cannot be performed (zero overlap, single tile).
+    */
+   public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel) {
+      if (overlapX_ <= 0 && overlapY_ <= 0) {
+         return null;
+      }
+
+      Set<Point> tiles = collectTiles();
+      if (tiles.size() <= 1) {
+         return null;
+      }
+
+      int scale = 1 << resLevel;
+      int dsStepX = (tileWidth_ - overlapX_) / scale;
+      int dsStepY = (tileHeight_ - overlapY_) / scale;
+      int dsOverlapX = overlapX_ / scale;
+      int dsOverlapY = overlapY_ / scale;
+
+      List<TranslationResult> translations = computePairwiseTranslations(
+              tiles, resLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, scale);
+
+      return propagateOrigins(tiles, translations, dsStepX, dsStepY, scale);
+   }
+
+   private Set<Point> collectTiles() {
+      Set<Point> result = new HashSet<>();
+      for (HashMap<String, Object> stored : storage_.getAxesSet()) {
+         if (!stored.containsKey(NDTiffStorage.ROW_AXIS)
+                 || !stored.containsKey(NDTiffStorage.COL_AXIS)) {
+            continue;
+         }
+         boolean matches = true;
+         for (Map.Entry<String, Object> entry : baseAxes_.entrySet()) {
+            Object storedVal = stored.get(entry.getKey());
+            if (storedVal == null || !storedVal.equals(entry.getValue())) {
+               matches = false;
+               break;
+            }
+         }
+         if (matches) {
+            int r = ((Number) stored.get(NDTiffStorage.ROW_AXIS)).intValue();
+            int c = ((Number) stored.get(NDTiffStorage.COL_AXIS)).intValue();
+            result.add(new Point(c, r)); // x=col, y=row
+         }
+      }
+      return result;
+   }
+
+   /**
+    * Loads a single tile as a float[] array (first available channel).
+    * Returns null if no image is available.
+    */
+   private float[] loadTileGray(int row, int col, int resLevel) {
+      // Try channels in order; use first successful load
+      for (String chName : channelNames_) {
+         HashMap<String, Object> axes = buildAxesForTile(row, col, chName);
+         if (axes == null) {
+            continue;
+         }
+         TaggedImage ti = storage_.getImage(axes, resLevel);
+         if (ti == null || !(ti.pix instanceof short[])) {
+            continue;
+         }
+         short[] src = (short[]) ti.pix;
+         float[] dst = new float[src.length];
+         for (int i = 0; i < src.length; i++) {
+            dst[i] = src[i] & 0xFFFF;
+         }
+         return dst;
+      }
+      return null;
+   }
+
+   /**
+    * Returns the next power of two >= n (minimum 2).
+    */
+   private static int nextPow2(int n) {
+      int p = 2;
+      while (p < n) {
+         p <<= 1;
+      }
+      return p;
+   }
+
+   /**
+    * Cross-correlates two image strips using FHT (Fast Hartley Transform).
+    * Both strips must have the same dimensions (stripW x stripH).
+    * Pads to the next power-of-two square before computing.
+    *
+    * @return float[] pixel data of the correlation map (padW x padH, after swapQuadrants).
+    *         Returns null on failure.
+    */
+   private static float[] crossCorrelateStrip(float[] pix1, float[] pix2,
+                                               int stripW, int stripH,
+                                               int[] outSize) {
+      int padN = nextPow2(Math.max(stripW, stripH));
+      outSize[0] = padN;
+
+      // Copy strips into padded square arrays
+      float[] padded1 = new float[padN * padN];
+      float[] padded2 = new float[padN * padN];
+      for (int y = 0; y < stripH; y++) {
+         System.arraycopy(pix1, y * stripW, padded1, y * padN, stripW);
+         System.arraycopy(pix2, y * stripW, padded2, y * padN, stripW);
+      }
+
+      FloatProcessor proc1 = new FloatProcessor(padN, padN, padded1, null);
+      FloatProcessor proc2 = new FloatProcessor(padN, padN, padded2, null);
+
+      FHT h1 = new FHT(proc1);
+      h1.transform();
+      FHT h2 = new FHT(proc2);
+      h2.transform();
+      FHT corr = h1.conjugateMultiply(h2);
+      corr.inverseTransform();
+      corr.swapQuadrants();
+
+      return (float[]) corr.getPixels();
+   }
+
+   /**
+    * Finds the peak in the correlation map and returns {peakX, peakY} shifted
+    * so that (0,0) means no translation.  Also evaluates quality as
+    * peak / mean (returned via quality[0]).
+    *
+    * @param corrMap  Correlation map pixels (square, side = n).
+    * @param n        Side length (power of two).
+    * @param quality  Output array of length 1; filled with peak-to-mean ratio.
+    * @return int[2] containing {dx, dy} shift.
+    */
+   private static int[] findPeak(float[] corrMap, int n, double[] quality) {
+      int bestIdx = 0;
+      float bestVal = corrMap[0];
+      double sum = 0;
+      for (int i = 0; i < corrMap.length; i++) {
+         float v = corrMap[i];
+         if (v > bestVal) {
+            bestVal = v;
+            bestIdx = i;
+         }
+         sum += v;
+      }
+      double mean = sum / corrMap.length;
+      quality[0] = (mean > 0) ? bestVal / mean : 0;
+
+      int px = bestIdx % n;
+      int py = bestIdx / n;
+      // After swapQuadrants, centre of image = no shift.
+      // Shift from image-centre convention:
+      if (px > n / 2) {
+         px -= n;
+      }
+      if (py > n / 2) {
+         py -= n;
+      }
+      return new int[]{px, py};
+   }
+
+   /**
+    * Extracts a vertical strip (left or right edge) from a full tile pixel array.
+    *
+    * @param tilePix  Full tile pixels (tileW x tileH).
+    * @param tileW    Tile width.
+    * @param tileH    Tile height.
+    * @param fromRight If true, take the rightmost stripW columns; otherwise leftmost.
+    * @param stripW   Strip width.
+    * @return float[] of size stripW x tileH.
+    */
+   private static float[] extractVerticalStrip(float[] tilePix, int tileW, int tileH,
+                                                boolean fromRight, int stripW) {
+      int startX = fromRight ? (tileW - stripW) : 0;
+      float[] strip = new float[stripW * tileH];
+      for (int y = 0; y < tileH; y++) {
+         System.arraycopy(tilePix, y * tileW + startX, strip, y * stripW, stripW);
+      }
+      return strip;
+   }
+
+   /**
+    * Extracts a horizontal strip (top or bottom edge) from a full tile pixel array.
+    *
+    * @param tilePix    Full tile pixels (tileW x tileH).
+    * @param tileW      Tile width.
+    * @param tileH      Tile height.
+    * @param fromBottom If true, take the bottom stripH rows; otherwise topmost.
+    * @param stripH     Strip height.
+    * @return float[] of size tileW x stripH.
+    */
+   private static float[] extractHorizontalStrip(float[] tilePix, int tileW, int tileH,
+                                                   boolean fromBottom, int stripH) {
+      int startY = fromBottom ? (tileH - stripH) : 0;
+      float[] strip = new float[tileW * stripH];
+      System.arraycopy(tilePix, startY * tileW, strip, 0, tileW * stripH);
+      return strip;
+   }
+
+   private List<TranslationResult> computePairwiseTranslations(
+           Set<Point> tiles, int resLevel,
+           int dsStepX, int dsStepY, int dsOverlapX, int dsOverlapY, int scale) {
+
+      List<TranslationResult> results = new ArrayList<>();
+
+      int dsTileW = tileWidth_ / scale;
+      int dsTileH = tileHeight_ / scale;
+
+      // Cache loaded tile pixels to avoid redundant storage reads
+      Map<Point, float[]> pixCache = new HashMap<>();
+
+      for (Point tile : tiles) {
+         int col = tile.x;
+         int row = tile.y;
+
+         float[] curPix = getOrLoad(pixCache, row, col, resLevel);
+         if (curPix == null) {
+            continue;
+         }
+
+         // --- Horizontal pair: current tile and its west neighbour (col-1) ---
+         if (dsOverlapX > 0) {
+            Point west = new Point(col - 1, row);
+            if (tiles.contains(west)) {
+               float[] westPix = getOrLoad(pixCache, row, col - 1, resLevel);
+               if (westPix != null) {
+                  // Right strip of west tile vs left strip of current tile
+                  float[] strip1 = extractVerticalStrip(westPix, dsTileW, dsTileH,
+                          true, dsOverlapX);
+                  float[] strip2 = extractVerticalStrip(curPix, dsTileW, dsTileH,
+                          false, dsOverlapX);
+                  int[] outSize = new int[1];
+                  float[] corrMap = crossCorrelateStrip(strip1, strip2,
+                          dsOverlapX, dsTileH, outSize);
+                  if (corrMap != null) {
+                     double[] quality = new double[1];
+                     int[] shift = findPeak(corrMap, outSize[0], quality);
+                     if (quality[0] >= CORRELATION_THRESHOLD) {
+                        // shift[0] = dx correction relative to nominal step
+                        results.add(new TranslationResult(west, tile,
+                                shift[0], shift[1]));
+                     }
+                  }
+               }
+            }
+         }
+
+         // --- Vertical pair: current tile and its north neighbour (row-1) ---
+         if (dsOverlapY > 0) {
+            Point north = new Point(col, row - 1);
+            if (tiles.contains(north)) {
+               float[] northPix = getOrLoad(pixCache, row - 1, col, resLevel);
+               if (northPix != null) {
+                  // Bottom strip of north tile vs top strip of current tile
+                  float[] strip1 = extractHorizontalStrip(northPix, dsTileW, dsTileH,
+                          true, dsOverlapY);
+                  float[] strip2 = extractHorizontalStrip(curPix, dsTileW, dsTileH,
+                          false, dsOverlapY);
+                  int[] outSize = new int[1];
+                  float[] corrMap = crossCorrelateStrip(strip1, strip2,
+                          dsTileW, dsOverlapY, outSize);
+                  if (corrMap != null) {
+                     double[] quality = new double[1];
+                     int[] shift = findPeak(corrMap, outSize[0], quality);
+                     if (quality[0] >= CORRELATION_THRESHOLD) {
+                        results.add(new TranslationResult(north, tile,
+                                shift[0], shift[1]));
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      return results;
+   }
+
+   private float[] getOrLoad(Map<Point, float[]> cache, int row, int col, int resLevel) {
+      Point key = new Point(col, row);
+      if (!cache.containsKey(key)) {
+         cache.put(key, loadTileGray(row, col, resLevel));
+      }
+      return cache.get(key);
+   }
+
+   /**
+    * BFS from anchor tile, propagating corrected origins through accepted translations.
+    * Results are at full resolution (not downsampled).
+    */
+   private Map<Point, Point2D.Float> propagateOrigins(
+           Set<Point> tiles, List<TranslationResult> translations,
+           int dsStepX, int dsStepY, int scale) {
+
+      // Build adjacency: for each tile, list of (neighbour, dx, dy)
+      Map<Point, List<TranslationResult>> adjFrom = new HashMap<>();
+      Map<Point, List<TranslationResult>> adjTo = new HashMap<>();
+      for (Point t : tiles) {
+         adjFrom.put(t, new ArrayList<>());
+         adjTo.put(t, new ArrayList<>());
+      }
+      for (TranslationResult tr : translations) {
+         adjFrom.get(tr.from).add(tr);
+         adjTo.get(tr.to).add(tr);
+      }
+
+      // Pick anchor: smallest row then col
+      Point anchor = null;
+      for (Point t : tiles) {
+         if (anchor == null || t.y < anchor.y || (t.y == anchor.y && t.x < anchor.x)) {
+            anchor = t;
+         }
+      }
+
+      Map<Point, Point2D.Float> origins = new HashMap<>();
+
+      // Anchor gets nominal position (in downsampled coords × scale = full-res coords)
+      float anchorX = anchor.x * dsStepX * scale;
+      float anchorY = anchor.y * dsStepY * scale;
+      origins.put(anchor, new Point2D.Float(anchorX, anchorY));
+
+      // BFS
+      Queue<Point> queue = new ArrayDeque<>();
+      Set<Point> visited = new HashSet<>();
+      queue.add(anchor);
+      visited.add(anchor);
+
+      while (!queue.isEmpty()) {
+         Point cur = queue.poll();
+         Point2D.Float curOrigin = origins.get(cur);
+
+         // Traverse edges where cur is the "from" tile
+         for (TranslationResult tr : adjFrom.get(cur)) {
+            if (!visited.contains(tr.to)) {
+               visited.add(tr.to);
+               // to is one col/row step ahead of from
+               float nomDx = (tr.to.x - cur.x) * dsStepX * scale;
+               float nomDy = (tr.to.y - cur.y) * dsStepY * scale;
+               float corrX = curOrigin.x + nomDx + tr.dx * scale;
+               float corrY = curOrigin.y + nomDy + tr.dy * scale;
+               origins.put(tr.to, new Point2D.Float(corrX, corrY));
+               queue.add(tr.to);
+            }
+         }
+
+         // Traverse edges where cur is the "to" tile (reverse direction)
+         for (TranslationResult tr : adjTo.get(cur)) {
+            if (!visited.contains(tr.from)) {
+               visited.add(tr.from);
+               float nomDx = (tr.from.x - cur.x) * dsStepX * scale;
+               float nomDy = (tr.from.y - cur.y) * dsStepY * scale;
+               float corrX = curOrigin.x + nomDx - tr.dx * scale;
+               float corrY = curOrigin.y + nomDy - tr.dy * scale;
+               origins.put(tr.from, new Point2D.Float(corrX, corrY));
+               queue.add(tr.from);
+            }
+         }
+      }
+
+      // Fill in nominal positions for any unreached tiles
+      for (Point t : tiles) {
+         if (!origins.containsKey(t)) {
+            origins.put(t, new Point2D.Float(t.x * dsStepX * scale, t.y * dsStepY * scale));
+         }
+      }
+
+      return origins;
+   }
+
+   private HashMap<String, Object> buildAxesForTile(int row, int col, String chName) {
+      for (HashMap<String, Object> stored : storage_.getAxesSet()) {
+         if (!stored.containsKey(NDTiffStorage.ROW_AXIS)
+                 || !stored.containsKey(NDTiffStorage.COL_AXIS)) {
+            continue;
+         }
+         boolean matches = true;
+         for (Map.Entry<String, Object> entry : baseAxes_.entrySet()) {
+            Object storedVal = stored.get(entry.getKey());
+            if (storedVal == null || !storedVal.equals(entry.getValue())) {
+               matches = false;
+               break;
+            }
+         }
+         if (!matches) {
+            continue;
+         }
+         if (chName != null) {
+            Object storedCh = stored.get("channel");
+            if (!chName.equals(storedCh)) {
+               continue;
+            }
+         }
+         HashMap<String, Object> axes = new HashMap<>(stored);
+         axes.put(NDTiffStorage.ROW_AXIS, row);
+         axes.put(NDTiffStorage.COL_AXIS, col);
+         return axes;
+      }
+      return null;
+   }
+}

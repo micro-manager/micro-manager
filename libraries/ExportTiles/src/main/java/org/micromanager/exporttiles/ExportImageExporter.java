@@ -3,11 +3,14 @@ package org.micromanager.exporttiles;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.ShortProcessor;
+import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.imageio.ImageIO;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
@@ -42,14 +45,19 @@ public class ExportImageExporter {
     */
    public void export(HashMap<String, Object> baseAxes, List<String> channelNames,
                       int roiX, int roiY, int roiW, int roiH,
-                      int resLevel, String format, String outputPath, boolean blend)
+                      int resLevel, String format, String outputPath, boolean blend, boolean align)
            throws Exception {
       if (blend) {
          JSONObject summaryMD = storage_.getSummaryMetadata();
          if (summaryMD != null) {
+            Map<Point, Point2D.Float> origins = null;
+            if (align) {
+               origins = new TileAligner(storage_, baseAxes, channelNames, summaryMD)
+                       .computeAlignedOrigins(resLevel);
+            }
             BufferedImage blended = new TileBlender(storage_, displaySettings_,
                     baseAxes, channelNames, summaryMD)
-                    .composite(roiX, roiY, roiW, roiH, resLevel);
+                    .composite(roiX, roiY, roiW, roiH, resLevel, origins);
             writeImage(blended, format, outputPath);
             return;
          }

@@ -1,9 +1,11 @@
 package org.micromanager.exporttiles;
 
 import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
@@ -54,14 +56,31 @@ public class TileBlender {
    /**
     * Composite tiles covering the given ROI at the requested resolution level.
     *
-    * @param roiX     Left edge of ROI in full-resolution pixels.
-    * @param roiY     Top edge of ROI in full-resolution pixels.
-    * @param roiW     Width of ROI in full-resolution pixels.
-    * @param roiH     Height of ROI in full-resolution pixels.
-    * @param resLevel Resolution level (0 = full res, 1 = half res, …).
+    * @param roiX       Left edge of ROI in full-resolution pixels.
+    * @param roiY       Top edge of ROI in full-resolution pixels.
+    * @param roiW       Width of ROI in full-resolution pixels.
+    * @param roiH       Height of ROI in full-resolution pixels.
+    * @param resLevel   Resolution level (0 = full res, 1 = half res, …).
     * @return 8-bit RGB BufferedImage with blended tile seams.
     */
    public BufferedImage composite(int roiX, int roiY, int roiW, int roiH, int resLevel) {
+      return composite(roiX, roiY, roiW, roiH, resLevel, null);
+   }
+
+   /**
+    * Composite tiles covering the given ROI, using optionally corrected tile origins.
+    *
+    * @param roiX       Left edge of ROI in full-resolution pixels.
+    * @param roiY       Top edge of ROI in full-resolution pixels.
+    * @param roiW       Width of ROI in full-resolution pixels.
+    * @param roiH       Height of ROI in full-resolution pixels.
+    * @param resLevel   Resolution level (0 = full res, 1 = half res, …).
+    * @param tileOrigins Optional map from Point(col, row) to corrected pixel origin at full
+    *                    resolution. Pass null to use nominal grid positions.
+    * @return 8-bit RGB BufferedImage with blended tile seams.
+    */
+   public BufferedImage composite(int roiX, int roiY, int roiW, int roiH, int resLevel,
+                                  Map<Point, Point2D.Float> tileOrigins) {
       int scale = 1 << resLevel;
       int dsRoiX = roiX / scale;
       int dsRoiY = roiY / scale;
@@ -111,8 +130,21 @@ public class TileBlender {
             }
 
             // Top-left corner of this tile in downsampled pixels
-            int tileOriginX = col * dsStepX;
-            int tileOriginY = row * dsStepY;
+            int tileOriginX;
+            int tileOriginY;
+            if (tileOrigins != null) {
+               Point2D.Float corrected = tileOrigins.get(new Point(col, row));
+               if (corrected != null) {
+                  tileOriginX = (int) (corrected.x / scale);
+                  tileOriginY = (int) (corrected.y / scale);
+               } else {
+                  tileOriginX = col * dsStepX;
+                  tileOriginY = row * dsStepY;
+               }
+            } else {
+               tileOriginX = col * dsStepX;
+               tileOriginY = row * dsStepY;
+            }
 
             // Intersection of tile with ROI in downsampled pixel coordinates
             int interX0 = Math.max(dsRoiX, tileOriginX);
