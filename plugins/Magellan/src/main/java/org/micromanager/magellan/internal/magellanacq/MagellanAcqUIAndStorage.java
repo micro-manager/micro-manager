@@ -285,6 +285,39 @@ public class MagellanAcqUIAndStorage
                        return channels;
                     });
             exportModeController_.installControlsPanel();
+         } else if (loadedData_) {
+            exportModeController_ = new ExportModeController(display_, overlayer_, mouseListener_,
+                    storage_,
+                    () -> {
+                       // For loaded data, supply the current display position for every
+                       // non-row/col axis so the exporter reads the right Z/time/position.
+                       HashMap<String, Object> baseAxes = new HashMap<>();
+                       for (HashMap<String, Object> stored : storage_.getAxesSet()) {
+                          for (String axis : stored.keySet()) {
+                             if (axis.equals(NDTiffStorage.ROW_AXIS)
+                                     || axis.equals(NDTiffStorage.COL_AXIS)
+                                     || axis.equals(MagellanMD.CHANNEL_AXIS)) {
+                                continue;
+                             }
+                             baseAxes.put(axis, display_.getAxisPosition(axis));
+                          }
+                          break; // one entry is enough to learn which axes exist
+                       }
+                       return baseAxes;
+                    },
+                    () -> {
+                       List<String> channels = new java.util.ArrayList<>();
+                       for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+                          if (axes.containsKey(MagellanMD.CHANNEL_AXIS)) {
+                             String ch = (String) axes.get(MagellanMD.CHANNEL_AXIS);
+                             if (!channels.contains(ch)) {
+                                channels.add(ch);
+                             }
+                          }
+                       }
+                       return channels;
+                    });
+            exportModeController_.installControlsPanel();
          }
 
          display_.setCustomCanvasMouseListener(mouseListener_);

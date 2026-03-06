@@ -81,16 +81,20 @@ public class TileAligner {
          return null;
       }
 
-      int scale = 1 << resLevel;
-      int dsStepX = (tileWidth_ - overlapX_) / scale;
-      int dsStepY = (tileHeight_ - overlapY_) / scale;
-      int dsOverlapX = overlapX_ / scale;
-      int dsOverlapY = overlapY_ / scale;
+      // Run alignment at the coarsest available resolution to keep FHT sizes manageable.
+      // Corrections are then scaled up to full-resolution pixel coords for TileBlender.
+      int alignResLevel = storage_.getNumResLevels() - 1;
+      int alignScale = 1 << alignResLevel;
+      int dsStepX = (tileWidth_ - overlapX_) / alignScale;
+      int dsStepY = (tileHeight_ - overlapY_) / alignScale;
+      int dsOverlapX = overlapX_ / alignScale;
+      int dsOverlapY = overlapY_ / alignScale;
 
       List<TranslationResult> translations = computePairwiseTranslations(
-              tiles, resLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, scale);
+              tiles, alignResLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, alignScale);
 
-      return propagateOrigins(tiles, translations, dsStepX, dsStepY, scale);
+      // propagateOrigins returns full-resolution pixel coords regardless of alignResLevel.
+      return propagateOrigins(tiles, translations, dsStepX, dsStepY, alignScale);
    }
 
    private Set<Point> collectTiles() {
@@ -120,9 +124,9 @@ public class TileAligner {
    /**
     * Loads a single tile as a float[] array (first available channel).
     * Returns null if no image is available.
+    * Also fills tileDims[0]=width, tileDims[1]=height from the TaggedImage metadata.
     */
-   private float[] loadTileGray(int row, int col, int resLevel) {
-      // Try channels in order; use first successful load
+   private float[] loadTileGray(int row, int col, int resLevel, int[] tileDims) {
       for (String chName : channelNames_) {
          HashMap<String, Object> axes = buildAxesForTile(row, col, chName);
          if (axes == null) {
@@ -132,7 +136,28 @@ public class TileAligner {
          if (ti == null || !(ti.pix instanceof short[])) {
             continue;
          }
+         // Read actual dimensions from the image tags rather than trusting summary metadata.
+         int w = 0;
+         int h = 0;
+         if (ti.tags != null) {
+            w = ti.tags.optInt("Width", 0);
+            h = ti.tags.optInt("Height", 0);
+         }
          short[] src = (short[]) ti.pix;
+         // Fall back: derive height from pixel count when tags are missing/zero.
+         if (w <= 0 || h <= 0 || w * h != src.length) {
+            // Use summary-metadata width at this res level; derive height from pixel count.
+            int scale = 1 << resLevel;
+            w = tileWidth_ / scale;
+            if (w > 0 && src.length % w == 0) {
+               h = src.length / w;
+            } else {
+               // Cannot determine dimensions — skip.
+               continue;
+            }
+         }
+         tileDims[0] = w;
+         tileDims[1] = h;
          float[] dst = new float[src.length];
          for (int i = 0; i < src.length; i++) {
             dst[i] = src[i] & 0xFFFF;
@@ -265,24 +290,29 @@ public class TileAligner {
       return strip;
    }
 
+   /** Cached tile: pixels + actual dimensions from image tags. */
+   private static class TilePixels {
+      final float[] pix;
+      final int w;
+      final int h;
+      TilePixels(float[] pix, int w, int h) { this.pix = pix; this.w = w; this.h = h; }
+   }
+
    private List<TranslationResult> computePairwiseTranslations(
            Set<Point> tiles, int resLevel,
            int dsStepX, int dsStepY, int dsOverlapX, int dsOverlapY, int scale) {
 
       List<TranslationResult> results = new ArrayList<>();
 
-      int dsTileW = tileWidth_ / scale;
-      int dsTileH = tileHeight_ / scale;
-
-      // Cache loaded tile pixels to avoid redundant storage reads
-      Map<Point, float[]> pixCache = new HashMap<>();
+      // Cache loaded tile pixels keyed by (col, row) Point
+      Map<Point, TilePixels> pixCache = new HashMap<>();
 
       for (Point tile : tiles) {
          int col = tile.x;
          int row = tile.y;
 
-         float[] curPix = getOrLoad(pixCache, row, col, resLevel);
-         if (curPix == null) {
+         TilePixels cur = getOrLoad(pixCache, row, col, resLevel);
+         if (cur == null) {
             continue;
          }
 
@@ -290,23 +320,22 @@ public class TileAligner {
          if (dsOverlapX > 0) {
             Point west = new Point(col - 1, row);
             if (tiles.contains(west)) {
-               float[] westPix = getOrLoad(pixCache, row, col - 1, resLevel);
-               if (westPix != null) {
-                  // Right strip of west tile vs left strip of current tile
-                  float[] strip1 = extractVerticalStrip(westPix, dsTileW, dsTileH,
-                          true, dsOverlapX);
-                  float[] strip2 = extractVerticalStrip(curPix, dsTileW, dsTileH,
-                          false, dsOverlapX);
+               TilePixels westTile = getOrLoad(pixCache, row, col - 1, resLevel);
+               if (westTile != null) {
+                  // Use the smaller height so both strips have identical dimensions
+                  int stripH = Math.min(cur.h, westTile.h);
+                  int stripW = Math.min(dsOverlapX, Math.min(cur.w, westTile.w));
+                  float[] strip1 = extractVerticalStrip(westTile.pix, westTile.w, stripH,
+                          true, stripW);
+                  float[] strip2 = extractVerticalStrip(cur.pix, cur.w, stripH,
+                          false, stripW);
                   int[] outSize = new int[1];
-                  float[] corrMap = crossCorrelateStrip(strip1, strip2,
-                          dsOverlapX, dsTileH, outSize);
+                  float[] corrMap = crossCorrelateStrip(strip1, strip2, stripW, stripH, outSize);
                   if (corrMap != null) {
                      double[] quality = new double[1];
                      int[] shift = findPeak(corrMap, outSize[0], quality);
                      if (quality[0] >= CORRELATION_THRESHOLD) {
-                        // shift[0] = dx correction relative to nominal step
-                        results.add(new TranslationResult(west, tile,
-                                shift[0], shift[1]));
+                        results.add(new TranslationResult(west, tile, shift[0], shift[1]));
                      }
                   }
                }
@@ -317,22 +346,27 @@ public class TileAligner {
          if (dsOverlapY > 0) {
             Point north = new Point(col, row - 1);
             if (tiles.contains(north)) {
-               float[] northPix = getOrLoad(pixCache, row - 1, col, resLevel);
-               if (northPix != null) {
-                  // Bottom strip of north tile vs top strip of current tile
-                  float[] strip1 = extractHorizontalStrip(northPix, dsTileW, dsTileH,
-                          true, dsOverlapY);
-                  float[] strip2 = extractHorizontalStrip(curPix, dsTileW, dsTileH,
-                          false, dsOverlapY);
+               TilePixels northTile = getOrLoad(pixCache, row - 1, col, resLevel);
+               if (northTile != null) {
+                  // Use the smaller width so both strips have identical dimensions
+                  int stripW = Math.min(cur.w, northTile.w);
+                  int stripH = Math.min(dsOverlapY, Math.min(cur.h, northTile.h));
+                  float[] strip1 = extractHorizontalStrip(northTile.pix, northTile.w, northTile.h,
+                          true, stripH);
+                  float[] strip2 = extractHorizontalStrip(cur.pix, cur.w, cur.h,
+                          false, stripH);
+                  // Trim to common width if tiles differ
+                  if (northTile.w != cur.w) {
+                     strip1 = trimStripWidth(strip1, northTile.w, stripH, stripW);
+                     strip2 = trimStripWidth(strip2, cur.w, stripH, stripW);
+                  }
                   int[] outSize = new int[1];
-                  float[] corrMap = crossCorrelateStrip(strip1, strip2,
-                          dsTileW, dsOverlapY, outSize);
+                  float[] corrMap = crossCorrelateStrip(strip1, strip2, stripW, stripH, outSize);
                   if (corrMap != null) {
                      double[] quality = new double[1];
                      int[] shift = findPeak(corrMap, outSize[0], quality);
                      if (quality[0] >= CORRELATION_THRESHOLD) {
-                        results.add(new TranslationResult(north, tile,
-                                shift[0], shift[1]));
+                        results.add(new TranslationResult(north, tile, shift[0], shift[1]));
                      }
                   }
                }
@@ -343,10 +377,23 @@ public class TileAligner {
       return results;
    }
 
-   private float[] getOrLoad(Map<Point, float[]> cache, int row, int col, int resLevel) {
+   private static float[] trimStripWidth(float[] strip, int srcW, int h, int dstW) {
+      if (srcW == dstW) {
+         return strip;
+      }
+      float[] out = new float[dstW * h];
+      for (int y = 0; y < h; y++) {
+         System.arraycopy(strip, y * srcW, out, y * dstW, dstW);
+      }
+      return out;
+   }
+
+   private TilePixels getOrLoad(Map<Point, TilePixels> cache, int row, int col, int resLevel) {
       Point key = new Point(col, row);
       if (!cache.containsKey(key)) {
-         cache.put(key, loadTileGray(row, col, resLevel));
+         int[] dims = new int[2];
+         float[] pix = loadTileGray(row, col, resLevel, dims);
+         cache.put(key, pix != null ? new TilePixels(pix, dims[0], dims[1]) : null);
       }
       return cache.get(key);
    }

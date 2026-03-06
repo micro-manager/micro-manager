@@ -108,20 +108,17 @@ public class ExportDialog extends JDialog {
       add(new JLabel("Format:"));
       add(formatCombo_, "span 2, wrap");
 
+      // Align checkbox
+      alignCheckBox_ = new JCheckBox("Align tiles (phase correlation)");
+      alignCheckBox_.setSelected(PREFS.getBoolean(PREF_ALIGN, true));
+      add(new JLabel(""));
+      add(alignCheckBox_, "span 2, wrap");
+
       // Blend checkbox
       blendCheckBox_ = new JCheckBox("Blend tile overlaps");
       blendCheckBox_.setSelected(PREFS.getBoolean(PREF_BLEND, true));
       add(new JLabel(""));
       add(blendCheckBox_, "span 2, wrap");
-
-      // Align checkbox (only active when blend is on)
-      alignCheckBox_ = new JCheckBox("Align tiles (phase correlation)");
-      alignCheckBox_.setSelected(PREFS.getBoolean(PREF_ALIGN, true));
-      alignCheckBox_.setEnabled(blendCheckBox_.isSelected());
-      blendCheckBox_.addActionListener(e ->
-              alignCheckBox_.setEnabled(blendCheckBox_.isSelected()));
-      add(new JLabel(""));
-      add(alignCheckBox_, "span 2, wrap");
 
       // Path field + browse button
       pathField_ = new JTextField(30);
@@ -167,7 +164,7 @@ public class ExportDialog extends JDialog {
             }
          }
          boolean blend = blendCheckBox_.isSelected();
-         boolean align = blend && alignCheckBox_.isSelected();
+         boolean align = alignCheckBox_.isSelected();
          PREFS.putInt(PREF_RES, level);
          PREFS.put(PREF_FORMAT, format);
          PREFS.put(PREF_PATH, path);

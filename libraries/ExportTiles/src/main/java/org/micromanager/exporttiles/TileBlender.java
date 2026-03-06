@@ -99,8 +99,7 @@ public class TileBlender {
       int dsOverlapX = overlapX_ / scale;
       int dsOverlapY = overlapY_ / scale;
 
-      // Guard against zero-overlap case (no blending needed; caller should use the
-      // fast path, but this is safe to call anyway)
+      // Guard against zero-overlap case
       int halfOX = Math.max(1, dsOverlapX / 2);
       int halfOY = Math.max(1, dsOverlapY / 2);
 
@@ -110,123 +109,122 @@ public class TileBlender {
       float[] bAcc = new float[dsRoiW * dsRoiH];
       float[] wAcc = new float[dsRoiW * dsRoiH];
 
-      // Determine tile row/col range that covers the ROI.
-      // Tile indices are signed (negative rows/cols are valid in explore acquisitions).
-      // Use floor division so negative coordinates round toward -infinity.
-      int colMin = dsStepX > 0 ? Math.floorDiv(dsRoiX, dsStepX) : 0;
-      int rowMin = dsStepY > 0 ? Math.floorDiv(dsRoiY, dsStepY) : 0;
-      int colMax = dsStepX > 0 ? Math.floorDiv(dsRoiX + dsRoiW - 1, dsStepX) : 0;
-      int rowMax = dsStepY > 0 ? Math.floorDiv(dsRoiY + dsRoiH - 1, dsStepY) : 0;
-
       // Get the set of tiles that actually have data at the current z position
       Set<Point> tilesWithData = getTilesWithData();
 
+      // Build the list of (tile, tileOriginX, tileOriginY) to process.
+      // When corrected origins are provided, iterate all tiles with data directly —
+      // the nominal grid range cannot be trusted to contain all corrected positions.
+      // Otherwise use the fast nominal range loop.
+      java.util.List<int[]> tileList = new java.util.ArrayList<>();
+      if (tileOrigins != null) {
+         for (Point tile : tilesWithData) {
+            int col = tile.x;
+            int row = tile.y;
+            Point2D.Float corrected = tileOrigins.get(tile);
+            int ox = corrected != null ? (int) (corrected.x / scale) : col * dsStepX;
+            int oy = corrected != null ? (int) (corrected.y / scale) : row * dsStepY;
+            tileList.add(new int[]{row, col, ox, oy});
+         }
+      } else {
+         // Tile indices are signed; use floor division so negatives round toward -infinity.
+         int colMin = dsStepX > 0 ? Math.floorDiv(dsRoiX, dsStepX) : 0;
+         int rowMin = dsStepY > 0 ? Math.floorDiv(dsRoiY, dsStepY) : 0;
+         int colMax = dsStepX > 0 ? Math.floorDiv(dsRoiX + dsRoiW - 1, dsStepX) : 0;
+         int rowMax = dsStepY > 0 ? Math.floorDiv(dsRoiY + dsRoiH - 1, dsStepY) : 0;
+         for (int row = rowMin; row <= rowMax; row++) {
+            for (int col = colMin; col <= colMax; col++) {
+               if (hasTile(tilesWithData, row, col)) {
+                  tileList.add(new int[]{row, col, col * dsStepX, row * dsStepY});
+               }
+            }
+         }
+      }
+
       int numChannels = channelNames_.size();
 
-      for (int row = rowMin; row <= rowMax; row++) {
-         for (int col = colMin; col <= colMax; col++) {
-            if (!hasTile(tilesWithData, row, col)) {
-               continue;
-            }
+      for (int[] entry : tileList) {
+         int row = entry[0];
+         int col = entry[1];
+         int tileOriginX = entry[2];
+         int tileOriginY = entry[3];
 
-            // Top-left corner of this tile in downsampled pixels
-            int tileOriginX;
-            int tileOriginY;
-            if (tileOrigins != null) {
-               Point2D.Float corrected = tileOrigins.get(new Point(col, row));
-               if (corrected != null) {
-                  tileOriginX = (int) (corrected.x / scale);
-                  tileOriginY = (int) (corrected.y / scale);
-               } else {
-                  tileOriginX = col * dsStepX;
-                  tileOriginY = row * dsStepY;
+         // Intersection of this tile with the ROI in downsampled pixel coordinates
+         int interX0 = Math.max(dsRoiX, tileOriginX);
+         int interY0 = Math.max(dsRoiY, tileOriginY);
+         int interX1 = Math.min(dsRoiX + dsRoiW, tileOriginX + dsTileW);
+         int interY1 = Math.min(dsRoiY + dsRoiH, tileOriginY + dsTileH);
+         if (interX0 >= interX1 || interY0 >= interY1) {
+            continue;
+         }
+
+         // Accumulate blend weights (independent of channel data)
+         for (int py = interY0; py < interY1; py++) {
+            for (int px = interX0; px < interX1; px++) {
+               int tx = px - tileOriginX;
+               int ty = py - tileOriginY;
+               float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
+               float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
+               int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
+               wAcc[outIdx] += wx * wy;
+            }
+         }
+
+         // Accumulate each channel into the weighted colour buffers
+         for (int c = 0; c < numChannels; c++) {
+            String chName = channelNames_.get(c);
+            String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
+
+            int color = 0xFFFFFF;
+            int cMin  = 0;
+            int cMax  = 65535;
+            if (displaySettings_ != null) {
+               try {
+                  JSONObject chSettings = displaySettings_.optJSONObject(displayKey);
+                  if (chSettings != null) {
+                     color = chSettings.optInt("Color", 0xFFFFFF) & 0xFFFFFF;
+                     cMin  = chSettings.optInt("Min", 0);
+                     cMax  = chSettings.optInt("Max", 65535);
+                  }
+               } catch (Exception e) {
+                  // use defaults
                }
-            } else {
-               tileOriginX = col * dsStepX;
-               tileOriginY = row * dsStepY;
             }
+            float range = Math.max(1f, cMax - cMin);
+            float chR = ((color >> 16) & 0xFF) / 255f;
+            float chG = ((color >>  8) & 0xFF) / 255f;
+            float chB = (color         & 0xFF) / 255f;
 
-            // Intersection of tile with ROI in downsampled pixel coordinates
-            int interX0 = Math.max(dsRoiX, tileOriginX);
-            int interY0 = Math.max(dsRoiY, tileOriginY);
-            int interX1 = Math.min(dsRoiX + dsRoiW, tileOriginX + dsTileW);
-            int interY1 = Math.min(dsRoiY + dsRoiH, tileOriginY + dsTileH);
-            if (interX0 >= interX1 || interY0 >= interY1) {
+            HashMap<String, Object> axes = buildAxesForTile(row, col, chName);
+            if (axes == null) {
                continue;
             }
 
-            // Pre-compute blend weights for the intersection region and accumulate
-            // into wAcc. This is done once per tile, independent of channel data.
+            TaggedImage taggedImage = storage_.getImage(axes, resLevel);
+            if (taggedImage == null || !(taggedImage.pix instanceof short[])) {
+               continue;
+            }
+            short[] tilePix = (short[]) taggedImage.pix;
+
             for (int py = interY0; py < interY1; py++) {
                for (int px = interX0; px < interX1; px++) {
                   int tx = px - tileOriginX;
                   int ty = py - tileOriginY;
                   float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
                   float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
+                  float w = wx * wy;
+
+                  int tileIdx = ty * dsTileW + tx;
+                  if (tileIdx < 0 || tileIdx >= tilePix.length) {
+                     continue; // safety guard for edge tiles with non-standard sizes
+                  }
+                  float norm = Math.min(1f, Math.max(0f,
+                          ((tilePix[tileIdx] & 0xFFFF) - cMin) / range));
+
                   int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
-                  wAcc[outIdx] += wx * wy;
-               }
-            }
-
-            // Accumulate each channel into the weighted colour buffers
-            for (int c = 0; c < numChannels; c++) {
-               String chName = channelNames_.get(c);
-               String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
-
-               // Parse channel display settings
-               int color = 0xFFFFFF;
-               int cMin  = 0;
-               int cMax  = 65535;
-               if (displaySettings_ != null) {
-                  try {
-                     JSONObject chSettings = displaySettings_.optJSONObject(displayKey);
-                     if (chSettings != null) {
-                        color = chSettings.optInt("Color", 0xFFFFFF) & 0xFFFFFF;
-                        cMin  = chSettings.optInt("Min", 0);
-                        cMax  = chSettings.optInt("Max", 65535);
-                     }
-                  } catch (Exception e) {
-                     // use defaults
-                  }
-               }
-               float range = Math.max(1f, cMax - cMin);
-               float chR = ((color >> 16) & 0xFF) / 255f;
-               float chG = ((color >>  8) & 0xFF) / 255f;
-               float chB = (color         & 0xFF) / 255f;
-
-               // Build a complete axes map for this tile + channel.
-               // storage_.getImage() requires every axis that the stored data was
-               // written with (z, time, position, row, column, channel, …).
-               // We find a stored axes set that matches baseAxes_ + channel, then
-               // override row and column with the tile coordinates.
-               HashMap<String, Object> axes = buildAxesForTile(row, col, chName);
-               if (axes == null) {
-                  continue;
-               }
-
-               TaggedImage taggedImage = storage_.getImage(axes, resLevel);
-               if (taggedImage == null || !(taggedImage.pix instanceof short[])) {
-                  continue;
-               }
-               short[] tilePix = (short[]) taggedImage.pix;
-
-               for (int py = interY0; py < interY1; py++) {
-                  for (int px = interX0; px < interX1; px++) {
-                     int tx = px - tileOriginX;
-                     int ty = py - tileOriginY;
-                     float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
-                     float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
-                     float w = wx * wy;
-
-                     int tileIdx = ty * dsTileW + tx;
-                     float norm = Math.min(1f, Math.max(0f,
-                             ((tilePix[tileIdx] & 0xFFFF) - cMin) / range));
-
-                     int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
-                     rAcc[outIdx] += norm * chR * w;
-                     gAcc[outIdx] += norm * chG * w;
-                     bAcc[outIdx] += norm * chB * w;
-                  }
+                  rAcc[outIdx] += norm * chR * w;
+                  gAcc[outIdx] += norm * chG * w;
+                  bAcc[outIdx] += norm * chB * w;
                }
             }
          }

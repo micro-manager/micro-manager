@@ -47,7 +47,7 @@ public class ExportImageExporter {
                       int roiX, int roiY, int roiW, int roiH,
                       int resLevel, String format, String outputPath, boolean blend, boolean align)
            throws Exception {
-      if (blend) {
+      if (blend || align) {
          JSONObject summaryMD = storage_.getSummaryMetadata();
          if (summaryMD != null) {
             Map<Point, Point2D.Float> origins = null;
