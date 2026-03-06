@@ -354,7 +354,12 @@ public class TileAligner {
       final float[] pix;
       final int w;
       final int h;
-      TilePixels(float[] pix, int w, int h) { this.pix = pix; this.w = w; this.h = h; }
+
+      TilePixels(float[] pix, int w, int h) {
+         this.pix = pix;
+         this.w = w;
+         this.h = h;
+      }
    }
 
    private List<TranslationResult> computePairwiseTranslations(

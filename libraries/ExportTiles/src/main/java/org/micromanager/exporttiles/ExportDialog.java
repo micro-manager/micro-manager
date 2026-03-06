@@ -163,8 +163,8 @@ public class ExportDialog extends JDialog {
                return;
             }
          }
-         boolean blend = blendCheckBox_.isSelected();
-         boolean align = alignCheckBox_.isSelected();
+         final boolean blend = blendCheckBox_.isSelected();
+         final boolean align = alignCheckBox_.isSelected();
          PREFS.putInt(PREF_RES, level);
          PREFS.put(PREF_FORMAT, format);
          PREFS.put(PREF_PATH, path);

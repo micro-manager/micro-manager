@@ -214,10 +214,10 @@ public class TileBlender {
                   // use defaults
                }
             }
-            float range = Math.max(1f, cMax - cMin);
-            float chR = ((color >> 16) & 0xFF) / 255f;
-            float chG = ((color >>  8) & 0xFF) / 255f;
-            float chB = (color         & 0xFF) / 255f;
+            final float range = Math.max(1f, cMax - cMin);
+            final float chR = ((color >> 16) & 0xFF) / 255f;
+            final float chG = ((color >>  8) & 0xFF) / 255f;
+            final float chB = (color         & 0xFF) / 255f;
 
             HashMap<String, Object> axes = buildAxesForTile(row, col, chName);
             if (axes == null) {
@@ -266,13 +266,17 @@ public class TileBlender {
       BufferedImage out = new BufferedImage(dsRoiW, dsRoiH, BufferedImage.TYPE_INT_RGB);
       for (int i = 0; i < dsRoiW * dsRoiH; i++) {
          float w = wAcc[i];
-         int r, g, b;
+         int r;
+         int g;
+         int b;
          if (w > 0f) {
             r = Math.min(255, (int) (rAcc[i] / w * 255));
             g = Math.min(255, (int) (gAcc[i] / w * 255));
             b = Math.min(255, (int) (bAcc[i] / w * 255));
          } else {
-            r = 0; g = 0; b = 0;
+            r = 0;
+            g = 0;
+            b = 0;
          }
          out.setRGB(i % dsRoiW, i / dsRoiW, (r << 16) | (g << 8) | b);
       }
@@ -285,8 +289,12 @@ public class TileBlender {
     * weight 1/halfOverlap rather than 0, ensuring no pixel is ever fully zero.
     */
    private static float ramp(int d, int halfOverlap) {
-      if (d <= 0) return 0f;
-      if (d >= halfOverlap) return 1f;
+      if (d <= 0) {
+         return 0f;
+      }
+      if (d >= halfOverlap) {
+         return 1f;
+      }
       return (float) d / halfOverlap;
    }
 

@@ -1,10 +1,10 @@
 package org.micromanager.exporttiles;
 
+import java.awt.Dialog;
 import java.awt.Window;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.awt.Dialog;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -52,7 +52,7 @@ public class ExportTiles {
          return;
       }
 
-      List<String> channels = channelNames.isEmpty()
+      final List<String> channels = channelNames.isEmpty()
               ? Collections.singletonList(null) : channelNames;
 
       // Build a non-modal progress dialog
