@@ -2020,7 +2020,7 @@ public class GUI extends JFrame {
       if (JavaUtils.isMac()) {
          System.setProperty("apple.awt.fileDialogForDirectories", "true");
          FileDialog fd = new FileDialog(this, "Select Magellan dataset to load", FileDialog.LOAD);
-
+         fd.setDirectory(settings_.getStoredOpenDatasetDirectory());
          fd.setVisible(true);
          if (fd.getFile() != null) {
             selectedFile = new File(fd.getDirectory() + File.separator + fd.getFile());
@@ -2029,7 +2029,7 @@ public class GUI extends JFrame {
          fd.dispose();
          System.setProperty("apple.awt.fileDialogForDirectories", "false");
       } else {
-         JFileChooser fc = new JFileChooser(globalSavingDirTextField_.getText());
+         JFileChooser fc = new JFileChooser(settings_.getStoredOpenDatasetDirectory());
          fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
          fc.setDialogTitle("Select Magellan dataset to load");
          int returnVal = fc.showOpenDialog(this);
@@ -2040,6 +2040,8 @@ public class GUI extends JFrame {
       if (selectedFile == null) {
          return; //canceled
       }
+      settings_.storeOpenDatasetDirectory(selectedFile.getParent() != null
+              ? selectedFile.getParent() : selectedFile.getAbsolutePath());
       final File finalFile = selectedFile;
       new Thread(() -> {
          //TODO
