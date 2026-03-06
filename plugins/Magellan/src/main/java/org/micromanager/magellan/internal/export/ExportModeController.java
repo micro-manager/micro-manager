@@ -101,13 +101,23 @@ public class ExportModeController {
                           controlsPanel_.setStatus(null);
                        }
                     }
-                    @Override public void mousePressed(MouseEvent e) { dismiss(); }
+
+                    @Override public void mousePressed(MouseEvent e) {
+                       dismiss();
+                    }
+
                     @Override public void mouseReleased(MouseEvent e) {}
+
                     @Override public void mouseClicked(MouseEvent e) {}
+
                     @Override public void mouseDragged(MouseEvent e) {}
+
                     @Override public void mouseMoved(MouseEvent e) {}
+
                     @Override public void mouseEntered(MouseEvent e) {}
+
                     @Override public void mouseExited(MouseEvent e) {}
+
                     @Override public void mouseWheelMoved(MouseWheelEvent e) {}
                  });
                  display_.getCanvasJPanel().setCursor(Cursor.getDefaultCursor());

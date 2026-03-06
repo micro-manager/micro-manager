@@ -44,9 +44,9 @@ import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.magellan.internal.explore.ChannelGroupSettings;
-import org.micromanager.magellan.internal.export.ExportModeController;
 import org.micromanager.magellan.internal.explore.ExploreAcquisition;
 import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
+import org.micromanager.magellan.internal.export.ExportModeController;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
 import org.micromanager.magellan.internal.gui.SurfaceGridPanel;
@@ -61,7 +61,6 @@ import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
-import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.remote.PycroManagerCompatibleUI;
 
