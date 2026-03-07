@@ -1,4 +1,4 @@
-package org.micromanager.display.internal.ndviewer2;
+package org.micromanager.ndviewer2.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,8 +19,13 @@ import org.micromanager.display.AbstractDataViewer;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
+// API gaps: the following are internal mmstudio classes that would need to be
+// promoted to public API for this library to be fully independent:
+//   - ImageStatsPublisher (display.inspector.internal.panels.intensity)
+//   - StatsComputeQueue and imagestats classes (display.internal.imagestats)
+//   - DataViewerWillCloseEvent, DataViewerDidBecomeActiveEvent,
+//     DataViewerDidBecomeVisibleEvent (display.internal.event)
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -30,9 +35,10 @@ import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
-import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.api.NDViewerDataSource;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
+import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * NDViewer2 data viewer: combines NDViewer's pyramidal canvas with MM's
@@ -44,12 +50,12 @@ import org.micromanager.ndviewer.main.NDViewer;
  * histogram computation callbacks.</p>
  */
 public final class NDViewer2DataViewer extends AbstractDataViewer
-      implements ImageStatsPublisher, StatsComputeQueue.Listener {
+      implements NDViewer2DataViewerAPI, ImageStatsPublisher, StatsComputeQueue.Listener {
 
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
 
    private final Studio studio_;
-   private final NDViewer ndViewer_;
+   private final NDViewer2 ndViewer2_;
    private final NDViewer2DataProvider dataProvider_;
    private final AxesBridge axesBridge_;
    private final DisplaySettingsBridge displaySettingsBridge_;
@@ -91,9 +97,11 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // channels with different default colors.
    private volatile boolean preserveMMColors_ = false;
 
-   // True when the current stats computation is for a newly arrived image
-   // (should be merged into the accumulator). Reset after processing.
-   private volatile boolean accumulateNext_ = false;
+   // Set of channel indices whose next stats result should be merged into the
+   // accumulator. Replaces the old single boolean to correctly handle multiple
+   // channels arriving in rapid succession without flag aliasing.
+   private final java.util.Set<Integer> accumulateNextChannels_ =
+         java.util.Collections.synchronizedSet(new java.util.HashSet<>());
 
    // Closed state
    private volatile boolean closed_ = false;
@@ -105,56 +113,32 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * @param dataSource      NDViewer data source (typically NDTiffAndViewerAdapter)
     * @param acqInterface    acquisition control interface (may be null)
     * @param dataProvider    the MM DataProvider wrapping NDTiff storage
-    * @param axesBridge      shared axes bridge
     * @param summaryMetadata NDTiff summary metadata JSON
     * @param pixelSizeUm     pixel size in micrometers
     * @param rgb             whether images are RGB
     */
    public NDViewer2DataViewer(Studio studio,
-                               NDViewerDataSource dataSource,
-                               NDViewerAcqInterface acqInterface,
+                               NDViewer2DataSource dataSource,
+                               NDViewer2AcqInterface acqInterface,
                                NDViewer2DataProvider dataProvider,
-                               AxesBridge axesBridge,
                                JSONObject summaryMetadata,
                                double pixelSizeUm,
                                boolean rgb) {
-      super(DefaultDisplaySettings.builder().build());
+      super(studio.displays().displaySettingsBuilder().build());
       studio_ = studio;
       dataProvider_ = dataProvider;
-      axesBridge_ = axesBridge;
-      displaySettingsBridge_ = new DisplaySettingsBridge(axesBridge_);
+      axesBridge_ = dataProvider.getAxesBridge();
+      displaySettingsBridge_ = new DisplaySettingsBridge(studio_.displays(), axesBridge_);
 
       // Create NDViewer (the canvas/scrollbar viewer)
-      ndViewer_ = new NDViewer(dataSource, acqInterface,
+      ndViewer2_ = new NDViewer2(dataSource, acqInterface,
             summaryMetadata, pixelSizeUm, rgb);
-
-      // Hide NDViewer's side controls (histogram/metadata panels).
-      // We use reflection because NDViewer does not yet expose a public API
-      // for this. This is coupled to NDViewer's internal GuiManager layout —
-      // if field/method names change in a future NDViewer version, the
-      // reflection will fail gracefully (side controls remain visible).
-      // TODO: add a public API to NDViewer and remove this reflection.
-      try {
-         Object guiManager = ndViewer_.getGUIManager();
-         java.lang.reflect.Field displayWindowField =
-               guiManager.getClass().getDeclaredField("displayWindow_");
-         displayWindowField.setAccessible(true);
-         Object displayWindow = displayWindowField.get(guiManager);
-         java.lang.reflect.Method collapse =
-               displayWindow.getClass().getMethod(
-                     "collapseOrExpandSideControls", boolean.class);
-         collapse.invoke(displayWindow, false);
-      } catch (Exception e) {
-         // If reflection fails, side controls remain visible — not critical
-         studio_.logs().logError(e,
-               "Could not hide NDViewer side controls");
-      }
 
       // Set up stats computation
       computeQueue_.addListener(this);
 
       // Hook into NDViewer to detect image changes
-      ndViewer_.addSetImageHook(axes -> onNDViewerImageChanged(axes));
+      ndViewer2_.addSetImageHook(axes -> onNDViewerImageChanged(axes));
 
       // Register with Studio so Inspector discovers us
       studio_.displays().addViewer(this);
@@ -180,14 +164,14 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          // Read current NDViewer state BEFORE applying
          DisplaySettings currentNDViewerSettings =
                displaySettingsBridge_.readFromNDViewer(
-                     ndViewer_.getDisplaySettingsObject(), requestedSettings);
+                     ndViewer2_.getDisplaySettingsObject(), requestedSettings);
 
          // Apply MM settings to NDViewer contrast model
          displaySettingsBridge_.applyToNDViewer(
-               requestedSettings, ndViewer_.getDisplaySettingsObject());
+               requestedSettings, ndViewer2_.getDisplaySettingsObject());
 
          if (!requestedSettings.equals(currentNDViewerSettings)) {
-            ndViewer_.update();
+            ndViewer2_.update();
          }
       } catch (NullPointerException e) {
          studio_.logs().logDebugMessage("NDViewer2: NPE in handleDisplaySettings "
@@ -210,9 +194,9 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       try {
          HashMap<String, Object> axes = axesBridge_.coordsToNDViewer(position);
          for (Map.Entry<String, Object> entry : axes.entrySet()) {
-            if (!NDViewer.CHANNEL_AXIS.equals(entry.getKey())
+            if (!NDViewer2.CHANNEL_AXIS.equals(entry.getKey())
                   && entry.getValue() instanceof Number) {
-               ndViewer_.setAxisPosition(
+               ndViewer2_.setAxisPosition(
                      entry.getKey(), ((Number) entry.getValue()).intValue());
             }
          }
@@ -265,8 +249,8 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    public boolean isVisible() {
       // NDViewer window visibility
       try {
-         return ndViewer_.getCanvasJPanel() != null
-               && ndViewer_.getCanvasJPanel().isShowing();
+         return ndViewer2_.getCanvasJPanel() != null
+               && ndViewer2_.getCanvasJPanel().isShowing();
       } catch (Exception e) {
          return false;
       }
@@ -307,42 +291,46 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
 
    @Override
    public long imageStatsReady(ImagesAndStats result) {
-      if (accumulateMode_) {
-         // Merge new-image stats into the per-channel accumulator
-         if (accumulateNext_ && result.isRealStats()) {
-            accumulateNext_ = false;
-            List<ImageStats> newStats = result.getResult();
-            Coords position = result.getRequest().getNominalCoords();
-            int channelIndex = position != null ? position.getChannel() : 0;
-
-            if (!newStats.isEmpty()) {
-               ImageStats tileStats = newStats.get(0);
-               synchronized (accumulatedStatsPerChannel_) {
-                  ImageStats existing = accumulatedStatsPerChannel_.get(channelIndex);
-                  if (existing == null) {
-                     accumulatedStatsPerChannel_.put(channelIndex, tileStats);
-                  } else {
-                     accumulatedStatsPerChannel_.put(channelIndex,
-                           mergeImageStats(existing, tileStats));
-                  }
+      if (accumulateMode_ && result.isRealStats()) {
+         // Merge each per-channel ImageStats into the accumulator, keyed by the
+         // channel index of the corresponding image in the request.
+         List<ImageStats> newStats = result.getResult();
+         ImageStatsRequest req = result.getRequest();
+         synchronized (accumulatedStatsPerChannel_) {
+            for (int i = 0; i < newStats.size(); i++) {
+               ImageStats tileStats = newStats.get(i);
+               // Channel index comes from the image's own Coords.
+               int channelIndex = (req.getNumberOfImages() > i)
+                     ? req.getImage(i).getCoords().getChannel() : i;
+               if (!accumulateNextChannels_.contains(channelIndex)) {
+                  continue; // not a new-image result for this channel
                }
+               ImageStats existing = accumulatedStatsPerChannel_.get(channelIndex);
+               accumulatedStatsPerChannel_.put(channelIndex,
+                     existing == null ? tileStats : mergeImageStats(existing, tileStats));
             }
          }
-         // Always post accumulated stats while in accumulate mode,
-         // so scrollbar-triggered recomputes don't reset the histogram.
-         // Build a list of stats for all accumulated channels.
+         accumulateNextChannels_.clear();
+
+         // Build a replacement result using accumulated stats for every channel,
+         // re-wrapping each image with the accumulated ImageStats.
+         // This ensures scrollbar-triggered recomputes also show the full
+         // accumulated histogram rather than just the current tile's stats.
          synchronized (accumulatedStatsPerChannel_) {
             if (!accumulatedStatsPerChannel_.isEmpty()) {
-               // Get channel index from the request to return correct channel's stats
-               Coords position = result.getRequest().getNominalCoords();
-               int channelIndex = position != null ? position.getChannel() : 0;
-               ImageStats channelStats = accumulatedStatsPerChannel_.get(channelIndex);
-               if (channelStats != null) {
-                  result = ImagesAndStats.create(
-                        result.getStatsSequenceNumber(),
-                        result.getRequest(),
-                        channelStats);
+               List<ImageStats> accumulated = new ArrayList<>();
+               List<ImageStats> rawStats = result.getResult();
+               ImageStatsRequest rawReq = result.getRequest();
+               for (int i = 0; i < rawStats.size(); i++) {
+                  int channelIndex = (rawReq.getNumberOfImages() > i)
+                        ? rawReq.getImage(i).getCoords().getChannel() : i;
+                  ImageStats acc = accumulatedStatsPerChannel_.get(channelIndex);
+                  accumulated.add(acc != null ? acc : rawStats.get(i));
                }
+               result = ImagesAndStats.create(
+                     result.getStatsSequenceNumber(),
+                     result.getRequest(),
+                     accumulated.toArray(new ImageStats[0]));
             }
          }
       }
@@ -377,7 +365,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
          final boolean preserveColors = preserveMMColors_;
          statsExecutor_.submit(() -> {
             DisplaySettings fromNDViewer = displaySettingsBridge_.readFromNDViewer(
-                  ndViewer_.getDisplaySettingsObject(), capturedDS);
+                  ndViewer2_.getDisplaySettingsObject(), capturedDS);
 
             // If preserving MM colors, restore original colors from capturedDS
             // while keeping contrast (min/max/gamma) from NDViewer
@@ -406,16 +394,19 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
                // Settings match after color restoration, but NDViewer has wrong colors.
                // Force push MM colors to NDViewer.
                displaySettingsBridge_.applyToNDViewer(
-                     capturedDS, ndViewer_.getDisplaySettingsObject());
-               ndViewer_.update();
+                     capturedDS, ndViewer2_.getDisplaySettingsObject());
+               ndViewer2_.update();
             }
          });
       }
 
       // Skip redundant stats when accumulate mode has a pending new-image
-      // request (newImageArrived already submitted one for this tile)
-      if (accumulateMode_ && accumulateNext_) {
-         return;
+      // request for the current channel (newImageArrived already submitted one)
+      if (accumulateMode_) {
+         int ch = newPosition != null ? newPosition.getChannel() : 0;
+         if (accumulateNextChannels_.contains(ch)) {
+            return;
+         }
       }
       // Submit stats computation request asynchronously so disk I/O does not
       // block NDViewer's render thread
@@ -471,12 +462,71 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // ---- New image notification ----
 
    /**
+    * Notify this viewer that a new tile has arrived with images for all channels.
+    * All images are submitted as a single stats request so the Inspector
+    * receives one result with all channel histograms in one callback.
+    * StatsComputeQueue uses a global sequence number, so separate per-channel
+    * requests would cause older-sequence results to be silently discarded.
+    *
+    * <p>Images and axes lists must correspond 1-to-1. The axes map for each
+    * image must contain a "channel" key whose value AxesBridge can map to an
+    * integer channel index.</p>
+    *
+    * @param images list of images (one per channel)
+    * @param axesList list of NDViewer axes maps (one per image, same order)
+    */
+   @Override
+   public void newTileArrived(final List<Image> images,
+                              final List<HashMap<String, Object>> axesList) {
+      if (images == null || images.isEmpty()) {
+         return;
+      }
+      // Resolve channel indices and re-wrap images with correct Coords
+      // before queuing the EDT task — registerChannel is thread-safe.
+      final List<Image> tagged = new ArrayList<>(images.size());
+      for (int i = 0; i < images.size(); i++) {
+         Image img = images.get(i);
+         if (img == null) {
+            continue;
+         }
+         int channelIndex = 0;
+         if (i < axesList.size() && axesList.get(i) != null) {
+            Object chValue = axesList.get(i).get(NDViewer2.CHANNEL_AXIS);
+            if (chValue != null) {
+               channelIndex = axesBridge_.registerChannel(chValue);
+            }
+         }
+         Coords coords = Coordinates.builder().channel(channelIndex).build();
+         tagged.add(img.copyWith(coords, img.getMetadata()));
+         if (accumulateMode_) {
+            accumulateNextChannels_.add(channelIndex);
+         }
+      }
+      if (tagged.isEmpty()) {
+         return;
+      }
+      // Delay submission until after pending EDT tasks (e.g. histogram panel
+      // creation from DataProviderHasNewImageEvent) so panels exist first.
+      SwingUtilities.invokeLater(() -> {
+         // Use channel=0 as the nominal display position for the request;
+         // the Inspector routes each ImageStats to its panel via the individual
+         // image coords, not the request's nominal position.
+         Coords nominalPosition = tagged.get(0).getCoords();
+         setDisplayPosition(nominalPosition);
+         ImageStatsRequest request = ImageStatsRequest.create(
+               nominalPosition, tagged, BoundsRectAndMask.unselected());
+         computeQueue_.submitRequest(request);
+      });
+   }
+
+   /**
     * Notify this viewer that a new image has arrived at the given axes.
     * Fetches the image directly by axes (avoiding the Coords round-trip
     * that drops axes with value 0) and submits a stats computation request.
     *
-    * <p>Call this from external code (e.g. DeskewExploreManager) after
-    * storing a new image, so the Inspector histogram updates.</p>
+    * <p>Prefer {@link #newTileArrived} when images for all channels of a tile
+    * are available at the same time, to avoid sequence-number conflicts in the
+    * stats queue.</p>
     *
     * @param axes the NDViewer axes of the new image
     */
@@ -484,7 +534,18 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       try {
          final Image image = dataProvider_.getDownsampledImageByAxes(axes);
          if (image != null) {
-            submitImageForStats(image);
+            int channelIndex = 0;
+            if (axes != null) {
+               Object chValue = axes.get(NDViewer2.CHANNEL_AXIS);
+               if (chValue != null) {
+                  channelIndex = axesBridge_.registerChannel(chValue);
+               }
+            }
+            List<Image> imgs = new ArrayList<>();
+            List<HashMap<String, Object>> axesList = new ArrayList<>();
+            imgs.add(image);
+            axesList.add(axes);
+            newTileArrived(imgs, axesList);
          }
       } catch (IOException e) {
          // Non-critical — stats won't update for this image
@@ -493,31 +554,31 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
 
    /**
     * Notify this viewer that a new image has arrived.
-    * Uses the provided Image directly instead of reading from storage.
+    * Uses the provided Image directly and derives the correct MM channel index
+    * from the NDViewer axes map via AxesBridge.
     *
     * @param image the image
+    * @param axes  the NDViewer axes of the image (e.g. {channel: "DAPI", ...})
     */
-   public void newImageArrived(Image image) {
+   public void newImageArrived(Image image, HashMap<String, Object> axes) {
       if (image != null) {
-         submitImageForStats(image);
+         List<Image> imgs = new ArrayList<>();
+         List<HashMap<String, Object>> axesList = new ArrayList<>();
+         imgs.add(image);
+         axesList.add(axes);
+         newTileArrived(imgs, axesList);
       }
    }
 
-   private void submitImageForStats(final Image image) {
-      // Delay stats submission to run after any pending EDT tasks
-      // (e.g. the histogram panel creation triggered by
-      // DataProviderHasNewImageEvent). This ensures the histogram
-      // panel exists before stats arrive.
-      SwingUtilities.invokeLater(() -> {
-         List<Image> images = new ArrayList<>();
-         images.add(image);
-         Coords position = image.getCoords();
-         setDisplayPosition(position);
-         accumulateNext_ = true;
-         ImageStatsRequest request = ImageStatsRequest.create(
-               position, images, BoundsRectAndMask.unselected());
-         computeQueue_.submitRequest(request);
-      });
+   /**
+    * Notify this viewer that a new image has arrived.
+    *
+    * @param image the image (channel index taken from its own Coords)
+    */
+   public void newImageArrived(Image image) {
+      if (image != null) {
+         newImageArrived(image, null);
+      }
    }
 
    // ---- Histogram accumulation ----
@@ -541,9 +602,11 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     *
     * @param enabled true to enable accumulation, false to disable
     */
+   @Override
    public void setAccumulateStats(boolean enabled) {
       accumulateMode_ = enabled;
       if (!enabled) {
+         accumulateNextChannels_.clear();
          synchronized (accumulatedStatsPerChannel_) {
             accumulatedStatsPerChannel_.clear();
          }
@@ -554,6 +617,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * Reset the accumulated histogram stats without changing the mode.
     */
    public void resetAccumulatedStats() {
+      accumulateNextChannels_.clear();
       synchronized (accumulatedStatsPerChannel_) {
          accumulatedStatsPerChannel_.clear();
       }
@@ -571,6 +635,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     *
     * @param preserve true to preserve MM colors, false for normal bidirectional sync
     */
+   @Override
    public void setPreserveMMColors(boolean preserve) {
       preserveMMColors_ = preserve;
    }
@@ -582,8 +647,9 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     *
     * @return the NDViewer
     */
-   public NDViewer getNDViewer() {
-      return ndViewer_;
+   @Override
+   public NDViewer2 getNDViewer() {
+      return ndViewer2_;
    }
 
    /**
@@ -592,12 +658,13 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * @param title the title to set
     */
    public void setWindowTitle(String title) {
-      ndViewer_.setWindowTitle(title);
+      ndViewer2_.setWindowTitle(title);
    }
 
    /**
     * Close the viewer and release resources.
     */
+   @Override
    public void close() {
       if (closed_) {
          return;
@@ -605,7 +672,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       closed_ = true;
       shutdownMM2Resources();
       try {
-         ndViewer_.close();
+         ndViewer2_.close();
       } catch (Exception e) {
          // NDViewer may already be closing/disposed — not critical
       }
@@ -617,6 +684,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     * to avoid calling ndViewer_.close() a second time, which can queue
     * additional EDT runnables that NPE on partially-torn-down state.
     */
+   @Override
    public void closeWithoutNDViewer() {
       if (closed_) {
          return;

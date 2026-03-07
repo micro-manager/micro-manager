@@ -13,28 +13,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
-import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
-import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.api.NDViewerDataSource;
-import org.micromanager.ndviewer.api.OverlayerPlugin;
-import org.micromanager.ndviewer.overlay.Overlay;
-import org.micromanager.ndviewer.overlay.Roi;
-import org.micromanager.ndviewer.overlay.TextRoi;
+import org.micromanager.ndviewer2.NDViewer2API;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
+import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
+import org.micromanager.ndviewer2.overlay.Overlay;
+import org.micromanager.ndviewer2.overlay.Roi;
+import org.micromanager.ndviewer2.overlay.TextRoi;
 
 /**
  * Data source for the Deskew Explore mode NDViewer.
  * Implements the interfaces required for NDViewer to function,
  * including mouse handling and overlay rendering for tile selection.
  */
-public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqInterface,
-        CanvasMouseListenerInterface, OverlayerPlugin {
+public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2AcqInterface,
+        NDViewer2CanvasMouseListenerInterface, NDViewer2OverlayerPlugin {
 
    private static final double ZOOM_FACTOR = 1.4;
 
    private final DeskewExploreManager manager_;
+   private volatile NDViewer2API viewer_;
    private volatile MultiresNDTiffAPI storage_;
    private volatile boolean finished_ = false;
 
@@ -62,6 +63,10 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
 
    public DeskewExploreDataSource(DeskewExploreManager manager) {
       manager_ = manager;
+   }
+
+   public void setViewer(NDViewer2API viewer) {
+      viewer_ = viewer;
    }
 
    public void setStorage(MultiresNDTiffAPI storage) {
@@ -230,7 +235,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       return acquiredTiles_.contains(row + "," + col);
    }
 
-   // ===================== NDViewerDataSource interface =====================
+   // ===================== NDViewer2DataSource interface =====================
 
    @Override
    public int[] getBounds() {
@@ -318,14 +323,14 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       return 16;
    }
 
-   // ===================== NDViewerAcqInterface interface =====================
+   // ===================== NDViewer2AcqInterface interface =====================
 
    @Override
    public boolean isFinished() {
       // Return false while exploring so NDViewer will call increaseMaxResolutionLevel()
       // if the user zooms out further than the pre-built pyramid covers.
       // setFinished(true) is called by the manager when the session stops.
-      // Note: the close dialog is controlled by the separate NDViewerAcqInterface
+      // Note: the close dialog is controlled by the separate NDViewer2AcqInterface
       // (createAcqInterface()), which always returns isFinished()=true, so changing
       // this does not affect the "Finish Acquisition?" dialog.
       return finished_;
@@ -357,7 +362,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       // Non-blocking for explore mode
    }
 
-   // ===================== CanvasMouseListenerInterface =====================
+   // ===================== NDViewer2CanvasMouseListenerInterface =====================
 
    @Override
    public void mousePressed(MouseEvent e) {
@@ -520,7 +525,7 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       return new Point(row, col);
    }
 
-   // ===================== OverlayerPlugin interface =====================
+   // ===================== NDViewer2OverlayerPlugin interface =====================
 
    @Override
    public void drawOverlay(Overlay overlay, Point2D.Double displayImageSize,
@@ -528,7 +533,9 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
                            HashMap<String, Object> axes, double magnification,
                            Point2D.Double viewOffset) {
       if (tileWidth_ <= 0 || tileHeight_ <= 0) {
-         manager_.setOverlay(overlay);
+         if (viewer_ != null) {
+            viewer_.setOverlay(overlay);
+         }
          return;
       }
 
@@ -648,6 +655,8 @@ public class DeskewExploreDataSource implements NDViewerDataSource, NDViewerAcqI
       }
 
       // Set the overlay on the viewer
-      manager_.setOverlay(overlay);
+      if (viewer_ != null) {
+         viewer_.setOverlay(overlay);
+      }
    }
 }

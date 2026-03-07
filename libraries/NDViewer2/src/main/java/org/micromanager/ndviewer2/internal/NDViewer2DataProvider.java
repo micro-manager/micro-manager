@@ -1,6 +1,8 @@
-package org.micromanager.display.internal.ndviewer2;
+package org.micromanager.ndviewer2.internal;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.SubscriberExceptionContext;
+import com.google.common.eventbus.SubscriberExceptionHandler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,18 +10,18 @@ import java.util.List;
 import java.util.Set;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataManager;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultNewImageEvent;
-import org.micromanager.data.internal.DefaultSummaryMetadata;
-import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * Wraps NDTiffStorage (MultiresNDTiffAPI) as an MM DataProvider.
@@ -27,28 +29,44 @@ import org.micromanager.ndviewer.main.NDViewer;
  * <p>This allows the MM Inspector and other DataProvider consumers to
  * interact with NDTiff datasets that are being displayed through NDViewer2.</p>
  */
-public final class NDViewer2DataProvider implements DataProvider {
+public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
 
    private final MultiresNDTiffAPI storage_;
+   private final DataManager dataManager_;
    private final AxesBridge axesBridge_;
-   private final EventBus eventBus_ =
-         new EventBus(EventBusExceptionLogger.getInstance());
+   private static final SubscriberExceptionHandler EVENT_BUS_EXCEPTION_HANDLER =
+         (Throwable ex, SubscriberExceptionContext ctx) ->
+               System.err.println("NDViewer2DataProvider EventBus subscriber threw: "
+                     + ex + " [event=" + ctx.getEvent()
+                     + ", subscriber=" + ctx.getSubscriber() + "]");
+
+   private final EventBus eventBus_ = new EventBus(EVENT_BUS_EXCEPTION_HANDLER);
    private final String name_;
 
    /**
     * Construct a data provider wrapping the given NDTiff storage.
     *
-    * @param storage    the NDTiff storage backend
-    * @param axesBridge shared axes bridge for coordinate translation
-    * @param name       display name for this data provider
+    * @param dataManager the MM DataManager for creating Image and SummaryMetadata objects
+    * @param storage     the NDTiff storage backend
+    * @param name        display name for this data provider
     */
-   public NDViewer2DataProvider(MultiresNDTiffAPI storage,
-                                AxesBridge axesBridge, String name) {
+   public NDViewer2DataProvider(DataManager dataManager, MultiresNDTiffAPI storage, String name) {
+      dataManager_ = dataManager;
       storage_ = storage;
-      axesBridge_ = axesBridge;
+      axesBridge_ = new AxesBridge();
       name_ = name;
       // Discover existing channels
       axesBridge_.discoverChannels(storage_.getAxesSet());
+   }
+
+   /**
+    * Return the shared axes bridge used by this provider.
+    * Package-private: only NDViewer2DataViewer should need this.
+    *
+    * @return the axes bridge
+    */
+   AxesBridge getAxesBridge() {
+      return axesBridge_;
    }
 
    @Override
@@ -58,7 +76,11 @@ public final class NDViewer2DataProvider implements DataProvider {
       if (ti == null || ti.pix == null) {
          return null;
       }
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    /**
@@ -74,7 +96,11 @@ public final class NDViewer2DataProvider implements DataProvider {
          return null;
       }
       Coords coords = axesBridge_.ndViewerToCoords(axes);
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    @Override
@@ -89,7 +115,11 @@ public final class NDViewer2DataProvider implements DataProvider {
          return null;
       }
       Coords coords = axesBridge_.ndViewerToCoords(firstKey);
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    @Override
@@ -104,7 +134,7 @@ public final class NDViewer2DataProvider implements DataProvider {
          for (String axis : key.keySet()) {
             String mmAxis = axis;
             // NDViewer "channel" axis maps to Coords.CHANNEL
-            if (NDViewer.CHANNEL_AXIS.equals(axis)) {
+            if (NDViewer2.CHANNEL_AXIS.equals(axis)) {
                mmAxis = Coords.CHANNEL;
             }
             if (!axes.contains(mmAxis)) {
@@ -140,7 +170,7 @@ public final class NDViewer2DataProvider implements DataProvider {
    @Override
    public SummaryMetadata getSummaryMetadata() {
       // Parse channel names from NDTiff storage for Inspector display
-      DefaultSummaryMetadata.Builder builder = new DefaultSummaryMetadata.Builder();
+      SummaryMetadata.Builder builder = dataManager_.summaryMetadataBuilder();
 
       try {
          JSONObject json = storage_.getSummaryMetadata();
@@ -187,6 +217,7 @@ public final class NDViewer2DataProvider implements DataProvider {
       return storage_.hasImage(axes);
    }
 
+   @Deprecated
    @Override
    public List<Image> getImagesMatching(Coords coords) throws IOException {
       return getImagesIgnoringAxes(coords);
@@ -263,7 +294,11 @@ public final class NDViewer2DataProvider implements DataProvider {
       if (ti == null || ti.pix == null) {
          return getImage(coords);
       }
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    /**
@@ -285,7 +320,11 @@ public final class NDViewer2DataProvider implements DataProvider {
          return null;
       }
       Coords coords = axesBridge_.ndViewerToCoords(axes);
-      return new DefaultImage(ti, coords, null);
+      try {
+         return dataManager_.convertTaggedImage(ti, coords, null);
+      } catch (JSONException e) {
+         throw new IOException("Failed to convert TaggedImage", e);
+      }
    }
 
    /**
@@ -296,7 +335,7 @@ public final class NDViewer2DataProvider implements DataProvider {
     */
    public void newImageArrived(HashMap<String, Object> axes) {
       // Register any new channel
-      Object ch = axes.get(NDViewer.CHANNEL_AXIS);
+      Object ch = axes.get(NDViewer2.CHANNEL_AXIS);
       if (ch != null) {
          axesBridge_.registerChannel(ch);
       }
@@ -305,7 +344,7 @@ public final class NDViewer2DataProvider implements DataProvider {
          // (Coords drops axes with value 0, losing e.g. row=0, column=0)
          Image image = getImageByAxes(axes);
          if (image != null) {
-            eventBus_.post(new DefaultNewImageEvent(image, this));
+            eventBus_.post(newImageEvent(image));
          }
       } catch (IOException e) {
          // Image may not be written yet; ignore
@@ -320,13 +359,35 @@ public final class NDViewer2DataProvider implements DataProvider {
     * @param image the image that arrived
     * @param axes  the NDViewer axes of the new image
     */
+   @Override
    public void newImageArrived(Image image, HashMap<String, Object> axes) {
-      Object ch = axes.get(NDViewer.CHANNEL_AXIS);
+      Object ch = axes.get(NDViewer2.CHANNEL_AXIS);
       if (ch != null) {
          axesBridge_.registerChannel(ch);
       }
       if (image != null) {
-         eventBus_.post(new DefaultNewImageEvent(image, this));
+         eventBus_.post(newImageEvent(image));
       }
+   }
+
+   private DataProviderHasNewImageEvent newImageEvent(final Image image) {
+      final DataProvider self = this;
+      return new DataProviderHasNewImageEvent() {
+         @Override
+         public Image getImage() {
+            return image;
+         }
+
+         @Override
+         public Coords getCoords() {
+            return image.getCoords();
+         }
+
+         @Override
+         public DataProvider getDataProvider() {
+            return self;
+         }
+
+      };
    }
 }

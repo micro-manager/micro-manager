@@ -1,13 +1,13 @@
-package org.micromanager.display.internal.ndviewer2;
+package org.micromanager.ndviewer2.internal;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
+import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DefaultComponentDisplaySettings;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * Bidirectional translation between MM DisplaySettings and NDViewer's
@@ -16,12 +16,14 @@ import org.micromanager.ndviewer.main.NDViewer;
  * <p>Uses the fully-qualified name for NDViewer's DisplaySettings to avoid
  * collision with MM's DisplaySettings interface.</p>
  */
-public final class DisplaySettingsBridge {
+final class DisplaySettingsBridge {
 
    private final AxesBridge axesBridge_;
+   private final DisplayManager displayManager_;
 
-   public DisplaySettingsBridge(AxesBridge axesBridge) {
+   public DisplaySettingsBridge(DisplayManager displayManager, AxesBridge axesBridge) {
       axesBridge_ = axesBridge;
+      displayManager_ = displayManager;
    }
 
    /**
@@ -32,7 +34,7 @@ public final class DisplaySettingsBridge {
     */
    public void applyToNDViewer(
          DisplaySettings mmSettings,
-         org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings) {
+         org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings ndSettings) {
       List<String> channelNames = getNDViewerChannelNames(ndSettings);
       for (int i = 0; i < mmSettings.getNumberOfChannels()
             && i < channelNames.size(); i++) {
@@ -70,7 +72,7 @@ public final class DisplaySettingsBridge {
     * @return new MM DisplaySettings reflecting NDViewer state
     */
    public DisplaySettings readFromNDViewer(
-         org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings,
+         org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings ndSettings,
          DisplaySettings existing) {
       List<String> channelNames = getNDViewerChannelNames(ndSettings);
       DisplaySettings.Builder dsBuilder = existing.copyBuilder();
@@ -88,7 +90,7 @@ public final class DisplaySettingsBridge {
          boolean active = ndSettings.isActive(chName);
 
          ComponentDisplaySettings comp =
-               DefaultComponentDisplaySettings.builder()
+                  displayManager_.componentDisplaySettingsBuilder()
                      .scalingMinimum(contrastMin)
                      .scalingMaximum(contrastMax)
                      .scalingGamma(gamma)
@@ -142,15 +144,15 @@ public final class DisplaySettingsBridge {
     * @return ordered list of channel names known to NDViewer
     */
    private List<String> getNDViewerChannelNames(
-         org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings ndSettings) {
+         org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings ndSettings) {
       List<String> names = axesBridge_.getChannelNames();
       if (!names.isEmpty()) {
          return names;
       }
       // No explicit channels — check if NDViewer has its synthetic channel
       List<String> fallback = new ArrayList<>();
-      if (ndSettings.containsChannel(NDViewer.NO_CHANNEL)) {
-         fallback.add(NDViewer.NO_CHANNEL);
+      if (ndSettings.containsChannel(NDViewer2.NO_CHANNEL)) {
+         fallback.add(NDViewer2.NO_CHANNEL);
       }
       return fallback;
    }

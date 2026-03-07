@@ -1,4 +1,4 @@
-package org.micromanager.acquisition.internal.acqengjcompat;
+package org.micromanager.ndviewer2.internal;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -12,30 +12,30 @@ import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
-import org.micromanager.display.internal.ndviewer2.AxesBridge;
-import org.micromanager.display.internal.ndviewer2.NDViewer2DataProvider;
-import org.micromanager.display.internal.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer.api.NDViewerAPI;
-import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.api.NDViewerDataSource;
-import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer2.NDViewer2API;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2DataSource;
+import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
  * The class is the glue needed in order for AcqEngJ, NDViewer2, and NDTiff
  * to be able to be used together, since they are independent libraries that do not know about one
  * another. It implements the Acquisition engine API for a {@link AcqEngJDataSink} interface,
  * dispatching acquired images to viewer and storage as appropriate. It implements NDviewer's
- * {@link NDViewerDataSource}, so that images in storage can be requested by the viewer for
+ * {@link NDViewer2DataSource}, so that images in storage can be requested by the viewer for
  * display. Each time it recieves an image it will pass it to storage and alert the display that
  * a new image has arrived. There are analogous classes to this one in Micro-Magellan
  * (MagellanDatasetAndAcquisition) and the Java side of pycro-manger (RemoteViewerStorageAdapter).
  *
+ * <p>Note: this class is currently not used by any caller within the project.
+ * It is retained as a reference implementation and for potential future use.</p>
+ *
  * @author henrypinkard
  */
-public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSink {
+public class NDTiffAndViewerAdapter implements NDViewer2DataSource, AcqEngJDataSink {
 
    public static final int VIEWER_TYPE_NONE = 0;
    public static final int VIEWER_TYPE_NDVIEWER = 1;
@@ -45,7 +45,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
 
    private ExecutorService displayCommunicationExecutor_;
 
-   private volatile NDViewerAPI viewer_;
+   private volatile NDViewer2API viewer_;
    private volatile NDViewer2DataViewer mm2Viewer_;
    private volatile NDViewer2DataProvider mm2DataProvider_;
    private volatile Acquisition acq_;
@@ -138,11 +138,9 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
                + "Use the constructor that accepts Studio.");
       }
 
-      AxesBridge axesBridge = new AxesBridge();
-      mm2DataProvider_ = new NDViewer2DataProvider(
-            storage_, axesBridge, name_);
+      mm2DataProvider_ = new NDViewer2DataProvider(studio_.data(), storage_, name_);
 
-      NDViewerAcqInterface vai = new NDViewerAcqInterface() {
+      NDViewer2AcqInterface vai = new NDViewer2AcqInterface() {
          @Override
          public boolean isFinished() {
             return acq_.areEventsFinished();
@@ -170,7 +168,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
       };
 
       mm2Viewer_ = new NDViewer2DataViewer(
-            studio_, this, vai, mm2DataProvider_, axesBridge,
+            studio_, this, vai, mm2DataProvider_,
             summaryMetadata,
             AcqEngMetadata.getPixelSizeUm(summaryMetadata),
             AcqEngMetadata.isRGB(summaryMetadata));
@@ -188,7 +186,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
 
    private void createNDViewer(JSONObject summaryMetadata) {
       // simple class that allows viewer to start and stop acquisition
-      NDViewerAcqInterface vai = new NDViewerAcqInterface() {
+      NDViewer2AcqInterface vai = new NDViewer2AcqInterface() {
          @Override
          public boolean isFinished() {
             return acq_.areEventsFinished();
@@ -215,7 +213,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
          }
       };
 
-      viewer_ = new NDViewer(this, vai,
+      viewer_ = new NDViewer2(this, vai,
             summaryMetadata, AcqEngMetadata.getPixelSizeUm(summaryMetadata),
             AcqEngMetadata.isRGB(summaryMetadata));
 

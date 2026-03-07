@@ -33,16 +33,15 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.internal.RememberedDisplaySettings;
-import org.micromanager.display.internal.ndviewer2.AxesBridge;
-import org.micromanager.display.internal.ndviewer2.NDViewer2DataProvider;
-import org.micromanager.display.internal.ndviewer2.NDViewer2DataViewer;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer.api.NDViewerAPI;
-import org.micromanager.ndviewer.api.NDViewerAcqInterface;
-import org.micromanager.ndviewer.overlay.Overlay;
+import org.micromanager.ndviewer2.NDViewer2API;
+import org.micromanager.ndviewer2.NDViewer2AcqInterface;
+import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
+import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
+import org.micromanager.ndviewer2.NDViewer2Factory;
 
 /**
  * Manages the Deskew Explore session.
@@ -56,9 +55,9 @@ public class DeskewExploreManager {
    private final DeskewFrame frame_;
    private final DeskewFactory deskewFactory_;
 
-   private NDViewerAPI viewer_;
-   private NDViewer2DataViewer mm2Viewer_;
-   private NDViewer2DataProvider mm2DataProvider_;
+   private NDViewer2API viewer_;
+   private NDViewer2DataViewerAPI mm2Viewer_;
+   private NDViewer2DataProviderAPI mm2DataProvider_;
    private NDTiffStorage storage_;
    private DeskewExploreDataSource dataSource_;
    private ExecutorService displayExecutor_;
@@ -226,12 +225,10 @@ public class DeskewExploreManager {
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         AxesBridge axesBridge = new AxesBridge();
-         mm2DataProvider_ = new NDViewer2DataProvider(
-               storage_, axesBridge, acqName_);
-         NDViewerAcqInterface acqInterface = createAcqInterface();
-         mm2Viewer_ = new NDViewer2DataViewer(
-               studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
+         mm2DataProvider_ = NDViewer2Factory.createDataProvider(studio_.data(), storage_, acqName_);
+         NDViewer2AcqInterface acqInterface = createAcqInterface();
+         mm2Viewer_ = NDViewer2Factory.createDataViewer(
+               studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
 
@@ -273,6 +270,7 @@ public class DeskewExploreManager {
          }
 
          viewer_ = mm2Viewer_.getNDViewer();
+         dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Deskew Explore - Right-click to select, "
                + "Left-drag to extend, Left-click to acquire");
 
@@ -396,12 +394,10 @@ public class DeskewExploreManager {
          }
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         AxesBridge axesBridge = new AxesBridge();
-         mm2DataProvider_ = new NDViewer2DataProvider(
-               storage_, axesBridge, acqName_);
-         NDViewerAcqInterface acqInterface = createAcqInterface();
-         mm2Viewer_ = new NDViewer2DataViewer(
-               studio_, dataSource_, acqInterface, mm2DataProvider_, axesBridge,
+         mm2DataProvider_ = NDViewer2Factory.createDataProvider(studio_.data(), storage_, acqName_);
+         NDViewer2AcqInterface acqInterface = createAcqInterface();
+         mm2Viewer_ = NDViewer2Factory.createDataViewer(
+               studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
 
@@ -436,6 +432,7 @@ public class DeskewExploreManager {
          }
 
          viewer_ = mm2Viewer_.getNDViewer();
+         dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
          // Set up overlayer and mouse listener
@@ -481,10 +478,10 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Create an NDViewerAcqInterface for the explore session.
+    * Create an NDViewer2AcqInterface for the explore session.
     */
-   private NDViewerAcqInterface createAcqInterface() {
-      return new NDViewerAcqInterface() {
+   private NDViewer2AcqInterface createAcqInterface() {
+      return new NDViewer2AcqInterface() {
          @Override
          public boolean isFinished() {
             // Always report finished so NDViewer does not show
@@ -940,8 +937,9 @@ public class DeskewExploreManager {
             // Get channel names from source datastore's SummaryMetadata
             SummaryMetadata summaryMeta = testStore.getSummaryMetadata();
 
-            // Collect axes from stored images for viewer notification
+            // Collect axes and images from stored images for viewer notification
             List<HashMap<String, Object>> storedAxes = new ArrayList<>();
+            List<Image> storedImages = new ArrayList<>();
             for (Image projectedImage : projectedImages) {
                int channelIndex = projectedImage.getCoords().getChannel();
                // Get channel name from SummaryMetadata (with safe fallback)
@@ -950,6 +948,7 @@ public class DeskewExploreManager {
                      channelName);
                if (axes != null) {
                   storedAxes.add(axes);
+                  storedImages.add(projectedImage);
                }
             }
 
@@ -958,29 +957,31 @@ public class DeskewExploreManager {
 
             // Notify viewer of new images (one per channel)
             if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
-               final List<Image> tileImages = new ArrayList<>(projectedImages);
-               final List<HashMap<String, Object>> axesList = new ArrayList<>(storedAxes);
+               final List<Image> tileImages = storedImages;
+               // Strip row/col from axes — channel name is what NDViewer/AxesBridge needs
+               final List<HashMap<String, Object>> displayAxesList = new ArrayList<>();
+               for (HashMap<String, Object> axes : storedAxes) {
+                  HashMap<String, Object> displayAxes = new HashMap<>(axes);
+                  displayAxes.remove("row");
+                  displayAxes.remove("column");
+                  displayAxesList.add(displayAxes);
+               }
                displayExecutor_.submit(() -> {
-                  // Notify viewer for each channel separately
-                  // Use axes from storage with channel as string name
-                  // AxesBridge translates between string names (NDViewer) and integer indices (MM)
-                  for (int i = 0; i < tileImages.size() && i < axesList.size(); i++) {
-                     Image tileImage = tileImages.get(i);
-                     HashMap<String, Object> displayAxes = new HashMap<>(axesList.get(i));
-                     displayAxes.remove("row");
-                     displayAxes.remove("column");
-
+                  // Notify data provider per-channel (needed for DataProviderHasNewImageEvent)
+                  for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
                      if (mm2DataProvider_ != null) {
-                        mm2DataProvider_.newImageArrived(tileImage, displayAxes);
-                     }
-                     if (mm2Viewer_ != null) {
-                        mm2Viewer_.newImageArrived(tileImage);
+                        mm2DataProvider_.newImageArrived(tileImages.get(i), displayAxesList.get(i));
                      }
                      try {
-                        viewer_.newImageArrived(displayAxes);
+                        viewer_.newImageArrived(displayAxesList.get(i));
                      } catch (NullPointerException e) {
                         // NDViewer histogram not yet initialized - ignore
                      }
+                  }
+                  // Notify viewer with all channels at once so they are submitted
+                  // as a single stats request (avoids sequence-number conflicts)
+                  if (mm2Viewer_ != null) {
+                     mm2Viewer_.newTileArrived(tileImages, displayAxesList);
                   }
                   try {
                      viewer_.update();
@@ -1221,8 +1222,9 @@ public class DeskewExploreManager {
          // Get channel names from source datastore's SummaryMetadata
          SummaryMetadata summaryMeta = testStore.getSummaryMetadata();
 
-         // Collect axes from stored images for viewer notification
+         // Collect axes and images from stored images for viewer notification
          List<HashMap<String, Object>> storedAxes = new ArrayList<>();
+         List<Image> storedImages = new ArrayList<>();
          for (Image projectedImage : projectedImages) {
             int channelIndex = projectedImage.getCoords().getChannel();
             // Get channel name from SummaryMetadata (with safe fallback)
@@ -1231,6 +1233,7 @@ public class DeskewExploreManager {
                   channelName);
             if (axes != null) {
                storedAxes.add(axes);
+               storedImages.add(projectedImage);
             }
          }
 
@@ -1239,29 +1242,31 @@ public class DeskewExploreManager {
 
          // Notify viewer of new images (one per channel)
          if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
-            final List<Image> tileImages = new ArrayList<>(projectedImages);
-            final List<HashMap<String, Object>> axesList = new ArrayList<>(storedAxes);
+            final List<Image> tileImages = storedImages;
+            // Strip row/col from axes — channel name is what NDViewer/AxesBridge needs
+            final List<HashMap<String, Object>> displayAxesList = new ArrayList<>();
+            for (HashMap<String, Object> axes : storedAxes) {
+               HashMap<String, Object> displayAxes = new HashMap<>(axes);
+               displayAxes.remove("row");
+               displayAxes.remove("column");
+               displayAxesList.add(displayAxes);
+            }
             displayExecutor_.submit(() -> {
-               // Notify viewer for each channel separately
-               // Use axes from storage with channel as string name
-               // AxesBridge translates between string names (NDViewer) and integer indices (MM)
-               for (int i = 0; i < tileImages.size() && i < axesList.size(); i++) {
-                  Image tileImage = tileImages.get(i);
-                  HashMap<String, Object> displayAxes = new HashMap<>(axesList.get(i));
-                  displayAxes.remove("row");
-                  displayAxes.remove("column");
-
+               // Notify data provider per-channel (needed for DataProviderHasNewImageEvent)
+               for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
                   if (mm2DataProvider_ != null) {
-                     mm2DataProvider_.newImageArrived(tileImage, displayAxes);
-                  }
-                  if (mm2Viewer_ != null) {
-                     mm2Viewer_.newImageArrived(tileImage);
+                     mm2DataProvider_.newImageArrived(tileImages.get(i), displayAxesList.get(i));
                   }
                   try {
-                     viewer_.newImageArrived(displayAxes);
+                     viewer_.newImageArrived(displayAxesList.get(i));
                   } catch (NullPointerException e) {
                      // NDViewer histogram not yet initialized - ignore
                   }
+               }
+               // Notify viewer with all channels at once so they are submitted
+               // as a single stats request (avoids sequence-number conflicts)
+               if (mm2Viewer_ != null) {
+                  mm2Viewer_.newTileArrived(tileImages, displayAxesList);
                }
                try {
                   viewer_.update();
@@ -1619,11 +1624,6 @@ public class DeskewExploreManager {
       return overlapPercentage_;
    }
 
-   public void setOverlay(Overlay overlay) {
-      if (viewer_ != null) {
-         viewer_.setOverlay(overlay);
-      }
-   }
 
    /**
     * Recomputes the tile dimensions shown in the overlay based on the current

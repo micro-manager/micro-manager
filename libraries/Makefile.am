@@ -6,6 +6,7 @@ nobase_mmlibrary_DATA = \
 	Big.jar \
 	GaussianLibrary.jar \
 	ImageProcessing.jar \
+	NDViewer2.jar \
 	PluginUtilities.jar \
 	Projector.jar
 
