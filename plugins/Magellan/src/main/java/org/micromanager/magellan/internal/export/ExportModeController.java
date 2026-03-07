@@ -104,7 +104,9 @@ public class ExportModeController {
                           }
                        }
 
-                       @Override public void mousePressed(MouseEvent e) { dismiss(); }
+                       @Override public void mousePressed(MouseEvent e) {
+                          dismiss();
+                       }
 
                        @Override public void mouseReleased(MouseEvent e) {}
 

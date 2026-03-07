@@ -76,7 +76,7 @@ public class ExportDialog extends JDialog {
       // Resolution combo
       String[] resItems = new String[numResLevels_];
       for (int i = 0; i < numResLevels_; i++) {
-         resItems[i] = "Level " + i + "  (" + (roiW_ >> i) + " \u00d7 "
+         resItems[i] = "Level " + i + "  (" + (roiW_ >> i) + " × "
             + (roiH_ >> i) + " px)";
       }
       resolutionCombo_ = new JComboBox<>(resItems);
@@ -191,7 +191,7 @@ public class ExportDialog extends JDialog {
    }
 
    private String outputSizeText(int level) {
-      return "Output size: " + (roiW_ >> level) + " \u00d7 "
+      return "Output size: " + (roiW_ >> level) + " × "
                + (roiH_ >> level) + " px";
    }
 
