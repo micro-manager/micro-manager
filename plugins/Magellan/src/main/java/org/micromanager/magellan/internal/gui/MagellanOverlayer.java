@@ -488,8 +488,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
       rectangle.setStrokeWidth(5f);
       rectangle.setStrokeColor(getSurfaceGridLineColor(grid));
 
-      Point displayTopLeft = new Point((int) (displayCenter.x - roiWidth / 2),
-            (int) (displayCenter.y - roiHeight / 2));
+      Point displayTopLeft = new Point(displayCenter.x - roiWidth / 2,
+            displayCenter.y - roiHeight / 2);
       //draw boundries of tile
       for (int row = 1; row < grid.numRows(); row++) {
          int yPos = (int) (displayTopLeft.y + row * dsTileHeight);
@@ -577,7 +577,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
       ArrayList<XYFootprint> list = surfaceGridPanel_.getSurfacesAndGridsForDisplay();
       if (list.contains(surfaceGridPanel_.getCurrentSurfaceOrGrid())) {
          list.remove(surfaceGridPanel_.getCurrentSurfaceOrGrid());
-         list.add((XYFootprint) surfaceGridPanel_.getCurrentSurfaceOrGrid());
+         list.add(surfaceGridPanel_.getCurrentSurfaceOrGrid());
       }
       return list;
    }

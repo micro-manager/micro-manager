@@ -185,7 +185,7 @@ public class MagellanAcqUIAndStorage
    public Object putImage(final TaggedImage taggedImg) {
       try {
          HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
-         final Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
+         final Future<?> added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
                  AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
                  AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
 

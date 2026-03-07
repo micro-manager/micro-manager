@@ -90,7 +90,7 @@ public class MagellanGUIAcquisition extends
                   }
                });
       settings_ = settings;
-      zStep_ = ((MagellanGUIAcquisitionSettings) settings).zStep_;
+      zStep_ = settings.zStep_;
 
       //"position" is not generic name...and as of right now there is no way of getting
       // generic z positions.

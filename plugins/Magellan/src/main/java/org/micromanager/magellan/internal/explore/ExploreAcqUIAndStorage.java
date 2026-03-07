@@ -392,7 +392,7 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
          channelNames_.add(channelName);
       }
       HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
-      Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
+      Future<?> added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
               AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
               AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
 
