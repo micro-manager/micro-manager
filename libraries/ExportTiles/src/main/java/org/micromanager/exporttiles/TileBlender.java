@@ -371,7 +371,4 @@ public class TileBlender {
       return result;
    }
 
-   private static boolean hasTile(Set<Point> tilesWithData, int row, int col) {
-      return tilesWithData.contains(new Point(col, row));
-   }
 }

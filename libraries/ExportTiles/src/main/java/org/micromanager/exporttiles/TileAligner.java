@@ -206,7 +206,7 @@ public class TileAligner {
       if (n <= 0) {
          return 0;
       }
-      int p = 2;
+      int p = 1;
       while (p < n && p < 4096) {
          p <<= 1;
       }
@@ -217,7 +217,7 @@ public class TileAligner {
     * Cross-correlates two image strips using FHT (Fast Hartley Transform).
     * Both strips must have the same dimensions (stripW x stripH).
     * Pads to the next power-of-two square before computing.
-    * Strips wider/taller than 4096 px are centre-cropped to 4096 before correlation.
+    * Strips wider/taller than 512 px are centre-cropped to 512 before correlation.
     *
     * @return float[] pixel data of the correlation map (padW x padH, after swapQuadrants).
     *         Returns null if strip dimensions are degenerate.

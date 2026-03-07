@@ -62,13 +62,14 @@ public class ExportMouseListener implements CanvasMouseListenerInterface {
       Point start = mouseDragStartPoint_;
       Point end = e.getPoint();
       currentMouseLocation_ = end;
-      // Always restore normal mode on release (even a simple click exits export mode).
-      onRelease_.run();
       if (start != null
               && (Math.abs(end.x - start.x) >= MIN_DRAG_PIXELS
                   || Math.abs(end.y - start.y) >= MIN_DRAG_PIXELS)) {
          onRoiSelected_.accept(start, end);
       }
+      // Restore normal mode after notifying the ROI callback so the controller
+      // can inspect lastRoi_ to decide whether to install the dismiss listener.
+      onRelease_.run();
    }
 
    @Override

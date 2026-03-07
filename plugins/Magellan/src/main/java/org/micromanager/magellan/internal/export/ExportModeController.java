@@ -88,41 +88,48 @@ public class ExportModeController {
 
       ExportMouseListener exportListener = new ExportMouseListener(display_,
               () -> {
-                 // Restore normal overlayer/cursor; keep the ROI overlay visible.
                  exportOverlay.setExportMouseListener(null);
                  display_.setOverlayerPlugin(normalOverlay_);
-                 display_.setCustomCanvasMouseListener(new CanvasMouseListenerInterface() {
-                    // One-shot listener: any click clears the ROI and restores normal listener.
-                    private void dismiss() {
-                       lastRoi_ = null;
-                       display_.setOverlay(new Overlay());
-                       display_.setCustomCanvasMouseListener(normalMouseListener_);
-                       if (controlsPanel_ != null) {
-                          controlsPanel_.setStatus(null);
-                       }
-                    }
-
-                    @Override public void mousePressed(MouseEvent e) {
-                       dismiss();
-                    }
-
-                    @Override public void mouseReleased(MouseEvent e) {}
-
-                    @Override public void mouseClicked(MouseEvent e) {}
-
-                    @Override public void mouseDragged(MouseEvent e) {}
-
-                    @Override public void mouseMoved(MouseEvent e) {}
-
-                    @Override public void mouseEntered(MouseEvent e) {}
-
-                    @Override public void mouseExited(MouseEvent e) {}
-
-                    @Override public void mouseWheelMoved(MouseWheelEvent e) {}
-                 });
                  display_.getCanvasJPanel().setCursor(Cursor.getDefaultCursor());
-                 if (controlsPanel_ != null) {
-                    controlsPanel_.setStatus("Click to dismiss selection");
+                 if (lastRoi_ != null) {
+                    // ROI was accepted: install a one-shot listener so the user can
+                    // click to dismiss the selection and return to normal mode.
+                    display_.setCustomCanvasMouseListener(new CanvasMouseListenerInterface() {
+                       private void dismiss() {
+                          lastRoi_ = null;
+                          display_.setOverlay(new Overlay());
+                          display_.setCustomCanvasMouseListener(normalMouseListener_);
+                          if (controlsPanel_ != null) {
+                             controlsPanel_.setStatus(null);
+                          }
+                       }
+
+                       @Override public void mousePressed(MouseEvent e) { dismiss(); }
+
+                       @Override public void mouseReleased(MouseEvent e) {}
+
+                       @Override public void mouseClicked(MouseEvent e) {}
+
+                       @Override public void mouseDragged(MouseEvent e) {}
+
+                       @Override public void mouseMoved(MouseEvent e) {}
+
+                       @Override public void mouseEntered(MouseEvent e) {}
+
+                       @Override public void mouseExited(MouseEvent e) {}
+
+                       @Override public void mouseWheelMoved(MouseWheelEvent e) {}
+                    });
+                    if (controlsPanel_ != null) {
+                       controlsPanel_.setStatus("Click to dismiss selection");
+                    }
+                 } else {
+                    // No ROI (simple click or tiny drag): immediately restore normal mode.
+                    display_.setOverlay(new Overlay());
+                    display_.setCustomCanvasMouseListener(normalMouseListener_);
+                    if (controlsPanel_ != null) {
+                       controlsPanel_.setStatus(null);
+                    }
                  }
               },
               this::onExportRoiSelected);
