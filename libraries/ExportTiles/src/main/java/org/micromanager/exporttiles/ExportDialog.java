@@ -1,9 +1,10 @@
-package org.micromanager.magellan.internal.explore.gui;
+package org.micromanager.exporttiles;
 
 import java.awt.Window;
 import java.io.File;
 import java.util.prefs.Preferences;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -14,7 +15,7 @@ import net.miginfocom.swing.MigLayout;
 
 /**
  * Modal dialog that lets the user choose a resolution level, image format,
- * and output file path for an export operation.  Settings are persisted via
+ * and output file path for an export operation. Settings are persisted via
  * java.util.prefs.Preferences across sessions.
  */
 public class ExportDialog extends JDialog {
@@ -23,18 +24,25 @@ public class ExportDialog extends JDialog {
       public final int resolutionLevel;
       public final String format;
       public final String filePath;
+      public final boolean blend;
+      public final boolean align;
 
-      public ExportOptions(int resolutionLevel, String format, String filePath) {
+      public ExportOptions(int resolutionLevel, String format, String filePath,
+                           boolean blend, boolean align) {
          this.resolutionLevel = resolutionLevel;
          this.format = format;
          this.filePath = filePath;
+         this.blend = blend;
+         this.align = align;
       }
    }
 
    private static final String[] FORMATS = {"TIFF", "JPEG", "PNG", "GIF"};
-   private static final String PREF_FORMAT   = "ExportFormat";
-   private static final String PREF_RES      = "ExportResLevel";
-   private static final String PREF_PATH     = "ExportPath";
+   private static final String PREF_FORMAT = "ExportFormat";
+   private static final String PREF_RES    = "ExportResLevel";
+   private static final String PREF_PATH   = "ExportPath";
+   private static final String PREF_BLEND  = "ExportBlend";
+   private static final String PREF_ALIGN  = "ExportAlign";
 
    private static final Preferences PREFS =
            Preferences.userNodeForPackage(ExportDialog.class);
@@ -46,6 +54,8 @@ public class ExportDialog extends JDialog {
    private JComboBox<String> resolutionCombo_;
    private JLabel outputSizeLabel_;
    private JComboBox<String> formatCombo_;
+   private JCheckBox blendCheckBox_;
+   private JCheckBox alignCheckBox_;
    private JTextField pathField_;
 
    private ExportOptions result_ = null;
@@ -66,7 +76,7 @@ public class ExportDialog extends JDialog {
       // Resolution combo
       String[] resItems = new String[numResLevels_];
       for (int i = 0; i < numResLevels_; i++) {
-         resItems[i] = "Level " + i + "  (" + (roiW_ >> i) + " \u00d7 " // x
+         resItems[i] = "Level " + i + "  (" + (roiW_ >> i) + " × "
             + (roiH_ >> i) + " px)";
       }
       resolutionCombo_ = new JComboBox<>(resItems);
@@ -97,6 +107,18 @@ public class ExportDialog extends JDialog {
       }
       add(new JLabel("Format:"));
       add(formatCombo_, "span 2, wrap");
+
+      // Align checkbox
+      alignCheckBox_ = new JCheckBox("Align tiles (phase correlation)");
+      alignCheckBox_.setSelected(PREFS.getBoolean(PREF_ALIGN, true));
+      add(new JLabel(""));
+      add(alignCheckBox_, "span 2, wrap");
+
+      // Blend checkbox
+      blendCheckBox_ = new JCheckBox("Blend tile overlaps");
+      blendCheckBox_.setSelected(PREFS.getBoolean(PREF_BLEND, true));
+      add(new JLabel(""));
+      add(blendCheckBox_, "span 2, wrap");
 
       // Path field + browse button
       pathField_ = new JTextField(30);
@@ -130,7 +152,6 @@ public class ExportDialog extends JDialog {
          }
          int level = resolutionCombo_.getSelectedIndex();
          String format = (String) formatCombo_.getSelectedItem();
-         // Resolve the extension the same way the exporter will
          String ext = formatToExt(format);
          File resolvedFile = new File(path.endsWith(ext) ? path : path + ext);
          if (resolvedFile.exists()) {
@@ -142,10 +163,14 @@ public class ExportDialog extends JDialog {
                return;
             }
          }
+         final boolean blend = blendCheckBox_.isSelected();
+         final boolean align = alignCheckBox_.isSelected();
          PREFS.putInt(PREF_RES, level);
          PREFS.put(PREF_FORMAT, format);
          PREFS.put(PREF_PATH, path);
-         result_ = new ExportOptions(level, format, path);
+         PREFS.putBoolean(PREF_BLEND, blend);
+         PREFS.putBoolean(PREF_ALIGN, alignCheckBox_.isSelected());
+         result_ = new ExportOptions(level, format, path, blend, align);
          dispose();
       });
       JButton cancelButton = new JButton("Cancel");
@@ -166,7 +191,7 @@ public class ExportDialog extends JDialog {
    }
 
    private String outputSizeText(int level) {
-      return "Output size: " + (roiW_ >> level) + " \u00d7 "  // x
+      return "Output size: " + (roiW_ >> level) + " × "
                + (roiH_ >> level) + " px";
    }
 
@@ -179,5 +204,4 @@ public class ExportDialog extends JDialog {
       setVisible(true);
       return result_;
    }
-
 }

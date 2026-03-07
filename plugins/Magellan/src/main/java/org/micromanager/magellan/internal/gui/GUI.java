@@ -657,8 +657,8 @@ public class GUI extends JFrame {
       volumeBetweenZPanel_ = new JPanel();
       topSurfaceLabel_ = new JLabel();
       bottomSurfaceLabel_ = new JLabel();
-      topSurfaceCombo_ = new JComboBox();
-      bottomSurfaceCombo_ = new JComboBox();
+      topSurfaceCombo_ = new JComboBox<>();
+      bottomSurfaceCombo_ = new JComboBox<>();
       umAboveTopSurfaceSpinner_ = new JSpinner();
       umAboveVolBetweenLabel_ = new JLabel();
       umBelowBottomSurfaceSpinner_ = new JSpinner();
@@ -672,7 +672,7 @@ public class GUI extends JFrame {
       umAboveLabel_ = new JLabel();
       umBelowLabel_ = new JLabel();
       fixedSurfaceLabel_ = new JLabel();
-      fixedDistanceSurfaceComboBox_ = new JComboBox();
+      fixedDistanceSurfaceComboBox_ = new JComboBox<>();
       labelDiagram3dSurface_ = new JLabel();
       zStepLabel_ = new JLabel();
       zStepSpinner_ = new JSpinner();
@@ -692,7 +692,7 @@ public class GUI extends JFrame {
       syncExposuresButton_ = new JButton();
       timePointsTab_ = new JPanel();
       timePointsPanel_ = new JPanel();
-      timeIntevalUnitCombo_ = new JComboBox();
+      timeIntevalUnitCombo_ = new JComboBox<>();
       timeIntervalLabel_ = new JLabel();
       numTimePointsLabel_ = new JLabel();
       numTimePointsSpinner_ = new JSpinner();
@@ -1554,7 +1554,7 @@ public class GUI extends JFrame {
       acqTabbedPane_.addTab("Channels", channelsTab);
 
       timeIntevalUnitCombo_.setFont(tahoma14Pt);
-      timeIntevalUnitCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
+      timeIntevalUnitCombo_.setModel(new DefaultComboBoxModel<>(new String[]{"ms", "s", "min"}));
       timeIntevalUnitCombo_.addActionListener(evt -> timeIntervalUnitComboActionPerformed(evt));
 
       timeIntervalLabel_.setFont(tahoma14Pt);
@@ -1813,17 +1813,17 @@ public class GUI extends JFrame {
 
       userGuideLink_.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       Font font = userGuideLink_.getFont();
-      Map attributes = font.getAttributes();
+      Map<TextAttribute, Object> attributes = new java.util.HashMap<>(font.getAttributes());
       attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
       userGuideLink_.setFont(font.deriveFont(attributes));
       citeLink_.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       Font font3 = citeLink_.getFont();
-      Map attributes3 = font3.getAttributes();
+      Map<TextAttribute, Object> attributes3 = new java.util.HashMap<>(font3.getAttributes());
       attributes3.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
       citeLink_.setFont(font3.deriveFont(attributes3));
       bugReportLink_.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       Font font2 = bugReportLink_.getFont();
-      Map attributes2 = font2.getAttributes();
+      Map<TextAttribute, Object> attributes2 = new java.util.HashMap<>(font2.getAttributes());
       attributes2.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
       bugReportLink_.setFont(font2.deriveFont(attributes2));
 
@@ -2020,7 +2020,7 @@ public class GUI extends JFrame {
       if (JavaUtils.isMac()) {
          System.setProperty("apple.awt.fileDialogForDirectories", "true");
          FileDialog fd = new FileDialog(this, "Select Magellan dataset to load", FileDialog.LOAD);
-
+         fd.setDirectory(settings_.getStoredOpenDatasetDirectory());
          fd.setVisible(true);
          if (fd.getFile() != null) {
             selectedFile = new File(fd.getDirectory() + File.separator + fd.getFile());
@@ -2029,7 +2029,7 @@ public class GUI extends JFrame {
          fd.dispose();
          System.setProperty("apple.awt.fileDialogForDirectories", "false");
       } else {
-         JFileChooser fc = new JFileChooser(globalSavingDirTextField_.getText());
+         JFileChooser fc = new JFileChooser(settings_.getStoredOpenDatasetDirectory());
          fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
          fc.setDialogTitle("Select Magellan dataset to load");
          int returnVal = fc.showOpenDialog(this);
@@ -2040,6 +2040,8 @@ public class GUI extends JFrame {
       if (selectedFile == null) {
          return; //canceled
       }
+      settings_.storeOpenDatasetDirectory(selectedFile.getParent() != null
+              ? selectedFile.getParent() : selectedFile.getAbsolutePath());
       final File finalFile = selectedFile;
       new Thread(() -> {
          //TODO
@@ -2315,7 +2317,7 @@ public class GUI extends JFrame {
    private JTabbedPane acqTabbedPane_;
    private JButton addAcqButton_;
    private JPanel bottomPanel_;
-   private JComboBox<String> bottomSurfaceCombo_;
+   private JComboBox<Object> bottomSurfaceCombo_;
    private JLabel bottomSurfaceLabel_;
    private JLabel bugReportLink_;
    private JRadioButton button2D_;
@@ -2323,7 +2325,7 @@ public class GUI extends JFrame {
    private JLabel channelGroupLabel_;
    private JTable channelsTable_;
    private JLabel citeLink_;
-   private JComboBox<String> collectionPlaneCombo_;
+   private JComboBox<Object> collectionPlaneCombo_;
    private JLabel collectionPlaneLabel_;
    private JPanel controls2DOr3D_;
    private JRadioButton cuboidVolumeButton_;
@@ -2337,7 +2339,7 @@ public class GUI extends JFrame {
    private JLabel estSizeLabel_;
    private JTabbedPane exploreAcqTabbedPane_;
    private JButton exploreBrowseButton_;
-   private JComboBox exploreChannelGroupCombo_;
+   private JComboBox<String> exploreChannelGroupCombo_;
    private JPanel explorePanel;
    private JLabel exploreSavingDirLabel_;
    private JLabel exploreSavingNameLabel_;
@@ -2345,7 +2347,7 @@ public class GUI extends JFrame {
    private JCheckBox exploreUseZCheckBox_;
    private JLabel exploreZStepLabel_;
    private JSpinner exploreZStepSpinner_;
-   private JComboBox fixedDistanceSurfaceComboBox_;
+   private JComboBox<Object> fixedDistanceSurfaceComboBox_;
    private JPanel fixedDistanceZPanel_;
    private JLabel fixedSurfaceLabel_;
    private JLabel footprin2DLabel_;
@@ -2394,11 +2396,11 @@ public class GUI extends JFrame {
    private JSpinner tileOverlapSpinner_;
    private JLabel timeIntervalLabel_;
    private JSpinner timeIntervalSpinner_;
-   private JComboBox timeIntevalUnitCombo_;
+   private JComboBox<Object> timeIntevalUnitCombo_;
    private JCheckBox timePointsCheckBox_;
    private JPanel timePointsPanel_;
    private JPanel timePointsTab_;
-   private JComboBox topSurfaceCombo_;
+   private JComboBox<Object> topSurfaceCombo_;
    private JLabel topSurfaceLabel_;
    private JLabel umAboveLabel_;
    private JSpinner umAboveTopSurfaceSpinner_;
@@ -2411,7 +2413,7 @@ public class GUI extends JFrame {
    private JRadioButton volumeBetweenSurfacesButton_;
    private JPanel volumeBetweenZPanel_;
    private JRadioButton withinDistanceFromSurfacesButton_;
-   private JComboBox xyFootprintComboBox_;
+   private JComboBox<Object> xyFootprintComboBox_;
    private ButtonGroup z2DButtonGroup_;
    private JLabel zEndLabel;
    private JSpinner zEndSpinner_;

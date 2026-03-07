@@ -73,7 +73,7 @@ public abstract class SurfaceInterpolator extends XYFootprint {
    protected volatile int minPixelsPerInterpPoint_ = 1;
    private ExecutorService executor_;
    protected volatile SingleResolutionInterpolation currentInterpolation_;
-   private volatile Future currentInterpolationTask_;
+   private volatile Future<?> currentInterpolationTask_;
    //Objects for wait/notify sync of calcualtions
    protected Object xyPositionLock_ = new Object();
    protected Object interpolationLock_ = new Object();

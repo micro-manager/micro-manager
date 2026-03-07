@@ -1,4 +1,4 @@
-package org.micromanager.magellan.internal.explore.gui;
+package org.micromanager.magellan.internal.export;
 
 import java.awt.Color;
 import javax.swing.JButton;
@@ -12,18 +12,15 @@ import org.micromanager.ndviewer.api.ControlsPanelInterface;
  */
 public class ExportControlsPanel extends JPanel implements ControlsPanelInterface {
 
-   private final Runnable exportAction_;
    private final JLabel statusLabel_;
 
    public ExportControlsPanel(Runnable exportAction) {
-      exportAction_ = exportAction;
-
       setLayout(new MigLayout("insets 8"));
 
       JButton exportButton = new JButton("Export Image...");
       exportButton.addActionListener(evt -> {
-         if (exportAction_ != null) {
-            exportAction_.run();
+         if (exportAction != null) {
+            exportAction.run();
          }
       });
 
@@ -39,6 +36,11 @@ public class ExportControlsPanel extends JPanel implements ControlsPanelInterfac
    }
 
    @Override
+   public String getTitle() {
+      return "Export";
+   }
+
+   @Override
    public void selected() {
    }
 
@@ -47,12 +49,6 @@ public class ExportControlsPanel extends JPanel implements ControlsPanelInterfac
    }
 
    @Override
-   public String getTitle() {
-      return "Export";
-   }
-
-   @Override
    public void close() {
    }
-
 }
