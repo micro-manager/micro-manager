@@ -2,7 +2,9 @@ package org.micromanager.deskew;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionListener;
+import java.net.URL;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -162,6 +164,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    private void initComponents() {
       super.setTitle(DIALOG_TITLE);
+      URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("flowx"));
 

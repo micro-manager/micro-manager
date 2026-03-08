@@ -1,5 +1,6 @@
 package org.micromanager.ndviewer2.internal;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.display.AbstractDataViewer;
 import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 // API gaps: the following are internal mmstudio classes that would need to be
@@ -39,6 +41,9 @@ import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
 import org.micromanager.ndviewer2.internal.NDViewer2;
+import org.micromanager.ndviewer2.internal.gui.ChannelRenderSettings;
+import org.micromanager.ndviewer2.internal.gui.ContrastUpdateCallback;
+import org.micromanager.ndviewer2.internal.gui.GlobalRenderSettings;
 
 /**
  * NDViewer2 data viewer: combines NDViewer's pyramidal canvas with MM's
@@ -50,7 +55,8 @@ import org.micromanager.ndviewer2.internal.NDViewer2;
  * histogram computation callbacks.</p>
  */
 public final class NDViewer2DataViewer extends AbstractDataViewer
-      implements NDViewer2DataViewerAPI, ImageStatsPublisher, StatsComputeQueue.Listener {
+      implements NDViewer2DataViewerAPI, ImageStatsPublisher, StatsComputeQueue.Listener,
+      ContrastUpdateCallback {
 
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
 
@@ -58,7 +64,6 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    private final NDViewer2 ndViewer2_;
    private final NDViewer2DataProvider dataProvider_;
    private final AxesBridge axesBridge_;
-   private final DisplaySettingsBridge displaySettingsBridge_;
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
 
    // Single-threaded executor for off-render-thread stats fetching.
@@ -73,10 +78,6 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // The most recent images and stats (for getCurrentImagesAndStats)
    private volatile ImagesAndStats currentImagesAndStats_;
 
-   // Feedback loop guard: true while we are pushing MM settings to NDViewer,
-   // so that the resulting NDViewer repaint does not trigger a reverse sync.
-   private volatile boolean updatingFromInspector_ = false;
-
    // Feedback loop guard for position: true while we are pushing position
    // to NDViewer, so that the resulting setImageHook does not recurse.
    private volatile boolean updatingPosition_ = false;
@@ -90,12 +91,6 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // and ALL stats results (including scrollbar navigation) post the
    // accumulated histogram. Set to true for the entire explore session.
    private volatile boolean accumulateMode_ = false;
-
-   // When true, color changes from NDViewer are NOT synced back to MM
-   // DisplaySettings. This allows external code (e.g. DeskewExploreManager)
-   // to set colors once and have them preserved even if NDViewer initializes
-   // channels with different default colors.
-   private volatile boolean preserveMMColors_ = false;
 
    // Set of channel indices whose next stats result should be merged into the
    // accumulator. Replaces the old single boolean to correctly handle multiple
@@ -128,7 +123,6 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       studio_ = studio;
       dataProvider_ = dataProvider;
       axesBridge_ = dataProvider.getAxesBridge();
-      displaySettingsBridge_ = new DisplaySettingsBridge(studio_.displays(), axesBridge_);
 
       // Create NDViewer (the canvas/scrollbar viewer)
       ndViewer2_ = new NDViewer2(dataSource, acqInterface,
@@ -159,27 +153,62 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       if (closed_) {
          return requestedSettings;
       }
-      updatingFromInspector_ = true;
       try {
-         // Read current NDViewer state BEFORE applying
-         DisplaySettings currentNDViewerSettings =
-               displaySettingsBridge_.readFromNDViewer(
-                     ndViewer2_.getDisplaySettingsObject(), requestedSettings);
-
-         // Apply MM settings to NDViewer contrast model
-         displaySettingsBridge_.applyToNDViewer(
-               requestedSettings, ndViewer2_.getDisplaySettingsObject());
-
-         if (!requestedSettings.equals(currentNDViewerSettings)) {
-            ndViewer2_.update();
-         }
+         // Push MM settings into NDViewer's ImageMaker as render parameters
+         pushRenderSettings(requestedSettings);
+         ndViewer2_.update();
       } catch (NullPointerException e) {
          studio_.logs().logDebugMessage("NDViewer2: NPE in handleDisplaySettings "
                + "(likely async close race): " + e.getMessage());
-      } finally {
-         updatingFromInspector_ = false;
       }
       return requestedSettings;
+   }
+
+   /**
+    * Build render settings from MM DisplaySettings and push them into NDViewer's ImageMaker.
+    */
+   private void pushRenderSettings(DisplaySettings ds) {
+      List<String> channelNames = axesBridge_.getChannelNames();
+      if (channelNames.isEmpty()) {
+         // Single channel — use NO_CHANNEL
+         channelNames = new ArrayList<>();
+         channelNames.add(NDViewer2.NO_CHANNEL);
+      }
+
+      Map<String, ChannelRenderSettings> channelSettings = new HashMap<>();
+      for (int i = 0; i < channelNames.size(); i++) {
+         String name = channelNames.get(i);
+         int min = 0;
+         int max = 65535;
+         double gamma = 1.0;
+         Color color = Color.white;
+         boolean active = true;
+
+         if (i < ds.getNumberOfChannels()) {
+            ChannelDisplaySettings ch = ds.getChannelSettings(i);
+            ComponentDisplaySettings comp = ch.getComponentSettings(0);
+            min = (int) comp.getScalingMinimum();
+            max = (int) comp.getScalingMaximum();
+            gamma = comp.getScalingGamma();
+            color = ch.getColor();
+            active = ch.isVisible();
+         }
+         channelSettings.put(name, new ChannelRenderSettings(min, max, gamma, color, active));
+      }
+
+      boolean composite = ds.getColorMode() == DisplaySettings.ColorMode.COMPOSITE;
+      boolean autostretch = ds.isAutostretchEnabled();
+      boolean logHist = ds.isHistogramLogarithmic();
+      double percentile = ds.getAutoscaleIgnoredPercentile();
+      boolean ignoreOutliers = percentile > 0;
+
+      GlobalRenderSettings globalSettings = new GlobalRenderSettings(
+            autostretch, ignoreOutliers, percentile, composite, logHist);
+
+      ndViewer2_.setRenderSettings(channelSettings, globalSettings, this);
+
+      // Keep NDViewer's internal composite mode in sync (needed for scrollbar/checkbox logic)
+      ndViewer2_.setCompositeMode(composite);
    }
 
    @Override
@@ -343,6 +372,34 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       return MIN_REPAINT_PERIOD_NS;
    }
 
+   // ---- ContrastUpdateCallback ----
+
+   /**
+    * Called by ImageMaker when autostretch computes new contrast bounds.
+    * Updates MM DisplaySettings with the new min/max for the given channel.
+    */
+   @Override
+   public void onContrastUpdated(String channelName, int newMin, int newMax) {
+      int idx = axesBridge_.getChannelIndex(channelName);
+      // For single-channel data (NO_CHANNEL), use index 0
+      if (idx < 0 && NDViewer2.NO_CHANNEL.equals(channelName)) {
+         idx = 0;
+      }
+      if (idx < 0) {
+         return;
+      }
+      DisplaySettings current = getDisplaySettings();
+      if (idx >= current.getNumberOfChannels()) {
+         return;
+      }
+      ChannelDisplaySettings ch = current.getChannelSettings(idx);
+      ComponentDisplaySettings comp = ch.getComponentSettings(0).copyBuilder()
+            .scalingMinimum(newMin).scalingMaximum(newMax).build();
+      DisplaySettings updated = current.copyBuilder()
+            .channel(idx, ch.copyBuilder().component(0, comp).build()).build();
+      compareAndSetDisplaySettings(current, updated);
+   }
+
    // ---- NDViewer image hook ----
 
    /**
@@ -356,49 +413,6 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       // Convert axes to Coords and update display position
       Coords newPosition = axesBridge_.ndViewerToCoords(axes);
       setDisplayPosition(newPosition);
-
-      // If not in the middle of applying Inspector settings,
-      // sync NDViewer contrast back to MM DisplaySettings.
-      // Capture the snapshot on the render thread; the actual sync runs async.
-      if (!updatingFromInspector_) {
-         final DisplaySettings capturedDS = getDisplaySettings();
-         final boolean preserveColors = preserveMMColors_;
-         statsExecutor_.submit(() -> {
-            DisplaySettings fromNDViewer = displaySettingsBridge_.readFromNDViewer(
-                  ndViewer2_.getDisplaySettingsObject(), capturedDS);
-
-            // If preserving MM colors, restore original colors from capturedDS
-            // while keeping contrast (min/max/gamma) from NDViewer
-            boolean colorsDiffered = false;
-            if (preserveColors && fromNDViewer.getNumberOfChannels() > 0) {
-               DisplaySettings.Builder builder = fromNDViewer.copyBuilder();
-               for (int i = 0; i < fromNDViewer.getNumberOfChannels(); i++) {
-                  if (i < capturedDS.getNumberOfChannels()) {
-                     // Keep contrast from NDViewer, but restore color from MM
-                     ChannelDisplaySettings ndCh = fromNDViewer.getChannelSettings(i);
-                     ChannelDisplaySettings mmCh = capturedDS.getChannelSettings(i);
-                     if (!ndCh.getColor().equals(mmCh.getColor())) {
-                        colorsDiffered = true;
-                     }
-                     builder.channel(i, ndCh.copyBuilder()
-                           .color(mmCh.getColor())
-                           .build());
-                  }
-               }
-               fromNDViewer = builder.build();
-            }
-
-            if (!fromNDViewer.equals(capturedDS)) {
-               compareAndSetDisplaySettings(capturedDS, fromNDViewer);
-            } else if (colorsDiffered) {
-               // Settings match after color restoration, but NDViewer has wrong colors.
-               // Force push MM colors to NDViewer.
-               displaySettingsBridge_.applyToNDViewer(
-                     capturedDS, ndViewer2_.getDisplaySettingsObject());
-               ndViewer2_.update();
-            }
-         });
-      }
 
       // Skip redundant stats when accumulate mode has a pending new-image
       // request for the current channel (newImageArrived already submitted one)
@@ -621,23 +635,6 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       synchronized (accumulatedStatsPerChannel_) {
          accumulatedStatsPerChannel_.clear();
       }
-   }
-
-   /**
-    * Set whether MM DisplaySettings colors should be preserved, preventing
-    * NDViewer's colors from being synced back to MM.
-    *
-    * <p>When enabled, contrast changes (min/max/gamma) still sync from
-    * NDViewer to MM, but colors are not overwritten. This is useful when
-    * external code sets specific colors (e.g. from MDA channel settings)
-    * and wants them to persist even if NDViewer initializes channels with
-    * different default colors.</p>
-    *
-    * @param preserve true to preserve MM colors, false for normal bidirectional sync
-    */
-   @Override
-   public void setPreserveMMColors(boolean preserve) {
-      preserveMMColors_ = preserve;
    }
 
    // ---- Viewer control ----

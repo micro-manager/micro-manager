@@ -11,13 +11,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.internal.NDViewer2;
-import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
 import org.micromanager.ndviewer2.internal.gui.contrast.HistogramUtils;
 import org.micromanager.ndviewer2.internal.gui.contrast.LUT;
 
@@ -29,6 +29,8 @@ public class ImageMaker {
 
    public static final int EIGHTBIT = 0;
    public static final int SIXTEENBIT = 1;
+
+   private static final int NUM_DISPLAY_HIST_BINS = 256;
 
    private final ConcurrentHashMap<String, NDVImageProcessor> channelProcessors_ =
             new ConcurrentHashMap<>();
@@ -44,6 +46,12 @@ public class ImageMaker {
    private NDViewer2 display_;
    private boolean closed_ = false;
 
+   // Render settings supplied by NDViewer2DataViewer before each render
+   private volatile Map<String, ChannelRenderSettings> channelRenderSettings_ = new HashMap<>();
+   private volatile GlobalRenderSettings globalRenderSettings_ =
+         new GlobalRenderSettings(true, false, 0.0, true, false);
+   private volatile ContrastUpdateCallback contrastCallback_ = null;
+
    public ImageMaker(NDViewer2 c, NDViewer2DataSource data) {
       display_ = c;
       data_ = data;
@@ -53,6 +61,18 @@ public class ImageMaker {
       closed_ = true;
       display_ = null;
       data_ = null;
+   }
+
+   /**
+    * Update rendering parameters from MM DisplaySettings.
+    * Called by NDViewer2 before each render.
+    */
+   public void setRenderSettings(Map<String, ChannelRenderSettings> channelSettings,
+                                  GlobalRenderSettings globalSettings,
+                                  ContrastUpdateCallback callback) {
+      channelRenderSettings_ = channelSettings;
+      globalRenderSettings_ = globalSettings;
+      contrastCallback_ = callback;
    }
 
    public JSONObject getLatestTags() {
@@ -88,6 +108,19 @@ public class ImageMaker {
 
       return data_.getImageForDisplay(
               axes, resolutionindex, xOffset, yOffset, imageWidth, imageHeight);
+   }
+
+   /**
+    * Get the channel render settings for the given channel name.
+    * Falls back to a default (autostretch=true) if not found.
+    */
+   private ChannelRenderSettings getChannelSettings(String channelName) {
+      ChannelRenderSettings rs = channelRenderSettings_.get(channelName);
+      if (rs == null) {
+         // Default: full range 16-bit, white, active
+         return new ChannelRenderSettings(0, 65535, 1.0, Color.white, true);
+      }
+      return rs;
    }
 
    /**
@@ -132,7 +165,7 @@ public class ImageMaker {
                           new NDVImageProcessor(imageWidth_, imageHeight_, channel));
                }
 
-               if (!display_.getDisplaySettingsObject().isActive(channel)) {
+               if (!getChannelSettings(channel).active) {
                   continue;
                }
 
@@ -176,11 +209,11 @@ public class ImageMaker {
          int greenValue;
          int blueValue;
          for (String c : channelProcessors_.keySet()) {
-            if (!display_.getDisplaySettingsObject().isActive(c)) {
+            if (!getChannelSettings(c).active) {
                continue;
             }
             String channelName = c;
-            if (display_.getDisplaySettingsObject().isActive(channelName)) {
+            if (getChannelSettings(channelName).active) {
                //get the appropriate pixels from the data view
 
                //recompute 8 bit image
@@ -346,8 +379,10 @@ public class ImageMaker {
       }
 
       public void recompute() {
-         contrastMin_ = display_.getDisplaySettingsObject().getContrastMin(channelName_);
-         contrastMax_ = display_.getDisplaySettingsObject().getContrastMax(channelName_);
+         ChannelRenderSettings rs = getChannelSettings(channelName_);
+         GlobalRenderSettings gs = globalRenderSettings_;
+         contrastMin_ = rs.contrastMin;
+         contrastMax_ = rs.contrastMax;
          rProcessor_.contrastMin_ = contrastMin_;
          rProcessor_.contrastMax_ = contrastMax_;
          gProcessor_.contrastMin_ = contrastMin_;
@@ -363,18 +398,25 @@ public class ImageMaker {
             rawHistogram[i] += gProcessor_.rawHistogram[i];
             rawHistogram[i] += bProcessor_.rawHistogram[i];
          }
-         processHistogram(rawHistogram);
+         processHistogram(rawHistogram, gs);
 
-         if (display_.getDisplaySettingsObject().getAutoscale()) {
-            if (display_.getDisplaySettingsObject().ignoreFractionOn()) {
+         if (gs.autostretch) {
+            if (gs.ignoreOutliers) {
                contrastMax_ = maxAfterRejectingOutliers_;
                contrastMin_ = minAfterRejectingOutliers_;
             } else {
                contrastMin_ = pixelMin_;
                contrastMax_ = pixelMax_;
             }
-            display_.getDisplaySettingsObject().setContrastMin(channelName_, contrastMin_);
-            display_.getDisplaySettingsObject().setContrastMax(channelName_, contrastMax_);
+            if (contrastCallback_ != null) {
+               contrastCallback_.onContrastUpdated(channelName_, contrastMin_, contrastMax_);
+            }
+            rProcessor_.contrastMin_ = contrastMin_;
+            rProcessor_.contrastMax_ = contrastMax_;
+            gProcessor_.contrastMin_ = contrastMin_;
+            gProcessor_.contrastMax_ = contrastMax_;
+            bProcessor_.contrastMin_ = contrastMin_;
+            bProcessor_.contrastMax_ = contrastMax_;
             //need to redo this with autoscaled contrast now
             rProcessor_.create8BitImage();
             gProcessor_.create8BitImage();
@@ -387,18 +429,15 @@ public class ImageMaker {
                rawHistogram[i] += bProcessor_.rawHistogram[i];
             }
          }
-         rProcessor_.lut = makeLUT(Color.red, display_.getDisplaySettingsObject()
-                  .getContrastGamma(channelName_));
-         gProcessor_.lut = makeLUT(Color.green, display_.getDisplaySettingsObject()
-                  .getContrastGamma(channelName_));
-         bProcessor_.lut = makeLUT(Color.blue, display_.getDisplaySettingsObject()
-                  .getContrastGamma(channelName_));
+         rProcessor_.lut = makeLUT(Color.red, rs.gamma);
+         gProcessor_.lut = makeLUT(Color.green, rs.gamma);
+         bProcessor_.lut = makeLUT(Color.blue, rs.gamma);
          rProcessor_.splitLUTRGB();
          gProcessor_.splitLUTRGB();
          bProcessor_.splitLUTRGB();
       }
 
-      private void processHistogram(int[] rawHistogram) {
+      private void processHistogram(int[] rawHistogram, GlobalRenderSettings gs) {
          // Compute stats
          int totalPixels = 0;
          for (int i = 0; i < rawHistogram.length; i++) {
@@ -408,8 +447,7 @@ public class ImageMaker {
          pixelMin_ = -1;
          pixelMax_ = 0;
          int binSize = rawHistogram.length / 256;
-         int numBins = Math.min(rawHistogram.length / binSize,
-                  DisplaySettings.NUM_DISPLAY_HIST_BINS);
+         int numBins = Math.min(rawHistogram.length / binSize, NUM_DISPLAY_HIST_BINS);
          for (int i = 0; i < numBins; i++) {
             for (int j = 0; j < binSize; j++) {
                int rawHistIndex = i * binSize + j;
@@ -423,17 +461,10 @@ public class ImageMaker {
             }
          }
          maxAfterRejectingOutliers_ = totalPixels;
-         // specified percent of pixels are ignored in the automatic contrast setting
-         double percentToIgnore = 0.0;
-         try  {
-            percentToIgnore = display_.getDisplaySettingsObject().percentToIgnore();
-         } catch (Exception e) {
-            System.err.println(e);
-         }
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * percentToIgnore);
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels,
+               0.01 * gs.percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-
       }
    }
 
@@ -470,31 +501,32 @@ public class ImageMaker {
       }
 
       public void recompute() {
-         DisplaySettings ds = display_.getDisplaySettingsObject();
-         contrastMin_ = ds.getContrastMin(channelName_);
-         contrastMax_ = ds.getContrastMax(channelName_);
+         ChannelRenderSettings rs = getChannelSettings(channelName_);
+         GlobalRenderSettings gs = globalRenderSettings_;
+         contrastMin_ = rs.contrastMin;
+         contrastMax_ = rs.contrastMax;
          create8BitImage();
-         processHistogram(rawHistogram);
-         if (ds.getAutoscale()) {
-            if (ds.ignoreFractionOn()) {
+         processHistogram(rawHistogram, gs);
+         if (gs.autostretch) {
+            if (gs.ignoreOutliers) {
                contrastMax_ = maxAfterRejectingOutliers_;
                contrastMin_ = minAfterRejectingOutliers_;
             } else {
                contrastMin_ = pixelMin_;
                contrastMax_ = pixelMax_;
             }
-            ds.setContrastMin(channelName_, contrastMin_);
-            ds.setContrastMax(channelName_, contrastMax_);
+            if (contrastCallback_ != null) {
+               contrastCallback_.onContrastUpdated(channelName_, contrastMin_, contrastMax_);
+            }
             //need to redo this with autoscaled contrast now
             create8BitImage();
-            processHistogram(rawHistogram);
+            processHistogram(rawHistogram, gs);
          }
-         lut = makeLUT(display_.getDisplaySettingsObject().getColor(channelName_),
-                 display_.getDisplaySettingsObject().getContrastGamma(channelName_));
+         lut = makeLUT(rs.color, rs.gamma);
          splitLUTRGB();
       }
 
-      private void processHistogram(int[] rawHistogram) {
+      private void processHistogram(int[] rawHistogram, GlobalRenderSettings gs) {
          //Compute stats
          int totalPixels = 0;
          for (int i = 0; i < rawHistogram.length; i++) {
@@ -504,8 +536,7 @@ public class ImageMaker {
          pixelMin_ = -1;
          pixelMax_ = 0;
          int binSize = rawHistogram.length / 256;
-         int numBins = Math.min(rawHistogram.length / binSize,
-                  DisplaySettings.NUM_DISPLAY_HIST_BINS);
+         int numBins = Math.min(rawHistogram.length / binSize, NUM_DISPLAY_HIST_BINS);
          for (int i = 0; i < numBins; i++) {
             for (int j = 0; j < binSize; j++) {
                int rawHistIndex = i * binSize + j;
@@ -519,17 +550,10 @@ public class ImageMaker {
             }
          }
          maxAfterRejectingOutliers_ = totalPixels;
-         // specified percent of pixels are ignored in the automatic contrast setting
-         double percentToIgnore = 0.0;
-         try  {
-            percentToIgnore = display_.getDisplaySettingsObject().percentToIgnore();
-         } catch (Exception e) {
-            System.err.println(e);
-         }
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * percentToIgnore);
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels,
+               0.01 * gs.percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-
       }
 
       /**

@@ -70,7 +70,7 @@ final class AxesBridge {
    }
 
    /**
-    * Return the channel names as strings (for DisplaySettingsBridge).
+    * Return the channel names as strings.
     * Integer channel values are converted to their string representation.
     *
     * @return ordered list of channel names
@@ -82,6 +82,26 @@ final class AxesBridge {
             names.add(v.toString());
          }
          return names;
+      }
+   }
+
+   /**
+    * Return the MM channel index for a channel name string, or -1 if not found.
+    *
+    * <p>Matches by {@code toString()} equality, so works for both String-valued
+    * and Integer-valued channel axes.</p>
+    *
+    * @param channelName the channel name string
+    * @return MM channel index, or -1 if not found
+    */
+   public int getChannelIndex(String channelName) {
+      synchronized (channelValues_) {
+         for (int i = 0; i < channelValues_.size(); i++) {
+            if (channelValues_.get(i).toString().equals(channelName)) {
+               return i;
+            }
+         }
+         return -1;
       }
    }
 

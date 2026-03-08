@@ -22,14 +22,6 @@ public interface NDViewer2DataViewerAPI extends DataViewer {
    void setAccumulateStats(boolean enabled);
 
    /**
-    * Set whether MM DisplaySettings colors should be preserved, preventing
-    * NDViewer's colors from overwriting them.
-    *
-    * @param preserve true to preserve MM colors, false for normal bidirectional sync
-    */
-   void setPreserveMMColors(boolean preserve);
-
-   /**
     * Get the underlying NDViewer instance for direct NDViewer API access.
     *
     * @return the NDViewer2API instance

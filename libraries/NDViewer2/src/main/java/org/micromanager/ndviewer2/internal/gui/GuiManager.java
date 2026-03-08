@@ -4,6 +4,7 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.Map;
 import javax.swing.Timer;
 import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
@@ -129,9 +130,20 @@ public class GuiManager {
 
    public void displayNewImage(Image img, HashMap<String, int[]> hists, DataViewCoords view,
                                NDViewer2OverlayerPlugin overlayerPlugin) {
+      if (displayWindow_ == null || overlayer_ == null) {
+         return; // shutdown() already ran; discard stale repaint
+      }
       displayWindow_.displayImage(img, hists, view);
       overlayer_.createOverlay(view, overlayerPlugin);
       displayWindow_.repaintCanvas();
+   }
+
+   public void setRenderSettings(Map<String, ChannelRenderSettings> channelSettings,
+                                  GlobalRenderSettings globalSettings,
+                                  ContrastUpdateCallback callback) {
+      if (imageMaker_ != null) {
+         imageMaker_.setRenderSettings(channelSettings, globalSettings, callback);
+      }
    }
 
    public Image makeOrGetImage(DataViewCoords view) {

@@ -4,12 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JFrame;
@@ -41,6 +43,10 @@ public class DisplayWindow implements WindowListener {
       // Closing controlled by dialog
       window_.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       display_ = display;
+      URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         window_.setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       window_.setSize(1500, 800);
       WindowPositioning.setUpBoundsMemory(window_, display.getPreferences());
       window_.setVisible(true);

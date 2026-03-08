@@ -1,6 +1,5 @@
 package org.micromanager.ndviewer2.internal.gui;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
@@ -356,10 +355,6 @@ public class DisplayModel {
       }
    }
 
-   public void setChannelColor(String channel, Color c) {
-      displaySettings_.setColor(channel, c);
-   }
-
    public JSONObject getDisplaySettingsJSON() {
       if (displaySettings_ == null) {
          return null;
@@ -369,25 +364,6 @@ public class DisplayModel {
 
    public DisplaySettings getDisplaySettingsObject() {
       return displaySettings_;
-   }
-
-   public void setHistogramSettings(boolean autostretch,
-                                    boolean ignoreOutliers,
-                                    boolean syncChannels,
-                                    boolean logHist,
-                                    boolean composite,
-                                    double percentToIgnore) {
-      displaySettings_.setAutoscale(autostretch);
-      displaySettings_.setIgnoreOutliers(ignoreOutliers);
-      displaySettings_.setSyncChannels(syncChannels);
-      displaySettings_.setLogHist(logHist);
-      displaySettings_.setCompositeMode(composite);
-      displaySettings_.setIgnoreOutliersPercentage(percentToIgnore);
-
-   }
-
-   public boolean isChannelActive(String channelName) {
-      return displaySettings_.isActive(channelName);
    }
 
    public boolean isCompositeMode() {

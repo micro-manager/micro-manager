@@ -39,11 +39,14 @@ import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
 import org.micromanager.ndviewer2.internal.gui.AxisScroller;
+import org.micromanager.ndviewer2.internal.gui.ChannelRenderSettings;
 import org.micromanager.ndviewer2.internal.gui.CoalescentExecutor;
 import org.micromanager.ndviewer2.internal.gui.CoalescentRunnable;
+import org.micromanager.ndviewer2.internal.gui.ContrastUpdateCallback;
 import org.micromanager.ndviewer2.internal.gui.DataViewCoords;
 import org.micromanager.ndviewer2.internal.gui.DisplayCoalescentEDTRunnablePool;
 import org.micromanager.ndviewer2.internal.gui.DisplayModel;
+import org.micromanager.ndviewer2.internal.gui.GlobalRenderSettings;
 import org.micromanager.ndviewer2.internal.gui.GuiManager;
 import org.micromanager.ndviewer2.internal.gui.ViewerCanvas;
 import org.micromanager.ndviewer2.internal.gui.contrast.DisplaySettings;
@@ -108,9 +111,10 @@ public class NDViewer2 implements NDViewer2API {
       readZFunction_ = fn;
    }
 
+   /** @deprecated Colors are now managed by MM DisplaySettings. No-op. */
+   @Deprecated
    public void setChannelColor(String channel, Color c) {
-      displayModel_.setChannelColor(channel, c);
-
+      // No-op: colors are now managed through MM DisplaySettings via setRenderSettings()
    }
 
    public JSONObject getDisplaySettingsJSON() {
@@ -374,8 +378,14 @@ public class NDViewer2 implements NDViewer2API {
       update();
    }
 
-   public DisplaySettings getDisplaySettingsObject() {
-      return displayModel_.getDisplaySettingsObject();
+   /**
+    * Update render settings used by ImageMaker for the next render.
+    * Called by NDViewer2DataViewer before triggering update().
+    */
+   public void setRenderSettings(java.util.Map<String, ChannelRenderSettings> channelSettings,
+                                  GlobalRenderSettings globalSettings,
+                                  ContrastUpdateCallback callback) {
+      guiManager_.setRenderSettings(channelSettings, globalSettings, callback);
    }
 
    public JPanel getCanvasJPanel() {
@@ -462,14 +472,6 @@ public class NDViewer2 implements NDViewer2API {
    public GuiManager getGUIManager() {
       return guiManager_;
    }
-
-   public void setHistogramSettings(boolean autostretch, boolean ignoreOutliers,
-                                    boolean syncChannels, boolean logHist,
-                                    boolean composite, double percentToIgnore) {
-      displayModel_.setHistogramSettings(autostretch, ignoreOutliers, syncChannels,
-               logHist, composite, percentToIgnore);
-   }
-
 
    public DisplayModel getDisplayModel() {
       return displayModel_;
