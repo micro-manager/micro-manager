@@ -13,8 +13,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -32,7 +34,10 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
@@ -50,6 +55,7 @@ import org.micromanager.ndviewer2.NDViewer2Factory;
 public class DeskewExploreManager {
 
    private static final int SAVING_QUEUE_SIZE = 30;
+   private static final String MM_DISPLAY_SETTINGS_FILE = "mm_display_settings.json";
 
    private final Studio studio_;
    private final DeskewFrame frame_;
@@ -76,6 +82,8 @@ public class DeskewExploreManager {
    private volatile boolean exploring_ = false;
    private volatile boolean viewerClosing_ = false;  // Guard for onViewerClosed re-entrancy
    private boolean loadedData_ = false;  // True when viewing a loaded dataset
+   private JSONObject pendingDisplaySettings_ = null;  // Captured before viewer is nulled (unused, kept for cleanup)
+   private DisplaySettings pendingMMDisplaySettings_ = null;  // MM display settings captured before viewer is nulled
    private String storageDir_;
    private String acqName_;
 
@@ -313,6 +321,8 @@ public class DeskewExploreManager {
     * @param dir Path to the NDTiff dataset directory
     */
    public void openExplore(String dir) {
+      studio_.logs().logMessage("Deskew Explore: openExplore called, dir=" + dir
+            + " exploring_=" + exploring_);
       if (exploring_) {
          studio_.logs().showMessage("Explore session already running.");
          return;
@@ -333,6 +343,7 @@ public class DeskewExploreManager {
 
          // Create data source
          dataSource_ = new DeskewExploreDataSource(this);
+         dataSource_.setReadOnly(true);
 
          // Open existing storage read-only
          storage_ = new NDTiffStorage(dir);
@@ -401,34 +412,84 @@ public class DeskewExploreManager {
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
 
-         // Initialize DisplaySettings with channels from storage metadata
-         if (summaryMetadata.has("ChNames")) {
-            try {
-               JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
-               int nrChannels = chNames.length();
-               org.micromanager.display.DisplaySettings.Builder dsBuilder =
-                     studio_.displays().displaySettingsBuilder();
-               if (nrChannels == 1) {
-                  dsBuilder.colorModeGrayscale();
+         // Initialize MM DisplaySettings.
+         // Priority: saved mm_display_settings.json (full MM settings incl. autostretch/bit-depth)
+         // > per-channel color heuristics (NDViewer JSON → RememberedDisplaySettings
+         //   → ColorPalettes.guessColor → ColorPalettes.getFromDefaultPalette).
+         // savedMMSettings is declared here so the display executor lambda can capture it.
+         File mmSettingsFile = new File(dir, MM_DISPLAY_SETTINGS_FILE);
+         final DisplaySettings savedMMSettings = mmSettingsFile.canRead()
+               ? DefaultDisplaySettings.getSavedDisplaySettings(mmSettingsFile) : null;
+         try {
+            if (savedMMSettings != null) {
+               mm2Viewer_.setDisplaySettings(savedMMSettings);
+               mm2Viewer_.setPreserveMMColors(true);
+            } else {
+               // No saved MM settings — build from color heuristics.
+               // Collect channel names in order from ChNames or from axes set.
+               List<String> channelNames = new ArrayList<>();
+               String channelGroup = summaryMetadata.optString("ChGroup", "");
+               if (summaryMetadata.has("ChNames")) {
+                  JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
+                  for (int i = 0; i < chNames.length(); i++) {
+                     channelNames.add(chNames.getString(i));
+                  }
                } else {
-                  dsBuilder.colorModeComposite();
+                  LinkedHashSet<String> seen = new LinkedHashSet<>();
+                  for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+                     Object ch = axes.get("channel");
+                     if (ch != null) {
+                        seen.add(ch.toString());
+                     }
+                  }
+                  channelNames.addAll(seen);
                }
-               for (int i = 0; i < nrChannels; i++) {
-                  String channelName = chNames.getString(i);
-                  String channelGroup = summaryMetadata.optString("ChGroup", "");
-                  dsBuilder.channel(i,
-                        RememberedDisplaySettings.loadChannel(studio_,
-                              channelGroup,
-                              channelName,
-                              java.awt.Color.WHITE));
+
+               if (!channelNames.isEmpty()) {
+                  JSONObject storedNDVSettings = storage_.getDisplaySettings();
+                  DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
+                  dsBuilder = channelNames.size() > 1
+                        ? dsBuilder.colorModeComposite() : dsBuilder.colorModeGrayscale();
+                  for (int i = 0; i < channelNames.size(); i++) {
+                     String name = channelNames.get(i);
+                     java.awt.Color color = null;
+                     // 1. Try stored NDViewer display_settings.txt
+                     if (storedNDVSettings != null) {
+                        try {
+                           color = new java.awt.Color(
+                                 storedNDVSettings.getJSONObject(name).getInt("Color"));
+                        } catch (Exception ignored) {
+                        }
+                     }
+                     // 2. Try MM RememberedDisplaySettings
+                     if (color == null || color.equals(java.awt.Color.WHITE)) {
+                        org.micromanager.display.ChannelDisplaySettings remembered =
+                              RememberedDisplaySettings.loadChannel(studio_, channelGroup, name, null);
+                        if (remembered != null && !remembered.getColor().equals(java.awt.Color.WHITE)) {
+                           color = remembered.getColor();
+                        }
+                     }
+                     // 3. Guess from channel name (wavelength-based)
+                     if (color == null || color.equals(java.awt.Color.WHITE)) {
+                        java.awt.Color guessed = ColorPalettes.guessColor(name);
+                        if (!guessed.equals(java.awt.Color.WHITE)) {
+                           color = guessed;
+                        }
+                     }
+                     // 4. Fall back to MM default palette by index
+                     if (color == null || color.equals(java.awt.Color.WHITE)) {
+                        color = ColorPalettes.getFromDefaultPalette(i);
+                     }
+                     dsBuilder.channel(i,
+                           studio_.displays().channelDisplaySettingsBuilder()
+                                 .color(color).build());
+                  }
+                  mm2Viewer_.setDisplaySettings(dsBuilder.build());
+                  mm2Viewer_.setPreserveMMColors(true);
                }
-               mm2Viewer_.setDisplaySettings(dsBuilder.build());
-               studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
-                     + nrChannels + " channels from storage");
-            } catch (Exception e) {
-               studio_.logs().logError(e,
-                     "Failed to initialize DisplaySettings from storage metadata");
             }
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Failed to initialize DisplaySettings");
          }
 
          viewer_ = mm2Viewer_.getNDViewer();
@@ -454,15 +515,64 @@ public class DeskewExploreManager {
 
          viewer_.setViewOffset(0, 0);
 
-         // Trigger initial display
+         // Trigger initial display and seed the histogram for all stored images.
+         studio_.logs().logMessage("Deskew Explore: pre-seed check displayExecutor_="
+               + displayExecutor_ + " viewer_=" + viewer_);
          if (displayExecutor_ != null && viewer_ != null) {
             displayExecutor_.submit(() -> {
-               HashMap<String, Object> displayAxes = new HashMap<>();
                try {
-                  viewer_.newImageArrived(displayAxes);
+                  // Pick one representative image per channel from the first tile found in
+                  // storage, then feed it through the full histogram pipeline so the
+                  // Inspector panel is created and stats are computed on open.
+                  List<Image> seedImages = new ArrayList<>();
+                  List<HashMap<String, Object>> seedAxesList = new ArrayList<>();
+                  Set<Object> seenChannels = new LinkedHashSet<>();
+                  studio_.logs().logMessage("Deskew Explore: seeding histogram, axesSet size="
+                        + storage_.getAxesSet().size());
+                  for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+                     Object ch = axes.get("channel");
+                     if (!seenChannels.add(ch == null ? "" : ch)) {
+                        continue; // already have a representative for this channel
+                     }
+                     // Build channel-only axes for histogram registration (row/column not needed)
+                     HashMap<String, Object> channelAxes = new HashMap<>();
+                     if (ch != null) {
+                        channelAxes.put("channel", ch);
+                     }
+                     try {
+                        // Fetch image using full axes (including row/column) so storage lookup succeeds
+                        studio_.logs().logMessage("Deskew Explore: fetching seed image for axes=" + axes);
+                        Image img = mm2DataProvider_.getDownsampledImageByAxes(axes);
+                        studio_.logs().logMessage("Deskew Explore: seed image=" + img
+                              + " channelAxes=" + channelAxes);
+                        if (img != null) {
+                           mm2DataProvider_.newImageArrived(img, channelAxes);
+                           seedImages.add(img);
+                           seedAxesList.add(channelAxes);
+                        }
+                     } catch (Exception e) {
+                        studio_.logs().logMessage("Deskew Explore: exception fetching seed image: " + e);
+                     }
+                  }
+                  studio_.logs().logMessage("Deskew Explore: seedImages.size()=" + seedImages.size()
+                        + " mm2Viewer_=" + mm2Viewer_);
+                  if (mm2Viewer_ != null && !seedImages.isEmpty()) {
+                     mm2Viewer_.newTileArrived(seedImages, seedAxesList);
+                  }
+                  // Initialize NDViewer from the data source's image keys — this registers
+                  // all channels, sets up scrollbars, and triggers the first canvas render.
+                  // Pass null so NDViewer uses white defaults; MM colors set via
+                  // setDisplaySettings above are preserved by setPreserveMMColors(true).
+                  viewer_.initializeViewerToLoaded(null);
                   viewer_.update();
+                  // Re-apply saved MM display settings after initializeViewerToLoaded, because
+                  // the canvas render triggers the setImageHook which syncs NDViewer's state
+                  // (autostretch=true by default) back into MM DisplaySettings, overwriting ours.
+                  if (savedMMSettings != null && mm2Viewer_ != null) {
+                     mm2Viewer_.setDisplaySettings(savedMMSettings);
+                  }
                } catch (NullPointerException e) {
-                  // NDViewer histogram not yet initialized - ignore
+                  studio_.logs().logMessage("Deskew Explore: NPE in histogram seed: " + e);
                }
             });
          }
@@ -472,6 +582,7 @@ public class DeskewExploreManager {
          studio_.logs().logMessage("Deskew Explore: opened dataset from " + dir);
 
       } catch (Exception e) {
+         studio_.logs().logMessage("Deskew Explore: openExplore EXCEPTION: " + e);
          studio_.logs().showError(e, "Failed to open Deskew Explore dataset.");
          stopExplore();
       }
@@ -549,6 +660,27 @@ public class DeskewExploreManager {
          stagePollingExecutor_ = null;
       }
 
+      // Capture MM DisplaySettings so we can persist them to mm_display_settings.json.
+      // mm2Viewer_ may already be null if onViewerClosed() ran first (loaded-data close path),
+      // in which case pendingMMDisplaySettings_ was captured there before the viewer was nulled.
+      final DisplaySettings mmDisplaySettingsToSave;
+      if (!deleteTempFiles) {
+         if (mm2Viewer_ != null) {
+            DisplaySettings captured = null;
+            try {
+               captured = mm2Viewer_.getDisplaySettings();
+            } catch (Exception ignored) {
+            }
+            mmDisplaySettingsToSave = captured;
+         } else {
+            mmDisplaySettingsToSave = pendingMMDisplaySettings_;
+         }
+      } else {
+         mmDisplaySettingsToSave = null;
+      }
+      pendingMMDisplaySettings_ = null;
+      pendingDisplaySettings_ = null;
+
       // Close viewers BEFORE storage to avoid NPEs from pending repaints
       if (mm2Viewer_ != null) {
          mm2Viewer_.close();
@@ -583,6 +715,15 @@ public class DeskewExploreManager {
             }
             if (storageToClose != null) {
                try {
+                  if (mmDisplaySettingsToSave != null) {
+                     // Save full MM display settings (autostretch, bit-depth, colors, etc.)
+                     // to mm_display_settings.json alongside the dataset.
+                     String diskLocation = storageToClose.getDiskLocation();
+                     if (diskLocation != null) {
+                        File mmSettingsFile = new File(diskLocation, MM_DISPLAY_SETTINGS_FILE);
+                        ((DefaultDisplaySettings) mmDisplaySettingsToSave).save(mmSettingsFile);
+                     }
+                  }
                   if (!storageToClose.isFinished()) {
                      storageToClose.finishedWriting();
                   }
@@ -617,6 +758,14 @@ public class DeskewExploreManager {
          return;
       }
       viewerClosing_ = true;
+
+      // Capture MM display settings before nulling viewer references so stopExplore() can save them.
+      if (mm2Viewer_ != null) {
+         try {
+            pendingMMDisplaySettings_ = mm2Viewer_.getDisplaySettings();
+         } catch (Exception ignored) {
+         }
+      }
 
       // The viewer is already closing (NDViewer triggered this via dataSource.close()).
       // Only shut down MM2-specific resources (Inspector detach, stats queue) without

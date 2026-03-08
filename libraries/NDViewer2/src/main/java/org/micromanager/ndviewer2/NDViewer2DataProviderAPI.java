@@ -1,5 +1,6 @@
 package org.micromanager.ndviewer2;
 
+import java.io.IOException;
 import java.util.HashMap;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
@@ -19,4 +20,13 @@ public interface NDViewer2DataProviderAPI extends DataProvider {
     * @param axes  the NDViewer axes of the image (e.g. {channel: "DAPI", ...})
     */
    void newImageArrived(Image image, HashMap<String, Object> axes);
+
+   /**
+    * Fetch a downsampled (coarsest pyramid level) version of the image by NDViewer axes.
+    *
+    * @param axes the NDViewer axes map
+    * @return downsampled image, or null if not found
+    * @throws IOException if conversion from TaggedImage fails
+    */
+   Image getDownsampledImageByAxes(HashMap<String, Object> axes) throws IOException;
 }

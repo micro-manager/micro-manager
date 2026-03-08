@@ -311,11 +311,10 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
     */
    public Image getDownsampledImageByAxes(HashMap<String, Object> axes)
          throws IOException {
-      int numLevels = storage_.getNumResLevels();
-      int resLevel = Math.max(0, numLevels - 1);
-      TaggedImage ti = (numLevels > 1)
-            ? storage_.getImage(axes, resLevel)
-            : storage_.getImage(axes);
+      // Always fetch from full resolution (level 0).
+      // Lower pyramid levels use different row/col indices (floorDiv by 2^N)
+      // so passing full-res axes directly to a higher level would return null.
+      TaggedImage ti = storage_.getImage(axes);
       if (ti == null || ti.pix == null) {
          return null;
       }

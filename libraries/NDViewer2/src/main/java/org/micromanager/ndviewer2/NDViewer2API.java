@@ -75,6 +75,14 @@ public interface NDViewer2API {
               HashMap<String, Object> axisMins,
               HashMap<String, Object> axisMaxs);
 
+   /**
+    * Initialize the viewer for a dataset already on disk (no live newImageArrived calls).
+    * Reads all image keys from the data source, registers channels, and sets up scrollbars.
+    *
+    * @param displaySettings NDViewer display settings JSON (may be null/empty)
+    */
+   void initializeViewerToLoaded(JSONObject displaySettings);
+
 
    /**
     * Set the text in the windows frame.

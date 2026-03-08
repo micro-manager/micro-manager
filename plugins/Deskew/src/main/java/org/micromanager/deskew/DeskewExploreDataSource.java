@@ -47,6 +47,9 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
    private boolean isLeftDragging_ = false;
    private volatile boolean acquisitionInProgress_ = false;
 
+   // When true, tile selection and acquisition are disabled (opened dataset, not live explore).
+   private volatile boolean readOnly_ = false;
+
    // Cache for getImageKeys() — invalidated by DeskewExploreManager after putImageMultiRes.
    private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
 
@@ -111,6 +114,10 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
     * Sets whether an acquisition is currently in progress.
     * Used to prevent new selections during acquisition.
     */
+   public void setReadOnly(boolean readOnly) {
+      readOnly_ = readOnly;
+   }
+
    public void setAcquisitionInProgress(boolean inProgress) {
       acquisitionInProgress_ = inProgress;
       if (!inProgress) {
@@ -378,8 +385,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
    @Override
    public void mouseReleased(MouseEvent e) {
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
-         // Right-click without drag - start new selection (blocked during acquisition)
-         if (!acquisitionInProgress_ && tileWidth_ > 0 && tileHeight_ > 0) {
+         // Right-click without drag - start new selection (blocked in read-only mode and during acquisition)
+         if (!readOnly_ && !acquisitionInProgress_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
             if (tile != null) {
                selectionStart_ = tile;
@@ -388,14 +395,14 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
             }
          }
       } else if (javax.swing.SwingUtilities.isLeftMouseButton(e) && !isLeftDragging_) {
-         if (e.isControlDown()) {
+         if (!readOnly_ && e.isControlDown()) {
             // Ctrl+left-click - move stage to clicked position
             Point2D.Double pixelPos = getFullResPixelCoords(e.getX(), e.getY());
             if (pixelPos != null) {
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
-         } else if (!acquisitionInProgress_) {
-            // Left-click without drag - acquire selected tiles (blocked during acquisition)
+         } else if (!readOnly_ && !acquisitionInProgress_) {
+            // Left-click without drag - acquire selected tiles (blocked in read-only mode and during acquisition)
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
@@ -437,8 +444,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
             dragStart_ = current;
          }
       } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
-         // Left-drag extends the selection — blocked during acquisition.
-         if (!acquisitionInProgress_ && selectionStart_ != null
+         // Left-drag extends the selection — blocked in read-only mode and during acquisition.
+         if (!readOnly_ && !acquisitionInProgress_ && selectionStart_ != null
                  && tileWidth_ > 0 && tileHeight_ > 0) {
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
                isLeftDragging_ = true;
@@ -540,8 +547,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
       }
 
       // Show usage instructions when nothing is selected, not acquiring,
-      // and no tiles have been acquired yet
-      if (selectionStart_ == null && !acquisitionInProgress_ && acquiredTiles_.isEmpty()) {
+      // no tiles have been acquired yet, and not in read-only mode
+      if (!readOnly_ && selectionStart_ == null && !acquisitionInProgress_ && acquiredTiles_.isEmpty()) {
          int centerX = (int) (displayImageSize.x / 2);
          int centerY = (int) (displayImageSize.y / 2);
 
