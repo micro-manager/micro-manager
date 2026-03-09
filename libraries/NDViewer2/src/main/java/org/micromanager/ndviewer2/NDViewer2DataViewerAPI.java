@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.overlay.Overlay;
 
 /**
  * Public interface for the NDViewer2 data viewer.
@@ -39,6 +40,36 @@ public interface NDViewer2DataViewerAPI extends DataViewer {
     * to avoid calling ndViewer_.close() a second time.
     */
    void closeWithoutNDViewer();
+
+   /**
+    * Add an MM Inspector overlay to this viewer.
+    * The overlay will be rendered on the NDViewer canvas on top of the image.
+    *
+    * @param overlay the overlay to add
+    */
+   void addOverlay(Overlay overlay);
+
+   /**
+    * Remove an MM Inspector overlay from this viewer.
+    *
+    * @param overlay the overlay to remove
+    */
+   void removeOverlay(Overlay overlay);
+
+   /**
+    * Return the list of MM Inspector overlays currently attached to this viewer.
+    *
+    * @return list of overlays
+    */
+   List<Overlay> getOverlays();
+
+   /**
+    * Set an external overlayer plugin (e.g. for tile grid display).
+    * The plugin will be chained after the MM overlays.
+    *
+    * @param plugin the external overlayer plugin, or null to clear
+    */
+   void setOverlayerPlugin(NDViewer2OverlayerPlugin plugin);
 
    /**
     * Notify this viewer that new tiles have arrived with images for all channels.

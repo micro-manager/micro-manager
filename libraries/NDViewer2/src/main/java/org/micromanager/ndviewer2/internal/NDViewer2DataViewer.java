@@ -1,12 +1,19 @@
 package org.micromanager.ndviewer2.internal;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
@@ -37,9 +44,15 @@ import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
+import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
+import org.micromanager.display.overlay.Overlay;
+import org.micromanager.display.overlay.OverlayListener;
+import org.micromanager.display.overlay.OverlaySupport;
 import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
+import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
 import org.micromanager.ndviewer2.internal.NDViewer2;
 import org.micromanager.ndviewer2.internal.gui.ChannelRenderSettings;
 import org.micromanager.ndviewer2.internal.gui.ContrastUpdateCallback;
@@ -56,7 +69,7 @@ import org.micromanager.ndviewer2.internal.gui.GlobalRenderSettings;
  */
 public final class NDViewer2DataViewer extends AbstractDataViewer
       implements NDViewer2DataViewerAPI, ImageStatsPublisher, StatsComputeQueue.Listener,
-      ContrastUpdateCallback {
+      ContrastUpdateCallback, OverlaySupport {
 
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
 
@@ -101,6 +114,31 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
    // Closed state
    private volatile boolean closed_ = false;
 
+   // Set to true once the first real image has been rendered (initializeViewerToLoaded
+   // or first newImageArrived). Used to suppress premature redrawOverlay() calls at
+   // startup before any image is available.
+   private volatile boolean viewerInitialized_ = false;
+
+   // MM Inspector overlay support
+   private final List<Overlay> mmOverlays_ = new CopyOnWriteArrayList<>();
+   // Listeners registered on each overlay so we can remove them on removeOverlay()
+   private final Map<Overlay, OverlayListener> mmOverlayListeners_ = new HashMap<>();
+   // External overlayer plugin slot (e.g. DeskewExploreDataSource tile grid)
+   private volatile NDViewer2OverlayerPlugin externalOverlayerPlugin_ = null;
+   // Last rendered BufferedImage of MM overlays — read by the persistent mmOverlayRoi_
+   private volatile BufferedImage mmOverlayBuf_ = null;
+   // Single persistent Roi that draws mmOverlayBuf_ onto the canvas each repaint
+   private final org.micromanager.ndviewer2.overlay.Roi mmOverlayRoi_ =
+         new org.micromanager.ndviewer2.overlay.Roi(0, 0, 1, 1) {
+            @Override
+            public void drawOverlay(java.awt.Graphics gr) {
+               BufferedImage buf = mmOverlayBuf_;
+               if (buf != null) {
+                  gr.drawImage(buf, 0, 0, null);
+               }
+            }
+         };
+
    /**
     * Create an NDViewer2DataViewer.
     *
@@ -127,6 +165,10 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       // Create NDViewer (the canvas/scrollbar viewer)
       ndViewer2_ = new NDViewer2(dataSource, acqInterface,
             summaryMetadata, pixelSizeUm, rgb);
+
+      // Register the internal bridge overlayer plugin that chains MM overlays
+      // into NDViewer's render pipeline.
+      ndViewer2_.setOverlayerPlugin(createBridgeOverlayerPlugin());
 
       // Set up stats computation
       computeQueue_.addListener(this);
@@ -410,6 +452,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       if (updatingPosition_) {
          return;
       }
+      viewerInitialized_ = true;
       // Convert axes to Coords and update display position
       Coords newPosition = axesBridge_.ndViewerToCoords(axes);
       setDisplayPosition(newPosition);
@@ -519,6 +562,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       if (tagged.isEmpty()) {
          return;
       }
+      viewerInitialized_ = true;
       // Delay submission until after pending EDT tasks (e.g. histogram panel
       // creation from DataProviderHasNewImageEvent) so panels exist first.
       SwingUtilities.invokeLater(() -> {
@@ -656,6 +700,200 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
     */
    public void setWindowTitle(String title) {
       ndViewer2_.setWindowTitle(title);
+   }
+
+   // ---- OverlaySupport / NDViewer2DataViewerAPI overlay methods ----
+
+   /**
+    * Create the internal bridge overlayer plugin that renders MM overlays onto the NDViewer canvas.
+    * This plugin also chains to any external overlayer plugin set via setOverlayerPlugin().
+    */
+   private NDViewer2OverlayerPlugin createBridgeOverlayerPlugin() {
+      return new NDViewer2OverlayerPlugin() {
+         @Override
+         public void drawOverlay(org.micromanager.ndviewer2.overlay.Overlay defaultOverlay,
+               Point2D.Double displayImageSize, double downsampleFactor,
+               java.awt.Graphics g, HashMap<String, Object> axes,
+               double magnification, Point2D.Double viewOffset) throws InterruptedException {
+            studio_.logs().logDebugMessage("NDViewer2 bridge drawOverlay called, mmOverlays_=" + mmOverlays_.size());
+            // Chain to external plugin first (e.g. DeskewExploreDataSource tile grid).
+            // The external plugin is responsible for calling ndViewer2_.setOverlay() itself.
+            NDViewer2OverlayerPlugin external = externalOverlayerPlugin_;
+            // If no MM overlays are active, let the default/external path handle
+            // setOverlay and return — no need to intercept.
+            List<Overlay> overlays = new ArrayList<>(mmOverlays_);
+
+            if (external != null) {
+               external.drawOverlay(defaultOverlay, displayImageSize, downsampleFactor,
+                     g, axes, magnification, viewOffset);
+            } else {
+               ndViewer2_.setOverlay(defaultOverlay);
+            }
+
+            // Check if any overlay is actually visible before doing any work
+            boolean anyVisible = false;
+            for (Overlay overlay : overlays) {
+               if (overlay.isVisible()) {
+                  anyVisible = true;
+                  break;
+               }
+            }
+            if (!anyVisible) {
+               mmOverlayBuf_ = null;
+               return;
+            }
+
+            // Render MM overlays into mmOverlayBuf_.
+            // mmOverlayRoi_ reads that field on every canvas repaint.
+            int w = Math.max(1, (int) displayImageSize.x);
+            int h = Math.max(1, (int) displayImageSize.y);
+            Rectangle screenRect = new Rectangle(0, 0, w, h);
+            Rectangle2D.Float viewPort = new Rectangle2D.Float(
+                  (float) viewOffset.x,
+                  (float) viewOffset.y,
+                  (float) (displayImageSize.x * downsampleFactor),
+                  (float) (displayImageSize.y * downsampleFactor));
+            DisplaySettings ds = getDisplaySettings();
+            // Fetch a representative image so overlays can read pixel metadata
+            // (e.g. ScaleBarOverlay reads pixelSizeUm from primaryImage,
+            //  PatternOverlay requires non-null primaryImage).
+            Image primaryImage = null;
+            try {
+               primaryImage = dataProvider_.getImageByAxes(axes);
+               if (primaryImage == null) {
+                  Coords pos = axesBridge_.ndViewerToCoords(axes);
+                  if (pos != null) {
+                     primaryImage = dataProvider_.getImage(pos);
+                  }
+               }
+               // Last resort: grab any image from the dataset
+               if (primaryImage == null) {
+                  primaryImage = dataProvider_.getAnyImage();
+               }
+            } catch (Exception ex) {
+               // Non-critical — overlays that don't need metadata will still work
+            }
+            final Image finalPrimaryImage = primaryImage;
+
+            // Paint all visible MM overlays into a fresh transparent BufferedImage
+            BufferedImage buf = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D bg = buf.createGraphics();
+            boolean anyPainted = false;
+            try {
+               for (Overlay overlay : overlays) {
+                  if (overlay.isVisible()) {
+                     try {
+                        overlay.paintOverlay(bg, screenRect, ds,
+                              finalPrimaryImage != null
+                                    ? Collections.singletonList(finalPrimaryImage)
+                                    : Collections.emptyList(),
+                              finalPrimaryImage, viewPort);
+                        anyPainted = true;
+                     } catch (Exception ex) {
+                        studio_.logs().logError(ex,
+                              "NDViewer2 bridge: error painting " + overlay.getTitle());
+                     }
+                  }
+               }
+            } finally {
+               bg.dispose();
+            }
+
+            if (!anyPainted) {
+               // All overlays failed to paint — don't corrupt the canvas
+               mmOverlayBuf_ = null;
+               return;
+            }
+
+            // Atomic update — mmOverlayRoi_.drawOverlay reads this volatile field
+            mmOverlayBuf_ = buf;
+
+            // Append mmOverlayRoi_ to whatever setOverlay was already called with.
+            // Re-issue setOverlay with the combined overlay so mmOverlayRoi_ is included.
+            org.micromanager.ndviewer2.overlay.Overlay combined =
+                  new org.micromanager.ndviewer2.overlay.Overlay();
+            for (int i = 0; i < defaultOverlay.size(); i++) {
+               combined.add(defaultOverlay.get(i));
+            }
+            combined.add(mmOverlayRoi_);
+            ndViewer2_.setOverlay(combined);
+         }
+      };
+   }
+
+   @Override
+   public void addOverlay(Overlay overlay) {
+      if (overlay == null) {
+         return;
+      }
+      studio_.logs().logMessage("NDViewer2: addOverlay called: " + overlay.getTitle());
+      mmOverlays_.add(overlay);
+      // Listen for repaint requests from the overlay so the canvas redraws
+      // immediately when settings or visibility change.
+      OverlayListener listener = new OverlayListener() {
+         @Override
+         public void overlayTitleChanged(Overlay o) {
+         }
+
+         @Override
+         public void overlayConfigurationChanged(Overlay o) {
+            ndViewer2_.redrawOverlay();
+         }
+
+         @Override
+         public void overlayVisibleChanged(Overlay o) {
+            ndViewer2_.redrawOverlay();
+         }
+      };
+      synchronized (mmOverlayListeners_) {
+         mmOverlayListeners_.put(overlay, listener);
+      }
+      overlay.addOverlayListener(listener);
+      // Fire event so the Inspector controller can add the config panel.
+      // Use null for the DisplayWindow arg — the controller only uses getOverlay().
+      postEvent(DisplayWindowDidAddOverlayEvent.create(null, overlay));
+      // Only trigger redraw if the viewer has already rendered its first image;
+      // otherwise makeOrGetImage returns null and sets currentImage_ = null → grey canvas.
+      if (viewerInitialized_) {
+         ndViewer2_.redrawOverlay();
+      }
+   }
+
+   @Override
+   public void removeOverlay(Overlay overlay) {
+      if (overlay == null) {
+         return;
+      }
+      mmOverlays_.remove(overlay);
+      // Unregister the overlay listener we registered in addOverlay()
+      OverlayListener listener;
+      synchronized (mmOverlayListeners_) {
+         listener = mmOverlayListeners_.remove(overlay);
+      }
+      if (listener != null) {
+         overlay.removeOverlayListener(listener);
+      }
+      // Fire event so the Inspector controller removes the config panel.
+      postEvent(DisplayWindowDidRemoveOverlayEvent.create(null, overlay));
+      if (viewerInitialized_) {
+         ndViewer2_.redrawOverlay();
+      }
+   }
+
+   @Override
+   public List<Overlay> getOverlays() {
+      return Collections.unmodifiableList(new ArrayList<>(mmOverlays_));
+   }
+
+   /**
+    * Set an external overlayer plugin (e.g. for tile grid display in Deskew Explore).
+    * The plugin is chained inside the internal bridge plugin so MM overlays are still painted.
+    *
+    * @param plugin the external overlayer plugin, or null to clear
+    */
+   @Override
+   public void setOverlayerPlugin(NDViewer2OverlayerPlugin plugin) {
+      externalOverlayerPlugin_ = plugin;
    }
 
    /**

@@ -264,7 +264,8 @@ public class DeskewExploreManager {
                + "Left-drag to extend, Left-click to acquire");
 
          // Set up overlayer and mouse listener
-         viewer_.setOverlayerPlugin(dataSource_);
+         // Route through mm2Viewer_ so the bridge plugin chains this as externalOverlayerPlugin_
+         mm2Viewer_.setOverlayerPlugin(dataSource_);
          viewer_.setCustomCanvasMouseListener(dataSource_);
 
          // Set metadata functions
@@ -469,7 +470,8 @@ public class DeskewExploreManager {
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
          // Set up overlayer and mouse listener
-         viewer_.setOverlayerPlugin(dataSource_);
+         // Route through mm2Viewer_ so the bridge plugin chains this as externalOverlayerPlugin_
+         mm2Viewer_.setOverlayerPlugin(dataSource_);
          viewer_.setCustomCanvasMouseListener(dataSource_);
 
          // Set metadata functions

@@ -27,6 +27,7 @@ import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayPlugin;
+import org.micromanager.display.overlay.OverlaySupport;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.utils.PopupButton;
 import org.scijava.plugin.Plugin;
@@ -55,7 +56,7 @@ public final class OverlaysInspectorPanelController
    private final List<OverlayConfigPanelController> configPanelControllers_ =
          new ArrayList<>();
 
-   private DisplayWindow viewer_;
+   private DataViewer viewer_;
    private final List<OverlayPlugin> plugins_;
 
    public static OverlaysInspectorPanelController create(Studio studio) {
@@ -103,7 +104,37 @@ public final class OverlaysInspectorPanelController
                   .height("pref:pref:pref"));
    }
 
-   private void loadSettings(DisplayWindow viewer) {
+   /**
+    * Return the overlay support interface for the current viewer.
+    * Works for both DisplayWindow and OverlaySupport implementations.
+    */
+   private OverlaySupport getOverlaySupport() {
+      if (viewer_ instanceof OverlaySupport) {
+         return (OverlaySupport) viewer_;
+      }
+      if (viewer_ instanceof DisplayWindow) {
+         final DisplayWindow dw = (DisplayWindow) viewer_;
+         return new OverlaySupport() {
+            @Override
+            public void addOverlay(Overlay overlay) {
+               dw.addOverlay(overlay);
+            }
+
+            @Override
+            public void removeOverlay(Overlay overlay) {
+               dw.removeOverlay(overlay);
+            }
+
+            @Override
+            public List<Overlay> getOverlays() {
+               return dw.getOverlays();
+            }
+         };
+      }
+      return null;
+   }
+
+   private void loadSettings(DataViewer viewer) {
       //Load the overlays from the profile.
       String providerName = viewer.getDataProvider().getName();
       // first look for settings for this display, if not found, revert to DEFAULT settings
@@ -113,6 +144,10 @@ public final class OverlaysInspectorPanelController
                     profile_.getSettings(this.getClass()).getPropertyMapList(
                             OVERLAYDEFAULT, (PropertyMap[]) null));
       if (settings == null) {
+         return;
+      }
+      OverlaySupport support = getOverlaySupport();
+      if (support == null) {
          return;
       }
       for (PropertyMap pMap : settings) {
@@ -125,7 +160,7 @@ public final class OverlaysInspectorPanelController
                PropertyMap config = pMap.getPropertyMap(CONFIGPMAPKEY, null);
                o.setConfiguration(config);
                o.setVisible(pMap.getBoolean(VISIBLEPMAPKEY, false));
-               viewer_.addOverlay(
+               support.addOverlay(
                      o); // The viewer will fire an event that will trigger adding the
                // UI components to the inspector
                break;
@@ -134,7 +169,7 @@ public final class OverlaysInspectorPanelController
       }
    }
 
-   private void saveSettings(DisplayWindow viewer) {
+   private void saveSettings(DataViewer viewer) {
       List<PropertyMap> configList = new ArrayList<>();
       for (Overlay o : this.overlays_) {
          PropertyMap map = new DefaultPropertyMap.Builder()
@@ -151,11 +186,23 @@ public final class OverlaysInspectorPanelController
 
    private void handleAddOverlay(OverlayPlugin plugin) {
       Overlay overlay = plugin.createOverlay();
-      viewer_.addOverlay(overlay);
+      org.micromanager.internal.utils.ReportingUtils.logMessage(
+            "OverlaysInspectorPanelController: handleAddOverlay " + overlay.getTitle()
+            + " viewer_=" + (viewer_ == null ? "null" : viewer_.getClass().getSimpleName()));
+      OverlaySupport support = getOverlaySupport();
+      org.micromanager.internal.utils.ReportingUtils.logMessage(
+            "OverlaysInspectorPanelController: getOverlaySupport returned "
+            + (support == null ? "null" : support.getClass().getSimpleName()));
+      if (support != null) {
+         support.addOverlay(overlay);
+      }
    }
 
    void handleRemoveOverlay(Overlay overlay) {
-      viewer_.removeOverlay(overlay);
+      OverlaySupport support = getOverlaySupport();
+      if (support != null) {
+         support.removeOverlay(overlay);
+      }
    }
 
    void handleEnableOverlay(Overlay overlay, boolean show) {
@@ -204,8 +251,13 @@ public final class OverlaysInspectorPanelController
    @Override
    public void attachDataViewer(DataViewer viewer) {
       Preconditions.checkState(viewer_ == null);
-      Preconditions.checkArgument(viewer instanceof DisplayWindow);
-      viewer_ = (DisplayWindow) viewer;
+      Preconditions.checkArgument(viewer instanceof DisplayWindow
+            || viewer instanceof OverlaySupport);
+      viewer_ = viewer;
+      org.micromanager.internal.utils.ReportingUtils.logMessage(
+            "OverlaysInspectorPanelController: attachDataViewer "
+            + viewer.getClass().getSimpleName()
+            + " isOverlaySupport=" + (viewer instanceof OverlaySupport));
       viewer_.registerForEvents(this);
       loadSettings(viewer_);
    }
