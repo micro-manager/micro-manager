@@ -56,6 +56,7 @@ public class DeskewExploreManager {
 
    private static final int SAVING_QUEUE_SIZE = 30;
    private static final String MM_DISPLAY_SETTINGS_FILE = "mm_display_settings.json";
+   private static final String VIEW_STATE_FILE = "view_state.json";
 
    private final Studio studio_;
    private final DeskewFrame frame_;
@@ -84,6 +85,7 @@ public class DeskewExploreManager {
    private boolean loadedData_ = false;  // True when viewing a loaded dataset
    private JSONObject pendingDisplaySettings_ = null;  // Captured before viewer is nulled (unused, kept for cleanup)
    private DisplaySettings pendingMMDisplaySettings_ = null;  // MM display settings captured before viewer is nulled
+   private JSONObject pendingViewState_ = null;  // View offset/zoom captured before viewer is nulled
    private String storageDir_;
    private String acqName_;
 
@@ -319,8 +321,8 @@ public class DeskewExploreManager {
          dataSource_ = new DeskewExploreDataSource(this);
          dataSource_.setReadOnly(true);
 
-         // Open existing storage read-only
-         storage_ = new NDTiffStorage(dir);
+         // Open existing storage in write-append mode so pyramid levels can be built on demand
+         storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
          storageDir_ = new File(dir).getParent();
          acqName_ = new File(dir).getName();
          dataSource_.setStorage(storage_);
@@ -485,6 +487,10 @@ public class DeskewExploreManager {
 
          viewer_.setViewOffset(0, 0);
 
+         // Load saved view state (pan offset + zoom) — will be applied after initializeViewerToLoaded.
+         File viewStateFile = new File(dir, VIEW_STATE_FILE);
+         final JSONObject savedViewState = loadViewState(viewStateFile);
+
          // Trigger initial display and seed the histogram for all stored images.
          if (displayExecutor_ != null && viewer_ != null) {
             displayExecutor_.submit(() -> {
@@ -523,6 +529,20 @@ public class DeskewExploreManager {
                   // all channels, sets up scrollbars, and triggers the first canvas render.
                   viewer_.initializeViewerToLoaded(null);
                   viewer_.update();
+
+                  // Restore view state after the canvas is initialized and sized.
+                  // Restore saved view state after the canvas is initialized.
+                  if (savedViewState != null && viewer_ != null) {
+                     double savedW = savedViewState.optDouble("sourceDataWidth", 0);
+                     double savedH = savedViewState.optDouble("sourceDataHeight", 0);
+                     if (savedW > 0 && savedH > 0) {
+                        viewer_.setFullResSourceDataSize(savedW, savedH);
+                     }
+                     viewer_.setViewOffset(
+                             savedViewState.optDouble("xView", 0),
+                             savedViewState.optDouble("yView", 0));
+                     viewer_.update();
+                  }
                } catch (NullPointerException e) {
                   studio_.logs().logMessage("Deskew Explore: NPE in histogram seed: " + e);
                }
@@ -536,7 +556,7 @@ public class DeskewExploreManager {
       } catch (Exception e) {
          studio_.logs().logMessage("Deskew Explore: openExplore EXCEPTION: " + e);
          studio_.logs().showError(e, "Failed to open Deskew Explore dataset.");
-         stopExplore();
+         stopExplore(false);  // Never delete existing data on open failure
       }
    }
 
@@ -579,10 +599,10 @@ public class DeskewExploreManager {
 
    /**
     * Stops the explore session and cleans up resources.
-    * Deletes temporary storage by default.
+    * Deletes temporary storage only for new (non-loaded) sessions.
     */
    public void stopExplore() {
-      stopExplore(true);
+      stopExplore(!loadedData_);
    }
 
    /**
@@ -612,10 +632,11 @@ public class DeskewExploreManager {
          stagePollingExecutor_ = null;
       }
 
-      // Capture MM DisplaySettings so we can persist them to mm_display_settings.json.
-      // mm2Viewer_ may already be null if onViewerClosed() ran first (loaded-data close path),
-      // in which case pendingMMDisplaySettings_ was captured there before the viewer was nulled.
+      // Capture MM DisplaySettings and view state so we can persist them alongside the dataset.
+      // mm2Viewer_/viewer_ may already be null if onViewerClosed() ran first (loaded-data close path),
+      // in which case pending* fields were captured there before the viewer was nulled.
       final DisplaySettings mmDisplaySettingsToSave;
+      final JSONObject viewStateToSave;
       if (!deleteTempFiles) {
          if (mm2Viewer_ != null) {
             DisplaySettings captured = null;
@@ -627,11 +648,23 @@ public class DeskewExploreManager {
          } else {
             mmDisplaySettingsToSave = pendingMMDisplaySettings_;
          }
+         if (viewer_ != null) {
+            JSONObject captured = null;
+            try {
+               captured = captureViewState(viewer_);
+            } catch (Exception ignored) {
+            }
+            viewStateToSave = captured;
+         } else {
+            viewStateToSave = pendingViewState_;
+         }
       } else {
          mmDisplaySettingsToSave = null;
+         viewStateToSave = null;
       }
       pendingMMDisplaySettings_ = null;
       pendingDisplaySettings_ = null;
+      pendingViewState_ = null;
 
       // Close viewers BEFORE storage to avoid NPEs from pending repaints
       if (mm2Viewer_ != null) {
@@ -667,13 +700,19 @@ public class DeskewExploreManager {
             }
             if (storageToClose != null) {
                try {
-                  if (mmDisplaySettingsToSave != null) {
-                     // Save full MM display settings (autostretch, bit-depth, colors, etc.)
-                     // to mm_display_settings.json alongside the dataset.
-                     String diskLocation = storageToClose.getDiskLocation();
-                     if (diskLocation != null) {
+                  String diskLocation = storageToClose.getDiskLocation();
+                  if (diskLocation != null) {
+                     if (mmDisplaySettingsToSave != null) {
+                        // Save full MM display settings (autostretch, bit-depth, colors, etc.)
+                        // to mm_display_settings.json alongside the dataset.
                         File mmSettingsFile = new File(diskLocation, MM_DISPLAY_SETTINGS_FILE);
                         ((DefaultDisplaySettings) mmDisplaySettingsToSave).save(mmSettingsFile);
+                     }
+                     if (viewStateToSave != null) {
+                        // Save view offset and zoom to view_state.json alongside the dataset.
+                        File viewStateFile = new File(diskLocation, VIEW_STATE_FILE);
+                        Files.write(viewStateFile.toPath(),
+                                viewStateToSave.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8));
                      }
                   }
                   if (!storageToClose.isFinished()) {
@@ -711,10 +750,16 @@ public class DeskewExploreManager {
       }
       viewerClosing_ = true;
 
-      // Capture MM display settings before nulling viewer references so stopExplore() can save them.
+      // Capture MM display settings and view state before nulling viewer references so stopExplore() can save them.
       if (mm2Viewer_ != null) {
          try {
             pendingMMDisplaySettings_ = mm2Viewer_.getDisplaySettings();
+         } catch (Exception ignored) {
+         }
+      }
+      if (viewer_ != null) {
+         try {
+            pendingViewState_ = captureViewState(viewer_);
          } catch (Exception ignored) {
          }
       }
@@ -776,6 +821,9 @@ public class DeskewExploreManager {
 
                if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                   File destDir = chooser.getSelectedFile();
+                  // Write view state and display settings into the temp directory
+                  // before copying, so they are included in the saved dataset.
+                  writeSettingsToTempDir();
                   saveDataTo(destDir);
                   break;  // Save completed — fall through to delete temp files
                }
@@ -1716,5 +1764,64 @@ public class DeskewExploreManager {
             studio_.logs().logError(e, "Deskew Explore: error moving stage");
          }
       });
+   }
+
+   /**
+    * Writes pending display settings and view state into the storage directory
+    * so they are included when the data is subsequently copied to its final location.
+    * Must be called while storage_ is still open (before saveDataTo closes it).
+    */
+   private void writeSettingsToTempDir() {
+      if (storage_ == null) {
+         return;
+      }
+      String diskLocation = storage_.getDiskLocation();
+      if (diskLocation == null) {
+         return;
+      }
+      File dataDir = new File(diskLocation);
+      if (!dataDir.exists()) {
+         return;
+      }
+      try {
+         if (pendingMMDisplaySettings_ != null) {
+            File f = new File(dataDir, MM_DISPLAY_SETTINGS_FILE);
+            ((DefaultDisplaySettings) pendingMMDisplaySettings_).save(f);
+         }
+         if (pendingViewState_ != null) {
+            File f = new File(dataDir, VIEW_STATE_FILE);
+            Files.write(f.toPath(),
+                    pendingViewState_.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Failed to write settings to data dir");
+      }
+   }
+
+   private static JSONObject captureViewState(NDViewer2API viewer) {
+      Point2D.Double offset = viewer.getViewOffset();
+      Point2D.Double size = viewer.getFullResSourceDataSize();
+      JSONObject json = new JSONObject();
+      try {
+         json.put("xView", offset.x);
+         json.put("yView", offset.y);
+         json.put("sourceDataWidth", size.x);
+         json.put("sourceDataHeight", size.y);
+      } catch (mmcorej.org.json.JSONException e) {
+         return null;
+      }
+      return json;
+   }
+
+   private static JSONObject loadViewState(File file) {
+      if (!file.canRead()) {
+         return null;
+      }
+      try {
+         byte[] bytes = Files.readAllBytes(file.toPath());
+         return new JSONObject(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+      } catch (Exception e) {
+         return null;
+      }
    }
 }

@@ -176,6 +176,12 @@ public interface NDViewer2API {
    void setViewOffset(double newX, double newY);
 
    /**
+    * Set the size (in full-resolution pixels) of the region currently being
+    * displayed. This controls the zoom level.
+    */
+   void setFullResSourceDataSize(double width, double height);
+
+   /**
     * Add a custom object to respond to different types of mouse events on the
     * canvas.
     *

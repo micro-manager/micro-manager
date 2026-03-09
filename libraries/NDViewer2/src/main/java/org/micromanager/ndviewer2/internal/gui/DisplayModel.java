@@ -202,6 +202,10 @@ public class DisplayModel {
       viewCoords_.setViewOffset(newX, newY);
    }
 
+   public void setFullResSourceDataSize(double width, double height) {
+      viewCoords_.setFullResSourceDataSize(width, height);
+   }
+
    public Point2D.Double getFullResSourceDataSize() {
       return viewCoords_.getFullResSourceDataSize();
    }

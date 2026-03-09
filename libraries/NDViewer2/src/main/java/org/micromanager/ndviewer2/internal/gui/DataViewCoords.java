@@ -111,7 +111,9 @@ public class DataViewCoords {
    private void updateResIndex() {
       double resIndexFloat = Math.log(sourceDataFullResWidth_ / displayImageWidth_)
                / Math.log(2);
-      int newResIndex = (int) Math.max(0, Math.ceil(resIndexFloat));
+      int newResIndex = (int) Math.min(
+               Math.max(0, Math.ceil(resIndexFloat)),
+               org.micromanager.ndtiffstorage.NDTiffStorage.MAX_RESOLUTION_LEVEL);
 
       // Let the storage know the viewer will be requesting data at this resolution
       int currentMaxResIndex = data_.getMaxResolutionIndex();
