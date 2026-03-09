@@ -715,22 +715,17 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
                Point2D.Double displayImageSize, double downsampleFactor,
                java.awt.Graphics g, HashMap<String, Object> axes,
                double magnification, Point2D.Double viewOffset) throws InterruptedException {
-            studio_.logs().logDebugMessage("NDViewer2 bridge drawOverlay called, mmOverlays_=" + mmOverlays_.size());
             // Chain to external plugin first (e.g. DeskewExploreDataSource tile grid).
-            // The external plugin is responsible for calling ndViewer2_.setOverlay() itself.
+            // The external plugin adds ROIs to defaultOverlay; setOverlay is called once below.
             NDViewer2OverlayerPlugin external = externalOverlayerPlugin_;
-            // If no MM overlays are active, let the default/external path handle
-            // setOverlay and return — no need to intercept.
             List<Overlay> overlays = new ArrayList<>(mmOverlays_);
 
             if (external != null) {
                external.drawOverlay(defaultOverlay, displayImageSize, downsampleFactor,
                      g, axes, magnification, viewOffset);
-            } else {
-               ndViewer2_.setOverlay(defaultOverlay);
             }
 
-            // Check if any overlay is actually visible before doing any work
+            // Check if any MM overlay is actually visible before doing any work
             boolean anyVisible = false;
             for (Overlay overlay : overlays) {
                if (overlay.isVisible()) {
@@ -740,6 +735,7 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
             }
             if (!anyVisible) {
                mmOverlayBuf_ = null;
+               ndViewer2_.setOverlay(defaultOverlay);
                return;
             }
 
@@ -800,16 +796,16 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
             }
 
             if (!anyPainted) {
-               // All overlays failed to paint — don't corrupt the canvas
+               // All overlays failed to paint — fall back to default overlay only
                mmOverlayBuf_ = null;
+               ndViewer2_.setOverlay(defaultOverlay);
                return;
             }
 
             // Atomic update — mmOverlayRoi_.drawOverlay reads this volatile field
             mmOverlayBuf_ = buf;
 
-            // Append mmOverlayRoi_ to whatever setOverlay was already called with.
-            // Re-issue setOverlay with the combined overlay so mmOverlayRoi_ is included.
+            // Single setOverlay call: defaultOverlay ROIs + mmOverlayRoi_ combined.
             org.micromanager.ndviewer2.overlay.Overlay combined =
                   new org.micromanager.ndviewer2.overlay.Overlay();
             for (int i = 0; i < defaultOverlay.size(); i++) {

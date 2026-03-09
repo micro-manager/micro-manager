@@ -540,9 +540,6 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
                            HashMap<String, Object> axes, double magnification,
                            Point2D.Double viewOffset) {
       if (tileWidth_ <= 0 || tileHeight_ <= 0) {
-         if (viewer_ != null) {
-            viewer_.setOverlay(overlay);
-         }
          return;
       }
 
@@ -661,9 +658,5 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
          overlay.add(stageRoi);
       }
 
-      // Set the overlay on the viewer
-      if (viewer_ != null) {
-         viewer_.setOverlay(overlay);
-      }
    }
 }
