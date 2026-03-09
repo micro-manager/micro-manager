@@ -744,11 +744,14 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
             int w = Math.max(1, (int) displayImageSize.x);
             int h = Math.max(1, (int) displayImageSize.y);
             Rectangle screenRect = new Rectangle(0, 0, w, h);
+            // viewport dimensions in full-res pixels: use magnification (continuous zoom ratio)
+            // rather than downsampleFactor (discrete power-of-2), so the scale bar stays
+            // accurate at all zoom levels including deep zoom where resIndex == 0.
             Rectangle2D.Float viewPort = new Rectangle2D.Float(
                   (float) viewOffset.x,
                   (float) viewOffset.y,
-                  (float) (displayImageSize.x * downsampleFactor),
-                  (float) (displayImageSize.y * downsampleFactor));
+                  (float) (displayImageSize.x / magnification),
+                  (float) (displayImageSize.y / magnification));
             DisplaySettings ds = getDisplaySettings();
             // Fetch a representative image so overlays can read pixel metadata
             // (e.g. ScaleBarOverlay reads pixelSizeUm from primaryImage,
@@ -767,7 +770,16 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
                   primaryImage = dataProvider_.getAnyImage();
                }
             } catch (Exception ex) {
-               // Non-critical — overlays that don't need metadata will still work
+               // Ignore — primaryImage stays null
+            }
+
+            // Many overlays (ScaleBarOverlay, PatternOverlay) require a non-null primaryImage
+            // to read pixel metadata.  If no image is available yet (e.g. before the first
+            // tile arrives in a new acquisition), skip MM overlays entirely.
+            if (primaryImage == null) {
+               mmOverlayBuf_ = null;
+               ndViewer2_.setOverlay(defaultOverlay);
+               return;
             }
             final Image finalPrimaryImage = primaryImage;
 

@@ -1588,6 +1588,7 @@ public class DeskewExploreManager {
          tags.put("Height", image.getHeight());
          tags.put("BitDepth", bitDepth_);
          tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
+         tags.put("PixelSizeUm", pixelSizeUm_);
 
          // Set up axes using AcqEngMetadata
          // Store channel as STRING (channel name) for NDViewer
