@@ -53,6 +53,10 @@ public class DisplayModel {
       this.displaySettings_ = displaySettings;
    }
 
+   public DisplaySettings getDisplaySettings() {
+      return displaySettings_;
+   }
+
    public int getIntegerPositionFromStringPosition(String axisName, String axisPosition) {
       return stringAxes_.get(axisName).indexOf(axisPosition);
    }

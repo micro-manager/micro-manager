@@ -381,11 +381,29 @@ public class NDViewer2 implements NDViewer2API {
    /**
     * Update render settings used by ImageMaker for the next render.
     * Called by NDViewer2DataViewer before triggering update().
+    * Also syncs the internal DisplaySettings so getDisplaySettingsJSON() is always current.
     */
    public void setRenderSettings(java.util.Map<String, ChannelRenderSettings> channelSettings,
                                   GlobalRenderSettings globalSettings,
                                   ContrastUpdateCallback callback) {
       guiManager_.setRenderSettings(channelSettings, globalSettings, callback);
+
+      // Keep internal DisplaySettings in sync so getDisplaySettingsJSON() is always current.
+      DisplaySettings ds = displayModel_.getDisplaySettings();
+      for (java.util.Map.Entry<String, ChannelRenderSettings> entry : channelSettings.entrySet()) {
+         String name = entry.getKey();
+         ChannelRenderSettings rs = entry.getValue();
+         ds.setColor(name, rs.color);
+         ds.setContrastMin(name, rs.contrastMin);
+         ds.setContrastMax(name, rs.contrastMax);
+         ds.setGamma(name, rs.gamma);
+         ds.setActive(name, rs.active);
+      }
+      ds.setAutoscale(globalSettings.autostretch);
+      ds.setCompositeMode(globalSettings.composite);
+      ds.setLogHist(globalSettings.logHistogram);
+      ds.setIgnoreOutliers(globalSettings.ignoreOutliers);
+      ds.setIgnoreOutliersPercentage(globalSettings.percentToIgnore);
    }
 
    @Override

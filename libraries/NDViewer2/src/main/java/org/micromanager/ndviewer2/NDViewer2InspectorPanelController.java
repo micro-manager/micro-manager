@@ -13,14 +13,10 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.display.ChannelDisplaySettings;
-import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
 import org.micromanager.exporttiles.ExportTiles;
 import org.micromanager.ndviewer2.overlay.Overlay;
@@ -163,45 +159,17 @@ public final class NDViewer2InspectorPanelController
       }
       Window owner = SwingUtilities.getWindowAncestor(panel_);
       ExportTiles.showDialogAndExport(owner, dp.getStorage(),
-            buildDisplaySettingsJSON(chNames), new HashMap<String, Object>(), chNames,
+            buildDisplaySettingsJSON(), new HashMap<String, Object>(), chNames,
             roi[0], roi[1], roi[2], roi[3]);
    }
 
    /**
-    * Build the display settings JSON that ExportTiles expects from the current MM
-    * DisplaySettings. Format: { channelKeyName: { "Min": x, "Max": y, "Color": rgb } }.
-    * For single-channel (null name) the key is "NO_CHANNEL_PRESENT".
+    * Build the display settings JSON that ExportTiles expects.
+    * Format: { channelName: { "Min": x, "Max": y, "Color": rgb, ... } }.
+    * getDisplaySettingsJSON() is always current because setRenderSettings() syncs it.
     */
-   private JSONObject buildDisplaySettingsJSON(List<String> chNames) {
-      DisplaySettings ds = viewer_.getDisplaySettings();
-      // Channel names in MM DisplaySettings index order (same as pushRenderSettings uses)
-      List<String> renderOrder = viewer_.getChannelNames();
-      JSONObject result = new JSONObject();
-      for (String chName : chNames) {
-         String key = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
-         int min = 0;
-         int max = 65535;
-         int colorRgb = 0xFFFFFF;
-         // Find the MM DisplaySettings index for this channel name
-         int dsIdx = renderOrder.indexOf(chName);
-         if (dsIdx >= 0 && dsIdx < ds.getNumberOfChannels()) {
-            ChannelDisplaySettings ch = ds.getChannelSettings(dsIdx);
-            ComponentDisplaySettings comp = ch.getComponentSettings(0);
-            min = (int) comp.getScalingMinimum();
-            max = (int) comp.getScalingMaximum();
-            colorRgb = ch.getColor().getRGB() & 0xFFFFFF;
-         }
-         try {
-            JSONObject chJson = new JSONObject();
-            chJson.put("Min", min);
-            chJson.put("Max", max);
-            chJson.put("Color", colorRgb);
-            result.put(key, chJson);
-         } catch (JSONException e) {
-            // won't happen
-         }
-      }
-      return result;
+   private JSONObject buildDisplaySettingsJSON() {
+      return viewer_.getNDViewer().getDisplaySettingsJSON();
    }
 
    private void setStatus(String text) {
