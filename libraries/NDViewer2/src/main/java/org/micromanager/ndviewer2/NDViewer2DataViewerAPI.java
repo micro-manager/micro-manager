@@ -72,6 +72,14 @@ public interface NDViewer2DataViewerAPI extends DataViewer {
    void setOverlayerPlugin(NDViewer2OverlayerPlugin plugin);
 
    /**
+    * Return channel names in the same order that MM DisplaySettings channel indices map to.
+    * Use this to correctly associate DisplaySettings.getChannelSettings(i) with channel names.
+    *
+    * @return ordered list of channel names (as used for rendering)
+    */
+   List<String> getChannelNames();
+
+   /**
     * Notify this viewer that new tiles have arrived with images for all channels.
     * All images are submitted as a single stats request so the Inspector
     * receives one result with all channel histograms in one callback.

@@ -388,6 +388,7 @@ public class NDViewer2 implements NDViewer2API {
       guiManager_.setRenderSettings(channelSettings, globalSettings, callback);
    }
 
+   @Override
    public JPanel getCanvasJPanel() {
       return getCanvas().getCanvas();
    }
@@ -465,6 +466,11 @@ public class NDViewer2 implements NDViewer2API {
    }
 
    @Override
+   public void resetCanvasMouseListener() {
+      guiManager_.resetCanvasMouseListener();
+   }
+
+   @Override
    public Point2D.Double getDisplayImageSize() {
       return displayModel_.getDisplayImageSize();
    }
@@ -484,6 +490,11 @@ public class NDViewer2 implements NDViewer2API {
 
    public NDViewer2DataSource getDataSource() {
       return dataSource_;
+   }
+
+   @Override
+   public int[] getBounds() {
+      return dataSource_.getBounds();
    }
 
    public void readHistogramControlsStateFromGUI() {

@@ -3,6 +3,7 @@ package org.micromanager.ndviewer2;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import javax.swing.JPanel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -216,5 +217,21 @@ public interface NDViewer2API {
     * trigger redraw of the image overlay.
     */
    void redrawOverlay();
+
+   /**
+    * Return the full-resolution pixel bounds of the dataset [xMin, yMin, xMax, yMax],
+    * or null if the dataset is unbounded (e.g. a live explore acquisition with no tiles yet).
+    */
+   int[] getBounds();
+
+   /**
+    * Return the canvas JPanel, for cursor and focus manipulation.
+    */
+   JPanel getCanvasJPanel();
+
+   /**
+    * Remove any custom canvas mouse listener and restore the default pan/zoom listener.
+    */
+   void resetCanvasMouseListener();
 
 }

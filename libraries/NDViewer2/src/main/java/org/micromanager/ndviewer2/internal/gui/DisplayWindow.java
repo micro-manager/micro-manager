@@ -264,4 +264,20 @@ public class DisplayWindow implements WindowListener {
       imageCanvas_.getCanvas().addMouseListener(m);
    }
 
+   public void resetCanvasMouseListener() {
+      // Remove whatever listener is currently installed, then restore the default.
+      for (java.awt.event.MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
+         imageCanvas_.getCanvas().removeMouseListener(l);
+      }
+      for (java.awt.event.MouseMotionListener l : imageCanvas_.getCanvas().getMouseMotionListeners()) {
+         imageCanvas_.getCanvas().removeMouseMotionListener(l);
+      }
+      for (java.awt.event.MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
+         imageCanvas_.getCanvas().removeMouseWheelListener(l);
+      }
+      imageCanvas_.getCanvas().addMouseWheelListener(listener_);
+      imageCanvas_.getCanvas().addMouseMotionListener(listener_);
+      imageCanvas_.getCanvas().addMouseListener(listener_);
+   }
+
 }

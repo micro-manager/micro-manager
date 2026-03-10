@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
+import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 
 /**
  * Public interface for the NDViewer2 data provider.
@@ -29,4 +30,9 @@ public interface NDViewer2DataProviderAPI extends DataProvider {
     * @throws IOException if conversion from TaggedImage fails
     */
    Image getDownsampledImageByAxes(HashMap<String, Object> axes) throws IOException;
+
+   /**
+    * Return the underlying NDTiff storage for direct access (e.g. for export).
+    */
+   MultiresNDTiffAPI getStorage();
 }

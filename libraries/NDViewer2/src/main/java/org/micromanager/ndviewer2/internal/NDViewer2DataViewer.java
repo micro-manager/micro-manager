@@ -904,6 +904,16 @@ public final class NDViewer2DataViewer extends AbstractDataViewer
       externalOverlayerPlugin_ = plugin;
    }
 
+   @Override
+   public List<String> getChannelNames() {
+      List<String> names = axesBridge_.getChannelNames();
+      if (names.isEmpty()) {
+         names = new ArrayList<>();
+         names.add(NDViewer2.NO_CHANNEL);
+      }
+      return names;
+   }
+
    /**
     * Close the viewer and release resources.
     */

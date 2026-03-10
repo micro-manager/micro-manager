@@ -169,6 +169,10 @@ public class GuiManager {
       displayWindow_.setCustomCanvasMouseListener(m);
    }
 
+   public void resetCanvasMouseListener() {
+      displayWindow_.resetCanvasMouseListener();
+   }
+
    public void setShowZPosition(boolean selected) {
       overlayer_.setShowZPosition(selected);
    }

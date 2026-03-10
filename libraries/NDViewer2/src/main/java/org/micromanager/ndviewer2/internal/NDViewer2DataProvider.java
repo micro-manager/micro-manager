@@ -389,4 +389,9 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
 
       };
    }
+
+   @Override
+   public MultiresNDTiffAPI getStorage() {
+      return storage_;
+   }
 }
