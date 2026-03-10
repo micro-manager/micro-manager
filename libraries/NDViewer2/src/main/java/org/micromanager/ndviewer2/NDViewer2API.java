@@ -183,6 +183,14 @@ public interface NDViewer2API {
    void setFullResSourceDataSize(double width, double height);
 
    /**
+    * Like {@link #setFullResSourceDataSize}, but automatically applies the
+    * canvas aspect-ratio correction so the image fills the canvas correctly.
+    * Prefer this over setFullResSourceDataSize() when setting zoom from
+    * UI actions (Fit, view-state restore, etc.).
+    */
+   void setFullResSourceDataSizeAspectCorrected(double width, double height);
+
+   /**
     * Add a custom object to respond to different types of mouse events on the
     * canvas.
     *

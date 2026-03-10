@@ -535,10 +535,15 @@ public class DeskewExploreManager {
                   // Restore view state after the canvas is initialized and sized.
                   // Restore saved view state after the canvas is initialized.
                   if (savedViewState != null && viewer_ != null) {
-                     double savedW = savedViewState.optDouble("sourceDataWidth", 0);
-                     double savedH = savedViewState.optDouble("sourceDataHeight", 0);
-                     if (savedW > 0 && savedH > 0) {
-                        viewer_.setFullResSourceDataSize(savedW, savedH);
+                     double mag = savedViewState.optDouble("magnification", 0);
+                     if (mag > 0) {
+                        // Derive source size from canvas size and saved magnification.
+                        // This is already aspect-correct since newW/newH are both derived
+                        // from the canvas dimensions.
+                        Point2D.Double displaySize = viewer_.getDisplayImageSize();
+                        double newW = displaySize.x / mag;
+                        double newH = displaySize.y / mag;
+                        viewer_.setFullResSourceDataSize(newW, newH);
                      }
                      viewer_.setViewOffset(
                              savedViewState.optDouble("xView", 0),
@@ -1803,13 +1808,17 @@ public class DeskewExploreManager {
 
    private static JSONObject captureViewState(NDViewer2API viewer) {
       Point2D.Double offset = viewer.getViewOffset();
-      Point2D.Double size = viewer.getFullResSourceDataSize();
+      Point2D.Double displaySize = viewer.getDisplayImageSize();
+      Point2D.Double sourceSize = viewer.getFullResSourceDataSize();
       JSONObject json = new JSONObject();
       try {
          json.put("xView", offset.x);
          json.put("yView", offset.y);
-         json.put("sourceDataWidth", size.x);
-         json.put("sourceDataHeight", size.y);
+         // Save magnification (display pixels / source pixels) rather than raw source dims,
+         // so that view-state restore works correctly regardless of canvas size at restore time.
+         if (displaySize.x > 0 && sourceSize.x > 0) {
+            json.put("magnification", displaySize.x / sourceSize.x);
+         }
       } catch (mmcorej.org.json.JSONException e) {
          return null;
       }

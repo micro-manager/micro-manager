@@ -436,6 +436,11 @@ public class NDViewer2 implements NDViewer2API {
       displayModel_.setFullResSourceDataSize(width, height);
    }
 
+   @Override
+   public void setFullResSourceDataSizeAspectCorrected(double width, double height) {
+      displayModel_.setFullResSourceDataSizeAspectCorrected(width, height);
+   }
+
    public void showTimeLabel(boolean selected) {
       guiManager_.setShowTimeLabel(selected);
    }

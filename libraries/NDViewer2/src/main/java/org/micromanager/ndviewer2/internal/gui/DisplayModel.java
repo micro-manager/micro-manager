@@ -210,6 +210,41 @@ public class DisplayModel {
       viewCoords_.setFullResSourceDataSize(width, height);
    }
 
+   /**
+    * Sets the full-res source data size adjusted for the current canvas aspect ratio,
+    * preserving the requested zoom area. Use this instead of setFullResSourceDataSize()
+    * when the canvas is already sized, to avoid aspect-ratio mismatch.
+    */
+   public void setFullResSourceDataSizeAspectCorrected(double requestedWidth, double requestedHeight) {
+      Point2D.Double canvasSize = viewCoords_.getDisplayImageSize();
+      if (canvasSize.x == 0 || canvasSize.y == 0) {
+         viewCoords_.setFullResSourceDataSize(requestedWidth, requestedHeight);
+         return;
+      }
+      double canvasAspect = canvasSize.x / canvasSize.y;
+      double sourceAspect = requestedWidth / requestedHeight;
+      double newW;
+      double newH;
+      if (canvasAspect > sourceAspect) {
+         newW = canvasAspect / sourceAspect * requestedWidth;
+         newH = requestedHeight;
+      } else {
+         newW = requestedWidth;
+         newH = requestedHeight / (canvasAspect / sourceAspect);
+      }
+      int[] bounds = viewCoords_.getBounds();
+      if (bounds != null && bounds[0] != Integer.MIN_VALUE) {
+         double ovX = newW / (bounds[2] - bounds[0]);
+         double ovY = newH / (bounds[3] - bounds[1]);
+         if (ovX > 1 || ovY > 1) {
+            double scale = Math.max(ovX, ovY);
+            newW /= scale;
+            newH /= scale;
+         }
+      }
+      viewCoords_.setFullResSourceDataSize(newW, newH);
+   }
+
    public Point2D.Double getFullResSourceDataSize() {
       return viewCoords_.getFullResSourceDataSize();
    }

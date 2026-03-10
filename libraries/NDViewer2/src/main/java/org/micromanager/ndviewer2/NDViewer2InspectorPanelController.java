@@ -76,7 +76,7 @@ public final class NDViewer2InspectorPanelController
          return;
       }
       v.setViewOffset(b[0], b[1]);
-      v.setFullResSourceDataSize(b[2] - b[0], b[3] - b[1]);
+      v.setFullResSourceDataSizeAspectCorrected(b[2] - b[0], b[3] - b[1]);
       v.update();
    }
 
