@@ -39,41 +39,56 @@ public final class NDViewer2InspectorPanelController
    }
 
    private JPanel buildPanel() {
-      JPanel p = new JPanel(new MigLayout("insets 4", "[]4[]4[]", "[]2[]"));
-      JButton oneToOne = new JButton("1:1");
-      JButton fit = new JButton("Fit");
-      oneToOne.addActionListener(e -> onOneToOne());
-      fit.addActionListener(e -> onFit());
+      final JPanel p = new JPanel(new MigLayout("insets 4", "[]4[]4[]", "[]2[]"));
+      JButton center = new JButton("Center");
+      JButton noZoom = new JButton("No Zoom");
+      center.addActionListener(e -> onCenter());
+      noZoom.addActionListener(e -> onNoZoom());
       exportButton_.addActionListener(e -> onExportClicked());
-      p.add(oneToOne);
-      p.add(fit);
-      p.add(exportButton_, "wrap");
-      p.add(statusLabel_, "span 3");
+      p.add(center);
+      p.add(noZoom, "wrap");
+      p.add(exportButton_);
+      p.add(statusLabel_, "wrap");
       return p;
    }
 
-   private void onOneToOne() {
+   /** Returns the center of the dataset in full-res pixel coordinates, or null if unknown. */
+   private Point2D.Double getDataCenter() {
+      NDViewer2DataProviderAPI dp = (NDViewer2DataProviderAPI) viewer_.getDataProvider();
+      int[] b = dp.getStorage().getImageBounds();
+      if (b == null) {
+         return null;
+      }
+      return new Point2D.Double((b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0);
+   }
+
+   /** Pan so the dataset center is in the middle of the canvas; keep current zoom. */
+   private void onCenter() {
+      if (viewer_ == null) {
+         return;
+      }
+      NDViewer2API v = viewer_.getNDViewer();
+      Point2D.Double dataCenter = getDataCenter();
+      if (dataCenter == null) {
+         return;
+      }
+      Point2D.Double source = v.getFullResSourceDataSize();
+      v.setViewOffset(dataCenter.x - source.x / 2.0, dataCenter.y - source.y / 2.0);
+      v.update();
+   }
+
+   /** Set zoom to 1:1 (one full-res pixel per screen pixel), centered on the dataset. */
+   private void onNoZoom() {
       if (viewer_ == null) {
          return;
       }
       NDViewer2API v = viewer_.getNDViewer();
       Point2D.Double displaySize = v.getDisplayImageSize();
+      Point2D.Double dataCenter = getDataCenter();
+      double centerX = dataCenter != null ? dataCenter.x : v.getViewOffset().x + v.getFullResSourceDataSize().x / 2.0;
+      double centerY = dataCenter != null ? dataCenter.y : v.getViewOffset().y + v.getFullResSourceDataSize().y / 2.0;
+      v.setViewOffset(centerX - displaySize.x / 2.0, centerY - displaySize.y / 2.0);
       v.setFullResSourceDataSize(displaySize.x, displaySize.y);
-      v.update();
-   }
-
-   private void onFit() {
-      if (viewer_ == null) {
-         return;
-      }
-      NDViewer2API v = viewer_.getNDViewer();
-      NDViewer2DataProviderAPI dp = (NDViewer2DataProviderAPI) viewer_.getDataProvider();
-      int[] b = dp.getStorage().getImageBounds();
-      if (b == null) {
-         return;
-      }
-      v.setViewOffset(b[0], b[1]);
-      v.setFullResSourceDataSizeAspectCorrected(b[2] - b[0], b[3] - b[1]);
       v.update();
    }
 
