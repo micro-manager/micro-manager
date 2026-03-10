@@ -16,6 +16,8 @@ class ExportSelectionOverlay implements NDViewer2OverlayerPlugin {
 
    private final NDViewer2API viewer_;
    private volatile ExportMouseListener exportListener_;
+   private volatile Point frozenStart_;
+   private volatile Point frozenEnd_;
 
    ExportSelectionOverlay(NDViewer2API viewer) {
       viewer_ = viewer;
@@ -25,28 +27,39 @@ class ExportSelectionOverlay implements NDViewer2OverlayerPlugin {
       exportListener_ = ml;
    }
 
+   /** Call after drag completes to keep the rectangle visible without a live mouse listener. */
+   void freezeRoi(Point start, Point end) {
+      frozenStart_ = start;
+      frozenEnd_ = end;
+      exportListener_ = null;
+   }
+
    @Override
    public void drawOverlay(Overlay defaultOverlay, Point2D.Double displayImageSize,
            double downsampleFactor, Graphics g, HashMap<String, Object> axes,
            double magnification, Point2D.Double viewOffset) throws InterruptedException {
+      Point start;
+      Point end;
       ExportMouseListener ml = exportListener_;
-      Overlay overlay = new Overlay();
       if (ml != null) {
-         Point start = ml.mouseDragStartPoint_;
-         Point current = ml.currentMouseLocation_;
-         if (start != null && current != null) {
-            int x = Math.min(start.x, current.x);
-            int y = Math.min(start.y, current.y);
-            int w = Math.abs(current.x - start.x);
-            int h = Math.abs(current.y - start.y);
-            if (w > 0 && h > 0) {
-               Roi roi = new Roi(x, y, w, h);
-               roi.setStrokeColor(Color.YELLOW);
-               roi.setStrokeWidth(2f);
-               overlay.add(roi);
-            }
+         start = ml.mouseDragStartPoint_;
+         end = ml.currentMouseLocation_;
+      } else {
+         start = frozenStart_;
+         end = frozenEnd_;
+      }
+      if (start != null && end != null) {
+         int x = Math.min(start.x, end.x);
+         int y = Math.min(start.y, end.y);
+         int w = Math.abs(end.x - start.x);
+         int h = Math.abs(end.y - start.y);
+         if (w > 0 && h > 0) {
+            Roi roi = new Roi(x, y, w, h);
+            roi.setStrokeColor(Color.YELLOW);
+            roi.setStrokeWidth(2f);
+            defaultOverlay.add(roi);
          }
       }
-      viewer_.setOverlay(overlay);
+      viewer_.setOverlay(defaultOverlay);
    }
 }

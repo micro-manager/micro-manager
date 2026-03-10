@@ -3,8 +3,6 @@ package org.micromanager.ndviewer2;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Window;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,7 +17,6 @@ import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
 import org.micromanager.exporttiles.ExportTiles;
-import org.micromanager.ndviewer2.overlay.Overlay;
 
 public final class NDViewer2InspectorPanelController
       extends AbstractInspectorPanelController {
@@ -99,41 +96,33 @@ public final class NDViewer2InspectorPanelController
       ExportSelectionOverlay exportOverlay = new ExportSelectionOverlay(v);
       viewer_.setOverlayerPlugin(exportOverlay);
 
-      ExportMouseListener exportListener = new ExportMouseListener(v,
+      ExportMouseListener[] el = new ExportMouseListener[1];
+      el[0] = new ExportMouseListener(v,
               () -> {
-                 // onRelease: restore normal state
-                 exportOverlay.setExportMouseListener(null);
-                 viewer_.setOverlayerPlugin(null);
                  v.getCanvasJPanel().setCursor(Cursor.getDefaultCursor());
                  if (lastRoi_ != null) {
-                    // ROI accepted: install dismiss listener
-                    v.setCustomCanvasMouseListener(new NDViewer2CanvasMouseListenerInterface() {
-                       private void dismiss() {
-                          lastRoi_ = null;
-                          v.setOverlay(new Overlay());
-                          v.resetCanvasMouseListener();
-                          setStatus(null);
-                       }
-
-                       @Override public void mousePressed(MouseEvent e) { dismiss(); }
-                       @Override public void mouseReleased(MouseEvent e) {}
-                       @Override public void mouseClicked(MouseEvent e) {}
-                       @Override public void mouseDragged(MouseEvent e) {}
-                       @Override public void mouseMoved(MouseEvent e) {}
-                       @Override public void mouseEntered(MouseEvent e) {}
-                       @Override public void mouseExited(MouseEvent e) {}
-                       @Override public void mouseWheelMoved(MouseWheelEvent e) {}
+                    // Freeze the drawn rectangle in the overlay plugin so it survives
+                    // repaints without needing mouse movement. The exportListener stays
+                    // installed — its next mousePressed will call onDismiss.
+                    exportOverlay.freezeRoi(el[0].mouseDragStartPoint_,
+                            el[0].currentMouseLocation_);
+                    el[0].setOnDismiss(() -> {
+                       lastRoi_ = null;
+                       viewer_.setOverlayerPlugin(null);
+                       v.resetCanvasMouseListener();
+                       v.update();
+                       setStatus(null);
                     });
                     setStatus("Click to dismiss selection");
                  } else {
-                    v.setOverlay(new Overlay());
+                    viewer_.setOverlayerPlugin(null);
                     v.resetCanvasMouseListener();
                     setStatus(null);
                  }
               },
               this::onRoiSelected);
-      exportOverlay.setExportMouseListener(exportListener);
-      v.setCustomCanvasMouseListener(exportListener);
+      exportOverlay.setExportMouseListener(el[0]);
+      v.setCustomCanvasMouseListener(el[0]);
    }
 
    private void onRoiSelected(Point dragStart, Point dragEnd) {

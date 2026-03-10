@@ -37,6 +37,7 @@ public class DisplayWindow implements WindowListener {
    private NDViewer2 display_;
    JFrame window_;
    private NDViewer2CanvasMouseListenerInterface listener_;
+   private NDViewer2CanvasMouseListenerInterface previousCustomListener_;
 
    public DisplayWindow(NDViewer2 display, boolean nullAcq) {
       window_ = new JFrame();
@@ -254,18 +255,11 @@ public class DisplayWindow implements WindowListener {
    }
 
    public void setCustomCanvasMouseListener(NDViewer2CanvasMouseListenerInterface m) {
-      //out with the old
-      imageCanvas_.getCanvas().removeMouseListener(listener_);
-      imageCanvas_.getCanvas().removeMouseMotionListener(listener_);
-      imageCanvas_.getCanvas().removeMouseWheelListener(listener_);
-      //in with the new
-      imageCanvas_.getCanvas().addMouseWheelListener(m);
-      imageCanvas_.getCanvas().addMouseMotionListener(m);
-      imageCanvas_.getCanvas().addMouseListener(m);
-   }
-
-   public void resetCanvasMouseListener() {
-      // Remove whatever listener is currently installed, then restore the default.
+      // Track the outgoing listener so resetCanvasMouseListener can restore it.
+      java.awt.event.MouseListener[] current = imageCanvas_.getCanvas().getMouseListeners();
+      previousCustomListener_ = (current.length > 0 && current[0] != listener_)
+              ? (NDViewer2CanvasMouseListenerInterface) current[0] : null;
+      // Remove all currently registered listeners.
       for (java.awt.event.MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
          imageCanvas_.getCanvas().removeMouseListener(l);
       }
@@ -275,9 +269,29 @@ public class DisplayWindow implements WindowListener {
       for (java.awt.event.MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
          imageCanvas_.getCanvas().removeMouseWheelListener(l);
       }
-      imageCanvas_.getCanvas().addMouseWheelListener(listener_);
-      imageCanvas_.getCanvas().addMouseMotionListener(listener_);
-      imageCanvas_.getCanvas().addMouseListener(listener_);
+      imageCanvas_.getCanvas().addMouseWheelListener(m);
+      imageCanvas_.getCanvas().addMouseMotionListener(m);
+      imageCanvas_.getCanvas().addMouseListener(m);
+   }
+
+   public void resetCanvasMouseListener() {
+      // Restore the listener that was active before the last setCustomCanvasMouseListener call.
+      // If there was a custom listener before that, restore it; otherwise restore the default.
+      NDViewer2CanvasMouseListenerInterface restore =
+              previousCustomListener_ != null ? previousCustomListener_ : listener_;
+      previousCustomListener_ = null;
+      for (java.awt.event.MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
+         imageCanvas_.getCanvas().removeMouseListener(l);
+      }
+      for (java.awt.event.MouseMotionListener l : imageCanvas_.getCanvas().getMouseMotionListeners()) {
+         imageCanvas_.getCanvas().removeMouseMotionListener(l);
+      }
+      for (java.awt.event.MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
+         imageCanvas_.getCanvas().removeMouseWheelListener(l);
+      }
+      imageCanvas_.getCanvas().addMouseWheelListener(restore);
+      imageCanvas_.getCanvas().addMouseMotionListener(restore);
+      imageCanvas_.getCanvas().addMouseListener(restore);
    }
 
 }

@@ -11,8 +11,10 @@ import java.util.function.BiConsumer;
  * reads fresh values.
  *
  * <p>On mouse release, {@code onRelease} is always called so the controller can
- * restore the normal viewer state. {@code onRoiSelected} is only called when
- * the drag is large enough to define a meaningful ROI.
+ * freeze the overlay. {@code onRoiSelected} is only called when the drag is
+ * large enough to define a meaningful ROI. If a ROI was accepted, the next
+ * {@code mousePressed} calls {@code onDismiss} so the caller can clean up
+ * without needing a separate dismiss listener.
  */
 class ExportMouseListener implements NDViewer2CanvasMouseListenerInterface {
 
@@ -23,6 +25,7 @@ class ExportMouseListener implements NDViewer2CanvasMouseListenerInterface {
    private final NDViewer2API viewer_;
    private final Runnable onRelease_;
    private final BiConsumer<Point, Point> onRoiSelected_;
+   private Runnable onDismiss_;
    private boolean released_ = false;
 
    ExportMouseListener(NDViewer2API viewer,
@@ -33,8 +36,19 @@ class ExportMouseListener implements NDViewer2CanvasMouseListenerInterface {
       onRoiSelected_ = onRoiSelected;
    }
 
+   void setOnDismiss(Runnable onDismiss) {
+      onDismiss_ = onDismiss;
+   }
+
    @Override
    public void mousePressed(MouseEvent e) {
+      if (released_) {
+         // ROI is frozen and waiting for dismiss click.
+         if (onDismiss_ != null) {
+            onDismiss_.run();
+         }
+         return;
+      }
       mouseDragStartPoint_ = e.getPoint();
       currentMouseLocation_ = e.getPoint();
       viewer_.redrawOverlay();
@@ -42,6 +56,9 @@ class ExportMouseListener implements NDViewer2CanvasMouseListenerInterface {
 
    @Override
    public void mouseDragged(MouseEvent e) {
+      if (released_) {
+         return;
+      }
       currentMouseLocation_ = e.getPoint();
       viewer_.redrawOverlay();
    }
@@ -65,14 +82,19 @@ class ExportMouseListener implements NDViewer2CanvasMouseListenerInterface {
 
    @Override
    public void mouseMoved(MouseEvent e) {
-      currentMouseLocation_ = e.getPoint();
-      viewer_.redrawOverlay();
+      // Only update during an active drag; outside of a drag, moving the mouse
+      // has no visual effect and triggering redraws would cause flicker.
+      if (mouseDragStartPoint_ != null && !released_) {
+         currentMouseLocation_ = e.getPoint();
+         viewer_.redrawOverlay();
+      }
    }
 
    @Override
    public void mouseExited(MouseEvent e) {
-      currentMouseLocation_ = null;
-      viewer_.redrawOverlay();
+      // Do not clear currentMouseLocation_ — keep the last known drag position
+      // so the selection rectangle stays visible when the mouse briefly leaves
+      // the canvas edge.
    }
 
    @Override

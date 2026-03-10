@@ -662,6 +662,11 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
               "Select Deskew Explore Dataset",
               FileDialogs.MM_DATA_SET);
       if (result != null) {
+         // Remember the parent directory so the next Open starts one level up.
+         File parent = result.getParentFile();
+         if (parent != null) {
+            FileDialogs.storePath(FileDialogs.MM_DATA_SET, parent);
+         }
          exploreManager_.openExplore(result.getAbsolutePath());
       }
    }

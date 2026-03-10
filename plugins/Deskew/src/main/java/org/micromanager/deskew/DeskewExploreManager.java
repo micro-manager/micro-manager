@@ -556,8 +556,6 @@ public class DeskewExploreManager {
             });
          }
 
-         startStagePositionPolling();
-
          studio_.logs().logMessage("Deskew Explore: opened dataset from " + dir);
 
       } catch (Exception e) {
