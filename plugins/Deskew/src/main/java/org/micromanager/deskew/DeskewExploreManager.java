@@ -26,6 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+import com.google.common.eventbus.Subscribe;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import mmcorej.org.json.JSONArray;
@@ -49,6 +50,7 @@ import org.micromanager.ndviewer2.NDViewer2API;
 import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.ndviewer2.NDViewer2Factory;
 
 /**
@@ -292,6 +294,7 @@ public class DeskewExploreManager {
          viewer_.setViewOffset(0, 0);
 
          startStagePositionPolling();
+         studio_.events().registerForEvents(this);
 
       } catch (Exception e) {
          studio_.logs().showError(e, "Failed to start Deskew Explore.");
@@ -568,6 +571,7 @@ public class DeskewExploreManager {
          }
 
          studio_.logs().logMessage("Deskew Explore: opened dataset from " + dir);
+         studio_.events().registerForEvents(this);
 
       } catch (Exception e) {
          studio_.logs().logMessage("Deskew Explore: openExplore EXCEPTION: " + e);
@@ -629,6 +633,11 @@ public class DeskewExploreManager {
    private void stopExplore(boolean deleteTempFiles) {
       if (!exploring_) {
          return; // Already stopped (re-entrant call)
+      }
+      try {
+         studio_.events().unregisterForEvents(this);
+      } catch (Exception ignored) {
+         // Not registered — safe to ignore
       }
       exploring_ = false;
       loadedData_ = false;
@@ -757,6 +766,23 @@ public class DeskewExploreManager {
                deleteTempStorage();
             }
          }, "Deskew Explore cleanup").start();
+      }
+   }
+
+   /**
+    * Called when the application is shutting down.
+    * Triggers the same save/discard prompt as closing the viewer window.
+    * Cancels shutdown if the user picks "Cancel".
+    */
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      if (event.isCanceled() || !exploring_) {
+         return;
+      }
+      onViewerClosed();
+      // If the session is still open (user cancelled the prompt), cancel shutdown.
+      if (exploring_) {
+         event.cancelShutdown();
       }
    }
 

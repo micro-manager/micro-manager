@@ -14,10 +14,7 @@ import org.micromanager.ndviewer2.overlay.Overlay;
 /**
  * Interface for external methods of the NDViewer2 viewer.
  * The only requirement is to call {@link #newImageArrived(HashMap)} newImageArrived}
- * method each time a new image is available. It may also
- * be helpful to call {@link #setChannelColor(String, Color)}
- * bitDepth} before each image arrives to initialize preferred
- * contrast controls
+ * method each time a new image is available.
  *
  */
 public interface NDViewer2API {
