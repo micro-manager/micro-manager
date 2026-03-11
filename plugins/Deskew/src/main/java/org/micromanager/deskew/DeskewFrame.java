@@ -480,7 +480,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
             "Stop tile acquisition after the current tile finishes.");
       interruptExploreButton_.setEnabled(false);
       interruptExploreButton_.addActionListener(e -> exploreManager_.interruptAcquisition());
-      explorePanel.add(interruptExploreButton_, "span 2");
+      explorePanel.add(interruptExploreButton_ );
 
       JButton exploreHelpButton = new JButton("Help");
       exploreHelpButton.addActionListener(e -> JOptionPane.showMessageDialog(

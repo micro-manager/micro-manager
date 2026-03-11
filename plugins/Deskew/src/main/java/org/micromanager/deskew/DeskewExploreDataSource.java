@@ -42,8 +42,9 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
    private volatile boolean finished_ = false;
 
    // Mouse interaction state
-   private Point selectionStart_ = null;   // First corner of selection (row, col)
-   private Point selectionEnd_ = null;     // Second corner of selection (row, col)
+   private volatile Point selectionStart_ = null;   // First corner of selection (row, col)
+   private volatile Point selectionEnd_ = null;     // Second corner of selection (row, col)
+
    private Point dragStart_ = null;
    private boolean isRightDragging_ = false;
    private boolean isLeftDragging_ = false;
@@ -59,8 +60,9 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
    // Null when unknown. Updated by the stage polling task in DeskewExploreManager.
    private volatile Point2D.Double stagePositionPixel_ = null;
 
-   // Tile tracking
-   private final Set<String> acquiredTiles_ = new HashSet<>();
+   // Tile tracking (accessed from multiple threads — use concurrent set)
+   private final Set<String> acquiredTiles_ =
+         Collections.newSetFromMap(new ConcurrentHashMap<>());
    // Tiles queued for acquisition but not yet displayed (shown as persistent blue overlay)
    private final Set<String> pendingTiles_ =
          Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -137,9 +139,6 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
 
    public void setAcquisitionInProgress(boolean inProgress) {
       acquisitionInProgress_ = inProgress;
-      if (!inProgress) {
-         clearSelection();
-      }
    }
 
    /**
@@ -398,6 +397,17 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
       dragStart_ = e.getPoint();
       if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
          isRightDragging_ = false;
+         // Tentatively start a selection on press so the tile highlight is visible
+         // immediately, even before the button is released.  If the press turns into
+         // a drag (pan), mouseDragged will clear selectionStart_.
+         if (!readOnly_ && tileWidth_ > 0 && tileHeight_ > 0) {
+            Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
+            if (tile != null) {
+               selectionStart_ = tile;
+               selectionEnd_ = null;
+               manager_.redrawOverlay();
+            }
+         }
       } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
          isLeftDragging_ = false;
       }
@@ -454,21 +464,9 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
       int dx = dragStart_.x - current.x;
       int dy = dragStart_.y - current.y;
 
-      if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
-         // Right-drag pans the view — always allowed, even during acquisition.
-         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-            isRightDragging_ = true;
-            // Clear selection when panning
-            selectionStart_ = null;
-            selectionEnd_ = null;
-         }
-
-         if (isRightDragging_) {
-            manager_.pan(dx, dy);
-            dragStart_ = current;
-         }
-      } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+      if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
          // Left-drag extends the selection — blocked in read-only mode.
+         // Left takes priority over right: if left is held we do selection, not pan.
          if (!readOnly_ && selectionStart_ != null
                  && tileWidth_ > 0 && tileHeight_ > 0) {
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
@@ -482,6 +480,19 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
                   manager_.redrawOverlay();
                }
             }
+         }
+      } else if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
+         // Right-drag pans the view — only when left is not also held.
+         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+            isRightDragging_ = true;
+            // Clear selection when panning
+            selectionStart_ = null;
+            selectionEnd_ = null;
+         }
+
+         if (isRightDragging_) {
+            manager_.pan(dx, dy);
+            dragStart_ = current;
          }
       }
    }
