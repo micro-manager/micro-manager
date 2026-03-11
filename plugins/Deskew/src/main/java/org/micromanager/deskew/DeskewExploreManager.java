@@ -779,23 +779,33 @@ public class DeskewExploreManager {
       if (event.isCanceled() || !exploring_) {
          return;
       }
-      onViewerClosed();
-      // If the session is still open (user cancelled the prompt), cancel shutdown.
-      if (exploring_) {
+      boolean proceeded = onViewerClosed(true);
+      if (!proceeded) {
          event.cancelShutdown();
       }
    }
 
    /**
-    * Called when the viewer is closed by the user.
+    * Called when the viewer is closed by the user (e.g. from DeskewExploreDataSource.close()).
     * Prompts to save data if any tiles were acquired (only for new sessions, not loaded data).
     */
    public void onViewerClosed() {
+      onViewerClosed(false);
+   }
+
+   /**
+    * Core implementation of viewer-closed logic.
+    *
+    * @param calledFromShutdown true when invoked from onShutdownCommencing; on Cancel,
+    *                           the session is left alive so the caller can abort shutdown.
+    * @return true if the session ended (save/discard/no-data), false if the user cancelled.
+    */
+   private boolean onViewerClosed(boolean calledFromShutdown) {
       // Guard against re-entrant calls:
       // - stopExplore() closes the viewer, which triggers dataSource.close() → here
       // - mm2Viewer_.close() below calls ndViewer_.close() → dataSource.close() → here
       if (!exploring_ || viewerClosing_) {
-         return;
+         return true;
       }
       viewerClosing_ = true;
 
@@ -831,7 +841,7 @@ public class DeskewExploreManager {
       // If we opened an existing dataset, just close without prompting
       if (loadedData_) {
          stopExplore(false);  // Don't delete the user's data
-         return;
+         return true;
       }
 
       // Check if there's any data to save
@@ -859,11 +869,16 @@ public class DeskewExploreManager {
                     "Save");
 
             if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
-               // Cancel — keep data in temp storage and stop without deleting
+               // Cancel
                studio_.logs().logMessage("Deskew Explore: close cancelled, data remains in: "
                         + storageDir_);
-               stopExplore(false);
-               return;
+               if (!calledFromShutdown) {
+                  // Viewer is already gone — must end the session (keep temp files)
+                  stopExplore(false);
+               }
+               // If calledFromShutdown: leave session alive so caller can abort shutdown.
+               viewerClosing_ = false;
+               return false;
             } else if (choice == 0) {
                // Save — let user choose location; loop back if they cancel the file chooser
                JFileChooser chooser = new JFileChooser();
@@ -888,6 +903,7 @@ public class DeskewExploreManager {
       }
 
       stopExplore(true);  // Delete temp files
+      return true;
    }
 
    /**
