@@ -8,9 +8,11 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
@@ -59,6 +61,9 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
 
    // Tile tracking
    private final Set<String> acquiredTiles_ = new HashSet<>();
+   // Tiles queued for acquisition but not yet displayed (shown as persistent blue overlay)
+   private final Set<String> pendingTiles_ =
+         Collections.newSetFromMap(new ConcurrentHashMap<>());
 
    // Tile dimensions (set after first acquisition)
    private int tileWidth_ = -1;
@@ -99,6 +104,18 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
 
    public void markTileAcquired(int row, int col) {
       acquiredTiles_.add(row + "," + col);
+   }
+
+   public void addPendingTile(int row, int col) {
+      pendingTiles_.add(row + "," + col);
+   }
+
+   public void removePendingTile(int row, int col) {
+      pendingTiles_.remove(row + "," + col);
+   }
+
+   public void clearPendingTiles() {
+      pendingTiles_.clear();
    }
 
    /**
@@ -389,9 +406,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
    @Override
    public void mouseReleased(MouseEvent e) {
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
-         // Right-click without drag - start new selection (blocked in read-only mode and
-         // during acquisition)
-         if (!readOnly_ && !acquisitionInProgress_ && tileWidth_ > 0 && tileHeight_ > 0) {
+         // Right-click without drag - start new selection (blocked in read-only mode)
+         if (!readOnly_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
             if (tile != null) {
                selectionStart_ = tile;
@@ -406,12 +422,14 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
             if (pixelPos != null) {
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
-         } else if (!readOnly_ && !acquisitionInProgress_) {
-            // Left-click without drag - acquire selected tiles (blocked in read-only
-            // mode and during acquisition)
+         } else if (!readOnly_) {
+            // Left-click without drag - queue selected tiles for acquisition
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
+               // Clear selection immediately — tiles are now tracked via pendingTiles_
+               selectionStart_ = null;
+               selectionEnd_ = null;
             }
          }
       }
@@ -450,8 +468,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
             dragStart_ = current;
          }
       } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
-         // Left-drag extends the selection — blocked in read-only mode and during acquisition.
-         if (!readOnly_ && !acquisitionInProgress_ && selectionStart_ != null
+         // Left-drag extends the selection — blocked in read-only mode.
+         if (!readOnly_ && selectionStart_ != null
                  && tileWidth_ > 0 && tileHeight_ > 0) {
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
                isLeftDragging_ = true;
@@ -583,6 +601,30 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
          overlay.add(line5);
       }
 
+      // Draw persistent blue overlay for tiles that are queued/in-progress but not yet displayed
+      if (!pendingTiles_.isEmpty()) {
+         double overlapPercent = manager_.getOverlapPercentage();
+         int overlapPixels = (int) Math.round(tileWidth_ * overlapPercent / 100.0);
+         double effectiveTileWidth = tileWidth_ - overlapPixels;
+         double effectiveTileHeight = tileHeight_ - overlapPixels;
+         for (String key : pendingTiles_) {
+            String[] parts = key.split(",");
+            int row = Integer.parseInt(parts[0]);
+            int col = Integer.parseInt(parts[1]);
+            double tilePixelX = col * effectiveTileWidth;
+            double tilePixelY = row * effectiveTileHeight;
+            int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
+            int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
+            int dispW = (int) (effectiveTileWidth * magnification);
+            int dispH = (int) (effectiveTileHeight * magnification);
+            Roi rectRoi = new Roi(dispX, dispY, dispW, dispH);
+            rectRoi.setStrokeColor(new Color(0, 100, 255));
+            rectRoi.setStrokeWidth(3);
+            rectRoi.setFillColor(new Color(0, 100, 255, 100));
+            overlay.add(rectRoi);
+         }
+      }
+
       // Draw selection if any
       if (selectionStart_ != null) {
          int startRow = selectionStart_.x;
@@ -634,12 +676,14 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
          int textY = (int) ((centerPixelY - viewOffset.y) * magnification);
 
          String instructions;
-         if (acquisitionInProgress_) {
-            instructions = "Acquiring...";
-         } else if (selectionEnd_ == null) {
-            instructions = "Left-drag to extend, left-click to acquire";
+         if (selectionEnd_ == null) {
+            instructions = acquisitionInProgress_
+                  ? "Left-drag to extend, left-click to queue"
+                  : "Left-drag to extend, left-click to acquire";
          } else {
-            instructions = "Left-click to acquire " + tileCount + " tile(s)";
+            instructions = acquisitionInProgress_
+                  ? "Left-click to queue " + tileCount + " tile(s)"
+                  : "Left-click to acquire " + tileCount + " tile(s)";
          }
          TextRoi textRoi = new TextRoi(textX - 100, textY - 20, instructions);
          textRoi.setStrokeColor(Color.WHITE);

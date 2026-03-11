@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -98,6 +99,8 @@ public class DeskewExploreManager {
    private double pixelSizeUm_ = 1.0;
    private double overlapPercentage_ = 10.0;  // Percentage overlap between tiles (0-50)
    private volatile boolean acquisitionInterrupted_ = false;
+   // Counts tile-batch tasks currently queued or running in acquisitionExecutor_
+   private final AtomicInteger pendingBatches_ = new AtomicInteger(0);
 
    public DeskewExploreManager(Studio studio, DeskewFrame frame, DeskewFactory deskewFactory) {
       studio_ = studio;
@@ -629,6 +632,11 @@ public class DeskewExploreManager {
       }
       exploring_ = false;
       loadedData_ = false;
+      acquisitionInterrupted_ = true;
+      pendingBatches_.set(0);
+      if (dataSource_ != null) {
+         dataSource_.clearPendingTiles();
+      }
 
       if (displayExecutor_ != null) {
          displayExecutor_.shutdownNow();
@@ -1120,6 +1128,8 @@ public class DeskewExploreManager {
                   displayAxes.remove("column");
                   displayAxesList.add(displayAxes);
                }
+               final int tileRow = row;
+               final int tileCol = col;
                displayExecutor_.submit(() -> {
                   // Notify data provider per-channel (needed for DataProviderHasNewImageEvent)
                   for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
@@ -1142,7 +1152,14 @@ public class DeskewExploreManager {
                   } catch (NullPointerException e) {
                      // NDViewer histogram not yet initialized - ignore
                   }
+                  // Remove from pending overlay now that the image is being displayed
+                  dataSource_.removePendingTile(tileRow, tileCol);
+                  redrawOverlay();
                });
+            } else {
+               // No display submission — remove from pending immediately
+               dataSource_.removePendingTile(row, col);
+               redrawOverlay();
             }
 
             // Clean up test store - freeze first to prevent "save" dialogs
@@ -1160,14 +1177,21 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Signals the current multi-tile acquisition to stop after the current tile finishes.
+    * Signals all queued and running tile-batch acquisitions to stop after the current
+    * tile finishes, and clears the pending-tile overlay.
     */
    public void interruptAcquisition() {
       acquisitionInterrupted_ = true;
+      if (dataSource_ != null) {
+         dataSource_.clearPendingTiles();
+         redrawOverlay();
+      }
    }
 
    /**
     * Acquires multiple tiles sequentially, moving the stage between positions.
+    * May be called while a previous batch is still running; the new batch is queued
+    * and will start as soon as the previous one finishes (or is interrupted).
     * Each tile position is calculated relative to the initial stage position when explore started.
     *
     * @param tiles List of tile positions as (row, col) Points
@@ -1177,39 +1201,48 @@ public class DeskewExploreManager {
          return;
       }
 
+      // Clear any prior interrupt so this new batch (and any already-queued batches
+      // that haven't started yet) will run.  Do this before incrementing the counter
+      // so there is no window where a batch could see a stale interrupted flag.
       acquisitionInterrupted_ = false;
-      acquisitionExecutor_.submit(() -> {
+
+      int batchCount = pendingBatches_.incrementAndGet();
+      if (batchCount == 1) {
+         // First batch entering the queue — flip UI to in-progress
          dataSource_.setAcquisitionInProgress(true);
          frame_.setAcquisitionInProgress(true);
-         redrawOverlay();
+      }
 
+      // Mark all tiles in this batch as pending immediately so the blue overlay
+      // appears before the executor picks up the task.
+      for (Point tile : tiles) {
+         dataSource_.addPendingTile(tile.x, tile.y);
+      }
+      redrawOverlay();
+
+      acquisitionExecutor_.submit(() -> {
          try {
             // Get the projected tile dimensions (use estimated if not yet determined)
             int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
             int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
 
-            // Calculate the stage movement per tile in microns
-            // Note: tile coordinates are in projected pixel space
-            double tileWidthUm = tileWidth * pixelSizeUm_;
-            double tileHeightUm = tileHeight * pixelSizeUm_;
+            // Account for overlap: overlap pixel count is derived from X tile width only,
+            // so both axes subtract the same number of pixels (not the same percentage).
+            int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+            double effectiveTileWidthUm = (tileWidth - overlapPixels) * pixelSizeUm_;
+            double effectiveTileHeightUm = (tileHeight - overlapPixels) * pixelSizeUm_;
 
-            for (int i = 0; i < tiles.size(); i++) {
+            for (Point tile : tiles) {
                if (acquisitionInterrupted_) {
                   break;
                }
-               Point tile = tiles.get(i);
                int row = tile.x;
                int col = tile.y;
 
-               // Calculate target stage position relative to initial position
-               // Tile (0,0) is at the initial position
+               // Calculate target stage position relative to initial position.
+               // Tile (0,0) is at the initial position.
                // Positive col -> move stage in +X direction
                // Positive row -> move stage in +Y direction
-               // Account for overlap: overlap pixel count is derived from X tile width only,
-               // so both axes subtract the same number of pixels (not the same percentage).
-               int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
-               double effectiveTileWidthUm = (tileWidth - overlapPixels) * pixelSizeUm_;
-               double effectiveTileHeightUm = (tileHeight - overlapPixels) * pixelSizeUm_;
                double targetX = initialStageX_ + col * effectiveTileWidthUm;
                double targetY = initialStageY_ + row * effectiveTileHeightUm;
 
@@ -1225,12 +1258,14 @@ public class DeskewExploreManager {
                acquireSingleTileBlocking(row, col);
             }
 
-
          } catch (Exception e) {
             studio_.logs().logError(e, "Deskew Explore: error during multi-tile acquisition");
          } finally {
-            dataSource_.setAcquisitionInProgress(false);
-            frame_.setAcquisitionInProgress(false);
+            if (pendingBatches_.decrementAndGet() == 0) {
+               // Last batch finished — clear in-progress state
+               dataSource_.setAcquisitionInProgress(false);
+               frame_.setAcquisitionInProgress(false);
+            }
          }
       });
    }
@@ -1393,6 +1428,8 @@ public class DeskewExploreManager {
                displayAxes.remove("column");
                displayAxesList.add(displayAxes);
             }
+            final int tileRow = row;
+            final int tileCol = col;
             displayExecutor_.submit(() -> {
                // Notify data provider per-channel (needed for DataProviderHasNewImageEvent)
                for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
@@ -1415,7 +1452,14 @@ public class DeskewExploreManager {
                } catch (NullPointerException e) {
                   // NDViewer histogram not yet initialized - ignore
                }
+               // Remove from pending overlay now that the image is being displayed
+               dataSource_.removePendingTile(tileRow, tileCol);
+               redrawOverlay();
             });
+         } else {
+            // No display submission — remove from pending immediately
+            dataSource_.removePendingTile(row, col);
+            redrawOverlay();
          }
 
          // Clean up
