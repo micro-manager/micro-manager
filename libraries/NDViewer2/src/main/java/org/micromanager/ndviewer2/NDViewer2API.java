@@ -3,11 +3,11 @@ package org.micromanager.ndviewer2;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import javax.swing.JPanel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.swing.JPanel;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndviewer2.overlay.Overlay;
 
@@ -37,14 +37,6 @@ public interface NDViewer2API {
     * @param hook
     */
    void addSetImageHook(Consumer<HashMap<String, Object>> hook);
-
-   /**
-    * Set display settings for channel with the given name.
-    *
-    * @param chName Channel name
-    * @param c Desired color
-    */
-   void setChannelColor(String chName, Color c);
 
    /**
     * Set the scrollbar with a given axis label to a position.

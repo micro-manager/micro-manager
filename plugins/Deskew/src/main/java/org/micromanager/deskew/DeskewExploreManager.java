@@ -1,9 +1,11 @@
 package org.micromanager.deskew;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -83,9 +85,10 @@ public class DeskewExploreManager {
    private volatile boolean exploring_ = false;
    private volatile boolean viewerClosing_ = false;  // Guard for onViewerClosed re-entrancy
    private boolean loadedData_ = false;  // True when viewing a loaded dataset
-   private JSONObject pendingDisplaySettings_ = null;  // Captured before viewer is nulled (unused, kept for cleanup)
-   private DisplaySettings pendingMMDisplaySettings_ = null;  // MM display settings captured before viewer is nulled
-   private JSONObject pendingViewState_ = null;  // View offset/zoom captured before viewer is nulled
+   // MM display settings captured before viewer is nulled
+   private DisplaySettings pendingMMDisplaySettings_ = null;
+   // View offset/zoom captured before viewer is nulled
+   private JSONObject pendingViewState_ = null;
    private String storageDir_;
    private String acqName_;
 
@@ -237,7 +240,7 @@ public class DeskewExploreManager {
                if (settings.channels().get(i).useChannel()) {
                   String channelGroup = settings.channelGroup();
                   String channelName = settings.channels().get(i).config();
-                  java.awt.Color channelColor = settings.channels().get(i).color();
+                  Color channelColor = settings.channels().get(i).color();
                   // Build ChannelDisplaySettings directly using MDA color,
                   // bypassing RememberedDisplaySettings which prefers persisted colors
                   dsBuilder.channel(displayChannelIndex,
@@ -427,32 +430,34 @@ public class DeskewExploreManager {
                         ? dsBuilder.colorModeComposite() : dsBuilder.colorModeGrayscale();
                   for (int i = 0; i < channelNames.size(); i++) {
                      String name = channelNames.get(i);
-                     java.awt.Color color = null;
+                     Color color = null;
                      // 1. Try stored NDViewer display_settings.txt
                      if (storedNDVSettings != null) {
                         try {
-                           color = new java.awt.Color(
+                           color = new Color(
                                  storedNDVSettings.getJSONObject(name).getInt("Color"));
-                        } catch (Exception ignored) {
+                        } catch (Exception e) {
+                           studio_.logs().logError(e);
                         }
                      }
                      // 2. Try MM RememberedDisplaySettings
-                     if (color == null || color.equals(java.awt.Color.WHITE)) {
+                     if (color == null || color.equals(Color.WHITE)) {
                         org.micromanager.display.ChannelDisplaySettings remembered =
-                              RememberedDisplaySettings.loadChannel(studio_, channelGroup, name, null);
-                        if (remembered != null && !remembered.getColor().equals(java.awt.Color.WHITE)) {
+                              RememberedDisplaySettings.loadChannel(
+                                       studio_, channelGroup, name, null);
+                        if (remembered != null && !remembered.getColor().equals(Color.WHITE)) {
                            color = remembered.getColor();
                         }
                      }
                      // 3. Guess from channel name (wavelength-based)
-                     if (color == null || color.equals(java.awt.Color.WHITE)) {
-                        java.awt.Color guessed = ColorPalettes.guessColor(name);
-                        if (!guessed.equals(java.awt.Color.WHITE)) {
+                     if (color == null || color.equals(Color.WHITE)) {
+                        Color guessed = ColorPalettes.guessColor(name);
+                        if (!guessed.equals(Color.WHITE)) {
                            color = guessed;
                         }
                      }
                      // 4. Fall back to MM default palette by index
-                     if (color == null || color.equals(java.awt.Color.WHITE)) {
+                     if (color == null || color.equals(Color.WHITE)) {
                         color = ColorPalettes.getFromDefaultPalette(i);
                      }
                      dsBuilder.channel(i,
@@ -490,7 +495,8 @@ public class DeskewExploreManager {
 
          viewer_.setViewOffset(0, 0);
 
-         // Load saved view state (pan offset + zoom) — will be applied after initializeViewerToLoaded.
+         // Load saved view state (pan offset + zoom) — will be applied after
+         // initializeViewerToLoaded.
          File viewStateFile = new File(dir, VIEW_STATE_FILE);
          final JSONObject savedViewState = loadViewState(viewStateFile);
 
@@ -522,7 +528,8 @@ public class DeskewExploreManager {
                            seedAxesList.add(channelAxes);
                         }
                      } catch (Exception e) {
-                        studio_.logs().logMessage("Deskew Explore: exception fetching seed image: " + e);
+                        studio_.logs().logMessage(
+                                 "Deskew Explore: exception fetching seed image: " + e);
                      }
                   }
                   if (mm2Viewer_ != null && !seedImages.isEmpty()) {
@@ -639,8 +646,9 @@ public class DeskewExploreManager {
       }
 
       // Capture MM DisplaySettings and view state so we can persist them alongside the dataset.
-      // mm2Viewer_/viewer_ may already be null if onViewerClosed() ran first (loaded-data close path),
-      // in which case pending* fields were captured there before the viewer was nulled.
+      // mm2Viewer_/viewer_ may already be null if onViewerClosed() ran first (loaded-data
+      // close path), in which case pending* fields were captured there before the viewer was
+      // nulled.
       final DisplaySettings mmDisplaySettingsToSave;
       final JSONObject viewStateToSave;
       if (!deleteTempFiles) {
@@ -648,7 +656,8 @@ public class DeskewExploreManager {
             DisplaySettings captured = null;
             try {
                captured = mm2Viewer_.getDisplaySettings();
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+               studio_.logs().logError(e);
             }
             mmDisplaySettingsToSave = captured;
          } else {
@@ -658,7 +667,8 @@ public class DeskewExploreManager {
             JSONObject captured = null;
             try {
                captured = captureViewState(viewer_);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+               studio_.logs().logError(e);
             }
             viewStateToSave = captured;
          } else {
@@ -669,7 +679,6 @@ public class DeskewExploreManager {
          viewStateToSave = null;
       }
       pendingMMDisplaySettings_ = null;
-      pendingDisplaySettings_ = null;
       pendingViewState_ = null;
 
       // Close viewers BEFORE storage to avoid NPEs from pending repaints
@@ -718,7 +727,7 @@ public class DeskewExploreManager {
                         // Save view offset and zoom to view_state.json alongside the dataset.
                         File viewStateFile = new File(diskLocation, VIEW_STATE_FILE);
                         Files.write(viewStateFile.toPath(),
-                                viewStateToSave.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                                viewStateToSave.toString(2).getBytes(StandardCharsets.UTF_8));
                      }
                   }
                   if (!storageToClose.isFinished()) {
@@ -756,17 +765,20 @@ public class DeskewExploreManager {
       }
       viewerClosing_ = true;
 
-      // Capture MM display settings and view state before nulling viewer references so stopExplore() can save them.
+      // Capture MM display settings and view state before nulling viewer references so
+      // stopExplore() can save them.
       if (mm2Viewer_ != null) {
          try {
             pendingMMDisplaySettings_ = mm2Viewer_.getDisplaySettings();
-         } catch (Exception ignored) {
+         } catch (Exception e) {
+            studio_.logs().logError(e);
          }
       }
       if (viewer_ != null) {
          try {
             pendingViewState_ = captureViewState(viewer_);
-         } catch (Exception ignored) {
+         } catch (Exception e) {
+            studio_.logs().logError(e);
          }
       }
 
@@ -1817,7 +1829,7 @@ public class DeskewExploreManager {
          if (pendingViewState_ != null) {
             File f = new File(dataDir, VIEW_STATE_FILE);
             Files.write(f.toPath(),
-                    pendingViewState_.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    pendingViewState_.toString(2).getBytes(StandardCharsets.UTF_8));
          }
       } catch (Exception e) {
          studio_.logs().logError(e, "Failed to write settings to data dir");
@@ -1849,7 +1861,7 @@ public class DeskewExploreManager {
       }
       try {
          byte[] bytes = Files.readAllBytes(file.toPath());
-         return new JSONObject(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+         return new JSONObject(new String(bytes, StandardCharsets.UTF_8));
       } catch (Exception e) {
          return null;
       }

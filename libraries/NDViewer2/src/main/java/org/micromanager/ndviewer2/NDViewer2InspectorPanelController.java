@@ -40,23 +40,23 @@ public final class NDViewer2InspectorPanelController
    }
 
    private static final String HELP_TEXT =
-         "Navigation:\n" +
-         "  Right-drag: pan view\n" +
-         "  Scroll wheel: zoom in/out\n" +
-         "\n" +
-         "Tile selection (live explore only):\n" +
-         "  Right-click: select tile\n" +
-         "  Left-drag: expand selection\n" +
-         "  Left-click: acquire selected tiles\n" +
-         "  Ctrl+left-click: move stage to position\n" +
-         "\n" +
-         "View controls:\n" +
-         "  Center: pan to center of dataset (keep zoom)\n" +
-         "  No Zoom: zoom to 1:1 and center on dataset\n" +
-         "\n" +
-         "Export:\n" +
-         "  Click Export, drag to draw ROI, then confirm export\n" +
-         "  Click anywhere to dismiss the ROI";
+         "Navigation:\n"
+                  + "  Right-drag: pan view\n"
+                  + "  Scroll wheel: zoom in/out\n"
+                  + "\n"
+                  + "Tile selection (live explore only):\n"
+                  + "  Right-click: select tile\n"
+                  + "  Left-drag: expand selection\n"
+                  + "  Left-click: acquire selected tiles\n"
+                  + "  Ctrl+left-click: move stage to position\n"
+                  + "\n"
+                  + "View controls:\n"
+                  + "  Center: pan to center of dataset (keep zoom)\n"
+                  + "  No Zoom: zoom to 1:1 and center on dataset\n"
+                  + "\n"
+                  + "Export:\n"
+                  + "  Click Export, drag to draw ROI, then confirm export\n"
+                  + "  Click anywhere to dismiss the ROI";
 
    private JPanel buildPanel() {
       final JPanel p = new JPanel(new MigLayout("insets 4", "[]4[]4[]", "[]2[]"));
@@ -109,8 +109,10 @@ public final class NDViewer2InspectorPanelController
       NDViewer2API v = viewer_.getNDViewer();
       Point2D.Double displaySize = v.getDisplayImageSize();
       Point2D.Double dataCenter = getDataCenter();
-      double centerX = dataCenter != null ? dataCenter.x : v.getViewOffset().x + v.getFullResSourceDataSize().x / 2.0;
-      double centerY = dataCenter != null ? dataCenter.y : v.getViewOffset().y + v.getFullResSourceDataSize().y / 2.0;
+      double centerX = dataCenter != null ? dataCenter.x
+               : v.getViewOffset().x + v.getFullResSourceDataSize().x / 2.0;
+      double centerY = dataCenter != null ? dataCenter.y
+               : v.getViewOffset().y + v.getFullResSourceDataSize().y / 2.0;
       v.setViewOffset(centerX - displaySize.x / 2.0, centerY - displaySize.y / 2.0);
       v.setFullResSourceDataSize(displaySize.x, displaySize.y);
       v.update();

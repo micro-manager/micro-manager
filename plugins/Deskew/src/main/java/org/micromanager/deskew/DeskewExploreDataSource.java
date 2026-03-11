@@ -389,7 +389,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
    @Override
    public void mouseReleased(MouseEvent e) {
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
-         // Right-click without drag - start new selection (blocked in read-only mode and during acquisition)
+         // Right-click without drag - start new selection (blocked in read-only mode and
+         // during acquisition)
          if (!readOnly_ && !acquisitionInProgress_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
             if (tile != null) {
@@ -406,7 +407,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
          } else if (!readOnly_ && !acquisitionInProgress_) {
-            // Left-click without drag - acquire selected tiles (blocked in read-only mode and during acquisition)
+            // Left-click without drag - acquire selected tiles (blocked in read-only
+            // mode and during acquisition)
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
@@ -550,7 +552,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
 
       // Show usage instructions when nothing is selected, not acquiring,
       // no tiles have been acquired yet, and not in read-only mode
-      if (!readOnly_ && selectionStart_ == null && !acquisitionInProgress_ && acquiredTiles_.isEmpty()) {
+      if (!readOnly_ && selectionStart_ == null && !acquisitionInProgress_
+               && acquiredTiles_.isEmpty()) {
          int centerX = (int) (displayImageSize.x / 2);
          int centerY = (int) (displayImageSize.y / 2);
 

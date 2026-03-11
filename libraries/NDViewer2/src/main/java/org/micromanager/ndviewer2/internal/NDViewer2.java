@@ -111,12 +111,6 @@ public class NDViewer2 implements NDViewer2API {
       readZFunction_ = fn;
    }
 
-   /** @deprecated Colors are now managed by MM DisplaySettings. No-op. */
-   @Deprecated
-   public void setChannelColor(String channel, Color c) {
-      // No-op: colors are now managed through MM DisplaySettings via setRenderSettings()
-   }
-
    public JSONObject getDisplaySettingsJSON() {
       return displayModel_.getDisplaySettingsJSON();
    }
