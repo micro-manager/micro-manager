@@ -153,9 +153,13 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
       Point closestCorner;
 
       if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
-         // Convert stage pixel position to tile indices
-         int stageRow = (int) Math.floor(stagePixel.y / tileHeight_);
-         int stageCol = (int) Math.floor(stagePixel.x / tileWidth_);
+         // Convert stage pixel position to tile indices using effective (non-overlap) spacing
+         double overlapPercent = manager_.getOverlapPercentage();
+         int overlapPixels = (int) Math.round(tileWidth_ * overlapPercent / 100.0);
+         double effectiveTileWidth = tileWidth_ - overlapPixels;
+         double effectiveTileHeight = tileHeight_ - overlapPixels;
+         int stageRow = (int) Math.floor(stagePixel.y / effectiveTileHeight);
+         int stageCol = (int) Math.floor(stagePixel.x / effectiveTileWidth);
 
          // Find closest corner
          closestCorner = findClosestCorner(stageRow, stageCol, minRow, maxRow, minCol, maxCol);
@@ -520,10 +524,11 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
       double fullResX = viewOffset.x + displayX / mag;
       double fullResY = viewOffset.y + displayY / mag;
 
-      // Calculate effective tile dimensions accounting for overlap
+      // Calculate effective tile dimensions: overlap is same pixel count in X and Y
       double overlapPercent = manager_.getOverlapPercentage();
-      double effectiveTileWidth = tileWidth_ * (1.0 - overlapPercent / 100.0);
-      double effectiveTileHeight = tileHeight_ * (1.0 - overlapPercent / 100.0);
+      int overlapPixels = (int) Math.round(tileWidth_ * overlapPercent / 100.0);
+      double effectiveTileWidth = tileWidth_ - overlapPixels;
+      double effectiveTileHeight = tileHeight_ - overlapPixels;
 
       // Convert to tile indices using effective spacing
       int col = (int) Math.floor(fullResX / effectiveTileWidth);
@@ -591,9 +596,11 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
          int tileCount = (maxRow - minRow + 1) * (maxCol - minCol + 1);
 
          // Draw each tile in the selection
+         // Overlap is the same pixel count in X and Y (derived from X tile width)
          double overlapPercent = manager_.getOverlapPercentage();
-         double effectiveTileWidth = tileWidth_ * (1.0 - overlapPercent / 100.0);
-         double effectiveTileHeight = tileHeight_ * (1.0 - overlapPercent / 100.0);
+         int overlapPixels = (int) Math.round(tileWidth_ * overlapPercent / 100.0);
+         double effectiveTileWidth = tileWidth_ - overlapPixels;
+         double effectiveTileHeight = tileHeight_ - overlapPixels;
 
          for (int row = minRow; row <= maxRow; row++) {
             for (int col = minCol; col <= maxCol; col++) {
@@ -604,9 +611,9 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
                // Convert to display/screen coordinates
                int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
                int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
-               // Draw full tile size (including overlap) to show actual acquired area
-               int dispW = (int) (tileWidth_ * magnification);
-               int dispH = (int) (tileHeight_ * magnification);
+               // Draw the effective (non-overlap) size to match what NDTiffStorage renders
+               int dispW = (int) (effectiveTileWidth * magnification);
+               int dispH = (int) (effectiveTileHeight * magnification);
 
                // Create rectangle ROI at the tile position
                Roi rectRoi = new Roi(dispX, dispY, dispW, dispH);
@@ -618,8 +625,8 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
          }
 
          // Add instruction text at the center of the selection
-         double centerPixelX = (minCol + maxCol + 1) * tileWidth_ / 2.0;
-         double centerPixelY = (minRow + maxRow + 1) * tileHeight_ / 2.0;
+         double centerPixelX = (minCol + maxCol + 1) * effectiveTileWidth / 2.0;
+         double centerPixelY = (minRow + maxRow + 1) * effectiveTileHeight / 2.0;
          int textX = (int) ((centerPixelX - viewOffset.x) * magnification);
          int textY = (int) ((centerPixelY - viewOffset.y) * magnification);
 
@@ -646,12 +653,16 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
       // Draw red rectangle showing the current stage FOV position
       Point2D.Double stagePixel = stagePositionPixel_;
       if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
-         double tilePixelX = stagePixel.x - tileWidth_ / 2.0;
-         double tilePixelY = stagePixel.y - tileHeight_ / 2.0;
+         double overlapPct = manager_.getOverlapPercentage();
+         int overlapPx = (int) Math.round(tileWidth_ * overlapPct / 100.0);
+         double effW = tileWidth_ - overlapPx;
+         double effH = tileHeight_ - overlapPx;
+         double tilePixelX = stagePixel.x - effW / 2.0;
+         double tilePixelY = stagePixel.y - effH / 2.0;
          int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
          int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
-         int dispW = (int) (tileWidth_ * magnification);
-         int dispH = (int) (tileHeight_ * magnification);
+         int dispW = (int) (effW * magnification);
+         int dispH = (int) (effH * magnification);
          Roi stageRoi = new Roi(dispX, dispY, dispW, dispH);
          stageRoi.setStrokeColor(Color.RED);
          stageRoi.setStrokeWidth(2);

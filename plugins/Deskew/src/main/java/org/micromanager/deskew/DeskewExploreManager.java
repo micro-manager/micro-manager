@@ -1668,9 +1668,10 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Converts a stage position (in microns) to full-resolution pixel coordinates.
+    * Converts a stage position (in microns) to full-resolution pixel coordinates
+    * in NDTiffStorage display space, where tile (0,0) occupies [0, effectiveTileWidth).
     * Tile (0,0) center is at (initialStageX_, initialStageY_) in stage space and
-    * at pixel (tileWidth/2, tileHeight/2).
+    * at pixel (effectiveTileWidth/2, effectiveTileHeight/2).
     */
    private Point2D.Double stageToPixel(double stageX, double stageY) {
       int tileWidth = dataSource_.getTileWidth();
@@ -1678,8 +1679,11 @@ public class DeskewExploreManager {
       if (tileWidth <= 0 || tileHeight <= 0 || pixelSizeUm_ <= 0) {
          return null;
       }
-      double pixelX = (stageX - initialStageX_) / pixelSizeUm_ + tileWidth / 2.0;
-      double pixelY = (stageY - initialStageY_) / pixelSizeUm_ + tileHeight / 2.0;
+      int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+      double effectiveTileWidth = tileWidth - overlapPixels;
+      double effectiveTileHeight = tileHeight - overlapPixels;
+      double pixelX = (stageX - initialStageX_) / pixelSizeUm_ + effectiveTileWidth / 2.0;
+      double pixelY = (stageY - initialStageY_) / pixelSizeUm_ + effectiveTileHeight / 2.0;
       return new Point2D.Double(pixelX, pixelY);
    }
 
@@ -1768,11 +1772,13 @@ public class DeskewExploreManager {
             int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
             int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
 
-            // The center of tile (0,0) is at pixel (tileWidth/2, tileHeight/2)
+            // The center of tile (0,0) is at pixel (effectiveTileWidth/2, effectiveTileHeight/2)
             // and corresponds to stage (initialStageX_, initialStageY_)
-            // So we need to offset by half a tile
-            double offsetPixelX = pixelX - tileWidth / 2.0;
-            double offsetPixelY = pixelY - tileHeight / 2.0;
+            int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+            double effectiveTileWidth = tileWidth - overlapPixels;
+            double effectiveTileHeight = tileHeight - overlapPixels;
+            double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
+            double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
 
             double targetX = initialStageX_ + offsetPixelX * pixelSizeUm_;
             double targetY = initialStageY_ + offsetPixelY * pixelSizeUm_;
