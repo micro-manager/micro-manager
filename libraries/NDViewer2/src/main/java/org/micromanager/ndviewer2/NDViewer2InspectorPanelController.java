@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONObject;
@@ -39,38 +38,15 @@ public final class NDViewer2InspectorPanelController
       panel_ = buildPanel();
    }
 
-   private static final String HELP_TEXT =
-         "Navigation:\n"
-                  + "  Right-drag: pan view\n"
-                  + "  Scroll wheel: zoom in/out\n"
-                  + "\n"
-                  + "Tile selection (live explore only):\n"
-                  + "  Right-click: select tile\n"
-                  + "  Left-drag: expand selection\n"
-                  + "  Left-click: acquire selected tiles\n"
-                  + "  Ctrl+left-click: move stage to position\n"
-                  + "\n"
-                  + "View controls:\n"
-                  + "  Center: pan to center of dataset (keep zoom)\n"
-                  + "  No Zoom: zoom to 1:1 and center on dataset\n"
-                  + "\n"
-                  + "Export:\n"
-                  + "  Click Export, drag to draw ROI, then confirm export\n"
-                  + "  Click anywhere to dismiss the ROI";
-
    private JPanel buildPanel() {
       final JPanel p = new JPanel(new MigLayout("insets 4", "[]4[]4[]", "[]2[]"));
       JButton center = new JButton("Center");
       JButton noZoom = new JButton("No Zoom");
-      JButton help = new JButton("Help");
       center.addActionListener(e -> onCenter());
       noZoom.addActionListener(e -> onNoZoom());
       exportButton_.addActionListener(e -> onExportClicked());
-      help.addActionListener(e -> JOptionPane.showMessageDialog(
-              panel_, HELP_TEXT, "NDViewer2 Controls Help", JOptionPane.PLAIN_MESSAGE));
       p.add(center);
-      p.add(noZoom);
-      p.add(help, "wrap");
+      p.add(noZoom, "wrap");
       p.add(exportButton_);
       p.add(statusLabel_, "wrap");
       return p;
