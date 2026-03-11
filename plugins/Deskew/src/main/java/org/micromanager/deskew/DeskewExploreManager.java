@@ -94,6 +94,7 @@ public class DeskewExploreManager {
    private double initialStageY_ = 0;
    private double pixelSizeUm_ = 1.0;
    private double overlapPercentage_ = 10.0;  // Percentage overlap between tiles (0-50)
+   private volatile boolean acquisitionInterrupted_ = false;
 
    public DeskewExploreManager(Studio studio, DeskewFrame frame, DeskewFactory deskewFactory) {
       studio_ = studio;
@@ -1147,6 +1148,13 @@ public class DeskewExploreManager {
    }
 
    /**
+    * Signals the current multi-tile acquisition to stop after the current tile finishes.
+    */
+   public void interruptAcquisition() {
+      acquisitionInterrupted_ = true;
+   }
+
+   /**
     * Acquires multiple tiles sequentially, moving the stage between positions.
     * Each tile position is calculated relative to the initial stage position when explore started.
     *
@@ -1157,8 +1165,10 @@ public class DeskewExploreManager {
          return;
       }
 
+      acquisitionInterrupted_ = false;
       acquisitionExecutor_.submit(() -> {
          dataSource_.setAcquisitionInProgress(true);
+         frame_.setAcquisitionInProgress(true);
          redrawOverlay();
 
          try {
@@ -1172,6 +1182,9 @@ public class DeskewExploreManager {
             double tileHeightUm = tileHeight * pixelSizeUm_;
 
             for (int i = 0; i < tiles.size(); i++) {
+               if (acquisitionInterrupted_) {
+                  break;
+               }
                Point tile = tiles.get(i);
                int row = tile.x;
                int col = tile.y;
@@ -1203,6 +1216,7 @@ public class DeskewExploreManager {
             studio_.logs().logError(e, "Deskew Explore: error during multi-tile acquisition");
          } finally {
             dataSource_.setAcquisitionInProgress(false);
+            frame_.setAcquisitionInProgress(false);
          }
       });
    }

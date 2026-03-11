@@ -111,6 +111,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private JTextField outputPath_;
    private JButton browseButton_;
    private JButton copyDirButton_;
+   private JButton interruptExploreButton_;
    private boolean eventsRegistered_ = false;
 
    /**
@@ -473,6 +474,13 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       startExploreButton.addActionListener(e -> startExplore());
       explorePanel.add(startExploreButton, "wrap");
 
+      interruptExploreButton_ = new JButton("Interrupt");
+      interruptExploreButton_.setToolTipText(
+            "Stop tile acquisition after the current tile finishes.");
+      interruptExploreButton_.setEnabled(false);
+      interruptExploreButton_.addActionListener(e -> exploreManager_.interruptAcquisition());
+      explorePanel.add(interruptExploreButton_, "span 2, wrap");
+
       add(explorePanel, "span, growx, wrap");
       add(new JSeparator(), "span 5, growx, wrap");
       JButton processButton = new JButton("Process");
@@ -669,6 +677,20 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
          }
          exploreManager_.openExplore(result.getAbsolutePath());
       }
+   }
+
+   /**
+    * Enables or disables the Interrupt button based on whether acquisition is running.
+    * Called from DeskewExploreManager on the acquisition thread; switches to EDT.
+    *
+    * @param inProgress true while a multi-tile acquisition is running
+    */
+   public void setAcquisitionInProgress(boolean inProgress) {
+      SwingUtilities.invokeLater(() -> {
+         if (interruptExploreButton_ != null) {
+            interruptExploreButton_.setEnabled(inProgress);
+         }
+      });
    }
 
    @Subscribe
