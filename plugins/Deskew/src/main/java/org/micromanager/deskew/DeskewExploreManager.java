@@ -1205,9 +1205,11 @@ public class DeskewExploreManager {
                // Tile (0,0) is at the initial position
                // Positive col -> move stage in +X direction
                // Positive row -> move stage in +Y direction
-               // Account for overlap: effective spacing is reduced by overlap percentage
-               double effectiveTileWidthUm = tileWidthUm * (1.0 - overlapPercentage_ / 100.0);
-               double effectiveTileHeightUm = tileHeightUm * (1.0 - overlapPercentage_ / 100.0);
+               // Account for overlap: overlap pixel count is derived from X tile width only,
+               // so both axes subtract the same number of pixels (not the same percentage).
+               int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+               double effectiveTileWidthUm = (tileWidth - overlapPixels) * pixelSizeUm_;
+               double effectiveTileHeightUm = (tileHeight - overlapPixels) * pixelSizeUm_;
                double targetX = initialStageX_ + col * effectiveTileWidthUm;
                double targetY = initialStageY_ + row * effectiveTileHeightUm;
 
