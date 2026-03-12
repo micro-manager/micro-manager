@@ -111,6 +111,12 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    private final java.util.Set<Integer> accumulateNextChannels_ =
          java.util.Collections.synchronizedSet(new java.util.HashSet<>());
 
+   // Last autostretch-computed contrast bounds per NDViewer channel name.
+   // Updated directly by onContrastUpdated (bypasses the fragile CAS path).
+   // int[]{min, max}
+   private final java.util.concurrent.ConcurrentHashMap<String, int[]> lastStretchedContrast_ =
+         new java.util.concurrent.ConcurrentHashMap<>();
+
    // Closed state
    private volatile boolean closed_ = false;
 
@@ -232,7 +238,9 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             min = (int) comp.getScalingMinimum();
             max = (int) comp.getScalingMaximum();
             gamma = comp.getScalingGamma();
-            color = ch.getColor();
+            DisplaySettings.ColorMode mode = ds.getColorMode();
+            boolean grayscale = mode == DisplaySettings.ColorMode.GRAYSCALE;
+            color = grayscale ? Color.white : ch.getColor();
             active = ch.isVisible();
          }
          channelSettings.put(name, new ChannelRenderSettings(min, max, gamma, color, active));
@@ -414,6 +422,71 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       return MIN_REPAINT_PERIOD_NS;
    }
 
+   // ---- Export helpers ----
+
+   @Override
+   public List<String> getExportChannelNames() {
+      List<String> names = axesBridge_.getChannelNames();
+      if (names.isEmpty()) {
+         return Collections.singletonList(null);
+      }
+      return names;
+   }
+
+   /**
+    * Build display settings JSON from the current MM DisplaySettings.
+    * This is the authoritative source for contrast values — it reflects
+    * autostretch-computed values because onContrastUpdated() writes them back
+    * to MM's DisplaySettings before this is called.
+    */
+   @Override
+   public JSONObject buildExportDisplaySettingsJSON() {
+      DisplaySettings ds = getDisplaySettings();
+      List<String> channelNames = axesBridge_.getChannelNames();
+      if (channelNames.isEmpty()) {
+         channelNames = new ArrayList<>();
+         channelNames.add(TiledDataViewer.NO_CHANNEL);
+      }
+      JSONObject result = new JSONObject();
+      try {
+         for (int i = 0; i < channelNames.size(); i++) {
+            String name = channelNames.get(i);
+            int min = 0;
+            int max = 65535;
+            double gamma = 1.0;
+            int colorRgb = Color.white.getRGB();
+            if (i < ds.getNumberOfChannels()) {
+               ChannelDisplaySettings ch = ds.getChannelSettings(i);
+               ComponentDisplaySettings comp = ch.getComponentSettings(0);
+               min = (int) comp.getScalingMinimum();
+               max = (int) comp.getScalingMaximum();
+               gamma = comp.getScalingGamma();
+               // If autostretch is on, the CAS in onContrastUpdated may have lost
+               // the race against incoming frames. Use the directly-stored values.
+               if (ds.isAutostretchEnabled()) {
+                  int[] stretched = lastStretchedContrast_.get(name);
+                  if (stretched != null) {
+                     min = stretched[0];
+                     max = stretched[1];
+                  }
+               }
+               DisplaySettings.ColorMode mode = ds.getColorMode();
+               boolean grayscale = mode == DisplaySettings.ColorMode.GRAYSCALE;
+               colorRgb = (grayscale ? Color.white : ch.getColor()).getRGB();
+            }
+            JSONObject ch = new JSONObject();
+            ch.put("Min", min);
+            ch.put("Max", max);
+            ch.put("Gamma", gamma);
+            ch.put("Color", colorRgb);
+            result.put(name, ch);
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e, "TiledDataViewerDataViewer: failed to build export JSON");
+      }
+      return result;
+   }
+
    // ---- ContrastUpdateCallback ----
 
    /**
@@ -422,6 +495,10 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
     */
    @Override
    public void onContrastUpdated(String channelName, int newMin, int newMax) {
+      // Always store the latest autostretch values, regardless of whether the
+      // CAS below succeeds. This is what buildExportDisplaySettingsJSON reads.
+      lastStretchedContrast_.put(channelName, new int[]{newMin, newMax});
+
       int idx = axesBridge_.getChannelIndex(channelName);
       // For single-channel data (NO_CHANNEL), use index 0
       if (idx < 0 && TiledDataViewer.NO_CHANNEL.equals(channelName)) {

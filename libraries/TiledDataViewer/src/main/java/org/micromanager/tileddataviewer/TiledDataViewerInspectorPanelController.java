@@ -157,12 +157,8 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void showExportDialog(int[] roi) {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
       TiledDataViewerDataProviderAPI dp = (TiledDataViewerDataProviderAPI) viewer_.getDataProvider();
-      List<String> chNames = dp.getSummaryMetadata().getChannelNameList();
-      if (chNames == null || chNames.isEmpty()) {
-         chNames = Collections.singletonList(null);
-      }
+      List<String> chNames = viewer_.getExportChannelNames();
       Window owner = SwingUtilities.getWindowAncestor(panel_);
       ExportTiles.showDialogAndExport(owner, dp.getStorage(),
             buildDisplaySettingsJSON(), new HashMap<String, Object>(), chNames,
@@ -171,11 +167,10 @@ public final class TiledDataViewerInspectorPanelController
 
    /**
     * Build the display settings JSON that ExportTiles expects.
-    * Format: { channelName: { "Min": x, "Max": y, "Color": rgb, ... } }.
-    * getDisplaySettingsJSON() is always current because setRenderSettings() syncs it.
+    * Reads directly from MM DisplaySettings so autostretch values are current.
     */
    private JSONObject buildDisplaySettingsJSON() {
-      return viewer_.getNDViewer().getDisplaySettingsJSON();
+      return viewer_.buildExportDisplaySettingsJSON();
    }
 
    private void setStatus(String text) {

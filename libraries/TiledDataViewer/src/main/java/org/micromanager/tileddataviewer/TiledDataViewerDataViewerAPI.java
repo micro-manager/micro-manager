@@ -2,6 +2,7 @@ package org.micromanager.tileddataviewer;
 
 import java.util.HashMap;
 import java.util.List;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.overlay.Overlay;
@@ -70,6 +71,24 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
     * @param plugin the external overlayer plugin, or null to clear
     */
    void setOverlayerPlugin(TiledDataViewerOverlayerPlugin plugin);
+
+   /**
+    * Return the NDViewer channel names as they are keyed in storage and in
+    * the display-settings JSON. Use these as the channel name list for ExportTiles
+    * instead of the MM SummaryMetadata channel names, which may be null/empty.
+    * Returns a list containing null if no channel axis exists.
+    */
+   List<String> getExportChannelNames();
+
+   /**
+    * Build a display-settings JSON object suitable for passing to ExportTiles.
+    * Reads directly from the current MM DisplaySettings so that autostretch
+    * contrast values are always up to date.
+    * Format: { ndViewerChannelName: { "Min": x, "Max": y, "Color": rgb, ... } }
+    *
+    * @return JSON keyed by NDViewer channel name, or null if not available
+    */
+   JSONObject buildExportDisplaySettingsJSON();
 
    /**
     * Notify this viewer that new tiles have arrived with images for all channels.

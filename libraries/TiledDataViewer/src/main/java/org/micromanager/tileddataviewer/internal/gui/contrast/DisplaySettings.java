@@ -231,6 +231,9 @@ public class DisplaySettings {
       synchronized (this) {
          int boundedContrastMin = Math.max(0, contrastMin);
          try {
+            if (!json_.has(channelName)) {
+               addChannel(channelName, 16);
+            }
             if (isSyncChannels()) {
                json_.keys().forEachRemaining((String t) -> {
                   if (!t.equals(ALL_CHANNELS_SETTINGS_KEY)) {
@@ -257,6 +260,9 @@ public class DisplaySettings {
       synchronized (this) {
          int boundedContrastMax = Math.max(0, contrastMax);
          try {
+            if (!json_.has(channelName)) {
+               addChannel(channelName, 16);
+            }
             if (isSyncChannels()) {
                json_.keys().forEachRemaining((String t) -> {
                   if (!t.equals(ALL_CHANNELS_SETTINGS_KEY)) {
