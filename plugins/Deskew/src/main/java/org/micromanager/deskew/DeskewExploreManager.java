@@ -52,7 +52,7 @@ import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.tileddataviewer.TiledDataViewerFactory;
-import org.micromanager.pyramidalstorage.NDTiffStorageAdapter;
+import org.micromanager.tiledataprovider.NDTiffProviderAdapter;
 
 /**
  * Manages the Deskew Explore session.
@@ -228,7 +228,7 @@ public class DeskewExploreManager {
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(), new NDTiffStorageAdapter(storage_), acqName_);
+         mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(), new NDTiffProviderAdapter(storage_), acqName_);
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
@@ -391,7 +391,7 @@ public class DeskewExploreManager {
          }
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(), new NDTiffStorageAdapter(storage_), acqName_);
+         mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(), new NDTiffProviderAdapter(storage_), acqName_);
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,

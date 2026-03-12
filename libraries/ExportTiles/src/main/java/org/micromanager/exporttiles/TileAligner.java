@@ -16,7 +16,7 @@ import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Computes sub-pixel translation corrections for a grid of overlapping tiles
@@ -30,7 +30,7 @@ public class TileAligner {
 
    private static final double CORRELATION_THRESHOLD = 0.5;
 
-   private final PyramidalStorageAPI storage_;
+   private final TiledDataProviderAPI storage_;
    private final HashMap<String, Object> baseAxes_;
    private final List<String> channelNames_;
    private final int tileWidth_;
@@ -52,7 +52,7 @@ public class TileAligner {
       }
    }
 
-   public TileAligner(PyramidalStorageAPI storage, HashMap<String, Object> baseAxes,
+   public TileAligner(TiledDataProviderAPI storage, HashMap<String, Object> baseAxes,
                       List<String> channelNames, JSONObject summaryMetadata) {
       storage_ = storage;
       baseAxes_ = baseAxes;

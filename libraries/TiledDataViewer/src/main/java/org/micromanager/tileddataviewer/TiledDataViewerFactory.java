@@ -5,7 +5,7 @@ import org.micromanager.Studio;
 import org.micromanager.data.DataManager;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataProvider;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataViewer;
-import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Factory for creating NDViewer2 data providers and viewers.
@@ -30,7 +30,7 @@ public final class TiledDataViewerFactory {
     * @return a new NDViewer2DataProviderAPI instance
     */
    public static TiledDataViewerDataProviderAPI createDataProvider(
-         DataManager dataManager, PyramidalStorageAPI storage, String name) {
+            DataManager dataManager, TiledDataProviderAPI storage, String name) {
       return new TiledDataViewerDataProvider(dataManager, storage, name);
    }
 

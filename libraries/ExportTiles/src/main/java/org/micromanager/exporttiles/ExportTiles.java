@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import mmcorej.org.json.JSONObject;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Public facade for the ExportTiles library.
@@ -40,7 +40,7 @@ public class ExportTiles {
     */
    public static void showDialogAndExport(
            Window owner,
-           PyramidalStorageAPI storage,
+           TiledDataProviderAPI storage,
            JSONObject displaySettings,
            HashMap<String, Object> baseAxes,
            List<String> channelNames,

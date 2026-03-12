@@ -1,4 +1,4 @@
-package org.micromanager.pyramidalstorage;
+package org.micromanager.tiledataprovider;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -53,7 +53,7 @@ import mmcorej.org.json.JSONObject;
  * Use {@code new NDTiffStorageAdapter(storage)}
  * to obtain a {@code PyramidalStorageAPI} view of an existing {@code MultiresNDTiffAPI}.</p>
  */
-public interface PyramidalStorageAPI {
+public interface TiledDataProviderAPI {
 
    /**
     * Returns the set of axes maps for every image currently in the storage.

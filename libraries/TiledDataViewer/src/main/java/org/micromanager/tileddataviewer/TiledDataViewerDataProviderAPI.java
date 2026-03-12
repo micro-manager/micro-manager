@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
-import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Public interface for the NDViewer2 data provider.
@@ -34,5 +34,5 @@ public interface TiledDataViewerDataProviderAPI extends DataProvider {
    /**
     * Return the storage backend for read-only access (e.g. for export).
     */
-   PyramidalStorageAPI getStorage();
+   TiledDataProviderAPI getStorage();
 }

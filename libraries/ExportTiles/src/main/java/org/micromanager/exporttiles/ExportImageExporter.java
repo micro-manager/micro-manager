@@ -15,7 +15,7 @@ import java.util.function.IntConsumer;
 import javax.imageio.ImageIO;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Retrieves tiles from a MultiresNDTiffAPI storage, composites channel data
@@ -23,10 +23,10 @@ import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
  */
 public class ExportImageExporter {
 
-   private final PyramidalStorageAPI storage_;
+   private final TiledDataProviderAPI storage_;
    private final JSONObject displaySettings_;
 
-   public ExportImageExporter(PyramidalStorageAPI storage, JSONObject displaySettings) {
+   public ExportImageExporter(TiledDataProviderAPI storage, JSONObject displaySettings) {
       storage_ = storage;
       displaySettings_ = displaySettings;
    }

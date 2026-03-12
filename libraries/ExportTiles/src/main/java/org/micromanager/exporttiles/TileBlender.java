@@ -11,7 +11,7 @@ import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Composites tiles from a MultiresNDTiffAPI storage into a single RGB image
@@ -25,7 +25,7 @@ import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
  */
 public class TileBlender {
 
-   private final PyramidalStorageAPI storage_;
+   private final TiledDataProviderAPI storage_;
    private final JSONObject displaySettings_;
    private final HashMap<String, Object> baseAxes_;
    private final List<String> channelNames_;
@@ -41,7 +41,7 @@ public class TileBlender {
     * @param channelNames    Channel names to composite (null means no channel axis).
     * @param summaryMetadata Summary metadata containing tile dimensions and overlap.
     */
-   public TileBlender(PyramidalStorageAPI storage, JSONObject displaySettings,
+   public TileBlender(TiledDataProviderAPI storage, JSONObject displaySettings,
                       HashMap<String, Object> baseAxes, List<String> channelNames,
                       JSONObject summaryMetadata) {
       storage_ = storage;

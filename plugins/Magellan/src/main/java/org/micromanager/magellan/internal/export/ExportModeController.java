@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import javax.swing.SwingUtilities;
 import org.micromanager.exporttiles.ExportTiles;
 import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
-import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.overlay.Overlay;
@@ -30,7 +30,7 @@ public class ExportModeController {
    private final NDViewer display_;
    private final OverlayerPlugin normalOverlay_;
    private final CanvasMouseListenerInterface normalMouseListener_;
-   private final PyramidalStorageAPI storage_;
+   private final TiledDataProviderAPI storage_;
    private final Supplier<HashMap<String, Object>> baseAxesSupplier_;
    private final Supplier<List<String>> channelNamesSupplier_;
 
@@ -41,7 +41,7 @@ public class ExportModeController {
    public ExportModeController(NDViewer display,
                                OverlayerPlugin normalOverlay,
                                CanvasMouseListenerInterface normalMouseListener,
-                               PyramidalStorageAPI storage,
+                               TiledDataProviderAPI storage,
                                Supplier<HashMap<String, Object>> baseAxesSupplier,
                                Supplier<List<String>> channelNamesSupplier) {
       display_ = display;

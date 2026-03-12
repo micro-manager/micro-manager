@@ -1,6 +1,7 @@
-<project name="NDViewer2" default="jar">
+<project name="TiledDataViewer" default="jar">
 	<import file="../javalibrarybuild.xml"/>
 	<path id="library.classpath">
 		<pathelement location="${mm.java.mmlibraries}/PyramidalStorage.jar"/>
+		<pathelement location="${mm.java.mmlibraries}/ExportTiles.jar"/>
 	</path>
 </project>

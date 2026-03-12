@@ -20,7 +20,7 @@ import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
-import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Wraps NDTiffStorage (MultiresNDTiffAPI) as an MM DataProvider.
@@ -30,7 +30,7 @@ import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
  */
 public final class TiledDataViewerDataProvider implements TiledDataViewerDataProviderAPI {
 
-   private final PyramidalStorageAPI storage_;
+   private final TiledDataProviderAPI storage_;
    private final DataManager dataManager_;
    private final AxesBridge axesBridge_;
    private static final SubscriberExceptionHandler EVENT_BUS_EXCEPTION_HANDLER =
@@ -49,7 +49,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
     * @param storage     the NDTiff storage backend
     * @param name        display name for this data provider
     */
-   public TiledDataViewerDataProvider(DataManager dataManager, PyramidalStorageAPI storage, String name) {
+   public TiledDataViewerDataProvider(DataManager dataManager, TiledDataProviderAPI storage, String name) {
       dataManager_ = dataManager;
       storage_ = storage;
       axesBridge_ = new AxesBridge();
@@ -369,7 +369,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    }
 
    @Override
-   public PyramidalStorageAPI getStorage() {
+   public TiledDataProviderAPI getStorage() {
       return storage_;
    }
 

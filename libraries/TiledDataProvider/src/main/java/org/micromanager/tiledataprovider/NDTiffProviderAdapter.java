@@ -1,4 +1,4 @@
-package org.micromanager.pyramidalstorage;
+package org.micromanager.tiledataprovider;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -7,16 +7,16 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 
 /**
- * Adapts {@link MultiresNDTiffAPI} to the narrow {@link PyramidalStorageAPI} read interface.
+ * Adapts {@link MultiresNDTiffAPI} to the narrow {@link TiledDataProviderAPI} read interface.
  *
  * <p>Callers that need write access (putImage, finishedWriting, close, etc.) keep their
  * own {@code MultiresNDTiffAPI} reference. This adapter is only for the read path.</p>
  */
-public final class NDTiffStorageAdapter implements PyramidalStorageAPI {
+public final class NDTiffProviderAdapter implements TiledDataProviderAPI {
 
    private final MultiresNDTiffAPI storage_;
 
-   public NDTiffStorageAdapter(MultiresNDTiffAPI storage) {
+   public NDTiffProviderAdapter(MultiresNDTiffAPI storage) {
       storage_ = storage;
    }
 
