@@ -53,7 +53,6 @@ import org.micromanager.ndviewer2.NDViewer2AcqInterface;
 import org.micromanager.ndviewer2.NDViewer2DataSource;
 import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
 import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
-import org.micromanager.ndviewer2.internal.NDViewer2;
 import org.micromanager.ndviewer2.internal.gui.ChannelRenderSettings;
 import org.micromanager.ndviewer2.internal.gui.ContrastUpdateCallback;
 import org.micromanager.ndviewer2.internal.gui.GlobalRenderSettings;

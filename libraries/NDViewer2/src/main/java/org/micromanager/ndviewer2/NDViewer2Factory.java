@@ -3,7 +3,9 @@ package org.micromanager.ndviewer2;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.data.DataManager;
-import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
+import org.micromanager.ndviewer2.internal.NDViewer2DataProvider;
+import org.micromanager.ndviewer2.internal.NDViewer2DataViewer;
+import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
 
 /**
  * Factory for creating NDViewer2 data providers and viewers.
@@ -20,31 +22,16 @@ public final class NDViewer2Factory {
    }
 
    /**
-    * Wrap a {@link MultiresNDTiffAPI} in the narrow {@link NDViewer2StorageAPI} read interface.
-    *
-    * <p>Use this when passing storage to {@link #createDataProvider} or to ExportTiles.
-    * Callers that need write access (putImage, finishedWriting, close, etc.) retain their
-    * own {@code MultiresNDTiffAPI} reference for that purpose.</p>
-    *
-    * @param storage the NDTiff storage to wrap
-    * @return an {@link NDViewer2StorageAPI} view of the storage
-    */
-   public static NDViewer2StorageAPI wrapStorage(MultiresNDTiffAPI storage) {
-      return new org.micromanager.ndviewer2.internal.NDTiffStorageAdapter(storage);
-   }
-
-   /**
     * Create a new NDViewer2 data provider wrapping the given storage.
     *
     * @param dataManager the MM DataManager for creating Image and SummaryMetadata objects
-    * @param storage     the storage backend (use {@link #wrapStorage} to convert MultiresNDTiffAPI)
+    * @param storage     the storage backend (use {@code new NDTiffStorageAdapter(multiresNDTiff)} to convert MultiresNDTiffAPI)
     * @param name        display name for this data provider
     * @return a new NDViewer2DataProviderAPI instance
     */
    public static NDViewer2DataProviderAPI createDataProvider(
-         DataManager dataManager, NDViewer2StorageAPI storage, String name) {
-      return new org.micromanager.ndviewer2.internal.NDViewer2DataProvider(
-               dataManager, storage, name);
+         DataManager dataManager, PyramidalStorageAPI storage, String name) {
+      return new NDViewer2DataProvider(dataManager, storage, name);
    }
 
    /**
@@ -67,11 +54,11 @@ public final class NDViewer2Factory {
          JSONObject summaryMetadata,
          double pixelSizeUm,
          boolean rgb) {
-      return new org.micromanager.ndviewer2.internal.NDViewer2DataViewer(
+      return new NDViewer2DataViewer(
                studio,
                dataSource,
                acqInterface,
-               (org.micromanager.ndviewer2.internal.NDViewer2DataProvider) dataProvider,
+               (NDViewer2DataProvider) dataProvider,
                summaryMetadata,
                pixelSizeUm,
                rgb);

@@ -1,19 +1,18 @@
-package org.micromanager.ndviewer2.internal;
+package org.micromanager.pyramidalstorage;
 
 import java.util.HashMap;
 import java.util.Set;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
-import org.micromanager.ndviewer2.NDViewer2StorageAPI;
 
 /**
- * Adapts {@link MultiresNDTiffAPI} to the narrow {@link NDViewer2StorageAPI} read interface.
+ * Adapts {@link MultiresNDTiffAPI} to the narrow {@link PyramidalStorageAPI} read interface.
  *
  * <p>Callers that need write access (putImage, finishedWriting, close, etc.) keep their
  * own {@code MultiresNDTiffAPI} reference. This adapter is only for the read path.</p>
  */
-public final class NDTiffStorageAdapter implements NDViewer2StorageAPI {
+public final class NDTiffStorageAdapter implements PyramidalStorageAPI {
 
    private final MultiresNDTiffAPI storage_;
 

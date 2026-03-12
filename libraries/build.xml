@@ -5,7 +5,15 @@
 		<attribute name="failonerror" default="true"/>
 		<sequential>
 			<subant target="@{target}" failonerror="@{failonerror}">
-				<fileset dir="." includes="*/build.xml"/>
+				<file file="PyramidalStorage/build.xml"/>
+				<file file="Big/build.xml"/>
+				<file file="ExampleLibrary/build.xml"/>
+				<file file="ExportTiles/build.xml"/>
+				<file file="Gaussian/build.xml"/>
+				<file file="ImageProcessing/build.xml"/>
+				<file file="NDViewer2/build.xml"/>
+				<file file="PluginUtilities/build.xml"/>
+				<file file="Projector/build.xml"/>
 			</subant>
 		</sequential>
 	</macrodef>

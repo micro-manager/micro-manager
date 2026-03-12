@@ -1,3 +1,6 @@
 <project name="ExportTiles" default="jar">
 	<import file="../javalibrarybuild.xml"/>
+	<path id="library.classpath">
+		<pathelement location="${mm.java.mmlibraries}/PyramidalStorage.jar"/>
+	</path>
 </project>

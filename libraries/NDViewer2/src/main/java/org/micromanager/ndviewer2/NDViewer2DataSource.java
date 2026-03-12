@@ -16,14 +16,14 @@ public interface NDViewer2DataSource {
    /**
     * Is the dataset still acquiring data/be written.
     */
-   public boolean isFinished();
+   boolean isFinished();
 
    /**
     * The minimal and maximal pixel coordinates of the image to be viewed.
     *
     * @return 4 element array x_min, y_min, x_max, y_max
     */
-   public int[] getBounds();
+   int[] getBounds();
 
    /**
     * Retrieve image with the given parameters so it can be displayed.
@@ -38,7 +38,7 @@ public interface NDViewer2DataSource {
     * @param imageHeight pixel height of the image at the requested resolution
     * @return taggedImage
     */
-   public TaggedImage getImageForDisplay(HashMap<String, Object> axes,
+   TaggedImage getImageForDisplay(HashMap<String, Object> axes,
            int resolutionindex, double xOffset, double yOffset,
            int imageWidth, int imageHeight);
 
@@ -47,7 +47,7 @@ public interface NDViewer2DataSource {
     *
     * @return
     */
-   public Set<HashMap<String, Object>> getImageKeys();
+   Set<HashMap<String, Object>> getImageKeys();
 
    /**
     * Index of the log 2 biggest downsample factor in the pyramid 0 is full
@@ -56,14 +56,14 @@ public interface NDViewer2DataSource {
     *
     * @return
     */
-   public int getMaxResolutionIndex();
+   int getMaxResolutionIndex();
 
    /**
     * Viewer will be viewing at this res index, so make sure it exists.
     *
     * @param newMaxResolutionLevel
     */
-   public void increaseMaxResolutionLevel(int newMaxResolutionLevel);
+   void increaseMaxResolutionLevel(int newMaxResolutionLevel);
 
 
    /**
@@ -71,12 +71,12 @@ public interface NDViewer2DataSource {
     *
     * @return Path to data stored on disk
     */
-   public String getDiskLocation();
+   String getDiskLocation();
 
    /**
     * Called when viewer is closing.
     */
-   public void close();
+   void close();
 
    /**
     * Get the bits per pixel of image with the given axes positions.
@@ -84,5 +84,5 @@ public interface NDViewer2DataSource {
     * @param axesPositions
     * @return
     */
-   public int getImageBitDepth(HashMap<String, Object> axesPositions);
+   int getImageBitDepth(HashMap<String, Object> axesPositions);
 }

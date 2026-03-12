@@ -15,7 +15,7 @@ import java.util.function.IntConsumer;
 import javax.imageio.ImageIO;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.ndviewer2.NDViewer2StorageAPI;
+import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
 
 /**
  * Retrieves tiles from a MultiresNDTiffAPI storage, composites channel data
@@ -23,10 +23,10 @@ import org.micromanager.ndviewer2.NDViewer2StorageAPI;
  */
 public class ExportImageExporter {
 
-   private final NDViewer2StorageAPI storage_;
+   private final PyramidalStorageAPI storage_;
    private final JSONObject displaySettings_;
 
-   public ExportImageExporter(NDViewer2StorageAPI storage, JSONObject displaySettings) {
+   public ExportImageExporter(PyramidalStorageAPI storage, JSONObject displaySettings) {
       storage_ = storage;
       displaySettings_ = displaySettings;
    }

@@ -1,4 +1,4 @@
-package org.micromanager.ndviewer2;
+package org.micromanager.pyramidalstorage;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -50,10 +50,10 @@ import mmcorej.org.json.JSONObject;
  * <p>This interface intentionally omits write-path methods ({@code putImage},
  * {@code finishedWriting}, {@code close}, etc.).  Callers that need write access
  * retain their own {@code MultiresNDTiffAPI} reference for that purpose.
- * Use {@link NDViewer2Factory#wrapStorage(org.micromanager.ndtiffstorage.MultiresNDTiffAPI)}
- * to obtain an {@code NDViewer2StorageAPI} view of an existing {@code MultiresNDTiffAPI}.</p>
+ * Use {@code new NDTiffStorageAdapter(storage)}
+ * to obtain a {@code PyramidalStorageAPI} view of an existing {@code MultiresNDTiffAPI}.</p>
  */
-public interface NDViewer2StorageAPI {
+public interface PyramidalStorageAPI {
 
    /**
     * Returns the set of axes maps for every image currently in the storage.

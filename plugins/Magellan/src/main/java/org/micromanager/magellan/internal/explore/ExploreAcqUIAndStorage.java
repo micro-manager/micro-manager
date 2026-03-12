@@ -55,6 +55,7 @@ import org.micromanager.magellan.internal.export.ExportModeController;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer2.NDViewer2Factory;
+import org.micromanager.pyramidalstorage.NDTiffStorageAdapter;
 import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
@@ -334,7 +335,7 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
          display_.addControlPanel(exploreControlsPanel_);
 
          exportModeController_ = new ExportModeController(display_, overlayer_, mouseListener_,
-                 NDViewer2Factory.wrapStorage(storage_),
+                 new NDTiffStorageAdapter(storage_),
                  () -> {
                     HashMap<String, Object> baseAxes = new HashMap<>();
                     if (acq_ != null) {

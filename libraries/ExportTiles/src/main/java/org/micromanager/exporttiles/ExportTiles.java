@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import mmcorej.org.json.JSONObject;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.ndviewer2.NDViewer2StorageAPI;
+import org.micromanager.pyramidalstorage.PyramidalStorageAPI;
 
 /**
  * Public facade for the ExportTiles library.
@@ -40,7 +40,7 @@ public class ExportTiles {
     */
    public static void showDialogAndExport(
            Window owner,
-           NDViewer2StorageAPI storage,
+           PyramidalStorageAPI storage,
            JSONObject displaySettings,
            HashMap<String, Object> baseAxes,
            List<String> channelNames,
