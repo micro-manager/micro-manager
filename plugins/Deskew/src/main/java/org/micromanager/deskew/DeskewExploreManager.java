@@ -88,6 +88,7 @@ public class DeskewExploreManager {
    // State tracking
    private volatile boolean exploring_ = false;
    private volatile boolean viewerClosing_ = false;  // Guard for onViewerClosed re-entrancy
+   private volatile boolean shutdownInProgress_ = false;
    private boolean loadedData_ = false;  // True when viewing a loaded dataset
    // MM display settings captured before viewer is nulled
    private DisplaySettings pendingMMDisplaySettings_ = null;
@@ -720,7 +721,7 @@ public class DeskewExploreManager {
       final boolean doDelete = deleteTempFiles;
       storage_ = null;
       if (storageToClose != null || doDelete) {
-         new Thread(() -> {
+         Runnable cleanupTask = () -> {
             // Wait for NDViewer's async close thread ("NDViewer closing thread")
             // to finish before touching storage. NDViewer does not provide a
             // join/callback, so we use a best-effort delay. 1000ms is sufficient
@@ -766,7 +767,16 @@ public class DeskewExploreManager {
                }
                deleteTempStorage();
             }
-         }, "Deskew Explore cleanup").start();
+         };
+         // When called during app shutdown, addShutdownHook throws IllegalStateException,
+         // so we cannot use a hook. Instead run the cleanup synchronously here — the
+         // caller (onShutdownCommencing) holds the shutdown event and the JVM will not
+         // exit until this method returns.
+         if (deleteTempFiles && shutdownInProgress_) {
+            cleanupTask.run();
+         } else {
+            new Thread(cleanupTask, "Deskew Explore cleanup").start();
+         }
       }
    }
 
@@ -780,6 +790,7 @@ public class DeskewExploreManager {
       if (event.isCanceled() || !exploring_) {
          return;
       }
+      shutdownInProgress_ = true;
       boolean proceeded = onViewerClosed(true);
       if (!proceeded) {
          event.cancelShutdown();
