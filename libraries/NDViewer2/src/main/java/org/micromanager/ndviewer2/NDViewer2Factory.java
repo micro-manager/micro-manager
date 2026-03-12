@@ -20,15 +20,29 @@ public final class NDViewer2Factory {
    }
 
    /**
-    * Create a new NDViewer2 data provider wrapping the given NDTiff storage.
+    * Wrap a {@link MultiresNDTiffAPI} in the narrow {@link NDViewer2StorageAPI} read interface.
+    *
+    * <p>Use this when passing storage to {@link #createDataProvider} or to ExportTiles.
+    * Callers that need write access (putImage, finishedWriting, close, etc.) retain their
+    * own {@code MultiresNDTiffAPI} reference for that purpose.</p>
+    *
+    * @param storage the NDTiff storage to wrap
+    * @return an {@link NDViewer2StorageAPI} view of the storage
+    */
+   public static NDViewer2StorageAPI wrapStorage(MultiresNDTiffAPI storage) {
+      return new org.micromanager.ndviewer2.internal.NDTiffStorageAdapter(storage);
+   }
+
+   /**
+    * Create a new NDViewer2 data provider wrapping the given storage.
     *
     * @param dataManager the MM DataManager for creating Image and SummaryMetadata objects
-    * @param storage     the NDTiff storage backend
+    * @param storage     the storage backend (use {@link #wrapStorage} to convert MultiresNDTiffAPI)
     * @param name        display name for this data provider
     * @return a new NDViewer2DataProviderAPI instance
     */
    public static NDViewer2DataProviderAPI createDataProvider(
-         DataManager dataManager, MultiresNDTiffAPI storage, String name) {
+         DataManager dataManager, NDViewer2StorageAPI storage, String name) {
       return new org.micromanager.ndviewer2.internal.NDViewer2DataProvider(
                dataManager, storage, name);
    }

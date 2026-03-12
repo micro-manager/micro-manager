@@ -19,8 +19,8 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
+import org.micromanager.ndviewer2.NDViewer2StorageAPI;
 import org.micromanager.ndviewer2.internal.NDViewer2;
 
 /**
@@ -31,7 +31,7 @@ import org.micromanager.ndviewer2.internal.NDViewer2;
  */
 public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
 
-   private final MultiresNDTiffAPI storage_;
+   private final NDViewer2StorageAPI storage_;
    private final DataManager dataManager_;
    private final AxesBridge axesBridge_;
    private static final SubscriberExceptionHandler EVENT_BUS_EXCEPTION_HANDLER =
@@ -50,7 +50,7 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
     * @param storage     the NDTiff storage backend
     * @param name        display name for this data provider
     */
-   public NDViewer2DataProvider(DataManager dataManager, MultiresNDTiffAPI storage, String name) {
+   public NDViewer2DataProvider(DataManager dataManager, NDViewer2StorageAPI storage, String name) {
       dataManager_ = dataManager;
       storage_ = storage;
       axesBridge_ = new AxesBridge();
@@ -369,6 +369,11 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
       }
    }
 
+   @Override
+   public NDViewer2StorageAPI getStorage() {
+      return storage_;
+   }
+
    private DataProviderHasNewImageEvent newImageEvent(final Image image) {
       final DataProvider self = this;
       return new DataProviderHasNewImageEvent() {
@@ -390,8 +395,4 @@ public final class NDViewer2DataProvider implements NDViewer2DataProviderAPI {
       };
    }
 
-   @Override
-   public MultiresNDTiffAPI getStorage() {
-      return storage_;
-   }
 }

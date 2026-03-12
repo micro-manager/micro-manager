@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.function.Supplier;
 import javax.swing.SwingUtilities;
 import org.micromanager.exporttiles.ExportTiles;
-import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer2.NDViewer2StorageAPI;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.overlay.Overlay;
@@ -30,7 +30,7 @@ public class ExportModeController {
    private final NDViewer display_;
    private final OverlayerPlugin normalOverlay_;
    private final CanvasMouseListenerInterface normalMouseListener_;
-   private final MultiresNDTiffAPI storage_;
+   private final NDViewer2StorageAPI storage_;
    private final Supplier<HashMap<String, Object>> baseAxesSupplier_;
    private final Supplier<List<String>> channelNamesSupplier_;
 
@@ -41,7 +41,7 @@ public class ExportModeController {
    public ExportModeController(NDViewer display,
                                OverlayerPlugin normalOverlay,
                                CanvasMouseListenerInterface normalMouseListener,
-                               MultiresNDTiffAPI storage,
+                               NDViewer2StorageAPI storage,
                                Supplier<HashMap<String, Object>> baseAxesSupplier,
                                Supplier<List<String>> channelNamesSupplier) {
       display_ = display;

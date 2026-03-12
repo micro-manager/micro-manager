@@ -138,7 +138,8 @@ public class NDTiffAndViewerAdapter implements NDViewer2DataSource, AcqEngJDataS
                + "Use the constructor that accepts Studio.");
       }
 
-      mm2DataProvider_ = new NDViewer2DataProvider(studio_.data(), storage_, name_);
+      mm2DataProvider_ = new NDViewer2DataProvider(studio_.data(),
+            new NDTiffStorageAdapter(storage_), name_);
 
       NDViewer2AcqInterface vai = new NDViewer2AcqInterface() {
          @Override

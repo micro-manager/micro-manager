@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
+import org.micromanager.ndviewer2.NDViewer2StorageAPI;
 
 /**
  * Composites tiles from a MultiresNDTiffAPI storage into a single RGB image
@@ -25,7 +25,7 @@ import org.micromanager.ndtiffstorage.NDTiffStorage;
  */
 public class TileBlender {
 
-   private final MultiresNDTiffAPI storage_;
+   private final NDViewer2StorageAPI storage_;
    private final JSONObject displaySettings_;
    private final HashMap<String, Object> baseAxes_;
    private final List<String> channelNames_;
@@ -41,7 +41,7 @@ public class TileBlender {
     * @param channelNames    Channel names to composite (null means no channel axis).
     * @param summaryMetadata Summary metadata containing tile dimensions and overlap.
     */
-   public TileBlender(MultiresNDTiffAPI storage, JSONObject displaySettings,
+   public TileBlender(NDViewer2StorageAPI storage, JSONObject displaySettings,
                       HashMap<String, Object> baseAxes, List<String> channelNames,
                       JSONObject summaryMetadata) {
       storage_ = storage;
