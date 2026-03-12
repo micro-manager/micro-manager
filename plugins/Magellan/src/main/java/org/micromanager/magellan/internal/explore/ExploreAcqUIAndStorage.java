@@ -54,7 +54,6 @@ import org.micromanager.magellan.internal.explore.gui.ExploreOverlayer;
 import org.micromanager.magellan.internal.export.ExportModeController;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.NDViewer2Factory;
 import org.micromanager.pyramidalstorage.NDTiffStorageAdapter;
 import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;

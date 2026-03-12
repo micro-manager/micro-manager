@@ -46,12 +46,12 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.NDViewer2API;
-import org.micromanager.ndviewer2.NDViewer2AcqInterface;
-import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
-import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
+import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI;
 import org.micromanager.events.ShutdownCommencingEvent;
-import org.micromanager.ndviewer2.NDViewer2Factory;
+import org.micromanager.tileddataviewer.TiledDataViewerFactory;
 import org.micromanager.pyramidalstorage.NDTiffStorageAdapter;
 
 /**
@@ -68,9 +68,9 @@ public class DeskewExploreManager {
    private final DeskewFrame frame_;
    private final DeskewFactory deskewFactory_;
 
-   private NDViewer2API viewer_;
-   private NDViewer2DataViewerAPI mm2Viewer_;
-   private NDViewer2DataProviderAPI mm2DataProvider_;
+   private TiledDataViewerAPI viewer_;
+   private TiledDataViewerDataViewerAPI mm2Viewer_;
+   private TiledDataViewerDataProviderAPI mm2DataProvider_;
    private NDTiffStorage storage_;
    private DeskewExploreDataSource dataSource_;
    private ExecutorService displayExecutor_;
@@ -228,9 +228,9 @@ public class DeskewExploreManager {
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = NDViewer2Factory.createDataProvider(studio_.data(), new NDTiffStorageAdapter(storage_), acqName_);
-         NDViewer2AcqInterface acqInterface = createAcqInterface();
-         mm2Viewer_ = NDViewer2Factory.createDataViewer(
+         mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(), new NDTiffStorageAdapter(storage_), acqName_);
+         TiledDataViewerAcqInterface acqInterface = createAcqInterface();
+         mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
@@ -391,9 +391,9 @@ public class DeskewExploreManager {
          }
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = NDViewer2Factory.createDataProvider(studio_.data(), new NDTiffStorageAdapter(storage_), acqName_);
-         NDViewer2AcqInterface acqInterface = createAcqInterface();
-         mm2Viewer_ = NDViewer2Factory.createDataViewer(
+         mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(), new NDTiffStorageAdapter(storage_), acqName_);
+         TiledDataViewerAcqInterface acqInterface = createAcqInterface();
+         mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
@@ -584,8 +584,8 @@ public class DeskewExploreManager {
    /**
     * Create an NDViewer2AcqInterface for the explore session.
     */
-   private NDViewer2AcqInterface createAcqInterface() {
-      return new NDViewer2AcqInterface() {
+   private TiledDataViewerAcqInterface createAcqInterface() {
+      return new TiledDataViewerAcqInterface() {
          @Override
          public boolean isFinished() {
             // Always report finished so NDViewer does not show
@@ -1925,7 +1925,7 @@ public class DeskewExploreManager {
       }
    }
 
-   private static JSONObject captureViewState(NDViewer2API viewer) {
+   private static JSONObject captureViewState(TiledDataViewerAPI viewer) {
       Point2D.Double offset = viewer.getViewOffset();
       Point2D.Double displaySize = viewer.getDisplayImageSize();
       Point2D.Double sourceSize = viewer.getFullResSourceDataSize();

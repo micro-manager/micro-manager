@@ -1,0 +1,36 @@
+package org.micromanager.tileddataviewer;
+
+import java.awt.Graphics;
+import java.awt.geom.Point2D;
+import java.util.HashMap;
+import org.micromanager.tileddataviewer.overlay.Overlay;
+
+/**
+ * Interface for a plugin to draw customized overlays on the image window.
+ * Register it using the setOverlayPlugin method in {@link TiledDataViewerAPI}
+ */
+public interface TiledDataViewerOverlayerPlugin {
+
+   /**
+    * Called whenever the overlay needs to be drawn. Once it is ready, it should
+    * be passed to the viewer by calling
+    * {@link TiledDataViewerAPI#setOverlay(Overlay)}
+    * This can happen multiple times within a call of this function
+    * (i.e. to show intermediate rendering progress)
+    *
+    * @param defaultOverlay The base overlay which should be added onto
+    * @param displayImageSize
+    * @param downsampleFactor
+    * @param g
+    * @param axes
+    * @param magnification
+    * @param viewOffset
+    * @throws InterruptedException
+    */
+   void drawOverlay(Overlay defaultOverlay, Point2D.Double displayImageSize,
+           double downsampleFactor, Graphics g, HashMap<String, Object> axes,
+           double magnification, Point2D.Double viewOffset) throws InterruptedException;
+
+
+
+}

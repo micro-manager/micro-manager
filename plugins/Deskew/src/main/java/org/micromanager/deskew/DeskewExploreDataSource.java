@@ -17,27 +17,27 @@ import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.NDViewer2API;
-import org.micromanager.ndviewer2.NDViewer2AcqInterface;
-import org.micromanager.ndviewer2.NDViewer2CanvasMouseListenerInterface;
-import org.micromanager.ndviewer2.NDViewer2DataSource;
-import org.micromanager.ndviewer2.NDViewer2OverlayerPlugin;
-import org.micromanager.ndviewer2.overlay.Overlay;
-import org.micromanager.ndviewer2.overlay.Roi;
-import org.micromanager.ndviewer2.overlay.TextRoi;
+import org.micromanager.tileddataviewer.TiledDataViewerAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
+import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterface;
+import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
+import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
+import org.micromanager.tileddataviewer.overlay.Overlay;
+import org.micromanager.tileddataviewer.overlay.Roi;
+import org.micromanager.tileddataviewer.overlay.TextRoi;
 
 /**
  * Data source for the Deskew Explore mode NDViewer.
  * Implements the interfaces required for NDViewer to function,
  * including mouse handling and overlay rendering for tile selection.
  */
-public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2AcqInterface,
-        NDViewer2CanvasMouseListenerInterface, NDViewer2OverlayerPlugin {
+public class DeskewExploreDataSource implements TiledDataViewerDataSource, TiledDataViewerAcqInterface,
+         TiledDataViewerCanvasMouseListenerInterface, TiledDataViewerOverlayerPlugin {
 
    private static final double ZOOM_FACTOR = 1.4;
 
    private final DeskewExploreManager manager_;
-   private volatile NDViewer2API viewer_;
+   private volatile TiledDataViewerAPI viewer_;
    private volatile MultiresNDTiffAPI storage_;
    private volatile boolean finished_ = false;
 
@@ -75,7 +75,7 @@ public class DeskewExploreDataSource implements NDViewer2DataSource, NDViewer2Ac
       manager_ = manager;
    }
 
-   public void setViewer(NDViewer2API viewer) {
+   public void setViewer(TiledDataViewerAPI viewer) {
       viewer_ = viewer;
    }
 
