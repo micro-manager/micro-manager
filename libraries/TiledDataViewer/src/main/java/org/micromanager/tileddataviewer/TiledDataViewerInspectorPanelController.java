@@ -54,7 +54,8 @@ public final class TiledDataViewerInspectorPanelController
 
    /** Returns the center of the dataset in full-res pixel coordinates, or null if unknown. */
    private Point2D.Double getDataCenter() {
-      TiledDataViewerDataProviderAPI dp = (TiledDataViewerDataProviderAPI) viewer_.getDataProvider();
+      TiledDataViewerDataProviderAPI dp =
+               (TiledDataViewerDataProviderAPI) viewer_.getDataProvider();
       int[] b = dp.getStorage().getImageBounds();
       if (b == null) {
          return null;
@@ -157,7 +158,8 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void showExportDialog(int[] roi) {
-      TiledDataViewerDataProviderAPI dp = (TiledDataViewerDataProviderAPI) viewer_.getDataProvider();
+      TiledDataViewerDataProviderAPI dp =
+               (TiledDataViewerDataProviderAPI) viewer_.getDataProvider();
       List<String> chNames = viewer_.getExportChannelNames();
       Window owner = SwingUtilities.getWindowAncestor(panel_);
       ExportTiles.showDialogAndExport(owner, dp.getStorage(),

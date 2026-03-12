@@ -3,9 +3,9 @@ package org.micromanager.tileddataviewer;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.data.DataManager;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataProvider;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataViewer;
-import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Factory for creating NDViewer2 data providers and viewers.
@@ -25,7 +25,8 @@ public final class TiledDataViewerFactory {
     * Create a new NDViewer2 data provider wrapping the given storage.
     *
     * @param dataManager the MM DataManager for creating Image and SummaryMetadata objects
-    * @param storage     the storage backend (use {@code new NDTiffStorageAdapter(multiresNDTiff)} to convert MultiresNDTiffAPI)
+    * @param storage     the storage backend (use {@code new NDTiffStorageAdapter(multiresNDTiff)}
+    *                    to convert MultiresNDTiffAPI)
     * @param name        display name for this data provider
     * @return a new NDViewer2DataProviderAPI instance
     */

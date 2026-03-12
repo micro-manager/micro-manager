@@ -38,14 +38,14 @@ import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPu
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
-import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
-import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
 import org.micromanager.display.overlay.OverlaySupport;
@@ -791,7 +791,8 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          public void drawOverlay(org.micromanager.tileddataviewer.overlay.Overlay defaultOverlay,
                                  Point2D.Double displayImageSize, double downsampleFactor,
                                  java.awt.Graphics g, HashMap<String, Object> axes,
-                                 double magnification, Point2D.Double viewOffset) throws InterruptedException {
+                                 double magnification, Point2D.Double viewOffset)
+                  throws InterruptedException {
             // Chain to external plugin first (e.g. DeskewExploreDataSource tile grid).
             // The external plugin adds ROIs to defaultOverlay; setOverlay is called once below.
             TiledDataViewerOverlayerPlugin external = externalOverlayerPlugin_;

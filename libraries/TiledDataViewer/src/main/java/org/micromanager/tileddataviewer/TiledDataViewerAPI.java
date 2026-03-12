@@ -112,7 +112,7 @@ public interface TiledDataViewerAPI {
    void close();
 
    /**
-    * Redraw current image and any overlay
+    * Redraw current image and any overlay.
     */
    void update();
 

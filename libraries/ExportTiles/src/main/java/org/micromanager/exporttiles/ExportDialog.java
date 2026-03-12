@@ -83,7 +83,7 @@ public class ExportDialog extends JDialog {
       int savedRes = Math.min(PREFS.getInt(PREF_RES, 0), numResLevels_ - 1);
       resolutionCombo_.setSelectedIndex(savedRes);
       add(new JLabel("Resolution:"));
-      add(resolutionCombo_, "span 2, wrap");
+      add(resolutionCombo_, "span 2, w 175!, wrap");
 
       // Output size label
       outputSizeLabel_ = new JLabel(outputSizeText(savedRes));
@@ -106,7 +106,7 @@ public class ExportDialog extends JDialog {
          }
       }
       add(new JLabel("Format:"));
-      add(formatCombo_, "span 2, wrap");
+      add(formatCombo_, "span 2, w 175!, wrap");
 
       // Align checkbox
       alignCheckBox_ = new JCheckBox("Align tiles (phase correlation)");
