@@ -903,8 +903,10 @@ public class DeskewExploreManager {
                   // Write view state and display settings into the temp directory
                   // before copying, so they are included in the saved dataset.
                   writeSettingsToTempDir();
-                  saveDataTo(destDir);
-                  break;  // Save completed — fall through to delete temp files
+                  if (saveDataTo(destDir)) {
+                     break;  // Success — fall through to delete temp files
+                  }
+                  // Save failed — re-show dialog so user can retry or discard
                }
                // File chooser cancelled — re-show the save/discard/cancel dialog
             } else {
@@ -920,35 +922,43 @@ public class DeskewExploreManager {
 
    /**
     * Saves the explore data to the specified directory.
+    * Returns true on success, false if any error prevented a complete save.
     */
-   private void saveDataTo(File destDir) {
+   private boolean saveDataTo(File destDir) {
       if (storageDir_ == null) {
-         return;
+         return false;
+      }
+
+      // Validate destination before closing storage (storage close is irreversible)
+      if (!destDir.exists() && !destDir.mkdirs()) {
+         studio_.logs().showError("Cannot create destination directory: " + destDir);
+         return false;
+      }
+      if (!destDir.canWrite()) {
+         studio_.logs().showError("Cannot write to destination directory: " + destDir);
+         return false;
       }
 
       try {
-         // Finish writing to storage if it's still open
+         // Finish writing to storage if it's still open.
+         // Null storage_ BEFORE close to prevent double-close in the cleanup thread.
          if (storage_ != null) {
+            NDTiffStorage storageRef = storage_;
+            storage_ = null;
             try {
-               if (!storage_.isFinished()) {
-                  storage_.finishedWriting();
+               if (!storageRef.isFinished()) {
+                  storageRef.finishedWriting();
                }
-               storage_.close();
+               storageRef.close();
             } catch (Exception e) {
                studio_.logs().logError(e, "Error closing storage before save");
             }
-            storage_ = null;
          }
 
          // Source directory contains the NDTiff data
          File sourceDir = new File(storageDir_, acqName_);
          if (!sourceDir.exists()) {
             sourceDir = new File(storageDir_);
-         }
-
-         // Create destination if it doesn't exist
-         if (!destDir.exists()) {
-            destDir.mkdirs();
          }
 
          // Copy all files from source to destination
@@ -975,17 +985,21 @@ public class DeskewExploreManager {
          }
 
          if (copyErrors[0] > 0) {
-            studio_.logs().showMessage("Data saved to " + destDir.getAbsolutePath()
-                  + " with " + copyErrors[0] + " file(s) failed to copy. "
-                  + "Check CoreLog for details.");
-         } else {
-            studio_.logs().logMessage(
-                  "Deskew Explore: data saved to " + destDir.getAbsolutePath());
-            studio_.logs().showMessage("Data saved to: " + destDir.getAbsolutePath());
+            studio_.logs().showError("Save incomplete: " + copyErrors[0]
+                  + " file(s) could not be copied.\n"
+                  + "Your data is still in the temporary directory:\n  " + storageDir_
+                  + "\nSee CoreLog for details.");
+            return false;
          }
+
+         studio_.logs().logMessage(
+               "Deskew Explore: data saved to " + destDir.getAbsolutePath());
+         studio_.logs().showMessage("Data saved to: " + destDir.getAbsolutePath());
+         return true;
 
       } catch (Exception e) {
          studio_.logs().showError(e, "Failed to save Deskew Explore data");
+         return false;
       }
    }
 
