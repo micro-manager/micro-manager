@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
-import org.micromanager.tiledataprovider.TiledDataProviderAPI;
+import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 
 /**
  * Public interface for the NDViewer2 data provider.

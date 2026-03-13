@@ -15,7 +15,7 @@ import java.util.function.IntConsumer;
 import javax.imageio.ImageIO;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.tiledataprovider.TiledDataProviderAPI;
+import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 
 /**
  * Retrieves tiles from a MultiresNDTiffAPI storage, composites channel data

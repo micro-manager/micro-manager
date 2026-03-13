@@ -11,7 +11,7 @@ import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.tiledataprovider.TiledDataProviderAPI;
+import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 
 /**
  * Composites tiles from a MultiresNDTiffAPI storage into a single RGB image

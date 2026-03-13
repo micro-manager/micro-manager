@@ -3,7 +3,7 @@ package org.micromanager.tileddataviewer;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.data.DataManager;
-import org.micromanager.tiledataprovider.TiledDataProviderAPI;
+import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataProvider;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataViewer;
 

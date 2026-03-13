@@ -1,4 +1,4 @@
-package org.micromanager.tiledataprovider;
+package org.micromanager.tileddataprovider;
 
 import java.util.HashMap;
 import java.util.Set;

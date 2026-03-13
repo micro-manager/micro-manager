@@ -63,7 +63,7 @@ import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.remote.PycroManagerCompatibleUI;
-import org.micromanager.tiledataprovider.NDTiffProviderAdapter;
+import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 
 /**
  * This class links data storage, viewer, and acquisition, acting as

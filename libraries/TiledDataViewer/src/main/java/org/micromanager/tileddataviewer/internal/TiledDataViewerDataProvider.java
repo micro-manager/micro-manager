@@ -19,7 +19,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.tiledataprovider.TiledDataProviderAPI;
+import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
 
 /**

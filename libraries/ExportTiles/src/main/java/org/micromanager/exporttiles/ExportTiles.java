@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import mmcorej.org.json.JSONObject;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.tiledataprovider.TiledDataProviderAPI;
+import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 
 /**
  * Public facade for the ExportTiles library.
