@@ -60,6 +60,7 @@ import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.remote.PycroManagerCompatibleUI;
+import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 
 /**
  * This class links data storage, viewer, and acquisition, acting as
@@ -333,7 +334,7 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
          display_.addControlPanel(exploreControlsPanel_);
 
          exportModeController_ = new ExportModeController(display_, overlayer_, mouseListener_,
-                 storage_,
+                 new NDTiffProviderAdapter(storage_),
                  () -> {
                     HashMap<String, Object> baseAxes = new HashMap<>();
                     if (acq_ != null) {

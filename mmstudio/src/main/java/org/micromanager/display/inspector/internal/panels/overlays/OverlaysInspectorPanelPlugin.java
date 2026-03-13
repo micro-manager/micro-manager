@@ -11,6 +11,7 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.InspectorPanelController;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
+import org.micromanager.display.overlay.OverlaySupport;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
@@ -24,7 +25,7 @@ import org.scijava.plugin.Plugin;
 public final class OverlaysInspectorPanelPlugin implements InspectorPanelPlugin {
    @Override
    public boolean isApplicableToDataViewer(DataViewer viewer) {
-      return viewer instanceof DisplayWindow;
+      return viewer instanceof DisplayWindow || viewer instanceof OverlaySupport;
    }
 
    @Override

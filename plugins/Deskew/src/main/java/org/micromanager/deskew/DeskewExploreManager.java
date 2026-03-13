@@ -1,9 +1,12 @@
 package org.micromanager.deskew;
 
+import com.google.common.eventbus.Subscribe;
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -13,13 +16,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -32,16 +38,21 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer2.NDViewer2API;
-import org.micromanager.ndviewer2.NDViewer2AcqInterface;
-import org.micromanager.ndviewer2.NDViewer2DataProviderAPI;
-import org.micromanager.ndviewer2.NDViewer2DataViewerAPI;
-import org.micromanager.ndviewer2.NDViewer2Factory;
+import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
+import org.micromanager.tileddataviewer.TiledDataViewerAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
+import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerFactory;
 
 /**
  * Manages the Deskew Explore session.
@@ -50,14 +61,16 @@ import org.micromanager.ndviewer2.NDViewer2Factory;
 public class DeskewExploreManager {
 
    private static final int SAVING_QUEUE_SIZE = 30;
+   private static final String MM_DISPLAY_SETTINGS_FILE = "mm_display_settings.json";
+   private static final String VIEW_STATE_FILE = "view_state.json";
 
    private final Studio studio_;
    private final DeskewFrame frame_;
    private final DeskewFactory deskewFactory_;
 
-   private NDViewer2API viewer_;
-   private NDViewer2DataViewerAPI mm2Viewer_;
-   private NDViewer2DataProviderAPI mm2DataProvider_;
+   private TiledDataViewerAPI viewer_;
+   private TiledDataViewerDataViewerAPI mm2Viewer_;
+   private TiledDataViewerDataProviderAPI mm2DataProvider_;
    private NDTiffStorage storage_;
    private DeskewExploreDataSource dataSource_;
    private ExecutorService displayExecutor_;
@@ -75,7 +88,12 @@ public class DeskewExploreManager {
    // State tracking
    private volatile boolean exploring_ = false;
    private volatile boolean viewerClosing_ = false;  // Guard for onViewerClosed re-entrancy
+   private volatile boolean shutdownInProgress_ = false;
    private boolean loadedData_ = false;  // True when viewing a loaded dataset
+   // MM display settings captured before viewer is nulled
+   private DisplaySettings pendingMMDisplaySettings_ = null;
+   // View offset/zoom captured before viewer is nulled
+   private JSONObject pendingViewState_ = null;
    private String storageDir_;
    private String acqName_;
 
@@ -84,6 +102,9 @@ public class DeskewExploreManager {
    private double initialStageY_ = 0;
    private double pixelSizeUm_ = 1.0;
    private double overlapPercentage_ = 10.0;  // Percentage overlap between tiles (0-50)
+   private volatile boolean acquisitionInterrupted_ = false;
+   // Counts tile-batch tasks currently queued or running in acquisitionExecutor_
+   private final AtomicInteger pendingBatches_ = new AtomicInteger(0);
 
    public DeskewExploreManager(Studio studio, DeskewFrame frame, DeskewFactory deskewFactory) {
       studio_ = studio;
@@ -143,14 +164,9 @@ public class DeskewExploreManager {
          // Store initial stage position for multi-tile acquisition
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
-         studio_.logs().logMessage("Deskew Explore: initial stage position = ("
-                 + initialStageX_ + ", " + initialStageY_ + ")");
-
          // Read overlap percentage from settings
          overlapPercentage_ = studio_.profile().getSettings(DeskewFrame.class)
                  .getInteger(DeskewFrame.EXPLORE_OVERLAP_PERCENT, 10);
-         studio_.logs().logMessage("Deskew Explore: tile overlap = "
-                 + overlapPercentage_ + "%");
 
          // Estimate tile dimensions based on camera size
          // (actual size will be determined after first deskew)
@@ -180,11 +196,7 @@ public class DeskewExploreManager {
             int temp = overlapX;
             overlapX = overlapY;
             overlapY = temp;
-            studio_.logs().logMessage("Deskew Explore: swapped overlap for "
-                    + rotateDegrees + "° rotation");
          }
-         studio_.logs().logMessage("Deskew Explore: initial overlap = "
-                 + overlapX + "x" + overlapY + " pixels");
 
          // Store metadata normally: X for X, Y for Y
          summaryMetadata.put("GridPixelOverlapX", overlapX);
@@ -192,12 +204,6 @@ public class DeskewExploreManager {
 
          // Add channel metadata from MDA settings for Inspector display
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
-         studio_.logs().logMessage("Deskew Explore: settings.useChannels() = "
-               + settings.useChannels());
-         if (settings.useChannels()) {
-            studio_.logs().logMessage("Deskew Explore: settings.channels().size() = "
-                  + settings.channels().size());
-         }
          if (settings.useChannels() && settings.channels().size() > 0) {
             JSONArray channelNames = new JSONArray();
             // Only include enabled channels (useChannel() == true)
@@ -210,8 +216,6 @@ public class DeskewExploreManager {
                summaryMetadata.put("ChNames", channelNames);
                summaryMetadata.put("Channels", channelNames.length());
                summaryMetadata.put("ChGroup", settings.channelGroup());
-               studio_.logs().logMessage("Deskew Explore: initialized with " + channelNames.length()
-                       + " channels from MDA settings");
             }
          }
 
@@ -225,9 +229,10 @@ public class DeskewExploreManager {
          dataSource_.setStorage(storage_);
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = NDViewer2Factory.createDataProvider(studio_.data(), storage_, acqName_);
-         NDViewer2AcqInterface acqInterface = createAcqInterface();
-         mm2Viewer_ = NDViewer2Factory.createDataViewer(
+         mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(),
+                  new NDTiffProviderAdapter(storage_), acqName_);
+         TiledDataViewerAcqInterface acqInterface = createAcqInterface();
+         mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
@@ -243,7 +248,7 @@ public class DeskewExploreManager {
                if (settings.channels().get(i).useChannel()) {
                   String channelGroup = settings.channelGroup();
                   String channelName = settings.channels().get(i).config();
-                  java.awt.Color channelColor = settings.channels().get(i).color();
+                  Color channelColor = settings.channels().get(i).color();
                   // Build ChannelDisplaySettings directly using MDA color,
                   // bypassing RememberedDisplaySettings which prefers persisted colors
                   dsBuilder.channel(displayChannelIndex,
@@ -262,10 +267,6 @@ public class DeskewExploreManager {
             }
             if (displayChannelIndex > 0) {
                mm2Viewer_.setDisplaySettings(dsBuilder.build());
-               // Prevent NDViewer's default/remembered colors from overriding MDA colors
-               mm2Viewer_.setPreserveMMColors(true);
-               studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
-                     + displayChannelIndex + " channels");
             }
          }
 
@@ -275,7 +276,8 @@ public class DeskewExploreManager {
                + "Left-drag to extend, Left-click to acquire");
 
          // Set up overlayer and mouse listener
-         viewer_.setOverlayerPlugin(dataSource_);
+         // Route through mm2Viewer_ so the bridge plugin chains this as externalOverlayerPlugin_
+         mm2Viewer_.setOverlayerPlugin(dataSource_);
          viewer_.setCustomCanvasMouseListener(dataSource_);
 
          // Set metadata functions
@@ -295,9 +297,7 @@ public class DeskewExploreManager {
          viewer_.setViewOffset(0, 0);
 
          startStagePositionPolling();
-
-         studio_.logs().logMessage("Deskew Explore started. "
-                 + "Dimensions will be determined after first acquisition.");
+         studio_.events().registerForEvents(this);
 
       } catch (Exception e) {
          studio_.logs().showError(e, "Failed to start Deskew Explore.");
@@ -333,9 +333,10 @@ public class DeskewExploreManager {
 
          // Create data source
          dataSource_ = new DeskewExploreDataSource(this);
+         dataSource_.setReadOnly(true);
 
-         // Open existing storage read-only
-         storage_ = new NDTiffStorage(dir);
+         // Open existing storage in write-append mode so pyramid levels can be built on demand
+         storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
          storageDir_ = new File(dir).getParent();
          acqName_ = new File(dir).getName();
          dataSource_.setStorage(storage_);
@@ -360,8 +361,6 @@ public class DeskewExploreManager {
          } else {
             overlapPercentage_ = 0.0;  // No overlap in this dataset
          }
-         studio_.logs().logMessage("Deskew Explore: loaded dataset with "
-                 + overlapPercentage_ + "% overlap");
 
          // Store current stage position for potential new acquisitions
          initialStageX_ = studio_.core().getXPosition();
@@ -394,41 +393,92 @@ public class DeskewExploreManager {
          }
 
          // Create NDViewer2 (NDViewer + MM Inspector)
-         mm2DataProvider_ = NDViewer2Factory.createDataProvider(studio_.data(), storage_, acqName_);
-         NDViewer2AcqInterface acqInterface = createAcqInterface();
-         mm2Viewer_ = NDViewer2Factory.createDataViewer(
+         mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(),
+                  new NDTiffProviderAdapter(storage_), acqName_);
+         TiledDataViewerAcqInterface acqInterface = createAcqInterface();
+         mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
                summaryMetadata, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
 
-         // Initialize DisplaySettings with channels from storage metadata
-         if (summaryMetadata.has("ChNames")) {
-            try {
-               JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
-               int nrChannels = chNames.length();
-               org.micromanager.display.DisplaySettings.Builder dsBuilder =
-                     studio_.displays().displaySettingsBuilder();
-               if (nrChannels == 1) {
-                  dsBuilder.colorModeGrayscale();
+         // Initialize MM DisplaySettings.
+         // Priority: saved mm_display_settings.json (full MM settings incl. autostretch/bit-depth)
+         // > per-channel color heuristics (NDViewer JSON → RememberedDisplaySettings
+         //   → ColorPalettes.guessColor → ColorPalettes.getFromDefaultPalette).
+         // savedMMSettings is declared here so the display executor lambda can capture it.
+         File mmSettingsFile = new File(dir, MM_DISPLAY_SETTINGS_FILE);
+         final DisplaySettings savedMMSettings = mmSettingsFile.canRead()
+               ? DefaultDisplaySettings.getSavedDisplaySettings(mmSettingsFile) : null;
+         try {
+            if (savedMMSettings != null) {
+               mm2Viewer_.setDisplaySettings(savedMMSettings);
+            } else {
+               // No saved MM settings — build from color heuristics.
+               // Collect channel names in order from ChNames or from axes set.
+               List<String> channelNames = new ArrayList<>();
+               String channelGroup = summaryMetadata.optString("ChGroup", "");
+               if (summaryMetadata.has("ChNames")) {
+                  JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
+                  for (int i = 0; i < chNames.length(); i++) {
+                     channelNames.add(chNames.getString(i));
+                  }
                } else {
-                  dsBuilder.colorModeComposite();
+                  LinkedHashSet<String> seen = new LinkedHashSet<>();
+                  for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+                     Object ch = axes.get("channel");
+                     if (ch != null) {
+                        seen.add(ch.toString());
+                     }
+                  }
+                  channelNames.addAll(seen);
                }
-               for (int i = 0; i < nrChannels; i++) {
-                  String channelName = chNames.getString(i);
-                  String channelGroup = summaryMetadata.optString("ChGroup", "");
-                  dsBuilder.channel(i,
-                        RememberedDisplaySettings.loadChannel(studio_,
-                              channelGroup,
-                              channelName,
-                              java.awt.Color.WHITE));
+
+               if (!channelNames.isEmpty()) {
+                  JSONObject storedNDVSettings = storage_.getDisplaySettings();
+                  DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
+                  dsBuilder = channelNames.size() > 1
+                        ? dsBuilder.colorModeComposite() : dsBuilder.colorModeGrayscale();
+                  for (int i = 0; i < channelNames.size(); i++) {
+                     String name = channelNames.get(i);
+                     Color color = null;
+                     // 1. Try stored NDViewer display_settings.txt
+                     if (storedNDVSettings != null) {
+                        try {
+                           color = new Color(
+                                 storedNDVSettings.getJSONObject(name).getInt("Color"));
+                        } catch (Exception e) {
+                           studio_.logs().logError(e);
+                        }
+                     }
+                     // 2. Try MM RememberedDisplaySettings
+                     if (color == null || color.equals(Color.WHITE)) {
+                        org.micromanager.display.ChannelDisplaySettings remembered =
+                              RememberedDisplaySettings.loadChannel(
+                                       studio_, channelGroup, name, null);
+                        if (remembered != null && !remembered.getColor().equals(Color.WHITE)) {
+                           color = remembered.getColor();
+                        }
+                     }
+                     // 3. Guess from channel name (wavelength-based)
+                     if (color == null || color.equals(Color.WHITE)) {
+                        Color guessed = ColorPalettes.guessColor(name);
+                        if (!guessed.equals(Color.WHITE)) {
+                           color = guessed;
+                        }
+                     }
+                     // 4. Fall back to MM default palette by index
+                     if (color == null || color.equals(Color.WHITE)) {
+                        color = ColorPalettes.getFromDefaultPalette(i);
+                     }
+                     dsBuilder.channel(i,
+                           studio_.displays().channelDisplaySettingsBuilder()
+                                 .color(color).build());
+                  }
+                  mm2Viewer_.setDisplaySettings(dsBuilder.build());
                }
-               mm2Viewer_.setDisplaySettings(dsBuilder.build());
-               studio_.logs().logMessage("Deskew Explore: initialized DisplaySettings with "
-                     + nrChannels + " channels from storage");
-            } catch (Exception e) {
-               studio_.logs().logError(e,
-                     "Failed to initialize DisplaySettings from storage metadata");
             }
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Failed to initialize DisplaySettings");
          }
 
          viewer_ = mm2Viewer_.getNDViewer();
@@ -436,7 +486,8 @@ public class DeskewExploreManager {
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
          // Set up overlayer and mouse listener
-         viewer_.setOverlayerPlugin(dataSource_);
+         // Route through mm2Viewer_ so the bridge plugin chains this as externalOverlayerPlugin_
+         mm2Viewer_.setOverlayerPlugin(dataSource_);
          viewer_.setCustomCanvasMouseListener(dataSource_);
 
          // Set metadata functions
@@ -454,34 +505,90 @@ public class DeskewExploreManager {
 
          viewer_.setViewOffset(0, 0);
 
-         // Trigger initial display
+         // Load saved view state (pan offset + zoom) — will be applied after
+         // initializeViewerToLoaded.
+         File viewStateFile = new File(dir, VIEW_STATE_FILE);
+         final JSONObject savedViewState = loadViewState(viewStateFile);
+
+         // Trigger initial display and seed the histogram for all stored images.
          if (displayExecutor_ != null && viewer_ != null) {
             displayExecutor_.submit(() -> {
-               HashMap<String, Object> displayAxes = new HashMap<>();
                try {
-                  viewer_.newImageArrived(displayAxes);
+                  // Pick one representative image per channel from the first tile found in
+                  // storage, then feed it through the full histogram pipeline so the
+                  // Inspector panel is created and stats are computed on open.
+                  List<Image> seedImages = new ArrayList<>();
+                  List<HashMap<String, Object>> seedAxesList = new ArrayList<>();
+                  Set<Object> seenChannels = new LinkedHashSet<>();
+                  for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+                     Object ch = axes.get("channel");
+                     if (!seenChannels.add(ch == null ? "" : ch)) {
+                        continue; // already have a representative for this channel
+                     }
+                     // Build channel-only axes for histogram registration (row/column not needed)
+                     HashMap<String, Object> channelAxes = new HashMap<>();
+                     if (ch != null) {
+                        channelAxes.put("channel", ch);
+                     }
+                     try {
+                        Image img = mm2DataProvider_.getDownsampledImageByAxes(axes);
+                        if (img != null) {
+                           mm2DataProvider_.newImageArrived(img, channelAxes);
+                           seedImages.add(img);
+                           seedAxesList.add(channelAxes);
+                        }
+                     } catch (Exception e) {
+                        studio_.logs().logMessage(
+                                 "Deskew Explore: exception fetching seed image: " + e);
+                     }
+                  }
+                  if (mm2Viewer_ != null && !seedImages.isEmpty()) {
+                     mm2Viewer_.newTileArrived(seedImages, seedAxesList);
+                  }
+                  // Initialize NDViewer from the data source's image keys — this registers
+                  // all channels, sets up scrollbars, and triggers the first canvas render.
+                  viewer_.initializeViewerToLoaded(null);
                   viewer_.update();
+
+                  // Restore view state after the canvas is initialized and sized.
+                  // Restore saved view state after the canvas is initialized.
+                  if (savedViewState != null && viewer_ != null) {
+                     double mag = savedViewState.optDouble("magnification", 0);
+                     if (mag > 0) {
+                        // Derive source size from canvas size and saved magnification.
+                        // This is already aspect-correct since newW/newH are both derived
+                        // from the canvas dimensions.
+                        Point2D.Double displaySize = viewer_.getDisplayImageSize();
+                        double newW = displaySize.x / mag;
+                        double newH = displaySize.y / mag;
+                        viewer_.setFullResSourceDataSize(newW, newH);
+                     }
+                     viewer_.setViewOffset(
+                             savedViewState.optDouble("xView", 0),
+                             savedViewState.optDouble("yView", 0));
+                     viewer_.update();
+                  }
                } catch (NullPointerException e) {
-                  // NDViewer histogram not yet initialized - ignore
+                  studio_.logs().logMessage("Deskew Explore: NPE in histogram seed: " + e);
                }
             });
          }
 
-         startStagePositionPolling();
-
          studio_.logs().logMessage("Deskew Explore: opened dataset from " + dir);
+         studio_.events().registerForEvents(this);
 
       } catch (Exception e) {
+         studio_.logs().logMessage("Deskew Explore: openExplore EXCEPTION: " + e);
          studio_.logs().showError(e, "Failed to open Deskew Explore dataset.");
-         stopExplore();
+         stopExplore(false);  // Never delete existing data on open failure
       }
    }
 
    /**
     * Create an NDViewer2AcqInterface for the explore session.
     */
-   private NDViewer2AcqInterface createAcqInterface() {
-      return new NDViewer2AcqInterface() {
+   private TiledDataViewerAcqInterface createAcqInterface() {
+      return new TiledDataViewerAcqInterface() {
          @Override
          public boolean isFinished() {
             // Always report finished so NDViewer does not show
@@ -516,10 +623,10 @@ public class DeskewExploreManager {
 
    /**
     * Stops the explore session and cleans up resources.
-    * Deletes temporary storage by default.
+    * Deletes temporary storage only for new (non-loaded) sessions.
     */
    public void stopExplore() {
-      stopExplore(true);
+      stopExplore(!loadedData_);
    }
 
    /**
@@ -531,8 +638,18 @@ public class DeskewExploreManager {
       if (!exploring_) {
          return; // Already stopped (re-entrant call)
       }
+      try {
+         studio_.events().unregisterForEvents(this);
+      } catch (Exception ignored) {
+         // Not registered — safe to ignore
+      }
       exploring_ = false;
       loadedData_ = false;
+      acquisitionInterrupted_ = true;
+      pendingBatches_.set(0);
+      if (dataSource_ != null) {
+         dataSource_.clearPendingTiles();
+      }
 
       if (displayExecutor_ != null) {
          displayExecutor_.shutdownNow();
@@ -548,6 +665,42 @@ public class DeskewExploreManager {
          stagePollingExecutor_.shutdownNow();
          stagePollingExecutor_ = null;
       }
+
+      // Capture MM DisplaySettings and view state so we can persist them alongside the dataset.
+      // mm2Viewer_/viewer_ may already be null if onViewerClosed() ran first (loaded-data
+      // close path), in which case pending* fields were captured there before the viewer was
+      // nulled.
+      final DisplaySettings mmDisplaySettingsToSave;
+      final JSONObject viewStateToSave;
+      if (!deleteTempFiles) {
+         if (mm2Viewer_ != null) {
+            DisplaySettings captured = null;
+            try {
+               captured = mm2Viewer_.getDisplaySettings();
+            } catch (Exception e) {
+               studio_.logs().logError(e);
+            }
+            mmDisplaySettingsToSave = captured;
+         } else {
+            mmDisplaySettingsToSave = pendingMMDisplaySettings_;
+         }
+         if (viewer_ != null) {
+            JSONObject captured = null;
+            try {
+               captured = captureViewState(viewer_);
+            } catch (Exception e) {
+               studio_.logs().logError(e);
+            }
+            viewStateToSave = captured;
+         } else {
+            viewStateToSave = pendingViewState_;
+         }
+      } else {
+         mmDisplaySettingsToSave = null;
+         viewStateToSave = null;
+      }
+      pendingMMDisplaySettings_ = null;
+      pendingViewState_ = null;
 
       // Close viewers BEFORE storage to avoid NPEs from pending repaints
       if (mm2Viewer_ != null) {
@@ -570,7 +723,7 @@ public class DeskewExploreManager {
       final boolean doDelete = deleteTempFiles;
       storage_ = null;
       if (storageToClose != null || doDelete) {
-         new Thread(() -> {
+         Runnable cleanupTask = () -> {
             // Wait for NDViewer's async close thread ("NDViewer closing thread")
             // to finish before touching storage. NDViewer does not provide a
             // join/callback, so we use a best-effort delay. 1000ms is sufficient
@@ -583,6 +736,21 @@ public class DeskewExploreManager {
             }
             if (storageToClose != null) {
                try {
+                  String diskLocation = storageToClose.getDiskLocation();
+                  if (diskLocation != null) {
+                     if (mmDisplaySettingsToSave != null) {
+                        // Save full MM display settings (autostretch, bit-depth, colors, etc.)
+                        // to mm_display_settings.json alongside the dataset.
+                        File mmSettingsFile = new File(diskLocation, MM_DISPLAY_SETTINGS_FILE);
+                        ((DefaultDisplaySettings) mmDisplaySettingsToSave).save(mmSettingsFile);
+                     }
+                     if (viewStateToSave != null) {
+                        // Save view offset and zoom to view_state.json alongside the dataset.
+                        File viewStateFile = new File(diskLocation, VIEW_STATE_FILE);
+                        Files.write(viewStateFile.toPath(),
+                                viewStateToSave.toString(2).getBytes(StandardCharsets.UTF_8));
+                     }
+                  }
                   if (!storageToClose.isFinished()) {
                      storageToClose.finishedWriting();
                   }
@@ -601,22 +769,76 @@ public class DeskewExploreManager {
                }
                deleteTempStorage();
             }
-         }, "Deskew Explore cleanup").start();
+         };
+         // When called during app shutdown, addShutdownHook throws IllegalStateException,
+         // so we cannot use a hook. Instead run the cleanup synchronously here — the
+         // caller (onShutdownCommencing) holds the shutdown event and the JVM will not
+         // exit until this method returns.
+         if (deleteTempFiles && shutdownInProgress_) {
+            cleanupTask.run();
+         } else {
+            new Thread(cleanupTask, "Deskew Explore cleanup").start();
+         }
       }
    }
 
    /**
-    * Called when the viewer is closed by the user.
+    * Called when the application is shutting down.
+    * Triggers the same save/discard prompt as closing the viewer window.
+    * Cancels shutdown if the user picks "Cancel".
+    */
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      if (event.isCanceled() || !exploring_) {
+         return;
+      }
+      shutdownInProgress_ = true;
+      boolean proceeded = onViewerClosed(true);
+      if (!proceeded) {
+         event.cancelShutdown();
+      }
+   }
+
+   /**
+    * Called when the viewer is closed by the user (e.g. from DeskewExploreDataSource.close()).
     * Prompts to save data if any tiles were acquired (only for new sessions, not loaded data).
     */
    public void onViewerClosed() {
+      onViewerClosed(false);
+   }
+
+   /**
+    * Core implementation of viewer-closed logic.
+    *
+    * @param calledFromShutdown true when invoked from onShutdownCommencing; on Cancel,
+    *                           the session is left alive so the caller can abort shutdown.
+    * @return true if the session ended (save/discard/no-data), false if the user cancelled.
+    */
+   private boolean onViewerClosed(boolean calledFromShutdown) {
       // Guard against re-entrant calls:
       // - stopExplore() closes the viewer, which triggers dataSource.close() → here
       // - mm2Viewer_.close() below calls ndViewer_.close() → dataSource.close() → here
       if (!exploring_ || viewerClosing_) {
-         return;
+         return true;
       }
       viewerClosing_ = true;
+
+      // Capture MM display settings and view state before nulling viewer references so
+      // stopExplore() can save them.
+      if (mm2Viewer_ != null) {
+         try {
+            pendingMMDisplaySettings_ = mm2Viewer_.getDisplaySettings();
+         } catch (Exception e) {
+            studio_.logs().logError(e);
+         }
+      }
+      if (viewer_ != null) {
+         try {
+            pendingViewState_ = captureViewState(viewer_);
+         } catch (Exception e) {
+            studio_.logs().logError(e);
+         }
+      }
 
       // The viewer is already closing (NDViewer triggered this via dataSource.close()).
       // Only shut down MM2-specific resources (Inspector detach, stats queue) without
@@ -633,7 +855,7 @@ public class DeskewExploreManager {
       // If we opened an existing dataset, just close without prompting
       if (loadedData_) {
          stopExplore(false);  // Don't delete the user's data
-         return;
+         return true;
       }
 
       // Check if there's any data to save
@@ -661,11 +883,16 @@ public class DeskewExploreManager {
                     "Save");
 
             if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
-               // Cancel — keep data in temp storage and stop without deleting
+               // Cancel
                studio_.logs().logMessage("Deskew Explore: close cancelled, data remains in: "
                         + storageDir_);
-               stopExplore(false);
-               return;
+               if (!calledFromShutdown) {
+                  // Viewer is already gone — must end the session (keep temp files)
+                  stopExplore(false);
+               }
+               // If calledFromShutdown: leave session alive so caller can abort shutdown.
+               viewerClosing_ = false;
+               return false;
             } else if (choice == 0) {
                // Save — let user choose location; loop back if they cancel the file chooser
                JFileChooser chooser = new JFileChooser();
@@ -675,8 +902,13 @@ public class DeskewExploreManager {
 
                if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                   File destDir = chooser.getSelectedFile();
-                  saveDataTo(destDir);
-                  break;  // Save completed — fall through to delete temp files
+                  // Write view state and display settings into the temp directory
+                  // before copying, so they are included in the saved dataset.
+                  writeSettingsToTempDir();
+                  if (saveDataTo(destDir)) {
+                     break;  // Success — fall through to delete temp files
+                  }
+                  // Save failed — re-show dialog so user can retry or discard
                }
                // File chooser cancelled — re-show the save/discard/cancel dialog
             } else {
@@ -687,39 +919,48 @@ public class DeskewExploreManager {
       }
 
       stopExplore(true);  // Delete temp files
+      return true;
    }
 
    /**
     * Saves the explore data to the specified directory.
+    * Returns true on success, false if any error prevented a complete save.
     */
-   private void saveDataTo(File destDir) {
+   private boolean saveDataTo(File destDir) {
       if (storageDir_ == null) {
-         return;
+         return false;
+      }
+
+      // Validate destination before closing storage (storage close is irreversible)
+      if (!destDir.exists() && !destDir.mkdirs()) {
+         studio_.logs().showError("Cannot create destination directory: " + destDir);
+         return false;
+      }
+      if (!destDir.canWrite()) {
+         studio_.logs().showError("Cannot write to destination directory: " + destDir);
+         return false;
       }
 
       try {
-         // Finish writing to storage if it's still open
+         // Finish writing to storage if it's still open.
+         // Null storage_ BEFORE close to prevent double-close in the cleanup thread.
          if (storage_ != null) {
+            NDTiffStorage storageRef = storage_;
+            storage_ = null;
             try {
-               if (!storage_.isFinished()) {
-                  storage_.finishedWriting();
+               if (!storageRef.isFinished()) {
+                  storageRef.finishedWriting();
                }
-               storage_.close();
+               storageRef.close();
             } catch (Exception e) {
                studio_.logs().logError(e, "Error closing storage before save");
             }
-            storage_ = null;
          }
 
          // Source directory contains the NDTiff data
          File sourceDir = new File(storageDir_, acqName_);
          if (!sourceDir.exists()) {
             sourceDir = new File(storageDir_);
-         }
-
-         // Create destination if it doesn't exist
-         if (!destDir.exists()) {
-            destDir.mkdirs();
          }
 
          // Copy all files from source to destination
@@ -746,17 +987,21 @@ public class DeskewExploreManager {
          }
 
          if (copyErrors[0] > 0) {
-            studio_.logs().showMessage("Data saved to " + destDir.getAbsolutePath()
-                  + " with " + copyErrors[0] + " file(s) failed to copy. "
-                  + "Check CoreLog for details.");
-         } else {
-            studio_.logs().logMessage(
-                  "Deskew Explore: data saved to " + destDir.getAbsolutePath());
-            studio_.logs().showMessage("Data saved to: " + destDir.getAbsolutePath());
+            studio_.logs().showError("Save incomplete: " + copyErrors[0]
+                  + " file(s) could not be copied.\n"
+                  + "Your data is still in the temporary directory:\n  " + storageDir_
+                  + "\nSee CoreLog for details.");
+            return false;
          }
+
+         studio_.logs().logMessage(
+               "Deskew Explore: data saved to " + destDir.getAbsolutePath());
+         studio_.logs().showMessage("Data saved to: " + destDir.getAbsolutePath());
+         return true;
 
       } catch (Exception e) {
          studio_.logs().showError(e, "Failed to save Deskew Explore data");
+         return false;
       }
    }
 
@@ -832,9 +1077,6 @@ public class DeskewExploreManager {
 
       acquisitionExecutor_.submit(() -> {
          try {
-            studio_.logs().logMessage("Deskew Explore: acquiring tile at row=" + row + ", col="
-                     + col);
-
             // Get Z settings from MDA
             SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
             SequenceSettings.Builder sb = settings.copyBuilder();
@@ -852,8 +1094,6 @@ public class DeskewExploreManager {
             // Preserve channel settings from MDA
             if (settings.useChannels()) {
                sb.useChannels(true);
-               studio_.logs().logMessage("Deskew Explore: acquiring "
-                       + settings.channels().size() + " channels per tile");
             }
 
             SequenceSettings acqSettings = sb.build();
@@ -883,8 +1123,6 @@ public class DeskewExploreManager {
 
             // The store should now have all images
             int numImages = testStore.getNumImages();
-            studio_.logs().logMessage("Deskew Explore: test store has " + numImages + " images");
-
             if (numImages == 0) {
                studio_.logs().showError("Test acquisition produced no images.");
                try {
@@ -897,11 +1135,7 @@ public class DeskewExploreManager {
             }
 
             // Process through our own deskew to get XY projection(s)
-            studio_.logs().logMessage("Deskew Explore: calling processStackThroughDeskew");
             List<Image> projectedImages = processStackThroughDeskew(testStore);
-            studio_.logs().logMessage("Deskew Explore: processStackThroughDeskew returned "
-                    + (projectedImages == null || projectedImages.isEmpty() ? "no images"
-                    : projectedImages.size() + " channel(s)"));
 
             if (projectedImages == null || projectedImages.isEmpty()) {
                studio_.logs().showError("Deskew processing failed.");
@@ -929,8 +1163,6 @@ public class DeskewExploreManager {
                   projectedHeight_ = firstChannel.getHeight();
                }
                updateTileDimensionsForRotation();
-               studio_.logs().logMessage("Deskew Explore: projected dimensions = "
-                       + projectedWidth_ + " x " + projectedHeight_);
             }
 
             // Store each channel separately with channel axis
@@ -966,6 +1198,8 @@ public class DeskewExploreManager {
                   displayAxes.remove("column");
                   displayAxesList.add(displayAxes);
                }
+               final int tileRow = row;
+               final int tileCol = col;
                displayExecutor_.submit(() -> {
                   // Notify data provider per-channel (needed for DataProviderHasNewImageEvent)
                   for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
@@ -988,8 +1222,14 @@ public class DeskewExploreManager {
                   } catch (NullPointerException e) {
                      // NDViewer histogram not yet initialized - ignore
                   }
-                  studio_.logs().logMessage("Deskew Explore: viewer notified of new image");
+                  // Remove from pending overlay now that the image is being displayed
+                  dataSource_.removePendingTile(tileRow, tileCol);
+                  redrawOverlay();
                });
+            } else {
+               // No display submission — remove from pending immediately
+               dataSource_.removePendingTile(row, col);
+               redrawOverlay();
             }
 
             // Clean up test store - freeze first to prevent "save" dialogs
@@ -1000,9 +1240,6 @@ public class DeskewExploreManager {
             }
             testStore.close();
 
-            studio_.logs().logMessage("Deskew Explore: tile acquired at row=" + row + ", col="
-                     + col);
-
          } catch (Exception e) {
             studio_.logs().logError(e, "Deskew Explore: error acquiring tile");
          }
@@ -1010,7 +1247,21 @@ public class DeskewExploreManager {
    }
 
    /**
+    * Signals all queued and running tile-batch acquisitions to stop after the current
+    * tile finishes, and clears the pending-tile overlay.
+    */
+   public void interruptAcquisition() {
+      acquisitionInterrupted_ = true;
+      if (dataSource_ != null) {
+         dataSource_.clearPendingTiles();
+         redrawOverlay();
+      }
+   }
+
+   /**
     * Acquires multiple tiles sequentially, moving the stage between positions.
+    * May be called while a previous batch is still running; the new batch is queued
+    * and will start as soon as the previous one finishes (or is interrupted).
     * Each tile position is calculated relative to the initial stage position when explore started.
     *
     * @param tiles List of tile positions as (row, col) Points
@@ -1020,48 +1271,51 @@ public class DeskewExploreManager {
          return;
       }
 
-      acquisitionExecutor_.submit(() -> {
+      // Clear any prior interrupt so this new batch (and any already-queued batches
+      // that haven't started yet) will run.  Do this before incrementing the counter
+      // so there is no window where a batch could see a stale interrupted flag.
+      acquisitionInterrupted_ = false;
+
+      int batchCount = pendingBatches_.incrementAndGet();
+      if (batchCount == 1) {
+         // First batch entering the queue — flip UI to in-progress
          dataSource_.setAcquisitionInProgress(true);
-         redrawOverlay();
+         frame_.setAcquisitionInProgress(true);
+      }
 
+      // Mark all tiles in this batch as pending immediately so the blue overlay
+      // appears before the executor picks up the task.
+      for (Point tile : tiles) {
+         dataSource_.addPendingTile(tile.x, tile.y);
+      }
+      redrawOverlay();
+
+      acquisitionExecutor_.submit(() -> {
          try {
-            studio_.logs().logMessage("Deskew Explore: starting multi-tile acquisition of "
-                    + tiles.size() + " tiles");
-
             // Get the projected tile dimensions (use estimated if not yet determined)
             int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
             int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
 
-            // Calculate the stage movement per tile in microns
-            // Note: tile coordinates are in projected pixel space
-            double tileWidthUm = tileWidth * pixelSizeUm_;
-            double tileHeightUm = tileHeight * pixelSizeUm_;
+            // Account for overlap: overlap pixel count is derived from X tile width only,
+            // so both axes subtract the same number of pixels (not the same percentage).
+            int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+            double effectiveTileWidthUm = (tileWidth - overlapPixels) * pixelSizeUm_;
+            double effectiveTileHeightUm = (tileHeight - overlapPixels) * pixelSizeUm_;
 
-            studio_.logs().logMessage("Deskew Explore: tile size = " + tileWidth + "x" + tileHeight
-                    + " pixels, " + tileWidthUm + "x" + tileHeightUm + " um");
-
-            for (int i = 0; i < tiles.size(); i++) {
-               Point tile = tiles.get(i);
+            for (Point tile : tiles) {
+               if (acquisitionInterrupted_) {
+                  break;
+               }
                int row = tile.x;
                int col = tile.y;
 
-               studio_.logs().logMessage("Deskew Explore: acquiring tile " + (i + 1) + "/"
-                        + tiles.size()
-                       + " at row=" + row + ", col=" + col);
-
-               // Calculate target stage position relative to initial position
-               // Tile (0,0) is at the initial position
+               // Calculate target stage position relative to initial position.
+               // Tile (0,0) is at the initial position.
                // Positive col -> move stage in +X direction
                // Positive row -> move stage in +Y direction
-               // Account for overlap: effective spacing is reduced by overlap percentage
-               double effectiveTileWidthUm = tileWidthUm * (1.0 - overlapPercentage_ / 100.0);
-               double effectiveTileHeightUm = tileHeightUm * (1.0 - overlapPercentage_ / 100.0);
                double targetX = initialStageX_ + col * effectiveTileWidthUm;
                double targetY = initialStageY_ + row * effectiveTileHeightUm;
 
-               // Move stage to target position
-               studio_.logs().logMessage("Deskew Explore: moving stage to ("
-                       + targetX + ", " + targetY + ")");
                studio_.core().setXYPosition(targetX, targetY);
                studio_.core().waitForDevice(studio_.core().getXYStageDevice());
 
@@ -1074,12 +1328,14 @@ public class DeskewExploreManager {
                acquireSingleTileBlocking(row, col);
             }
 
-            studio_.logs().logMessage("Deskew Explore: multi-tile acquisition complete");
-
          } catch (Exception e) {
             studio_.logs().logError(e, "Deskew Explore: error during multi-tile acquisition");
          } finally {
-            dataSource_.setAcquisitionInProgress(false);
+            if (pendingBatches_.decrementAndGet() == 0) {
+               // Last batch finished — clear in-progress state
+               dataSource_.setAcquisitionInProgress(false);
+               frame_.setAcquisitionInProgress(false);
+            }
          }
       });
    }
@@ -1130,10 +1386,7 @@ public class DeskewExploreManager {
             return;
          }
 
-         int numImages = testStore.getNumImages();
-         studio_.logs().logMessage("Deskew Explore: test store has " + numImages + " images");
-
-         if (numImages == 0) {
+         if (testStore.getNumImages() == 0) {
             studio_.logs().showError("Test acquisition produced no images at row=" + row + ", col="
                      + col);
             try {
@@ -1165,8 +1418,6 @@ public class DeskewExploreManager {
             projectedWidth_ = firstChannel.getWidth();
             projectedHeight_ = firstChannel.getHeight();
             dataSource_.setTileDimensions(projectedWidth_, projectedHeight_);
-            studio_.logs().logMessage("Deskew Explore: projected dimensions = "
-                    + projectedWidth_ + " x " + projectedHeight_);
 
             // Update overlap metadata with actual tile dimensions
             // Note: projectedWidth/Height are pre-rotation dimensions
@@ -1206,13 +1457,9 @@ public class DeskewExploreManager {
                   if (channelNames.length() > 0) {
                      summaryMetadata.put("ChNames", channelNames);
                      summaryMetadata.put("Channels", channelNames.length());
-                     studio_.logs().logMessage("Deskew Explore: added " + channelNames.length()
-                             + " channels to metadata");
                   }
                }
 
-               studio_.logs().logMessage("Deskew Explore: updated overlap metadata to "
-                       + overlapX + "x" + overlapY + " pixels");
             } catch (Exception e) {
                studio_.logs().logError(e, "Failed to update overlap metadata");
             }
@@ -1251,6 +1498,8 @@ public class DeskewExploreManager {
                displayAxes.remove("column");
                displayAxesList.add(displayAxes);
             }
+            final int tileRow = row;
+            final int tileCol = col;
             displayExecutor_.submit(() -> {
                // Notify data provider per-channel (needed for DataProviderHasNewImageEvent)
                for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
@@ -1273,7 +1522,14 @@ public class DeskewExploreManager {
                } catch (NullPointerException e) {
                   // NDViewer histogram not yet initialized - ignore
                }
+               // Remove from pending overlay now that the image is being displayed
+               dataSource_.removePendingTile(tileRow, tileCol);
+               redrawOverlay();
             });
+         } else {
+            // No display submission — remove from pending immediately
+            dataSource_.removePendingTile(row, col);
+            redrawOverlay();
          }
 
          // Clean up
@@ -1283,8 +1539,6 @@ public class DeskewExploreManager {
             studio_.logs().logError("IOException ignored in DeskewExploreManager");
          }
          testStore.close();
-
-         studio_.logs().logMessage("Deskew Explore: tile acquired at row=" + row + ", col=" + col);
 
       } catch (Exception e) {
          studio_.logs().logError(e, "Deskew Explore: error acquiring tile at row=" + row + ", col="
@@ -1300,16 +1554,12 @@ public class DeskewExploreManager {
     */
    private List<Image> processStackThroughDeskew(Datastore source) {
       try {
-         studio_.logs().logMessage("Deskew Explore: starting deskew processing");
-
          // Get deskew settings from frame
          double theta = Math.toRadians(NumberUtils.displayStringToDouble(
                  frame_.getSettings().getString(DeskewFrame.DEGREE, "20.0")));
-         studio_.logs().logMessage("Deskew Explore: theta = " + Math.toDegrees(theta) + " degrees");
 
          SummaryMetadata summaryMetadata = source.getSummaryMetadata();
          int nSlices = summaryMetadata.getIntendedDimensions().getZ();
-         studio_.logs().logMessage("Deskew Explore: nSlices from metadata = " + nSlices);
 
          // Detect channels present in the datastore and group coordinates by channel
          List<Coords> allCoordsList = new ArrayList<>();
@@ -1321,9 +1571,6 @@ public class DeskewExploreManager {
             coordsByChannel.computeIfAbsent(channel, k -> new ArrayList<>()).add(c);
          }
 
-         studio_.logs().logMessage("Deskew Explore: processing "
-                 + coordsByChannel.size() + " channels");
-
          List<Image> projectedImages = new ArrayList<>();
 
          // Process each channel independently
@@ -1331,21 +1578,14 @@ public class DeskewExploreManager {
             int channelIndex = entry.getKey();
             List<Coords> channelCoords = entry.getValue();
 
-            studio_.logs().logMessage("Deskew Explore: processing channel " + channelIndex
-                    + " with " + channelCoords.size() + " images");
-
             // Get first image of this channel for dimensions
             Coords firstCoords = channelCoords.get(0);
             Image firstImage = source.getImage(firstCoords);
-            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
-                    + " image size = " + firstImage.getWidth() + "x" + firstImage.getHeight());
 
             double pixelSizeUm = firstImage.getMetadata().getPixelSizeUm();
             double zStepUm = summaryMetadata.getZStepUm();
 
             // Create resampler for this channel's XY projection
-            studio_.logs().logMessage("Deskew Explore: creating StackResampler for channel "
-                  + channelIndex);
             StackResampler resampler;
             try {
                resampler = new StackResampler(
@@ -1357,8 +1597,6 @@ public class DeskewExploreManager {
                        nSlices,
                        firstImage.getHeight(),
                        firstImage.getWidth());
-               studio_.logs().logMessage("Deskew Explore: StackResampler created for channel "
-                     + channelIndex);
             } catch (Exception e) {
                studio_.logs().logError(e,
                      "Deskew Explore: failed to create StackResampler for channel " + channelIndex);
@@ -1378,8 +1616,6 @@ public class DeskewExploreManager {
             for (Coords c : channelCoords) {
                zStack.add(source.getImage(c));
             }
-            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
-                    + " loaded " + zStack.size() + " images");
 
             // Sort by Z
             zStack.sort((a, b) -> Integer.compare(a.getCoords().getZ(), b.getCoords().getZ()));
@@ -1389,13 +1625,9 @@ public class DeskewExploreManager {
                Image img = zStack.get(z);
                resampler.addToProcessImageQueue((short[]) img.getRawPixels(), z);
             }
-            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
-                    + " all images added to queue");
 
             // Wait for processing to complete
             processingThread.join();
-            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
-                    + " processing thread finished");
 
             resampler.finalizeProjections();
 
@@ -1403,8 +1635,6 @@ public class DeskewExploreManager {
             short[] projectionPixels = resampler.getYXProjection();
             int width = resampler.getResampledShapeX();
             int height = resampler.getResampledShapeY();
-            studio_.logs().logMessage("Deskew Explore: channel " + channelIndex
-                    + " projection size = " + width + "x" + height);
 
             // Apply optional mirror and rotate transformations
             boolean doMirror = frame_.getSettings().getBoolean(DeskewFrame.EXPLORE_MIRROR, false);
@@ -1468,13 +1698,9 @@ public class DeskewExploreManager {
                     1, // number of components
                     projectedCoords,
                     firstImage.getMetadata());
-            studio_.logs().logMessage("Deskew Explore: created result image for channel "
-                  + channelIndex);
             projectedImages.add(result);
          }
 
-         studio_.logs().logMessage("Deskew Explore: processed "
-                 + projectedImages.size() + " channels successfully");
          return projectedImages;
 
       } catch (ParseException e) {
@@ -1500,10 +1726,6 @@ public class DeskewExploreManager {
       }
 
       try {
-         studio_.logs().logMessage("Deskew Explore: storing image " + image.getWidth() + "x"
-                 + image.getHeight() + " at row=" + row + ", col=" + col
-                 + ", channelName=" + channelName);
-
          // Create image metadata with row/col/channel axes
          JSONObject tags = new JSONObject();
          tags.put("ElapsedTime-ms", System.currentTimeMillis());
@@ -1511,6 +1733,7 @@ public class DeskewExploreManager {
          tags.put("Height", image.getHeight());
          tags.put("BitDepth", bitDepth_);
          tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
+         tags.put("PixelSizeUm", pixelSizeUm_);
 
          // Set up axes using AcqEngMetadata
          // Store channel as STRING (channel name) for NDViewer
@@ -1521,7 +1744,6 @@ public class DeskewExploreManager {
          AcqEngMetadata.setAxisPosition(tags, "channel", channelName);
 
          HashMap<String, Object> axes = AcqEngMetadata.getAxes(tags);
-         studio_.logs().logMessage("Deskew Explore: axes = " + axes);
 
          // Store with multi-resolution pyramid
          Future<?> future = storage_.putImageMultiRes(
@@ -1541,9 +1763,6 @@ public class DeskewExploreManager {
          if (dataSource_ != null) {
             dataSource_.invalidateImageKeysCache();
          }
-
-         studio_.logs().logMessage("Deskew Explore: image stored, storage now has "
-                 + storage_.getAxesSet().size() + " images");
 
          return axes;
 
@@ -1577,9 +1796,10 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Converts a stage position (in microns) to full-resolution pixel coordinates.
+    * Converts a stage position (in microns) to full-resolution pixel coordinates
+    * in NDTiffStorage display space, where tile (0,0) occupies [0, effectiveTileWidth).
     * Tile (0,0) center is at (initialStageX_, initialStageY_) in stage space and
-    * at pixel (tileWidth/2, tileHeight/2).
+    * at pixel (effectiveTileWidth/2, effectiveTileHeight/2).
     */
    private Point2D.Double stageToPixel(double stageX, double stageY) {
       int tileWidth = dataSource_.getTileWidth();
@@ -1587,8 +1807,11 @@ public class DeskewExploreManager {
       if (tileWidth <= 0 || tileHeight <= 0 || pixelSizeUm_ <= 0) {
          return null;
       }
-      double pixelX = (stageX - initialStageX_) / pixelSizeUm_ + tileWidth / 2.0;
-      double pixelY = (stageY - initialStageY_) / pixelSizeUm_ + tileHeight / 2.0;
+      int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+      double effectiveTileWidth = tileWidth - overlapPixels;
+      double effectiveTileHeight = tileHeight - overlapPixels;
+      double pixelX = (stageX - initialStageX_) / pixelSizeUm_ + effectiveTileWidth / 2.0;
+      double pixelY = (stageY - initialStageY_) / pixelSizeUm_ + effectiveTileHeight / 2.0;
       return new Point2D.Double(pixelX, pixelY);
    }
 
@@ -1677,18 +1900,16 @@ public class DeskewExploreManager {
             int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
             int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
 
-            // The center of tile (0,0) is at pixel (tileWidth/2, tileHeight/2)
+            // The center of tile (0,0) is at pixel (effectiveTileWidth/2, effectiveTileHeight/2)
             // and corresponds to stage (initialStageX_, initialStageY_)
-            // So we need to offset by half a tile
-            double offsetPixelX = pixelX - tileWidth / 2.0;
-            double offsetPixelY = pixelY - tileHeight / 2.0;
+            int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+            double effectiveTileWidth = tileWidth - overlapPixels;
+            double effectiveTileHeight = tileHeight - overlapPixels;
+            double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
+            double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
 
             double targetX = initialStageX_ + offsetPixelX * pixelSizeUm_;
             double targetY = initialStageY_ + offsetPixelY * pixelSizeUm_;
-
-            studio_.logs().logMessage("Deskew Explore: moving stage to pixel ("
-                    + pixelX + ", " + pixelY + ") -> stage ("
-                    + targetX + ", " + targetY + ")");
 
             studio_.core().setXYPosition(targetX, targetY);
             studio_.core().waitForDevice(studio_.core().getXYStageDevice());
@@ -1697,5 +1918,68 @@ public class DeskewExploreManager {
             studio_.logs().logError(e, "Deskew Explore: error moving stage");
          }
       });
+   }
+
+   /**
+    * Writes pending display settings and view state into the storage directory
+    * so they are included when the data is subsequently copied to its final location.
+    * Must be called while storage_ is still open (before saveDataTo closes it).
+    */
+   private void writeSettingsToTempDir() {
+      if (storage_ == null) {
+         return;
+      }
+      String diskLocation = storage_.getDiskLocation();
+      if (diskLocation == null) {
+         return;
+      }
+      File dataDir = new File(diskLocation);
+      if (!dataDir.exists()) {
+         return;
+      }
+      try {
+         if (pendingMMDisplaySettings_ != null) {
+            File f = new File(dataDir, MM_DISPLAY_SETTINGS_FILE);
+            ((DefaultDisplaySettings) pendingMMDisplaySettings_).save(f);
+         }
+         if (pendingViewState_ != null) {
+            File f = new File(dataDir, VIEW_STATE_FILE);
+            Files.write(f.toPath(),
+                    pendingViewState_.toString(2).getBytes(StandardCharsets.UTF_8));
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Failed to write settings to data dir");
+      }
+   }
+
+   private static JSONObject captureViewState(TiledDataViewerAPI viewer) {
+      Point2D.Double offset = viewer.getViewOffset();
+      Point2D.Double displaySize = viewer.getDisplayImageSize();
+      Point2D.Double sourceSize = viewer.getFullResSourceDataSize();
+      JSONObject json = new JSONObject();
+      try {
+         json.put("xView", offset.x);
+         json.put("yView", offset.y);
+         // Save magnification (display pixels / source pixels) rather than raw source dims,
+         // so that view-state restore works correctly regardless of canvas size at restore time.
+         if (displaySize.x > 0 && sourceSize.x > 0) {
+            json.put("magnification", displaySize.x / sourceSize.x);
+         }
+      } catch (mmcorej.org.json.JSONException e) {
+         return null;
+      }
+      return json;
+   }
+
+   private static JSONObject loadViewState(File file) {
+      if (!file.canRead()) {
+         return null;
+      }
+      try {
+         byte[] bytes = Files.readAllBytes(file.toPath());
+         return new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+      } catch (Exception e) {
+         return null;
+      }
    }
 }
