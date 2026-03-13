@@ -215,7 +215,8 @@ public class DisplayModel {
     * preserving the requested zoom area. Use this instead of setFullResSourceDataSize()
     * when the canvas is already sized, to avoid aspect-ratio mismatch.
     */
-   public void setFullResSourceDataSizeAspectCorrected(double requestedWidth, double requestedHeight) {
+   public void setFullResSourceDataSizeAspectCorrected(double requestedWidth,
+                                                       double requestedHeight) {
       Point2D.Double canvasSize = viewCoords_.getDisplayImageSize();
       if (canvasSize.x == 0 || canvasSize.y == 0) {
          viewCoords_.setFullResSourceDataSize(requestedWidth, requestedHeight);
@@ -313,7 +314,8 @@ public class DisplayModel {
                      public void run() {
                         // make sure GUI and display settings are in sync
                         display_.readHistogramControlsStateFromGUI();
-                        String channelName = (String) axesPositions.get(TiledDataViewer.CHANNEL_AXIS);
+                        String channelName = (String) axesPositions
+                                 .get(TiledDataViewer.CHANNEL_AXIS);
 
                         if (!channelName.equals(TiledDataViewer.NO_CHANNEL)
                                  && displaySettings_.containsChannel(TiledDataViewer.NO_CHANNEL)) {

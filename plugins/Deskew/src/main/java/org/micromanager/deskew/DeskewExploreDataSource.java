@@ -7,8 +7,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,8 +31,10 @@ import org.micromanager.tileddataviewer.overlay.TextRoi;
  * Implements the interfaces required for NDViewer to function,
  * including mouse handling and overlay rendering for tile selection.
  */
-public class DeskewExploreDataSource implements TiledDataViewerDataSource, TiledDataViewerAcqInterface,
-         TiledDataViewerCanvasMouseListenerInterface, TiledDataViewerOverlayerPlugin {
+public class DeskewExploreDataSource implements TiledDataViewerDataSource,
+         TiledDataViewerAcqInterface,
+         TiledDataViewerCanvasMouseListenerInterface,
+         TiledDataViewerOverlayerPlugin {
 
    private static final double ZOOM_FACTOR = 1.4;
 

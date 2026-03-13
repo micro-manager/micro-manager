@@ -19,8 +19,8 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
 import org.micromanager.tiledataprovider.TiledDataProviderAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
 
 /**
  * Wraps NDTiffStorage (MultiresNDTiffAPI) as an MM DataProvider.
@@ -49,7 +49,9 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
     * @param storage     the NDTiff storage backend
     * @param name        display name for this data provider
     */
-   public TiledDataViewerDataProvider(DataManager dataManager, TiledDataProviderAPI storage, String name) {
+   public TiledDataViewerDataProvider(DataManager dataManager,
+                                      TiledDataProviderAPI storage,
+                                      String name) {
       dataManager_ = dataManager;
       storage_ = storage;
       axesBridge_ = new AxesBridge();

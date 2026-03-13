@@ -4,9 +4,9 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionListener;
-import java.net.URL;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -480,7 +480,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
             "Stop tile acquisition after the current tile finishes.");
       interruptExploreButton_.setEnabled(false);
       interruptExploreButton_.addActionListener(e -> exploreManager_.interruptAcquisition());
-      explorePanel.add(interruptExploreButton_ );
+      explorePanel.add(interruptExploreButton_);
 
       JButton exploreHelpButton = new JButton("Help");
       exploreHelpButton.addActionListener(e -> JOptionPane.showMessageDialog(

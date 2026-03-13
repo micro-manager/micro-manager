@@ -83,13 +83,20 @@ public class TiledDataViewer implements TiledDataViewerAPI {
    private TiledDataViewerDataSource dataSource_;
    private DisplayModel displayModel_;
 
-   public TiledDataViewer(TiledDataViewerDataSource cache, TiledDataViewerAcqInterface acq, JSONObject summaryMD,
-                          double pixelSize, boolean rgb) {
+   public TiledDataViewer(TiledDataViewerDataSource cache,
+                          TiledDataViewerAcqInterface acq,
+                          JSONObject summaryMD,
+                          double pixelSize,
+                          boolean rgb) {
       this(cache, acq, summaryMD, pixelSize, rgb, null);
    }
 
-   public TiledDataViewer(TiledDataViewerDataSource dataSource, TiledDataViewerAcqInterface acq, JSONObject summaryMD,
-                          double pixelSize, boolean rgb, String preferencesKey) {
+   public TiledDataViewer(TiledDataViewerDataSource dataSource,
+                          TiledDataViewerAcqInterface acq,
+                          JSONObject summaryMD,
+                          double pixelSize,
+                          boolean rgb,
+                          String preferencesKey) {
       dataSource_ = dataSource;
       pixelSizeUm_ = pixelSize; //TODO: Could be replaced later with per image pixel size
       summaryMetadata_ = summaryMD;

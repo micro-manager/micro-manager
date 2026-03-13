@@ -58,12 +58,12 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.tiledataprovider.NDTiffProviderAdapter;
 import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.remote.PycroManagerCompatibleUI;
+import org.micromanager.tiledataprovider.NDTiffProviderAdapter;
 
 /**
  * This class links data storage, viewer, and acquisition, acting as

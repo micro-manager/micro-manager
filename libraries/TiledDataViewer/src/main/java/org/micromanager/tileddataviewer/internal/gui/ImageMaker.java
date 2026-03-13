@@ -380,7 +380,7 @@ public class ImageMaker {
 
       public void recompute() {
          ChannelRenderSettings rs = getChannelSettings(channelName_);
-         GlobalRenderSettings gs = globalRenderSettings_;
+         final GlobalRenderSettings gs = globalRenderSettings_;
          contrastMin_ = rs.contrastMin;
          contrastMax_ = rs.contrastMax;
          rProcessor_.contrastMin_ = contrastMin_;
@@ -502,7 +502,7 @@ public class ImageMaker {
 
       public void recompute() {
          ChannelRenderSettings rs = getChannelSettings(channelName_);
-         GlobalRenderSettings gs = globalRenderSettings_;
+         final GlobalRenderSettings gs = globalRenderSettings_;
          contrastMin_ = rs.contrastMin;
          contrastMax_ = rs.contrastMax;
          create8BitImage();

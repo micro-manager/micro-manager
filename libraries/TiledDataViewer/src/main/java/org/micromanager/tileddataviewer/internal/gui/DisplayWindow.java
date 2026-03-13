@@ -9,6 +9,9 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.net.URL;
@@ -260,13 +263,13 @@ public class DisplayWindow implements WindowListener {
       previousCustomListener_ = (current.length > 0 && current[0] != listener_)
               ? (TiledDataViewerCanvasMouseListenerInterface) current[0] : null;
       // Remove all currently registered listeners.
-      for (java.awt.event.MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
+      for (MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
          imageCanvas_.getCanvas().removeMouseListener(l);
       }
-      for (java.awt.event.MouseMotionListener l : imageCanvas_.getCanvas().getMouseMotionListeners()) {
+      for (MouseMotionListener l : imageCanvas_.getCanvas().getMouseMotionListeners()) {
          imageCanvas_.getCanvas().removeMouseMotionListener(l);
       }
-      for (java.awt.event.MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
+      for (MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
          imageCanvas_.getCanvas().removeMouseWheelListener(l);
       }
       imageCanvas_.getCanvas().addMouseWheelListener(m);
@@ -277,16 +280,16 @@ public class DisplayWindow implements WindowListener {
    public void resetCanvasMouseListener() {
       // Restore the listener that was active before the last setCustomCanvasMouseListener call.
       // If there was a custom listener before that, restore it; otherwise restore the default.
-      TiledDataViewerCanvasMouseListenerInterface restore =
+      final TiledDataViewerCanvasMouseListenerInterface restore =
               previousCustomListener_ != null ? previousCustomListener_ : listener_;
       previousCustomListener_ = null;
-      for (java.awt.event.MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
+      for (MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
          imageCanvas_.getCanvas().removeMouseListener(l);
       }
-      for (java.awt.event.MouseMotionListener l : imageCanvas_.getCanvas().getMouseMotionListeners()) {
+      for (MouseMotionListener l : imageCanvas_.getCanvas().getMouseMotionListeners()) {
          imageCanvas_.getCanvas().removeMouseMotionListener(l);
       }
-      for (java.awt.event.MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
+      for (MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
          imageCanvas_.getCanvas().removeMouseWheelListener(l);
       }
       imageCanvas_.getCanvas().addMouseWheelListener(restore);

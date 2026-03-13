@@ -12,10 +12,10 @@ import java.util.function.Supplier;
 import javax.swing.SwingUtilities;
 import org.micromanager.exporttiles.ExportTiles;
 import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
-import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.overlay.Overlay;
+import org.micromanager.tiledataprovider.TiledDataProviderAPI;
 
 /**
  * Orchestrates the interactive export-region workflow inside Magellan.
