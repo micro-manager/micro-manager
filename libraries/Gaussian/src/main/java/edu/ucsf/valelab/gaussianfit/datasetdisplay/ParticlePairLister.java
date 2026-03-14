@@ -289,10 +289,10 @@ public class ParticlePairLister {
                      }
 
                      // Find matching points in the two ArrayLists
-                     Iterator it2 = gsCh1.iterator();
+                     Iterator<SpotData> it2 = gsCh1.iterator();
                      NearestPoint2D np = new NearestPoint2D(xyPointsCh2, maxDistanceNm_);
                      while (it2.hasNext()) {
-                        SpotData ch1Spot = (SpotData) it2.next();
+                        SpotData ch1Spot = it2.next();
                         Point2D.Double pCh1 = new Point2D.Double(
                               ch1Spot.getXCenter(), ch1Spot.getYCenter());
                         Point2D.Double pCh2 = np.findKDWSE(pCh1);
@@ -825,7 +825,7 @@ public class ParticlePairLister {
                      List<Double> mus = new ArrayList<Double>();
                      double[] bootsTrapResult;
                      while (counter < nrRuns && errorCounter < maxNrErrors) {
-                        List bootstrapList = ListUtils.listToListForBootstrap(vectorDistances);
+                        List<Double> bootstrapList = ListUtils.listToListForBootstrap(vectorDistances);
                         try {
                            bootsTrapResult = p2dLeastSquareFit(bootstrapList, maxDistanceNm_);
                            mus.add(bootsTrapResult[0]);
@@ -946,7 +946,7 @@ public class ParticlePairLister {
       return gf.solve();
    }
 
-   public static double[] p2dLeastSquareFit(List distances, double maxDistance)
+   public static double[] p2dLeastSquareFit(List<Double> distances, double maxDistance)
          throws FittingException, TooManyEvaluationsException {
       double[] d = ListUtils.toArray(distances);
 

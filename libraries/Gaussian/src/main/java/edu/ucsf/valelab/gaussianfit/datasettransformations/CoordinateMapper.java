@@ -148,7 +148,7 @@ public class CoordinateMapper {
     * Utility class that functions as a bridge between KdTree implementation and the data structures
     * used in our code
     */
-   public static class EnhancedKDTree extends KdTree.SqrEuclid {
+   public static class EnhancedKDTree extends KdTree.SqrEuclid<Integer> {
 
       final Point2D.Double[] points_;
 
@@ -190,10 +190,10 @@ public class CoordinateMapper {
          // reverse through the list and remove items until distance is smaller than 
          // maxDistance
          final double maxDistanceSquare = maxDistance * maxDistance;
-         ListIterator li = nearestNeighbors.listIterator(nearestNeighbors.size());
+         ListIterator<Point2D.Double> li = nearestNeighbors.listIterator(nearestNeighbors.size());
          boolean goOn = true;
          while (li.hasPrevious() && goOn) {
-            Point2D.Double controlPoint = (Point2D.Double) li.previous();
+            Point2D.Double controlPoint = li.previous();
             if (NearestPoint2D.distance2(testPoint, controlPoint) > maxDistanceSquare) {
                li.remove();
             } else {
@@ -392,9 +392,9 @@ public class CoordinateMapper {
       // are [x,y,1] for each Point2D.Double:
 
       int i = 0;
-      for (Map.Entry pair : pointPairs.entrySet()) {
-         Point2D.Double uPt = (Point2D.Double) pair.getKey();
-         Point2D.Double vPt = (Point2D.Double) pair.getValue();
+      for (Map.Entry<Point2D.Double, Point2D.Double> pair : pointPairs.entrySet()) {
+         Point2D.Double uPt = pair.getKey();
+         Point2D.Double vPt = pair.getValue();
 
          insertPoint2DInMatrix(u, uPt, i);
          insertPoint2DInMatrix(v, vPt, i);
@@ -555,9 +555,9 @@ public class CoordinateMapper {
          double maxDistance = 0.0;
          AffineTransform af = generateAffineTransformFromPointPairs(cleanedPointMap);
          Point2D.Double maxPairKey = null;
-         for (Map.Entry pair : cleanedPointMap.entrySet()) {
-            Point2D.Double uPt = (Point2D.Double) pair.getValue();
-            Point2D.Double otherPt = (Point2D.Double) pair.getKey();
+         for (Map.Entry<Point2D.Double, Point2D.Double> pair : cleanedPointMap.entrySet()) {
+            Point2D.Double uPt = pair.getValue();
+            Point2D.Double otherPt = pair.getKey();
             Point2D.Double corPt = (Point2D.Double) af.transform(otherPt, null);
             corPoints.put(uPt, corPt);
             double distance = Math.sqrt(NearestPoint2D.distance2(uPt, corPt));

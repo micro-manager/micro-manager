@@ -202,15 +202,15 @@ public class DataCollectionForm extends JFrame {
 
    // GUI elements
    private DataTable mainTable_;
-   private JComboBox saveFormatBox_;
+   private JComboBox<String> saveFormatBox_;
    private JTextField pairsMaxDistanceField_;
-   private JComboBox method2CBox_;
+   private JComboBox<String> method2CBox_;
    private JLabel reference2CName_;
    private JCheckBox logLogCheckBox_;
-   private JComboBox plotComboBox_;
+   private JComboBox<String> plotComboBox_;
    private JCheckBox powerSpectrumCheckBox_;
-   private JComboBox visualizationMagnification_;
-   private JComboBox visualizationModel_;
+   private JComboBox<String> visualizationMagnification_;
+   private JComboBox<String> visualizationModel_;
    private JLabel zCalibrationLabel_;
    private JCheckBox filterIntensityCheckBox_;
    private JTextField intensityMax_;
@@ -324,7 +324,7 @@ public class DataCollectionForm extends JFrame {
 
       // Read UI values bakc form Profile
       UserProfile up = studio_.getUserProfile();
-      Class oc = DataCollectionForm.class;
+      Class<DataCollectionForm> oc = DataCollectionForm.class;
       settings_ = up.getSettings(oc);
       super.setBounds(
             settings_.getInteger(FRAMEXPOS, 50),
@@ -448,20 +448,20 @@ public class DataCollectionForm extends JFrame {
 
       intensityMax_ = new JTextField();
       sigmaMax_ = new JTextField();
-      visualizationMagnification_ = new JComboBox();
-      visualizationModel_ = new JComboBox();
+      visualizationMagnification_ = new JComboBox<String>();
+      visualizationModel_ = new JComboBox<String>();
       sigmaMin_ = new JTextField();
       intensityMin_ = new JTextField();
       filterIntensityCheckBox_ = new JCheckBox();
       filterSigmaCheckBox_ = new JCheckBox();
       zCalibrationLabel_ = new JLabel();
       logLogCheckBox_ = new JCheckBox();
-      plotComboBox_ = new JComboBox();
+      plotComboBox_ = new JComboBox<String>();
       powerSpectrumCheckBox_ = new JCheckBox();
       pairsMaxDistanceField_ = new JTextField();
       reference2CName_ = new JLabel("  ");
-      method2CBox_ = new JComboBox();
-      saveFormatBox_ = new JComboBox();
+      method2CBox_ = new JComboBox<String>();
+      saveFormatBox_ = new JComboBox<String>();
       mainTable_ = new DataTable();
 
       final String insets = "insets 3";
@@ -509,7 +509,7 @@ public class DataCollectionForm extends JFrame {
       generalPanel.add(saveButton);
 
       saveFormatBox_.setFont(gFont);
-      saveFormatBox_.setModel(new DefaultComboBoxModel(fileFormats_));
+      saveFormatBox_.setModel(new DefaultComboBoxModel<String>(fileFormats_));
       saveFormatBox_.setPreferredSize(dropDownSize);
       saveFormatBox_.setMaximumSize(dropDownSizeMax);
       generalPanel.add(saveFormatBox_, "wrap");
@@ -614,7 +614,7 @@ public class DataCollectionForm extends JFrame {
       c2Panel.add(reference2CName_, "width 50:50:60, wrap");
 
       method2CBox_.setFont(gFont);
-      method2CBox_.setModel(new DefaultComboBoxModel(c2CorrectAlgorithms_));
+      method2CBox_.setModel(new DefaultComboBoxModel<String>(c2CorrectAlgorithms_));
       method2CBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -677,7 +677,7 @@ public class DataCollectionForm extends JFrame {
       tracksPanel.add(plotButton);
 
       plotComboBox_.setFont(gFont);
-      plotComboBox_.setModel(new DefaultComboBoxModel(TrackPlotter.PLOTMODES));
+      plotComboBox_.setModel(new DefaultComboBoxModel<String>(TrackPlotter.PLOTMODES));
       plotComboBox_.setMaximumSize(dropDownSizeMax);
       tracksPanel.add(plotComboBox_, "wrap");
 
@@ -879,13 +879,13 @@ public class DataCollectionForm extends JFrame {
       visualizationPanel.add(renderButton);
 
       visualizationModel_.setFont(gFont);
-      visualizationModel_.setModel(new DefaultComboBoxModel(renderModes_));
+      visualizationModel_.setModel(new DefaultComboBoxModel<String>(renderModes_));
       visualizationModel_.setPreferredSize(dropDownSize);
       visualizationModel_.setMaximumSize(dropDownSizeMax);
       visualizationPanel.add(visualizationModel_);
 
       visualizationMagnification_.setFont(gFont);
-      visualizationMagnification_.setModel(new DefaultComboBoxModel(renderSizes_));
+      visualizationMagnification_.setModel(new DefaultComboBoxModel<String>(renderSizes_));
       visualizationMagnification_.setPreferredSize(dropDownSize);
       visualizationMagnification_.setMaximumSize(dropDownSizeMax);
       visualizationPanel.add(visualizationMagnification_, "wrap");
@@ -1227,7 +1227,7 @@ public class DataCollectionForm extends JFrame {
             }
 
             // Find matching points in the two ArrayLists
-            Iterator it2 = xyPointsCh1.iterator();
+            Iterator<Point2D.Double> it2 = xyPointsCh1.iterator();
             NearestPoint2D np;
             try {
                np = new NearestPoint2D(xyPointsCh2,
@@ -1238,7 +1238,7 @@ public class DataCollectionForm extends JFrame {
             }
 
             while (it2.hasNext()) {
-               Point2D.Double pCh1 = (Point2D.Double) it2.next();
+               Point2D.Double pCh1 = it2.next();
                Point2D.Double pCh2 = np.findKDWSE(pCh1);
                if (pCh2 != null) {
                   points.put(pCh1, pCh2);
@@ -1843,7 +1843,7 @@ public class DataCollectionForm extends JFrame {
                for (SpotData spotData : rowData.spotList_) {
                   SpotData sSpotData = null;
                   if (sSpotListByFrame.get(spotData.getFrame()) != null) {
-                     sSpotData = (SpotData) sSpotListByFrame.get(spotData.getFrame()).get(0);
+                     sSpotData = sSpotListByFrame.get(spotData.getFrame()).get(0);
                   }
                   if (sSpotData != null) {
                      double xDistance = spotData.getXCenter() - sSpotData.getXCenter();
@@ -1892,7 +1892,7 @@ public class DataCollectionForm extends JFrame {
                for (SpotData spotData : rowData.spotList_) {
                   SpotData sSpotData = null;
                   if (sSpotListByFrame.get(spotData.getFrame()) != null) {
-                     sSpotData = (SpotData) sSpotListByFrame.get(spotData.getFrame()).get(0);
+                     sSpotData = sSpotListByFrame.get(spotData.getFrame()).get(0);
                   }
                   if (sSpotData != null) {
                      double xDist = spotData.getXCenter() - sSpotData.getXCenter();
@@ -2328,10 +2328,10 @@ public class DataCollectionForm extends JFrame {
 
             List<SpotData> correctedData =
                   Collections.synchronizedList(new ArrayList<SpotData>());
-            Iterator it = rowData.spotList_.iterator();
+            Iterator<SpotData> it = rowData.spotList_.iterator();
             int frameNr = 0;
             while (it.hasNext()) {
-               SpotData gs = (SpotData) it.next();
+               SpotData gs = it.next();
                if (gs.getFrame() != frameNr) {
                   frameNr = gs.getFrame();
                   ij.IJ.showStatus("Executing color correction...");
