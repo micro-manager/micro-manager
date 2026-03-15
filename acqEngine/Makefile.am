@@ -16,5 +16,9 @@ ant_test.sh:
 
 CLEANFILES = ant_test.sh
 
+.PHONY: pitest
+pitest:
+	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) pitest
+
 clean-local:
 	$(ANT) $(ANTFLAGS) clean
