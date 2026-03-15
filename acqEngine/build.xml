@@ -28,6 +28,7 @@
 		<path refid="project.test.classpath"/>
 	</path>
 
+	<property name="pitest.targetTests" value="org.micromanager.internal.jacque.*"/>
 	<target name="pitest" depends="jar" description="Run PIT mutation testing">
 		<mkdir dir="${test.intdir}"/>
 		<mm-javac srcdir="${testdir}" destdir="${test.intdir}">
@@ -43,7 +44,7 @@
 			classPath="pitest.classpath"
 			targetClasses="org.micromanager.internal.jacque.*"
 			excludedClasses="org.micromanager.internal.jacque.CoreOps*,org.micromanager.internal.jacque.EngineState*,org.micromanager.internal.jacque.*Test*,org.micromanager.internal.jacque.Helper*"
-			targetTests="org.micromanager.internal.jacque.*"
+			targetTests="${pitest.targetTests}"
 			reportDir="pit-reports"
 			sourceDir="src/main/java"
 			timestampedReports="false"
