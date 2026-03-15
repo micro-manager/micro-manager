@@ -126,13 +126,13 @@ public class ExplorerFrame extends JFrame {
       startButton.addActionListener(e -> explorerManager_.startExplore());
       add(startButton);
 
-      stopButton_ = new JButton("Stop");
-      stopButton_.setToolTipText("Stop tile acquisition after the current tile finishes.");
+      stopButton_ = new JButton("Interrupt");
+      stopButton_.setToolTipText("Interrupt tile acquisition after the current tile finishes.");
       stopButton_.setEnabled(false);
       stopButton_.addActionListener(e -> explorerManager_.interruptAcquisition());
       add(stopButton_);
 
-      JButton helpButton = new JButton("?");
+      JButton helpButton = new JButton("Help");
       helpButton.addActionListener(e -> JOptionPane.showMessageDialog(
             this,
             "Navigation:\n"
