@@ -67,7 +67,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
       axisPane.setViewportView(axisTable_);
 
       //populate zDropdown
-      zTypeDropdown.setModel(new DefaultComboBoxModel(ZGenerator.Type.values()));
+      zTypeDropdown.setModel(new DefaultComboBoxModel<ZGenerator.Type>(ZGenerator.Type.values()));
 
       userParameter1 = 1;
    }
@@ -203,7 +203,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
       }
    }
 
-   private class RegionListModel extends AbstractListModel {
+   private class RegionListModel extends AbstractListModel<String> {
       public RegionList regions_;
 
       private RegionListModel() {
@@ -216,7 +216,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
       }
 
       @Override
-      public Object getElementAt(int index) {
+      public String getElementAt(int index) {
          Region r = regions_.getRegion(index);
          return r.name();
       }
@@ -387,7 +387,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
       directoryButton = new javax.swing.JButton();
       jLabel1 = new javax.swing.JLabel();
       jScrollPane1 = new javax.swing.JScrollPane();
-      acquireList = new javax.swing.JList();
+      acquireList = new javax.swing.JList<String>();
       jLabel2 = new javax.swing.JLabel();
       filenameText = new javax.swing.JTextField();
       addPointToRegion = new javax.swing.JButton();
@@ -410,7 +410,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
       axisPane = new javax.swing.JScrollPane();
       jLabel6 = new javax.swing.JLabel();
       mjLabel7 = new javax.swing.JLabel();
-      zTypeDropdown = new javax.swing.JComboBox();
+      zTypeDropdown = new javax.swing.JComboBox<ZGenerator.Type>();
       loadRegionsButton = new javax.swing.JButton();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -737,7 +737,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
 
       mjLabel7.setText("How to handle movement along those axes?");
 
-      zTypeDropdown.setModel(new javax.swing.DefaultComboBoxModel(
+      zTypeDropdown.setModel(new javax.swing.DefaultComboBoxModel<ZGenerator.Type>(
             new String[] {"Item 1", "Item 2", "Item 3", "Item 4"}));
 
       loadRegionsButton.setText("Load Regions From Folder");
@@ -1011,7 +1011,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
    }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JList acquireList;
+   private javax.swing.JList<String> acquireList;
    private javax.swing.JButton addPositionList;
    private javax.swing.JButton deleteRegion;
    private javax.swing.JButton directoryButton;
@@ -1043,6 +1043,6 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
    private javax.swing.JLabel regionText;
    private javax.swing.JLabel statusText;
    private javax.swing.ButtonGroup zAxisButtonGroup;
-   private javax.swing.JComboBox zTypeDropdown;
+   private javax.swing.JComboBox<ZGenerator.Type> zTypeDropdown;
    // End of variables declaration//GEN-END:variables
 }

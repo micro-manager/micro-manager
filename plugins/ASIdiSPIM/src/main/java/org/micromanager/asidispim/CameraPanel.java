@@ -58,7 +58,7 @@ public class CameraPanel extends ListeningJPanel{
    final private Properties props_;
    final private Prefs prefs_;
    final private Cameras cameras_;
-   final private JComboBox camModeCB_;
+   final private JComboBox<CameraModes.Keys> camModeCB_;
    
    
    public CameraPanel(final Studio gui, final Devices devices, 

@@ -31,6 +31,7 @@ import boofcv.struct.image.Planar;
  *
  * @author Nico
  */
+@SuppressWarnings("unchecked")
 public class GPixelMath {
 
    /**

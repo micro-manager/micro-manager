@@ -182,8 +182,8 @@ public class CameraModes {
       return keyList;
    }
 
-   public JComboBox getComboBox() {
-      JComboBox jcb = new JComboBox();
+   public JComboBox<Keys> getComboBox() {
+      JComboBox<Keys> jcb = new JComboBox<>();
       ActionListener l = new CameraModeComboBoxListener(jcb);
       jcb.addActionListener(l);
       // when devices are changed we want to regenerate the list
@@ -194,9 +194,9 @@ public class CameraModes {
    private class CameraModeComboBoxListener implements ActionListener,
            DevicesListenerInterface {
 
-      private final JComboBox jcb_;
+      private final JComboBox<Keys> jcb_;
 
-      public CameraModeComboBoxListener(JComboBox jcb) {
+      public CameraModeComboBoxListener(JComboBox<Keys> jcb) {
          jcb_ = jcb;
          updateSelections();  // do initial rendering
       }
@@ -238,7 +238,7 @@ public class CameraModes {
          int origCode = prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                Properties.Keys.PLUGIN_CAMERA_MODE, 0);
          
-         DefaultComboBoxModel cbModel = new DefaultComboBoxModel();
+         DefaultComboBoxModel<Keys> cbModel = new DefaultComboBoxModel<>();
          
          List<Keys> validModeKeys = getValidModeKeys();
          Keys origItem = null;

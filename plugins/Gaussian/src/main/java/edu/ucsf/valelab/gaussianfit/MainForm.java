@@ -149,11 +149,11 @@ public class MainForm extends JFrame {
    private JTextField readNoiseTextField_;
 
    private JToggleButton showOverlay_;
-   private JComboBox preFilterComboBox_;
+   private JComboBox<String> preFilterComboBox_;
    private JTextField noiseToleranceTextField_;
 
-   private JComboBox fitDimensionsComboBox1_;
-   private JComboBox fitMethodComboBox1_;
+   private JComboBox<String> fitDimensionsComboBox1_;
+   private JComboBox<String> fitMethodComboBox1_;
    private JTextField boxSizeTextField;
    private JTextField maxIterationsTextField_;
    private JCheckBox useFixedWidthInFit_;
@@ -324,13 +324,13 @@ public class MainForm extends JFrame {
       minSigmaTextField_ = new JTextField();
       noiseToleranceTextField_ = new JTextField();
       pixelSizeTextField_ = new JTextField();
-      preFilterComboBox_ = new JComboBox();
-      fitDimensionsComboBox1_ = new JComboBox();
+      preFilterComboBox_ = new JComboBox<>();
+      fitDimensionsComboBox1_ = new JComboBox<>();
       timeIntervalTextField_ = new JTextField();
       maxIterationsTextField_ = new JTextField();
       maxSigmaTextField_ = new JTextField();
       boxSizeTextField = new JTextField();
-      fitMethodComboBox1_ = new JComboBox();
+      fitMethodComboBox1_ = new JComboBox<>();
       useFixedWidthInFit_ = new JCheckBox();
       fixedWidthInFit_ = new JTextField();
 
@@ -466,7 +466,7 @@ public class MainForm extends JFrame {
       getContentPane().add(jLabel, indent);
 
       preFilterComboBox_.setFont(gFont);
-      preFilterComboBox_.setModel(new DefaultComboBoxModel(new String[] {"None", "Gaussian1-5"}));
+      preFilterComboBox_.setModel(new DefaultComboBoxModel<>(new String[] {"None", "Gaussian1-5"}));
       preFilterComboBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -501,7 +501,7 @@ public class MainForm extends JFrame {
       getContentPane().add(jLabel, indent);
 
       fitDimensionsComboBox1_.setFont(gFont);
-      fitDimensionsComboBox1_.setModel(new DefaultComboBoxModel(
+      fitDimensionsComboBox1_.setModel(new DefaultComboBoxModel<>(
             new String[] {"1", "2", "3"}));
       fitDimensionsComboBox1_.setMinimumSize(dropDownSize);
       fitDimensionsComboBox1_.setMaximumSize(dropDownSizeMax);
@@ -521,7 +521,7 @@ public class MainForm extends JFrame {
       getContentPane().add(jLabel, indent);
 
       fitMethodComboBox1_.setFont(gFont);
-      fitMethodComboBox1_.setModel(new DefaultComboBoxModel(
+      fitMethodComboBox1_.setModel(new DefaultComboBoxModel<>(
             new String[] {"Simplex", "Levenberg-Marq", "Simplex-MLE", "LM-Weighted"}));
       fitMethodComboBox1_.setMinimumSize(dropDownSize);
       fitMethodComboBox1_.setMaximumSize(dropDownSize);

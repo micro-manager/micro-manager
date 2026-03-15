@@ -631,6 +631,7 @@ public class Cameras {
     * @param camMode camera mode
     * @return readout time in ms
     */
+   @SuppressWarnings("fallthrough")
    public float computeCameraReadoutTime(Devices.Keys camKey, CameraModes.Keys camMode) {
 
       if (camKey == null) {
@@ -660,9 +661,10 @@ public class Cameras {
                   if (readoutTimeMs < 0.249f) {
                      readoutTimeMs = 0.25f;
                   }
-               } else {  // original Prime 
+               } else {  // original Prime
                   readoutTimeMs = 0.25f;
                }
+            // fall through
             default:
                break;
          }

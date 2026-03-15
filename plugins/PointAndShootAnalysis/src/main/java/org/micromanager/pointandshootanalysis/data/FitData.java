@@ -15,13 +15,13 @@ import org.micromanager.pointandshootanalysis.DataExporter;
  */
 public class FitData {
    private final List<Point2D> data_; // actual XY points that were fitted
-   private final Class fitType_; // Class that performed the fitting
+   private final Class<?> fitType_; // Class that performed the fitting
    private final DataExporter.Type subjectType_;
    private final double[] parms_; // parameters found in fit
    private final double rSquared_; // estimted of the goodness of fit
    private final double tHalf_; // x at which y is halfway between min and max
 
-   public FitData(List<Point2D> data, Class fitType, DataExporter.Type subjectType,
+   public FitData(List<Point2D> data, Class<?> fitType, DataExporter.Type subjectType,
                   double[] parms, double rSquared, double tHalf) {
       data_ = data;
       fitType_ = fitType;
@@ -35,7 +35,7 @@ public class FitData {
       return data_;
    }
 
-   public Class fitType() {
+   public Class<?> fitType() {
       return fitType_;
    }
 

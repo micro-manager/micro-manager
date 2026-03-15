@@ -21,6 +21,7 @@ public class IBeamSmartFrame extends ConfigurableMainFrame {
    }
 
    @Override
+   @SuppressWarnings("rawtypes")
    public HashMap<String, Setting> getDefaultPluginSettings() {
       HashMap<String, Setting> sttgs = new HashMap<String, Setting>();
       sttgs.put(SETTING_NLASERS,

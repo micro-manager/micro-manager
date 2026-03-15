@@ -233,20 +233,20 @@ public class MultiCameraFrame extends JFrame {
       jCheckBox1 = new JCheckBox();
       emGainSlider = new JSlider();
       emGainTextField = new JTextField();
-      modeComboBox = new JComboBox();
+      modeComboBox = new JComboBox<>();
       jLabel4 = new JLabel();
       jLabel5 = new JLabel();
       gainLabel = new JLabel();
-      speedComboBox = new JComboBox();
+      speedComboBox = new JComboBox<>();
       speedLabel = new JLabel();
       emCheckBox = new JCheckBox();
-      gainComboBox = new JComboBox();
+      gainComboBox = new JComboBox<>();
       frameTransferLabel = new JLabel();
-      frameTransferComboBox = new JComboBox();
+      frameTransferComboBox = new JComboBox<>();
       jLabel9 = new JLabel();
-      cameraSelectComboBox = new JComboBox();
+      cameraSelectComboBox = new JComboBox<>();
       triggerLabel = new JLabel();
-      triggerComboBox = new JComboBox();
+      triggerComboBox = new JComboBox<>();
       tempButton = new JButton();
       tempLabel = new JLabel();
       jLabel1 = new JLabel();
@@ -283,7 +283,7 @@ public class MultiCameraFrame extends JFrame {
 
       modeComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       modeComboBox.setModel(
-            new DefaultComboBoxModel(new String[] {"EM", "Conventional"}));
+            new DefaultComboBoxModel<>(new String[] {"EM", "Conventional"}));
       modeComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             modeComboBoxItemStateChanged(evt);
@@ -306,7 +306,7 @@ public class MultiCameraFrame extends JFrame {
 
       speedComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       speedComboBox.setModel(
-            new DefaultComboBoxModel(new String[] {"1MHz", "3MHz", "5MHz", "10MHz"}));
+            new DefaultComboBoxModel<>(new String[] {"1MHz", "3MHz", "5MHz", "10MHz"}));
       speedComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             speedComboBoxItemStateChanged(evt);
@@ -326,7 +326,7 @@ public class MultiCameraFrame extends JFrame {
 
       gainComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       gainComboBox.setModel(
-            new DefaultComboBoxModel(new String[] {"1", "2", "3", "4", "5"}));
+            new DefaultComboBoxModel<>(new String[] {"1", "2", "3", "4", "5"}));
       gainComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             gainComboBoxItemStateChanged(evt);
@@ -338,7 +338,7 @@ public class MultiCameraFrame extends JFrame {
 
       frameTransferComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       frameTransferComboBox.setModel(
-            new DefaultComboBoxModel(new String[] {"On", "Off"}));
+            new DefaultComboBoxModel<>(new String[] {"On", "Off"}));
       frameTransferComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             frameTransferComboBoxItemStateChanged(evt);
@@ -350,7 +350,7 @@ public class MultiCameraFrame extends JFrame {
 
       cameraSelectComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       cameraSelectComboBox.setModel(
-            new DefaultComboBoxModel(new String[] {"1", "2", "4", "8"}));
+            new DefaultComboBoxModel<>(new String[] {"1", "2", "4", "8"}));
       cameraSelectComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             cameraSelectComboBoxItemStateChanged(evt);
@@ -361,7 +361,7 @@ public class MultiCameraFrame extends JFrame {
       triggerLabel.setText("Trigger");
 
       triggerComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      triggerComboBox.setModel(new DefaultComboBoxModel(new String[] {"On", "Off"}));
+      triggerComboBox.setModel(new DefaultComboBoxModel<>(new String[] {"On", "Off"}));
       triggerComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             triggerComboBoxItemStateChanged(evt);
@@ -881,7 +881,7 @@ public class MultiCameraFrame extends JFrame {
       tempLabel.setText(tempText);
    }
 
-   private void updateItems(JComboBox comboBox, String property) {
+   private void updateItems(JComboBox<String> comboBox, String property) {
       if (comboBox != null) {
          try {
             String camera = camerasInUse_.get(0);
@@ -892,7 +892,7 @@ public class MultiCameraFrame extends JFrame {
             for (int i = 0; i < vals.size(); i++) {
                newVals[i + 1] = vals.get(i);
             }
-            comboBox.setModel(new DefaultComboBoxModel(newVals));
+            comboBox.setModel(new DefaultComboBoxModel<>(newVals));
 
          } catch (Exception ex) {
             gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
@@ -901,7 +901,7 @@ public class MultiCameraFrame extends JFrame {
       }
    }
 
-   private void getComboSelection(JComboBox comboBox, String property) {
+   private void getComboSelection(JComboBox<String> comboBox, String property) {
       if (comboBox == null || !comboBox.isEnabled()) {
          return;
       }
@@ -922,7 +922,7 @@ public class MultiCameraFrame extends JFrame {
       }
    }
 
-   private void setComboSelection(JComboBox comboBox, String property) {
+   private void setComboSelection(JComboBox<String> comboBox, String property) {
       if (!initialized(false, false)) {
          return;
       }
@@ -951,19 +951,19 @@ public class MultiCameraFrame extends JFrame {
    private JLabel gainLabel;
    private JLabel speedLabel;
    private JLabel triggerLabel;
-   private JComboBox cameraSelectComboBox;
-   private JComboBox frameTransferComboBox;
-   private JComboBox gainComboBox;
+   private JComboBox<String> cameraSelectComboBox;
+   private JComboBox<String> frameTransferComboBox;
+   private JComboBox<String> gainComboBox;
    private JCheckBox jCheckBox1;
    private JLabel jLabel1;
    private JLabel jLabel4;
    private JLabel jLabel5;
    private JLabel jLabel9;
-   private JComboBox modeComboBox;
-   private JComboBox speedComboBox;
+   private JComboBox<String> modeComboBox;
+   private JComboBox<String> speedComboBox;
    private JButton tempButton;
    private JLabel tempLabel;
-   private JComboBox triggerComboBox;
+   private JComboBox<String> triggerComboBox;
    // End of variables declaration//GEN-END:variables
 
 

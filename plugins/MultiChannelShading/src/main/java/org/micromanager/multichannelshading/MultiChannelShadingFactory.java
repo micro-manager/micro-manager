@@ -33,9 +33,9 @@ public class MultiChannelShadingFactory implements ProcessorFactory {
    private final Studio studio_;
    private final String channelGroup_;
    private final Boolean useOpenCL_;
-   private final List presets_;
+   private final List<String> presets_;
    private final String backgroundFile_;
-   private final List files_;
+   private final List<String> files_;
    private final String pixelSizeCalibration_;
 
    public MultiChannelShadingFactory(Studio studio, PropertyMap settings) {

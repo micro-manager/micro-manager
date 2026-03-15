@@ -240,7 +240,7 @@ public class PointAndShootAnalyzer implements Runnable {
 
          // create a boofCV Planar that contains all of the MM data (no copy, backed by MM)
          Coords.Builder cbb = dataProvider.getAnyImage().getCoords().copyBuilder();
-         Planar bCVStack = new Planar(GrayU16.class, dataProvider.getNextIndex(Coords.T));
+         Planar<GrayU16> bCVStack = new Planar<>(GrayU16.class, dataProvider.getNextIndex(Coords.T));
          bCVStack.setWidth(imgWidth);
          bCVStack.setHeight(imgHeight);
          bCVStack.setStride(imgWidth);
@@ -376,7 +376,7 @@ public class PointAndShootAnalyzer implements Runnable {
                   frame < dataProvider.getNextIndex(Coords.T); frame++) {
                if (bleachSpotsMissed < 5 || continueBleachSpotTracking) {
                   ParticleData particle = track.get(frame);
-                  ImageGray current = BoofCVImageConverter.subImage(dataProvider,
+                  ImageGray<?> current = BoofCVImageConverter.subImage(dataProvider,
                         cb, frame, currentPoint, halfROISize_);
                   if (current != null) {
                      Point2D_I32 offset = new Point2D_I32(currentPoint.x - halfROISize_,
@@ -912,14 +912,14 @@ public class PointAndShootAnalyzer implements Runnable {
       Coords coord = cb.t(frame).build();
       Image img = dp.getImage(coord);
 
-      ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
+      ImageGray<?> ig = BoofCVImageConverter.mmToBoofCV(img, false);
       if (p.getX() - halfROISize_ < 0
             || p.getY() - halfROISize_ < 0
             || p.getX() + halfROISize_ >= ig.getWidth()
             || p.getY() + halfROISize_ >= ig.getHeight()) {
          return null; // TODO: we'll get stuck at the edge
       }
-      ImageGray sub = (ImageGray) ig.subimage((int) p.getX() - halfROISize_,
+      ImageGray<?> sub = ig.subimage((int) p.getX() - halfROISize_,
             (int) p.getY() - halfROISize_, (int) p.getX() + halfROISize_,
             (int) p.getY() + halfROISize_);
       int threshold = GThresholdImageOps.computeOtsu2(sub,

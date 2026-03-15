@@ -86,12 +86,28 @@ public class SliceTiming {
                && cameraDuration == s.cameraDuration
                && cameraExposure == s.cameraExposure
                && sliceDuration == s.sliceDuration
-               && valid == s.valid); 
+               && valid == s.valid);
       } else {
          return false;
       }
-      
-      
+
+
+   }
+
+   @Override
+   public int hashCode() {
+      int result = 17;
+      result = 31 * result + Float.floatToIntBits(scanDelay);
+      result = 31 * result + scanNum;
+      result = 31 * result + Float.floatToIntBits(scanPeriod);
+      result = 31 * result + Float.floatToIntBits(laserDelay);
+      result = 31 * result + Float.floatToIntBits(laserDuration);
+      result = 31 * result + Float.floatToIntBits(cameraDelay);
+      result = 31 * result + Float.floatToIntBits(cameraDuration);
+      result = 31 * result + Float.floatToIntBits(cameraExposure);
+      result = 31 * result + Float.floatToIntBits(sliceDuration);
+      result = 31 * result + (valid ? 1 : 0);
+      return result;
    }
 
 }

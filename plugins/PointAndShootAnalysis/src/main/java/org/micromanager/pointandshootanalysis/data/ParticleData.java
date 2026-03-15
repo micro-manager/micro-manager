@@ -263,7 +263,7 @@ public class ParticleData {
                                               final Point2D_I32 startCenter,
                                               final int halfBoxSize) throws IOException {
 
-      ImageGray sub = BoofCVImageConverter.subImage(dp, cb, frame, startCenter, halfBoxSize);
+      ImageGray<?> sub = BoofCVImageConverter.subImage(dp, cb, frame, startCenter, halfBoxSize);
       if (sub == null) {
          return null;
       }
