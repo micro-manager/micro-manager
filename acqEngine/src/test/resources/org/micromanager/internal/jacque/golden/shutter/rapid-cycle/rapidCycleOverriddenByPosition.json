@@ -1,5 +1,5 @@
 {
-  "description": "Position change overrides rapid cycle: shutter closes at position boundary despite keepShutterOpenChannels\u003dtrue and waitTime\u003d0",
+  "description": "Position change overrides rapid cycle: shutter closes at position boundary despite keepShutterOpenChannels=true and waitTime=0",
   "settings": {
     "numFrames": 2,
     "frames": [

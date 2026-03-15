@@ -1,5 +1,5 @@
 {
-  "description": "Rapid cycle does not apply when slice changes: keepShutterOpenChannels\u003dtrue but slice change forces shutter close",
+  "description": "Rapid cycle does not apply when slice changes: keepShutterOpenChannels=true but slice change forces shutter close",
   "settings": {
     "numFrames": 2,
     "frames": [

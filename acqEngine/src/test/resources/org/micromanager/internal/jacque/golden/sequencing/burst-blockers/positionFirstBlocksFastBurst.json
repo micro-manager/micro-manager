@@ -1,5 +1,5 @@
 {
-  "description": "timeFirst\u003dfalse with multiple positions blocks fast burst; default path with stage sequencing",
+  "description": "timeFirst=false with multiple positions blocks fast burst; default path with stage sequencing",
   "settings": {
     "numFrames": 2,
     "frames": [

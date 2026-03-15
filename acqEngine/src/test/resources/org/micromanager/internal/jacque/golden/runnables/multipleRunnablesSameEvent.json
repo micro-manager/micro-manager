@@ -1,5 +1,5 @@
 {
-  "description": "Two runnables targeting the same event (frameIndex\u003d1)",
+  "description": "Two runnables targeting the same event (frameIndex=1)",
   "settings": {
     "numFrames": 3,
     "frames": [

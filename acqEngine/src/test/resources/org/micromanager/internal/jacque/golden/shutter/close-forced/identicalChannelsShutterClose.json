@@ -1,5 +1,5 @@
 {
-  "description": "Identical channels with keepShutterOpenChannels\u003dfalse, 1 frame, 1 slice, 2 identical channels",
+  "description": "Identical channels with keepShutterOpenChannels=false, 1 frame, 1 slice, 2 identical channels",
   "settings": {
     "numFrames": 1,
     "frames": [

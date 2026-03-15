@@ -1,5 +1,5 @@
 {
-  "description": "Autofocus with skip\u003d0 and positions, 3 frames, no slices, 1 channel, 2 positions, time first",
+  "description": "Autofocus with skip=0 and positions, 3 frames, no slices, 1 channel, 2 positions, time first",
   "settings": {
     "numFrames": 3,
     "frames": [

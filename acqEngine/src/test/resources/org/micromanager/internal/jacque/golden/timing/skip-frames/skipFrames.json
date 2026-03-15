@@ -1,5 +1,5 @@
 {
-  "description": "Channel with skipFrames\u003d2, 6 frames, no slices, 1 channel (DAPI); skipFrames is effectively ignored for single channel in fast burst path (noChannelSkipsFrames check only applies to multi-channel)",
+  "description": "Channel with skipFrames=2, 6 frames, no slices, 1 channel (DAPI); skipFrames is effectively ignored for single channel in fast burst path (noChannelSkipsFrames check only applies to multi-channel)",
   "settings": {
     "numFrames": 6,
     "frames": [

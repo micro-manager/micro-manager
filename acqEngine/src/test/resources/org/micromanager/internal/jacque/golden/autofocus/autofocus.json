@@ -1,5 +1,5 @@
 {
-  "description": "Autofocus with skip\u003d1, slices first, 4 frames, 2 slices, 1 channel",
+  "description": "Autofocus with skip=1, slices first, 4 frames, 2 slices, 1 channel",
   "settings": {
     "numFrames": 4,
     "frames": [

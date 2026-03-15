@@ -1,5 +1,5 @@
 {
-  "description": "Rapid-cycle shutter via default path: keepShutterOpenChannels with different exposures, intervalMs\u003d0",
+  "description": "Rapid-cycle shutter via default path: keepShutterOpenChannels with different exposures, intervalMs=0",
   "settings": {
     "numFrames": 3,
     "frames": [

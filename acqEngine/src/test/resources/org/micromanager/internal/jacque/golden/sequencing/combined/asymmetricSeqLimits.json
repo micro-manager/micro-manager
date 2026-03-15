@@ -1,5 +1,5 @@
 {
-  "description": "Asymmetric sequence limits: tight stage maxLength\u003d2, generous property maxLength\u003d100",
+  "description": "Asymmetric sequence limits: tight stage maxLength=2, generous property maxLength=100",
   "settings": {
     "numFrames": 1,
     "frames": [

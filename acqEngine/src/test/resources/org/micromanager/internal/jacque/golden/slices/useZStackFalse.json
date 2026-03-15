@@ -1,5 +1,5 @@
 {
-  "description": "Channel with useZStack\u003dfalse, 1 frame, 3 slices, 1 channel (BF, exposure\u003d50)",
+  "description": "Channel with useZStack=false, 1 frame, 3 slices, 1 channel (BF, exposure=50)",
   "settings": {
     "numFrames": 1,
     "frames": [

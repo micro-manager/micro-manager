@@ -1,5 +1,5 @@
 {
-  "description": "Single frame with multiple slices on fast burst path: generateSimpleBurstSequence with numFrames\u003d1, single partition",
+  "description": "Single frame with multiple slices on fast burst path: generateSimpleBurstSequence with numFrames=1, single partition",
   "settings": {
     "numFrames": 1,
     "frames": [

@@ -1,5 +1,5 @@
 {
-  "description": "Mixed useZStack with slicesFirst\u003dfalse blocks fast burst via all-channels-do-z-stack gate",
+  "description": "Mixed useZStack with slicesFirst=false blocks fast burst via all-channels-do-z-stack gate",
   "settings": {
     "numFrames": 1,
     "frames": [

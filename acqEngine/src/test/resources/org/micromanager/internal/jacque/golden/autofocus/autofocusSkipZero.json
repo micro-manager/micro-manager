@@ -1,5 +1,5 @@
 {
-  "description": "Autofocus with skip\u003d0 prevents fast burst (autofocus on every frame)",
+  "description": "Autofocus with skip=0 prevents fast burst (autofocus on every frame)",
   "settings": {
     "numFrames": 3,
     "frames": [

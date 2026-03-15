@@ -1,5 +1,5 @@
 {
-  "description": "Property sequenceable but maxLength\u003d1 is less than 2 channels; blocks fast burst",
+  "description": "Property sequenceable but maxLength=1 is less than 2 channels; blocks fast burst",
   "settings": {
     "numFrames": 2,
     "frames": [
