@@ -20,5 +20,9 @@ CLEANFILES = ant_test.sh
 pitest:
 	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) pitest
 
+.PHONY: pitest-golden
+pitest-golden:
+	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" -Dpitest.targetTests=org.micromanager.internal.jacque.SequenceGeneratorGoldenTest $(ANTFLAGS) pitest
+
 clean-local:
 	$(ANT) $(ANTFLAGS) clean
