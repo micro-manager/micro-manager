@@ -69,7 +69,7 @@ public final class DefaultPluginManager implements PluginManager {
 
    private final Studio studio_;
    private final Thread loadingThread_;
-   private final Map<Class, List<MMGenericPlugin>> pluginTypeToPlugins_ =
+   private final Map<Class<?>, List<MMGenericPlugin>> pluginTypeToPlugins_ =
          new HashMap<>();
 
    public DefaultPluginManager(Studio studio) {

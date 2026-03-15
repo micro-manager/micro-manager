@@ -70,6 +70,7 @@ public class ConfigSelectionUIController {
     *
     * @param admin admin UserProfile
     */
+   @SuppressWarnings("unchecked")
    private ConfigSelectionUIController(UserProfileAdmin admin) {
       admin_ = admin;
 

@@ -25,7 +25,7 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
    private static final long serialVersionUID = 1L;
    // This is the component that will handle the editing of the cell value
    JTextField text_ = new JTextField();
-   JComboBox combo_ = new JComboBox();
+   JComboBox<String> combo_ = new JComboBox<>();
    StateItem item_;
    SliderPanel slider_ = new SliderPanel();
 

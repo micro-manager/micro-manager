@@ -882,6 +882,15 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public int hashCode() {
+         int result = java.util.Arrays.deepHashCode(contrastMins_);
+         result = 31 * result + java.util.Arrays.deepHashCode(contrastMaxes_);
+         result = 31 * result + java.util.Arrays.deepHashCode(gammas_);
+         result = 31 * result + (isVisible_ != null ? isVisible_.hashCode() : 0);
+         return result;
+      }
+
+      @Override
       public String toString() {
          String result = String.format("<ContrastSettings (%d components)", getNumComponents());
          for (int i = 0; i < getNumComponents(); ++i) {

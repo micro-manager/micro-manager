@@ -321,6 +321,7 @@ public final class TileCreatorDlg extends JDialog {
       overlapUnitsCombo.setSelectedItem(settings.getString(OVERLAP_UNIT_PREF, unitStrings[0]));
       overlapUnit_ = TileCreator.OverlapUnitEnum.values()[overlapUnitsCombo.getSelectedIndex()];
       overlapUnitsCombo.addActionListener(arg0 -> {
+         @SuppressWarnings("unchecked")
          JComboBox<String> cb = (JComboBox<String>) arg0.getSource();
          overlapUnit_ = TileCreator.OverlapUnitEnum.values()[cb.getSelectedIndex()];
          settings.putString(OVERLAP_UNIT_PREF, unitStrings[cb.getSelectedIndex()]);

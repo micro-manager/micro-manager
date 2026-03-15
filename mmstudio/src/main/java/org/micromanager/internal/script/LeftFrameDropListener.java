@@ -42,6 +42,7 @@ public class LeftFrameDropListener implements DropTargetListener {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public void drop(DropTargetDropEvent dropTargetDropEvent) {
       try {
          Transferable tr = dropTargetDropEvent.getTransferable();

@@ -77,6 +77,7 @@ public final class DragDropUtil implements DropTargetListener {
     * @param dropTargetDropEvent Event signalling that a Drop occurred
     */
    @Override
+   @SuppressWarnings("unchecked")
    public void drop(final DropTargetDropEvent dropTargetDropEvent) {
       try {
          Transferable tr = dropTargetDropEvent.getTransferable();
