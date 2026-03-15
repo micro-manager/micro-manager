@@ -125,6 +125,7 @@ final class HelperGoldenFileIO {
    private static final Gson GSON = new GsonBuilder()
          .serializeNulls()
          .setPrettyPrinting()
+         .disableHtmlEscaping()
          .create();
 
    // --- Read/write ---

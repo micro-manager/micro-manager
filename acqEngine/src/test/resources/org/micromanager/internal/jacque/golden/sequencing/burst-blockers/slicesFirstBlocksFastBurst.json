@@ -1,5 +1,5 @@
 {
-  "description": "slicesFirst\u003dtrue with multiple slices and channels blocks fast burst even with sequencing",
+  "description": "slicesFirst=true with multiple slices and channels blocks fast burst even with sequencing",
   "settings": {
     "numFrames": 1,
     "frames": [

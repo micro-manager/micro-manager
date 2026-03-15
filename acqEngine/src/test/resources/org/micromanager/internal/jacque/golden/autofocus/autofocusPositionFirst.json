@@ -1,5 +1,5 @@
 {
-  "description": "Autofocus with position-first ordering: autofocusSkip\u003d1 skips odd frames",
+  "description": "Autofocus with position-first ordering: autofocusSkip=1 skips odd frames",
   "settings": {
     "numFrames": 3,
     "frames": [

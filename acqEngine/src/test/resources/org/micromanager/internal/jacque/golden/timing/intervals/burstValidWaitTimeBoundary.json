@@ -1,5 +1,5 @@
 {
-  "description": "burstValid boundary: exposure \u003d\u003d waitTimeMs (100 \u003e\u003d 100 is true, so frames burst together)",
+  "description": "burstValid boundary: exposure == waitTimeMs (100 >= 100 is true, so frames burst together)",
   "settings": {
     "numFrames": 2,
     "frames": [

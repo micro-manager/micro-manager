@@ -1,5 +1,5 @@
 {
-  "description": "Autofocus with skip \u003e\u003d numFrames-1 allows fast burst; autofocus only on frame 0",
+  "description": "Autofocus with skip >= numFrames-1 allows fast burst; autofocus only on frame 0",
   "settings": {
     "numFrames": 3,
     "frames": [

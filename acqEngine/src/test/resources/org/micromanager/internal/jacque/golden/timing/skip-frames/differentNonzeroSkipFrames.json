@@ -1,5 +1,5 @@
 {
-  "description": "Two channels with different non-zero skipFrames: ch0 skipFrames\u003d1 (frames 0,2,4,6,8,10), ch1 skipFrames\u003d2 (frames 0,3,6,9)",
+  "description": "Two channels with different non-zero skipFrames: ch0 skipFrames=1 (frames 0,2,4,6,8,10), ch1 skipFrames=2 (frames 0,3,6,9)",
   "settings": {
     "numFrames": 12,
     "frames": [

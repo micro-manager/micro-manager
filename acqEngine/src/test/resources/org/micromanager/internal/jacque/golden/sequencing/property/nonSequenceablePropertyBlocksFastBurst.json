@@ -1,5 +1,5 @@
 {
-  "description": "Non-sequenceable property blocks fast burst: channelsSequenceable returns false due to isPropertySequenceable\u003dfalse for varying property",
+  "description": "Non-sequenceable property blocks fast burst: channelsSequenceable returns false due to isPropertySequenceable=false for varying property",
   "settings": {
     "numFrames": 2,
     "frames": [

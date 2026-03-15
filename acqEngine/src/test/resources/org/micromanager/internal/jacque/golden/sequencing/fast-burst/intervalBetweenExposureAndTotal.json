@@ -1,5 +1,5 @@
 {
-  "description": "intervalMs between single-channel exposure and channelTotalExposure: 200 \u003c 300 allows fast burst",
+  "description": "intervalMs between single-channel exposure and channelTotalExposure: 200 < 300 allows fast burst",
   "settings": {
     "numFrames": 2,
     "frames": [

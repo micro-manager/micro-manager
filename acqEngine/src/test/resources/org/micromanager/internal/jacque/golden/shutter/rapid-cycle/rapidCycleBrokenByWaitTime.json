@@ -1,5 +1,5 @@
 {
-  "description": "Rapid-cycle broken by non-zero wait time: same as rapidCycleDefaultPath but intervalMs\u003d500",
+  "description": "Rapid-cycle broken by non-zero wait time: same as rapidCycleDefaultPath but intervalMs=500",
   "settings": {
     "numFrames": 3,
     "frames": [

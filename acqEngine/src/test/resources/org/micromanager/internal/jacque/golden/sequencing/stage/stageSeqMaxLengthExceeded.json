@@ -1,5 +1,5 @@
 {
-  "description": "Stage sequenceable but maxLength\u003d2 is less than 3 slices; blocks fast burst",
+  "description": "Stage sequenceable but maxLength=2 is less than 3 slices; blocks fast burst",
   "settings": {
     "numFrames": 2,
     "frames": [
