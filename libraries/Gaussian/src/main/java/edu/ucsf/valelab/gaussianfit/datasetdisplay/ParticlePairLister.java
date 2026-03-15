@@ -825,7 +825,8 @@ public class ParticlePairLister {
                      List<Double> mus = new ArrayList<Double>();
                      double[] bootsTrapResult;
                      while (counter < nrRuns && errorCounter < maxNrErrors) {
-                        List<Double> bootstrapList = ListUtils.listToListForBootstrap(vectorDistances);
+                        List<Double> bootstrapList = ListUtils
+                                 .listToListForBootstrap(vectorDistances);
                         try {
                            bootsTrapResult = p2dLeastSquareFit(bootstrapList, maxDistanceNm_);
                            mus.add(bootsTrapResult[0]);
@@ -927,7 +928,7 @@ public class ParticlePairLister {
    }
 
    /**
-    * Fits a list of numbers to a Gaussian function using Maximum Likelihood
+    * Fits a list of numbers to a Gaussian function using Maximum Likelihood.
     *
     * @param input
     * @param max

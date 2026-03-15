@@ -270,7 +270,7 @@ public class ParticleData {
       GrayU8 mask = new GrayU8(sub.width, sub.height);
 
       int threshold = BoofCVUtils.compressedMaxEntropyThreshold(sub, 256);
-      GThresholdImageOps.threshold(sub, mask, threshold, false);
+      GThresholdImageOps.threshold((ImageGray) sub, mask, threshold, false);
 
       // Remove small particles
       mask = BinaryImageOps.erode4(mask, 1, null);

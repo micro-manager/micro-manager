@@ -240,12 +240,13 @@ public class PointAndShootAnalyzer implements Runnable {
 
          // create a boofCV Planar that contains all of the MM data (no copy, backed by MM)
          Coords.Builder cbb = dataProvider.getAnyImage().getCoords().copyBuilder();
-         Planar<GrayU16> bCVStack = new Planar<>(GrayU16.class, dataProvider.getNextIndex(Coords.T));
+         Planar<GrayU16> bCVStack = new Planar<>(GrayU16.class,
+                  dataProvider.getNextIndex(Coords.T));
          bCVStack.setWidth(imgWidth);
          bCVStack.setHeight(imgHeight);
          bCVStack.setStride(imgWidth);
          for (int frame = 0; frame < dataProvider.getNextIndex(Coords.T); frame++) {
-            bCVStack.setBand(frame, BoofCVImageConverter.mmToBoofCV(
+            bCVStack.setBand(frame, (GrayU16) BoofCVImageConverter.mmToBoofCV(
                   dataProvider.getImage(cbb.t(frame).build()), false));
          }
          ListIterator<PASData> pasDataIt = pasData.listIterator();
@@ -925,7 +926,7 @@ public class PointAndShootAnalyzer implements Runnable {
       int threshold = GThresholdImageOps.computeOtsu2(sub,
             0, (int) sub.getImageType().getDataType().getMaxValue());
       GrayU8 mask = new GrayU8(sub.width, sub.height);
-      GThresholdImageOps.threshold(sub, mask, threshold, false);
+      GThresholdImageOps.threshold((ImageGray) sub, mask, threshold, false);
       GrayS32 contourImg = new GrayS32(sub.width, sub.height);
       List<Contour> contours = BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
 

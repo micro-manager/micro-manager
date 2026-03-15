@@ -1043,7 +1043,9 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    @SafeVarargs
    @SuppressWarnings("varargs")
-   private final <T> List<T> getNonPrimitiveArray(String key, Class<T> elementClass, T... defaults) {
+   private final <T> List<T> getNonPrimitiveArray(String key,
+                                                  Class<T> elementClass,
+                                                  T... defaults) {
       Preconditions.checkNotNull(key);
       return getNonPrimitiveArray(key, elementClass,
             defaults == null ? null : java.util.Arrays.asList(defaults));
@@ -1457,7 +1459,9 @@ public final class DefaultPropertyMap implements PropertyMap {
 
       @SafeVarargs
       @SuppressWarnings("varargs")
-      private final <T> Builder putNonPrimitiveArray(String key, Class<T> elementClass, T... values) {
+      private final <T> Builder putNonPrimitiveArray(String key,
+                                                     Class<T> elementClass,
+                                                     T... values) {
          putNonPrimitiveArrayImpl(key, elementClass,
                values == null ? null : java.util.Arrays.asList(values), null);
          return this;

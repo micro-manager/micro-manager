@@ -737,8 +737,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
 
       mjLabel7.setText("How to handle movement along those axes?");
 
-      zTypeDropdown.setModel(new javax.swing.DefaultComboBoxModel<ZGenerator.Type>(
-            new String[] {"Item 1", "Item 2", "Item 3", "Item 4"}));
+      zTypeDropdown.setModel(new javax.swing.DefaultComboBoxModel<>(
+            ZGenerator.Type.values()));
 
       loadRegionsButton.setText("Load Regions From Folder");
       loadRegionsButton.addActionListener(new java.awt.event.ActionListener() {
