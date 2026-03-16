@@ -488,6 +488,10 @@ public final class StorageMultipageTiff implements Storage {
                  0, positionToFileSet_.size());
       }
       try {
+         // This can happen if no writing task has been submitted yet
+         if (omeMetadata_ == null) {
+            throw new IOException("omeMetadata is null. No writing task submitted before closing");
+         }
          int count = 0;
          if (progressBar != null) {
             progressBar.setProgress(count);
