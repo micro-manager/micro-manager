@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntConsumer;
+import java.util.function.UnaryOperator;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
@@ -303,6 +304,26 @@ public class TileBlender {
    public short[] composite16(int roiX, int roiY, int roiW, int roiH, int resLevel,
                                String channelName,
                                Map<Point, Point2D.Float> tileOrigins, IntConsumer progress) {
+      return composite16(roiX, roiY, roiW, roiH, resLevel, channelName, tileOrigins, null,
+            progress);
+   }
+
+   /**
+    * Composite a single channel of tiles into a 16-bit grayscale canvas using feathered blending.
+    *
+    * <p>Identical to {@link #composite16(int, int, int, int, int, String, Map, IntConsumer)}
+    * but accepts an optional per-tile transform applied to each tile's pixel array immediately
+    * after it is fetched from storage and before it is blended into the canvas.
+    * The transform must not change the pixel count (i.e. it must not rotate 90/270°).</p>
+    *
+    * @param tileTransform Optional transform applied to each tile's {@code short[]} pixel array
+    *                      before blending. Pass null for no transform.
+    */
+   public short[] composite16(int roiX, int roiY, int roiW, int roiH, int resLevel,
+                               String channelName,
+                               Map<Point, Point2D.Float> tileOrigins,
+                               UnaryOperator<short[]> tileTransform,
+                               IntConsumer progress) {
       int scale = 1 << resLevel;
       int dsRoiX = roiX / scale;
       int dsRoiY = roiY / scale;
@@ -391,6 +412,9 @@ public class TileBlender {
             continue;
          }
          short[] tilePix = (short[]) taggedImage.pix;
+         if (tileTransform != null) {
+            tilePix = tileTransform.apply(tilePix);
+         }
          int fullTileW = (taggedImage.tags != null) ? taggedImage.tags.optInt("Width", 0) : 0;
          if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
             int sq = (int) Math.round(Math.sqrt(tilePix.length));

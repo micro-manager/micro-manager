@@ -5,6 +5,7 @@ import java.awt.Dialog;
 import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.exporttiles.TileAligner;
 import org.micromanager.exporttiles.TileBlender;
+import org.micromanager.imageprocessing.ImageTransformUtils;
 import org.micromanager.internal.utils.FileDialogs;
 
 /**
@@ -65,6 +67,7 @@ public class StitchFrame extends JDialog {
    private JComboBox<Integer> alignZCombo_;
    private JCheckBox blendCheck_;
    private JCheckBox alignCheck_;
+   private JCheckBox correctOrientationCheck_;
    private JComboBox<String> saveFormatCombo_;
    private JTextField outputPathField_;
    private JButton browseButton_;
@@ -135,6 +138,12 @@ public class StitchFrame extends JDialog {
       alignCheck_ = new JCheckBox("Align tiles (phase correlation)");
       alignCheck_.setSelected(false);
       add(alignCheck_, "wrap");
+
+      // Correct camera orientation
+      add(new JLabel(""));
+      correctOrientationCheck_ = new JCheckBox("Correct camera orientation (affine)");
+      correctOrientationCheck_.setSelected(false);
+      add(correctOrientationCheck_, "wrap");
 
       // Save format
       add(new JLabel("Save as:"));
@@ -236,7 +245,20 @@ public class StitchFrame extends JDialog {
             : 0;
       boolean blend = blendCheck_.isSelected();
       boolean align = alignCheck_.isSelected();
+      boolean correctOrientation = correctOrientationCheck_.isSelected();
       String outputPath = outputPathField_.getText().trim();
+
+      // Probe affine transform for orientation correction
+      int[] correction = null;
+      if (correctOrientation) {
+         AffineTransform affine = probeAffineTransform(dataProvider_);
+         correction = ImageTransformUtils.correctionFromAffine(affine);
+         if (correction == null) {
+            studio_.logs().showMessage(
+                  "No pixel size affine transform found in image metadata. "
+                  + "Orientation correction will be skipped.", this);
+         }
+      }
 
       SummaryMetadata summary = dataProvider_.getSummaryMetadata();
       List<String> allChannelNames = getChannelNames(summary);
@@ -277,6 +299,7 @@ public class StitchFrame extends JDialog {
       final List<String> chNames = channelNamesForExport;
       final boolean doBlend = blend;
       final boolean doAlign = align;
+      final int[] finalCorrection = correction;
       final boolean toStack = saveToStack;
       final String destPath = outputPath;
       final String datasetName = dataProvider_.getName() + "_stitched";
@@ -287,7 +310,7 @@ public class StitchFrame extends JDialog {
       new Thread(() -> {
          try {
             buildDatastore(adapter, baseAxes, finalAlignAxes, chNames, canvasW, canvasH,
-                  doBlend, doAlign, toStack, destPath, datasetName, exportAlignZ,
+                  doBlend, doAlign, finalCorrection, toStack, destPath, datasetName, exportAlignZ,
                   bar, statusLabel, progressDialog);
          } catch (Exception ex) {
             SwingUtilities.invokeLater(() -> {
@@ -311,6 +334,7 @@ public class StitchFrame extends JDialog {
                                List<String> chNames,
                                int canvasW, int canvasH,
                                boolean doBlend, boolean doAlign,
+                               int[] correction,
                                boolean toStack, String destPath,
                                String datasetName, int alignZ,
                                JProgressBar bar, JLabel statusLabel,
@@ -325,12 +349,19 @@ public class StitchFrame extends JDialog {
          ds = studio_.data().createRAMDatastore();
       }
 
+      // Derive correction components (null correction = no-op)
+      boolean doMirror = correction != null && correction[1] != 0;
+      int rotationDeg = correction != null ? correction[0] : 0;
+      // Canvas dims may change if rotation is 90/270
+      int outCanvasW = (rotationDeg == 90 || rotationDeg == 270) ? canvasH : canvasW;
+      int outCanvasH = (rotationDeg == 90 || rotationDeg == 270) ? canvasW : canvasH;
+
       try {
          // Step 2: set SummaryMetadata
          SummaryMetadata srcSummary = dataProvider_.getSummaryMetadata();
          SummaryMetadata.Builder smBuilder = studio_.data().summaryMetadataBuilder()
-               .imageWidth(canvasW)
-               .imageHeight(canvasH);
+               .imageWidth(outCanvasW)
+               .imageHeight(outCanvasH);
          if (srcSummary != null) {
             // Copy channel names
             List<String> chanNames = getChannelNames(srcSummary);
@@ -368,7 +399,36 @@ public class StitchFrame extends JDialog {
          int numCh = chNames.size();
 
          if (doBlend || doAlign) {
-            // Blend path: feathered blending per channel into 16-bit grayscale canvases
+            // Blend path: feathered blending per channel into 16-bit grayscale canvases.
+            //
+            // Orientation correction strategy:
+            //   - Mirror and 180° rotation keep tile w×h unchanged, so they can be applied
+            //     per-tile inside TileBlender via the tileTransform callback.
+            //   - 90°/270° rotations swap tile w×h which breaks TileBlender's grid geometry,
+            //     so those are applied to the fully-assembled canvas afterward.
+            //
+            // The per-tile transform handles: mirror (if requested) + 180° (if requested).
+            // The post-canvas transform handles: 90°/270° rotation only.
+            final boolean needsPerTileMirror = doMirror;
+            final int perTileRotation = (rotationDeg == 180) ? 180 : 0;
+            final int postCanvasRotation = (rotationDeg == 90 || rotationDeg == 270)
+                  ? rotationDeg : 0;
+
+            // Read tile dims from summary metadata (set by StitchDataProviderAdapter)
+            mmcorej.org.json.JSONObject blendSummaryMD = adapter.getSummaryMetadata();
+            final int tileW = blendSummaryMD != null ? blendSummaryMD.optInt("Width", 0) : 0;
+            final int tileH = blendSummaryMD != null ? blendSummaryMD.optInt("Height", 0) : 0;
+
+            java.util.function.UnaryOperator<short[]> tileTransform = null;
+            if (correction != null && (needsPerTileMirror || perTileRotation != 0)
+                  && tileW > 0 && tileH > 0) {
+               tileTransform = (pix) -> {
+                  Object[] r = ImageTransformUtils.transformPixels(
+                        pix, tileW, tileH, needsPerTileMirror, perTileRotation);
+                  return (short[]) r[0];
+               };
+            }
+
             TileBlender blender = new TileBlender(adapter, new mmcorej.org.json.JSONObject(),
                   baseAxes, chNames, adapter.getSummaryMetadata());
             for (int c = 0; c < numCh; c++) {
@@ -376,9 +436,11 @@ public class StitchFrame extends JDialog {
                final String chName = chNames.get(c);
                SwingUtilities.invokeLater(() -> statusLabel.setText(
                      "Compositing " + chName + "…"));
+               final java.util.function.UnaryOperator<short[]> finalTileTransform = tileTransform;
                short[] pixels = blender.composite16(0, 0, canvasW, canvasH, 0,
                      chName,
                      finalOrigins,
+                     finalTileTransform,
                      pct -> SwingUtilities.invokeLater(() -> {
                         int overall = doAlign
                               ? 50 + (chIdx * 100 + pct) / (numCh * 2)
@@ -386,10 +448,21 @@ public class StitchFrame extends JDialog {
                         bar.setValue(overall);
                      }));
 
+               // Apply 90°/270° post-canvas rotation if needed
+               int chCanvasW = canvasW;
+               int chCanvasH = canvasH;
+               if (postCanvasRotation != 0) {
+                  Object[] transformed = ImageTransformUtils.transformPixels(
+                        pixels, canvasW, canvasH, false, postCanvasRotation);
+                  pixels = (short[]) transformed[0];
+                  chCanvasW = (Integer) transformed[1];
+                  chCanvasH = (Integer) transformed[2];
+               }
+
                Coords coords = studio_.data().coordsBuilder()
                      .channel(c).z(alignZ).build();
                Metadata meta = studio_.data().metadataBuilder().build();
-               Image mmImg = studio_.data().createImage(pixels, canvasW, canvasH, 2, 1,
+               Image mmImg = studio_.data().createImage(pixels, chCanvasW, chCanvasH, 2, 1,
                      coords, meta);
                ds.putImage(mmImg);
             }
@@ -401,14 +474,16 @@ public class StitchFrame extends JDialog {
                SwingUtilities.invokeLater(() -> statusLabel.setText(
                      "Stitching " + chName + "…"));
                Object[] result = stitchTiles(adapter, baseAxes, chName, canvasW, canvasH,
-                     bar, statusLabel);
+                     correction, bar, statusLabel);
                Object canvas = result[0];
                int bytesPerPixel = (Integer) result[1];
+               int stitchedW = (Integer) result[2];
+               int stitchedH = (Integer) result[3];
 
                Coords coords = studio_.data().coordsBuilder()
                      .channel(c).z(alignZ).build();
                Metadata meta = studio_.data().metadataBuilder().build();
-               Image mmImg = studio_.data().createImage(canvas, canvasW, canvasH,
+               Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
                      bytesPerPixel, 1, coords, meta);
                ds.putImage(mmImg);
             }
@@ -445,18 +520,33 @@ public class StitchFrame extends JDialog {
     * Stitch tiles for a single channel into a canvas without blending.
     *
     * <p>Iterates all axes sets from the adapter and copies each tile's pixels
-    * into the correct position on the canvas based on its row/column.</p>
+    * into the correct position on the canvas based on its row/column. If a
+    * correction is provided, each tile is transformed before placement and the
+    * canvas dimensions are adjusted accordingly.</p>
     *
     * @param channelName the channel to stitch, or null for no channel axis
-    * @return Object[]{pixels (short[] or byte[]), bytesPerPixel (Integer)}
+    * @param correction  int[]{rotation, mirror} from
+    *                    {@link ImageTransformUtils#correctionFromAffine}, or null
+    * @return Object[]{pixels (short[] or byte[]), bytesPerPixel (Integer),
+    *         canvasWidth (Integer), canvasHeight (Integer)}
     */
    private static Object[] stitchTiles(StitchDataProviderAdapter adapter,
                                        HashMap<String, Object> baseAxes,
                                        String channelName,
                                        int canvasW, int canvasH,
+                                       int[] correction,
                                        JProgressBar bar, JLabel statusLabel) {
       short[] canvas16 = null;
       byte[] canvas8 = null;
+
+      boolean doMirror = correction != null && correction[1] != 0;
+      int rotationDeg = correction != null ? correction[0] : 0;
+      boolean needsTransform = correction != null && (doMirror || rotationDeg != 0);
+      // Corrected tile dims: swap w/h for 90/270 rotations
+      boolean swapTileDims = rotationDeg == 90 || rotationDeg == 270;
+      // Corrected canvas dims (determined once tile dims are known)
+      int corrCanvasW = swapTileDims ? canvasH : canvasW;
+      int corrCanvasH = swapTileDims ? canvasW : canvasH;
 
       Object targetZ = baseAxes.get("z");
 
@@ -528,32 +618,48 @@ public class StitchFrame extends JDialog {
          int tw = probedTileW > 0 ? probedTileW : (int) Math.sqrt(nPix);
          int th = probedTileH > 0 ? probedTileH : tw;
 
-         // Allocate canvas on first valid tile
+         // Apply orientation correction to the tile pixels
+         Object tilePix = tile.pix;
+         int tilePaintW = tw;
+         int tilePaintH = th;
+         if (needsTransform) {
+            Object[] transformed = ImageTransformUtils.transformPixels(
+                  tilePix, tw, th, doMirror, rotationDeg);
+            tilePix = transformed[0];
+            tilePaintW = (Integer) transformed[1];
+            tilePaintH = (Integer) transformed[2];
+         }
+
+         // Allocate canvas on first valid tile (using corrected dims)
          if (canvas16 == null && canvas8 == null) {
             if (is16bit) {
-               canvas16 = new short[canvasW * canvasH];
+               canvas16 = new short[corrCanvasW * corrCanvasH];
             } else {
-               canvas8 = new byte[canvasW * canvasH];
+               canvas8 = new byte[corrCanvasW * corrCanvasH];
             }
          }
 
+         // Corrected step accounts for overlap in corrected-tile space
+         int stepX = swapTileDims ? (th - overlapY) : (tw - overlapX);
+         int stepY = swapTileDims ? (tw - overlapX) : (th - overlapY);
+
          // Copy tile pixels into canvas, accounting for overlap between tiles
-         int destX = col * (tw - overlapX);
-         int destY = row * (th - overlapY);
-         for (int ty = 0; ty < th; ty++) {
-            if (destY + ty >= canvasH) {
+         int destX = col * stepX;
+         int destY = row * stepY;
+         for (int ty = 0; ty < tilePaintH; ty++) {
+            if (destY + ty >= corrCanvasH) {
                break;
             }
-            int srcOff = ty * tw;
-            int dstOff = (destY + ty) * canvasW + destX;
-            int copyW = Math.min(tw, canvasW - destX);
+            int srcOff = ty * tilePaintW;
+            int dstOff = (destY + ty) * corrCanvasW + destX;
+            int copyW = Math.min(tilePaintW, corrCanvasW - destX);
             if (copyW <= 0) {
                continue;
             }
             if (is16bit && canvas16 != null) {
-               System.arraycopy(tile.pix, srcOff, canvas16, dstOff, copyW);
+               System.arraycopy(tilePix, srcOff, canvas16, dstOff, copyW);
             } else if (!is16bit && canvas8 != null) {
-               System.arraycopy(tile.pix, srcOff, canvas8, dstOff, copyW);
+               System.arraycopy(tilePix, srcOff, canvas8, dstOff, copyW);
             }
          }
 
@@ -566,17 +672,44 @@ public class StitchFrame extends JDialog {
       }
 
       if (canvas16 != null) {
-         return new Object[]{canvas16, 2};
+         return new Object[]{canvas16, 2, corrCanvasW, corrCanvasH};
       } else if (canvas8 != null) {
-         return new Object[]{canvas8, 1};
+         return new Object[]{canvas8, 1, corrCanvasW, corrCanvasH};
       } else {
-         return new Object[]{new short[canvasW * canvasH], 2};
+         return new Object[]{new short[corrCanvasW * corrCanvasH], 2, corrCanvasW, corrCanvasH};
       }
    }
 
    // -------------------------------------------------------------------------
    // Utilities
    // -------------------------------------------------------------------------
+
+   /**
+    * Scan the DataProvider for the first image that carries a pixel size affine transform.
+    *
+    * @return the first non-null AffineTransform found, or null if none exists
+    */
+   private static AffineTransform probeAffineTransform(DataProvider dataProvider) {
+      try {
+         for (Coords coords : dataProvider.getUnorderedImageCoords()) {
+            Image img = dataProvider.getImage(coords);
+            if (img == null) {
+               continue;
+            }
+            Metadata meta = img.getMetadata();
+            if (meta == null) {
+               continue;
+            }
+            AffineTransform affine = meta.getPixelSizeAffine();
+            if (affine != null) {
+               return affine;
+            }
+         }
+      } catch (Exception e) {
+         // Ignore — return null
+      }
+      return null;
+   }
 
    private static List<String> getChannelNames(SummaryMetadata summary) {
       if (summary == null) {
