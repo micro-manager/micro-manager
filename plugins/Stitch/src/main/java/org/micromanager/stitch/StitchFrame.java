@@ -137,7 +137,7 @@ public class StitchFrame extends JDialog {
       add(new JLabel("Align z-slice:"));
       alignZCombo_ = new JComboBox<>();
       for (int z = 0; z < Math.max(numZ, 1); z++) {
-         alignZCombo_.addItem(z);
+         alignZCombo_.addItem(z + 1);  // display 1-based
       }
       alignZCombo_.setEnabled(numZ > 1);
       add(alignZCombo_, "wrap");
@@ -281,7 +281,7 @@ public class StitchFrame extends JDialog {
             ? (String) alignChannelCombo_.getSelectedItem()
             : null;
       int alignZ = alignZCombo_.getItemCount() > 0
-            ? (Integer) alignZCombo_.getSelectedItem()
+            ? (Integer) alignZCombo_.getSelectedItem() - 1  // convert 1-based display to 0-based
             : 0;
       boolean blend = blendCheck_.isSelected();
       boolean align = alignCheck_.isSelected();
@@ -474,6 +474,11 @@ public class StitchFrame extends JDialog {
 
          final Map<Point, Point2D.Float> finalOrigins = origins;
          int numCh = chNames.size();
+         int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
+         if (numZ < 1) {
+            numZ = 1;
+         }
+         final int totalImages = numZ * numCh;
 
          if (doBlend || doAlign) {
             // Blend path: feathered blending per channel into 16-bit grayscale canvases.
@@ -506,63 +511,88 @@ public class StitchFrame extends JDialog {
                };
             }
 
-            TileBlender blender = new TileBlender(adapter, new mmcorej.org.json.JSONObject(),
-                  baseAxes, chNames, adapter.getSummaryMetadata());
-            for (int c = 0; c < numCh; c++) {
-               final int chIdx = c;
-               final String chName = chNames.get(c);
-               SwingUtilities.invokeLater(() -> statusLabel.setText(
-                     "Compositing " + chName + "…"));
-               final java.util.function.UnaryOperator<short[]> finalTileTransform = tileTransform;
-               short[] pixels = blender.composite16(0, 0, canvasW, canvasH, 0,
-                     chName,
-                     finalOrigins,
-                     finalTileTransform,
-                     pct -> SwingUtilities.invokeLater(() -> {
-                        int overall = doAlign
-                              ? 50 + (chIdx * 100 + pct) / (numCh * 2)
-                              : (chIdx * 100 + pct) / numCh;
-                        bar.setValue(overall);
-                     }));
+            int imagesWritten = 0;
+            for (int z = 0; z < numZ; z++) {
+               // Per-z baseAxes: pin the z slice for this iteration
+               HashMap<String, Object> zAxes = new HashMap<>(baseAxes);
+               zAxes.put("z", z);
 
-               // Apply 90°/270° post-canvas rotation if needed
-               int chCanvasW = canvasW;
-               int chCanvasH = canvasH;
-               if (postCanvasRotation != 0) {
-                  Object[] transformed = ImageTransformUtils.transformPixels(
-                        pixels, canvasW, canvasH, false, postCanvasRotation);
-                  pixels = (short[]) transformed[0];
-                  chCanvasW = (Integer) transformed[1];
-                  chCanvasH = (Integer) transformed[2];
+               TileBlender blender = new TileBlender(adapter, new mmcorej.org.json.JSONObject(),
+                     zAxes, chNames, adapter.getSummaryMetadata());
+               for (int c = 0; c < numCh; c++) {
+                  final int chIdx = c;
+                  final int zIdx = z;
+                  final String chName = chNames.get(c);
+                  SwingUtilities.invokeLater(() -> statusLabel.setText(
+                        "Compositing z=" + zIdx + " " + chName + "…"));
+                  final java.util.function.UnaryOperator<short[]> finalTileTransform = tileTransform;
+                  final int imagesBefore = imagesWritten;
+                  short[] pixels = blender.composite16(0, 0, canvasW, canvasH, 0,
+                        chName,
+                        finalOrigins,
+                        finalTileTransform,
+                        pct -> SwingUtilities.invokeLater(() -> {
+                           int base = doAlign ? 50 : 0;
+                           int half = doAlign ? 2 : 1;
+                           int overall = base
+                                 + (imagesBefore * 100 + pct) / (totalImages * half);
+                           bar.setValue(overall);
+                        }));
+
+                  // Apply 90°/270° post-canvas rotation if needed
+                  int chCanvasW = canvasW;
+                  int chCanvasH = canvasH;
+                  if (postCanvasRotation != 0) {
+                     Object[] transformed = ImageTransformUtils.transformPixels(
+                           pixels, canvasW, canvasH, false, postCanvasRotation);
+                     pixels = (short[]) transformed[0];
+                     chCanvasW = (Integer) transformed[1];
+                     chCanvasH = (Integer) transformed[2];
+                  }
+
+                  Coords coords = studio_.data().coordsBuilder()
+                        .channel(c).z(z).build();
+                  Metadata meta = templateMetaBuilder.generateUUID().build();
+                  Image mmImg = studio_.data().createImage(pixels, chCanvasW, chCanvasH, 2, 1,
+                        coords, meta);
+                  ds.putImage(mmImg);
+                  imagesWritten++;
                }
-
-               Coords coords = studio_.data().coordsBuilder()
-                     .channel(c).z(alignZ).build();
-               Metadata meta = templateMetaBuilder.generateUUID().build();
-               Image mmImg = studio_.data().createImage(pixels, chCanvasW, chCanvasH, 2, 1,
-                     coords, meta);
-               ds.putImage(mmImg);
             }
 
          } else {
-            // Simple stitch path: copy tiles per channel onto a canvas
-            for (int c = 0; c < numCh; c++) {
-               final String chName = chNames.get(c);
-               SwingUtilities.invokeLater(() -> statusLabel.setText(
-                     "Stitching " + chName + "…"));
-               Object[] result = stitchTiles(adapter, baseAxes, chName, canvasW, canvasH,
-                     correction, bar, statusLabel);
-               Object canvas = result[0];
-               int bytesPerPixel = (Integer) result[1];
-               int stitchedW = (Integer) result[2];
-               int stitchedH = (Integer) result[3];
+            // Simple stitch path: copy tiles per channel per z onto a canvas
+            int imagesWritten = 0;
+            for (int z = 0; z < numZ; z++) {
+               // Per-z baseAxes: pin the z slice for this iteration
+               HashMap<String, Object> zAxes = new HashMap<>(baseAxes);
+               zAxes.put("z", z);
 
-               Coords coords = studio_.data().coordsBuilder()
-                     .channel(c).z(alignZ).build();
-               Metadata meta = templateMetaBuilder.generateUUID().build();
-               Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
-                     bytesPerPixel, 1, coords, meta);
-               ds.putImage(mmImg);
+               for (int c = 0; c < numCh; c++) {
+                  final String chName = chNames.get(c);
+                  final int zIdx = z;
+                  SwingUtilities.invokeLater(() -> statusLabel.setText(
+                        "Stitching z=" + zIdx + " " + chName + "…"));
+                  final int imagesBefore = imagesWritten;
+                  Object[] result = stitchTiles(adapter, zAxes, chName, canvasW, canvasH,
+                        correction,
+                        pct -> {
+                           int overall = (imagesBefore * 100 + pct) / totalImages;
+                           SwingUtilities.invokeLater(() -> bar.setValue(overall));
+                        });
+                  Object canvas = result[0];
+                  int bytesPerPixel = (Integer) result[1];
+                  int stitchedW = (Integer) result[2];
+                  int stitchedH = (Integer) result[3];
+
+                  Coords coords = studio_.data().coordsBuilder()
+                        .channel(c).z(z).build();
+                  Metadata meta = templateMetaBuilder.generateUUID().build();
+                  Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
+                        bytesPerPixel, 1, coords, meta);
+                  ds.putImage(mmImg);
+                  imagesWritten++;
+               }
             }
          }
 
@@ -612,7 +642,7 @@ public class StitchFrame extends JDialog {
                                        String channelName,
                                        int canvasW, int canvasH,
                                        int[] correction,
-                                       JProgressBar bar, JLabel statusLabel) {
+                                       java.util.function.IntConsumer progress) {
       short[] canvas16 = null;
       byte[] canvas8 = null;
 
@@ -742,10 +772,9 @@ public class StitchFrame extends JDialog {
 
          processed++;
          final int pct = total > 0 ? processed * 100 / total : 100;
-         SwingUtilities.invokeLater(() -> {
-            bar.setValue(pct);
-            statusLabel.setText("Stitching… " + pct + "%");
-         });
+         if (progress != null) {
+            progress.accept(pct);
+         }
       }
 
       if (canvas16 != null) {
