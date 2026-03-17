@@ -28,6 +28,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -878,7 +879,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             return false;
          }
          // All arrays have same contents or are both null.
-         return (isVisible_ != alt.isVisible());
+         return Objects.equals(isVisible_, alt.isVisible());
       }
 
       @Override
@@ -886,7 +887,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          int result = java.util.Arrays.deepHashCode(contrastMins_);
          result = 31 * result + java.util.Arrays.deepHashCode(contrastMaxes_);
          result = 31 * result + java.util.Arrays.deepHashCode(gammas_);
-         result = 31 * result + (isVisible_ != null ? isVisible_.hashCode() : 0);
+         result = 31 * result + Integer.hashCode(isVisible_ == null ? 2 : isVisible_ ? 1 : 0);
          return result;
       }
 

@@ -91,7 +91,7 @@ class OffsetPositionsDialog extends JDialog {
       }
       deviceName_ = options.get(0);
 
-      final JComboBox<Object> stageOptions = new JComboBox<>(options.toArray());
+      final JComboBox<String> stageOptions = new JComboBox<>(options.toArray(new String[0]));
       stageOptions.addActionListener(event -> {
          String stageName = (String) stageOptions.getSelectedItem();
          setControlsFor(stageName);
