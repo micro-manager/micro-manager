@@ -26,6 +26,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -33,12 +34,14 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.exporttiles.TileAligner;
 import org.micromanager.exporttiles.TileBlender;
 import org.micromanager.imageprocessing.ImageTransformUtils;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Dialog for the ExportMMTiles plugin.
@@ -59,18 +62,28 @@ public class StitchFrame extends JDialog {
    private static final String SAVE_RAM = "RAM (temporary)";
    private static final String SAVE_STACK = "Image Stack File";
 
+   // Profile keys
+   private static final String PREF_BLEND = "blend";
+   private static final String PREF_ALIGN = "align";
+   private static final String PREF_CORRECT_ORIENTATION = "correctOrientation";
+   private static final String PREF_SAVE_FORMAT = "saveFormat";
+   private static final String PREF_OUTPUT_DIR = "outputDir";
+   private static final String PREF_NAME_PREFIX = "namePrefix";
+
    private final Studio studio_;
    private final DisplayWindow displayWindow_;
    private final DataProvider dataProvider_;
+   private final MutablePropertyMapView settings_;
 
    private JComboBox<String> alignChannelCombo_;
    private JComboBox<Integer> alignZCombo_;
-   private JCheckBox blendCheck_;
-   private JCheckBox alignCheck_;
    private JCheckBox correctOrientationCheck_;
+   private JCheckBox alignCheck_;
+   private JCheckBox blendCheck_;
    private JComboBox<String> saveFormatCombo_;
-   private JTextField outputPathField_;
+   private JTextField outputDirField_;
    private JButton browseButton_;
+   private JTextField namePrefixField_;
    private boolean registeredForEvents_ = false;
 
    /**
@@ -84,11 +97,13 @@ public class StitchFrame extends JDialog {
       studio_ = studio;
       displayWindow_ = display;
       dataProvider_ = display.getDataProvider();
+      settings_ = studio_.profile().getSettings(StitchFrame.class);
 
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("fillx, insets 8", "[right][grow,fill]", "[]4[]"));
 
       buildUI();
+      updatePathControls();
 
       pack();
       Window owner = display.getWindow();
@@ -127,40 +142,46 @@ public class StitchFrame extends JDialog {
       alignZCombo_.setEnabled(numZ > 1);
       add(alignZCombo_, "wrap");
 
-      // Blend
+      // Correct camera orientation
       add(new JLabel(""));
-      blendCheck_ = new JCheckBox("Blend tiles (feathered overlap)");
-      blendCheck_.setSelected(false);
-      add(blendCheck_, "wrap");
+      correctOrientationCheck_ = new JCheckBox("Correct camera orientation (affine)");
+      correctOrientationCheck_.setSelected(settings_.getBoolean(PREF_CORRECT_ORIENTATION, false));
+      add(correctOrientationCheck_, "wrap");
 
       // Align
       add(new JLabel(""));
       alignCheck_ = new JCheckBox("Align tiles (phase correlation)");
-      alignCheck_.setSelected(false);
+      alignCheck_.setSelected(settings_.getBoolean(PREF_ALIGN, false));
       add(alignCheck_, "wrap");
 
-      // Correct camera orientation
+      // Blend
       add(new JLabel(""));
-      correctOrientationCheck_ = new JCheckBox("Correct camera orientation (affine)");
-      correctOrientationCheck_.setSelected(false);
-      add(correctOrientationCheck_, "wrap");
+      blendCheck_ = new JCheckBox("Blend tiles (feathered overlap)");
+      blendCheck_.setSelected(settings_.getBoolean(PREF_BLEND, false));
+      add(blendCheck_, "wrap");
 
       // Save format
       add(new JLabel("Save as:"));
       saveFormatCombo_ = new JComboBox<>(new String[]{SAVE_RAM, SAVE_STACK});
+      saveFormatCombo_.setSelectedItem(settings_.getString(PREF_SAVE_FORMAT, SAVE_RAM));
       saveFormatCombo_.addActionListener((ActionEvent e) -> updatePathControls());
       add(saveFormatCombo_, "wrap");
 
-      // Output path (enabled only for Image Stack File)
-      add(new JLabel("Output folder:"));
-      outputPathField_ = new JTextField(30);
-      outputPathField_.setEnabled(false);
-      add(outputPathField_, "growx");
+      // Directory root (enabled only for Image Stack File)
+      add(new JLabel("Directory root:"));
+      outputDirField_ = new JTextField(30);
+      outputDirField_.setText(settings_.getString(PREF_OUTPUT_DIR, ""));
+      add(outputDirField_, "growx");
 
       browseButton_ = new JButton("...");
-      browseButton_.setEnabled(false);
-      browseButton_.addActionListener((ActionEvent e) -> chooseSavePath());
+      browseButton_.addActionListener((ActionEvent e) -> chooseSaveDir());
       add(browseButton_, "wrap");
+
+      // Name prefix (enabled only for Image Stack File)
+      add(new JLabel("Name prefix:"));
+      namePrefixField_ = new JTextField(30);
+      namePrefixField_.setText(settings_.getString(PREF_NAME_PREFIX, "stitched"));
+      add(namePrefixField_, "growx, wrap");
 
       // Buttons
       JButton exportButton = new JButton("Export");
@@ -197,21 +218,28 @@ public class StitchFrame extends JDialog {
 
    private void updatePathControls() {
       boolean needsPath = SAVE_STACK.equals(saveFormatCombo_.getSelectedItem());
-      outputPathField_.setEnabled(needsPath);
+      outputDirField_.setEnabled(needsPath);
       browseButton_.setEnabled(needsPath);
+      namePrefixField_.setEnabled(needsPath);
    }
 
-   private void chooseSavePath() {
+   private void chooseSaveDir() {
       JFileChooser chooser = new JFileChooser();
-      chooser.setDialogTitle("Select output folder");
+      chooser.setDialogTitle("Select directory root");
       chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      File suggested = new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET));
-      if (suggested.getParentFile() != null) {
-         chooser.setCurrentDirectory(suggested.getParentFile());
+      String current = outputDirField_.getText().trim();
+      if (!current.isEmpty()) {
+         File cur = new File(current);
+         chooser.setCurrentDirectory(cur.isDirectory() ? cur : cur.getParentFile());
+      } else {
+         File suggested = new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET));
+         if (suggested.getParentFile() != null) {
+            chooser.setCurrentDirectory(suggested.getParentFile());
+         }
       }
       if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
          File file = chooser.getSelectedFile();
-         outputPathField_.setText(file.getAbsolutePath());
+         outputDirField_.setText(file.getAbsolutePath());
          FileDialogs.storePath(FileDialogs.MM_DATA_SET, file);
       }
    }
@@ -222,9 +250,21 @@ public class StitchFrame extends JDialog {
 
    private void onExport() {
       boolean saveToStack = SAVE_STACK.equals(saveFormatCombo_.getSelectedItem());
-      if (saveToStack && outputPathField_.getText().trim().isEmpty()) {
-         studio_.logs().showError("Please select an output folder.", this);
+      String outputDir = outputDirField_.getText().trim();
+      String namePrefix = namePrefixField_.getText().trim();
+      if (saveToStack && outputDir.isEmpty()) {
+         studio_.logs().showError("Please select a directory root.", this);
          return;
+      }
+      if (saveToStack && namePrefix.isEmpty()) {
+         studio_.logs().showError("Please enter a name prefix.", this);
+         return;
+      }
+      if (saveToStack) {
+         namePrefix = studio_.data().getUniqueSaveDirectory(
+               new File(outputDir, namePrefix).getAbsolutePath());
+         // Strip the parent dir back out — we only want the (possibly suffixed) leaf name
+         namePrefix = new File(namePrefix).getName();
       }
 
       // Wrap the DataProvider with row/col grid knowledge
@@ -246,7 +286,10 @@ public class StitchFrame extends JDialog {
       boolean blend = blendCheck_.isSelected();
       boolean align = alignCheck_.isSelected();
       boolean correctOrientation = correctOrientationCheck_.isSelected();
-      String outputPath = outputPathField_.getText().trim();
+      // Combine dir + prefix into the full save path
+      String outputPath = saveToStack
+            ? outputDir + File.separator + namePrefix
+            : "";
 
       // Probe affine transform for orientation correction
       int[] correction = null;
@@ -275,6 +318,17 @@ public class StitchFrame extends JDialog {
       if (selectedChannel != null) {
          alignAxes.put("channel", selectedChannel);
       }
+
+      // Capture display settings before dispose() closes the window
+      final DisplaySettings sourceDisplaySettings = displayWindow_.getDisplaySettings();
+
+      // Persist dialog settings to profile
+      settings_.putBoolean(PREF_CORRECT_ORIENTATION, correctOrientation);
+      settings_.putBoolean(PREF_ALIGN, align);
+      settings_.putBoolean(PREF_BLEND, blend);
+      settings_.putString(PREF_SAVE_FORMAT, (String) saveFormatCombo_.getSelectedItem());
+      settings_.putString(PREF_OUTPUT_DIR, outputDir);
+      settings_.putString(PREF_NAME_PREFIX, namePrefix);
 
       dispose();
 
@@ -311,12 +365,18 @@ public class StitchFrame extends JDialog {
          try {
             buildDatastore(adapter, baseAxes, finalAlignAxes, chNames, canvasW, canvasH,
                   doBlend, doAlign, finalCorrection, toStack, destPath, datasetName, exportAlignZ,
-                  bar, statusLabel, progressDialog);
+                  sourceDisplaySettings, bar, statusLabel, progressDialog);
          } catch (Exception ex) {
+            studio_.logs().logError(ex, "Stitch export failed");
+            String msg = ex.getMessage();
+            if (msg == null) {
+               msg = ex.getClass().getSimpleName();
+            }
+            final String displayMsg = msg;
             SwingUtilities.invokeLater(() -> {
                progressDialog.dispose();
                JOptionPane.showMessageDialog(null,
-                     "Export failed: " + ex.getMessage(),
+                     "Export failed: " + displayMsg,
                      "Export Error", JOptionPane.ERROR_MESSAGE);
             });
          }
@@ -337,13 +397,13 @@ public class StitchFrame extends JDialog {
                                int[] correction,
                                boolean toStack, String destPath,
                                String datasetName, int alignZ,
+                               DisplaySettings sourceDisplaySettings,
                                JProgressBar bar, JLabel statusLabel,
                                JDialog progressDialog) throws Exception {
 
       // Step 1: create the output Datastore
       final Datastore ds;
       if (toStack) {
-         new File(destPath).mkdirs();
          ds = studio_.data().createMultipageTIFFDatastore(destPath, true, false);
       } else {
          ds = studio_.data().createRAMDatastore();
@@ -357,18 +417,31 @@ public class StitchFrame extends JDialog {
       int outCanvasH = (rotationDeg == 90 || rotationDeg == 270) ? canvasW : canvasH;
 
       try {
-         // Step 2: set SummaryMetadata
+         // Step 2: set SummaryMetadata — copy from source, then fix up stitched-specific fields
          SummaryMetadata srcSummary = dataProvider_.getSummaryMetadata();
-         SummaryMetadata.Builder smBuilder = studio_.data().summaryMetadataBuilder()
-               .imageWidth(outCanvasW)
-               .imageHeight(outCanvasH);
+         SummaryMetadata.Builder smBuilder;
          if (srcSummary != null) {
-            // Copy channel names
-            List<String> chanNames = getChannelNames(srcSummary);
-            if (!chanNames.isEmpty()) {
-               smBuilder = smBuilder.channelNames(chanNames);
+            smBuilder = srcSummary.copyBuilder();
+         } else {
+            smBuilder = studio_.data().summaryMetadataBuilder();
+         }
+         smBuilder = smBuilder
+               .imageWidth(outCanvasW)
+               .imageHeight(outCanvasH)
+               // Stitched output is a single position — clear the multi-position list
+               .stagePositions(new MultiStagePosition[0]);
+
+         // Fix intendedDimensions: keep channel/z/time from source, force position=1
+         if (srcSummary != null) {
+            Coords srcDims = srcSummary.getIntendedDimensions();
+            if (srcDims != null) {
+               Coords.Builder dimBuilder = srcDims.copyBuilder();
+               // Remove position axis — stitched result has a single (merged) position
+               dimBuilder.removeAxis(Coords.STAGE_POSITION);
+               smBuilder = smBuilder.intendedDimensions(dimBuilder.build());
             }
          }
+
          final SummaryMetadata outputSummary = smBuilder.build();
          ds.setSummaryMetadata(outputSummary);
 
@@ -379,7 +452,11 @@ public class StitchFrame extends JDialog {
             Thread.sleep(100);
          }
 
-         // Step 4 & 5: compute aligned origins (if needed) and composite image
+         // Step 4: build a template Metadata from the first tile (position 0, selected z)
+         final Metadata.Builder templateMetaBuilder =
+               probeTemplateMetadata(dataProvider_, alignZ);
+
+         // Step 5 & 6: compute aligned origins (if needed) and composite image
          SwingUtilities.invokeLater(() -> statusLabel.setText("Computing…"));
 
          Map<Point, Point2D.Float> origins = null;
@@ -461,7 +538,7 @@ public class StitchFrame extends JDialog {
 
                Coords coords = studio_.data().coordsBuilder()
                      .channel(c).z(alignZ).build();
-               Metadata meta = studio_.data().metadataBuilder().build();
+               Metadata meta = templateMetaBuilder.generateUUID().build();
                Image mmImg = studio_.data().createImage(pixels, chCanvasW, chCanvasH, 2, 1,
                      coords, meta);
                ds.putImage(mmImg);
@@ -482,7 +559,7 @@ public class StitchFrame extends JDialog {
 
                Coords coords = studio_.data().coordsBuilder()
                      .channel(c).z(alignZ).build();
-               Metadata meta = studio_.data().metadataBuilder().build();
+               Metadata meta = templateMetaBuilder.generateUUID().build();
                Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
                      bytesPerPixel, 1, coords, meta);
                ds.putImage(mmImg);
@@ -500,7 +577,7 @@ public class StitchFrame extends JDialog {
             progressDialog.dispose();
             try {
                studio_.displays().manage(ds);
-               studio_.displays().createDisplay(ds);
+               studio_.displays().createDisplay(ds, null, sourceDisplaySettings);
             } catch (Exception e) {
                studio_.logs().logError(e, "Could not display exported dataset");
             }
@@ -683,6 +760,48 @@ public class StitchFrame extends JDialog {
    // -------------------------------------------------------------------------
    // Utilities
    // -------------------------------------------------------------------------
+
+   /**
+    * Build a template Metadata from the first available image at the given z slice.
+    *
+    * <p>Copies instrument-level fields (camera, binning, bitDepth, exposureMs,
+    * pixelSizeUm, pixelSizeAffine, pixelAspect, roi, scopeData, userData) from a
+    * representative source image. Position-specific fields (xPositionUm, yPositionUm,
+    * positionName, imageNumber, elapsedTimeMs, receivedTime, fileName) are left unset
+    * because they are meaningless for a stitched output.</p>
+    *
+    * <p>Returns a blank builder if no source image is found.</p>
+    */
+   private Metadata.Builder probeTemplateMetadata(DataProvider dataProvider, int z) {
+      try {
+         for (Coords coords : dataProvider.getUnorderedImageCoords()) {
+            // Match selected z if the dataset has a z axis; otherwise take the first image
+            if (coords.hasAxis(Coords.Z_SLICE) && coords.getIndex(Coords.Z_SLICE) != z) {
+               continue;
+            }
+            Image img = dataProvider.getImage(coords);
+            if (img == null) {
+               continue;
+            }
+            Metadata src = img.getMetadata();
+            if (src == null) {
+               break;
+            }
+            // Start from a copy, then clear position-specific fields
+            return src.copyBuilderWithNewUUID()
+                  .xPositionUm(null)
+                  .yPositionUm(null)
+                  .positionName(null)
+                  .imageNumber(null)
+                  .elapsedTimeMs(null)
+                  .receivedTime(null)
+                  .fileName(null);
+         }
+      } catch (Exception e) {
+         // Fall through to blank builder
+      }
+      return studio_.data().metadataBuilder();
+   }
 
    /**
     * Scan the DataProvider for the first image that carries a pixel size affine transform.
