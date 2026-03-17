@@ -362,8 +362,6 @@ public class TileBlender {
       float[] wAcc   = new float[dsRoiW * dsRoiH];
 
       Set<Point> tilesWithData = getTilesWithData();
-      System.out.println("[TileBlender.composite16] dsTileW=" + dsTileW + " dsTileH=" + dsTileH
-            + " dsStepX=" + dsStepX + " dsStepY=" + dsStepY + " tileOrigins=" + (tileOrigins != null ? "provided" : "null"));
       java.util.List<int[]> tileList = new java.util.ArrayList<>();
       for (Point tile : tilesWithData) {
          int col = tile.x;
@@ -378,7 +376,6 @@ public class TileBlender {
             ox = col * dsStepX;
             oy = row * dsStepY;
          }
-         System.out.println("[TileBlender.composite16]   tile col=" + col + " row=" + row + " origin=(" + ox + "," + oy + ")");
          tileList.add(new int[]{row, col, ox, oy});
       }
 
