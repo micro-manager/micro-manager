@@ -1,4 +1,4 @@
-package org.micromanager.exportmmtiles;
+package org.micromanager.stitch;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dialog;
@@ -52,7 +52,7 @@ import org.micromanager.internal.utils.FileDialogs;
  * <p>The stitched result is placed directly into an MM Datastore. For RAM output
  * the datastore is in-memory. For Image Stack File output it is written to disk.</p>
  */
-public class ExportMMTilesFrame extends JDialog {
+public class StitchFrame extends JDialog {
 
    private static final String SAVE_RAM = "RAM (temporary)";
    private static final String SAVE_STACK = "Image Stack File";
@@ -68,6 +68,7 @@ public class ExportMMTilesFrame extends JDialog {
    private JComboBox<String> saveFormatCombo_;
    private JTextField outputPathField_;
    private JButton browseButton_;
+   private boolean registeredForEvents_ = false;
 
    /**
     * Construct and show the export dialog.
@@ -75,7 +76,7 @@ public class ExportMMTilesFrame extends JDialog {
     * @param studio  the MM Studio instance
     * @param display the display whose data to export
     */
-   public ExportMMTilesFrame(Studio studio, DisplayWindow display) {
+   public StitchFrame(Studio studio, DisplayWindow display) {
       super(display.getWindow(), "Export Tiled Dataset", Dialog.ModalityType.MODELESS);
       studio_ = studio;
       displayWindow_ = display;
@@ -92,6 +93,7 @@ public class ExportMMTilesFrame extends JDialog {
             owner.getY() + owner.getHeight() / 2 - getHeight() / 2);
 
       studio_.displays().registerForEvents(this);
+      registeredForEvents_ = true;
       setVisible(true);
    }
 
@@ -173,7 +175,10 @@ public class ExportMMTilesFrame extends JDialog {
 
    @Override
    public void dispose() {
-      studio_.displays().unregisterForEvents(this);
+      if (registeredForEvents_) {
+         registeredForEvents_ = false;
+         studio_.displays().unregisterForEvents(this);
+      }
       super.dispose();
    }
 
@@ -214,9 +219,9 @@ public class ExportMMTilesFrame extends JDialog {
       }
 
       // Wrap the DataProvider with row/col grid knowledge
-      TiledMMDataProviderAdapter tiledAdapter;
+      StitchDataProviderAdapter tiledAdapter;
       try {
-         tiledAdapter = new TiledMMDataProviderAdapter(dataProvider_);
+         tiledAdapter = new StitchDataProviderAdapter(dataProvider_);
       } catch (IllegalArgumentException ex) {
          studio_.logs().showError(
                "Cannot determine tile grid positions: " + ex.getMessage(), null);
@@ -268,7 +273,7 @@ public class ExportMMTilesFrame extends JDialog {
 
       final int canvasW = tiledAdapter.getCanvasWidth();
       final int canvasH = tiledAdapter.getCanvasHeight();
-      final TiledMMDataProviderAdapter adapter = tiledAdapter;
+      final StitchDataProviderAdapter adapter = tiledAdapter;
       final List<String> chNames = channelNamesForExport;
       final boolean doBlend = blend;
       final boolean doAlign = align;
@@ -300,16 +305,16 @@ public class ExportMMTilesFrame extends JDialog {
     *
     * <p>All pixel assembly happens here — no temp files, no loadData().</p>
     */
-   private void buildDatastore(TiledMMDataProviderAdapter adapter,
-                                HashMap<String, Object> baseAxes,
-                                HashMap<String, Object> alignAxes,
-                                List<String> chNames,
-                                int canvasW, int canvasH,
-                                boolean doBlend, boolean doAlign,
-                                boolean toStack, String destPath,
-                                String datasetName, int alignZ,
-                                JProgressBar bar, JLabel statusLabel,
-                                JDialog progressDialog) throws Exception {
+   private void buildDatastore(StitchDataProviderAdapter adapter,
+                               HashMap<String, Object> baseAxes,
+                               HashMap<String, Object> alignAxes,
+                               List<String> chNames,
+                               int canvasW, int canvasH,
+                               boolean doBlend, boolean doAlign,
+                               boolean toStack, String destPath,
+                               String datasetName, int alignZ,
+                               JProgressBar bar, JLabel statusLabel,
+                               JDialog progressDialog) throws Exception {
 
       // Step 1: create the output Datastore
       final Datastore ds;
@@ -445,11 +450,11 @@ public class ExportMMTilesFrame extends JDialog {
     * @param channelName the channel to stitch, or null for no channel axis
     * @return Object[]{pixels (short[] or byte[]), bytesPerPixel (Integer)}
     */
-   private static Object[] stitchTiles(TiledMMDataProviderAdapter adapter,
-                                        HashMap<String, Object> baseAxes,
-                                        String channelName,
-                                        int canvasW, int canvasH,
-                                        JProgressBar bar, JLabel statusLabel) {
+   private static Object[] stitchTiles(StitchDataProviderAdapter adapter,
+                                       HashMap<String, Object> baseAxes,
+                                       String channelName,
+                                       int canvasW, int canvasH,
+                                       JProgressBar bar, JLabel statusLabel) {
       short[] canvas16 = null;
       byte[] canvas8 = null;
 

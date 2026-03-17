@@ -1,4 +1,4 @@
-package org.micromanager.exportmmtiles;
+package org.micromanager.stitch;
 
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
@@ -16,7 +16,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * ExportTiles can assemble and optionally align/blend the tiles.</p>
  */
 @Plugin(type = DisplayGearMenuPlugin.class)
-public class ExportMMTilesPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
+public class StitchPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
 
    public static final String MENU_NAME = "Stitch...";
 
@@ -29,7 +29,7 @@ public class ExportMMTilesPlugin implements DisplayGearMenuPlugin, SciJavaPlugin
 
    @Override
    public void onPluginSelected(DisplayWindow display) {
-      new ExportMMTilesFrame(studio_, display);
+      new StitchFrame(studio_, display);
    }
 
    @Override

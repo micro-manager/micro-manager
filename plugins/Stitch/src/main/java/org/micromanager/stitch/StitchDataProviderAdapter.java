@@ -1,4 +1,4 @@
-package org.micromanager.exportmmtiles;
+package org.micromanager.stitch;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ import org.micromanager.tileddataprovider.MMDataProviderAdapter;
  * {@code "column"} (Integer values).  The {@code "position"} axis is omitted from the
  * output axes map; row/col replace it.</p>
  */
-public class TiledMMDataProviderAdapter extends MMDataProviderAdapter {
+public class StitchDataProviderAdapter extends MMDataProviderAdapter {
 
    /** Row/col assignment for a single position index. */
    private static final class GridCell {
@@ -64,7 +64,7 @@ public class TiledMMDataProviderAdapter extends MMDataProviderAdapter {
     *               metadata, or stage positions with grid coordinates in summary metadata)
     * @throws IllegalArgumentException if grid coordinates cannot be determined
     */
-   public TiledMMDataProviderAdapter(DataProvider source) {
+   public StitchDataProviderAdapter(DataProvider source) {
       super(source);
       int[] dims = probeImageDims(source);
       imageWidth_ = dims[0];
