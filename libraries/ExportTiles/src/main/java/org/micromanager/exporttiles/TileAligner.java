@@ -77,10 +77,21 @@ public class TileAligner {
     *         Returns null if alignment cannot be performed (zero overlap, single tile).
     */
    public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel) {
-      return computeAlignedOrigins(resLevel, pct -> {});
+      return computeAlignedOrigins(resLevel, -1, pct -> {});
    }
 
    public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel, IntConsumer progress) {
+      return computeAlignedOrigins(resLevel, -1, progress);
+   }
+
+   /**
+    * @param maxDisplacementPx maximum allowed deviation from the nominal tile position
+    *                          in full-resolution pixels. Tiles whose computed origin
+    *                          deviates more than this are reset to nominal. Pass -1 to
+    *                          disable the cutoff.
+    */
+   public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel, int maxDisplacementPx,
+                                                           IntConsumer progress) {
       if (overlapX_ <= 0 && overlapY_ <= 0) {
          return null;
       }
@@ -125,24 +136,12 @@ public class TileAligner {
       int dsStepX = Math.max(1, (actualTileW - overlapX_) / alignScale);
       int dsStepY = Math.max(1, (actualTileH - overlapY_) / alignScale);
 
-      System.out.println("[TileAligner] overlapX=" + overlapX_ + " overlapY=" + overlapY_
-            + " actualTileW=" + actualTileW + " actualTileH=" + actualTileH
-            + " alignResLevel=" + alignResLevel + " alignScale=" + alignScale
-            + " dsStepX=" + dsStepX + " dsStepY=" + dsStepY
-            + " dsOverlapX=" + dsOverlapX + " dsOverlapY=" + dsOverlapY
-            + " tiles=" + tiles.size());
-
       List<TranslationResult> translations = computePairwiseTranslations(
               tiles, alignResLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, alignScale, progress);
 
-      System.out.println("[TileAligner] translations found: " + translations.size());
-      for (TranslationResult tr : translations) {
-         System.out.println("[TileAligner]   " + tr.from + " -> " + tr.to
-               + " dx=" + tr.dx + " dy=" + tr.dy);
-      }
-
       // propagateOrigins returns full-resolution pixel coords regardless of alignResLevel.
-      return propagateOrigins(tiles, translations, dsStepX, dsStepY, alignScale);
+      return propagateOrigins(tiles, translations, dsStepX, dsStepY, alignScale,
+            maxDisplacementPx);
    }
 
    private Set<Point> collectTiles() {
@@ -517,7 +516,7 @@ public class TileAligner {
     */
    private Map<Point, Point2D.Float> propagateOrigins(
            Set<Point> tiles, List<TranslationResult> translations,
-           int dsStepX, int dsStepY, int scale) {
+           int dsStepX, int dsStepY, int scale, int maxDisplacementPx) {
 
       // Build adjacency: for each tile, list of (neighbour, dx, dy)
       Map<Point, List<TranslationResult>> adjFrom = new HashMap<>();
@@ -591,11 +590,20 @@ public class TileAligner {
          }
       }
 
-      System.out.println("[TileAligner.propagateOrigins] dsStepX=" + dsStepX + " dsStepY=" + dsStepY + " scale=" + scale);
-      for (Map.Entry<Point, Point2D.Float> e : origins.entrySet()) {
-         System.out.println("[TileAligner.propagateOrigins]   tile col=" + e.getKey().x + " row=" + e.getKey().y
-               + " origin=(" + e.getValue().x + ", " + e.getValue().y + ")"
-               + " nominal=(" + (e.getKey().x * dsStepX * scale) + ", " + (e.getKey().y * dsStepY * scale) + ")");
+      // Apply displacement cutoff: reset any tile whose computed origin deviates from
+      // its nominal position by more than maxDisplacementPx back to the nominal position.
+      if (maxDisplacementPx >= 0) {
+         float maxDist = maxDisplacementPx;
+         for (Point t : tiles) {
+            float nomX = t.x * dsStepX * scale;
+            float nomY = t.y * dsStepY * scale;
+            Point2D.Float o = origins.get(t);
+            float dx = o.x - nomX;
+            float dy = o.y - nomY;
+            if (Math.sqrt(dx * dx + dy * dy) > maxDist) {
+               origins.put(t, new Point2D.Float(nomX, nomY));
+            }
+         }
       }
 
       return origins;

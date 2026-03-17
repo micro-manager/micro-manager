@@ -3,7 +3,9 @@ package org.micromanager.stitch;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dialog;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.Window;
+import java.net.URL;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -69,14 +71,18 @@ public class StitchFrame extends JDialog {
    private static final String PREF_SAVE_FORMAT = "saveFormat";
    private static final String PREF_OUTPUT_DIR = "outputDir";
    private static final String PREF_NAME_PREFIX = "namePrefix";
+   private static final String PREF_MAX_DISPLACEMENT = "maxDisplacement";
 
    private final Studio studio_;
    private final DisplayWindow displayWindow_;
    private final DataProvider dataProvider_;
    private final MutablePropertyMapView settings_;
 
+   private JLabel alignChannelLabel_;
    private JComboBox<String> alignChannelCombo_;
+   private JLabel alignZLabel_;
    private JComboBox<Integer> alignZCombo_;
+   private JLabel maxDisplacementLabel_;
    private JCheckBox correctOrientationCheck_;
    private JCheckBox alignCheck_;
    private JCheckBox blendCheck_;
@@ -84,6 +90,7 @@ public class StitchFrame extends JDialog {
    private JTextField outputDirField_;
    private JButton browseButton_;
    private JTextField namePrefixField_;
+   private JTextField maxDisplacementField_;
    private boolean registeredForEvents_ = false;
 
    /**
@@ -104,6 +111,7 @@ public class StitchFrame extends JDialog {
 
       buildUI();
       updatePathControls();
+      updateAlignControls();
 
       pack();
       Window owner = display.getWindow();
@@ -124,24 +132,6 @@ public class StitchFrame extends JDialog {
       List<String> channelNames = getChannelNames(summary);
       int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
 
-      // Alignment channel
-      add(new JLabel("Align channel:"));
-      alignChannelCombo_ = new JComboBox<>();
-      for (String name : channelNames) {
-         alignChannelCombo_.addItem(name);
-      }
-      alignChannelCombo_.setEnabled(channelNames.size() > 1);
-      add(alignChannelCombo_, "wrap");
-
-      // Alignment z-slice
-      add(new JLabel("Align z-slice:"));
-      alignZCombo_ = new JComboBox<>();
-      for (int z = 0; z < Math.max(numZ, 1); z++) {
-         alignZCombo_.addItem(z + 1);  // display 1-based
-      }
-      alignZCombo_.setEnabled(numZ > 1);
-      add(alignZCombo_, "wrap");
-
       // Correct camera orientation
       add(new JLabel(""));
       correctOrientationCheck_ = new JCheckBox("Correct camera orientation (affine)");
@@ -152,7 +142,33 @@ public class StitchFrame extends JDialog {
       add(new JLabel(""));
       alignCheck_ = new JCheckBox("Align tiles (phase correlation)");
       alignCheck_.setSelected(settings_.getBoolean(PREF_ALIGN, false));
+      alignCheck_.addActionListener((ActionEvent e) -> updateAlignControls());
       add(alignCheck_, "wrap");
+
+      // Alignment channel (only active when align is checked)
+      alignChannelLabel_ = new JLabel("Align channel:");
+      add(alignChannelLabel_);
+      alignChannelCombo_ = new JComboBox<>();
+      for (String name : channelNames) {
+         alignChannelCombo_.addItem(name);
+      }
+      add(alignChannelCombo_, "wrap");
+
+      // Alignment z-slice (only active when align is checked)
+      alignZLabel_ = new JLabel("Align z-slice:");
+      add(alignZLabel_);
+      alignZCombo_ = new JComboBox<>();
+      for (int z = 0; z < Math.max(numZ, 1); z++) {
+         alignZCombo_.addItem(z + 1);  // display 1-based
+      }
+      add(alignZCombo_, "wrap");
+
+      // Max displacement cutoff (only active when align is checked)
+      maxDisplacementLabel_ = new JLabel("Max displacement (px):");
+      add(maxDisplacementLabel_);
+      maxDisplacementField_ = new JTextField(6);
+      maxDisplacementField_.setText(settings_.getString(PREF_MAX_DISPLACEMENT, ""));
+      add(maxDisplacementField_, "growx, wrap");
 
       // Blend
       add(new JLabel(""));
@@ -223,6 +239,19 @@ public class StitchFrame extends JDialog {
       namePrefixField_.setEnabled(needsPath);
    }
 
+   private void updateAlignControls() {
+      boolean align = alignCheck_.isSelected();
+      SummaryMetadata summary = dataProvider_.getSummaryMetadata();
+      int numChannels = getChannelNames(summary).size();
+      int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
+      alignChannelLabel_.setEnabled(align);
+      alignChannelCombo_.setEnabled(align && numChannels > 1);
+      alignZLabel_.setEnabled(align);
+      alignZCombo_.setEnabled(align && numZ > 1);
+      maxDisplacementLabel_.setEnabled(align);
+      maxDisplacementField_.setEnabled(align);
+   }
+
    private void chooseSaveDir() {
       JFileChooser chooser = new JFileChooser();
       chooser.setDialogTitle("Select directory root");
@@ -286,6 +315,22 @@ public class StitchFrame extends JDialog {
       boolean blend = blendCheck_.isSelected();
       boolean align = alignCheck_.isSelected();
       boolean correctOrientation = correctOrientationCheck_.isSelected();
+      int maxDisplacementPx = -1;  // -1 = no cutoff
+      if (align) {
+         String maxDispText = maxDisplacementField_.getText().trim();
+         if (!maxDispText.isEmpty()) {
+            try {
+               maxDisplacementPx = Integer.parseInt(maxDispText);
+               if (maxDisplacementPx < 0) {
+                  maxDisplacementPx = -1;
+               }
+            } catch (NumberFormatException ex) {
+               studio_.logs().showError(
+                     "Max displacement must be a non-negative integer.", this);
+               return;
+            }
+         }
+      }
       // Combine dir + prefix into the full save path
       String outputPath = saveToStack
             ? outputDir + File.separator + namePrefix
@@ -329,6 +374,7 @@ public class StitchFrame extends JDialog {
       settings_.putString(PREF_SAVE_FORMAT, (String) saveFormatCombo_.getSelectedItem());
       settings_.putString(PREF_OUTPUT_DIR, outputDir);
       settings_.putString(PREF_NAME_PREFIX, namePrefix);
+      settings_.putString(PREF_MAX_DISPLACEMENT, maxDisplacementField_.getText().trim());
 
       dispose();
 
@@ -343,6 +389,10 @@ public class StitchFrame extends JDialog {
             new MigLayout("insets 12, gap 8", "[grow]"));
       progressDialog.getContentPane().add(statusLabel, "wrap");
       progressDialog.getContentPane().add(bar, "growx, wrap");
+      URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         progressDialog.setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       progressDialog.pack();
       progressDialog.setLocationRelativeTo(null);
       progressDialog.setVisible(true);
@@ -360,11 +410,13 @@ public class StitchFrame extends JDialog {
       final int exportAlignZ = alignZ;
 
       final HashMap<String, Object> finalAlignAxes = alignAxes;
+      final int finalMaxDisplacement = maxDisplacementPx;
 
       new Thread(() -> {
          try {
             buildDatastore(adapter, baseAxes, finalAlignAxes, chNames, canvasW, canvasH,
-                  doBlend, doAlign, finalCorrection, toStack, destPath, datasetName, exportAlignZ,
+                  doBlend, doAlign, finalCorrection, finalMaxDisplacement,
+                  toStack, destPath, datasetName, exportAlignZ,
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Stitch export failed");
@@ -395,6 +447,7 @@ public class StitchFrame extends JDialog {
                                int canvasW, int canvasH,
                                boolean doBlend, boolean doAlign,
                                int[] correction,
+                               int maxDisplacementPx,
                                boolean toStack, String destPath,
                                String datasetName, int alignZ,
                                DisplaySettings sourceDisplaySettings,
@@ -464,7 +517,7 @@ public class StitchFrame extends JDialog {
             SwingUtilities.invokeLater(() -> statusLabel.setText("Aligning…"));
             origins = new TileAligner(adapter, alignAxes, chNames,
                   adapter.getSummaryMetadata())
-                  .computeAlignedOrigins(0,
+                  .computeAlignedOrigins(0, maxDisplacementPx,
                         pct -> SwingUtilities.invokeLater(() -> {
                            bar.setValue(pct / 2);
                            statusLabel.setText("Aligning… " + pct + "%");
