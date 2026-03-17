@@ -29,6 +29,10 @@ import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 public class TileAligner {
 
    private static final double CORRELATION_THRESHOLD = 0.5;
+   /** Reject a pairwise shift if its magnitude along the primary axis exceeds this fraction
+    *  of the overlap strip width/height.  Shifts at or near the strip edge are almost always
+    *  FHT wrap-around artefacts rather than genuine sub-pixel corrections. */
+   private static final double MAX_SHIFT_FRACTION = 0.75;
 
    private final TiledDataProviderAPI storage_;
    private final HashMap<String, Object> baseAxes_;
@@ -121,8 +125,21 @@ public class TileAligner {
       int dsStepX = Math.max(1, (actualTileW - overlapX_) / alignScale);
       int dsStepY = Math.max(1, (actualTileH - overlapY_) / alignScale);
 
+      System.out.println("[TileAligner] overlapX=" + overlapX_ + " overlapY=" + overlapY_
+            + " actualTileW=" + actualTileW + " actualTileH=" + actualTileH
+            + " alignResLevel=" + alignResLevel + " alignScale=" + alignScale
+            + " dsStepX=" + dsStepX + " dsStepY=" + dsStepY
+            + " dsOverlapX=" + dsOverlapX + " dsOverlapY=" + dsOverlapY
+            + " tiles=" + tiles.size());
+
       List<TranslationResult> translations = computePairwiseTranslations(
               tiles, alignResLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, alignScale, progress);
+
+      System.out.println("[TileAligner] translations found: " + translations.size());
+      for (TranslationResult tr : translations) {
+         System.out.println("[TileAligner]   " + tr.from + " -> " + tr.to
+               + " dx=" + tr.dx + " dy=" + tr.dy);
+      }
 
       // propagateOrigins returns full-resolution pixel coords regardless of alignResLevel.
       return propagateOrigins(tiles, translations, dsStepX, dsStepY, alignScale);
@@ -138,7 +155,11 @@ public class TileAligner {
          boolean matches = true;
          for (Map.Entry<String, Object> entry : baseAxes_.entrySet()) {
             Object storedVal = stored.get(entry.getKey());
-            if (storedVal == null || !storedVal.equals(entry.getValue())) {
+            // Ignore axes absent from this stored entry (e.g. no z-axis in dataset)
+            if (storedVal == null) {
+               continue;
+            }
+            if (!storedVal.equals(entry.getValue())) {
                matches = false;
                break;
             }
@@ -251,12 +272,31 @@ public class TileAligner {
       }
       outSize[0] = padN;
 
+      // Subtract mean from each strip (zero-mean) before padding to suppress the DC
+      // component in the phase correlation.  Without this the dominant frequency is
+      // always the mean value, producing a spurious peak at (±N/2, ±N/2).
+      double sum1 = 0;
+      double sum2 = 0;
+      int n = stripW * stripH;
+      for (int i = 0; i < n; i++) {
+         sum1 += pix1[i];
+         sum2 += pix2[i];
+      }
+      float mean1 = (float) (sum1 / n);
+      float mean2 = (float) (sum2 / n);
+      float[] zm1 = new float[n];
+      float[] zm2 = new float[n];
+      for (int i = 0; i < n; i++) {
+         zm1[i] = pix1[i] - mean1;
+         zm2[i] = pix2[i] - mean2;
+      }
+
       // Copy strips into padded square arrays
       float[] padded1 = new float[padN * padN];
       float[] padded2 = new float[padN * padN];
       for (int y = 0; y < stripH; y++) {
-         System.arraycopy(pix1, y * stripW, padded1, y * padN, stripW);
-         System.arraycopy(pix2, y * stripW, padded2, y * padN, stripW);
+         System.arraycopy(zm1, y * stripW, padded1, y * padN, stripW);
+         System.arraycopy(zm2, y * stripW, padded2, y * padN, stripW);
       }
 
       FloatProcessor proc1 = new FloatProcessor(padN, padN, padded1, null);
@@ -403,7 +443,9 @@ public class TileAligner {
                   if (corrMap != null) {
                      double[] quality = new double[1];
                      int[] shift = findPeak(corrMap, outSize[0], quality);
-                     if (quality[0] >= CORRELATION_THRESHOLD) {
+                     int maxDx = (int) (stripW * MAX_SHIFT_FRACTION);
+                     if (quality[0] >= CORRELATION_THRESHOLD
+                           && Math.abs(shift[0]) <= maxDx) {
                         results.add(new TranslationResult(west, tile, shift[0], shift[1]));
                      }
                   }
@@ -434,7 +476,9 @@ public class TileAligner {
                   if (corrMap != null) {
                      double[] quality = new double[1];
                      int[] shift = findPeak(corrMap, outSize[0], quality);
-                     if (quality[0] >= CORRELATION_THRESHOLD) {
+                     int maxDy = (int) (stripH * MAX_SHIFT_FRACTION);
+                     if (quality[0] >= CORRELATION_THRESHOLD
+                           && Math.abs(shift[1]) <= maxDy) {
                         results.add(new TranslationResult(north, tile, shift[0], shift[1]));
                      }
                   }
@@ -547,6 +591,13 @@ public class TileAligner {
          }
       }
 
+      System.out.println("[TileAligner.propagateOrigins] dsStepX=" + dsStepX + " dsStepY=" + dsStepY + " scale=" + scale);
+      for (Map.Entry<Point, Point2D.Float> e : origins.entrySet()) {
+         System.out.println("[TileAligner.propagateOrigins]   tile col=" + e.getKey().x + " row=" + e.getKey().y
+               + " origin=(" + e.getValue().x + ", " + e.getValue().y + ")"
+               + " nominal=(" + (e.getKey().x * dsStepX * scale) + ", " + (e.getKey().y * dsStepY * scale) + ")");
+      }
+
       return origins;
    }
 
@@ -559,7 +610,11 @@ public class TileAligner {
          boolean matches = true;
          for (Map.Entry<String, Object> entry : baseAxes_.entrySet()) {
             Object storedVal = stored.get(entry.getKey());
-            if (storedVal == null || !storedVal.equals(entry.getValue())) {
+            // Ignore axes absent from this stored entry (e.g. no z-axis in dataset)
+            if (storedVal == null) {
+               continue;
+            }
+            if (!storedVal.equals(entry.getValue())) {
                matches = false;
                break;
             }

@@ -284,6 +284,147 @@ public class TileBlender {
    }
 
    /**
+    * Composite a single channel of tiles into a 16-bit grayscale canvas using feathered blending.
+    *
+    * <p>Identical blending logic to {@link #composite} but operates directly on
+    * raw 16-bit pixel values — no colour/contrast mapping, no 8-bit downscale.</p>
+    *
+    * @param roiX        Left edge of ROI in full-resolution pixels.
+    * @param roiY        Top edge of ROI in full-resolution pixels.
+    * @param roiW        Width of ROI in full-resolution pixels.
+    * @param roiH        Height of ROI in full-resolution pixels.
+    * @param resLevel    Resolution level (0 = full res, 1 = half res, …).
+    * @param channelName The channel name to composite, or null for no channel axis.
+    * @param tileOrigins Optional map from Point(col,row) to corrected pixel origin.
+    *                    Pass null to use nominal grid positions.
+    * @param progress    Callback receiving 0–100 percent completion.
+    * @return short[] of length roiW*roiH with blended 16-bit pixel values.
+    */
+   public short[] composite16(int roiX, int roiY, int roiW, int roiH, int resLevel,
+                               String channelName,
+                               Map<Point, Point2D.Float> tileOrigins, IntConsumer progress) {
+      int scale = 1 << resLevel;
+      int dsRoiX = roiX / scale;
+      int dsRoiY = roiY / scale;
+      int dsRoiW = Math.max(1, roiW / scale);
+      int dsRoiH = Math.max(1, roiH / scale);
+
+      int dsTileW = tileWidth_ / scale;
+      int dsTileH = tileHeight_ / scale;
+      outer16:
+      for (HashMap<String, Object> stored : storage_.getAxesSet()) {
+         TaggedImage probe = storage_.getImage(stored, 0);
+         if (probe != null && probe.pix instanceof short[]) {
+            int nPix = ((short[]) probe.pix).length;
+            int twFull = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
+            if (twFull > 0 && nPix % twFull == 0) {
+               dsTileW = twFull / scale;
+               dsTileH = (nPix / twFull) / scale;
+               break outer16;
+            }
+            int sq = (int) Math.round(Math.sqrt(nPix));
+            if (sq * sq == nPix) {
+               dsTileW = sq / scale;
+               dsTileH = sq / scale;
+               break outer16;
+            }
+         }
+      }
+      int dsOverlapX = overlapX_ / scale;
+      int dsOverlapY = overlapY_ / scale;
+      int dsStepX = Math.max(1, dsTileW - dsOverlapX);
+      final int dsStepY = Math.max(1, dsTileH - dsOverlapY);
+      int halfOX = Math.max(1, dsOverlapX / 2);
+      int halfOY = Math.max(1, dsOverlapY / 2);
+
+      float[] valAcc = new float[dsRoiW * dsRoiH];
+      float[] wAcc   = new float[dsRoiW * dsRoiH];
+
+      Set<Point> tilesWithData = getTilesWithData();
+      System.out.println("[TileBlender.composite16] dsTileW=" + dsTileW + " dsTileH=" + dsTileH
+            + " dsStepX=" + dsStepX + " dsStepY=" + dsStepY + " tileOrigins=" + (tileOrigins != null ? "provided" : "null"));
+      java.util.List<int[]> tileList = new java.util.ArrayList<>();
+      for (Point tile : tilesWithData) {
+         int col = tile.x;
+         int row = tile.y;
+         int ox;
+         int oy;
+         if (tileOrigins != null) {
+            Point2D.Float corrected = tileOrigins.get(tile);
+            ox = corrected != null ? (int) (corrected.x / scale) : col * dsStepX;
+            oy = corrected != null ? (int) (corrected.y / scale) : row * dsStepY;
+         } else {
+            ox = col * dsStepX;
+            oy = row * dsStepY;
+         }
+         System.out.println("[TileBlender.composite16]   tile col=" + col + " row=" + row + " origin=(" + ox + "," + oy + ")");
+         tileList.add(new int[]{row, col, ox, oy});
+      }
+
+      String chName = channelName;
+
+      int totalTiles = tileList.size();
+      int doneTiles = 0;
+
+      for (int[] entry : tileList) {
+         progress.accept(totalTiles > 0 ? (doneTiles * 100 / totalTiles) : 0);
+         doneTiles++;
+         int row = entry[0];
+         int col = entry[1];
+         int tileOriginX = entry[2];
+         int tileOriginY = entry[3];
+
+         int interX0 = Math.max(dsRoiX, tileOriginX);
+         int interY0 = Math.max(dsRoiY, tileOriginY);
+         int interX1 = Math.min(dsRoiX + dsRoiW, tileOriginX + dsTileW);
+         int interY1 = Math.min(dsRoiY + dsRoiH, tileOriginY + dsTileH);
+         if (interX0 >= interX1 || interY0 >= interY1) {
+            continue;
+         }
+
+         HashMap<String, Object> axes = buildAxesForTile(row, col, chName);
+         if (axes == null) {
+            continue;
+         }
+         TaggedImage taggedImage = storage_.getImage(axes, 0);
+         if (taggedImage == null || !(taggedImage.pix instanceof short[])) {
+            continue;
+         }
+         short[] tilePix = (short[]) taggedImage.pix;
+         int fullTileW = (taggedImage.tags != null) ? taggedImage.tags.optInt("Width", 0) : 0;
+         if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
+            int sq = (int) Math.round(Math.sqrt(tilePix.length));
+            fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
+         }
+
+         for (int py = interY0; py < interY1; py++) {
+            for (int px = interX0; px < interX1; px++) {
+               int tx = px - tileOriginX;
+               int ty = py - tileOriginY;
+               float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
+               float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
+               float w = wx * wy;
+               int tileIdx = (ty * scale) * fullTileW + (tx * scale);
+               if (tileIdx < 0 || tileIdx >= tilePix.length) {
+                  continue;
+               }
+               int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
+               valAcc[outIdx] += (tilePix[tileIdx] & 0xFFFF) * w;
+               wAcc[outIdx]   += w;
+            }
+         }
+      }
+      progress.accept(100);
+
+      short[] out = new short[dsRoiW * dsRoiH];
+      for (int i = 0; i < out.length; i++) {
+         float w = wAcc[i];
+         out[i] = w > 0f ? (short) Math.min(65535, Math.round(valAcc[i] / w)) : 0;
+      }
+      return out;
+   }
+
+   /**
     * Linear ramp: returns 0 when d<=0, 1 when d>=halfOverlap, linear in between.
     * Call with d = distance-from-edge + 1 so that the first pixel (d=1) has
     * weight 1/halfOverlap rather than 0, ensuring no pixel is ever fully zero.
@@ -315,10 +456,14 @@ public class TileBlender {
             continue;
          }
          // Every axis present in baseAxes_ must match the stored entry
+         // (axes absent from the stored entry are ignored — e.g. no z-axis in dataset)
          boolean matches = true;
          for (HashMap.Entry<String, Object> entry : baseAxes_.entrySet()) {
             Object storedVal = stored.get(entry.getKey());
-            if (storedVal == null || !storedVal.equals(entry.getValue())) {
+            if (storedVal == null) {
+               continue;
+            }
+            if (!storedVal.equals(entry.getValue())) {
                matches = false;
                break;
             }
@@ -357,7 +502,11 @@ public class TileBlender {
          boolean matches = true;
          for (HashMap.Entry<String, Object> entry : baseAxes_.entrySet()) {
             Object storedVal = stored.get(entry.getKey());
-            if (storedVal == null || !storedVal.equals(entry.getValue())) {
+            // Skip axes absent from this stored entry (e.g. no z-axis in dataset)
+            if (storedVal == null) {
+               continue;
+            }
+            if (!storedVal.equals(entry.getValue())) {
                matches = false;
                break;
             }
