@@ -77,15 +77,15 @@ public class SliceTiming {
    public boolean equals(Object obj) {
       if ((obj instanceof SliceTiming)) {
          SliceTiming s = (SliceTiming) obj;
-         return(scanDelay == s.scanDelay
+         return(Float.floatToIntBits(scanDelay) == Float.floatToIntBits(s.scanDelay)
                && scanNum == s.scanNum
-               && scanPeriod == s.scanPeriod
-               && laserDelay == s.laserDelay
-               && laserDuration == s.laserDuration
-               && cameraDelay == s.cameraDelay
-               && cameraDuration == s.cameraDuration
-               && cameraExposure == s.cameraExposure
-               && sliceDuration == s.sliceDuration
+               && Float.floatToIntBits(scanPeriod) == Float.floatToIntBits(s.scanPeriod)
+               && Float.floatToIntBits(laserDelay) == Float.floatToIntBits(s.laserDelay)
+               && Float.floatToIntBits(laserDuration) == Float.floatToIntBits(s.laserDuration)
+               && Float.floatToIntBits(cameraDelay) == Float.floatToIntBits(s.cameraDelay)
+               && Float.floatToIntBits(cameraDuration) == Float.floatToIntBits(s.cameraDuration)
+               && Float.floatToIntBits(cameraExposure) == Float.floatToIntBits(s.cameraExposure)
+               && Float.floatToIntBits(sliceDuration) == Float.floatToIntBits(s.sliceDuration)
                && valid == s.valid);
       } else {
          return false;

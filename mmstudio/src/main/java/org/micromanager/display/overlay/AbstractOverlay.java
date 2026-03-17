@@ -20,10 +20,8 @@ import org.micromanager.display.DisplaySettings;
  */
 public abstract class AbstractOverlay implements Overlay {
    private boolean visible_ = true;
-   @SuppressWarnings({"rawtypes", "unchecked"})
    private final EventListenerSupport<OverlayListener> listeners_ =
-         new EventListenerSupport(OverlayListener.class,
-               this.getClass().getClassLoader());
+         EventListenerSupport.create(OverlayListener.class);
 
    /**
     * {@inheritDoc}
