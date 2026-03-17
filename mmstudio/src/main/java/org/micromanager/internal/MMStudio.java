@@ -610,6 +610,7 @@ public final class MMStudio implements Studio {
       if (zmqServer_ == null) {
          //Make a function that passes existing instances of core and studio,
          //rather than constructing them
+         @SuppressWarnings("rawtypes")
          Function<Class, Object> instanceGrabberFunction = new Function<Class, Object>() {
             @Override
             public Object apply(Class baseClass) {

@@ -60,8 +60,8 @@ public final class PeripheralSetupDlg extends JDialog {
       }
 
       @Override
-      public Class getColumnClass(int c) {
-         Class ret = String.class;
+      public Class<?> getColumnClass(int c) {
+         Class<?> ret = String.class;
          if (SELECTIONCOLUMN == c) {
             ret = Boolean.class;
          }

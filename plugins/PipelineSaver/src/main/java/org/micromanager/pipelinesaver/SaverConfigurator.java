@@ -48,7 +48,7 @@ public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
 
    private final Studio studio_;
    private final JCheckBox shouldDisplay_;
-   private final JComboBox saveFormat_;
+   private final JComboBox<String> saveFormat_;
    private JTextField savePath_;
    private final JButton browseButton_;
 
@@ -62,7 +62,7 @@ public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
       panel.add(new JLabel("Save format: "), "split 2");
       String[] formats = new String[] {SaverPlugin.RAM,
             SaverPlugin.MULTIPAGE_TIFF, SaverPlugin.SINGLEPLANE_TIFF_SERIES};
-      saveFormat_ = new JComboBox(formats);
+      saveFormat_ = new JComboBox<>(formats);
       saveFormat_.setSelectedItem(
             settings.getString("format", getPreferredSaveFormat()));
       saveFormat_.addActionListener(new ActionListener() {

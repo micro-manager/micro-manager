@@ -145,8 +145,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     private final Studio gui_;
     private final JCheckBox advancedSliceTimingCB_;
     private final JSpinner numSlices_;
-    private final JComboBox numSides_;
-    private final JComboBox firstSide_;
+    private final JComboBox<String> numSides_;
+    private final JComboBox<String> firstSide_;
     private final JSpinner numScansPerSlice_;
     private final JSpinner lineScanDuration_;
     private final JSpinner delayScan_;
@@ -185,7 +185,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     private final JCheckBox minSlicePeriodCB_;
     private final JCheckBox separateTimePointsCB_;
     private final JCheckBox saveCB_;
-    private final JComboBox spimMode_;
+    private final JComboBox<AcquisitionModes.Keys> spimMode_;
     private final JCheckBox navigationJoysticksCB_;
     private final JCheckBox usePositionsCB_;
     private final JSpinner positionDelay_;

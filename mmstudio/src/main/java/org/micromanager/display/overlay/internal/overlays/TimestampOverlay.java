@@ -70,15 +70,15 @@ public final class TimestampOverlay extends AbstractOverlay {
 
    // GUI elements
    private JPanel configUI_;
-   private JComboBox formatComboBox_;
+   private JComboBox<TSFormat> formatComboBox_;
    private JCheckBox perChannelCheckBox_;
    private JLabel formatLabelRelative_;
    private DynamicTextField formatField_;
    private DynamicTextField keyField_;
-   private JComboBox colorComboBox_;
+   private JComboBox<TSColor> colorComboBox_;
    private JCheckBox addBackgroundCheckBox_;
    private DynamicTextField fontSizeField_;
-   private JComboBox positionComboBox_;
+   private JComboBox<TSPosition> positionComboBox_;
    private DynamicTextField xOffsetField_;
    private DynamicTextField yOffsetField_;
 
@@ -433,7 +433,7 @@ public final class TimestampOverlay extends AbstractOverlay {
       formatField_.setEnabled(format_.equals(TSFormat.RELATIVE_TIME));
       keyField_.setEnabled(format_.equals(TSFormat.RELATIVE_TIME));
 
-      formatComboBox_ = new JComboBox(TSFormat.values());
+      formatComboBox_ = new JComboBox<>(TSFormat.values());
       formatComboBox_.addActionListener((ActionEvent e) -> {
          format_ = (TSFormat) formatComboBox_.getSelectedItem();
          formatField_.setEnabled(format_.equals(TSFormat.RELATIVE_TIME));
@@ -441,7 +441,7 @@ public final class TimestampOverlay extends AbstractOverlay {
          fireOverlayConfigurationChanged();
       });
 
-      colorComboBox_ = new JComboBox(TSColor.values());
+      colorComboBox_ = new JComboBox<>(TSColor.values());
       colorComboBox_.addActionListener((ActionEvent e) -> {
          color_ = (TSColor) colorComboBox_.getSelectedItem();
          fireOverlayConfigurationChanged();
@@ -476,7 +476,7 @@ public final class TimestampOverlay extends AbstractOverlay {
                fireOverlayConfigurationChanged();
             });
 
-      positionComboBox_ = new JComboBox(TSPosition.values());
+      positionComboBox_ = new JComboBox<>(TSPosition.values());
       positionComboBox_.addActionListener((ActionEvent e) -> {
          position_ = (TSPosition) positionComboBox_.getSelectedItem();
          fireOverlayConfigurationChanged();

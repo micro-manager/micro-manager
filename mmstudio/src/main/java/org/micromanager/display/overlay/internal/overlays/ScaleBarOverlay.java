@@ -146,7 +146,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
    private JPanel configUI_;
    private JCheckBox drawLabelCheckBox_;
    private JCheckBox fillBarCheckBox_;
-   private JComboBox colorComboBox_;
+   private JComboBox<BarColor> colorComboBox_;
    private DynamicTextField fontSizeField_;
    private DynamicTextField xOffsetField_;
    private DynamicTextField yOffsetField_;
@@ -154,7 +154,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
    private JRadioButton manualLengthRadio_;
    private DynamicTextField lengthUmField_;
    private DynamicTextField thicknessField_;
-   private JComboBox positionComboBox_;
+   private JComboBox<BarPosition> positionComboBox_;
 
    private boolean programmaticallySettingConfiguration_ = false;
 
@@ -329,14 +329,14 @@ public final class ScaleBarOverlay extends AbstractOverlay {
          return;
       }
 
-      colorComboBox_ = new JComboBox(BarColor.values());
+      colorComboBox_ = new JComboBox<>(BarColor.values());
       colorComboBox_.setMaximumRowCount(BarColor.values().length);
       colorComboBox_.addActionListener((ActionEvent e) -> {
          color_ = (BarColor) colorComboBox_.getSelectedItem();
          fireOverlayConfigurationChanged();
       });
 
-      positionComboBox_ = new JComboBox(BarPosition.values());
+      positionComboBox_ = new JComboBox<>(BarPosition.values());
       positionComboBox_.addActionListener((ActionEvent e) -> {
          position_ = (BarPosition) positionComboBox_.getSelectedItem();
          fireOverlayConfigurationChanged();

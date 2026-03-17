@@ -251,13 +251,13 @@ public class DeviceUtils {
    // TODO clean up
    class DeviceBoxListener implements ActionListener {
       Devices.Keys key_;
-      JComboBox box_;
+      JComboBox<String> box_;
 
-      public DeviceBoxListener(Devices.Keys key, JComboBox box) {
+      public DeviceBoxListener(Devices.Keys key, JComboBox<String> box) {
          key_ = key;
          box_ = box;
       }
-      
+
       public void actionPerformed(ActionEvent ae) {
          devices_.setMMDevice(key_, (String) box_.getSelectedItem());
          doDeviceChecks(key_);
@@ -274,10 +274,10 @@ public class DeviceUtils {
     * @param maximumWidth -
     * @return final JComboBox
     */
-   public JComboBox makeDeviceSelectionBox(mmcorej.DeviceType deviceType,
+   public JComboBox<String> makeDeviceSelectionBox(mmcorej.DeviceType deviceType,
          Devices.Keys deviceKey, int maximumWidth) {
       // when editing this method do the same to the one with array argument too
-      JComboBox deviceBox = new JComboBox();
+      JComboBox<String> deviceBox = new JComboBox<>();
       ArrayList<String> devices = new ArrayList<String>();
       StrVector strvDevices = core_.getLoadedDevicesOfType(deviceType);
       devices.addAll(Arrays.asList(strvDevices.toArray()));
@@ -297,7 +297,7 @@ public class DeviceUtils {
     * @param deviceName
     * @return
     */
-   public JComboBox makeSingleCameraDeviceBox(Devices.Keys deviceName, int maximumWidth) {
+   public JComboBox<String> makeSingleCameraDeviceBox(Devices.Keys deviceName, int maximumWidth) {
       List<String> singleCameras = new ArrayList<String>();
       singleCameras.add(0, "");
       String originalCamera = core_.getCameraDevice();
@@ -320,7 +320,7 @@ public class DeviceUtils {
          }
       }
       
-      JComboBox deviceBox = new JComboBox(singleCameras.toArray());
+      JComboBox<String> deviceBox = new JComboBox<>(singleCameras.toArray(new String[0]));
       deviceBox.addActionListener(new DeviceBoxListener(deviceName, deviceBox));
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
       deviceBox.setMaximumSize(new Dimension(maximumWidth, 30));

@@ -446,8 +446,8 @@ public final class DefaultPropertyMap implements PropertyMap {
    // Non-type-specific numerical
    //
 
-   private static final Set<? extends Class<?>> NUMERICAL_PRIMITIVES =
-         ImmutableSet.of(byte.class, short.class, int.class, long.class,
+   private static final Set<Class<?>> NUMERICAL_PRIMITIVES =
+         ImmutableSet.<Class<?>>of(byte.class, short.class, int.class, long.class,
                float.class, double.class);
 
    @Override
@@ -476,6 +476,7 @@ public final class DefaultPropertyMap implements PropertyMap {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public List<Number> getAsNumberList(String key, Iterable<Number> defaults) {
       if (!containsNumberList(key)) {
          return Lists.newArrayList(defaults);
@@ -776,10 +777,12 @@ public final class DefaultPropertyMap implements PropertyMap {
    }
 
    @Override
-   public <E extends Enum<E>> List<E> getStringListAsEnumList(String key,
-                                                              Class<E> enumType,
-                                                              E... defaultValues) {
-      return getStringListAsEnumList(key, enumType, Lists.newArrayList(defaultValues));
+   @SafeVarargs
+   @SuppressWarnings("varargs")
+   public final <E extends Enum<E>> List<E> getStringListAsEnumList(String key,
+                                                                    Class<E> enumType,
+                                                                    E... defaultValues) {
+      return getStringListAsEnumList(key, enumType, java.util.Arrays.asList(defaultValues));
    }
 
    @Override
@@ -991,18 +994,21 @@ public final class DefaultPropertyMap implements PropertyMap {
       return map_.containsKey(key) && p.getPrimitiveArrayClass().isInstance(map_.get(key));
    }
 
+   @SuppressWarnings("unchecked")
    private <B> B getPrimitiveScalar(String key, Primitive p, B aDefault) {
       Preconditions.checkNotNull(key);
       Class<B> boxedClass = (Class<B>) p.getBoxedClass();
       return getRaw(key, boxedClass, aDefault);
    }
 
+   @SuppressWarnings("unchecked")
    private <A> A getPrimitiveArray(String key, Primitive p, A defaults) {
       Preconditions.checkNotNull(key);
       Class<A> arrayClass = (Class<A>) p.getPrimitiveArrayClass();
       return (A) p.clonePrimitiveArray(getRaw(key, arrayClass, defaults));
    }
 
+   @SuppressWarnings("unchecked")
    private <B> List<B> getBoxedList(String key, Primitive p, Iterable<B> defaults) {
       Preconditions.checkNotNull(key);
       if (missingOrWrongType(key, p.getPrimitiveArrayClass())) {
@@ -1035,12 +1041,17 @@ public final class DefaultPropertyMap implements PropertyMap {
       return cloner.clone(getNonPrimitiveScalar(key, scalarClass, aDefault));
    }
 
-   private <T> List<T> getNonPrimitiveArray(String key, Class<T> elementClass, T... defaults) {
+   @SafeVarargs
+   @SuppressWarnings("varargs")
+   private final <T> List<T> getNonPrimitiveArray(String key,
+                                                  Class<T> elementClass,
+                                                  T... defaults) {
       Preconditions.checkNotNull(key);
       return getNonPrimitiveArray(key, elementClass,
-            defaults == null ? null : Lists.newArrayList(defaults));
+            defaults == null ? null : java.util.Arrays.asList(defaults));
    }
 
+   @SuppressWarnings("unchecked")
    private <T> List<T> getNonPrimitiveArray(String key, Class<T> elementClass,
                                             Iterable<T> defaults) {
       Preconditions.checkNotNull(key);
@@ -1051,10 +1062,13 @@ public final class DefaultPropertyMap implements PropertyMap {
       return Lists.newArrayList((T[]) map_.get(key));
    }
 
-   private <T> List<T> getClonedNonPrimitiveArray(String key, Class<T> elementClass,
-                                                  Cloner<T> cloner, T... defaults) {
+   @SafeVarargs
+   @SuppressWarnings("varargs")
+   private final <T> List<T> getClonedNonPrimitiveArray(String key, Class<T> elementClass,
+                                                        Cloner<T> cloner, T... defaults) {
       Preconditions.checkNotNull(key);
-      List<T> values = getNonPrimitiveArray(key, elementClass, defaults);
+      List<T> values = getNonPrimitiveArray(key, elementClass,
+            defaults == null ? null : java.util.Arrays.asList(defaults));
       for (int i = 0; i < values.size(); ++i) {
          values.set(i, cloner.clone(values.get(i)));
       }
@@ -1080,10 +1094,12 @@ public final class DefaultPropertyMap implements PropertyMap {
       T clone(T value);
    }
 
+   @SuppressWarnings("unchecked")
    private <T> Class<T[]> arrayClassForElementClass(Class<T> elementClass) {
       return (Class<T[]>) Array.newInstance(elementClass, 0).getClass();
    }
 
+   @SuppressWarnings("unchecked")
    private <T> T getRaw(String key, Class<T> cls, T aDefault) {
       if (missingOrWrongType(key, cls)) {
          return aDefault;
@@ -1400,7 +1416,8 @@ public final class DefaultPropertyMap implements PropertyMap {
       }
 
       @Override
-      public <E extends Enum<E>> Builder putEnumListAsStringList(String key, E... values) {
+      @SafeVarargs
+      public final <E extends Enum<E>> Builder putEnumListAsStringList(String key, E... values) {
          if (checkArgsAndRemoveKeyIfValueIsNull(key, values)) {
             return this;
          }
@@ -1440,9 +1457,13 @@ public final class DefaultPropertyMap implements PropertyMap {
          return putScalar(key, value == null ? null : cloner.clone(value));
       }
 
-      private <T> Builder putNonPrimitiveArray(String key, Class<T> elementClass, T... values) {
+      @SafeVarargs
+      @SuppressWarnings("varargs")
+      private final <T> Builder putNonPrimitiveArray(String key,
+                                                     Class<T> elementClass,
+                                                     T... values) {
          putNonPrimitiveArrayImpl(key, elementClass,
-               values == null ? null : Lists.newArrayList(values), null);
+               values == null ? null : java.util.Arrays.asList(values), null);
          return this;
       }
 
@@ -1452,10 +1473,12 @@ public final class DefaultPropertyMap implements PropertyMap {
          return this;
       }
 
-      private <T> Builder putClonedNonPrimitiveArray(String key, Class<T> elementClass,
-                                                     Cloner<T> cloner, T... values) {
+      @SafeVarargs
+      @SuppressWarnings("varargs")
+      private final <T> Builder putClonedNonPrimitiveArray(String key, Class<T> elementClass,
+                                                           Cloner<T> cloner, T... values) {
          putNonPrimitiveArrayImpl(key, elementClass,
-               values == null ? null : Lists.newArrayList(values), cloner);
+               values == null ? null : java.util.Arrays.asList(values), cloner);
          return this;
       }
 
@@ -1465,6 +1488,7 @@ public final class DefaultPropertyMap implements PropertyMap {
          return this;
       }
 
+      @SuppressWarnings("unchecked")
       private <T> void putNonPrimitiveArrayImpl(String key, Class<T> elementClass,
                                                 Iterable<T> values, Cloner<T> cloner) {
          if (checkArgsAndRemoveKeyIfValueIsNull(key, values)) {
@@ -1496,6 +1520,7 @@ public final class DefaultPropertyMap implements PropertyMap {
          return this;
       }
 
+      @SuppressWarnings("unchecked")
       private <B> Builder putBoxedList(String key, Primitive p, Iterable<B> values) {
          if (checkArgsAndRemoveKeyIfValueIsNull(key, values)) {
             return this;
@@ -1706,7 +1731,7 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    @Override
    @Deprecated
-   public Class getPropertyType(String key) {
+   public Class<?> getPropertyType(String key) {
       return getValueTypeForKey(key);
    }
 
@@ -1747,6 +1772,7 @@ public final class DefaultPropertyMap implements PropertyMap {
    }
 
    @Deprecated
+   @SuppressWarnings("unchecked")
    public <T> T getLegacySerializedObject(String key, T aDefault) {
       T obj = (T) getNonPrimitiveScalar(
             key, SerializedObject.class, new SerializedObject(null)).getObject();

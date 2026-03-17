@@ -61,7 +61,7 @@ public final class UIMonitor {
    private static String getReleaseAction(Component component) {
       if (component instanceof JList) {
          try {
-            final JList list = (JList) component;
+            final JList<?> list = (JList<?>) component;
             return "set to " + "\"" + list.getSelectedValue().toString() + "\"";
          } catch (NullPointerException npe) {
             ReportingUtils.logError("NullPOinterException in UIMonitor-getReleaseAction");

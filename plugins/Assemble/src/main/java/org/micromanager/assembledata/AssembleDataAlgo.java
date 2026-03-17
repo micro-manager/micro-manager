@@ -48,7 +48,8 @@ public class AssembleDataAlgo {
     * @param test ???
     * @return Outputstore ?
     */
-   public static Datastore assemble(Studio studio, 
+   @SuppressWarnings({"rawtypes", "unchecked"})
+   public static Datastore assemble(Studio studio,
            AssembleDataForm form, 
            Datastore output, 
            DataProvider dp1, 

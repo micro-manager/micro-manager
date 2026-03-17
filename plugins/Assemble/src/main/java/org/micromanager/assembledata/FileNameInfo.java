@@ -16,7 +16,7 @@ import org.micromanager.assembledata.exceptions.MalFormedFileNameException;
  *
  * @author nico
  */
-public class FileNameInfo implements Comparable {
+public class FileNameInfo implements Comparable<FileNameInfo> {
    private final String fullName_;
    private final String root_;
    private final String well_; 
@@ -65,11 +65,7 @@ public class FileNameInfo implements Comparable {
    }
 
    @Override
-   public int compareTo(Object o) {
-      if (! (o instanceof FileNameInfo)) {
-         throw new ClassCastException();
-      }
-      FileNameInfo other = (FileNameInfo) o; 
+   public int compareTo(FileNameInfo other) {
       if (Objects.equals(other.sequence(), this.sequence_)) {
          return this.root_.compareTo(other.root());
       }

@@ -160,19 +160,19 @@ public class DataAnalysisPanel extends ListeningJPanel {
       // row with transform options
       JLabel transformLabel = new JLabel("Transform:");
       exportPanel_.add(transformLabel);
-      final JComboBox transformSelect = new JComboBox();
+      final JComboBox<String> transformSelect = new JComboBox<>();
       for (String item : TRANSFORMOPTIONS) {
          transformSelect.addItem(item);
       }
       String transformOption = prefs_.getString(
-              panelName_, Properties.Keys.PLUGIN_EXPORT_TRANSFORM_OPTION, 
+              panelName_, Properties.Keys.PLUGIN_EXPORT_TRANSFORM_OPTION,
               TRANSFORMOPTIONS[1]);
       transformSelect.setSelectedItem(transformOption);
       transformSelect.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            prefs_.putString(panelName_, 
-                    Properties.Keys.PLUGIN_EXPORT_TRANSFORM_OPTION, 
+            prefs_.putString(panelName_,
+                    Properties.Keys.PLUGIN_EXPORT_TRANSFORM_OPTION,
                     (String)transformSelect.getSelectedItem());
          }
       });
@@ -181,19 +181,19 @@ public class DataAnalysisPanel extends ListeningJPanel {
       // row with output options
       JLabel exportFormatLabel = new JLabel("Export for:");
       exportPanel_.add(exportFormatLabel);
-      final JComboBox exportFormatSelect = new JComboBox();
+      final JComboBox<String> exportFormatSelect = new JComboBox<>();
       for (String item : EXPORTFORMATS) {
          exportFormatSelect.addItem(item);
       }
       String exportFormatOption = prefs_.getString(
-              panelName_, Properties.Keys.PLUGIN_EXPORT_FORMAT, 
+              panelName_, Properties.Keys.PLUGIN_EXPORT_FORMAT,
               EXPORTFORMATS[1]);
       exportFormatSelect.setSelectedItem(exportFormatOption);
       exportFormatSelect.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            prefs_.putString(panelName_, 
-                    Properties.Keys.PLUGIN_EXPORT_FORMAT, 
+            prefs_.putString(panelName_,
+                    Properties.Keys.PLUGIN_EXPORT_FORMAT,
                     (String)exportFormatSelect.getSelectedItem());
          }
       });

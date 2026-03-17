@@ -277,6 +277,7 @@ public class AsiGamepadFrame extends JFrame {
     *
     * @param loadfile absolute path and file name of load file
     */
+   @SuppressWarnings("unchecked")
    private void loadTable(File loadfile) {
       try {
 

@@ -155,12 +155,12 @@ public class PairFilter {
                   for (int q = 0; q < nrQuadrants; q++) {
                      ij.IJ.showProgress((q + 1) * frame, (nrQuadrants + 1) * rowData.nrFrames_);
                      // Find matching points in the two ArrayLists
-                     Iterator it2 = gsCh1.get(q).iterator();
+                     Iterator<SpotData> it2 = gsCh1.get(q).iterator();
                      ArrayList<Double> distances = new ArrayList<Double>();
                      ArrayList<Double> orientations = new ArrayList<Double>();
 
                      while (it2.hasNext()) {
-                        SpotData gs = (SpotData) it2.next();
+                        SpotData gs = it2.next();
                         Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                         Point2D.Double pCh2 = npsByPosition.get(gs.getPosition() - 1)
                               .findKDWSE(pCh1);
@@ -181,7 +181,7 @@ public class PairFilter {
                         // now repeat going through the list and apply the criteria
                         it2 = gsCh1.get(q).iterator();
                         while (it2.hasNext()) {
-                           SpotData gs = (SpotData) it2.next();
+                           SpotData gs = it2.next();
                            Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(),
                                    gs.getYCenter());
                            Point2D.Double pCh2 = npsByPosition.get(gs.getPosition() - 1)
