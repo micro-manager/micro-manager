@@ -2,7 +2,6 @@ package org.micromanager.internal.jacque;
 
 import java.util.ArrayList;
 import java.util.List;
-import mmcorej.CMMCore;
 import org.micromanager.PositionList;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
@@ -32,7 +31,7 @@ final class AcqSettings {
    public String comment;
 
    public static AcqSettings fromSequenceSettings(SequenceSettings ss,
-         PositionList pl, CMMCore mmc) throws Exception {
+         PositionList pl, ExecutionCoreOps core) throws Exception {
       AcqSettings s = new AcqSettings();
       s.numFrames = ss.numFrames();
       s.frames = new ArrayList<>(ss.numFrames());
@@ -42,7 +41,7 @@ final class AcqSettings {
       s.channels = new ArrayList<>();
       for (ChannelSpec cs : ss.channels()) {
          AcqChannel ch = AcqChannel.fromChannelSpec(
-               ss.channelGroup(), cs, mmc);
+               ss.channelGroup(), cs, core);
          if (ch.useChannel) {
             s.channels.add(ch);
          }
@@ -65,7 +64,7 @@ final class AcqSettings {
       s.autofocusSkip = ss.skipAutofocusCount();
       s.relativeSlices = ss.relativeZSlice();
       s.intervalMs = ss.intervalMs();
-      s.defaultExposure = mmc.getExposure();
+      s.defaultExposure = core.getExposure();
       s.cameraTimeout = ss.cameraTimeout();
       s.customIntervalsMs = ss.customIntervalsMs() != null
             ? new ArrayList<>(ss.customIntervalsMs())

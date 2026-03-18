@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DoubleVector;
 import mmcorej.PropertySetting;
@@ -26,7 +25,7 @@ final class MmUtils {
    private MmUtils() {
    }
 
-   public static void log(CMMCore mmc, String... parts) {
+   public static void log(ExecutionCoreOps core, String... parts) {
       StringBuilder sb = new StringBuilder("[AE] ");
       for (int i = 0; i < parts.length; i++) {
          if (i > 0) {
@@ -34,15 +33,15 @@ final class MmUtils {
          }
          sb.append(parts[i]);
       }
-      mmc.logMessage(sb.toString(), true);
+      core.logMessage(sb.toString(), true);
    }
 
    public static synchronized String getCurrentTimeStr() {
       return IMAGE_DATE_FORMAT.format(new Date());
    }
 
-   public static String getPixelType(CMMCore mmc) throws Exception {
-      int components = (int) mmc.getNumberOfComponents();
+   public static String getPixelType(ExecutionCoreOps core) throws Exception {
+      int components = (int) core.getNumberOfComponents();
       String prefix;
       if (components == 1) {
          prefix = "GRAY";
@@ -51,15 +50,15 @@ final class MmUtils {
       } else {
          prefix = String.valueOf(components);
       }
-      return prefix + (8 * mmc.getBytesPerPixel());
+      return prefix + (8 * core.getBytesPerPixel());
    }
 
-   public static int[] getCameraRoi(CMMCore mmc) throws Exception {
+   public static int[] getCameraRoi(ExecutionCoreOps core) throws Exception {
       int[] x = new int[1];
       int[] y = new int[1];
       int[] w = new int[1];
       int[] h = new int[1];
-      mmc.getROI(x, y, w, h);
+      core.getROI(x, y, w, h);
       return new int[] { x[0], y[0], w[0], h[0] };
    }
 
@@ -115,14 +114,14 @@ final class MmUtils {
    }
 
    public static Map<List<String>, String> getSystemConfigCached(
-         CMMCore mmc) throws Exception {
-      return configStruct(mmc.getSystemStateCache());
+         ExecutionCoreOps core) throws Exception {
+      return configStruct(core.getSystemStateCache());
    }
 
-   public static String getPropertyValue(CMMCore mmc, String dev,
+   public static String getPropertyValue(ExecutionCoreOps core, String dev,
          String prop) throws Exception {
-      if (mmc.hasProperty(dev, prop)) {
-         return mmc.getProperty(dev, prop);
+      if (core.hasProperty(dev, prop)) {
+         return core.getProperty(dev, prop);
       }
       return null;
    }

@@ -6,8 +6,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +18,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
-import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
@@ -26,7 +26,6 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
-import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionSleepEvent;
 import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
@@ -38,28 +37,41 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private final Studio gui;
-   private final CMMCore mmc;
-   private final EngineState state = new EngineState();
+   private final ExecutionCoreOps core;
+   private final AcqClock clock;
+   final EngineState state = new EngineState();
    private final List<SequenceGenerator.AttachedRunnable> attachedRunnables =
          new ArrayList<>();
-   private final Set<String> pendingDevices = new HashSet<>();
+   private final Set<String> pendingDevices = new LinkedHashSet<>();
    private Map<List<String>, List<String>> activePropertySequences;
    private Object[] activeSliceSequence; // [String zStage, List<Double> slices]
 
    public Jacque2010(Studio studio) {
       this.gui = studio;
-      this.mmc = studio.getCMMCore();
+      this.core = ExecutionCoreOps.fromCMMCore(studio.getCMMCore());
+      this.clock = new SystemClock();
    }
 
    public Jacque2010(CMMCore mmc) {
       this.gui = null;
-      this.mmc = mmc;
+      this.core = ExecutionCoreOps.fromCMMCore(mmc);
+      this.clock = new SystemClock();
+   }
+
+   Jacque2010(ExecutionCoreOps core) {
+      this(core, new SystemClock());
+   }
+
+   Jacque2010(ExecutionCoreOps core, AcqClock clock) {
+      this.gui = null;
+      this.core = core;
+      this.clock = clock;
    }
 
    // --- Time ---
 
-   private static long jvmTimeMs() {
-      return System.nanoTime() / 1_000_000;
+   private long jvmTimeMs() {
+      return clock.nanoTime() / 1_000_000;
    }
 
    private long elapsedTime() {
@@ -92,10 +104,10 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
    // --- Channels ---
 
    private List<String> getCameraChannelNames() throws Exception {
-      int n = (int) mmc.getNumberOfCameraChannels();
+      int n = (int) core.getNumberOfCameraChannels();
       List<String> names = new ArrayList<>(n);
       for (int i = 0; i < n; i++) {
-         names.add(mmc.getCameraChannelName(i));
+         names.add(core.getCameraChannelName(i));
       }
       return names;
    }
@@ -202,7 +214,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          return;
       }
       try {
-         mmc.waitForDevice(dev);
+         core.waitForDevice(dev);
          pendingDevices.remove(dev);
       } catch (Exception e) {
          log("wait for device", dev, "failed.");
@@ -217,11 +229,24 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       void run() throws Exception;
    }
 
+   private interface DeviceSupplier {
+      String get();
+   }
+
    private void deviceBestEffort(String device, DeviceAction action)
          throws Exception {
+      deviceBestEffort(() -> device, action);
+   }
+
+   // Bug-compatible with Clojure: the device-best-effort macro inlines
+   // the device expression, re-evaluating it for wait-for-device and
+   // add-to-pending. When the expression is a core call (e.g.
+   // getCameraDevice), this produces extra recorded calls.
+   private void deviceBestEffort(DeviceSupplier deviceSupplier,
+         DeviceAction action) throws Exception {
       Runnable attempt = () -> {
-         waitForDevice(device);
-         addToPending(device);
+         waitForDevice(deviceSupplier.get());
+         addToPending(deviceSupplier.get());
          try {
             action.run();
          } catch (Exception e) {
@@ -246,7 +271,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       }
       if (!success) {
          state.stop = true;
-         throw new Exception("Device failure: " + device);
+         throw new Exception("Device failure: " + deviceSupplier.get());
       }
    }
 
@@ -257,13 +282,15 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       if (current != null && current == exp) {
          return;
       }
-      deviceBestEffort(camera, () -> mmc.setExposure(exp));
+      deviceBestEffort(camera, () -> core.setExposure(exp));
       state.cameraExposures.put(camera, exp);
    }
 
    private void waitForPendingDevices() {
       log("pending devices:", pendingDevices.toString());
-      for (String dev : new ArrayList<>(pendingDevices)) {
+      List<String> sorted = new ArrayList<>(pendingDevices);
+      Collections.sort(sorted);
+      for (String dev : sorted) {
          waitForDevice(dev);
       }
    }
@@ -272,7 +299,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       if (stage == null || stage.isEmpty()) {
          return 0;
       }
-      return mmc.getPosition(stage);
+      return core.getPosition(stage);
    }
 
    private double[] getXYStagePosition(String stage) throws Exception {
@@ -281,21 +308,21 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       }
       double[] x = new double[1];
       double[] y = new double[1];
-      mmc.getXYPosition(stage, x, y);
+      core.getXYPosition(stage, x, y);
       return new double[] { x[0], y[0] };
    }
 
    private void enableContinuousFocus(boolean on) throws Exception {
-      String autofocus = mmc.getAutoFocusDevice();
-      deviceBestEffort(autofocus, () -> mmc.enableContinuousFocus(on));
+      String autofocus = core.getAutoFocusDevice();
+      deviceBestEffort(autofocus, () -> core.enableContinuousFocus(on));
    }
 
    private void setShutterOpen(boolean open) throws Exception {
-      String shutter = mmc.getShutterDevice();
+      String shutter = core.getShutterDevice();
       deviceBestEffort(shutter, () -> {
          Boolean current = state.shutterStates.get(shutter);
          if (current == null || current != open) {
-            mmc.setShutterOpen(open);
+            core.setShutterOpen(open);
             state.shutterStates.put(shutter, open);
          }
       });
@@ -305,17 +332,17 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       if (stage == null || stage.isEmpty()) {
          return false;
       }
-      return mmc.isContinuousFocusDrive(stage);
+      return core.isContinuousFocusDrive(stage);
    }
 
    private void setZStagePosition(String stage, double pos)
          throws Exception {
       if (state.initContinuousFocus
             && !isContinuousFocusDrive(stage)
-            && mmc.isContinuousFocusEnabled()) {
+            && core.isContinuousFocusEnabled()) {
          enableContinuousFocus(false);
       }
-      deviceBestEffort(stage, () -> mmc.setPosition(stage, pos));
+      deviceBestEffort(stage, () -> core.setPosition(stage, pos));
    }
 
    private void setStagePositionZ(String stageDev, double z)
@@ -341,7 +368,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          }
       }
       deviceBestEffort(stageDev,
-            () -> mmc.setXYPosition(stageDev, x, y));
+            () -> core.setXYPosition(stageDev, x, y));
       state.lastStagePositions.put(stageDev, new double[] { x, y });
    }
 
@@ -354,7 +381,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       if (devProps != null && value.equals(devProps.get(p))) {
          return;
       }
-      deviceBestEffort(d, () -> mmc.setProperty(d, p, value));
+      deviceBestEffort(d, () -> core.setProperty(d, p, value));
       state.lastPropertySettings
             .computeIfAbsent(d, k -> new HashMap<>())
             .put(p, value);
@@ -376,24 +403,23 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private void snapImage(boolean openBefore, boolean closeAfter)
          throws Exception {
-      boolean savedAutoShutter = mmc.getAutoShutter();
+      boolean savedAutoShutter = core.getAutoShutter();
       try {
-         mmc.setAutoShutter(false);
-         String shutter = mmc.getShutterDevice();
+         core.setAutoShutter(false);
+         String shutter = core.getShutterDevice();
          waitForPendingDevices();
          if (openBefore) {
             setShutterOpen(true);
             waitForDevice(shutter);
          }
-         String camera = mmc.getCameraDevice();
-         deviceBestEffort(camera, () -> mmc.snapImage());
+         deviceBestEffort(core::getCameraDevice, () -> core.snapImage());
          state.lastImageTime = elapsedTime();
          if (closeAfter) {
             setShutterOpen(false);
             waitForDevice(shutter);
          }
       } finally {
-         mmc.setAutoShutter(savedAutoShutter);
+         core.setAutoShutter(savedAutoShutter);
       }
    }
 
@@ -409,7 +435,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
             : propertySequences.entrySet()) {
          String d = entry.getKey().get(0);
          String p = entry.getKey().get(1);
-         mmc.loadPropertySequence(d, p,
+         core.loadPropertySequence(d, p,
                MmUtils.toStrVector(entry.getValue()));
       }
       activePropertySequences = propertySequences;
@@ -420,7 +446,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       if (sliceSequence == null) {
          return null;
       }
-      String z = mmc.getFocusDevice();
+      String z = core.getFocusDevice();
       double ref = state.referenceZ;
       List<Double> adjusted;
       if (relativeZ) {
@@ -435,7 +461,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       if (currentSeq == null
             || !z.equals(currentSeq[0])
             || !adjusted.equals(currentSeq[1])) {
-         mmc.loadStageSequence(z, MmUtils.toDoubleVector(adjusted));
+         core.loadStageSequence(z, MmUtils.toDoubleVector(adjusted));
          activeSliceSequence = new Object[] { z, adjusted };
       }
       return adjusted;
@@ -448,7 +474,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
             : propertySequences.entrySet()) {
          String d = entry.getKey().get(0);
          String p = entry.getKey().get(1);
-         mmc.startPropertySequence(d, p);
+         core.startPropertySequence(d, p);
          List<String> vals = entry.getValue();
          state.lastPropertySettings
                .computeIfAbsent(d, k -> new HashMap<>())
@@ -458,19 +484,19 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private void startSliceSequence(List<Double> slices) throws Exception {
       String zStage = state.defaultZDrive;
-      mmc.startStageSequence(zStage);
+      core.startStageSequence(zStage);
       state.lastStagePositions.put(zStage,
             slices.get(slices.size() - 1));
    }
 
    private boolean firstTriggerMissing() throws Exception {
-      return "1".equals(MmUtils.getPropertyValue(mmc,
-            mmc.getCameraDevice(), "OutputTriggerFirstMissing"));
+      return "1".equals(MmUtils.getPropertyValue(core,
+            core.getCameraDevice(), "OutputTriggerFirstMissing"));
    }
 
    private long extraTriggers() throws Exception {
-      String val = MmUtils.getPropertyValue(mmc,
-            mmc.getCameraDevice(), "ExtraTriggers");
+      String val = MmUtils.getPropertyValue(core,
+            core.getCameraDevice(), "ExtraTriggers");
       return val != null ? Long.parseLong(val) : 0;
    }
 
@@ -503,7 +529,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private void initBurst(int length, TriggerSequence triggerSequence,
          boolean relativeZ) throws Exception {
-      mmc.setAutoShutter(state.initAutoShutter);
+      core.setAutoShutter(state.initAutoShutter);
       long extra = extraTriggers();
       Map<List<String>, List<String>> offsetProps = new HashMap<>();
       for (Map.Entry<List<String>, List<String>> entry
@@ -519,14 +545,14 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          startSliceSequence(triggerSequence.slices);
       }
       int burstLen = firstTriggerMissing() ? length + 1 : length;
-      mmc.startSequenceAcquisition(burstLen, 0, true);
+      core.startSequenceAcquisition(burstLen, 0, true);
    }
 
    // --- Image collection ---
 
    private TaggedImage popTaggedImage() {
       try {
-         return mmc.popNextTaggedImage();
+         return core.popNextTaggedImage();
       } catch (Exception e) {
          return null;
       }
@@ -536,7 +562,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          throws Exception {
       log("waiting for burst image with timeout",
             String.valueOf(timeoutMs), "ms");
-      long deadline = System.currentTimeMillis() + (long) timeoutMs;
+      long deadline = clock.currentTimeMillis() + (long) timeoutMs;
       while (true) {
          if (state.stop) {
             log("halting image collection due to engine stop");
@@ -546,16 +572,16 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          if (image != null) {
             return image;
          }
-         if (System.currentTimeMillis() > deadline) {
+         if (clock.currentTimeMillis() > deadline) {
             log("halting image collection due to timeout");
             throw new Exception(
                   "Timed out waiting for image to arrive from camera.");
          }
-         if (mmc.isBufferOverflowed()) {
+         if (core.isBufferOverflowed()) {
             log("halting image collection due to circular buffer overflow");
             throw new Exception("Sequence buffer overflowed.");
          }
-         Thread.sleep(1);
+         clock.sleep(1);
       }
    }
 
@@ -588,7 +614,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private List<AcqEvent> makeMulticameraEvents(AcqEvent event)
          throws Exception {
-      int numCameraChannels = (int) mmc.getNumberOfCameraChannels();
+      int numCameraChannels = (int) core.getNumberOfCameraChannels();
       List<String> cameraChannelNames = getCameraChannelNames();
       List<AcqEvent> result = new ArrayList<>(numCameraChannels);
       for (int camCh = 0; camCh < numCameraChannels; camCh++) {
@@ -630,9 +656,9 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private void burstCleanup() throws Exception {
       log("burst-cleanup");
-      mmc.stopSequenceAcquisition();
-      while (!state.stop && mmc.isSequenceRunning()) {
-         Thread.sleep(5);
+      core.stopSequenceAcquisition();
+      while (!state.stop && core.isSequenceRunning()) {
+         clock.sleep(5);
       }
    }
 
@@ -683,7 +709,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          List<String> cameraChannelNames, double timeoutMs,
          BlockingQueue<TaggedImage> outQueue) throws Exception {
       int total = burstEvents.size() * cameraChannelNames.size();
-      String cameraIndexTag = mmc.getCameraDevice()
+      String cameraIndexTag = core.getCameraDevice()
             + "-CameraChannelIndex";
       int imageNumberOffset = firstTriggerMissing() ? -1 : 0;
       // Pop images on a background thread into a bounded queue
@@ -744,7 +770,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
    @SuppressWarnings("unchecked")
    private void collectSnapImage(AcqEvent event,
          BlockingQueue<TaggedImage> outQueue) throws Exception {
-      TaggedImage raw = mmc.getTaggedImage(event.cameraChannelIndex);
+      TaggedImage raw = core.getTaggedImage(event.cameraChannelIndex);
       Map<String, Object> tags =
             (Map<String, Object>) MmUtils.jsonToData(raw.tags);
       if (outQueue != null) {
@@ -756,11 +782,11 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private void returnConfig() throws Exception {
       Map<List<String>, String> current =
-            MmUtils.getSystemConfigCached(mmc);
+            MmUtils.getSystemConfigCached(core);
       // Restore properties that differ from initial state
       if (state.initSystemState != null) {
          Set<Map.Entry<List<String>, String>> initSet =
-               new HashSet<>(state.initSystemState.entrySet());
+               new LinkedHashSet<>(state.initSystemState.entrySet());
          initSet.removeAll(current.entrySet());
          for (Map.Entry<List<String>, String> entry : initSet) {
             setProperty(entry.getKey(), entry.getValue());
@@ -771,11 +797,11 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
    private void stopTriggering() throws Exception {
       if (activePropertySequences != null) {
          for (List<String> key : activePropertySequences.keySet()) {
-            mmc.stopPropertySequence(key.get(0), key.get(1));
+            core.stopPropertySequence(key.get(0), key.get(1));
          }
       }
       if (activeSliceSequence != null) {
-         mmc.stopStageSequence((String) activeSliceSequence[0]);
+         core.stopStageSequence((String) activeSliceSequence[0]);
       }
    }
 
@@ -783,7 +809,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private void awaitResume() throws InterruptedException {
       while (state.pause && !state.stop) {
-         Thread.sleep(5);
+         clock.sleep(5);
       }
    }
 
@@ -803,7 +829,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
    private void acqSleep(double intervalMs) throws Exception {
       log("acq-sleep");
       if (state.initContinuousFocus
-            && !mmc.isContinuousFocusEnabled()) {
+            && !core.isContinuousFocusEnabled()) {
          try {
             enableContinuousFocus(true);
          } catch (Throwable t) {
@@ -834,14 +860,14 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private void expose(AcqEvent event) throws Exception {
       boolean openBefore, closeAfter;
-      if (mmc.getAutoShutter()) {
+      if (core.getAutoShutter()) {
          openBefore = true;
          closeAfter = event.closeShutter;
       } else {
          openBefore = false;
          closeAfter = false;
       }
-      state.systemState = MmUtils.mapConfig(mmc.getSystemStateCache());
+      state.systemState = MmUtils.mapConfig(core.getSystemStateCache());
       if ("snap".equals(event.task)) {
          snapImage(openBefore, closeAfter);
       } else if ("burst".equals(event.task)) {
@@ -899,7 +925,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
    private boolean zStageNeedsAdjustment(String stageName)
          throws Exception {
       return !(state.initContinuousFocus
-            && mmc.isContinuousFocusEnabled()
+            && core.isContinuousFocusEnabled()
             && !isContinuousFocusDrive(stageName));
    }
 
@@ -954,11 +980,11 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private void prepareState(PositionList positionList,
          AutofocusPlugin autofocusDevice) throws Exception {
-      String defaultZDrive = mmc.getFocusDevice();
-      String defaultXYStage = mmc.getXYStageDevice();
+      String defaultZDrive = core.getFocusDevice();
+      String defaultXYStage = core.getXYStageDevice();
       double z = getZStagePosition(defaultZDrive);
       double[] xy = getXYStagePosition(defaultXYStage);
-      double exposure = mmc.getExposure();
+      double exposure = core.getExposure();
 
       state.pause = false;
       state.stop = false;
@@ -971,25 +997,27 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       }
       state.referenceZ = z;
       state.startTime = jvmTimeMs();
-      state.initAutoShutter = mmc.getAutoShutter();
+      state.initAutoShutter = core.getAutoShutter();
       state.initExposure = exposure;
-      state.initShutterState = mmc.getShutterOpen();
+      state.initShutterState = core.getShutterOpen();
+      // Bug-compatible with Clojure: prepare-state sets :exposure (not
+      // :cameras), so set-exposure doesn't see the cached value and the
+      // first setExposure call always goes through.
       state.cameraExposures.clear();
-      state.cameraExposures.put(mmc.getCameraDevice(), exposure);
       state.defaultZDrive = defaultZDrive;
       state.defaultXYStage = defaultXYStage;
       state.autofocusDevice = autofocusDevice;
       state.positionList = positionList;
       state.initZPosition = z;
-      state.initSystemState = MmUtils.getSystemConfigCached(mmc);
-      state.initContinuousFocus = mmc.isContinuousFocusEnabled();
-      state.initWidth = (int) mmc.getImageWidth();
-      state.initHeight = (int) mmc.getImageHeight();
-      state.binning = mmc.getProperty(mmc.getCameraDevice(), "Binning");
-      state.bitDepth = (int) mmc.getImageBitDepth();
-      state.pixelSizeUm = mmc.getPixelSizeUm();
-      state.pixelSizeAffine = mmc.getPixelSizeAffineAsString();
-      state.pixelType = MmUtils.getPixelType(mmc);
+      state.initSystemState = MmUtils.getSystemConfigCached(core);
+      state.initContinuousFocus = core.isContinuousFocusEnabled();
+      state.initWidth = (int) core.getImageWidth();
+      state.initHeight = (int) core.getImageHeight();
+      state.binning = core.getProperty(core.getCameraDevice(), "Binning");
+      state.bitDepth = (int) core.getImageBitDepth();
+      state.pixelSizeUm = core.getPixelSizeUm();
+      state.pixelSizeAffine = core.getPixelSizeAffineAsString();
+      state.pixelType = MmUtils.getPixelType(core);
       state.lastPropertySettings.clear();
       state.shutterStates.clear();
    }
@@ -1001,8 +1029,8 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
             () -> { state.finished = true; },
             () -> {
                try {
-                  if (mmc.isSequenceRunning()) {
-                     mmc.stopSequenceAcquisition();
+                  if (core.isSequenceRunning()) {
+                     core.stopSequenceAcquisition();
                   }
                } catch (Exception e) { throw new RuntimeException(e); }
             },
@@ -1017,11 +1045,11 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
                catch (Exception e) { throw new RuntimeException(e); }
             },
             () -> {
-               try { mmc.setAutoShutter(state.initAutoShutter); }
+               try { core.setAutoShutter(state.initAutoShutter); }
                catch (Exception e) { throw new RuntimeException(e); }
             },
             () -> {
-               try { setExposure(mmc.getCameraDevice(), state.initExposure); }
+               try { setExposure(core.getCameraDevice(), state.initExposure); }
                catch (Exception e) { throw new RuntimeException(e); }
             },
             () -> {
@@ -1035,7 +1063,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
             () -> {
                try {
                   if (state.initContinuousFocus
-                        && !mmc.isContinuousFocusEnabled()) {
+                        && !core.isContinuousFocusEnabled()) {
                      enableContinuousFocus(true);
                   }
                } catch (Exception e) { throw new RuntimeException(e); }
@@ -1094,8 +1122,19 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
       fns.add(() -> log("BEGIN channel properties and exposure"));
       if (event.channel != null && event.channel.properties != null) {
-         for (Map.Entry<List<String>, String> prop
-               : event.channel.properties.entrySet()) {
+         // Sort and reverse to match Clojure 1.4's PersistentArrayMap,
+         // which prepends on assoc, causing reverse-sorted iteration.
+         List<Map.Entry<List<String>, String>> sortedProps =
+               new ArrayList<>(event.channel.properties.entrySet());
+         sortedProps.sort((a, b) -> {
+            List<String> ka = a.getKey(), kb = b.getKey();
+            for (int j = 0; j < Math.min(ka.size(), kb.size()); j++) {
+               int c = kb.get(j).compareTo(ka.get(j));
+               if (c != 0) return c;
+            }
+            return Integer.compare(kb.size(), ka.size());
+         });
+         for (Map.Entry<List<String>, String> prop : sortedProps) {
             List<String> key = prop.getKey();
             String value = prop.getValue();
             fns.add(() -> {
@@ -1109,7 +1148,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       }
       fns.add(() -> {
          try {
-            String camera = mmc.getCameraDevice();
+            String camera = core.getCameraDevice();
             if (camera != null && !camera.isEmpty()) {
                setExposure(camera, event.exposure);
             }
@@ -1215,6 +1254,15 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       }
    }
 
+   void executeEvents(List<AcqEvent> events, AcqSettings settings,
+         BlockingQueue<TaggedImage> outQueue) throws Exception {
+      List<Runnable> allFns = new ArrayList<>();
+      for (AcqEvent event : events) {
+         allFns.addAll(makeEventFns(event, outQueue, settings));
+      }
+      execute(allFns);
+   }
+
    private void runAcquisition(AcqSettings settings,
          BlockingQueue<TaggedImage> outQueue, boolean cleanup,
          PositionList positionList, AutofocusPlugin autofocusDevice) {
@@ -1229,9 +1277,8 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          }
          prepareState(settings.usePositionList ? positionList : null,
                autofocusDevice);
-         CoreOps coreOps = CoreOps.fromCMMCore(mmc);
          Iterable<AcqEvent> acqSeq = SequenceGenerator.generateAcqSequence(
-               settings, attachedRunnables, coreOps);
+               settings, attachedRunnables, core);
          List<Runnable> allFns = new ArrayList<>();
          for (AcqEvent event : acqSeq) {
             allFns.addAll(makeEventFns(event, outQueue, settings));
@@ -1265,7 +1312,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private AcqSettings convertSettings(SequenceSettings ss,
          PositionList pl) throws Exception {
-      return AcqSettings.fromSequenceSettings(ss, pl, mmc);
+      return AcqSettings.fromSequenceSettings(ss, pl, core);
    }
 
    // --- Summary metadata ---
@@ -1273,7 +1320,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
    @SuppressWarnings("deprecation")
    private JSONObject makeSummaryMetadata(AcqSettings settings,
          PositionList positionList) throws Exception {
-      int depth = (int) mmc.getBytesPerPixel();
+      int depth = (int) core.getBytesPerPixel();
       List<AcqChannel> channels = settings.channels;
       List<String> cameraChannelNames = getCameraChannelNames();
       int numCameraChannels = cameraChannelNames.size();
@@ -1345,12 +1392,12 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          zStep = settings.slices.get(1) - settings.slices.get(0);
       }
 
-      int[] roi = MmUtils.getCameraRoi(mmc);
+      int[] roi = MmUtils.getCameraRoi(core);
 
       JSONObject json = new JSONObject();
       json.put("AxisOrder", new JSONArray(Arrays.asList(
          axisOrder[0], axisOrder[1], outerOrder[0], outerOrder[1])));
-      json.put("BitDepth", mmc.getImageBitDepth());
+      json.put("BitDepth", core.getImageBitDepth());
       json.put("CameraTimeout", settings.cameraTimeout);
       json.put("Channels", Math.max(1, superChans.size()));
       json.put("ChNames", new JSONArray(chNames));
@@ -1365,7 +1412,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
             settings.frames != null ? settings.frames.size() : 0));
       json.put("GridColumn", 0);
       json.put("GridRow", 0);
-      json.put("Height", mmc.getImageHeight());
+      json.put("Height", core.getImageHeight());
       if (settings.usePositionList && positionList != null) {
          json.put("InitialPositionList",
                summarizePositionList(positionList));
@@ -1379,9 +1426,9 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       json.put("KeepShutterOpenSlices", settings.keepShutterOpenSlices);
       json.put("MicroManagerVersion",
             gui != null ? gui.compat().getVersion() : "N/A");
-      json.put("PixelSize_um", mmc.getPixelSizeUm());
-      json.put("PixelSizeAffine", mmc.getPixelSizeAffineAsString());
-      json.put("PixelType", MmUtils.getPixelType(mmc));
+      json.put("PixelSize_um", core.getPixelSizeUm());
+      json.put("PixelSizeAffine", core.getPixelSizeAffineAsString());
+      json.put("PixelType", MmUtils.getPixelType(core));
       json.put("Positions", Math.max(1,
             settings.positions != null ? settings.positions.size() : 0));
       json.put("Prefix",
@@ -1401,7 +1448,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       json.put("TimeFirst", settings.timeFirst);
       json.put("UserName", System.getProperty("user.name"));
       json.put("UUID", UUID.randomUUID());
-      json.put("Width", mmc.getImageWidth());
+      json.put("Width", core.getImageWidth());
       json.put("z-step_um", zStep);
       return json;
    }
@@ -1452,7 +1499,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
    // --- Logging ---
 
    private void log(String... parts) {
-      MmUtils.log(mmc, parts);
+      MmUtils.log(core, parts);
    }
 
    // --- run() implementation ---
