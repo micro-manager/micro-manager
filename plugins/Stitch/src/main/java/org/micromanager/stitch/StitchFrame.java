@@ -11,7 +11,6 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,7 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
- * Dialog for the ExportMMTiles plugin.
+ * Dialog for the Stitch plugin.
  *
  * <p>Lets the user choose:
  * <ul>
@@ -352,9 +351,22 @@ public class StitchFrame extends JDialog {
 
       SummaryMetadata summary = dataProvider_.getSummaryMetadata();
       final List<String> allChannelNames = getChannelNames(summary);
-      final List<String> channelNamesForExport = allChannelNames.isEmpty()
-            ? Collections.singletonList(null)
-            : allChannelNames;
+      // When no channel names are set in SummaryMetadata, use integer indices as String
+      // channel identifiers so that TileBlender/TileAligner can match them against the
+      // Integer channel values stored in the axes map.
+      final List<String> channelNamesForExport;
+      if (allChannelNames.isEmpty()) {
+         int numCh = dataProvider_.getNextIndex(Coords.CHANNEL);
+         if (numCh <= 0) {
+            numCh = 1;
+         }
+         channelNamesForExport = new ArrayList<>();
+         for (int i = 0; i < numCh; i++) {
+            channelNamesForExport.add(String.valueOf(i));
+         }
+      } else {
+         channelNamesForExport = allChannelNames;
+      }
 
       // baseAxes pins the z used for alignment only; channel is handled per-channel
       HashMap<String, Object> baseAxes = new HashMap<>();
@@ -527,12 +539,19 @@ public class StitchFrame extends JDialog {
          }
          final int totalImages = numT * numZ * numCh;
 
-         // Detect pixel depth from the first available tile.
+         // Detect pixel depth from the first tile that returns a non-null image.
          Set<HashMap<String, Object>> axesSet = adapter.getAxesSet();
          if (axesSet.isEmpty()) {
             throw new IllegalStateException("Dataset contains no images.");
          }
-         TaggedImage probe = adapter.getImage(axesSet.iterator().next(), 0);
+         TaggedImage probe = null;
+         for (HashMap<String, Object> probeAxes : axesSet) {
+            TaggedImage candidate = adapter.getImage(probeAxes, 0);
+            if (candidate != null && candidate.pix != null) {
+               probe = candidate;
+               break;
+            }
+         }
          final boolean is16bit = probe == null || probe.pix instanceof short[];
 
          // Orientation correction components (null correction = no-op)
@@ -915,7 +934,7 @@ public class StitchFrame extends JDialog {
             }
             Metadata src = img.getMetadata();
             if (src == null) {
-               break;
+               continue;
             }
             // Start from a copy, then clear position-specific fields
             return src.copyBuilderWithNewUUID()

@@ -628,7 +628,7 @@ public class TileBlender {
          // Channel must match (or be absent when chName is null)
          if (chName != null) {
             Object storedCh = stored.get("channel");
-            if (!chName.equals(storedCh)) {
+            if (!channelValuesMatch(chName, storedCh)) {
                continue;
             }
          }
@@ -639,6 +639,30 @@ public class TileBlender {
          return axes;
       }
       return null;
+   }
+
+   /**
+    * Returns true when a channel name from the caller matches a channel value from storage.
+    *
+    * <p>Handles the case where unnamed channels are stored as {@code Integer} indices
+    * but the caller passes the index as a {@code String} (e.g. {@code "0"}).</p>
+    */
+   private static boolean channelValuesMatch(String callerName, Object storedValue) {
+      if (storedValue == null) {
+         return false;
+      }
+      if (callerName.equals(storedValue)) {
+         return true;
+      }
+      // Unnamed channel: storedValue may be an Integer index; callerName may be its string form.
+      if (storedValue instanceof Integer) {
+         try {
+            return Integer.parseInt(callerName) == (Integer) storedValue;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+      return false;
    }
 
    /**

@@ -122,13 +122,17 @@ public class TileAligner {
                continue;
             }
             TaggedImage probe = storage_.getImage(axes, 0);  // always probe at full res
-            if (probe != null && probe.pix instanceof short[]) {
-               int nPix = ((short[]) probe.pix).length;
-               int tw = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
-               if (tw > 0 && nPix % tw == 0) {
-                  actualTileW = tw;            // already full-res
-                  actualTileH = nPix / tw;
-                  break outer;
+            if (probe != null && probe.pix != null) {
+               int nPix = (probe.pix instanceof short[])
+                     ? ((short[]) probe.pix).length
+                     : (probe.pix instanceof byte[]) ? ((byte[]) probe.pix).length : -1;
+               if (nPix > 0) {
+                  int tw = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
+                  if (tw > 0 && nPix % tw == 0) {
+                     actualTileW = tw;
+                     actualTileH = nPix / tw;
+                     break outer;
+                  }
                }
             }
          }
@@ -184,7 +188,7 @@ public class TileAligner {
             continue;
          }
          TaggedImage ti = storage_.getImage(axes, resLevel);
-         if (ti == null || !(ti.pix instanceof short[])) {
+         if (ti == null || ti.pix == null) {
             continue;
          }
          // "Width"/"Height" tags store full-resolution values; divide by scale.
@@ -197,22 +201,44 @@ public class TileAligner {
             w = (wFull > 0) ? wFull / scale : 0;
             h = (hFull > 0) ? hFull / scale : 0;
          }
-         short[] src = (short[]) ti.pix;
-         // Fall back: derive from pixel count when tags are missing/wrong.
-         if (w <= 0 || h <= 0 || w * h != src.length) {
-            w = tileWidth_ / scale;
-            if (w > 0 && src.length % w == 0) {
-               h = src.length / w;
-            } else {
-               continue;
+         float[] dst;
+         int nPix;
+         if (ti.pix instanceof short[]) {
+            short[] src = (short[]) ti.pix;
+            nPix = src.length;
+            // Fall back: derive from pixel count when tags are missing/wrong.
+            if (w <= 0 || h <= 0 || w * h != nPix) {
+               w = tileWidth_ / scale;
+               if (w > 0 && nPix % w == 0) {
+                  h = nPix / w;
+               } else {
+                  continue;
+               }
             }
+            dst = new float[nPix];
+            for (int i = 0; i < nPix; i++) {
+               dst[i] = src[i] & 0xFFFF;
+            }
+         } else if (ti.pix instanceof byte[]) {
+            byte[] src = (byte[]) ti.pix;
+            nPix = src.length;
+            if (w <= 0 || h <= 0 || w * h != nPix) {
+               w = tileWidth_ / scale;
+               if (w > 0 && nPix % w == 0) {
+                  h = nPix / w;
+               } else {
+                  continue;
+               }
+            }
+            dst = new float[nPix];
+            for (int i = 0; i < nPix; i++) {
+               dst[i] = src[i] & 0xFF;
+            }
+         } else {
+            continue;
          }
          tileDims[0] = w;
          tileDims[1] = h;
-         float[] dst = new float[src.length];
-         for (int i = 0; i < src.length; i++) {
-            dst[i] = src[i] & 0xFFFF;
-         }
          return dst;
       }
       return null;
@@ -632,7 +658,7 @@ public class TileAligner {
          }
          if (chName != null) {
             Object storedCh = stored.get("channel");
-            if (!chName.equals(storedCh)) {
+            if (!channelValuesMatch(chName, storedCh)) {
                continue;
             }
          }
@@ -642,5 +668,29 @@ public class TileAligner {
          return axes;
       }
       return null;
+   }
+
+   /**
+    * Returns true when a channel name from the caller matches a channel value from storage.
+    *
+    * <p>Handles the case where unnamed channels are stored as {@code Integer} indices
+    * but the caller passes the index as a {@code String} (e.g. {@code "0"}).</p>
+    */
+   private static boolean channelValuesMatch(String callerName, Object storedValue) {
+      if (storedValue == null) {
+         return false;
+      }
+      if (callerName.equals(storedValue)) {
+         return true;
+      }
+      // Unnamed channel: storedValue may be an Integer index; callerName may be its string form.
+      if (storedValue instanceof Integer) {
+         try {
+            return Integer.parseInt(callerName) == (Integer) storedValue;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+      return false;
    }
 }
