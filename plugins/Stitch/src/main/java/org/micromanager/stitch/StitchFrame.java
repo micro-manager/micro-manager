@@ -552,31 +552,55 @@ public class StitchFrame extends JDialog {
                break;
             }
          }
-         final boolean is16bit = probe == null || probe.pix instanceof short[];
-
-         // Orientation correction components (null correction = no-op)
-         final boolean needsPerTileMirror = doMirror;
-         final int perTileRotation = (rotationDeg == 180) ? 180 : 0;
-         final int postCanvasRotation = (rotationDeg == 90 || rotationDeg == 270)
-               ? rotationDeg : 0;
+         if (probe == null) {
+            throw new IllegalStateException(
+                  "Dataset pixel type is not supported (only 8-bit and 16-bit grayscale are).");
+         }
+         final boolean is16bit = probe.pix instanceof short[];
 
          // Read tile dims for per-tile transform (blend path only)
          mmcorej.org.json.JSONObject blendSummaryMD = adapter.getSummaryMetadata();
          final int tileW = blendSummaryMD != null ? blendSummaryMD.optInt("Width", 0) : 0;
          final int tileH = blendSummaryMD != null ? blendSummaryMD.optInt("Height", 0) : 0;
 
-         // Build per-tile orientation transforms for blend path
+         // Build per-tile orientation transforms.  All rotation angles (0/90/180/270)
+         // are applied per-tile for both the blend and simple paths.
+         // For 90/270° rotations the corrected tile dimensions are swapped, so we
+         // build a corrected summary metadata for TileBlender that reflects the new dims.
          final UnaryOperator<short[]> tileTransform16;
          final UnaryOperator<byte[]> tileTransform8;
-         if (doBlend && correction != null && (needsPerTileMirror || perTileRotation != 0)
-               && tileW > 0 && tileH > 0) {
+         final mmcorej.org.json.JSONObject correctedBlendSummaryMD;
+         if (correction != null && (doMirror || rotationDeg != 0) && tileW > 0 && tileH > 0) {
+            final boolean fm = doMirror;
+            final int rot = rotationDeg;
             tileTransform16 = (pix) -> (short[]) ImageTransformUtils.transformPixels(
-                  pix, tileW, tileH, needsPerTileMirror, perTileRotation)[0];
+                  pix, tileW, tileH, fm, rot)[0];
             tileTransform8 = (pix) -> (byte[]) ImageTransformUtils.transformPixels(
-                  pix, tileW, tileH, needsPerTileMirror, perTileRotation)[0];
+                  pix, tileW, tileH, fm, rot)[0];
+            // Corrected tile dims for the blender's geometry
+            boolean swapDims = rotationDeg == 90 || rotationDeg == 270;
+            int corrTileW = swapDims ? tileH : tileW;
+            int corrTileH = swapDims ? tileW : tileH;
+            int overlapX = blendSummaryMD != null
+                  ? blendSummaryMD.optInt("GridPixelOverlapX", 0) : 0;
+            int overlapY = blendSummaryMD != null
+                  ? blendSummaryMD.optInt("GridPixelOverlapY", 0) : 0;
+            int corrOverlapX = swapDims ? overlapY : overlapX;
+            int corrOverlapY = swapDims ? overlapX : overlapY;
+            try {
+               mmcorej.org.json.JSONObject md = new mmcorej.org.json.JSONObject();
+               md.put("Width", corrTileW);
+               md.put("Height", corrTileH);
+               md.put("GridPixelOverlapX", corrOverlapX);
+               md.put("GridPixelOverlapY", corrOverlapY);
+               correctedBlendSummaryMD = md;
+            } catch (mmcorej.org.json.JSONException e) {
+               throw new IllegalStateException("Failed to build corrected summary metadata", e);
+            }
          } else {
             tileTransform16 = null;
             tileTransform8 = null;
+            correctedBlendSummaryMD = blendSummaryMD;
          }
 
          int imagesWritten = 0;
@@ -609,7 +633,7 @@ public class StitchFrame extends JDialog {
                if (doBlend) {
                   TileBlender blender = new TileBlender(adapter,
                         new mmcorej.org.json.JSONObject(),
-                        tzAxes, chNames, adapter.getSummaryMetadata());
+                        tzAxes, chNames, correctedBlendSummaryMD);
 
                   for (int c = 0; c < numCh; c++) {
                      final int tIdx = t;
@@ -626,32 +650,16 @@ public class StitchFrame extends JDialog {
                                     + (imagesBefore * 100 + pct) / (totalImages * half));
                            });
 
-                     int chCanvasW = canvasW;
-                     int chCanvasH = canvasH;
                      Object pixelData;
                      int bytesPerPixel;
                      if (is16bit) {
-                        short[] pixels = blender.composite16(0, 0, canvasW, canvasH, 0,
+                        short[] pixels = blender.composite16(0, 0, outCanvasW, outCanvasH, 0,
                               chName, tOrigins, tileTransform16, blendProgress);
-                        if (postCanvasRotation != 0) {
-                           Object[] tr = ImageTransformUtils.transformPixels(
-                                 pixels, canvasW, canvasH, false, postCanvasRotation);
-                           pixels = (short[]) tr[0];
-                           chCanvasW = (Integer) tr[1];
-                           chCanvasH = (Integer) tr[2];
-                        }
                         pixelData = pixels;
                         bytesPerPixel = 2;
                      } else {
-                        byte[] pixels = blender.composite8(0, 0, canvasW, canvasH, 0,
+                        byte[] pixels = blender.composite8(0, 0, outCanvasW, outCanvasH, 0,
                               chName, tOrigins, tileTransform8, blendProgress);
-                        if (postCanvasRotation != 0) {
-                           Object[] tr = ImageTransformUtils.transformPixels(
-                                 pixels, canvasW, canvasH, false, postCanvasRotation);
-                           pixels = (byte[]) tr[0];
-                           chCanvasW = (Integer) tr[1];
-                           chCanvasH = (Integer) tr[2];
-                        }
                         pixelData = pixels;
                         bytesPerPixel = 1;
                      }
@@ -659,7 +667,7 @@ public class StitchFrame extends JDialog {
                      Coords coords = studio_.data().coordsBuilder()
                            .channel(c).z(z).time(t).build();
                      Metadata meta = templateMetaBuilder.generateUUID().build();
-                     Image mmImg = studio_.data().createImage(pixelData, chCanvasW, chCanvasH,
+                     Image mmImg = studio_.data().createImage(pixelData, outCanvasW, outCanvasH,
                            bytesPerPixel, 1, coords, meta);
                      ds.putImage(mmImg);
                      imagesWritten++;

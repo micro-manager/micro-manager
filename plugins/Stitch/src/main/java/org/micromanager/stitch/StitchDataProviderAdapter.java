@@ -432,7 +432,16 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          }
       }
 
-      // Find minimum step between horizontally and vertically adjacent grid cells
+      // Build a (row, col) → posIdx lookup for O(1) neighbour access
+      Map<Long, Integer> rcToPos = new HashMap<>();
+      for (Map.Entry<Integer, GridCell> entry : grid.entrySet()) {
+         GridCell cell = entry.getValue();
+         rcToPos.put(((long) cell.row << 32) | (cell.col & 0xFFFFFFFFL), entry.getKey());
+      }
+
+      // Find minimum step between horizontally and vertically adjacent grid cells.
+      // Only check the immediate right (dCol=+1) and bottom (dRow=+1) neighbour of
+      // each cell — O(N) rather than O(N²).
       double minStepX = Double.MAX_VALUE;
       double minStepY = Double.MAX_VALUE;
       for (Map.Entry<Integer, GridCell> a : grid.entrySet()) {
@@ -440,23 +449,27 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          if (xyA == null) {
             continue;
          }
-         for (Map.Entry<Integer, GridCell> b : grid.entrySet()) {
-            if (a.getKey().equals(b.getKey())) {
-               continue;
-            }
-            double[] xyB = xyByPos.get(b.getKey());
-            if (xyB == null) {
-               continue;
-            }
-            int dCol = Math.abs(b.getValue().col - a.getValue().col);
-            int dRow = Math.abs(b.getValue().row - a.getValue().row);
-            if (dCol == 1 && dRow == 0) {
+         GridCell cellA = a.getValue();
+
+         // Right neighbour
+         Long rightKey = ((long) cellA.row << 32) | ((cellA.col + 1) & 0xFFFFFFFFL);
+         Integer rightPos = rcToPos.get(rightKey);
+         if (rightPos != null) {
+            double[] xyB = xyByPos.get(rightPos);
+            if (xyB != null) {
                double step = Math.abs(xyB[0] - xyA[0]);
                if (step > 0 && step < minStepX) {
                   minStepX = step;
                }
             }
-            if (dRow == 1 && dCol == 0) {
+         }
+
+         // Bottom neighbour
+         Long bottomKey = (((long) cellA.row + 1) << 32) | (cellA.col & 0xFFFFFFFFL);
+         Integer bottomPos = rcToPos.get(bottomKey);
+         if (bottomPos != null) {
+            double[] xyB = xyByPos.get(bottomPos);
+            if (xyB != null) {
                double step = Math.abs(xyB[1] - xyA[1]);
                if (step > 0 && step < minStepY) {
                   minStepY = step;
