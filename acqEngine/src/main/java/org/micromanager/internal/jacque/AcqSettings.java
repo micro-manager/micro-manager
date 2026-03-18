@@ -7,7 +7,7 @@ import org.micromanager.PositionList;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 
-public final class AcqSettings {
+final class AcqSettings {
    public List<Integer> frames;
    public List<AcqChannel> channels;
    public List<Integer> positions;

@@ -2,7 +2,7 @@ package org.micromanager.internal.jacque;
 
 import mmcorej.CMMCore;
 
-public interface CoreOps {
+interface CoreOps {
    boolean isPropertySequenceable(String device, String property)
          throws Exception;
 

@@ -1,4 +1,4 @@
-package org.micromanager.internal;
+package org.micromanager.internal.jacque;
 
 import java.awt.Color;
 import java.io.EOFException;
@@ -32,18 +32,10 @@ import org.micromanager.acquisition.internal.AcquisitionSleepEvent;
 import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import org.micromanager.data.Coords;
-import org.micromanager.internal.jacque.AcqChannel;
-import org.micromanager.internal.jacque.AcqEvent;
-import org.micromanager.internal.jacque.AcqSettings;
-import org.micromanager.internal.jacque.CoreOps;
-import org.micromanager.internal.jacque.EngineState;
-import org.micromanager.internal.jacque.MmUtils;
-import org.micromanager.internal.jacque.SequenceGenerator;
-import org.micromanager.internal.jacque.TriggerSequence;
-import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 
-public class AcquisitionEngine2010J implements IAcquisitionEngine2010 {
+public class Jacque2010 implements IAcquisitionEngine2010 {
 
    private final Studio gui;
    private final CMMCore mmc;
@@ -54,12 +46,12 @@ public class AcquisitionEngine2010J implements IAcquisitionEngine2010 {
    private Map<List<String>, List<String>> activePropertySequences;
    private Object[] activeSliceSequence; // [String zStage, List<Double> slices]
 
-   public AcquisitionEngine2010J(Studio studio) {
+   public Jacque2010(Studio studio) {
       this.gui = studio;
       this.mmc = studio.getCMMCore();
    }
 
-   public AcquisitionEngine2010J(CMMCore mmc) {
+   public Jacque2010(CMMCore mmc) {
       this.gui = null;
       this.mmc = mmc;
    }
@@ -1490,7 +1482,7 @@ public class AcquisitionEngine2010J implements IAcquisitionEngine2010 {
       Thread acqThread = new Thread(
             () -> runAcquisition(settings, outQueue, cleanup,
                   positionList, autofocusDevice),
-            "AcquisitionEngine2010J Thread");
+            "Jacque2010 Thread");
       state.acqThread = acqThread;
       acqThread.start();
       return outQueue;

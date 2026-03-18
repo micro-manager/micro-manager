@@ -10,7 +10,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public abstract class Seq<T> implements Iterable<T> {
+abstract class Seq<T> implements Iterable<T> {
 
    public abstract T first();
 

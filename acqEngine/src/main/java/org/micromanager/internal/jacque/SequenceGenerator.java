@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-public final class SequenceGenerator {
+final class SequenceGenerator {
 
    static final double MAX_Z_TRIGGER_DIST = 5.0;
 
