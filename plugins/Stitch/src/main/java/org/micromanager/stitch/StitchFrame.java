@@ -537,11 +537,8 @@ public class StitchFrame extends JDialog {
          final int totalImages = numZ * numCh;
 
          // Detect pixel depth from the first available tile.
-         final boolean is16bit;
-         {
-            TaggedImage probe = adapter.getImage(adapter.getAxesSet().iterator().next(), 0);
-            is16bit = probe == null || probe.pix instanceof short[];
-         }
+         TaggedImage probe = adapter.getImage(adapter.getAxesSet().iterator().next(), 0);
+         final boolean is16bit = probe == null || probe.pix instanceof short[];
 
          if (doBlend) {
             // Blend path: feathered blending per channel.
