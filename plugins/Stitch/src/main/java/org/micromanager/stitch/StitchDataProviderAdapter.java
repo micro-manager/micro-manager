@@ -136,14 +136,20 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       if (resolutionLevel != 0) {
          return null;
       }
-      // Strip row/col before delegating to parent (parent doesn't know them)
+      // Strip row/col before delegating to parent (parent doesn't know them).
+      // If the (row,col) pair is not in the grid, return null rather than letting
+      // the parent silently fall back to position 0 and return the wrong tile.
       HashMap<String, Object> stripped = stripRowCol(axes);
+      if (stripped == null) {
+         return null;
+      }
       return super.getImage(stripped, 0);
    }
 
    @Override
    public boolean hasImage(HashMap<String, Object> axes) {
-      return super.hasImage(stripRowCol(axes));
+      HashMap<String, Object> stripped = stripRowCol(axes);
+      return stripped != null && super.hasImage(stripped);
    }
 
    @Override
@@ -192,6 +198,9 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
    /**
     * Remove {@code "row"} and {@code "column"} from an axes map, restore
     * {@code "position"} from the grid lookup (reverse of addRowCol).
+    *
+    * <p>Returns {@code null} if the (row, col) pair is not found in the grid,
+    * so callers can distinguish "unknown tile" from position 0.</p>
     */
    private HashMap<String, Object> stripRowCol(HashMap<String, Object> axes) {
       HashMap<String, Object> result = new HashMap<>(axes);
@@ -202,9 +211,10 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          int col = (Integer) colVal;
          long key = ((long) row << 32) | (col & 0xFFFFFFFFL);
          Integer posIdx = rowColToPosition_.get(key);
-         if (posIdx != null) {
-            result.put(Coords.STAGE_POSITION, posIdx);
+         if (posIdx == null) {
+            return null;  // unknown (row,col) — do not fall through to position 0
          }
+         result.put(Coords.STAGE_POSITION, posIdx);
       }
       return result;
    }

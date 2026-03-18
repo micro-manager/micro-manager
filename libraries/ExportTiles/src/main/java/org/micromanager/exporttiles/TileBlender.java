@@ -412,10 +412,18 @@ public class TileBlender {
          if (tileTransform != null) {
             tilePix = tileTransform.apply(tilePix);
          }
-         int fullTileW = (taggedImage.tags != null) ? taggedImage.tags.optInt("Width", 0) : 0;
-         if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
-            int sq = (int) Math.round(Math.sqrt(tilePix.length));
-            fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
+         // When a transform is applied, use the blender's expected tile width (derived from
+         // the corrected summary metadata) rather than the original image tag, which may
+         // reflect pre-transform dimensions and will be wrong for 90/270° rotations.
+         int fullTileW;
+         if (tileTransform != null) {
+            fullTileW = dsTileW * scale;
+         } else {
+            fullTileW = (taggedImage.tags != null) ? taggedImage.tags.optInt("Width", 0) : 0;
+            if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
+               int sq = (int) Math.round(Math.sqrt(tilePix.length));
+               fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
+            }
          }
 
          for (int py = interY0; py < interY1; py++) {
@@ -545,10 +553,17 @@ public class TileBlender {
          if (tileTransform != null) {
             tilePix = tileTransform.apply(tilePix);
          }
-         int fullTileW = (taggedImage.tags != null) ? taggedImage.tags.optInt("Width", 0) : 0;
-         if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
-            int sq = (int) Math.round(Math.sqrt(tilePix.length));
-            fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
+         // When a transform is applied, use the blender's expected tile width (derived from
+         // the corrected summary metadata) rather than the original image tag.
+         int fullTileW;
+         if (tileTransform != null) {
+            fullTileW = dsTileW * scale;
+         } else {
+            fullTileW = (taggedImage.tags != null) ? taggedImage.tags.optInt("Width", 0) : 0;
+            if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
+               int sq = (int) Math.round(Math.sqrt(tilePix.length));
+               fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
+            }
          }
 
          for (int py = interY0; py < interY1; py++) {

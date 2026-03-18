@@ -794,10 +794,12 @@ public class StitchFrame extends JDialog {
             processed++;
             continue;
          }
-         // Filter to the requested channel name
+         // Filter to the requested channel name.  Channel values can be String (named
+         // channels) or Integer (unnamed channels stored as index), so use the same
+         // matching logic as TileBlender/TileAligner.
          Object axisChannel = axes.get("channel");
          if (channelName != null) {
-            if (!channelName.equals(axisChannel)) {
+            if (!channelValuesMatch(channelName, axisChannel)) {
                processed++;
                continue;
             }
@@ -993,5 +995,28 @@ public class StitchFrame extends JDialog {
       }
       List<String> names = summary.getChannelNameList();
       return names != null ? names : new ArrayList<>();
+   }
+
+   /**
+    * Returns true when a channel name from the caller matches a channel value from an axes map.
+    *
+    * <p>Handles the case where unnamed channels are stored as {@code Integer} indices
+    * but the caller passes the index as a {@code String} (e.g. {@code "0"}).</p>
+    */
+   private static boolean channelValuesMatch(String callerName, Object storedValue) {
+      if (storedValue == null) {
+         return false;
+      }
+      if (callerName.equals(storedValue)) {
+         return true;
+      }
+      if (storedValue instanceof Integer) {
+         try {
+            return Integer.parseInt(callerName) == (Integer) storedValue;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+      return false;
    }
 }
