@@ -5,16 +5,17 @@ import java.awt.Dialog;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.net.URL;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -129,8 +130,8 @@ public class StitchFrame extends JDialog {
 
    private void buildUI() {
       SummaryMetadata summary = dataProvider_.getSummaryMetadata();
-      List<String> channelNames = getChannelNames(summary);
-      int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
+      final List<String> channelNames = getChannelNames(summary);
+      final int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
 
       // Correct camera orientation
       add(new JLabel(""));
@@ -242,8 +243,8 @@ public class StitchFrame extends JDialog {
    private void updateAlignControls() {
       boolean align = alignCheck_.isSelected();
       SummaryMetadata summary = dataProvider_.getSummaryMetadata();
-      int numChannels = getChannelNames(summary).size();
-      int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
+      final int numChannels = getChannelNames(summary).size();
+      final int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
       alignChannelLabel_.setEnabled(align);
       alignChannelCombo_.setEnabled(align && numChannels > 1);
       alignZLabel_.setEnabled(align);
@@ -306,15 +307,15 @@ public class StitchFrame extends JDialog {
          return;
       }
 
-      String selectedChannel = alignChannelCombo_.getItemCount() > 0
+      final String selectedChannel = alignChannelCombo_.getItemCount() > 0
             ? (String) alignChannelCombo_.getSelectedItem()
             : null;
-      int alignZ = alignZCombo_.getItemCount() > 0
+      final int alignZ = alignZCombo_.getItemCount() > 0
             ? (Integer) alignZCombo_.getSelectedItem() - 1  // convert 1-based display to 0-based
             : 0;
-      boolean blend = blendCheck_.isSelected();
-      boolean align = alignCheck_.isSelected();
-      boolean correctOrientation = correctOrientationCheck_.isSelected();
+      final boolean blend = blendCheck_.isSelected();
+      final boolean align = alignCheck_.isSelected();
+      final boolean correctOrientation = correctOrientationCheck_.isSelected();
       int maxDisplacementPx = -1;  // -1 = no cutoff
       if (align) {
          String maxDispText = maxDisplacementField_.getText().trim();
@@ -332,7 +333,7 @@ public class StitchFrame extends JDialog {
          }
       }
       // Combine dir + prefix into the full save path
-      String outputPath = saveToStack
+      final String outputPath = saveToStack
             ? outputDir + File.separator + namePrefix
             : "";
 
@@ -349,8 +350,8 @@ public class StitchFrame extends JDialog {
       }
 
       SummaryMetadata summary = dataProvider_.getSummaryMetadata();
-      List<String> allChannelNames = getChannelNames(summary);
-      List<String> channelNamesForExport = allChannelNames.isEmpty()
+      final List<String> allChannelNames = getChannelNames(summary);
+      final List<String> channelNamesForExport = allChannelNames.isEmpty()
             ? Collections.singletonList(null)
             : allChannelNames;
 
@@ -578,7 +579,7 @@ public class StitchFrame extends JDialog {
                   final String chName = chNames.get(c);
                   SwingUtilities.invokeLater(() -> statusLabel.setText(
                         "Compositing z=" + zIdx + " " + chName + "…"));
-                  final java.util.function.UnaryOperator<short[]> finalTileTransform = tileTransform;
+                  final UnaryOperator<short[]> finalTileTransform = tileTransform;
                   final int imagesBefore = imagesWritten;
                   short[] pixels = blender.composite16(0, 0, canvasW, canvasH, 0,
                         chName,
@@ -745,8 +746,8 @@ public class StitchFrame extends JDialog {
             processed++;
             continue;
          }
-         int row = (Integer) rowObj;
-         int col = (Integer) colObj;
+         final int row = (Integer) rowObj;
+         final int col = (Integer) colObj;
 
          TaggedImage tile = adapter.getImage(axes, 0);
          if (tile == null || tile.pix == null) {
