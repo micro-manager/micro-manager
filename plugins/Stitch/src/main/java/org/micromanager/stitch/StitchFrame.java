@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -512,172 +513,171 @@ public class StitchFrame extends JDialog {
          final Metadata.Builder templateMetaBuilder =
                probeTemplateMetadata(dataProvider_, alignZ);
 
-         // Step 5 & 6: compute aligned origins (if needed) and composite image
+         // Step 5 & 6: composite/stitch — iterates all time points, z slices, channels.
          SwingUtilities.invokeLater(() -> statusLabel.setText("Computing…"));
 
-         Map<Point, Point2D.Float> origins = null;
-         if (doAlign) {
-            SwingUtilities.invokeLater(() -> statusLabel.setText("Aligning…"));
-            origins = new TileAligner(adapter, alignAxes, chNames,
-                  adapter.getSummaryMetadata())
-                  .computeAlignedOrigins(0, maxDisplacementPx,
-                        pct -> SwingUtilities.invokeLater(() -> {
-                           bar.setValue(pct / 2);
-                           statusLabel.setText("Aligning… " + pct + "%");
-                        }));
-            SwingUtilities.invokeLater(() -> bar.setValue(50));
-         }
-
-         final Map<Point, Point2D.Float> finalOrigins = origins;
          int numCh = chNames.size();
          int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
          if (numZ < 1) {
             numZ = 1;
          }
-         final int totalImages = numZ * numCh;
+         int numT = dataProvider_.getNextIndex(Coords.TIME_POINT);
+         if (numT < 1) {
+            numT = 1;
+         }
+         final int totalImages = numT * numZ * numCh;
 
          // Detect pixel depth from the first available tile.
-         TaggedImage probe = adapter.getImage(adapter.getAxesSet().iterator().next(), 0);
+         Set<HashMap<String, Object>> axesSet = adapter.getAxesSet();
+         if (axesSet.isEmpty()) {
+            throw new IllegalStateException("Dataset contains no images.");
+         }
+         TaggedImage probe = adapter.getImage(axesSet.iterator().next(), 0);
          final boolean is16bit = probe == null || probe.pix instanceof short[];
 
-         if (doBlend) {
-            // Blend path: feathered blending per channel.
-            //
-            // Orientation correction strategy:
-            //   - Mirror and 180° rotation keep tile w×h unchanged, so they can be applied
-            //     per-tile inside TileBlender via the tileTransform callback.
-            //   - 90°/270° rotations swap tile w×h which breaks TileBlender's grid geometry,
-            //     so those are applied to the fully-assembled canvas afterward.
-            //
-            // The per-tile transform handles: mirror (if requested) + 180° (if requested).
-            // The post-canvas transform handles: 90°/270° rotation only.
-            final boolean needsPerTileMirror = doMirror;
-            final int perTileRotation = (rotationDeg == 180) ? 180 : 0;
-            final int postCanvasRotation = (rotationDeg == 90 || rotationDeg == 270)
-                  ? rotationDeg : 0;
+         // Orientation correction components (null correction = no-op)
+         final boolean needsPerTileMirror = doMirror;
+         final int perTileRotation = (rotationDeg == 180) ? 180 : 0;
+         final int postCanvasRotation = (rotationDeg == 90 || rotationDeg == 270)
+               ? rotationDeg : 0;
 
-            // Read tile dims from summary metadata (set by StitchDataProviderAdapter)
-            mmcorej.org.json.JSONObject blendSummaryMD = adapter.getSummaryMetadata();
-            final int tileW = blendSummaryMD != null ? blendSummaryMD.optInt("Width", 0) : 0;
-            final int tileH = blendSummaryMD != null ? blendSummaryMD.optInt("Height", 0) : 0;
+         // Read tile dims for per-tile transform (blend path only)
+         mmcorej.org.json.JSONObject blendSummaryMD = adapter.getSummaryMetadata();
+         final int tileW = blendSummaryMD != null ? blendSummaryMD.optInt("Width", 0) : 0;
+         final int tileH = blendSummaryMD != null ? blendSummaryMD.optInt("Height", 0) : 0;
 
-            // Build per-tile transform for 16-bit path (8-bit uses a separate operator below)
-            UnaryOperator<short[]> tileTransform16 = null;
-            UnaryOperator<byte[]> tileTransform8 = null;
-            if (correction != null && (needsPerTileMirror || perTileRotation != 0)
-                  && tileW > 0 && tileH > 0) {
-               if (is16bit) {
-                  tileTransform16 = (pix) -> {
-                     Object[] r = ImageTransformUtils.transformPixels(
-                           pix, tileW, tileH, needsPerTileMirror, perTileRotation);
-                     return (short[]) r[0];
-                  };
-               } else {
-                  tileTransform8 = (pix) -> {
-                     Object[] r = ImageTransformUtils.transformPixels(
-                           pix, tileW, tileH, needsPerTileMirror, perTileRotation);
-                     return (byte[]) r[0];
-                  };
+         // Build per-tile orientation transforms for blend path
+         final UnaryOperator<short[]> tileTransform16;
+         final UnaryOperator<byte[]> tileTransform8;
+         if (doBlend && correction != null && (needsPerTileMirror || perTileRotation != 0)
+               && tileW > 0 && tileH > 0) {
+            tileTransform16 = (pix) -> (short[]) ImageTransformUtils.transformPixels(
+                  pix, tileW, tileH, needsPerTileMirror, perTileRotation)[0];
+            tileTransform8 = (pix) -> (byte[]) ImageTransformUtils.transformPixels(
+                  pix, tileW, tileH, needsPerTileMirror, perTileRotation)[0];
+         } else {
+            tileTransform16 = null;
+            tileTransform8 = null;
+         }
+
+         int imagesWritten = 0;
+         for (int t = 0; t < numT; t++) {
+            // Compute aligned origins once per time point at the selected z slice.
+            // Origins are shared across all z and channels within this time point.
+            Map<Point, Point2D.Float> origins = null;
+            if (doAlign) {
+               final int tIdx = t;
+               SwingUtilities.invokeLater(() -> statusLabel.setText(
+                     "Aligning t=" + (tIdx + 1) + "…"));
+               HashMap<String, Object> tAlignAxes = new HashMap<>(alignAxes);
+               if (numT > 1) {
+                  tAlignAxes.put(Coords.TIME_POINT, t);
                }
+               origins = new TileAligner(adapter, tAlignAxes, chNames,
+                     adapter.getSummaryMetadata())
+                     .computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
             }
+            final Map<Point, Point2D.Float> tOrigins = origins;
 
-            int imagesWritten = 0;
             for (int z = 0; z < numZ; z++) {
-               HashMap<String, Object> zAxes = new HashMap<>(baseAxes);
-               zAxes.put("z", z);
+               // baseAxes for this t/z
+               HashMap<String, Object> tzAxes = new HashMap<>(baseAxes);
+               tzAxes.put("z", z);
+               if (numT > 1) {
+                  tzAxes.put(Coords.TIME_POINT, t);
+               }
 
-               TileBlender blender = new TileBlender(adapter, new mmcorej.org.json.JSONObject(),
-                     zAxes, chNames, adapter.getSummaryMetadata());
-               for (int c = 0; c < numCh; c++) {
-                  final int zIdx = z;
-                  final String chName = chNames.get(c);
-                  SwingUtilities.invokeLater(() -> statusLabel.setText(
-                        "Blending z=" + zIdx + " " + chName + "…"));
-                  final int imagesBefore = imagesWritten;
-                  final java.util.function.IntConsumer blendProgress =
-                        pct -> SwingUtilities.invokeLater(() -> {
-                           int base = doAlign ? 50 : 0;
-                           int half = doAlign ? 2 : 1;
-                           bar.setValue(base + (imagesBefore * 100 + pct) / (totalImages * half));
-                        });
+               if (doBlend) {
+                  TileBlender blender = new TileBlender(adapter,
+                        new mmcorej.org.json.JSONObject(),
+                        tzAxes, chNames, adapter.getSummaryMetadata());
 
-                  int chCanvasW = canvasW;
-                  int chCanvasH = canvasH;
-                  Object pixelData;
-                  int bytesPerPixel;
-                  if (is16bit) {
-                     final UnaryOperator<short[]> finalTT16 = tileTransform16;
-                     short[] pixels = blender.composite16(0, 0, canvasW, canvasH, 0,
-                           chName, finalOrigins, finalTT16, blendProgress);
-                     // Apply 90°/270° post-canvas rotation if needed
-                     if (postCanvasRotation != 0) {
-                        Object[] transformed = ImageTransformUtils.transformPixels(
-                              pixels, canvasW, canvasH, false, postCanvasRotation);
-                        pixels = (short[]) transformed[0];
-                        chCanvasW = (Integer) transformed[1];
-                        chCanvasH = (Integer) transformed[2];
+                  for (int c = 0; c < numCh; c++) {
+                     final int tIdx = t;
+                     final int zIdx = z;
+                     final String chName = chNames.get(c);
+                     SwingUtilities.invokeLater(() -> statusLabel.setText(
+                           "Blending t=" + (tIdx + 1) + " z=" + (zIdx + 1) + " " + chName + "…"));
+                     final int imagesBefore = imagesWritten;
+                     final java.util.function.IntConsumer blendProgress =
+                           pct -> SwingUtilities.invokeLater(() -> {
+                              int base = doAlign ? 50 : 0;
+                              int half = doAlign ? 2 : 1;
+                              bar.setValue(base
+                                    + (imagesBefore * 100 + pct) / (totalImages * half));
+                           });
+
+                     int chCanvasW = canvasW;
+                     int chCanvasH = canvasH;
+                     Object pixelData;
+                     int bytesPerPixel;
+                     if (is16bit) {
+                        short[] pixels = blender.composite16(0, 0, canvasW, canvasH, 0,
+                              chName, tOrigins, tileTransform16, blendProgress);
+                        if (postCanvasRotation != 0) {
+                           Object[] tr = ImageTransformUtils.transformPixels(
+                                 pixels, canvasW, canvasH, false, postCanvasRotation);
+                           pixels = (short[]) tr[0];
+                           chCanvasW = (Integer) tr[1];
+                           chCanvasH = (Integer) tr[2];
+                        }
+                        pixelData = pixels;
+                        bytesPerPixel = 2;
+                     } else {
+                        byte[] pixels = blender.composite8(0, 0, canvasW, canvasH, 0,
+                              chName, tOrigins, tileTransform8, blendProgress);
+                        if (postCanvasRotation != 0) {
+                           Object[] tr = ImageTransformUtils.transformPixels(
+                                 pixels, canvasW, canvasH, false, postCanvasRotation);
+                           pixels = (byte[]) tr[0];
+                           chCanvasW = (Integer) tr[1];
+                           chCanvasH = (Integer) tr[2];
+                        }
+                        pixelData = pixels;
+                        bytesPerPixel = 1;
                      }
-                     pixelData = pixels;
-                     bytesPerPixel = 2;
-                  } else {
-                     final UnaryOperator<byte[]> finalTT8 = tileTransform8;
-                     byte[] pixels = blender.composite8(0, 0, canvasW, canvasH, 0,
-                           chName, finalOrigins, finalTT8, blendProgress);
-                     if (postCanvasRotation != 0) {
-                        Object[] transformed = ImageTransformUtils.transformPixels(
-                              pixels, canvasW, canvasH, false, postCanvasRotation);
-                        pixels = (byte[]) transformed[0];
-                        chCanvasW = (Integer) transformed[1];
-                        chCanvasH = (Integer) transformed[2];
-                     }
-                     pixelData = pixels;
-                     bytesPerPixel = 1;
+
+                     Coords coords = studio_.data().coordsBuilder()
+                           .channel(c).z(z).time(t).build();
+                     Metadata meta = templateMetaBuilder.generateUUID().build();
+                     Image mmImg = studio_.data().createImage(pixelData, chCanvasW, chCanvasH,
+                           bytesPerPixel, 1, coords, meta);
+                     ds.putImage(mmImg);
+                     imagesWritten++;
                   }
 
-                  Coords coords = studio_.data().coordsBuilder()
-                        .channel(c).z(z).build();
-                  Metadata meta = templateMetaBuilder.generateUUID().build();
-                  Image mmImg = studio_.data().createImage(pixelData, chCanvasW, chCanvasH,
-                        bytesPerPixel, 1, coords, meta);
-                  ds.putImage(mmImg);
-                  imagesWritten++;
-               }
-            }
+               } else {
+                  // Simple stitch: copy tiles, using aligned origins when available.
+                  for (int c = 0; c < numCh; c++) {
+                     final String chName = chNames.get(c);
+                     final int tIdx = t;
+                     final int zIdx = z;
+                     SwingUtilities.invokeLater(() -> statusLabel.setText(
+                           "Stitching t=" + (tIdx + 1) + " z=" + (zIdx + 1)
+                                 + " " + chName + "…"));
+                     final int imagesBefore = imagesWritten;
+                     Object[] result = stitchTiles(adapter, tzAxes, chName, canvasW, canvasH,
+                           correction, tOrigins,
+                           pct -> {
+                              int base = doAlign ? 50 : 0;
+                              int half = doAlign ? 2 : 1;
+                              int overall = base
+                                    + (imagesBefore * 100 + pct) / (totalImages * half);
+                              SwingUtilities.invokeLater(() -> bar.setValue(overall));
+                           });
+                     Object canvas = result[0];
+                     int bytesPerPixel = (Integer) result[1];
+                     int stitchedW = (Integer) result[2];
+                     int stitchedH = (Integer) result[3];
 
-         } else {
-            // Simple stitch path: copy tiles per channel per z onto a canvas.
-            // When doAlign is true, use the computed aligned origins for tile placement.
-            int imagesWritten = 0;
-            for (int z = 0; z < numZ; z++) {
-               HashMap<String, Object> zAxes = new HashMap<>(baseAxes);
-               zAxes.put("z", z);
-
-               for (int c = 0; c < numCh; c++) {
-                  final String chName = chNames.get(c);
-                  final int zIdx = z;
-                  SwingUtilities.invokeLater(() -> statusLabel.setText(
-                        "Stitching z=" + zIdx + " " + chName + "…"));
-                  final int imagesBefore = imagesWritten;
-                  Object[] result = stitchTiles(adapter, zAxes, chName, canvasW, canvasH,
-                        correction, finalOrigins,
-                        pct -> {
-                           int base = doAlign ? 50 : 0;
-                           int half = doAlign ? 2 : 1;
-                           int overall = base + (imagesBefore * 100 + pct) / (totalImages * half);
-                           SwingUtilities.invokeLater(() -> bar.setValue(overall));
-                        });
-                  Object canvas = result[0];
-                  int bytesPerPixel = (Integer) result[1];
-                  int stitchedW = (Integer) result[2];
-                  int stitchedH = (Integer) result[3];
-
-                  Coords coords = studio_.data().coordsBuilder()
-                        .channel(c).z(z).build();
-                  Metadata meta = templateMetaBuilder.generateUUID().build();
-                  Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
-                        bytesPerPixel, 1, coords, meta);
-                  ds.putImage(mmImg);
-                  imagesWritten++;
+                     Coords coords = studio_.data().coordsBuilder()
+                           .channel(c).z(z).time(t).build();
+                     Metadata meta = templateMetaBuilder.generateUUID().build();
+                     Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
+                           bytesPerPixel, 1, coords, meta);
+                     ds.putImage(mmImg);
+                     imagesWritten++;
+                  }
                }
             }
          }
@@ -743,6 +743,7 @@ public class StitchFrame extends JDialog {
       int corrCanvasH = swapTileDims ? canvasW : canvasH;
 
       Object targetZ = baseAxes.get("z");
+      Object targetT = baseAxes.get(Coords.TIME_POINT);
 
       int processed = 0;
       java.util.Set<HashMap<String, Object>> allAxes = adapter.getAxesSet();
@@ -755,9 +756,14 @@ public class StitchFrame extends JDialog {
       int overlapY = summaryMD != null ? summaryMD.optInt("GridPixelOverlapY", 0) : 0;
 
       for (HashMap<String, Object> axes : allAxes) {
-         // Skip only if z axis is present AND differs from target
+         // Skip if z or time axis is present AND differs from target
          Object axisZ = axes.get("z");
          if (axisZ != null && targetZ != null && !targetZ.equals(axisZ)) {
+            processed++;
+            continue;
+         }
+         Object axisT = axes.get(Coords.TIME_POINT);
+         if (axisT != null && targetT != null && !targetT.equals(axisT)) {
             processed++;
             continue;
          }
@@ -848,16 +854,16 @@ public class StitchFrame extends JDialog {
             destX = col * stepX;
             destY = row * stepY;
          }
-         for (int ty = 0; ty < tilePaintH; ty++) {
-            if (destY + ty >= corrCanvasH) {
-               break;
-            }
-            int srcOff = ty * tilePaintW;
-            int dstOff = (destY + ty) * corrCanvasW + destX;
-            int copyW = Math.min(tilePaintW, corrCanvasW - destX);
-            if (copyW <= 0) {
-               continue;
-            }
+         // Clip copy region to canvas bounds, handling negative origins from alignment.
+         int srcX0 = Math.max(0, -destX);
+         int srcY0 = Math.max(0, -destY);
+         int dstX0 = Math.max(0, destX);
+         int dstY0 = Math.max(0, destY);
+         int copyW = Math.min(tilePaintW - srcX0, corrCanvasW - dstX0);
+         int copyH = Math.min(tilePaintH - srcY0, corrCanvasH - dstY0);
+         for (int ty = 0; ty < copyH; ty++) {
+            int srcOff = (srcY0 + ty) * tilePaintW + srcX0;
+            int dstOff = (dstY0 + ty) * corrCanvasW + dstX0;
             if (is16bit && canvas16 != null) {
                System.arraycopy(tilePix, srcOff, canvas16, dstOff, copyW);
             } else if (!is16bit && canvas8 != null) {
