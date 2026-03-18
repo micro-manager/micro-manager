@@ -246,12 +246,26 @@ public class MMDataProviderAdapter implements TiledDataProviderAPI {
             axes.put(axis, idx);
          }
       }
-      // Coords.index==0 axes are stripped by the builder, so channel 0 is absent
-      // from coords.getAxes() even though the image belongs to channel 0.
-      // Explicitly add it when channel names are available.
-      if (!axes.containsKey(Coords.CHANNEL) && channelNames_ != null
-            && channelNames_.length > 0) {
-         axes.put(Coords.CHANNEL, channelNames_[0]);
+      // Coords.index==0 axes are stripped by the builder, so axes like channel=0,
+      // time=0, z=0 are absent from coords.getAxes() even though the image belongs
+      // to index 0 on those axes.  Restore them so that downstream filters that
+      // match on these axes work correctly.
+      SummaryMetadata summary = source_.getSummaryMetadata();
+      Coords intendedDims = (summary != null) ? summary.getIntendedDimensions() : null;
+      if (intendedDims != null) {
+         if (!axes.containsKey(Coords.CHANNEL) && intendedDims.hasAxis(Coords.CHANNEL)) {
+            if (channelNames_ != null && channelNames_.length > 0) {
+               axes.put(Coords.CHANNEL, channelNames_[0]);
+            } else {
+               axes.put(Coords.CHANNEL, 0);
+            }
+         }
+         if (!axes.containsKey(Coords.Z_SLICE) && intendedDims.hasAxis(Coords.Z_SLICE)) {
+            axes.put(Coords.Z_SLICE, 0);
+         }
+         if (!axes.containsKey(Coords.TIME_POINT) && intendedDims.hasAxis(Coords.TIME_POINT)) {
+            axes.put(Coords.TIME_POINT, 0);
+         }
       }
       return axes;
    }
