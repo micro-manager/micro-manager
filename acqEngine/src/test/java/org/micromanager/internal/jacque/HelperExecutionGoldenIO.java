@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 
 final class HelperExecutionGoldenIO {
 
@@ -51,6 +54,18 @@ final class HelperExecutionGoldenIO {
       Integer maxLength;
    }
 
+   static class StagePositionJson {
+      String stageName;
+      int numAxes;
+      double x;
+      Double y;
+   }
+
+   static class MultiStagePositionJson {
+      String label;
+      List<StagePositionJson> stagePositions;
+   }
+
    static class InitialStateJson {
       String defaultZDrive;
       String defaultXYStage;
@@ -59,6 +74,7 @@ final class HelperExecutionGoldenIO {
       Double initExposure;
       Boolean initShutterState;
       Boolean initContinuousFocus;
+      List<MultiStagePositionJson> positionList;
    }
 
    static class SettingsJson {
@@ -215,6 +231,9 @@ final class HelperExecutionGoldenIO {
       if (isj.initContinuousFocus != null) {
          state.initContinuousFocus = isj.initContinuousFocus;
       }
+      if (isj.positionList != null) {
+         state.positionList = buildPositionList(isj.positionList);
+      }
       // Don't pre-populate cameraExposures: Clojure's prepare-state
       // puts exposure in :exposure, not :cameras, so set-exposure's
       // cache check always misses on the first call.
@@ -235,6 +254,25 @@ final class HelperExecutionGoldenIO {
             state.lastStagePositions.put(xyStage, new double[] {0, 0});
          }
       }
+   }
+
+   static PositionList buildPositionList(
+         List<MultiStagePositionJson> jsonList) {
+      PositionList pl = new PositionList();
+      for (MultiStagePositionJson mspJson : jsonList) {
+         MultiStagePosition msp = new MultiStagePosition();
+         msp.setLabel(mspJson.label);
+         for (StagePositionJson spJson : mspJson.stagePositions) {
+            if (spJson.numAxes == 1) {
+               msp.add(StagePosition.create1D(spJson.stageName, spJson.x));
+            } else {
+               msp.add(StagePosition.create2D(spJson.stageName,
+                     spJson.x, spJson.y != null ? spJson.y : 0));
+            }
+         }
+         pl.addPosition(msp);
+      }
+      return pl;
    }
 
    static AcqEvent eventFromJson(HelperGoldenFileIO.EventJson ej) {

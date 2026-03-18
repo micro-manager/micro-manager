@@ -1,5 +1,5 @@
 {
-  "description": "Shutter management across two snap events",
+  "description": "MSP Z reference used for relative slice instead of referenceZ",
   "mockCore": {
     "cameraDevice": "Camera",
     "shutterDevice": "Shutter",
@@ -8,8 +8,15 @@
     "autoFocusDevice": null,
     "autoShutter": true,
     "exposure": 10.0,
-    "positions": null,
-    "xyPositions": null,
+    "positions": {
+      "Z": 0.0
+    },
+    "xyPositions": {
+      "XY": [
+        0.0,
+        0.0
+      ]
+    },
     "properties": null,
     "numberOfCameraChannels": 1,
     "cameraChannelNames": [
@@ -31,12 +38,24 @@
   "initialState": {
     "defaultZDrive": "Z",
     "defaultXYStage": "XY",
-    "referenceZ": 0.0,
+    "referenceZ": 999.0,
     "initAutoShutter": true,
     "initExposure": 10.0,
     "initShutterState": false,
     "initContinuousFocus": false,
-    "positionList": null
+    "positionList": [
+      {
+        "label": "Pos0",
+        "stagePositions": [
+          {
+            "stageName": "Z",
+            "numAxes": 1,
+            "x": 15.0,
+            "y": null
+          }
+        ]
+      }
+    ]
   },
   "settings": {
     "cameraTimeout": 5000
@@ -50,43 +69,12 @@
       "cameraChannelIndex": 0,
       "position": 0,
       "exposure": 10.0,
-      "slice": null,
-      "waitTimeMs": null,
-      "autofocus": false,
-      "newPosition": false,
-      "closeShutter": false,
-      "relativeZ": false,
-      "task": "snap",
-      "nextFrameIndex": null,
-      "channelName": null,
-      "burstLength": 0,
-      "camera": null,
-      "channelProperties": null,
-      "channelExposure": null,
-      "channelZOffset": null,
-      "channelUseZStack": null,
-      "channelUseChannel": null,
-      "channelSkipFrames": null,
-      "channelColor": null,
-      "burstData": null,
-      "triggerSequence": null,
-      "metadata": null,
-      "runnableCount": null
-    },
-    {
-      "frameIndex": 0,
-      "sliceIndex": 1,
-      "channelIndex": 0,
-      "positionIndex": 0,
-      "cameraChannelIndex": 0,
-      "position": 0,
-      "exposure": 10.0,
-      "slice": null,
+      "slice": 5.0,
       "waitTimeMs": null,
       "autofocus": false,
       "newPosition": false,
       "closeShutter": true,
-      "relativeZ": false,
+      "relativeZ": true,
       "task": "snap",
       "nextFrameIndex": null,
       "channelName": null,
@@ -125,7 +113,26 @@
     {
       "method": "waitForDevice",
       "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "setPosition",
+      "args": [
+        "Z",
+        20.0
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
         "Camera"
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
       ]
     },
     {
@@ -164,98 +171,6 @@
       "method": "setShutterOpen",
       "args": [
         true
-      ]
-    },
-    {
-      "method": "waitForDevice",
-      "args": [
-        "Shutter"
-      ]
-    },
-    {
-      "method": "getCameraDevice",
-      "args": []
-    },
-    {
-      "method": "waitForDevice",
-      "args": [
-        "Camera"
-      ]
-    },
-    {
-      "method": "getCameraDevice",
-      "args": []
-    },
-    {
-      "method": "snapImage",
-      "args": []
-    },
-    {
-      "method": "setAutoShutter",
-      "args": [
-        true
-      ]
-    },
-    {
-      "method": "getNumberOfCameraChannels",
-      "args": []
-    },
-    {
-      "method": "getNumberOfCameraChannels",
-      "args": []
-    },
-    {
-      "method": "getCameraChannelName",
-      "args": [
-        0
-      ]
-    },
-    {
-      "method": "getTaggedImage",
-      "args": [
-        0
-      ]
-    },
-    {
-      "method": "getCameraDevice",
-      "args": []
-    },
-    {
-      "method": "waitForDevice",
-      "args": [
-        "Camera"
-      ]
-    },
-    {
-      "method": "getAutoShutter",
-      "args": []
-    },
-    {
-      "method": "getSystemStateCache",
-      "args": []
-    },
-    {
-      "method": "getAutoShutter",
-      "args": []
-    },
-    {
-      "method": "setAutoShutter",
-      "args": [
-        false
-      ]
-    },
-    {
-      "method": "getShutterDevice",
-      "args": []
-    },
-    {
-      "method": "getShutterDevice",
-      "args": []
-    },
-    {
-      "method": "waitForDevice",
-      "args": [
-        "Shutter"
       ]
     },
     {

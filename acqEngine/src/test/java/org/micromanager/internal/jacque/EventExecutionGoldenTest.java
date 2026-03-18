@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Stream;
 import mmcorej.TaggedImage;
+import org.micromanager.PositionList;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -446,7 +447,7 @@ public class EventExecutionGoldenTest {
             KW_DEFAULT_Z_DRIVE, zDrive,
             KW_DEFAULT_XY_STAGE, xyStage,
             KW_AUTOFOCUS_DEVICE, null,
-            KW_POSITION_LIST, null,
+            KW_POSITION_LIST, buildClojurePositionList(isj),
             KW_INIT_Z_POSITION, zPos,
             KW_INIT_SYSTEM_STATE, initSysState,
             KW_INIT_CONTINUOUS_FOCUS, initCF,
@@ -457,6 +458,14 @@ public class EventExecutionGoldenTest {
             KW_PIXEL_SIZE_UM, coreConfig.pixelSizeUm,
             KW_PIXEL_SIZE_AFFINE, affine,
             KW_PIXEL_TYPE, pixelType);
+   }
+
+   private static PositionList buildClojurePositionList(
+         HelperExecutionGoldenIO.InitialStateJson isj) {
+      if (isj == null || isj.positionList == null) {
+         return null;
+      }
+      return HelperExecutionGoldenIO.buildPositionList(isj.positionList);
    }
 
    private static Object toClojureSettings(
