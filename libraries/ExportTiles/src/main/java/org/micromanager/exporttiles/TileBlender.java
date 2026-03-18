@@ -332,22 +332,28 @@ public class TileBlender {
 
       int dsTileW = tileWidth_ / scale;
       int dsTileH = tileHeight_ / scale;
-      outer16:
-      for (HashMap<String, Object> stored : storage_.getAxesSet()) {
-         TaggedImage probe = storage_.getImage(stored, 0);
-         if (probe != null && probe.pix instanceof short[]) {
-            int nPix = ((short[]) probe.pix).length;
-            int twFull = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
-            if (twFull > 0 && nPix % twFull == 0) {
-               dsTileW = twFull / scale;
-               dsTileH = (nPix / twFull) / scale;
-               break outer16;
-            }
-            int sq = (int) Math.round(Math.sqrt(nPix));
-            if (sq * sq == nPix) {
-               dsTileW = sq / scale;
-               dsTileH = sq / scale;
-               break outer16;
+      // When a tileTransform is provided the caller passes corrected summary metadata
+      // (e.g. with swapped Width/Height for 90/270° rotations), so tileWidth_/tileHeight_
+      // already reflect the post-transform dimensions.  Skip the probe-based override in
+      // that case to avoid reverting to the pre-transform image tag dimensions.
+      if (tileTransform == null) {
+         outer16:
+         for (HashMap<String, Object> stored : storage_.getAxesSet()) {
+            TaggedImage probe = storage_.getImage(stored, 0);
+            if (probe != null && probe.pix instanceof short[]) {
+               int nPix = ((short[]) probe.pix).length;
+               int twFull = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
+               if (twFull > 0 && nPix % twFull == 0) {
+                  dsTileW = twFull / scale;
+                  dsTileH = (nPix / twFull) / scale;
+                  break outer16;
+               }
+               int sq = (int) Math.round(Math.sqrt(nPix));
+               if (sq * sq == nPix) {
+                  dsTileW = sq / scale;
+                  dsTileH = sq / scale;
+                  break outer16;
+               }
             }
          }
       }
@@ -475,22 +481,27 @@ public class TileBlender {
 
       int dsTileW = tileWidth_ / scale;
       int dsTileH = tileHeight_ / scale;
-      outer8:
-      for (HashMap<String, Object> stored : storage_.getAxesSet()) {
-         TaggedImage probe = storage_.getImage(stored, 0);
-         if (probe != null && probe.pix instanceof byte[]) {
-            int nPix = ((byte[]) probe.pix).length;
-            int twFull = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
-            if (twFull > 0 && nPix % twFull == 0) {
-               dsTileW = twFull / scale;
-               dsTileH = (nPix / twFull) / scale;
-               break outer8;
-            }
-            int sq = (int) Math.round(Math.sqrt(nPix));
-            if (sq * sq == nPix) {
-               dsTileW = sq / scale;
-               dsTileH = sq / scale;
-               break outer8;
+      // Skip probe-based dimension override when a tileTransform is provided — the
+      // caller already passed corrected summary metadata so tileWidth_/tileHeight_
+      // reflect the post-transform dimensions.
+      if (tileTransform == null) {
+         outer8:
+         for (HashMap<String, Object> stored : storage_.getAxesSet()) {
+            TaggedImage probe = storage_.getImage(stored, 0);
+            if (probe != null && probe.pix instanceof byte[]) {
+               int nPix = ((byte[]) probe.pix).length;
+               int twFull = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
+               if (twFull > 0 && nPix % twFull == 0) {
+                  dsTileW = twFull / scale;
+                  dsTileH = (nPix / twFull) / scale;
+                  break outer8;
+               }
+               int sq = (int) Math.round(Math.sqrt(nPix));
+               if (sq * sq == nPix) {
+                  dsTileW = sq / scale;
+                  dsTileH = sq / scale;
+                  break outer8;
+               }
             }
          }
       }

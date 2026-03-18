@@ -101,7 +101,7 @@ public class StitchFrame extends JDialog {
     * @param display the display whose data to export
     */
    public StitchFrame(Studio studio, DisplayWindow display) {
-      super(display.getWindow(), "Export Tiled Dataset", Dialog.ModalityType.MODELESS);
+      super(display.getWindow(), "Stitch Tiled Dataset", Dialog.ModalityType.MODELESS);
       studio_ = studio;
       displayWindow_ = display;
       dataProvider_ = display.getDataProvider();
@@ -684,7 +684,7 @@ public class StitchFrame extends JDialog {
                                  + " " + chName + "…"));
                      final int imagesBefore = imagesWritten;
                      Object[] result = stitchTiles(adapter, tzAxes, chName, canvasW, canvasH,
-                           correction, tOrigins,
+                           correction, tOrigins, is16bit,
                            pct -> {
                               int base = doAlign ? 50 : 0;
                               int half = doAlign ? 2 : 1;
@@ -756,6 +756,7 @@ public class StitchFrame extends JDialog {
                                        int canvasW, int canvasH,
                                        int[] correction,
                                        Map<Point, Point2D.Float> tileOrigins,
+                                       boolean is16bit,
                                        java.util.function.IntConsumer progress) {
       short[] canvas16 = null;
       byte[] canvas8 = null;
@@ -823,15 +824,12 @@ public class StitchFrame extends JDialog {
             continue;
          }
 
-         // Determine pixel type and allocate canvas on first valid tile
+         // Determine pixel count; skip unsupported pixel types
          int nPix;
-         boolean is16bit;
          if (tile.pix instanceof short[]) {
             nPix = ((short[]) tile.pix).length;
-            is16bit = true;
          } else if (tile.pix instanceof byte[]) {
             nPix = ((byte[]) tile.pix).length;
-            is16bit = false;
          } else {
             processed++;
             continue;
@@ -912,7 +910,12 @@ public class StitchFrame extends JDialog {
       } else if (canvas8 != null) {
          return new Object[]{canvas8, 1, corrCanvasW, corrCanvasH};
       } else {
-         return new Object[]{new short[corrCanvasW * corrCanvasH], 2, corrCanvasW, corrCanvasH};
+         // No matching tiles found — return a blank canvas matching the expected pixel type
+         if (is16bit) {
+            return new Object[]{new short[corrCanvasW * corrCanvasH], 2, corrCanvasW, corrCanvasH};
+         } else {
+            return new Object[]{new byte[corrCanvasW * corrCanvasH], 1, corrCanvasW, corrCanvasH};
+         }
       }
    }
 
