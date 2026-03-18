@@ -86,6 +86,17 @@ make check testclassarg="-Dtest.class=org.micromanager.internal.jacque.SequenceG
 3. Inspect the generated events in the JSON file.
 4. Commit the file.
 
+## Mutation testing
+
+```sh
+make pitest                # all tests
+make pitest-golden         # all golden tests
+make pitest-golden-seqgen  # SequenceGeneratorGoldenTest only
+make pitest-golden-exec    # EventExecutionGoldenTest only
+```
+
+Reports are written to `pit-reports/`.
+
 ## Regenerating golden data
 
 If the sequence generator intentionally changes behavior, re-record:

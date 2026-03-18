@@ -43,7 +43,7 @@
 			threads="4"
 			classPath="pitest.classpath"
 			targetClasses="org.micromanager.internal.jacque.*"
-			excludedClasses="org.micromanager.internal.jacque.CoreOps*,org.micromanager.internal.jacque.EngineState*,org.micromanager.internal.jacque.*Test*,org.micromanager.internal.jacque.Helper*"
+			excludedClasses="org.micromanager.internal.jacque.*CoreOps,org.micromanager.internal.jacque.EngineState*,org.micromanager.internal.jacque.*Clock,org.micromanager.internal.jacque.*Test*,org.micromanager.internal.jacque.Helper*"
 			targetTests="${pitest.targetTests}"
 			reportDir="pit-reports"
 			sourceDir="src/main/java"

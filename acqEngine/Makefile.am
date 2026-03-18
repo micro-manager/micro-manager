@@ -22,7 +22,15 @@ pitest:
 
 .PHONY: pitest-golden
 pitest-golden:
+	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" -Dpitest.targetTests="org.micromanager.internal.jacque.*GoldenTest" $(ANTFLAGS) pitest
+
+.PHONY: pitest-golden-seqgen
+pitest-golden-seqgen:
 	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" -Dpitest.targetTests=org.micromanager.internal.jacque.SequenceGeneratorGoldenTest $(ANTFLAGS) pitest
+
+.PHONY: pitest-golden-exec
+pitest-golden-exec:
+	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" -Dpitest.targetTests=org.micromanager.internal.jacque.EventExecutionGoldenTest $(ANTFLAGS) pitest
 
 clean-local:
 	$(ANT) $(ANTFLAGS) clean
