@@ -4,10 +4,9 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
-import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import org.micromanager.acquisition.ChannelSpec;
@@ -23,11 +22,11 @@ final class AcqChannel {
    public Map<List<String>, String> properties;
 
    public AcqChannel() {
-      this.properties = new TreeMap<>();
+      this.properties = new LinkedHashMap<>();
    }
 
    public static AcqChannel fromChannelSpec(String channelGroup,
-         ChannelSpec cs, CMMCore mmc) throws Exception {
+         ChannelSpec cs, ExecutionCoreOps core) throws Exception {
       AcqChannel ch = new AcqChannel();
       ch.name = cs.config();
       ch.exposure = cs.exposure();
@@ -37,7 +36,7 @@ final class AcqChannel {
       ch.useChannel = cs.useChannel();
       ch.color = cs.color();
       ch.properties = configToProperties(
-            mmc.getConfigData(channelGroup, cs.config()));
+            core.getConfigData(channelGroup, cs.config()));
       return ch;
    }
 
@@ -64,7 +63,7 @@ final class AcqChannel {
 
    private static Map<List<String>, String> configToProperties(
          Configuration config) {
-      Map<List<String>, String> props = new TreeMap<>();
+      Map<List<String>, String> props = new LinkedHashMap<>();
       for (long i = 0; i < config.size(); i++) {
          PropertySetting ps;
          try {

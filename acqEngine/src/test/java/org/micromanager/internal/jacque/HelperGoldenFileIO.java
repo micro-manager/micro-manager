@@ -483,4 +483,30 @@ final class HelperGoldenFileIO {
       }
       return new HelperMockCore(mcj);
    }
+
+   static Map<List<String>, String> propsFromJsonPublic(
+         Map<String, Map<String, String>> json) {
+      return propsFromJson(json);
+   }
+
+   static Map<List<String>, List<String>> propsListFromJson(
+         Map<String, Map<String, List<String>>> json) {
+      if (json == null || json.isEmpty()) {
+         return Collections.emptyMap();
+      }
+      Map<List<String>, List<String>> result = new LinkedHashMap<>();
+      for (Map.Entry<String, Map<String, List<String>>> deviceEntry
+            : json.entrySet()) {
+         String device = deviceEntry.getKey();
+         for (Map.Entry<String, List<String>> propEntry
+               : deviceEntry.getValue().entrySet()) {
+            List<String> key = new ArrayList<>(2);
+            key.add(device);
+            key.add(propEntry.getKey());
+            result.put(Collections.unmodifiableList(key),
+                  propEntry.getValue());
+         }
+      }
+      return result;
+   }
 }

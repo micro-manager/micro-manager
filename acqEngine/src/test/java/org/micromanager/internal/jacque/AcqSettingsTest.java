@@ -16,11 +16,11 @@ import org.junit.Test;
 
 public class AcqSettingsTest {
 
-   private static CMMCore mmc;
+   private static ExecutionCoreOps core;
 
    @BeforeClass
    public static void setup() throws Exception {
-      mmc = new CMMCore();
+      core = ExecutionCoreOps.fromCMMCore(new CMMCore());
    }
 
    @Test
@@ -43,7 +43,7 @@ public class AcqSettingsTest {
             .channelGroup("Channel")
             .build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, core);
 
       assertEquals(5, s.numFrames);
       assertEquals(5, s.frames.size());
@@ -74,7 +74,7 @@ public class AcqSettingsTest {
             .slices(slices)
             .build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, core);
 
       assertEquals(4, s.slices.size());
       assertEquals(-2.0, s.slices.get(0), 0.0);
@@ -89,7 +89,7 @@ public class AcqSettingsTest {
             .usePositionList(false)
             .build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, core);
 
       assertNull(s.positions);
       assertFalse(s.usePositionList);
@@ -106,7 +106,7 @@ public class AcqSettingsTest {
             .usePositionList(true)
             .build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, pl, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, pl, core);
 
       assertNotNull(s.positions);
       assertEquals(3, s.positions.size());
@@ -124,7 +124,7 @@ public class AcqSettingsTest {
             .customIntervalsMs(custom)
             .build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, core);
 
       assertEquals(3, s.customIntervalsMs.size());
       assertEquals(0.0, s.customIntervalsMs.get(0), 0.0);
@@ -136,7 +136,7 @@ public class AcqSettingsTest {
    public void testCustomIntervalsNull() throws Exception {
       SequenceSettings ss = new SequenceSettings.Builder().build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, core);
 
       assertNotNull(s.customIntervalsMs);
       assertTrue(s.customIntervalsMs.isEmpty());
@@ -146,7 +146,7 @@ public class AcqSettingsTest {
    public void testNoChannels() throws Exception {
       SequenceSettings ss = new SequenceSettings.Builder().build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, core);
 
       assertNotNull(s.channels);
       assertTrue(s.channels.isEmpty());
@@ -156,16 +156,16 @@ public class AcqSettingsTest {
    public void testDefaultExposureFromCore() throws Exception {
       SequenceSettings ss = new SequenceSettings.Builder().build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, core);
 
-      assertEquals(mmc.getExposure(), s.defaultExposure, 0.0);
+      assertEquals(core.getExposure(), s.defaultExposure, 0.0);
    }
 
    @Test
    public void testDefaults() throws Exception {
       SequenceSettings ss = new SequenceSettings.Builder().build();
 
-      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, mmc);
+      AcqSettings s = AcqSettings.fromSequenceSettings(ss, null, core);
 
       assertEquals(1, s.numFrames);
       assertFalse(s.slicesFirst);

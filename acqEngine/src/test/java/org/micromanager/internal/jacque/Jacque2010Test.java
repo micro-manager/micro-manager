@@ -12,11 +12,11 @@ import org.micromanager.acquisition.SequenceSettings;
 
 public class Jacque2010Test {
 
-   private static CMMCore mmc;
+   private static ExecutionCoreOps core;
 
    @BeforeClass
    public static void setup() throws Exception {
-      mmc = new CMMCore();
+      core = ExecutionCoreOps.fromCMMCore(new CMMCore());
    }
 
    @Test
@@ -32,7 +32,7 @@ public class Jacque2010Test {
             .build();
 
       AcqSettings settings = AcqSettings.fromSequenceSettings(
-            ss, new PositionList(), mmc);
+            ss, new PositionList(), core);
 
       assertEquals(3, settings.numFrames);
       assertEquals(3, settings.frames.size());
