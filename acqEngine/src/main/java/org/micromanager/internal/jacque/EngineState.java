@@ -8,7 +8,7 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.PositionList;
 
-public final class EngineState {
+final class EngineState {
    public volatile boolean stop;
    public volatile boolean pause;
    public boolean finished;

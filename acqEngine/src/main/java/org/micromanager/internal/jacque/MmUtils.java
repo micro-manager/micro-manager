@@ -18,7 +18,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 
-public final class MmUtils {
+final class MmUtils {
 
    private static final SimpleDateFormat IMAGE_DATE_FORMAT =
          new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");

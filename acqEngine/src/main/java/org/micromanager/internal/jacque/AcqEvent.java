@@ -3,7 +3,7 @@ package org.micromanager.internal.jacque;
 import java.util.List;
 import java.util.Map;
 
-public final class AcqEvent {
+final class AcqEvent {
    public int frameIndex;
    public int sliceIndex;
    public int channelIndex;

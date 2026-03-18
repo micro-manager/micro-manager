@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class TriggerSequence {
+final class TriggerSequence {
    public Map<List<String>, List<String>> properties;
    public List<Double> slices;
 

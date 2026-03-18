@@ -1,4 +1,4 @@
-package org.micromanager.internal;
+package org.micromanager.internal.jacque;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,9 +9,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.micromanager.PositionList;
 import org.micromanager.acquisition.SequenceSettings;
-import org.micromanager.internal.jacque.AcqSettings;
 
-public class AcquisitionEngine2010JTest {
+public class Jacque2010Test {
 
    private static CMMCore mmc;
 

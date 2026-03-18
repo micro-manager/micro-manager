@@ -12,7 +12,7 @@ import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import org.micromanager.acquisition.ChannelSpec;
 
-public final class AcqChannel {
+final class AcqChannel {
    public String name;
    public double exposure;
    public double zOffset;
