@@ -52,6 +52,8 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
 
    // position index → grid cell
    private final Map<Integer, GridCell> positionGrid_;
+   // (row << 32 | col) → position index, for O(1) reverse lookup in stripRowCol()
+   private final Map<Long, Integer> rowColToPosition_;
    private final int imageWidth_;
    private final int imageHeight_;
    private final int overlapX_;
@@ -70,6 +72,13 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       imageWidth_ = dims[0];
       imageHeight_ = dims[1];
       positionGrid_ = buildPositionGrid(source, imageWidth_, imageHeight_);
+      // Build reverse lookup for O(1) stripRowCol()
+      Map<Long, Integer> reverseMap = new HashMap<>();
+      for (Map.Entry<Integer, GridCell> entry : positionGrid_.entrySet()) {
+         GridCell cell = entry.getValue();
+         reverseMap.put(((long) cell.row << 32) | (cell.col & 0xFFFFFFFFL), entry.getKey());
+      }
+      rowColToPosition_ = reverseMap;
       int[] overlap = computeOverlap(source, positionGrid_, imageWidth_, imageHeight_);
       overlapX_ = overlap[0];
       overlapY_ = overlap[1];
@@ -191,11 +200,10 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       if (rowVal instanceof Integer && colVal instanceof Integer) {
          int row = (Integer) rowVal;
          int col = (Integer) colVal;
-         for (Map.Entry<Integer, GridCell> entry : positionGrid_.entrySet()) {
-            if (entry.getValue().row == row && entry.getValue().col == col) {
-               result.put(Coords.STAGE_POSITION, entry.getKey());
-               break;
-            }
+         long key = ((long) row << 32) | (col & 0xFFFFFFFFL);
+         Integer posIdx = rowColToPosition_.get(key);
+         if (posIdx != null) {
+            result.put(Coords.STAGE_POSITION, posIdx);
          }
       }
       return result;
@@ -272,7 +280,9 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          }
          grid.put(i, new GridCell(row, col));
       }
-      return anyNonZero ? shiftToZero(grid) : null;
+      // Accept if any position has explicit non-zero grid coords, OR if there is only
+      // one position (single-tile dataset: (0,0) is correct, not the unset default).
+      return (anyNonZero || positions.size() == 1) ? shiftToZero(grid) : null;
    }
 
    /**
