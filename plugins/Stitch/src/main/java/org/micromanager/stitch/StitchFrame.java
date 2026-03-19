@@ -828,9 +828,6 @@ public class StitchFrame extends JDialog {
                                        boolean is16bit,
                                        boolean isRgb,
                                        java.util.function.IntConsumer progress) {
-      System.err.println("Stitch stitchTiles: channelName=" + channelName
-            + " is16bit=" + is16bit + " isRgb=" + isRgb
-            + " canvasW=" + canvasW + " canvasH=" + canvasH);
       short[] canvas16 = null;
       byte[] canvas8 = null;
       byte[] canvasRgb = null;  // BGRA, 4 bytes per pixel
