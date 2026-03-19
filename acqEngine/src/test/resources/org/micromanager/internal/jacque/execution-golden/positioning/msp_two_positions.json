@@ -78,7 +78,8 @@
           }
         ]
       }
-    ]
+    ],
+    "autofocusDevice": null
   },
   "settings": {
     "cameraTimeout": 5000

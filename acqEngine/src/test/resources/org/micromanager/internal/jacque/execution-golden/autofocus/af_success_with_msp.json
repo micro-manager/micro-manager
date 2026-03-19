@@ -1,5 +1,5 @@
 {
-  "description": "waitTimeMs > 1000, MSP with Z, checkZRef uses MSP Z",
+  "description": "Autofocus success with MSP position list, new position move",
   "mockCore": {
     "cameraDevice": "Camera",
     "shutterDevice": "Shutter",
@@ -50,13 +50,16 @@
           {
             "stageName": "Z",
             "numAxes": 1,
-            "x": 15.0,
+            "x": 50.0,
             "y": null
           }
         ]
       }
     ],
-    "autofocusDevice": null
+    "autofocusDevice": {
+      "name": "TestAF",
+      "resultZ": 55.0
+    }
   },
   "settings": {
     "cameraTimeout": 5000
@@ -71,9 +74,9 @@
       "position": 0,
       "exposure": 10.0,
       "slice": null,
-      "waitTimeMs": 2000.0,
-      "autofocus": false,
-      "newPosition": false,
+      "waitTimeMs": null,
+      "autofocus": true,
+      "newPosition": true,
       "closeShutter": true,
       "relativeZ": false,
       "task": "snap",
@@ -95,6 +98,19 @@
     }
   ],
   "expectedCalls": [
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "setPosition",
+      "args": [
+        "Z",
+        50.0
+      ]
+    },
     {
       "method": "getCameraDevice",
       "args": []
@@ -118,34 +134,27 @@
       ]
     },
     {
-      "method": "setPosition",
-      "args": [
-        "Z",
-        15.0
-      ]
-    },
-    {
-      "method": "waitForDevice",
-      "args": [
-        "Z"
-      ]
-    },
-    {
-      "method": "getPosition",
-      "args": [
-        "Z"
-      ]
-    },
-    {
-      "method": "getPosition",
-      "args": [
-        "Z"
-      ]
-    },
-    {
       "method": "waitForDevice",
       "args": [
         "Camera"
+      ]
+    },
+    {
+      "method": "getPosition",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "getPosition",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "getPosition",
+      "args": [
+        "Z"
       ]
     },
     {

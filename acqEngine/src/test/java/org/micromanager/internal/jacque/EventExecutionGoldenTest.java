@@ -234,6 +234,9 @@ public class EventExecutionGoldenTest {
 
       HelperExecutionGoldenIO.applyInitialState(
             engine.state, testCase.initialState, coreConfig);
+      engine.state.autofocusDevice =
+            HelperExecutionGoldenIO.createFakeAutofocus(
+                  testCase.initialState, mockCore);
 
       AcqSettings settings =
             HelperExecutionGoldenIO.settingsFromJson(testCase.settings);
@@ -288,7 +291,8 @@ public class EventExecutionGoldenTest {
 
       // Build Clojure state atom
       IPersistentMap stateMap =
-            buildClojureStateMap(testCase.initialState, coreConfig);
+            buildClojureStateMap(testCase.initialState, coreConfig,
+                  mockCore);
       Object stateAtom = atomFn.invoke(stateMap);
 
       // Convert events to Clojure maps
@@ -365,7 +369,8 @@ public class EventExecutionGoldenTest {
 
    private static IPersistentMap buildClojureStateMap(
          HelperExecutionGoldenIO.InitialStateJson isj,
-         HelperRecordingMockCore.Config coreConfig) {
+         HelperRecordingMockCore.Config coreConfig,
+         HelperRecordingMockCore mockCore) {
       String zDrive = isj != null && isj.defaultZDrive != null
             ? isj.defaultZDrive : coreConfig.focusDevice;
       String xyStage = isj != null && isj.defaultXYStage != null
@@ -454,7 +459,8 @@ public class EventExecutionGoldenTest {
             KW_CLJ_EXPOSURE, exposureMap,
             KW_DEFAULT_Z_DRIVE, zDrive,
             KW_DEFAULT_XY_STAGE, xyStage,
-            KW_AUTOFOCUS_DEVICE, null,
+            KW_AUTOFOCUS_DEVICE,
+            HelperExecutionGoldenIO.createFakeAutofocus(isj, mockCore),
             KW_POSITION_LIST, buildClojurePositionList(isj),
             KW_INIT_Z_POSITION, zPos,
             KW_INIT_SYSTEM_STATE, initSysState,

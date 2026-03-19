@@ -43,7 +43,8 @@
     "initExposure": 10.0,
     "initShutterState": false,
     "initContinuousFocus": false,
-    "positionList": null
+    "positionList": null,
+    "autofocusDevice": null
   },
   "settings": {
     "cameraTimeout": 5000

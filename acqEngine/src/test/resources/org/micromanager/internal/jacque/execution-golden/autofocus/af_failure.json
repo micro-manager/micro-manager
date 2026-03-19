@@ -1,5 +1,5 @@
 {
-  "description": "waitTimeMs > 1000, MSP with Z, checkZRef uses MSP Z",
+  "description": "Autofocus failure, recovery path with tiny Z move",
   "mockCore": {
     "cameraDevice": "Camera",
     "shutterDevice": "Shutter",
@@ -38,25 +38,16 @@
   "initialState": {
     "defaultZDrive": "Z",
     "defaultXYStage": "XY",
-    "referenceZ": 999.0,
+    "referenceZ": 42.0,
     "initAutoShutter": true,
     "initExposure": 10.0,
     "initShutterState": false,
     "initContinuousFocus": false,
-    "positionList": [
-      {
-        "label": "Pos0",
-        "stagePositions": [
-          {
-            "stageName": "Z",
-            "numAxes": 1,
-            "x": 15.0,
-            "y": null
-          }
-        ]
-      }
-    ],
-    "autofocusDevice": null
+    "positionList": null,
+    "autofocusDevice": {
+      "name": "TestAF",
+      "resultZ": null
+    }
   },
   "settings": {
     "cameraTimeout": 5000
@@ -71,8 +62,8 @@
       "position": 0,
       "exposure": 10.0,
       "slice": null,
-      "waitTimeMs": 2000.0,
-      "autofocus": false,
+      "waitTimeMs": null,
+      "autofocus": true,
       "newPosition": false,
       "closeShutter": true,
       "relativeZ": false,
@@ -121,23 +112,11 @@
       "method": "setPosition",
       "args": [
         "Z",
-        15.0
+        42.0
       ]
     },
     {
       "method": "waitForDevice",
-      "args": [
-        "Z"
-      ]
-    },
-    {
-      "method": "getPosition",
-      "args": [
-        "Z"
-      ]
-    },
-    {
-      "method": "getPosition",
       "args": [
         "Z"
       ]
@@ -146,6 +125,37 @@
       "method": "waitForDevice",
       "args": [
         "Camera"
+      ]
+    },
+    {
+      "method": "getPosition",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "setPosition",
+      "args": [
+        "Z",
+        42.000001
+      ]
+    },
+    {
+      "method": "getPosition",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
       ]
     },
     {
