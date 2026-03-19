@@ -65,35 +65,57 @@ public class ImageTransformUtils {
    /**
     * Apply mirror-then-rotate correction to a raw pixel array.
     *
-    * <p>Supports {@code short[]} (16-bit) and {@code byte[]} (8-bit) pixel arrays.
+    * <p>Supports {@code short[]} (16-bit gray), {@code byte[]} with
+    * {@code bytesPerPixel=1} (8-bit gray), and {@code byte[]} with
+    * {@code bytesPerPixel=4} (RGB32 in BGRA order, as stored by Micro-Manager).
     * Mirror is applied first (horizontal flip), then rotation.</p>
     *
-    * @param pixels   the raw pixel array ({@code short[]} or {@code byte[]})
-    * @param width    image width in pixels
-    * @param height   image height in pixels
-    * @param mirror   true to apply horizontal mirror before rotation
-    * @param rotation rotation in degrees: 0, 90, 180, or 270
+    * @param pixels        the raw pixel array ({@code short[]} or {@code byte[]})
+    * @param width         image width in pixels
+    * @param height        image height in pixels
+    * @param bytesPerPixel 1 for 8-bit gray, 2 for 16-bit, 4 for RGB32/BGRA
+    * @param mirror        true to apply horizontal mirror before rotation
+    * @param rotation      rotation in degrees: 0, 90, 180, or 270
     * @return Object[]{transformedPixels, newWidth (Integer), newHeight (Integer)}
     */
    public static Object[] transformPixels(Object pixels, int width, int height,
-                                          boolean mirror, int rotation) {
+                                          int bytesPerPixel, boolean mirror, int rotation) {
       if (pixels instanceof short[]) {
          short[] src = (short[]) pixels;
          if (mirror) {
             src = mirrorHorizontal16(src, width, height);
          }
-         Object[] rotResult = rotate16(src, width, height, rotation);
-         return rotResult;
+         return rotate16(src, width, height, rotation);
       } else if (pixels instanceof byte[]) {
          byte[] src = (byte[]) pixels;
-         if (mirror) {
-            src = mirrorHorizontal8(src, width, height);
+         if (bytesPerPixel == 4) {
+            // RGB32: 4 bytes per pixel (BGRA order)
+            if (mirror) {
+               src = mirrorHorizontalBgra(src, width, height);
+            }
+            return rotateBgra(src, width, height, rotation);
+         } else {
+            // 8-bit gray: 1 byte per pixel
+            if (mirror) {
+               src = mirrorHorizontal8(src, width, height);
+            }
+            return rotate8(src, width, height, rotation);
          }
-         Object[] rotResult = rotate8(src, width, height, rotation);
-         return rotResult;
       } else {
          return new Object[]{pixels, width, height};
       }
+   }
+
+   /**
+    * Convenience overload for grayscale images (bytesPerPixel derived from array type).
+    *
+    * <p>For {@code short[]}: bytesPerPixel=2. For {@code byte[]}: bytesPerPixel=1.
+    * Use the full overload for RGB32 ({@code byte[]}, bytesPerPixel=4).</p>
+    */
+   public static Object[] transformPixels(Object pixels, int width, int height,
+                                          boolean mirror, int rotation) {
+      int bpp = (pixels instanceof short[]) ? 2 : 1;
+      return transformPixels(pixels, width, height, bpp, mirror, rotation);
    }
 
    // -------------------------------------------------------------------------
@@ -152,7 +174,7 @@ public class ImageTransformUtils {
    }
 
    // -------------------------------------------------------------------------
-   // 8-bit helpers
+   // 8-bit gray helpers
    // -------------------------------------------------------------------------
 
    private static byte[] mirrorHorizontal8(byte[] src, int width, int height) {
@@ -195,6 +217,71 @@ public class ImageTransformUtils {
             for (int y = 0; y < newH; y++) {
                for (int x = 0; x < newW; x++) {
                   dst[y * newW + x] = src[(newH - 1 - y) + x * width];
+               }
+            }
+            return new Object[]{dst, newW, newH};
+         }
+         default:
+            return new Object[]{src.clone(), width, height};
+      }
+   }
+
+   // -------------------------------------------------------------------------
+   // RGB32 / BGRA helpers (4 bytes per pixel, byte[] storage)
+   // -------------------------------------------------------------------------
+
+   private static byte[] mirrorHorizontalBgra(byte[] src, int width, int height) {
+      byte[] dst = new byte[src.length];
+      for (int y = 0; y < height; y++) {
+         for (int x = 0; x < width; x++) {
+            int srcOff = (y * width + x) * 4;
+            int dstOff = (y * width + (width - 1 - x)) * 4;
+            dst[dstOff]     = src[srcOff];
+            dst[dstOff + 1] = src[srcOff + 1];
+            dst[dstOff + 2] = src[srcOff + 2];
+            dst[dstOff + 3] = src[srcOff + 3];
+         }
+      }
+      return dst;
+   }
+
+   private static Object[] rotateBgra(byte[] src, int width, int height, int rotation) {
+      switch (((rotation % 360) + 360) % 360) {
+         case 0:
+            return new Object[]{src.clone(), width, height};
+         case 90: {
+            // 90° CW: dst pixel (x,y) comes from src pixel (y, width-1-x)
+            int newW = height;
+            int newH = width;
+            byte[] dst = new byte[src.length];
+            for (int y = 0; y < newH; y++) {
+               for (int x = 0; x < newW; x++) {
+                  int srcPixel = y + (newW - 1 - x) * width;
+                  int dstPixel = y * newW + x;
+                  System.arraycopy(src, srcPixel * 4, dst, dstPixel * 4, 4);
+               }
+            }
+            return new Object[]{dst, newW, newH};
+         }
+         case 180: {
+            // 180°: reverse pixel order
+            byte[] dst = new byte[src.length];
+            int nPix = width * height;
+            for (int i = 0; i < nPix; i++) {
+               System.arraycopy(src, i * 4, dst, (nPix - 1 - i) * 4, 4);
+            }
+            return new Object[]{dst, width, height};
+         }
+         case 270: {
+            // 270° CW: dst pixel (x,y) comes from src pixel (height-1-y, x)
+            int newW = height;
+            int newH = width;
+            byte[] dst = new byte[src.length];
+            for (int y = 0; y < newH; y++) {
+               for (int x = 0; x < newW; x++) {
+                  int srcPixel = (newH - 1 - y) + x * width;
+                  int dstPixel = y * newW + x;
+                  System.arraycopy(src, srcPixel * 4, dst, dstPixel * 4, 4);
                }
             }
             return new Object[]{dst, newW, newH};

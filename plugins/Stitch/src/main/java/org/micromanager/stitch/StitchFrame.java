@@ -11,6 +11,7 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -528,7 +529,7 @@ public class StitchFrame extends JDialog {
          // Step 5 & 6: composite/stitch — iterates all time points, z slices, channels.
          SwingUtilities.invokeLater(() -> statusLabel.setText("Computing…"));
 
-         int numCh = chNames.size();
+         int numCh = chNames.size();  // raw count from caller; effective count set after probe
          int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
          if (numZ < 1) {
             numZ = 1;
@@ -537,7 +538,8 @@ public class StitchFrame extends JDialog {
          if (numT < 1) {
             numT = 1;
          }
-         final int totalImages = numT * numZ * numCh;
+         // totalImages placeholder — refined after pixel type detection below
+         // totalImages is set after pixel type detection (effectiveNumCh may differ for RGB)
 
          // Detect pixel depth from the first tile that returns a non-null image.
          Set<HashMap<String, Object>> axesSet = adapter.getAxesSet();
@@ -554,9 +556,51 @@ public class StitchFrame extends JDialog {
          }
          if (probe == null) {
             throw new IllegalStateException(
-                  "Dataset pixel type is not supported (only 8-bit and 16-bit grayscale are).");
+                  "Dataset pixel type is not supported "
+                  + "(only 8-bit grayscale, 16-bit grayscale, and RGB32 are supported).");
          }
+         // Determine pixel type.
+         // MM RGB32 images are stored as byte[] with 4 bytes per pixel (BGRA order).
+         // BytesPerPixel/NumComponents tags are set by MMDataProviderAdapter; fall back
+         // to inferring from pixel array length vs. Width/Height when tags are absent.
          final boolean is16bit = probe.pix instanceof short[];
+         final boolean isRgb;
+         if (probe.pix instanceof byte[] && probe.tags != null) {
+            int bpp = probe.tags.optInt("BytesPerPixel", 0);
+            int nc  = probe.tags.optInt("NumComponents", 0);
+            studio_.logs().logMessage("Stitch: probe pix=byte[] len=" + ((byte[])probe.pix).length
+                  + " tags=" + probe.tags.toString());
+            if (bpp == 4 && nc == 3) {
+               isRgb = true;
+            } else if (bpp == 0) {
+               // Tags absent: infer from pixel count vs. image dimensions
+               int pw = probe.tags.optInt("Width", 0);
+               int ph = probe.tags.optInt("Height", 0);
+               isRgb = pw > 0 && ph > 0
+                     && ((byte[]) probe.pix).length == pw * ph * 4;
+            } else {
+               isRgb = false;
+            }
+         } else {
+            studio_.logs().logMessage("Stitch: probe pix type=" + probe.pix.getClass().getSimpleName()
+                  + " len=" + java.lang.reflect.Array.getLength(probe.pix)
+                  + " tags=" + (probe.tags != null ? probe.tags.toString() : "null"));
+            isRgb = false;
+         }
+         studio_.logs().logMessage("Stitch: is16bit=" + is16bit + " isRgb=" + isRgb);
+
+         // RGB images have no channel axis — override chNames to a single null entry
+         // so the channel loop runs once and no channel filtering is applied.
+         final List<String> effectiveChNames;
+         final int effectiveNumCh;
+         if (isRgb) {
+            effectiveChNames = Collections.singletonList(null);
+            effectiveNumCh = 1;
+         } else {
+            effectiveChNames = chNames;
+            effectiveNumCh = numCh;
+         }
+         final int totalImages = numT * numZ * effectiveNumCh;
 
          // Read tile dims for per-tile transform (blend path only)
          mmcorej.org.json.JSONObject blendSummaryMD = adapter.getSummaryMetadata();
@@ -569,6 +613,7 @@ public class StitchFrame extends JDialog {
          // build a corrected summary metadata for TileBlender that reflects the new dims.
          final UnaryOperator<short[]> tileTransform16;
          final UnaryOperator<byte[]> tileTransform8;
+         final UnaryOperator<byte[]> tileTransformRgb;
          final mmcorej.org.json.JSONObject correctedBlendSummaryMD;
          if (correction != null && (doMirror || rotationDeg != 0) && tileW > 0 && tileH > 0) {
             final boolean fm = doMirror;
@@ -577,6 +622,9 @@ public class StitchFrame extends JDialog {
                   pix, tileW, tileH, fm, rot)[0];
             tileTransform8 = (pix) -> (byte[]) ImageTransformUtils.transformPixels(
                   pix, tileW, tileH, fm, rot)[0];
+            // RGB32: byte[] with 4 bytes per pixel (BGRA); use bytesPerPixel=4 overload
+            tileTransformRgb = (pix) -> (byte[]) ImageTransformUtils.transformPixels(
+                  pix, tileW, tileH, 4, fm, rot)[0];
             // Corrected tile dims for the blender's geometry
             boolean swapDims = rotationDeg == 90 || rotationDeg == 270;
             int corrTileW = swapDims ? tileH : tileW;
@@ -600,6 +648,7 @@ public class StitchFrame extends JDialog {
          } else {
             tileTransform16 = null;
             tileTransform8 = null;
+            tileTransformRgb = null;
             correctedBlendSummaryMD = blendSummaryMD;
          }
 
@@ -608,7 +657,8 @@ public class StitchFrame extends JDialog {
             // Compute aligned origins once per time point at the selected z slice.
             // Origins are shared across all z and channels within this time point.
             Map<Point, Point2D.Float> origins = null;
-            if (doAlign) {
+            if (doAlign && !isRgb) {
+               // Phase-correlation alignment requires grayscale data; skip for RGB.
                final int tIdx = t;
                SwingUtilities.invokeLater(() -> statusLabel.setText(
                      "Aligning t=" + (tIdx + 1) + "…"));
@@ -616,7 +666,7 @@ public class StitchFrame extends JDialog {
                if (numT > 1) {
                   tAlignAxes.put(Coords.TIME_POINT, t);
                }
-               origins = new TileAligner(adapter, tAlignAxes, chNames,
+               origins = new TileAligner(adapter, tAlignAxes, effectiveChNames,
                      adapter.getSummaryMetadata())
                      .computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
             }
@@ -633,12 +683,12 @@ public class StitchFrame extends JDialog {
                if (doBlend) {
                   TileBlender blender = new TileBlender(adapter,
                         new mmcorej.org.json.JSONObject(),
-                        tzAxes, chNames, correctedBlendSummaryMD);
+                        tzAxes, effectiveChNames, correctedBlendSummaryMD);
 
-                  for (int c = 0; c < numCh; c++) {
+                  for (int c = 0; c < effectiveNumCh; c++) {
                      final int tIdx = t;
                      final int zIdx = z;
-                     final String chName = chNames.get(c);
+                     final String chName = effectiveChNames.get(c);
                      SwingUtilities.invokeLater(() -> statusLabel.setText(
                            "Blending t=" + (tIdx + 1) + " z=" + (zIdx + 1) + " " + chName + "…"));
                      final int imagesBefore = imagesWritten;
@@ -652,31 +702,48 @@ public class StitchFrame extends JDialog {
 
                      Object pixelData;
                      int bytesPerPixel;
-                     if (is16bit) {
+                     int numComponents;
+                     if (isRgb) {
+                        java.awt.image.BufferedImage bimg = blender.composite(
+                              0, 0, outCanvasW, outCanvasH, 0, tOrigins, blendProgress);
+                        // Convert BufferedImage (ARGB int[]) to MM RGB32 (BGRA byte[])
+                        int nPix = outCanvasW * outCanvasH;
+                        int[] argb = new int[nPix];
+                        bimg.getRGB(0, 0, outCanvasW, outCanvasH, argb, 0, outCanvasW);
+                        byte[] pixels = argbToBgra(argb);
+                        if (tileTransformRgb != null) {
+                           pixels = tileTransformRgb.apply(pixels);
+                        }
+                        pixelData = pixels;
+                        bytesPerPixel = 4;
+                        numComponents = 3;
+                     } else if (is16bit) {
                         short[] pixels = blender.composite16(0, 0, outCanvasW, outCanvasH, 0,
                               chName, tOrigins, tileTransform16, blendProgress);
                         pixelData = pixels;
                         bytesPerPixel = 2;
+                        numComponents = 1;
                      } else {
                         byte[] pixels = blender.composite8(0, 0, outCanvasW, outCanvasH, 0,
                               chName, tOrigins, tileTransform8, blendProgress);
                         pixelData = pixels;
                         bytesPerPixel = 1;
+                        numComponents = 1;
                      }
 
                      Coords coords = studio_.data().coordsBuilder()
                            .channel(c).z(z).time(t).build();
                      Metadata meta = templateMetaBuilder.generateUUID().build();
                      Image mmImg = studio_.data().createImage(pixelData, outCanvasW, outCanvasH,
-                           bytesPerPixel, 1, coords, meta);
+                           bytesPerPixel, numComponents, coords, meta);
                      ds.putImage(mmImg);
                      imagesWritten++;
                   }
 
                } else {
                   // Simple stitch: copy tiles, using aligned origins when available.
-                  for (int c = 0; c < numCh; c++) {
-                     final String chName = chNames.get(c);
+                  for (int c = 0; c < effectiveNumCh; c++) {
+                     final String chName = effectiveChNames.get(c);
                      final int tIdx = t;
                      final int zIdx = z;
                      SwingUtilities.invokeLater(() -> statusLabel.setText(
@@ -684,7 +751,7 @@ public class StitchFrame extends JDialog {
                                  + " " + chName + "…"));
                      final int imagesBefore = imagesWritten;
                      Object[] result = stitchTiles(adapter, tzAxes, chName, canvasW, canvasH,
-                           correction, tOrigins, is16bit,
+                           correction, tOrigins, is16bit, isRgb,
                            pct -> {
                               int base = doAlign ? 50 : 0;
                               int half = doAlign ? 2 : 1;
@@ -694,14 +761,15 @@ public class StitchFrame extends JDialog {
                            });
                      Object canvas = result[0];
                      int bytesPerPixel = (Integer) result[1];
-                     int stitchedW = (Integer) result[2];
-                     int stitchedH = (Integer) result[3];
+                     int numComponents = (Integer) result[2];
+                     int stitchedW = (Integer) result[3];
+                     int stitchedH = (Integer) result[4];
 
                      Coords coords = studio_.data().coordsBuilder()
                            .channel(c).z(z).time(t).build();
                      Metadata meta = templateMetaBuilder.generateUUID().build();
                      Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
-                           bytesPerPixel, 1, coords, meta);
+                           bytesPerPixel, numComponents, coords, meta);
                      ds.putImage(mmImg);
                      imagesWritten++;
                   }
@@ -744,11 +812,12 @@ public class StitchFrame extends JDialog {
     * correction is provided, each tile is transformed before placement and the
     * canvas dimensions are adjusted accordingly.</p>
     *
-    * @param channelName the channel to stitch, or null for no channel axis
+    * @param channelName the channel to stitch, or null for RGB (no channel axis)
     * @param correction  int[]{rotation, mirror} from
     *                    {@link ImageTransformUtils#correctionFromAffine}, or null
-    * @return Object[]{pixels (short[] or byte[]), bytesPerPixel (Integer),
-    *         canvasWidth (Integer), canvasHeight (Integer)}
+    * @return Object[]{pixels, bytesPerPixel, numComponents, canvasWidth, canvasHeight}
+    *         where pixels is {@code short[]} (16-bit gray), {@code byte[]} (8-bit gray),
+    *         or {@code byte[]} (RGB32 BGRA, 4 bytes per pixel)
     */
    private static Object[] stitchTiles(StitchDataProviderAdapter adapter,
                                        HashMap<String, Object> baseAxes,
@@ -757,9 +826,14 @@ public class StitchFrame extends JDialog {
                                        int[] correction,
                                        Map<Point, Point2D.Float> tileOrigins,
                                        boolean is16bit,
+                                       boolean isRgb,
                                        java.util.function.IntConsumer progress) {
+      System.err.println("Stitch stitchTiles: channelName=" + channelName
+            + " is16bit=" + is16bit + " isRgb=" + isRgb
+            + " canvasW=" + canvasW + " canvasH=" + canvasH);
       short[] canvas16 = null;
       byte[] canvas8 = null;
+      byte[] canvasRgb = null;  // BGRA, 4 bytes per pixel
 
       boolean doMirror = correction != null && correction[1] != 0;
       int rotationDeg = correction != null ? correction[0] : 0;
@@ -798,20 +872,20 @@ public class StitchFrame extends JDialog {
          // Filter to the requested channel name.  Channel values can be String (named
          // channels) or Integer (unnamed channels stored as index), so use the same
          // matching logic as TileBlender/TileAligner.
-         Object axisChannel = axes.get("channel");
+         // For RGB (channelName == null), skip this filter entirely — RGB datasets can
+         // still carry a channel axis (e.g. "Default") that must not cause tiles to be dropped.
          if (channelName != null) {
+            Object axisChannel = axes.get("channel");
             if (!channelValuesMatch(channelName, axisChannel)) {
                processed++;
                continue;
             }
-         } else if (axisChannel != null) {
-            processed++;
-            continue;
          }
 
          Object rowObj = axes.get("row");
          Object colObj = axes.get("column");
          if (!(rowObj instanceof Integer) || !(colObj instanceof Integer)) {
+            System.err.println("Stitch: skipping tile - missing row/col axes=" + axes);
             processed++;
             continue;
          }
@@ -820,20 +894,30 @@ public class StitchFrame extends JDialog {
 
          TaggedImage tile = adapter.getImage(axes, 0);
          if (tile == null || tile.pix == null) {
+            System.err.println("Stitch: null tile at row=" + row + " col=" + col);
             processed++;
             continue;
          }
 
-         // Determine pixel count; skip unsupported pixel types
+         // Determine pixel count; skip unsupported pixel types.
+         // For RGB (byte[], 4 bytes per pixel) nPix = byte count / 4.
          int nPix;
          if (tile.pix instanceof short[]) {
             nPix = ((short[]) tile.pix).length;
          } else if (tile.pix instanceof byte[]) {
-            nPix = ((byte[]) tile.pix).length;
+            int nBytes = ((byte[]) tile.pix).length;
+            nPix = isRgb ? nBytes / 4 : nBytes;
          } else {
+            System.err.println("Stitch: skipping tile - unsupported pix type "
+                  + tile.pix.getClass().getSimpleName());
             processed++;
             continue;
          }
+         System.err.println("Stitch: tile row=" + row + " col=" + col
+               + " pix=" + tile.pix.getClass().getSimpleName()
+               + " len=" + java.lang.reflect.Array.getLength(tile.pix)
+               + " nPix=" + nPix
+               + " tags=" + (tile.tags != null ? tile.tags.toString() : "null"));
 
          // Probe tile dimensions on first valid tile
          if (probedTileW == 0 && tile.tags != null) {
@@ -850,16 +934,22 @@ public class StitchFrame extends JDialog {
          int tilePaintW = tw;
          int tilePaintH = th;
          if (needsTransform) {
+            int bpp = isRgb ? 4 : (is16bit ? 2 : 1);
             Object[] transformed = ImageTransformUtils.transformPixels(
-                  tilePix, tw, th, doMirror, rotationDeg);
+                  tilePix, tw, th, bpp, doMirror, rotationDeg);
             tilePix = transformed[0];
             tilePaintW = (Integer) transformed[1];
             tilePaintH = (Integer) transformed[2];
          }
 
          // Allocate canvas on first valid tile (using corrected dims)
-         if (canvas16 == null && canvas8 == null) {
-            if (is16bit) {
+         if (canvas16 == null && canvas8 == null && canvasRgb == null) {
+            System.err.println("Stitch: allocating canvas corrCanvasW=" + corrCanvasW
+                  + " corrCanvasH=" + corrCanvasH + " isRgb=" + isRgb + " is16bit=" + is16bit
+                  + " tilePaintW=" + tilePaintW + " tilePaintH=" + tilePaintH);
+            if (isRgb) {
+               canvasRgb = new byte[corrCanvasW * corrCanvasH * 4];
+            } else if (is16bit) {
                canvas16 = new short[corrCanvasW * corrCanvasH];
             } else {
                canvas8 = new byte[corrCanvasW * corrCanvasH];
@@ -889,15 +979,25 @@ public class StitchFrame extends JDialog {
          int copyW = Math.min(tilePaintW - srcX0, corrCanvasW - dstX0);
          int copyH = Math.min(tilePaintH - srcY0, corrCanvasH - dstY0);
          for (int ty = 0; ty < copyH; ty++) {
-            int srcOff = (srcY0 + ty) * tilePaintW + srcX0;
-            int dstOff = (dstY0 + ty) * corrCanvasW + dstX0;
-            if (is16bit && canvas16 != null) {
+            if (canvas16 != null) {
+               int srcOff = (srcY0 + ty) * tilePaintW + srcX0;
+               int dstOff = (dstY0 + ty) * corrCanvasW + dstX0;
                System.arraycopy(tilePix, srcOff, canvas16, dstOff, copyW);
-            } else if (!is16bit && canvas8 != null) {
+            } else if (canvas8 != null) {
+               int srcOff = (srcY0 + ty) * tilePaintW + srcX0;
+               int dstOff = (dstY0 + ty) * corrCanvasW + dstX0;
                System.arraycopy(tilePix, srcOff, canvas8, dstOff, copyW);
+            } else if (canvasRgb != null) {
+               // RGB: offsets and lengths are in bytes (4 bytes per pixel)
+               int srcOff = ((srcY0 + ty) * tilePaintW + srcX0) * 4;
+               int dstOff = ((dstY0 + ty) * corrCanvasW + dstX0) * 4;
+               System.arraycopy(tilePix, srcOff, canvasRgb, dstOff, copyW * 4);
             }
          }
 
+         System.err.println("Stitch: copied tile row=" + row + " col=" + col
+               + " destX=" + destX + " destY=" + destY
+               + " copyW=" + copyW + " copyH=" + copyH);
          processed++;
          final int pct = total > 0 ? processed * 100 / total : 100;
          if (progress != null) {
@@ -906,15 +1006,22 @@ public class StitchFrame extends JDialog {
       }
 
       if (canvas16 != null) {
-         return new Object[]{canvas16, 2, corrCanvasW, corrCanvasH};
+         return new Object[]{canvas16, 2, 1, corrCanvasW, corrCanvasH};
       } else if (canvas8 != null) {
-         return new Object[]{canvas8, 1, corrCanvasW, corrCanvasH};
+         return new Object[]{canvas8, 1, 1, corrCanvasW, corrCanvasH};
+      } else if (canvasRgb != null) {
+         return new Object[]{canvasRgb, 4, 3, corrCanvasW, corrCanvasH};
       } else {
          // No matching tiles found — return a blank canvas matching the expected pixel type
-         if (is16bit) {
-            return new Object[]{new short[corrCanvasW * corrCanvasH], 2, corrCanvasW, corrCanvasH};
+         if (isRgb) {
+            return new Object[]{new byte[corrCanvasW * corrCanvasH * 4], 4, 3,
+                  corrCanvasW, corrCanvasH};
+         } else if (is16bit) {
+            return new Object[]{new short[corrCanvasW * corrCanvasH], 2, 1,
+                  corrCanvasW, corrCanvasH};
          } else {
-            return new Object[]{new byte[corrCanvasW * corrCanvasH], 1, corrCanvasW, corrCanvasH};
+            return new Object[]{new byte[corrCanvasW * corrCanvasH], 1, 1,
+                  corrCanvasW, corrCanvasH};
          }
       }
    }
@@ -922,6 +1029,22 @@ public class StitchFrame extends JDialog {
    // -------------------------------------------------------------------------
    // Utilities
    // -------------------------------------------------------------------------
+
+   /**
+    * Convert an ARGB {@code int[]} (as returned by {@link java.awt.image.BufferedImage#getRGB})
+    * to a BGRA {@code byte[]} (as expected by Micro-Manager RGB32 images).
+    */
+   private static byte[] argbToBgra(int[] argb) {
+      byte[] bgra = new byte[argb.length * 4];
+      for (int i = 0; i < argb.length; i++) {
+         int pixel = argb[i];
+         bgra[i * 4]     = (byte) (pixel & 0xFF);          // B
+         bgra[i * 4 + 1] = (byte) ((pixel >> 8) & 0xFF);   // G
+         bgra[i * 4 + 2] = (byte) ((pixel >> 16) & 0xFF);  // R
+         bgra[i * 4 + 3] = 0;                               // A (unused)
+      }
+      return bgra;
+   }
 
    /**
     * Build a template Metadata from the first available image at the given z slice.

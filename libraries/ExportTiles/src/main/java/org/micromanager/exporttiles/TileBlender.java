@@ -104,20 +104,30 @@ public class TileBlender {
       outer:
       for (HashMap<String, Object> stored : storage_.getAxesSet()) {
          TaggedImage probe = storage_.getImage(stored, 0);
-         if (probe != null && probe.pix instanceof short[]) {
-            int nPix = ((short[]) probe.pix).length;
-            int twFull = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
-            if (twFull > 0 && nPix % twFull == 0) {
-               dsTileW = twFull / scale;
-               dsTileH = (nPix / twFull) / scale;
-               break outer;
-            }
-            int sq = (int) Math.round(Math.sqrt(nPix));
-            if (sq * sq == nPix) {
-               dsTileW = sq / scale;
-               dsTileH = sq / scale;
-               break outer;
-            }
+         if (probe == null || probe.pix == null) {
+            continue;
+         }
+         int twFull = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
+         int nPix;
+         if (probe.pix instanceof short[]) {
+            nPix = ((short[]) probe.pix).length;
+         } else if (probe.pix instanceof byte[]) {
+            // RGB32: 4 bytes per pixel
+            int bpp = (probe.tags != null) ? probe.tags.optInt("BytesPerPixel", 1) : 1;
+            nPix = ((byte[]) probe.pix).length / bpp;
+         } else {
+            continue;
+         }
+         if (twFull > 0 && nPix % twFull == 0) {
+            dsTileW = twFull / scale;
+            dsTileH = (nPix / twFull) / scale;
+            break outer;
+         }
+         int sq = (int) Math.round(Math.sqrt(nPix));
+         if (sq * sq == nPix) {
+            dsTileW = sq / scale;
+            dsTileH = sq / scale;
+            break outer;
          }
       }
       int dsOverlapX = overlapX_ / scale;
@@ -227,37 +237,70 @@ public class TileBlender {
 
             // Always read at level 0; sample with stride=scale to produce downsampled output.
             TaggedImage taggedImage = storage_.getImage(axes, 0);
-            if (taggedImage == null || !(taggedImage.pix instanceof short[])) {
+            if (taggedImage == null || taggedImage.pix == null) {
                continue;
             }
-            short[] tilePix = (short[]) taggedImage.pix;
-            // Determine full-resolution tile width from tags or pixel count.
-            int fullTileW = (taggedImage.tags != null) ? taggedImage.tags.optInt("Width", 0) : 0;
-            if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
-               int sq = (int) Math.round(Math.sqrt(tilePix.length));
-               fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
-            }
 
-            for (int py = interY0; py < interY1; py++) {
-               for (int px = interX0; px < interX1; px++) {
-                  int tx = px - tileOriginX;
-                  int ty = py - tileOriginY;
-                  float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
-                  float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
-                  float w = wx * wy;
-
-                  // Map downsampled pixel coords to full-res tile coords via stride
-                  int tileIdx = (ty * scale) * fullTileW + (tx * scale);
-                  if (tileIdx < 0 || tileIdx >= tilePix.length) {
-                     continue; // safety guard for edge tiles
+            if (taggedImage.pix instanceof byte[]) {
+               // RGB32 (BGRA byte[], 4 bytes per pixel): accumulate R/G/B directly.
+               byte[] tilePix = (byte[]) taggedImage.pix;
+               int fullTileW = (taggedImage.tags != null)
+                     ? taggedImage.tags.optInt("Width", 0) : 0;
+               if (fullTileW <= 0) {
+                  fullTileW = dsTileW * scale;
+               }
+               for (int py = interY0; py < interY1; py++) {
+                  for (int px = interX0; px < interX1; px++) {
+                     int tx = px - tileOriginX;
+                     int ty = py - tileOriginY;
+                     float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
+                     float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
+                     float w = wx * wy;
+                     int byteOff = ((ty * scale) * fullTileW + (tx * scale)) * 4;
+                     if (byteOff < 0 || byteOff + 2 >= tilePix.length) {
+                        continue;
+                     }
+                     // BGRA layout: byte 0=B, 1=G, 2=R, 3=A
+                     float tB = (tilePix[byteOff]     & 0xFF) / 255f;
+                     float tG = (tilePix[byteOff + 1] & 0xFF) / 255f;
+                     float tR = (tilePix[byteOff + 2] & 0xFF) / 255f;
+                     int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
+                     rAcc[outIdx] += tR * w;
+                     gAcc[outIdx] += tG * w;
+                     bAcc[outIdx] += tB * w;
                   }
-                  float norm = Math.min(1f, Math.max(0f,
-                          ((tilePix[tileIdx] & 0xFFFF) - cMin) / range));
+               }
+            } else if (taggedImage.pix instanceof short[]) {
+               short[] tilePix = (short[]) taggedImage.pix;
+               // Determine full-resolution tile width from tags or pixel count.
+               int fullTileW = (taggedImage.tags != null)
+                     ? taggedImage.tags.optInt("Width", 0) : 0;
+               if (fullTileW <= 0 || tilePix.length % fullTileW != 0) {
+                  int sq = (int) Math.round(Math.sqrt(tilePix.length));
+                  fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
+               }
 
-                  int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
-                  rAcc[outIdx] += norm * chR * w;
-                  gAcc[outIdx] += norm * chG * w;
-                  bAcc[outIdx] += norm * chB * w;
+               for (int py = interY0; py < interY1; py++) {
+                  for (int px = interX0; px < interX1; px++) {
+                     int tx = px - tileOriginX;
+                     int ty = py - tileOriginY;
+                     float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
+                     float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
+                     float w = wx * wy;
+
+                     // Map downsampled pixel coords to full-res tile coords via stride
+                     int tileIdx = (ty * scale) * fullTileW + (tx * scale);
+                     if (tileIdx < 0 || tileIdx >= tilePix.length) {
+                        continue; // safety guard for edge tiles
+                     }
+                     float norm = Math.min(1f, Math.max(0f,
+                             ((tilePix[tileIdx] & 0xFFFF) - cMin) / range));
+
+                     int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
+                     rAcc[outIdx] += norm * chR * w;
+                     gAcc[outIdx] += norm * chG * w;
+                     bAcc[outIdx] += norm * chB * w;
+                  }
                }
             }
          }

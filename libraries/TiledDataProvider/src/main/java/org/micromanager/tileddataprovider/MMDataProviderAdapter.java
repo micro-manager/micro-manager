@@ -334,8 +334,10 @@ public class MMDataProviderAdapter implements TiledDataProviderAPI {
    /**
     * Convert an MM {@link Image} to a {@link TaggedImage}.
     *
-    * <p>Supports 16-bit ({@code short[]}) and 8-bit ({@code byte[]}) pixel data.
-    * The tags JSON is populated with {@code "Width"} and {@code "Height"} from the image.</p>
+    * <p>Supports 16-bit ({@code short[]}), 8-bit gray ({@code byte[]}), and RGB32
+    * ({@code byte[]}, 4 bytes per pixel in BGRA order). The tags JSON is populated
+    * with {@code "Width"}, {@code "Height"}, {@code "BytesPerPixel"}, and
+    * {@code "NumComponents"} so that downstream code can determine the pixel format.</p>
     */
    private static TaggedImage imageToTaggedImage(Image image) {
       Object rawPix = image.getRawPixels();
@@ -346,6 +348,8 @@ public class MMDataProviderAdapter implements TiledDataProviderAPI {
          JSONObject tags = new JSONObject();
          tags.put("Width", image.getWidth());
          tags.put("Height", image.getHeight());
+         tags.put("BytesPerPixel", image.getBytesPerPixel());
+         tags.put("NumComponents", image.getNumComponents());
          return new TaggedImage(rawPix, tags);
       } catch (JSONException e) {
          return null;
