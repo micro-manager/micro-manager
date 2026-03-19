@@ -1,5 +1,7 @@
 package org.micromanager.internal.jacque;
 
+import java.util.concurrent.CountDownLatch;
+
 public final class InstantClock implements AcqClock {
    private long millis;
 
@@ -23,6 +25,11 @@ public final class InstantClock implements AcqClock {
 
    @Override
    public void sleep(long sleepMillis) {
+      millis += sleepMillis;
+   }
+
+   @Override
+   public void interruptibleSleep(long sleepMillis, CountDownLatch latch) {
       millis += sleepMillis;
    }
 

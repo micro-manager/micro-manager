@@ -823,7 +823,7 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
       }
       state.sleepy = sleepy;
       state.nextWakeTime = jvmTimeMs() + timeMs;
-      sleepy.await(timeMs, TimeUnit.MILLISECONDS);
+      clock.interruptibleSleep(timeMs, sleepy);
    }
 
    private void acqSleep(double intervalMs) throws Exception {
