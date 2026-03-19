@@ -667,8 +667,7 @@ public class StitchFrame extends JDialog {
             // Compute aligned origins once per time point at the selected z slice.
             // Origins are shared across all z and channels within this time point.
             Map<Point, Point2D.Float> origins = null;
-            if (doAlign && !isRgb) {
-               // Phase-correlation alignment requires grayscale data; skip for RGB.
+            if (doAlign) {
                final int tIdx = t;
                SwingUtilities.invokeLater(() -> statusLabel.setText(
                      "Aligning t=" + (tIdx + 1) + "…"));
