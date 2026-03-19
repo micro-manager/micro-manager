@@ -213,6 +213,7 @@ public class TileBlender {
             int color = 0xFFFFFF;
             int cMin  = 0;
             int cMax  = 65535;
+            boolean cMaxExplicit = false;  // true when display settings provided a Max value
             if (displaySettings_ != null) {
                try {
                   JSONObject chSettings = displaySettings_.optJSONObject(displayKey);
@@ -220,6 +221,7 @@ public class TileBlender {
                      color = chSettings.optInt("Color", 0xFFFFFF) & 0xFFFFFF;
                      cMin  = chSettings.optInt("Min", 0);
                      cMax  = chSettings.optInt("Max", 65535);
+                     cMaxExplicit = chSettings.has("Max");
                   }
                } catch (Exception e) {
                   // use defaults
@@ -278,6 +280,9 @@ public class TileBlender {
                   }
                } else {
                   // 8-bit grayscale: apply min/max normalisation and channel-color mapping.
+                  // Default cMax to 255 (not 65535) when display settings did not provide
+                  // an explicit Max — 8-bit values normalised against 65535 would be ~black.
+                  final float range8 = Math.max(1f, (!cMaxExplicit ? 255 : cMax) - cMin);
                   if (fullTileW <= 0 || (tilePix.length % fullTileW) != 0) {
                      int sq = (int) Math.round(Math.sqrt(tilePix.length));
                      fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
@@ -294,7 +299,7 @@ public class TileBlender {
                            continue;
                         }
                         float norm = Math.min(1f, Math.max(0f,
-                              ((tilePix[tileIdx] & 0xFF) - cMin) / range));
+                              ((tilePix[tileIdx] & 0xFF) - cMin) / range8));
                         int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
                         rAcc[outIdx] += norm * chR * w;
                         gAcc[outIdx] += norm * chG * w;
