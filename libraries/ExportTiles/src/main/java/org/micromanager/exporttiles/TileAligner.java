@@ -123,9 +123,15 @@ public class TileAligner {
             }
             TaggedImage probe = storage_.getImage(axes, 0);  // always probe at full res
             if (probe != null && probe.pix != null) {
-               int nPix = (probe.pix instanceof short[])
-                     ? ((short[]) probe.pix).length
-                     : (probe.pix instanceof byte[]) ? ((byte[]) probe.pix).length : -1;
+               int nPix;
+               if (probe.pix instanceof short[]) {
+                  nPix = ((short[]) probe.pix).length;
+               } else if (probe.pix instanceof byte[]) {
+                  int bpp = (probe.tags != null) ? probe.tags.optInt("BytesPerPixel", 1) : 1;
+                  nPix = ((byte[]) probe.pix).length / bpp;
+               } else {
+                  continue;
+               }
                if (nPix > 0) {
                   int tw = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
                   if (tw > 0 && nPix % tw == 0) {
@@ -221,18 +227,41 @@ public class TileAligner {
             }
          } else if (ti.pix instanceof byte[]) {
             byte[] src = (byte[]) ti.pix;
-            nPix = src.length;
-            if (w <= 0 || h <= 0 || w * h != nPix) {
-               w = tileWidth_ / scale;
-               if (w > 0 && nPix % w == 0) {
-                  h = nPix / w;
-               } else {
-                  continue;
+            int bpp = (ti.tags != null) ? ti.tags.optInt("BytesPerPixel", 1) : 1;
+            if (bpp == 4) {
+               // RGB32 (BGRA): convert to grayscale via luminance
+               nPix = src.length / 4;
+               if (w <= 0 || h <= 0 || w * h != nPix) {
+                  w = tileWidth_ / scale;
+                  if (w > 0 && nPix % w == 0) {
+                     h = nPix / w;
+                  } else {
+                     continue;
+                  }
                }
-            }
-            dst = new float[nPix];
-            for (int i = 0; i < nPix; i++) {
-               dst[i] = src[i] & 0xFF;
+               dst = new float[nPix];
+               for (int i = 0; i < nPix; i++) {
+                  // BGRA layout: byte 0=B, 1=G, 2=R, 3=A
+                  float b = src[i * 4]     & 0xFF;
+                  float g = src[i * 4 + 1] & 0xFF;
+                  float r = src[i * 4 + 2] & 0xFF;
+                  dst[i] = 0.2126f * r + 0.7152f * g + 0.0722f * b;
+               }
+            } else {
+               // 8-bit gray
+               nPix = src.length;
+               if (w <= 0 || h <= 0 || w * h != nPix) {
+                  w = tileWidth_ / scale;
+                  if (w > 0 && nPix % w == 0) {
+                     h = nPix / w;
+                  } else {
+                     continue;
+                  }
+               }
+               dst = new float[nPix];
+               for (int i = 0; i < nPix; i++) {
+                  dst[i] = src[i] & 0xFF;
+               }
             }
          } else {
             continue;
