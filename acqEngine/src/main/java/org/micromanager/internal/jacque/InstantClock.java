@@ -1,6 +1,6 @@
 package org.micromanager.internal.jacque;
 
-final class InstantClock implements AcqClock {
+public final class InstantClock implements AcqClock {
    private long millis;
 
    InstantClock(long initialMillis) {

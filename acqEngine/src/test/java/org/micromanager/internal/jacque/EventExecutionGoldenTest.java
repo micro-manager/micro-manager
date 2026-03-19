@@ -276,6 +276,13 @@ public class EventExecutionGoldenTest {
             new HelperRecordingMockCore(coreConfig);
       storeMmcoreFn.invoke(mockCore);
 
+      // Install fake clock so timelapse waits don't block
+      IFn resetBang = (IFn) RT.var("clojure.core", "reset!").deref();
+      Object clockAtom =
+            RT.var("org.micromanager.acq-engine", "clock").deref();
+      InstantClock clojureClock = new InstantClock();
+      resetBang.invoke(clockAtom, clojureClock);
+
       // Reset global atoms
       resetGlobalAtoms();
 
@@ -322,6 +329,7 @@ public class EventExecutionGoldenTest {
                PersistentVector.create(allFns));
       } finally {
          Var.popThreadBindings();
+         resetBang.invoke(clockAtom, null);
       }
 
       List<HelperRecordingMockCore.MethodCall> calls =
