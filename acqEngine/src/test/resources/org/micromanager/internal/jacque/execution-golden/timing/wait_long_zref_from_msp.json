@@ -33,6 +33,7 @@
     "numberOfComponents": 1,
     "stageSequenceable": null,
     "stageSequenceMaxLength": null,
+    "continuousFocusDrives": null,
     "propertySequencing": null
   },
   "initialState": {

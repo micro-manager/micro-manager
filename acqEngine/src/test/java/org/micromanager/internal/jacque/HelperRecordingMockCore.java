@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import mmcorej.Configuration;
 import mmcorej.DoubleVector;
 import mmcorej.PropertySetting;
@@ -80,6 +82,8 @@ public final class HelperRecordingMockCore implements ExecutionCoreOps {
       long numberOfComponents = 1;
       String pixelType = "GRAY16";
       int cameraTimeout = 5000;
+
+      Set<String> continuousFocusDrives = new HashSet<>();
 
       // Sequencing (inherited CoreOps)
       boolean stageSequenceable = false;
@@ -252,7 +256,7 @@ public final class HelperRecordingMockCore implements ExecutionCoreOps {
    @Override
    public boolean isContinuousFocusDrive(String stage) {
       record("isContinuousFocusDrive", stage);
-      return false;
+      return config.continuousFocusDrives.contains(stage);
    }
 
    @Override
