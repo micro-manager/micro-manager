@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.imageprocessing.ImageTransformUtils;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 
@@ -42,6 +43,10 @@ public class TileAligner {
    private final int overlapX_;
    private final int overlapY_;
 
+   /** Optional per-tile orientation correction applied before strip extraction. */
+   private boolean tileTransformMirror_ = false;
+   private int tileTransformRotation_ = 0;
+
    private static class TranslationResult {
       final Point from;  // (col, row) in Point convention (x=col, y=row)
       final Point to;
@@ -65,6 +70,22 @@ public class TileAligner {
       tileHeight_ = summaryMetadata.optInt("Height", 0);
       overlapX_ = summaryMetadata.optInt("GridPixelOverlapX", 0);
       overlapY_ = summaryMetadata.optInt("GridPixelOverlapY", 0);
+   }
+
+   /**
+    * Configure an optional per-tile orientation correction to apply before strip extraction.
+    *
+    * <p>The same transform used during blending/stitching should be passed here so that
+    * phase-correlation alignment operates on corrected tile images. For 90°/270° rotations
+    * the horizontal and vertical overlap values are automatically swapped so the correct
+    * overlap strip width/height is used for each axis after rotation.</p>
+    *
+    * @param mirror   true to apply a horizontal mirror before rotation
+    * @param rotation rotation in degrees: 0, 90, 180, or 270
+    */
+   public void setTileTransform(boolean mirror, int rotation) {
+      tileTransformMirror_ = mirror;
+      tileTransformRotation_ = ((rotation % 360) + 360) % 360;
    }
 
    /**
@@ -101,17 +122,26 @@ public class TileAligner {
          return null;
       }
 
+      // When a tile transform is active, overlap axes may be swapped.
+      // After a 90°/270° rotation, what was the horizontal (X) overlap between
+      // left/right tile neighbours becomes the vertical (Y) overlap, and vice versa.
+      boolean swapAxes = (tileTransformRotation_ == 90 || tileTransformRotation_ == 270);
+      int effectiveOverlapX = swapAxes ? overlapY_ : overlapX_;
+      int effectiveOverlapY = swapAxes ? overlapX_ : overlapY_;
+
       // Run alignment at the coarsest available resolution to keep FHT sizes manageable.
       // Corrections are then scaled up to full-resolution pixel coords for TileBlender.
       int alignResLevel = storage_.getNumResLevels() - 1;
       int alignScale = 1 << alignResLevel;
-      int dsOverlapX = overlapX_ / alignScale;
-      int dsOverlapY = overlapY_ / alignScale;
+      int dsOverlapX = effectiveOverlapX / alignScale;
+      int dsOverlapY = effectiveOverlapY / alignScale;
 
       // Probe the first available tile at full resolution (level 0) to get actual tile
       // dimensions — summary metadata Width/Height can be wrong (e.g. Height=212 when
       // the actual tile is 3544x2396). Most tiles exist at level 0; higher levels may
       // have sparse data only near the centre.
+      // If a tile transform is active, the probed dims are the post-correction dims
+      // (loadTileGray applies the transform), so we read them from the tile itself.
       int actualTileW = tileWidth_;
       int actualTileH = tileHeight_;
       outer:
@@ -137,14 +167,20 @@ public class TileAligner {
                   if (tw > 0 && nPix % tw == 0) {
                      actualTileW = tw;
                      actualTileH = nPix / tw;
+                     // If the tile transform swaps axes, swap the dims to match
+                     if (swapAxes) {
+                        int tmp = actualTileW;
+                        actualTileW = actualTileH;
+                        actualTileH = tmp;
+                     }
                      break outer;
                   }
                }
             }
          }
       }
-      int dsStepX = Math.max(1, (actualTileW - overlapX_) / alignScale);
-      int dsStepY = Math.max(1, (actualTileH - overlapY_) / alignScale);
+      int dsStepX = Math.max(1, (actualTileW - effectiveOverlapX) / alignScale);
+      int dsStepY = Math.max(1, (actualTileH - effectiveOverlapY) / alignScale);
 
       List<TranslationResult> translations = computePairwiseTranslations(
               tiles, alignResLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, alignScale, progress);
@@ -209,8 +245,9 @@ public class TileAligner {
          }
          float[] dst;
          int nPix;
-         if (ti.pix instanceof short[]) {
-            short[] src = (short[]) ti.pix;
+         Object rawPix = ti.pix;
+         if (rawPix instanceof short[]) {
+            short[] src = (short[]) rawPix;
             nPix = src.length;
             // Fall back: derive from pixel count when tags are missing/wrong.
             if (w <= 0 || h <= 0 || w * h != nPix) {
@@ -221,15 +258,24 @@ public class TileAligner {
                   continue;
                }
             }
+            // Apply per-tile orientation correction before strip extraction.
+            if (tileTransformMirror_ || tileTransformRotation_ != 0) {
+               Object[] xf = ImageTransformUtils.transformPixels(
+                     src, w, h, tileTransformMirror_, tileTransformRotation_);
+               src = (short[]) xf[0];
+               w   = (Integer) xf[1];
+               h   = (Integer) xf[2];
+            }
+            nPix = src.length;
             dst = new float[nPix];
             for (int i = 0; i < nPix; i++) {
                dst[i] = src[i] & 0xFFFF;
             }
-         } else if (ti.pix instanceof byte[]) {
-            byte[] src = (byte[]) ti.pix;
+         } else if (rawPix instanceof byte[]) {
+            byte[] src = (byte[]) rawPix;
             int bpp = (ti.tags != null) ? ti.tags.optInt("BytesPerPixel", 1) : 1;
             if (bpp == 4) {
-               // RGB32 (BGRA): convert to grayscale via luminance
+               // RGB32 (BGRA): apply correction, then convert to grayscale via luminance.
                nPix = src.length / 4;
                if (w <= 0 || h <= 0 || w * h != nPix) {
                   w = tileWidth_ / scale;
@@ -239,6 +285,14 @@ public class TileAligner {
                      continue;
                   }
                }
+               if (tileTransformMirror_ || tileTransformRotation_ != 0) {
+                  Object[] xf = ImageTransformUtils.transformPixels(
+                        src, w, h, 4, tileTransformMirror_, tileTransformRotation_);
+                  src = (byte[]) xf[0];
+                  w   = (Integer) xf[1];
+                  h   = (Integer) xf[2];
+               }
+               nPix = src.length / 4;
                dst = new float[nPix];
                for (int i = 0; i < nPix; i++) {
                   // BGRA layout: byte 0=B, 1=G, 2=R, 3=A
@@ -258,6 +312,14 @@ public class TileAligner {
                      continue;
                   }
                }
+               if (tileTransformMirror_ || tileTransformRotation_ != 0) {
+                  Object[] xf = ImageTransformUtils.transformPixels(
+                        src, w, h, tileTransformMirror_, tileTransformRotation_);
+                  src = (byte[]) xf[0];
+                  w   = (Integer) xf[1];
+                  h   = (Integer) xf[2];
+               }
+               nPix = src.length;
                dst = new float[nPix];
                for (int i = 0; i < nPix; i++) {
                   dst[i] = src[i] & 0xFF;

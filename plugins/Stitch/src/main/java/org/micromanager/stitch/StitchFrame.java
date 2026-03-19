@@ -675,9 +675,12 @@ public class StitchFrame extends JDialog {
                if (numT > 1) {
                   tAlignAxes.put(Coords.TIME_POINT, t);
                }
-               origins = new TileAligner(adapter, tAlignAxes, effectiveChNames,
-                     adapter.getSummaryMetadata())
-                     .computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
+               TileAligner aligner = new TileAligner(adapter, tAlignAxes, effectiveChNames,
+                     adapter.getSummaryMetadata());
+               if (doMirror || rotationDeg != 0) {
+                  aligner.setTileTransform(doMirror, rotationDeg);
+               }
+               origins = aligner.computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
             }
             final Map<Point, Point2D.Float> tOrigins = origins;
 
@@ -998,6 +1001,10 @@ public class StitchFrame extends JDialog {
          int dstY0 = Math.max(0, destY);
          int copyW = Math.min(tilePaintW - srcX0, corrCanvasW - dstX0);
          int copyH = Math.min(tilePaintH - srcY0, corrCanvasH - dstY0);
+         if (copyW <= 0 || copyH <= 0) {
+            processed++;
+            continue;
+         }
          for (int ty = 0; ty < copyH; ty++) {
             if (canvas16 != null) {
                int srcOff = (srcY0 + ty) * tilePaintW + srcX0;
