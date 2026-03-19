@@ -613,7 +613,6 @@ public class StitchFrame extends JDialog {
          // build a corrected summary metadata for TileBlender that reflects the new dims.
          final UnaryOperator<short[]> tileTransform16;
          final UnaryOperator<byte[]> tileTransform8;
-         final UnaryOperator<byte[]> tileTransformRgb;
          final mmcorej.org.json.JSONObject correctedBlendSummaryMD;
          if (correction != null && (doMirror || rotationDeg != 0) && tileW > 0 && tileH > 0) {
             final boolean fm = doMirror;
@@ -622,9 +621,6 @@ public class StitchFrame extends JDialog {
                   pix, tileW, tileH, fm, rot)[0];
             tileTransform8 = (pix) -> (byte[]) ImageTransformUtils.transformPixels(
                   pix, tileW, tileH, fm, rot)[0];
-            // RGB32: byte[] with 4 bytes per pixel (BGRA); use bytesPerPixel=4 overload
-            tileTransformRgb = (pix) -> (byte[]) ImageTransformUtils.transformPixels(
-                  pix, tileW, tileH, 4, fm, rot)[0];
             // Corrected tile dims for the blender's geometry
             boolean swapDims = rotationDeg == 90 || rotationDeg == 270;
             int corrTileW = swapDims ? tileH : tileW;
@@ -648,7 +644,6 @@ public class StitchFrame extends JDialog {
          } else {
             tileTransform16 = null;
             tileTransform8 = null;
-            tileTransformRgb = null;
             correctedBlendSummaryMD = blendSummaryMD;
          }
 
@@ -711,8 +706,11 @@ public class StitchFrame extends JDialog {
                         int[] argb = new int[nPix];
                         bimg.getRGB(0, 0, outCanvasW, outCanvasH, argb, 0, outCanvasW);
                         byte[] pixels = argbToBgra(argb);
-                        if (tileTransformRgb != null) {
-                           pixels = tileTransformRgb.apply(pixels);
+                        // Apply orientation correction to the assembled canvas using canvas
+                        // dimensions (not tile dimensions — tileTransformRgb uses tileW/tileH).
+                        if (correction != null && (doMirror || rotationDeg != 0)) {
+                           pixels = (byte[]) ImageTransformUtils.transformPixels(
+                                 pixels, outCanvasW, outCanvasH, 4, doMirror, rotationDeg)[0];
                         }
                         pixelData = pixels;
                         bytesPerPixel = 4;
