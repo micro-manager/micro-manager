@@ -713,19 +713,24 @@ public class StitchFrame extends JDialog {
                      Object pixelData;
                      int bytesPerPixel;
                      int numComponents;
+                     int imgW = outCanvasW;
+                     int imgH = outCanvasH;
                      if (isRgb) {
+                        // Composite at the raw (pre-correction) canvas size so that the
+                        // tile geometry in TileBlender is consistent with the uncorrected
+                        // tile layout.  Orientation correction is then applied to the
+                        // assembled canvas; transformPixels returns the corrected dims.
                         java.awt.image.BufferedImage bimg = blender.composite(
-                              0, 0, outCanvasW, outCanvasH, 0, tOrigins, blendProgress);
-                        // Convert BufferedImage (ARGB int[]) to MM RGB32 (BGRA byte[])
-                        int nPix = outCanvasW * outCanvasH;
-                        int[] argb = new int[nPix];
-                        bimg.getRGB(0, 0, outCanvasW, outCanvasH, argb, 0, outCanvasW);
+                              0, 0, canvasW, canvasH, 0, tOrigins, blendProgress);
+                        int[] argb = new int[canvasW * canvasH];
+                        bimg.getRGB(0, 0, canvasW, canvasH, argb, 0, canvasW);
                         byte[] pixels = argbToBgra(argb);
-                        // Apply orientation correction to the assembled canvas using canvas
-                        // dimensions (not tile dimensions — tileTransformRgb uses tileW/tileH).
                         if (correction != null && (doMirror || rotationDeg != 0)) {
-                           pixels = (byte[]) ImageTransformUtils.transformPixels(
-                                 pixels, outCanvasW, outCanvasH, 4, doMirror, rotationDeg)[0];
+                           Object[] transformed = ImageTransformUtils.transformPixels(
+                                 pixels, canvasW, canvasH, 4, doMirror, rotationDeg);
+                           pixels = (byte[]) transformed[0];
+                           imgW   = (Integer) transformed[1];
+                           imgH   = (Integer) transformed[2];
                         }
                         pixelData = pixels;
                         bytesPerPixel = 4;
@@ -747,7 +752,7 @@ public class StitchFrame extends JDialog {
                      Coords coords = studio_.data().coordsBuilder()
                            .channel(c).z(z).time(t).build();
                      Metadata meta = templateMetaBuilder.generateUUID().build();
-                     Image mmImg = studio_.data().createImage(pixelData, outCanvasW, outCanvasH,
+                     Image mmImg = studio_.data().createImage(pixelData, imgW, imgH,
                            bytesPerPixel, numComponents, coords, meta);
                      ds.putImage(mmImg);
                      imagesWritten++;
