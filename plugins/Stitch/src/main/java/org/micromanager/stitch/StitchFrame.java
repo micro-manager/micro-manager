@@ -542,7 +542,8 @@ public class StitchFrame extends JDialog {
          // Step 5 & 6: composite/stitch — iterates all time points, z slices, channels.
          SwingUtilities.invokeLater(() -> statusLabel.setText("Computing…"));
 
-         int numCh = chNames.size();  // raw count from caller; effective count set after probe
+         // raw count from caller; effective count set after probe
+         final int numCh = chNames.size();
          int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
          if (numZ < 1) {
             numZ = 1;
@@ -581,7 +582,7 @@ public class StitchFrame extends JDialog {
          if (probe.pix instanceof byte[] && probe.tags != null) {
             int bpp = probe.tags.optInt("BytesPerPixel", 0);
             int nc  = probe.tags.optInt("NumComponents", 0);
-            studio_.logs().logMessage("Stitch: probe pix=byte[] len=" + ((byte[])probe.pix).length
+            studio_.logs().logMessage("Stitch: probe pix=byte[] len=" + ((byte[]) probe.pix).length
                   + " tags=" + probe.tags.toString());
             if (bpp == 4 && nc == 3) {
                isRgb = true;
@@ -595,7 +596,8 @@ public class StitchFrame extends JDialog {
                isRgb = false;
             }
          } else {
-            studio_.logs().logMessage("Stitch: probe pix type=" + probe.pix.getClass().getSimpleName()
+            studio_.logs().logMessage("Stitch: probe pix type="
+                  + probe.pix.getClass().getSimpleName()
                   + " len=" + java.lang.reflect.Array.getLength(probe.pix)
                   + " tags=" + (probe.tags != null ? probe.tags.toString() : "null"));
             isRgb = false;
