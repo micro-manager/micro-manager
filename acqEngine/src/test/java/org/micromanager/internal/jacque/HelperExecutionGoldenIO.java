@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
@@ -66,6 +67,11 @@ final class HelperExecutionGoldenIO {
       List<StagePositionJson> stagePositions;
    }
 
+   static class AutofocusDeviceJson {
+      String name;
+      Double resultZ;
+   }
+
    static class InitialStateJson {
       String defaultZDrive;
       String defaultXYStage;
@@ -75,6 +81,7 @@ final class HelperExecutionGoldenIO {
       Boolean initShutterState;
       Boolean initContinuousFocus;
       List<MultiStagePositionJson> positionList;
+      AutofocusDeviceJson autofocusDevice;
    }
 
    static class SettingsJson {
@@ -342,6 +349,16 @@ final class HelperExecutionGoldenIO {
       s.cameraTimeout = sj != null && sj.cameraTimeout != null
             ? sj.cameraTimeout : 5000;
       return s;
+   }
+
+   static AutofocusPlugin createFakeAutofocus(
+         InitialStateJson isj, HelperRecordingMockCore mockCore) {
+      if (isj == null || isj.autofocusDevice == null) {
+         return null;
+      }
+      AutofocusDeviceJson afj = isj.autofocusDevice;
+      return new HelperFakeAutofocus(afj.name, afj.resultZ,
+            mockCore, isj.defaultZDrive);
    }
 
    static List<MethodCallJson> callLogToJson(

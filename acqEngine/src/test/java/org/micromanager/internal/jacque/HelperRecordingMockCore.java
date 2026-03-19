@@ -506,6 +506,10 @@ public final class HelperRecordingMockCore implements ExecutionCoreOps {
 
    // --- Logging ---
 
+   void updatePositionSilently(String stage, double pos) {
+      positions.put(stage, pos);
+   }
+
    @Override
    public void logMessage(String msg, boolean debug) {
       logMessages.add(new MethodCall("logMessage", msg, debug));
