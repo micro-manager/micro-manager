@@ -357,7 +357,10 @@ public class TileBlender {
     * <p>Identical to {@link #composite16(int, int, int, int, int, String, Map, IntConsumer)}
     * but accepts an optional per-tile transform applied to each tile's pixel array immediately
     * after it is fetched from storage and before it is blended into the canvas.
-    * The transform must not change the pixel count (i.e. it must not rotate 90/270°).</p>
+    * The transform must produce pixel data whose dimensions are consistent with the tile
+    * width and height implied by the summary metadata passed to the constructor — including
+    * any swapped dimensions for 90/270° rotations, provided the caller supplied corrected
+    * summary metadata with the post-rotation tile size.</p>
     *
     * @param tileTransform Optional transform applied to each tile's {@code short[]} pixel array
     *                      before blending. Pass null for no transform.
