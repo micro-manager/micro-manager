@@ -1,11 +1,11 @@
 {
-  "description": "Autofocus success, no MSP, referenceZ fallback",
+  "description": "CF disabled before Z move when default Z drive is not a CF drive",
   "mockCore": {
     "cameraDevice": "Camera",
     "shutterDevice": "Shutter",
     "focusDevice": "Z",
     "xyStageDevice": "XY",
-    "autoFocusDevice": null,
+    "autoFocusDevice": "AutoFocus",
     "autoShutter": true,
     "exposure": 10.0,
     "positions": {
@@ -22,7 +22,7 @@
     "cameraChannelNames": [
       "Default"
     ],
-    "continuousFocusEnabled": null,
+    "continuousFocusEnabled": true,
     "shutterOpen": false,
     "imageWidth": 512,
     "imageHeight": 512,
@@ -39,16 +39,13 @@
   "initialState": {
     "defaultZDrive": "Z",
     "defaultXYStage": "XY",
-    "referenceZ": 42.0,
+    "referenceZ": 100.0,
     "initAutoShutter": true,
     "initExposure": 10.0,
     "initShutterState": false,
-    "initContinuousFocus": false,
+    "initContinuousFocus": true,
     "positionList": null,
-    "autofocusDevice": {
-      "name": "TestAF",
-      "resultZ": 45.0
-    }
+    "autofocusDevice": null
   },
   "settings": {
     "cameraTimeout": 5000
@@ -62,12 +59,12 @@
       "cameraChannelIndex": 0,
       "position": 0,
       "exposure": 10.0,
-      "slice": null,
+      "slice": 3.0,
       "waitTimeMs": null,
-      "autofocus": true,
+      "autofocus": false,
       "newPosition": false,
       "closeShutter": true,
-      "relativeZ": false,
+      "relativeZ": true,
       "task": "snap",
       "nextFrameIndex": null,
       "channelName": null,
@@ -104,6 +101,32 @@
       ]
     },
     {
+      "method": "isContinuousFocusDrive",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "isContinuousFocusEnabled",
+      "args": []
+    },
+    {
+      "method": "getAutoFocusDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "AutoFocus"
+      ]
+    },
+    {
+      "method": "enableContinuousFocus",
+      "args": [
+        false
+      ]
+    },
+    {
       "method": "waitForDevice",
       "args": [
         "Z"
@@ -113,13 +136,13 @@
       "method": "setPosition",
       "args": [
         "Z",
-        42.0
+        103.0
       ]
     },
     {
       "method": "waitForDevice",
       "args": [
-        "Z"
+        "AutoFocus"
       ]
     },
     {
@@ -129,13 +152,7 @@
       ]
     },
     {
-      "method": "getPosition",
-      "args": [
-        "Z"
-      ]
-    },
-    {
-      "method": "getPosition",
+      "method": "waitForDevice",
       "args": [
         "Z"
       ]

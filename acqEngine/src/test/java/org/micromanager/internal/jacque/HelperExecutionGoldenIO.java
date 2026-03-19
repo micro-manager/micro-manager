@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.micromanager.AutofocusPlugin;
@@ -47,6 +48,7 @@ final class HelperExecutionGoldenIO {
       Long numberOfComponents;
       Boolean stageSequenceable;
       Integer stageSequenceMaxLength;
+      List<String> continuousFocusDrives;
       Map<String, Map<String, PropertySeqJson>> propertySequencing;
    }
 
@@ -185,6 +187,9 @@ final class HelperExecutionGoldenIO {
          Map<String, String> camProps = new HashMap<>();
          camProps.put("Binning", "1");
          c.properties.put(c.cameraDevice, camProps);
+      }
+      if (mcj.continuousFocusDrives != null) {
+         c.continuousFocusDrives = new HashSet<>(mcj.continuousFocusDrives);
       }
       if (mcj.stageSequenceable != null) {
          c.stageSequenceable = mcj.stageSequenceable;

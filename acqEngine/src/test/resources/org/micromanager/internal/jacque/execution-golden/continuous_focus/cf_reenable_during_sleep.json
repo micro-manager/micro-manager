@@ -1,21 +1,28 @@
 {
-  "description": "Verify redundant calls are skipped (same exposure, same position)",
+  "description": "CF re-enabled during acqSleep; storeZReference skips getPosition when CF active",
   "mockCore": {
     "cameraDevice": "Camera",
     "shutterDevice": "Shutter",
     "focusDevice": "Z",
     "xyStageDevice": "XY",
-    "autoFocusDevice": null,
+    "autoFocusDevice": "AutoFocus",
     "autoShutter": true,
     "exposure": 10.0,
-    "positions": null,
-    "xyPositions": null,
+    "positions": {
+      "Z": 0.0
+    },
+    "xyPositions": {
+      "XY": [
+        0.0,
+        0.0
+      ]
+    },
     "properties": null,
     "numberOfCameraChannels": 1,
     "cameraChannelNames": [
       "Default"
     ],
-    "continuousFocusEnabled": null,
+    "continuousFocusEnabled": true,
     "shutterOpen": false,
     "imageWidth": 512,
     "imageHeight": 512,
@@ -32,11 +39,11 @@
   "initialState": {
     "defaultZDrive": "Z",
     "defaultXYStage": "XY",
-    "referenceZ": 0.0,
+    "referenceZ": 100.0,
     "initAutoShutter": true,
     "initExposure": 10.0,
     "initShutterState": false,
-    "initContinuousFocus": false,
+    "initContinuousFocus": true,
     "positionList": null,
     "autofocusDevice": null
   },
@@ -52,12 +59,12 @@
       "cameraChannelIndex": 0,
       "position": 0,
       "exposure": 10.0,
-      "slice": null,
+      "slice": 3.0,
       "waitTimeMs": null,
       "autofocus": false,
       "newPosition": false,
       "closeShutter": true,
-      "relativeZ": false,
+      "relativeZ": true,
       "task": "snap",
       "nextFrameIndex": null,
       "channelName": null,
@@ -83,12 +90,12 @@
       "cameraChannelIndex": 0,
       "position": 0,
       "exposure": 10.0,
-      "slice": null,
-      "waitTimeMs": null,
+      "slice": 3.0,
+      "waitTimeMs": 5000.0,
       "autofocus": false,
       "newPosition": false,
       "closeShutter": true,
-      "relativeZ": false,
+      "relativeZ": true,
       "task": "snap",
       "nextFrameIndex": null,
       "channelName": null,
@@ -125,9 +132,60 @@
       ]
     },
     {
+      "method": "isContinuousFocusDrive",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "isContinuousFocusEnabled",
+      "args": []
+    },
+    {
+      "method": "getAutoFocusDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "AutoFocus"
+      ]
+    },
+    {
+      "method": "enableContinuousFocus",
+      "args": [
+        false
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "setPosition",
+      "args": [
+        "Z",
+        103.0
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "AutoFocus"
+      ]
+    },
+    {
       "method": "waitForDevice",
       "args": [
         "Camera"
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
       ]
     },
     {
@@ -245,9 +303,123 @@
       "args": []
     },
     {
+      "method": "isContinuousFocusEnabled",
+      "args": []
+    },
+    {
+      "method": "isContinuousFocusDrive",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "isContinuousFocusEnabled",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "setPosition",
+      "args": [
+        "Z",
+        100.0
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "isContinuousFocusEnabled",
+      "args": []
+    },
+    {
+      "method": "getAutoFocusDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "AutoFocus"
+      ]
+    },
+    {
+      "method": "enableContinuousFocus",
+      "args": [
+        true
+      ]
+    },
+    {
+      "method": "isContinuousFocusEnabled",
+      "args": []
+    },
+    {
+      "method": "isContinuousFocusDrive",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "isContinuousFocusDrive",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "isContinuousFocusEnabled",
+      "args": []
+    },
+    {
+      "method": "getAutoFocusDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "AutoFocus"
+      ]
+    },
+    {
+      "method": "enableContinuousFocus",
+      "args": [
+        false
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "setPosition",
+      "args": [
+        "Z",
+        103.0
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "AutoFocus"
+      ]
+    },
+    {
       "method": "waitForDevice",
       "args": [
         "Camera"
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
       ]
     },
     {
