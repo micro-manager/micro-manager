@@ -763,7 +763,12 @@ public class StitchFrame extends JDialog {
                            "Stitching t=" + (tIdx + 1) + " z=" + (zIdx + 1)
                                  + " " + chName + "…"));
                      final int imagesBefore = imagesWritten;
-                     Object[] result = stitchTiles(adapter, tzAxes, chName, canvasW, canvasH,
+                     Object[] result = stitchTiles(studio_,
+                              adapter,
+                              tzAxes,
+                              chName,
+                              canvasW,
+                              canvasH,
                            correction, tOrigins, is16bit, isRgb,
                            pct -> {
                               int base = doAlign ? 50 : 0;
@@ -832,7 +837,8 @@ public class StitchFrame extends JDialog {
     *         where pixels is {@code short[]} (16-bit gray), {@code byte[]} (8-bit gray),
     *         or {@code byte[]} (RGB32 BGRA, 4 bytes per pixel)
     */
-   private static Object[] stitchTiles(StitchDataProviderAdapter adapter,
+   private static Object[] stitchTiles(Studio studio,
+                                       StitchDataProviderAdapter adapter,
                                        HashMap<String, Object> baseAxes,
                                        String channelName,
                                        int canvasW, int canvasH,
@@ -895,7 +901,7 @@ public class StitchFrame extends JDialog {
          Object rowObj = axes.get("row");
          Object colObj = axes.get("column");
          if (!(rowObj instanceof Integer) || !(colObj instanceof Integer)) {
-            System.err.println("Stitch: skipping tile - missing row/col axes=" + axes);
+            studio.logs().logMessage("Stitch: skipping tile - missing row/col axes=" + axes);
             processed++;
             continue;
          }
@@ -904,7 +910,7 @@ public class StitchFrame extends JDialog {
 
          TaggedImage tile = adapter.getImage(axes, 0);
          if (tile == null || tile.pix == null) {
-            System.err.println("Stitch: null tile at row=" + row + " col=" + col);
+            studio.logs().logMessage("Stitch: null tile at row=" + row + " col=" + col);
             processed++;
             continue;
          }
@@ -918,12 +924,12 @@ public class StitchFrame extends JDialog {
             int nBytes = ((byte[]) tile.pix).length;
             nPix = isRgb ? nBytes / 4 : nBytes;
          } else {
-            System.err.println("Stitch: skipping tile - unsupported pix type "
+            studio.logs().logMessage("Stitch: skipping tile - unsupported pix type "
                   + tile.pix.getClass().getSimpleName());
             processed++;
             continue;
          }
-         System.err.println("Stitch: tile row=" + row + " col=" + col
+         studio.logs().logDebugMessage("Stitch: tile row=" + row + " col=" + col
                + " pix=" + tile.pix.getClass().getSimpleName()
                + " len=" + java.lang.reflect.Array.getLength(tile.pix)
                + " nPix=" + nPix
@@ -954,7 +960,7 @@ public class StitchFrame extends JDialog {
 
          // Allocate canvas on first valid tile (using corrected dims)
          if (canvas16 == null && canvas8 == null && canvasRgb == null) {
-            System.err.println("Stitch: allocating canvas corrCanvasW=" + corrCanvasW
+            studio.logs().logDebugMessage("Stitch: allocating canvas corrCanvasW=" + corrCanvasW
                   + " corrCanvasH=" + corrCanvasH + " isRgb=" + isRgb + " is16bit=" + is16bit
                   + " tilePaintW=" + tilePaintW + " tilePaintH=" + tilePaintH);
             if (isRgb) {
@@ -1005,7 +1011,7 @@ public class StitchFrame extends JDialog {
             }
          }
 
-         System.err.println("Stitch: copied tile row=" + row + " col=" + col
+         studio.logs().logDebugMessage("Stitch: copied tile row=" + row + " col=" + col
                + " destX=" + destX + " destY=" + destY
                + " copyW=" + copyW + " copyH=" + copyH);
          processed++;
