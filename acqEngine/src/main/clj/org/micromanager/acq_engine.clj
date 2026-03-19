@@ -54,6 +54,8 @@
 
 (def ^:dynamic state nil)
 
+(def clock (atom nil))
+
 (def attached-runnables (atom (vec nil)))
 
 (def pending-devices (atom #{}))
@@ -73,7 +75,9 @@
 ;; time
 
 (defn jvm-time-ms []
-  (quot (System/nanoTime) 1000000))
+  (if-let [c @clock]
+    (quot (.nanoTime c) 1000000)
+    (quot (System/nanoTime) 1000000)))
 
 (defn elapsed-time [state]
   (if (state :start-time) (- (jvm-time-ms) (state :start-time)) 0))
@@ -542,7 +546,9 @@
       (let [event (AcquisitionSleepEvent. (+ (jvm-time-ms) time-ms))]
         (.post (.events gui) event)))
     (swap! state assoc :sleepy sleepy :next-wake-time (+ (jvm-time-ms) time-ms))
-    (.await sleepy time-ms TimeUnit/MILLISECONDS)))
+    (if-let [c @clock]
+      (.sleep c time-ms)
+      (.await sleepy time-ms TimeUnit/MILLISECONDS))))
 
 (defn acq-sleep [interval-ms]
   (log "acq-sleep")
