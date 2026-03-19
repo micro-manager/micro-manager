@@ -242,32 +242,64 @@ public class TileBlender {
             }
 
             if (taggedImage.pix instanceof byte[]) {
-               // RGB32 (BGRA byte[], 4 bytes per pixel): accumulate R/G/B directly.
                byte[] tilePix = (byte[]) taggedImage.pix;
+               int bpp = (taggedImage.tags != null)
+                     ? taggedImage.tags.optInt("BytesPerPixel", 1) : 1;
+               int nc  = (taggedImage.tags != null)
+                     ? taggedImage.tags.optInt("NumComponents", 1) : 1;
                int fullTileW = (taggedImage.tags != null)
                      ? taggedImage.tags.optInt("Width", 0) : 0;
-               if (fullTileW <= 0) {
-                  fullTileW = dsTileW * scale;
-               }
-               for (int py = interY0; py < interY1; py++) {
-                  for (int px = interX0; px < interX1; px++) {
-                     int tx = px - tileOriginX;
-                     int ty = py - tileOriginY;
-                     float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
-                     float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
-                     float w = wx * wy;
-                     int byteOff = ((ty * scale) * fullTileW + (tx * scale)) * 4;
-                     if (byteOff < 0 || byteOff + 2 >= tilePix.length) {
-                        continue;
+               if (bpp == 4 && nc == 3) {
+                  // RGB32 (BGRA byte[], 4 bytes per pixel): accumulate R/G/B directly,
+                  // bypassing min/max and channel-color mapping (tile is already colored).
+                  if (fullTileW <= 0) {
+                     fullTileW = dsTileW * scale;
+                  }
+                  for (int py = interY0; py < interY1; py++) {
+                     for (int px = interX0; px < interX1; px++) {
+                        int tx = px - tileOriginX;
+                        int ty = py - tileOriginY;
+                        float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
+                        float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
+                        float w = wx * wy;
+                        int byteOff = ((ty * scale) * fullTileW + (tx * scale)) * 4;
+                        if (byteOff < 0 || byteOff + 2 >= tilePix.length) {
+                           continue;
+                        }
+                        // BGRA layout: byte 0=B, 1=G, 2=R, 3=A
+                        float tB = (tilePix[byteOff]     & 0xFF) / 255f;
+                        float tG = (tilePix[byteOff + 1] & 0xFF) / 255f;
+                        float tR = (tilePix[byteOff + 2] & 0xFF) / 255f;
+                        int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
+                        rAcc[outIdx] += tR * w;
+                        gAcc[outIdx] += tG * w;
+                        bAcc[outIdx] += tB * w;
                      }
-                     // BGRA layout: byte 0=B, 1=G, 2=R, 3=A
-                     float tB = (tilePix[byteOff]     & 0xFF) / 255f;
-                     float tG = (tilePix[byteOff + 1] & 0xFF) / 255f;
-                     float tR = (tilePix[byteOff + 2] & 0xFF) / 255f;
-                     int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
-                     rAcc[outIdx] += tR * w;
-                     gAcc[outIdx] += tG * w;
-                     bAcc[outIdx] += tB * w;
+                  }
+               } else {
+                  // 8-bit grayscale: apply min/max normalisation and channel-color mapping.
+                  if (fullTileW <= 0 || (tilePix.length % fullTileW) != 0) {
+                     int sq = (int) Math.round(Math.sqrt(tilePix.length));
+                     fullTileW = (sq * sq == tilePix.length) ? sq : dsTileW * scale;
+                  }
+                  for (int py = interY0; py < interY1; py++) {
+                     for (int px = interX0; px < interX1; px++) {
+                        int tx = px - tileOriginX;
+                        int ty = py - tileOriginY;
+                        float wx = ramp(tx + 1, halfOX) * ramp(dsTileW - tx, halfOX);
+                        float wy = ramp(ty + 1, halfOY) * ramp(dsTileH - ty, halfOY);
+                        float w = wx * wy;
+                        int tileIdx = (ty * scale) * fullTileW + (tx * scale);
+                        if (tileIdx < 0 || tileIdx >= tilePix.length) {
+                           continue;
+                        }
+                        float norm = Math.min(1f, Math.max(0f,
+                              ((tilePix[tileIdx] & 0xFF) - cMin) / range));
+                        int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
+                        rAcc[outIdx] += norm * chR * w;
+                        gAcc[outIdx] += norm * chG * w;
+                        bAcc[outIdx] += norm * chB * w;
+                     }
                   }
                }
             } else if (taggedImage.pix instanceof short[]) {

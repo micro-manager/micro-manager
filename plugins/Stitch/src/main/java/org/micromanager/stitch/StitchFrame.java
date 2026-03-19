@@ -131,7 +131,17 @@ public class StitchFrame extends JDialog {
 
    private void buildUI() {
       SummaryMetadata summary = dataProvider_.getSummaryMetadata();
-      final List<String> channelNames = getChannelNames(summary);
+      List<String> channelNames = getChannelNames(summary);
+      if (channelNames.isEmpty()) {
+         int numCh = dataProvider_.getNextIndex(Coords.CHANNEL);
+         if (numCh <= 0) {
+            numCh = 1;
+         }
+         channelNames = new ArrayList<>();
+         for (int i = 0; i < numCh; i++) {
+            channelNames.add(String.valueOf(i));
+         }
+      }
       final int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
 
       // Correct camera orientation
@@ -244,7 +254,10 @@ public class StitchFrame extends JDialog {
    private void updateAlignControls() {
       boolean align = alignCheck_.isSelected();
       SummaryMetadata summary = dataProvider_.getSummaryMetadata();
-      final int numChannels = getChannelNames(summary).size();
+      List<String> chNames = getChannelNames(summary);
+      final int numChannels = chNames.isEmpty()
+            ? Math.max(1, dataProvider_.getNextIndex(Coords.CHANNEL))
+            : chNames.size();
       final int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
       alignChannelLabel_.setEnabled(align);
       alignChannelCombo_.setEnabled(align && numChannels > 1);
