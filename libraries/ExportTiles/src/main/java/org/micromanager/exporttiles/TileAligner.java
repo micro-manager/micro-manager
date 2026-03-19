@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.imageprocessing.ImageTransformUtils;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 
@@ -29,6 +30,10 @@ import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 public class TileAligner {
 
    private static final double CORRELATION_THRESHOLD = 0.5;
+   /** Reject a pairwise shift if its magnitude along the primary axis exceeds this fraction
+    *  of the overlap strip width/height.  Shifts at or near the strip edge are almost always
+    *  FHT wrap-around artefacts rather than genuine sub-pixel corrections. */
+   private static final double MAX_SHIFT_FRACTION = 0.75;
 
    private final TiledDataProviderAPI storage_;
    private final HashMap<String, Object> baseAxes_;
@@ -37,6 +42,10 @@ public class TileAligner {
    private final int tileHeight_;
    private final int overlapX_;
    private final int overlapY_;
+
+   /** Optional per-tile orientation correction applied before strip extraction. */
+   private boolean tileTransformMirror_ = false;
+   private int tileTransformRotation_ = 0;
 
    private static class TranslationResult {
       final Point from;  // (col, row) in Point convention (x=col, y=row)
@@ -64,6 +73,22 @@ public class TileAligner {
    }
 
    /**
+    * Configure an optional per-tile orientation correction to apply before strip extraction.
+    *
+    * <p>The same transform used during blending/stitching should be passed here so that
+    * phase-correlation alignment operates on corrected tile images. For 90°/270° rotations
+    * the horizontal and vertical overlap values are automatically swapped so the correct
+    * overlap strip width/height is used for each axis after rotation.</p>
+    *
+    * @param mirror   true to apply a horizontal mirror before rotation
+    * @param rotation rotation in degrees: 0, 90, 180, or 270
+    */
+   public void setTileTransform(boolean mirror, int rotation) {
+      tileTransformMirror_ = mirror;
+      tileTransformRotation_ = ((rotation % 360) + 360) % 360;
+   }
+
+   /**
     * Computes corrected pixel origins for each (col, row) tile at the given resolution level.
     * Falls back to the nominal grid position for tiles that cannot be reached via accepted
     * pairwise translations.
@@ -73,10 +98,21 @@ public class TileAligner {
     *         Returns null if alignment cannot be performed (zero overlap, single tile).
     */
    public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel) {
-      return computeAlignedOrigins(resLevel, pct -> {});
+      return computeAlignedOrigins(resLevel, -1, pct -> {});
    }
 
    public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel, IntConsumer progress) {
+      return computeAlignedOrigins(resLevel, -1, progress);
+   }
+
+   /**
+    * @param maxDisplacementPx maximum allowed deviation from the nominal tile position
+    *                          in full-resolution pixels. Tiles whose computed origin
+    *                          deviates more than this are reset to nominal. Pass -1 to
+    *                          disable the cutoff.
+    */
+   public Map<Point, Point2D.Float> computeAlignedOrigins(int resLevel, int maxDisplacementPx,
+                                                           IntConsumer progress) {
       if (overlapX_ <= 0 && overlapY_ <= 0) {
          return null;
       }
@@ -86,17 +122,26 @@ public class TileAligner {
          return null;
       }
 
+      // When a tile transform is active, overlap axes may be swapped.
+      // After a 90°/270° rotation, what was the horizontal (X) overlap between
+      // left/right tile neighbours becomes the vertical (Y) overlap, and vice versa.
+      boolean swapAxes = (tileTransformRotation_ == 90 || tileTransformRotation_ == 270);
+      int effectiveOverlapX = swapAxes ? overlapY_ : overlapX_;
+      int effectiveOverlapY = swapAxes ? overlapX_ : overlapY_;
+
       // Run alignment at the coarsest available resolution to keep FHT sizes manageable.
       // Corrections are then scaled up to full-resolution pixel coords for TileBlender.
       int alignResLevel = storage_.getNumResLevels() - 1;
       int alignScale = 1 << alignResLevel;
-      int dsOverlapX = overlapX_ / alignScale;
-      int dsOverlapY = overlapY_ / alignScale;
+      int dsOverlapX = effectiveOverlapX / alignScale;
+      int dsOverlapY = effectiveOverlapY / alignScale;
 
       // Probe the first available tile at full resolution (level 0) to get actual tile
       // dimensions — summary metadata Width/Height can be wrong (e.g. Height=212 when
       // the actual tile is 3544x2396). Most tiles exist at level 0; higher levels may
       // have sparse data only near the centre.
+      // If a tile transform is active, the probed dims are the post-correction dims
+      // (loadTileGray applies the transform), so we read them from the tile itself.
       int actualTileW = tileWidth_;
       int actualTileH = tileHeight_;
       outer:
@@ -107,25 +152,42 @@ public class TileAligner {
                continue;
             }
             TaggedImage probe = storage_.getImage(axes, 0);  // always probe at full res
-            if (probe != null && probe.pix instanceof short[]) {
-               int nPix = ((short[]) probe.pix).length;
-               int tw = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
-               if (tw > 0 && nPix % tw == 0) {
-                  actualTileW = tw;            // already full-res
-                  actualTileH = nPix / tw;
-                  break outer;
+            if (probe != null && probe.pix != null) {
+               int nPix;
+               if (probe.pix instanceof short[]) {
+                  nPix = ((short[]) probe.pix).length;
+               } else if (probe.pix instanceof byte[]) {
+                  int bpp = (probe.tags != null) ? probe.tags.optInt("BytesPerPixel", 1) : 1;
+                  nPix = ((byte[]) probe.pix).length / bpp;
+               } else {
+                  continue;
+               }
+               if (nPix > 0) {
+                  int tw = (probe.tags != null) ? probe.tags.optInt("Width", 0) : 0;
+                  if (tw > 0 && nPix % tw == 0) {
+                     actualTileW = tw;
+                     actualTileH = nPix / tw;
+                     // If the tile transform swaps axes, swap the dims to match
+                     if (swapAxes) {
+                        int tmp = actualTileW;
+                        actualTileW = actualTileH;
+                        actualTileH = tmp;
+                     }
+                     break outer;
+                  }
                }
             }
          }
       }
-      int dsStepX = Math.max(1, (actualTileW - overlapX_) / alignScale);
-      int dsStepY = Math.max(1, (actualTileH - overlapY_) / alignScale);
+      int dsStepX = Math.max(1, (actualTileW - effectiveOverlapX) / alignScale);
+      int dsStepY = Math.max(1, (actualTileH - effectiveOverlapY) / alignScale);
 
       List<TranslationResult> translations = computePairwiseTranslations(
               tiles, alignResLevel, dsStepX, dsStepY, dsOverlapX, dsOverlapY, alignScale, progress);
 
       // propagateOrigins returns full-resolution pixel coords regardless of alignResLevel.
-      return propagateOrigins(tiles, translations, dsStepX, dsStepY, alignScale);
+      return propagateOrigins(tiles, translations, dsStepX, dsStepY, alignScale,
+            maxDisplacementPx);
    }
 
    private Set<Point> collectTiles() {
@@ -138,7 +200,11 @@ public class TileAligner {
          boolean matches = true;
          for (Map.Entry<String, Object> entry : baseAxes_.entrySet()) {
             Object storedVal = stored.get(entry.getKey());
-            if (storedVal == null || !storedVal.equals(entry.getValue())) {
+            // Ignore axes absent from this stored entry (e.g. no z-axis in dataset)
+            if (storedVal == null) {
+               continue;
+            }
+            if (!storedVal.equals(entry.getValue())) {
                matches = false;
                break;
             }
@@ -164,7 +230,7 @@ public class TileAligner {
             continue;
          }
          TaggedImage ti = storage_.getImage(axes, resLevel);
-         if (ti == null || !(ti.pix instanceof short[])) {
+         if (ti == null || ti.pix == null) {
             continue;
          }
          // "Width"/"Height" tags store full-resolution values; divide by scale.
@@ -177,22 +243,93 @@ public class TileAligner {
             w = (wFull > 0) ? wFull / scale : 0;
             h = (hFull > 0) ? hFull / scale : 0;
          }
-         short[] src = (short[]) ti.pix;
-         // Fall back: derive from pixel count when tags are missing/wrong.
-         if (w <= 0 || h <= 0 || w * h != src.length) {
-            w = tileWidth_ / scale;
-            if (w > 0 && src.length % w == 0) {
-               h = src.length / w;
-            } else {
-               continue;
+         float[] dst;
+         int nPix;
+         Object rawPix = ti.pix;
+         if (rawPix instanceof short[]) {
+            short[] src = (short[]) rawPix;
+            nPix = src.length;
+            // Fall back: derive from pixel count when tags are missing/wrong.
+            if (w <= 0 || h <= 0 || w * h != nPix) {
+               w = tileWidth_ / scale;
+               if (w > 0 && nPix % w == 0) {
+                  h = nPix / w;
+               } else {
+                  continue;
+               }
             }
+            // Apply per-tile orientation correction before strip extraction.
+            if (tileTransformMirror_ || tileTransformRotation_ != 0) {
+               Object[] xf = ImageTransformUtils.transformPixels(
+                     src, w, h, tileTransformMirror_, tileTransformRotation_);
+               src = (short[]) xf[0];
+               w   = (Integer) xf[1];
+               h   = (Integer) xf[2];
+            }
+            nPix = src.length;
+            dst = new float[nPix];
+            for (int i = 0; i < nPix; i++) {
+               dst[i] = src[i] & 0xFFFF;
+            }
+         } else if (rawPix instanceof byte[]) {
+            byte[] src = (byte[]) rawPix;
+            int bpp = (ti.tags != null) ? ti.tags.optInt("BytesPerPixel", 1) : 1;
+            if (bpp == 4) {
+               // RGB32 (BGRA): apply correction, then convert to grayscale via luminance.
+               nPix = src.length / 4;
+               if (w <= 0 || h <= 0 || w * h != nPix) {
+                  w = tileWidth_ / scale;
+                  if (w > 0 && nPix % w == 0) {
+                     h = nPix / w;
+                  } else {
+                     continue;
+                  }
+               }
+               if (tileTransformMirror_ || tileTransformRotation_ != 0) {
+                  Object[] xf = ImageTransformUtils.transformPixels(
+                        src, w, h, 4, tileTransformMirror_, tileTransformRotation_);
+                  src = (byte[]) xf[0];
+                  w   = (Integer) xf[1];
+                  h   = (Integer) xf[2];
+               }
+               nPix = src.length / 4;
+               dst = new float[nPix];
+               for (int i = 0; i < nPix; i++) {
+                  // BGRA layout: byte 0=B, 1=G, 2=R, 3=A
+                  float b = src[i * 4]     & 0xFF;
+                  float g = src[i * 4 + 1] & 0xFF;
+                  float r = src[i * 4 + 2] & 0xFF;
+                  dst[i] = 0.2126f * r + 0.7152f * g + 0.0722f * b;
+               }
+            } else {
+               // 8-bit gray
+               nPix = src.length;
+               if (w <= 0 || h <= 0 || w * h != nPix) {
+                  w = tileWidth_ / scale;
+                  if (w > 0 && nPix % w == 0) {
+                     h = nPix / w;
+                  } else {
+                     continue;
+                  }
+               }
+               if (tileTransformMirror_ || tileTransformRotation_ != 0) {
+                  Object[] xf = ImageTransformUtils.transformPixels(
+                        src, w, h, tileTransformMirror_, tileTransformRotation_);
+                  src = (byte[]) xf[0];
+                  w   = (Integer) xf[1];
+                  h   = (Integer) xf[2];
+               }
+               nPix = src.length;
+               dst = new float[nPix];
+               for (int i = 0; i < nPix; i++) {
+                  dst[i] = src[i] & 0xFF;
+               }
+            }
+         } else {
+            continue;
          }
          tileDims[0] = w;
          tileDims[1] = h;
-         float[] dst = new float[src.length];
-         for (int i = 0; i < src.length; i++) {
-            dst[i] = src[i] & 0xFFFF;
-         }
          return dst;
       }
       return null;
@@ -251,12 +388,31 @@ public class TileAligner {
       }
       outSize[0] = padN;
 
+      // Subtract mean from each strip (zero-mean) before padding to suppress the DC
+      // component in the phase correlation.  Without this the dominant frequency is
+      // always the mean value, producing a spurious peak at (±N/2, ±N/2).
+      double sum1 = 0;
+      double sum2 = 0;
+      int n = stripW * stripH;
+      for (int i = 0; i < n; i++) {
+         sum1 += pix1[i];
+         sum2 += pix2[i];
+      }
+      float mean1 = (float) (sum1 / n);
+      float mean2 = (float) (sum2 / n);
+      float[] zm1 = new float[n];
+      float[] zm2 = new float[n];
+      for (int i = 0; i < n; i++) {
+         zm1[i] = pix1[i] - mean1;
+         zm2[i] = pix2[i] - mean2;
+      }
+
       // Copy strips into padded square arrays
       float[] padded1 = new float[padN * padN];
       float[] padded2 = new float[padN * padN];
       for (int y = 0; y < stripH; y++) {
-         System.arraycopy(pix1, y * stripW, padded1, y * padN, stripW);
-         System.arraycopy(pix2, y * stripW, padded2, y * padN, stripW);
+         System.arraycopy(zm1, y * stripW, padded1, y * padN, stripW);
+         System.arraycopy(zm2, y * stripW, padded2, y * padN, stripW);
       }
 
       FloatProcessor proc1 = new FloatProcessor(padN, padN, padded1, null);
@@ -403,7 +559,9 @@ public class TileAligner {
                   if (corrMap != null) {
                      double[] quality = new double[1];
                      int[] shift = findPeak(corrMap, outSize[0], quality);
-                     if (quality[0] >= CORRELATION_THRESHOLD) {
+                     int maxDx = (int) (stripW * MAX_SHIFT_FRACTION);
+                     if (quality[0] >= CORRELATION_THRESHOLD
+                           && Math.abs(shift[0]) <= maxDx) {
                         results.add(new TranslationResult(west, tile, shift[0], shift[1]));
                      }
                   }
@@ -434,7 +592,9 @@ public class TileAligner {
                   if (corrMap != null) {
                      double[] quality = new double[1];
                      int[] shift = findPeak(corrMap, outSize[0], quality);
-                     if (quality[0] >= CORRELATION_THRESHOLD) {
+                     int maxDy = (int) (stripH * MAX_SHIFT_FRACTION);
+                     if (quality[0] >= CORRELATION_THRESHOLD
+                           && Math.abs(shift[1]) <= maxDy) {
                         results.add(new TranslationResult(north, tile, shift[0], shift[1]));
                      }
                   }
@@ -473,7 +633,7 @@ public class TileAligner {
     */
    private Map<Point, Point2D.Float> propagateOrigins(
            Set<Point> tiles, List<TranslationResult> translations,
-           int dsStepX, int dsStepY, int scale) {
+           int dsStepX, int dsStepY, int scale, int maxDisplacementPx) {
 
       // Build adjacency: for each tile, list of (neighbour, dx, dy)
       Map<Point, List<TranslationResult>> adjFrom = new HashMap<>();
@@ -547,6 +707,22 @@ public class TileAligner {
          }
       }
 
+      // Apply displacement cutoff: reset any tile whose computed origin deviates from
+      // its nominal position by more than maxDisplacementPx back to the nominal position.
+      if (maxDisplacementPx >= 0) {
+         float maxDist = maxDisplacementPx;
+         for (Point t : tiles) {
+            float nomX = t.x * dsStepX * scale;
+            float nomY = t.y * dsStepY * scale;
+            Point2D.Float o = origins.get(t);
+            float dx = o.x - nomX;
+            float dy = o.y - nomY;
+            if (Math.sqrt(dx * dx + dy * dy) > maxDist) {
+               origins.put(t, new Point2D.Float(nomX, nomY));
+            }
+         }
+      }
+
       return origins;
    }
 
@@ -559,7 +735,11 @@ public class TileAligner {
          boolean matches = true;
          for (Map.Entry<String, Object> entry : baseAxes_.entrySet()) {
             Object storedVal = stored.get(entry.getKey());
-            if (storedVal == null || !storedVal.equals(entry.getValue())) {
+            // Ignore axes absent from this stored entry (e.g. no z-axis in dataset)
+            if (storedVal == null) {
+               continue;
+            }
+            if (!storedVal.equals(entry.getValue())) {
                matches = false;
                break;
             }
@@ -569,7 +749,7 @@ public class TileAligner {
          }
          if (chName != null) {
             Object storedCh = stored.get("channel");
-            if (!chName.equals(storedCh)) {
+            if (!channelValuesMatch(chName, storedCh)) {
                continue;
             }
          }
@@ -579,5 +759,29 @@ public class TileAligner {
          return axes;
       }
       return null;
+   }
+
+   /**
+    * Returns true when a channel name from the caller matches a channel value from storage.
+    *
+    * <p>Handles the case where unnamed channels are stored as {@code Integer} indices
+    * but the caller passes the index as a {@code String} (e.g. {@code "0"}).</p>
+    */
+   private static boolean channelValuesMatch(String callerName, Object storedValue) {
+      if (storedValue == null) {
+         return false;
+      }
+      if (callerName.equals(storedValue)) {
+         return true;
+      }
+      // Unnamed channel: storedValue may be an Integer index; callerName may be its string form.
+      if (storedValue instanceof Integer) {
+         try {
+            return Integer.parseInt(callerName) == (Integer) storedValue;
+         } catch (NumberFormatException e) {
+            return false;
+         }
+      }
+      return false;
    }
 }

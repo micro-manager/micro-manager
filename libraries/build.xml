@@ -6,10 +6,10 @@
 		<sequential>
 			<subant target="@{target}" failonerror="@{failonerror}">
 				<file file="TiledDataProvider/build.xml"/>
+				<file file="ImageProcessing/build.xml"/>
 				<file file="Big/build.xml"/>
 				<file file="ExportTiles/build.xml"/>
 				<file file="Gaussian/build.xml"/>
-				<file file="ImageProcessing/build.xml"/>
 				<file file="TiledDataViewer/build.xml"/>
 				<file file="PluginUtilities/build.xml"/>
 				<file file="Projector/build.xml"/>
