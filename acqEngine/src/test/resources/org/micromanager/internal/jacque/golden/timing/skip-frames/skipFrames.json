@@ -94,7 +94,8 @@
           "burstData": null,
           "triggerSequence": null,
           "metadata": {},
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 1,
@@ -125,7 +126,8 @@
           "burstData": null,
           "triggerSequence": null,
           "metadata": {},
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 2,
@@ -156,7 +158,8 @@
           "burstData": null,
           "triggerSequence": null,
           "metadata": {},
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 3,
@@ -187,7 +190,8 @@
           "burstData": null,
           "triggerSequence": null,
           "metadata": {},
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 4,
@@ -218,7 +222,8 @@
           "burstData": null,
           "triggerSequence": null,
           "metadata": {},
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 5,
@@ -249,7 +254,8 @@
           "burstData": null,
           "triggerSequence": null,
           "metadata": {},
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         }
       ],
       "triggerSequence": {
@@ -257,7 +263,8 @@
         "slices": null
       },
       "metadata": {},
-      "runnableCount": null
+      "runnableCount": null,
+      "runnableActions": null
     }
   ]
 }

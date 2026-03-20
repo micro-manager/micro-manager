@@ -245,7 +245,7 @@ public class EventExecutionGoldenTest {
       List<AcqEvent> events = new ArrayList<>();
       if (testCase.events != null) {
          for (HelperGoldenFileIO.EventJson ej : testCase.events) {
-            events.add(HelperExecutionGoldenIO.eventFromJson(ej));
+            events.add(HelperExecutionGoldenIO.eventFromJson(ej, mockCore));
          }
       }
 
@@ -300,7 +300,7 @@ public class EventExecutionGoldenTest {
       List<Object> cljEvents = new ArrayList<>();
       if (testCase.events != null) {
          for (HelperGoldenFileIO.EventJson ej : testCase.events) {
-            cljEvents.add(eventToCljMap(ej));
+            cljEvents.add(eventToCljMap(ej, mockCore));
          }
       }
 
@@ -490,7 +490,8 @@ public class EventExecutionGoldenTest {
       return RT.map(KW_CAMERA_TIMEOUT, timeout);
    }
 
-   private static Object eventToCljMap(HelperGoldenFileIO.EventJson ej) {
+   private static Object eventToCljMap(HelperGoldenFileIO.EventJson ej,
+         ExecutionCoreOps core) {
       Map<Object, Object> m = new LinkedHashMap<>();
       m.put(KW_FRAME_INDEX, ej.frameIndex);
       m.put(KW_SLICE_INDEX, ej.sliceIndex);
@@ -521,7 +522,7 @@ public class EventExecutionGoldenTest {
       if (ej.burstData != null) {
          List<Object> burstList = new ArrayList<>();
          for (HelperGoldenFileIO.EventJson sub : ej.burstData) {
-            burstList.add(eventToCljMap(sub));
+            burstList.add(eventToCljMap(sub, core));
          }
          m.put(KW_BURST_DATA, PersistentVector.create(burstList));
       }
@@ -531,6 +532,15 @@ public class EventExecutionGoldenTest {
       }
       if (ej.metadata != null) {
          m.put(KW_METADATA, PersistentHashMap.create(ej.metadata));
+      }
+      if (ej.runnableActions != null && !ej.runnableActions.isEmpty()) {
+         List<Runnable> runnables = new ArrayList<>();
+         for (HelperGoldenFileIO.RunnableActionJson ra
+               : ej.runnableActions) {
+            runnables.add(
+                  HelperExecutionGoldenIO.runnableFromJson(ra, core));
+         }
+         m.put(KW_RUNNABLES, PersistentVector.create(runnables));
       }
       return PersistentHashMap.create(m);
    }

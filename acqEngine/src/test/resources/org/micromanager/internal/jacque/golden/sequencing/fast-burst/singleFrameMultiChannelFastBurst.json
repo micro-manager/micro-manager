@@ -129,7 +129,8 @@
           "metadata": {
             "FilterWheel-Position": "1"
           },
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 0,
@@ -166,7 +167,8 @@
           "metadata": {
             "FilterWheel-Position": "2"
           },
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         }
       ],
       "triggerSequence": {
@@ -183,7 +185,8 @@
       "metadata": {
         "FilterWheel-Position": "1"
       },
-      "runnableCount": null
+      "runnableCount": null,
+      "runnableActions": null
     }
   ]
 }

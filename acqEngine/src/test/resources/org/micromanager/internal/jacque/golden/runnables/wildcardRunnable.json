@@ -71,7 +71,8 @@
       "burstData": null,
       "triggerSequence": null,
       "metadata": null,
-      "runnableCount": 1
+      "runnableCount": 1,
+      "runnableActions": null
     },
     {
       "frameIndex": 1,
@@ -102,7 +103,8 @@
       "burstData": null,
       "triggerSequence": null,
       "metadata": null,
-      "runnableCount": 1
+      "runnableCount": 1,
+      "runnableActions": null
     },
     {
       "frameIndex": 2,
@@ -133,7 +135,8 @@
       "burstData": null,
       "triggerSequence": null,
       "metadata": null,
-      "runnableCount": 1
+      "runnableCount": 1,
+      "runnableActions": null
     }
   ]
 }
