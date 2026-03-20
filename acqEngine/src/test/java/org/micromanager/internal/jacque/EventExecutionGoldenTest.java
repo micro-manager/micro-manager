@@ -8,6 +8,7 @@ import clojure.lang.Keyword;
 import clojure.lang.PersistentArrayMap;
 import clojure.lang.PersistentHashMap;
 import clojure.lang.PersistentHashSet;
+import clojure.lang.PersistentTreeMap;
 import clojure.lang.PersistentVector;
 import clojure.lang.RT;
 import clojure.lang.Symbol;
@@ -584,7 +585,10 @@ public class EventExecutionGoldenTest {
          HelperGoldenFileIO.TriggerSequenceJson tj) {
       Map<Object, Object> m = new LinkedHashMap<>();
       if (tj.properties != null) {
-         IPersistentMap props = PersistentArrayMap.EMPTY;
+         // The real Clojure sequence generator uses (sorted-map) for
+         // trigger sequence properties, so build a PersistentTreeMap
+         // to match production iteration order.
+         IPersistentMap props = PersistentTreeMap.EMPTY;
          for (Map.Entry<String, Map<String, List<String>>> devEntry
                : tj.properties.entrySet()) {
             String device = devEntry.getKey();

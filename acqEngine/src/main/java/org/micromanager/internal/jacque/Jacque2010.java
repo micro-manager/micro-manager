@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -530,22 +532,43 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
    private void initBurst(int length, TriggerSequence triggerSequence,
          boolean relativeZ) throws Exception {
       core.setAutoShutter(state.initAutoShutter);
-      long extra = extraTriggers();
-      Map<List<String>, List<String>> offsetProps = new HashMap<>();
+      // The Clojure sequence generator uses sorted-map for trigger
+      // sequence properties, so we sort to match iteration order.
+      Map<List<String>, List<String>> sorted =
+            sortedProperties(triggerSequence.properties);
+      // Bug-compatible: Clojure calls extra-triggers per-property via
+      // (apply-to-map-vals offset-if-extra-trigger ...), not once.
+      Map<List<String>, List<String>> offsetProps = new LinkedHashMap<>();
       for (Map.Entry<List<String>, List<String>> entry
-            : triggerSequence.properties.entrySet()) {
+            : sorted.entrySet()) {
          offsetProps.put(entry.getKey(),
-               offsetCycle(-extra, entry.getValue()));
+               offsetCycle(-extraTriggers(), entry.getValue()));
       }
       loadPropertySequences(offsetProps);
       List<Double> absoluteSlices = loadSliceSequence(
             compensateForExtraTrigger(triggerSequence.slices), relativeZ);
-      startPropertySequences(triggerSequence.properties);
+      startPropertySequences(sorted);
       if (absoluteSlices != null) {
          startSliceSequence(triggerSequence.slices);
       }
+      // Bug-compatible: Clojure's (core ...) macro evaluates args twice
+      // (once for logging, once for the actual call).
+      firstTriggerMissing();
       int burstLen = firstTriggerMissing() ? length + 1 : length;
       core.startSequenceAcquisition(burstLen, 0, true);
+   }
+
+   private static Map<List<String>, List<String>> sortedProperties(
+         Map<List<String>, List<String>> props) {
+      TreeMap<List<String>, List<String>> sorted = new TreeMap<>((a, b) -> {
+         for (int i = 0; i < Math.min(a.size(), b.size()); i++) {
+            int c = a.get(i).compareTo(b.get(i));
+            if (c != 0) return c;
+         }
+         return Integer.compare(a.size(), b.size());
+      });
+      sorted.putAll(props);
+      return sorted;
    }
 
    // --- Image collection ---
