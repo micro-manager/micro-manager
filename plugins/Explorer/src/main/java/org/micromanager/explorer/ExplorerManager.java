@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import org.micromanager.internal.utils.FileDialogs;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
@@ -40,11 +39,12 @@ import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.ColorPalettes;
+import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
@@ -1147,13 +1147,16 @@ public class ExplorerManager {
       int overlapPixels = (int) Math.round(tw * overlapPercentage_ / 100.0);
       double effectiveTileWidth = tw - overlapPixels;
       double effectiveTileHeight = th - overlapPixels;
-      // NDTiff canvas coords: tile (row,col) occupies [col*effectiveTileWidth, (col+1)*effectiveTileWidth).
+      // NDTiff canvas coords: tile (row,col) occupies [col*effectiveTileWidth,
+      // (col+1)*effectiveTileWidth).
       // Stage step per tile = stageTileWidthUm_ * (1 - overlap) / pixelSizeUm_ pixels.
       // Scale maps stage-offset pixels to NDTiff canvas pixels.
       double stageStepX = stageTileWidthUm_ > 0
-               ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_ : effectiveTileWidth;
+               ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
+               : effectiveTileWidth;
       double stageStepY = stageTileHeightUm_ > 0
-               ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_ : effectiveTileHeight;
+               ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
+               : effectiveTileHeight;
       double scaleX = effectiveTileWidth / stageStepX;
       double scaleY = effectiveTileHeight / stageStepY;
       double pixelX = (stageX - initialStageX_) / pixelSizeUm_ * scaleX + effectiveTileWidth / 2.0;
@@ -1219,9 +1222,11 @@ public class ExplorerManager {
             double effectiveTileHeight = th - overlapPixels;
 
             double stageStepX = stageTileWidthUm_ > 0
-                  ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_ : effectiveTileWidth;
+                  ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
+                     : effectiveTileWidth;
             double stageStepY = stageTileHeightUm_ > 0
-                  ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_ : effectiveTileHeight;
+                  ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
+                     : effectiveTileHeight;
             double scaleX = stageStepX / effectiveTileWidth;
             double scaleY = stageStepY / effectiveTileHeight;
 
