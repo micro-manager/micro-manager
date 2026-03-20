@@ -65,7 +65,15 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       axesBridge_ = new AxesBridge();
       name_ = name;
       summaryMetadata_ = summaryMetadata;
-      // Discover existing channels
+      // Seed channel order from SummaryMetadata ChNames so the axesBridge
+      // index→name mapping matches the stored channel order, not the arbitrary
+      // iteration order of getAxesSet() (which is a Set with no guarantees).
+      SummaryMetadata sm = getSummaryMetadata();
+      List<String> chNames = sm.getChannelNameList();
+      for (String ch : chNames) {
+         axesBridge_.registerChannel(ch);
+      }
+      // Discover any remaining channels not listed in SummaryMetadata
       axesBridge_.discoverChannels(storage_.getAxesSet());
    }
 
