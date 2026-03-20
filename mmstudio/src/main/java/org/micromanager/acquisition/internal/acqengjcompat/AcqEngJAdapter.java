@@ -605,7 +605,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                posList,
                chSpecs,
                null);
-      } else if ((acquisitionSettings.useChannels() && !chSpecs.isEmpty()) || acquisitionSettings.useAutofocus()) {
+      } else if ((acquisitionSettings.useChannels() && !chSpecs.isEmpty())
+               || acquisitionSettings.useAutofocus()) {
          // add a fake z stack so that the channel z-offsets and AF are handles correctly
          if (acquisitionSettings.usePositionList()
                   && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
@@ -647,7 +648,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // TODO: What about Z positions in position list
          // Yes: First move all stages in the MSP to their desired location, then do
          // whatever is asked to do.
-      }else if(acquisitionSettings.useAutofocus()){
+      } else if (acquisitionSettings.useAutofocus()) {
          // if no position list is used, add a dummy position function to make sure the
          // acquisition event has a position axis for the metadata to work correctly
          posList_ = new PositionList();
@@ -924,7 +925,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                if (msp != null) {
                   for (int i = 0; i < msp.size(); i++) {
                      StagePosition sp = msp.get(i);
-                     if (sp != null && sp.is1DStagePosition() && sp.getStageDeviceLabel().equals(zDevice)) {
+                     if (sp != null && sp.is1DStagePosition()
+                              && sp.getStageDeviceLabel().equals(zDevice)) {
                         // here we adjust the Z position of the event
                         // because at this point in code the event was already generated
                         // and event.zPos has already been set using old (un-adjusted)
@@ -933,17 +935,18 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                         // doesn't affect event's zPos
                         studio_.core().logMessage("Adjusting Z position for event; current zPos = "
                                 + event.getZPosition() + ", current stage single axis position = "
-                                + event.getStageSingleAxisStagePosition(sp.getStageDeviceLabel()) + ", new stage position = " + sp.get1DPosition());
+                                + event.getStageSingleAxisStagePosition(sp.getStageDeviceLabel())
+                                + ", new stage position = " + sp.get1DPosition());
                         event.setZ(event.getZIndex(),
-                            event.getZPosition() -
-                            event.getStageSingleAxisStagePosition(sp.getStageDeviceLabel()) +
-                            sp.get1DPosition()
+                              event.getZPosition()
+                              - event.getStageSingleAxisStagePosition(sp.getStageDeviceLabel())
+                              + sp.get1DPosition()
                            );
                         event.setStageCoordinate(sp.getStageDeviceLabel(), sp.get1DPosition());
                      }
                   }
                }
-            }else{ // we dont have positions, AF just moved stage but didn't update poslist
+            } else { // we dont have positions, AF just moved stage but didn't update poslist
                   
             }
             return event;
