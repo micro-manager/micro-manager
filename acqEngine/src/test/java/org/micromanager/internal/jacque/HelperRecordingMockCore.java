@@ -402,6 +402,10 @@ public final class HelperRecordingMockCore implements ExecutionCoreOps {
    }
 
    private TaggedImage makeDummyImage(int imageNumber) {
+      return makeDummyImage(imageNumber, 0);
+   }
+
+   private TaggedImage makeDummyImage(int imageNumber, int cameraChannel) {
       int size = (int) (config.imageWidth * config.imageHeight
             * config.bytesPerPixel);
       byte[] pixels = new byte[size];
@@ -409,6 +413,10 @@ public final class HelperRecordingMockCore implements ExecutionCoreOps {
       try {
          tags.put("ElapsedTime-ms", "0.0");
          tags.put("ImageNumber", String.valueOf(imageNumber));
+         if (config.numberOfCameraChannels > 1) {
+            tags.put(config.cameraDevice + "-CameraChannelIndex",
+                  String.valueOf(cameraChannel));
+         }
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -454,8 +462,11 @@ public final class HelperRecordingMockCore implements ExecutionCoreOps {
       sequenceRunning = true;
       nextImageNumber = 0;
       sequenceImages.clear();
+      int numCamCh = config.numberOfCameraChannels;
       for (int i = 0; i < numImages; i++) {
-         sequenceImages.add(makeDummyImage(i));
+         for (int ch = 0; ch < numCamCh; ch++) {
+            sequenceImages.add(makeDummyImage(i, ch));
+         }
       }
    }
 
