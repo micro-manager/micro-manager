@@ -23,6 +23,14 @@ public interface TiledDataViewerDataProviderAPI extends DataProvider {
    void newImageArrived(Image image, HashMap<String, Object> axes);
 
    /**
+    * Notify this data provider that a new image has arrived at the given axes.
+    * Re-reads the image from storage so that per-image metadata tags are included.
+    *
+    * @param axes the NDViewer axes of the image (e.g. {row: 0, column: 0, channel: "DAPI", ...})
+    */
+   void newImageArrived(HashMap<String, Object> axes);
+
+   /**
     * Fetch a downsampled (coarsest pyramid level) version of the image by NDViewer axes.
     *
     * @param axes the NDViewer axes map

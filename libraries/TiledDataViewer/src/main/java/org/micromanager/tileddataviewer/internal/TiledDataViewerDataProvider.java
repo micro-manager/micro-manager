@@ -41,6 +41,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
 
    private final EventBus eventBus_ = new EventBus(EVENT_BUS_EXCEPTION_HANDLER);
    private final String name_;
+   private SummaryMetadata summaryMetadata_;
 
    /**
     * Construct a data provider wrapping the given NDTiff storage.
@@ -52,10 +53,18 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    public TiledDataViewerDataProvider(DataManager dataManager,
                                       TiledDataProviderAPI storage,
                                       String name) {
+      this(dataManager, storage, name, null);
+   }
+
+   public TiledDataViewerDataProvider(DataManager dataManager,
+                                      TiledDataProviderAPI storage,
+                                      String name,
+                                      SummaryMetadata summaryMetadata) {
       dataManager_ = dataManager;
       storage_ = storage;
       axesBridge_ = new AxesBridge();
       name_ = name;
+      summaryMetadata_ = summaryMetadata;
       // Discover existing channels
       axesBridge_.discoverChannels(storage_.getAxesSet());
    }
@@ -170,27 +179,10 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
-      // Parse channel names from NDTiff storage for Inspector display
-      SummaryMetadata.Builder builder = dataManager_.summaryMetadataBuilder();
-
-      try {
-         JSONObject json = storage_.getSummaryMetadata();
-
-         // Parse channel names if present
-         if (json.has("ChNames")) {
-            JSONArray chNames = json.getJSONArray("ChNames");
-            List<String> channelNames = new ArrayList<>();
-            for (int i = 0; i < chNames.length(); i++) {
-               channelNames.add(chNames.getString(i));
-            }
-            String[] channelNamesArray = channelNames.toArray(new String[0]);
-            builder.channelNames(channelNamesArray);
-         }
-      } catch (Exception e) {
-         // If parsing fails, return minimal metadata (no channel names)
+      if (summaryMetadata_ != null) {
+         return summaryMetadata_;
       }
-
-      return builder.build();
+      return dataManager_.summaryMetadataBuilder().build();
    }
 
    @Override

@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import org.micromanager.internal.utils.FileDialogs;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
@@ -36,7 +37,9 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -176,26 +179,27 @@ public class ExplorerManager {
          dataSource_.setTileDimensions(cameraWidth_, cameraHeight_);
 
          // Build summary metadata for storage
-         JSONObject summaryMetadata = buildSummaryMetadata(cameraWidth_, cameraHeight_);
+         SummaryMetadata summaryMetadata = buildSummaryMetadata(cameraWidth_, cameraHeight_);
+         JSONObject summaryMetadataJson = summaryMetadataToJSON(summaryMetadata);
 
          int overlapX = (int) Math.round(cameraWidth_ * overlapPercentage_ / 100.0);
          int overlapY = (int) Math.round(cameraHeight_ * overlapPercentage_ / 100.0);
-         summaryMetadata.put("GridPixelOverlapX", overlapX);
-         summaryMetadata.put("GridPixelOverlapY", overlapY);
-         storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
+         summaryMetadataJson.put("GridPixelOverlapX", overlapX);
+         summaryMetadataJson.put("GridPixelOverlapY", overlapY);
+         storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadataJson,
                  overlapX, overlapY, true, null,
                  SAVING_QUEUE_SIZE, null, true);
          dataSource_.setStorage(storage_);
 
          mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(
-                 studio_.data(), new NDTiffProviderAdapter(storage_), acqName_);
+                 studio_.data(), new NDTiffProviderAdapter(storage_), acqName_, summaryMetadata);
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
-               summaryMetadata, pixelSizeUm_, false);
+               summaryMetadataJson, pixelSizeUm_, false);
          mm2Viewer_.setAccumulateStats(true);
 
-         initDisplaySettings(summaryMetadata);
+         initDisplaySettings(summaryMetadataJson);
 
          viewer_ = mm2Viewer_.getNDViewer();
          dataSource_.setViewer(viewer_);
@@ -302,8 +306,17 @@ public class ExplorerManager {
             }
          }
 
+         SummaryMetadata parsedSummaryMetadata = null;
+         try {
+            parsedSummaryMetadata = DefaultSummaryMetadata.fromPropertyMap(
+                  NonPropertyMapJSONFormats.summaryMetadata().fromJSON(summaryMetadata.toString()));
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Explorer: failed to parse stored summary metadata");
+         }
+
          mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(
-                 studio_.data(), new NDTiffProviderAdapter(storage_), acqName_);
+                 studio_.data(), new NDTiffProviderAdapter(storage_), acqName_,
+                 parsedSummaryMetadata);
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
@@ -642,9 +655,14 @@ public class ExplorerManager {
                JFileChooser chooser = new JFileChooser();
                chooser.setDialogTitle("Save Explorer Data");
                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+               String suggestedPath = FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET);
+               if (suggestedPath != null) {
+                  chooser.setCurrentDirectory(new File(suggestedPath).getParentFile());
+               }
                chooser.setSelectedFile(new File(acqName_));
                if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                   File destDir = chooser.getSelectedFile();
+                  FileDialogs.storePath(FileDialogs.MM_DATA_SET, destDir);
                   writeSettingsToTempDir();
                   if (saveDataTo(destDir)) {
                      break;
@@ -942,6 +960,7 @@ public class ExplorerManager {
 
          if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
             final List<Image> tileImages = storedImages;
+            final List<HashMap<String, Object>> fullAxesList = new ArrayList<>(storedAxes);
             final List<HashMap<String, Object>> displayAxesList = new ArrayList<>();
             for (HashMap<String, Object> axes : storedAxes) {
                HashMap<String, Object> displayAxes = new HashMap<>(axes);
@@ -954,7 +973,9 @@ public class ExplorerManager {
             displayExecutor_.submit(() -> {
                for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
                   if (mm2DataProvider_ != null) {
-                     mm2DataProvider_.newImageArrived(tileImages.get(i), displayAxesList.get(i));
+                     // Use axes-only overload so the image is re-read from storage,
+                     // ensuring per-image metadata tags are included.
+                     mm2DataProvider_.newImageArrived(fullAxesList.get(i));
                   }
                   try {
                      viewer_.newImageArrived(displayAxesList.get(i));
@@ -1016,6 +1037,36 @@ public class ExplorerManager {
          tags.put("BitDepth", bitDepth_);
          tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
          tags.put("PixelSizeUm", pixelSizeUm_);
+
+         // Per-image metadata for MM Inspector "Plane Metadata" panel
+         try {
+            tags.put("Camera", studio_.core().getCameraDevice());
+         } catch (Exception ignore) {
+            studio_.logs().logError("Explorer: camera device not found");
+         }
+         try {
+            tags.put("Exposure-ms", studio_.core().getExposure());
+         } catch (Exception ignore) {
+            studio_.logs().logError("Explorer: exposure not found");
+         }
+         try {
+            tags.put("XPositionUm", studio_.core().getXPosition());
+         } catch (Exception ignore) {
+            studio_.logs().logError("Explorer: X position not found");
+         }
+         try {
+            tags.put("YPositionUm", studio_.core().getYPosition());
+         } catch (Exception ignore) {
+            studio_.logs().logError("Explorer: Y position not found");
+         }
+         try {
+            tags.put("ZPositionUm", studio_.core().getPosition());
+         } catch (Exception ignore) {
+            studio_.logs().logError("Explorer: Z position not found");
+         }
+         tags.put("UUID", java.util.UUID.randomUUID().toString());
+         tags.put("ReceivedTime", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z")
+                 .format(new java.util.Date()));
 
          AcqEngMetadata.createAxes(tags);
          AcqEngMetadata.setAxisPosition(tags, "row", row);
@@ -1169,33 +1220,61 @@ public class ExplorerManager {
 
    // ===================== Private helpers =====================
 
-   private JSONObject buildSummaryMetadata(int width, int height) {
-      JSONObject md = new JSONObject();
+   private SummaryMetadata buildSummaryMetadata(int width, int height) {
       try {
-         md.put("Width", width);
-         md.put("Height", height);
-         md.put("PixelSize_um", pixelSizeUm_);
-         md.put("BitDepth", bitDepth_);
-         md.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
-
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+
+         List<String> chNames = new ArrayList<>();
          if (settings.useChannels() && settings.channels().size() > 0) {
-            JSONArray channelNames = new JSONArray();
             for (int i = 0; i < settings.channels().size(); i++) {
                if (settings.channels().get(i).useChannel()) {
-                  channelNames.put(settings.channels().get(i).config());
+                  chNames.add(settings.channels().get(i).config());
                }
             }
-            if (channelNames.length() > 0) {
-               md.put("ChNames", channelNames);
-               md.put("Channels", channelNames.length());
-               md.put("ChGroup", settings.channelGroup());
-            }
          }
+         if (chNames.isEmpty()) {
+            chNames.add("Default");
+         }
+
+         SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder()
+               .sequenceSettings(settings)
+               .channelNames(chNames)
+               .channelGroup(settings.channelGroup())
+               .userName(System.getProperty("user.name"))
+               .profileName(studio_.profile().getProfileName())
+               .startDate(LocalDateTime.now().toString())
+               .imageWidth(width)
+               .imageHeight(height)
+               .initialScopeData(studio_.acquisitions().scopeData()
+                     .configurationToPropertyMap(studio_.core().getSystemStateCache()));
+         if (settings.useSlices()) {
+            smb.zStepUm(settings.sliceZStepUm());
+         }
+         DefaultSummaryMetadata sm = (DefaultSummaryMetadata) smb.build();
+         // PixelType has no builder method — inject directly into the PropertyMap
+         return DefaultSummaryMetadata.fromPropertyMap(
+               sm.toPropertyMap().copyBuilder()
+                     .putString("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16")
+                     .build());
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: failed to build summary metadata");
+         return studio_.data().summaryMetadataBuilder().build();
       }
-      return md;
+   }
+
+   private JSONObject summaryMetadataToJSON(SummaryMetadata sm) {
+      try {
+         String json = NonPropertyMapJSONFormats.summaryMetadata().toJSON(
+               ((DefaultSummaryMetadata) sm).toPropertyMap());
+         JSONObject md = new JSONObject(json);
+         // NDTiff-specific fields not covered by SummaryMetadata API
+         md.put("PixelSize_um", pixelSizeUm_);
+         md.put("BitDepth", bitDepth_);
+         return md;
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: failed to serialize summary metadata");
+         return new JSONObject();
+      }
    }
 
    private void initDisplaySettings(JSONObject summaryMetadata) {

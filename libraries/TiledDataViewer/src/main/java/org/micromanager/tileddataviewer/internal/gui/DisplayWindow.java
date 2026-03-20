@@ -41,6 +41,7 @@ public class DisplayWindow implements WindowListener {
    JFrame window_;
    private TiledDataViewerCanvasMouseListenerInterface listener_;
    private TiledDataViewerCanvasMouseListenerInterface previousCustomListener_;
+   private Runnable windowActivatedCallback_;
 
    public DisplayWindow(TiledDataViewer display, boolean nullAcq) {
       window_ = new JFrame();
@@ -158,8 +159,15 @@ public class DisplayWindow implements WindowListener {
    public void windowDeiconified(WindowEvent e) {
    }
 
+   public void setWindowActivatedCallback(Runnable callback) {
+      windowActivatedCallback_ = callback;
+   }
+
    @Override
    public void windowActivated(WindowEvent e) {
+      if (windowActivatedCallback_ != null) {
+         windowActivatedCallback_.run();
+      }
    }
 
    @Override

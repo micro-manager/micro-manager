@@ -165,6 +165,10 @@ public class GuiManager {
       }
    }
 
+   public void setWindowActivatedCallback(Runnable callback) {
+      displayWindow_.setWindowActivatedCallback(callback);
+   }
+
    public void setCustomCanvasMouseListener(TiledDataViewerCanvasMouseListenerInterface m) {
       displayWindow_.setCustomCanvasMouseListener(m);
    }

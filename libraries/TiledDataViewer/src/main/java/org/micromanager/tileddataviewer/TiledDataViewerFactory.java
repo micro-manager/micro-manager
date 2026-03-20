@@ -3,6 +3,7 @@ package org.micromanager.tileddataviewer;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.data.DataManager;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataProvider;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataViewer;
@@ -33,6 +34,12 @@ public final class TiledDataViewerFactory {
    public static TiledDataViewerDataProviderAPI createDataProvider(
             DataManager dataManager, TiledDataProviderAPI storage, String name) {
       return new TiledDataViewerDataProvider(dataManager, storage, name);
+   }
+
+   public static TiledDataViewerDataProviderAPI createDataProvider(
+            DataManager dataManager, TiledDataProviderAPI storage, String name,
+            SummaryMetadata summaryMetadata) {
+      return new TiledDataViewerDataProvider(dataManager, storage, name, summaryMetadata);
    }
 
    /**
