@@ -287,7 +287,24 @@ final class HelperExecutionGoldenIO {
       return pl;
    }
 
-   static AcqEvent eventFromJson(HelperGoldenFileIO.EventJson ej) {
+   static Runnable runnableFromJson(
+         HelperGoldenFileIO.RunnableActionJson ra, ExecutionCoreOps core) {
+      if ("setProperty".equals(ra.method)) {
+         return () -> {
+            try {
+               core.setProperty(
+                     ra.args.get(0), ra.args.get(1), ra.args.get(2));
+            } catch (Exception e) {
+               throw new RuntimeException(e);
+            }
+         };
+      }
+      throw new IllegalArgumentException(
+            "Unsupported runnable action: " + ra.method);
+   }
+
+   static AcqEvent eventFromJson(HelperGoldenFileIO.EventJson ej,
+         ExecutionCoreOps core) {
       AcqEvent e = new AcqEvent();
       e.frameIndex = ej.frameIndex;
       e.sliceIndex = ej.sliceIndex;
@@ -332,11 +349,18 @@ final class HelperExecutionGoldenIO {
       if (ej.burstData != null) {
          e.burstData = new ArrayList<>();
          for (HelperGoldenFileIO.EventJson sub : ej.burstData) {
-            e.burstData.add(eventFromJson(sub));
+            e.burstData.add(eventFromJson(sub, core));
          }
       }
       if (ej.triggerSequence != null) {
          e.triggerSequence = triggerSeqFromJson(ej.triggerSequence);
+      }
+      if (ej.runnableActions != null) {
+         e.runnables = new ArrayList<>();
+         for (HelperGoldenFileIO.RunnableActionJson ra
+               : ej.runnableActions) {
+            e.runnables.add(runnableFromJson(ra, core));
+         }
       }
       return e;
    }

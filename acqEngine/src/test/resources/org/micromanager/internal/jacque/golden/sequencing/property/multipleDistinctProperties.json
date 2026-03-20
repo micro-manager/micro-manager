@@ -149,7 +149,8 @@
             "FilterWheel-Position": "1",
             "Dichroic-Mirror": "A"
           },
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 0,
@@ -190,7 +191,8 @@
             "FilterWheel-Position": "2",
             "Dichroic-Mirror": "B"
           },
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 1,
@@ -231,7 +233,8 @@
             "FilterWheel-Position": "1",
             "Dichroic-Mirror": "A"
           },
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         },
         {
           "frameIndex": 1,
@@ -272,7 +275,8 @@
             "FilterWheel-Position": "2",
             "Dichroic-Mirror": "B"
           },
-          "runnableCount": null
+          "runnableCount": null,
+          "runnableActions": null
         }
       ],
       "triggerSequence": {
@@ -296,7 +300,8 @@
         "FilterWheel-Position": "1",
         "Dichroic-Mirror": "A"
       },
-      "runnableCount": null
+      "runnableCount": null,
+      "runnableActions": null
     }
   ]
 }

@@ -83,6 +83,11 @@ final class HelperGoldenFileIO {
       Map<String, Map<String, String>> properties;
    }
 
+   static class RunnableActionJson {
+      String method;
+      List<String> args;
+   }
+
    static class TriggerSequenceJson {
       Map<String, Map<String, List<String>>> properties;
       List<Double> slices;
@@ -118,6 +123,7 @@ final class HelperGoldenFileIO {
       TriggerSequenceJson triggerSequence;
       Map<String, String> metadata;
       Integer runnableCount;
+      List<RunnableActionJson> runnableActions;
    }
 
    // --- Gson instance ---
