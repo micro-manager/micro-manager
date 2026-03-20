@@ -182,7 +182,6 @@ public class ExplorerManager {
          int overlapY = (int) Math.round(cameraHeight_ * overlapPercentage_ / 100.0);
          summaryMetadata.put("GridPixelOverlapX", overlapX);
          summaryMetadata.put("GridPixelOverlapY", overlapY);
-
          storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
                  overlapX, overlapY, true, null,
                  SAVING_QUEUE_SIZE, null, true);
@@ -867,6 +866,10 @@ public class ExplorerManager {
          // Preserve channel settings from MDA
          if (settings.useChannels()) {
             sb.useChannels(true);
+         } else {
+            // AcquisitionEventIterator requires at least one acquisition function;
+            // when no channels/slices/positions are used, enable a single frame.
+            sb.useFrames(true).numFrames(1).intervalMs(0);
          }
 
          Datastore testStore = studio_.acquisitions().runAcquisitionWithSettings(
@@ -1071,12 +1074,15 @@ public class ExplorerManager {
       int overlapPixels = (int) Math.round(tw * overlapPercentage_ / 100.0);
       double effectiveTileWidth = tw - overlapPixels;
       double effectiveTileHeight = th - overlapPixels;
-      // Stage moves by camera FOV; pixel coords are in pipeline-output tile space.
-      // For the stage overlay, scale by the ratio of pipeline tile to camera tile.
-      double scaleX = stageTileWidthUm_ > 0
-               ? effectiveTileWidth / (stageTileWidthUm_ / pixelSizeUm_) : 1.0;
-      double scaleY = stageTileHeightUm_ > 0
-               ? effectiveTileHeight / (stageTileHeightUm_ / pixelSizeUm_) : 1.0;
+      // NDTiff canvas coords: tile (row,col) occupies [col*effectiveTileWidth, (col+1)*effectiveTileWidth).
+      // Stage step per tile = stageTileWidthUm_ * (1 - overlap) / pixelSizeUm_ pixels.
+      // Scale maps stage-offset pixels to NDTiff canvas pixels.
+      double stageStepX = stageTileWidthUm_ > 0
+               ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_ : effectiveTileWidth;
+      double stageStepY = stageTileHeightUm_ > 0
+               ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_ : effectiveTileHeight;
+      double scaleX = effectiveTileWidth / stageStepX;
+      double scaleY = effectiveTileHeight / stageStepY;
       double pixelX = (stageX - initialStageX_) / pixelSizeUm_ * scaleX + effectiveTileWidth / 2.0;
       double pixelY = (stageY - initialStageY_) / pixelSizeUm_ * scaleY + effectiveTileHeight / 2.0;
       return new Point2D.Double(pixelX, pixelY);
@@ -1139,10 +1145,12 @@ public class ExplorerManager {
             double effectiveTileWidth = tw - overlapPixels;
             double effectiveTileHeight = th - overlapPixels;
 
-            double scaleX = stageTileWidthUm_ > 0
-                  ? (stageTileWidthUm_ / pixelSizeUm_) / effectiveTileWidth : 1.0;
-            double scaleY = stageTileHeightUm_ > 0
-                  ? (stageTileHeightUm_ / pixelSizeUm_) / effectiveTileHeight : 1.0;
+            double stageStepX = stageTileWidthUm_ > 0
+                  ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_ : effectiveTileWidth;
+            double stageStepY = stageTileHeightUm_ > 0
+                  ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_ : effectiveTileHeight;
+            double scaleX = stageStepX / effectiveTileWidth;
+            double scaleY = stageStepY / effectiveTileHeight;
 
             double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
             double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
