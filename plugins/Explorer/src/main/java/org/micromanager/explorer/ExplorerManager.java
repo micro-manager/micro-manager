@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,6 +76,9 @@ public class ExplorerManager {
    private static final int SAVING_QUEUE_SIZE = 30;
    private static final String MM_DISPLAY_SETTINGS_FILE = "mm_display_settings.json";
    private static final String VIEW_STATE_FILE = "view_state.json";
+   private static final java.time.format.DateTimeFormatter RECEIVED_TIME_FORMAT =
+         java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS Z")
+               .withZone(java.time.ZoneId.systemDefault());
 
    private final Studio studio_;
    private final ExplorerFrame frame_;
@@ -87,6 +91,9 @@ public class ExplorerManager {
    private ExecutorService displayExecutor_;
    private ExecutorService acquisitionExecutor_;
    private ScheduledExecutorService stagePollingExecutor_;
+
+   // Tracks which per-image metadata warnings have already been logged (once per session)
+   private final Set<String> loggedMetadataWarnings_ = new HashSet<>();
 
    // Display tile dimensions (from pipeline output; set after first tile)
    private int tileWidth_ = -1;
@@ -657,7 +664,11 @@ public class ExplorerManager {
                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                String suggestedPath = FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET);
                if (suggestedPath != null) {
-                  chooser.setCurrentDirectory(new File(suggestedPath).getParentFile());
+                  File suggested = new File(suggestedPath);
+                  File dir = suggested.isDirectory() ? suggested : suggested.getParentFile();
+                  if (dir != null) {
+                     chooser.setCurrentDirectory(dir);
+                  }
                }
                chooser.setSelectedFile(new File(acqName_));
                if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -948,7 +959,9 @@ public class ExplorerManager {
                continue;
             }
             int channelIndex = c.getChannel();
-            String channelName = summaryMeta.getSafeChannelName(channelIndex);
+            String[] chNames = summaryMeta.getChannelNames();
+            String channelName = (chNames != null && channelIndex < chNames.length)
+                  ? chNames[channelIndex] : "Default";
             HashMap<String, Object> axes = storeImage(img, row, col, channelName);
             if (axes != null) {
                storedAxes.add(axes);
@@ -1042,31 +1055,40 @@ public class ExplorerManager {
          try {
             tags.put("Camera", studio_.core().getCameraDevice());
          } catch (Exception ignore) {
-            studio_.logs().logError("Explorer: camera device not found");
+            if (loggedMetadataWarnings_.add("Camera")) {
+               studio_.logs().logError("Explorer: camera device not found");
+            }
          }
          try {
             tags.put("Exposure-ms", studio_.core().getExposure());
          } catch (Exception ignore) {
-            studio_.logs().logError("Explorer: exposure not found");
+            if (loggedMetadataWarnings_.add("Exposure-ms")) {
+               studio_.logs().logError("Explorer: exposure not found");
+            }
          }
          try {
             tags.put("XPositionUm", studio_.core().getXPosition());
          } catch (Exception ignore) {
-            studio_.logs().logError("Explorer: X position not found");
+            if (loggedMetadataWarnings_.add("XPositionUm")) {
+               studio_.logs().logError("Explorer: X position not found");
+            }
          }
          try {
             tags.put("YPositionUm", studio_.core().getYPosition());
          } catch (Exception ignore) {
-            studio_.logs().logError("Explorer: Y position not found");
+            if (loggedMetadataWarnings_.add("YPositionUm")) {
+               studio_.logs().logError("Explorer: Y position not found");
+            }
          }
          try {
             tags.put("ZPositionUm", studio_.core().getPosition());
          } catch (Exception ignore) {
-            studio_.logs().logError("Explorer: Z position not found");
+            if (loggedMetadataWarnings_.add("ZPositionUm")) {
+               studio_.logs().logError("Explorer: Z position not found");
+            }
          }
          tags.put("UUID", java.util.UUID.randomUUID().toString());
-         tags.put("ReceivedTime", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z")
-                 .format(new java.util.Date()));
+         tags.put("ReceivedTime", RECEIVED_TIME_FORMAT.format(java.time.Instant.now()));
 
          AcqEngMetadata.createAxes(tags);
          AcqEngMetadata.setAxisPosition(tags, "row", row);
@@ -1270,6 +1292,11 @@ public class ExplorerManager {
          // NDTiff-specific fields not covered by SummaryMetadata API
          md.put("PixelSize_um", pixelSizeUm_);
          md.put("BitDepth", bitDepth_);
+         // Alias "ChannelGroup" (NonPropertyMapJSONFormats key) as "ChGroup"
+         // so applyDisplaySettingsHeuristics() and other readers can find it.
+         if (md.has("ChannelGroup") && !md.has("ChGroup")) {
+            md.put("ChGroup", md.get("ChannelGroup"));
+         }
          return md;
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: failed to serialize summary metadata");

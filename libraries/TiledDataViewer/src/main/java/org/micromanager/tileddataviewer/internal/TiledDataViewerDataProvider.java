@@ -41,7 +41,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
 
    private final EventBus eventBus_ = new EventBus(EVENT_BUS_EXCEPTION_HANDLER);
    private final String name_;
-   private SummaryMetadata summaryMetadata_;
+   private final SummaryMetadata summaryMetadata_;
 
    /**
     * Construct a data provider wrapping the given NDTiff storage.
@@ -182,7 +182,23 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       if (summaryMetadata_ != null) {
          return summaryMetadata_;
       }
-      return dataManager_.summaryMetadataBuilder().build();
+      // Fallback: parse channel names from NDTiff storage summary metadata
+      // (for callers that use createDataProvider without passing a SummaryMetadata)
+      SummaryMetadata.Builder builder = dataManager_.summaryMetadataBuilder();
+      try {
+         JSONObject json = storage_.getSummaryMetadata();
+         if (json.has("ChNames")) {
+            JSONArray chNames = json.getJSONArray("ChNames");
+            List<String> channelNames = new ArrayList<>();
+            for (int i = 0; i < chNames.length(); i++) {
+               channelNames.add(chNames.getString(i));
+            }
+            builder.channelNames(channelNames.toArray(new String[0]));
+         }
+      } catch (Exception ignore) {
+         // If parsing fails, return minimal metadata (no channel names)
+      }
+      return builder.build();
    }
 
    @Override
