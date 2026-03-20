@@ -407,8 +407,8 @@ public final class HelperRecordingMockCore implements ExecutionCoreOps {
       byte[] pixels = new byte[size];
       JSONObject tags = new JSONObject();
       try {
-         tags.put("ElapsedTime-ms", 0.0);
-         tags.put("ImageNumber", imageNumber);
+         tags.put("ElapsedTime-ms", "0.0");
+         tags.put("ImageNumber", String.valueOf(imageNumber));
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
