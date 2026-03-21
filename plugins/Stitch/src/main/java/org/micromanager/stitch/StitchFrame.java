@@ -312,6 +312,15 @@ public class StitchFrame extends JDialog {
          namePrefix = new File(namePrefix).getName();
       }
 
+      // Refuse to stitch a live (still-acquiring) dataset — write-mode readers cannot be
+      // used reliably for random-access reading.
+      if (!dataProvider_.isFrozen()) {
+         studio_.logs().showError(
+               "The acquisition is still running. Please wait for it to finish before stitching.",
+               this);
+         return;
+      }
+
       // For file-based datastores, re-open from disk to get proper read-mode file channels.
       // The live datastore's MultipageTiffReader instances were created in write mode and
       // cannot reliably reopen their file channel after it has been closed (pause()).
