@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -311,11 +312,42 @@ public class StitchFrame extends JDialog {
          namePrefix = new File(namePrefix).getName();
       }
 
+      // For file-based datastores, re-open from disk to get proper read-mode file channels.
+      // The live datastore's MultipageTiffReader instances were created in write mode and
+      // cannot reliably reopen their file channel after it has been closed (pause()).
+      // RAM datastores do not have this issue and are used directly.
+      final Datastore reloadedDatastore;
+      final DataProvider sourceProvider;
+      if (dataProvider_ instanceof Datastore) {
+         String savePath = ((Datastore) dataProvider_).getSavePath();
+         if (savePath != null && !savePath.isEmpty()) {
+            Datastore reloaded = null;
+            try {
+               reloaded = studio_.data().loadData(savePath, true);
+            } catch (IOException ex) {
+               studio_.logs().showError(
+                     "Cannot re-open dataset from disk: " + ex.getMessage(), this);
+               return;
+            }
+            reloadedDatastore = reloaded;
+            sourceProvider = reloaded;
+         } else {
+            reloadedDatastore = null;
+            sourceProvider = dataProvider_;
+         }
+      } else {
+         reloadedDatastore = null;
+         sourceProvider = dataProvider_;
+      }
+
       // Wrap the DataProvider with row/col grid knowledge
       StitchDataProviderAdapter tiledAdapter;
       try {
-         tiledAdapter = new StitchDataProviderAdapter(dataProvider_);
+         tiledAdapter = new StitchDataProviderAdapter(sourceProvider);
       } catch (IllegalArgumentException ex) {
+         if (reloadedDatastore != null) {
+            try { reloadedDatastore.close(); } catch (IOException ignore) { }
+         }
          studio_.logs().showError(
                "Cannot determine tile grid positions: " + ex.getMessage(), null);
          return;
@@ -354,7 +386,7 @@ public class StitchFrame extends JDialog {
       // Probe affine transform for orientation correction
       int[] correction = null;
       if (correctOrientation) {
-         AffineTransform affine = probeAffineTransform(dataProvider_);
+         AffineTransform affine = probeAffineTransform(sourceProvider);
          correction = ImageTransformUtils.correctionFromAffine(affine);
          if (correction == null) {
             studio_.logs().showMessage(
@@ -363,14 +395,14 @@ public class StitchFrame extends JDialog {
          }
       }
 
-      SummaryMetadata summary = dataProvider_.getSummaryMetadata();
+      SummaryMetadata summary = sourceProvider.getSummaryMetadata();
       final List<String> allChannelNames = getChannelNames(summary);
       // When no channel names are set in SummaryMetadata, use integer indices as String
       // channel identifiers so that TileBlender/TileAligner can match them against the
       // Integer channel values stored in the axes map.
       final List<String> channelNamesForExport;
       if (allChannelNames.isEmpty()) {
-         int numCh = dataProvider_.getNextIndex(Coords.CHANNEL);
+         int numCh = sourceProvider.getNextIndex(Coords.CHANNEL);
          if (numCh <= 0) {
             numCh = 1;
          }
@@ -440,10 +472,11 @@ public class StitchFrame extends JDialog {
       final HashMap<String, Object> finalAlignAxes = alignAxes;
       final int finalMaxDisplacement = maxDisplacementPx;
 
+      final Datastore datastoreToClose = reloadedDatastore;
       new Thread(() -> {
          try {
-            buildDatastore(adapter, baseAxes, finalAlignAxes, chNames, canvasW, canvasH,
-                  doBlend, doAlign, finalCorrection, finalMaxDisplacement,
+            buildDatastore(adapter, sourceProvider, baseAxes, finalAlignAxes, chNames,
+                  canvasW, canvasH, doBlend, doAlign, finalCorrection, finalMaxDisplacement,
                   toStack, destPath, datasetName, exportAlignZ,
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
          } catch (Exception ex) {
@@ -461,6 +494,9 @@ public class StitchFrame extends JDialog {
             });
          } finally {
             adapter.close();
+            if (datastoreToClose != null) {
+               try { datastoreToClose.close(); } catch (IOException ignore) { }
+            }
          }
       }, "ExportMMTiles-Export").start();
    }
@@ -471,6 +507,7 @@ public class StitchFrame extends JDialog {
     * <p>All pixel assembly happens here — no temp files, no loadData().</p>
     */
    private void buildDatastore(StitchDataProviderAdapter adapter,
+                               DataProvider sourceProvider,
                                HashMap<String, Object> baseAxes,
                                HashMap<String, Object> alignAxes,
                                List<String> chNames,
@@ -501,7 +538,7 @@ public class StitchFrame extends JDialog {
 
       try {
          // Step 2: set SummaryMetadata — copy from source, then fix up stitched-specific fields
-         SummaryMetadata srcSummary = dataProvider_.getSummaryMetadata();
+         SummaryMetadata srcSummary = sourceProvider.getSummaryMetadata();
          SummaryMetadata.Builder smBuilder;
          if (srcSummary != null) {
             smBuilder = srcSummary.copyBuilder();
@@ -537,18 +574,18 @@ public class StitchFrame extends JDialog {
 
          // Step 4: build a template Metadata from the first tile (position 0, selected z)
          final Metadata.Builder templateMetaBuilder =
-               probeTemplateMetadata(dataProvider_, alignZ);
+               probeTemplateMetadata(sourceProvider, alignZ);
 
          // Step 5 & 6: composite/stitch — iterates all time points, z slices, channels.
          SwingUtilities.invokeLater(() -> statusLabel.setText("Computing…"));
 
          // raw count from caller; effective count set after probe
          final int numCh = chNames.size();
-         int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
+         int numZ = sourceProvider.getNextIndex(Coords.Z_SLICE);
          if (numZ < 1) {
             numZ = 1;
          }
-         int numT = dataProvider_.getNextIndex(Coords.TIME_POINT);
+         int numT = sourceProvider.getNextIndex(Coords.TIME_POINT);
          if (numT < 1) {
             numT = 1;
          }
