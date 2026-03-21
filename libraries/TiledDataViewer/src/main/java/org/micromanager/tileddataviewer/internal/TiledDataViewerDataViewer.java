@@ -38,6 +38,7 @@ import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPu
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.display.internal.event.DefaultDisplayDidShowImageEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
@@ -184,6 +185,11 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
 
       // Register with Studio so Inspector discovers us
       studio_.displays().addViewer(this);
+
+      // Post active event whenever the NDViewer window gains OS focus,
+      // so the Inspector "Frontmost Window" mode follows this viewer.
+      ndViewer2_.getGUIManager().setWindowActivatedCallback(
+            () -> postEvent(DataViewerDidBecomeActiveEvent.create(this)));
 
       // Notify the Inspector that this viewer is visible and active
       postEvent(DataViewerDidBecomeVisibleEvent.create(this));
@@ -418,6 +424,11 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // Post the event on the EDT
       SwingUtilities.invokeLater(() -> {
          postEvent(ImageStatsChangedEvent.create(finalResult));
+         // Post DisplayDidShowImageEvent so the Inspector "Plane Metadata" panel updates.
+         List<Image> imgs = finalResult.getRequest().getImages();
+         if (!imgs.isEmpty()) {
+            postEvent(DefaultDisplayDidShowImageEvent.create(this, imgs, imgs.get(0)));
+         }
       });
       return MIN_REPAINT_PERIOD_NS;
    }

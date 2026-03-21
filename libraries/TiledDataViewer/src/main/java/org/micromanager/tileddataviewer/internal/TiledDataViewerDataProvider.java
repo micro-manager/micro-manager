@@ -41,6 +41,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
 
    private final EventBus eventBus_ = new EventBus(EVENT_BUS_EXCEPTION_HANDLER);
    private final String name_;
+   private final SummaryMetadata summaryMetadata_;
 
    /**
     * Construct a data provider wrapping the given NDTiff storage.
@@ -52,11 +53,27 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    public TiledDataViewerDataProvider(DataManager dataManager,
                                       TiledDataProviderAPI storage,
                                       String name) {
+      this(dataManager, storage, name, null);
+   }
+
+   public TiledDataViewerDataProvider(DataManager dataManager,
+                                      TiledDataProviderAPI storage,
+                                      String name,
+                                      SummaryMetadata summaryMetadata) {
       dataManager_ = dataManager;
       storage_ = storage;
       axesBridge_ = new AxesBridge();
       name_ = name;
-      // Discover existing channels
+      summaryMetadata_ = summaryMetadata;
+      // Seed channel order from SummaryMetadata ChNames so the axesBridge
+      // index→name mapping matches the stored channel order, not the arbitrary
+      // iteration order of getAxesSet() (which is a Set with no guarantees).
+      SummaryMetadata sm = getSummaryMetadata();
+      List<String> chNames = sm.getChannelNameList();
+      for (String ch : chNames) {
+         axesBridge_.registerChannel(ch);
+      }
+      // Discover any remaining channels not listed in SummaryMetadata
       axesBridge_.discoverChannels(storage_.getAxesSet());
    }
 
@@ -170,26 +187,25 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
-      // Parse channel names from NDTiff storage for Inspector display
+      if (summaryMetadata_ != null) {
+         return summaryMetadata_;
+      }
+      // Fallback: parse channel names from NDTiff storage summary metadata
+      // (for callers that use createDataProvider without passing a SummaryMetadata)
       SummaryMetadata.Builder builder = dataManager_.summaryMetadataBuilder();
-
       try {
          JSONObject json = storage_.getSummaryMetadata();
-
-         // Parse channel names if present
          if (json.has("ChNames")) {
             JSONArray chNames = json.getJSONArray("ChNames");
             List<String> channelNames = new ArrayList<>();
             for (int i = 0; i < chNames.length(); i++) {
                channelNames.add(chNames.getString(i));
             }
-            String[] channelNamesArray = channelNames.toArray(new String[0]);
-            builder.channelNames(channelNamesArray);
+            builder.channelNames(channelNames.toArray(new String[0]));
          }
-      } catch (Exception e) {
+      } catch (Exception ignore) {
          // If parsing fails, return minimal metadata (no channel names)
       }
-
       return builder.build();
    }
 

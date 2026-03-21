@@ -165,12 +165,22 @@ public class GuiManager {
       }
    }
 
+   public void setWindowActivatedCallback(Runnable callback) {
+      if (displayWindow_ != null) {
+         displayWindow_.setWindowActivatedCallback(callback);
+      }
+   }
+
    public void setCustomCanvasMouseListener(TiledDataViewerCanvasMouseListenerInterface m) {
-      displayWindow_.setCustomCanvasMouseListener(m);
+      if (displayWindow_ != null) {
+         displayWindow_.setCustomCanvasMouseListener(m);
+      }
    }
 
    public void resetCanvasMouseListener() {
-      displayWindow_.resetCanvasMouseListener();
+      if (displayWindow_ != null) {
+         displayWindow_.resetCanvasMouseListener();
+      }
    }
 
    public void setShowZPosition(boolean selected) {
