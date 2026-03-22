@@ -137,252 +137,298 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
 
    @Override
    protected Void doInBackground() {
-      DataProvider oldStore = theWindow_.getDataProvider();
-      Datastore tmpStore = null;
-      try {
-         if (saveMode_ == null) {
-            tmpStore = studio_.data().createRAMDatastore();
-         } else if (saveMode_ == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-            tmpStore = studio_.data().createSinglePlaneTIFFSeriesDatastore(filePath_);
-         } else if (saveMode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
-            // TODO: read options for parameters here
-            tmpStore = studio_.data().createMultipageTIFFDatastore(filePath_, true, true);
-         } else if (saveMode_ == Datastore.SaveMode.ND_TIFF) {
-            tmpStore = studio_.data().createNDTIFFDatastore(filePath_);
-         }
-      } catch (IOException ioe) {
-         studio_.logs().showError(ioe, "Failed to open new datastore on disk");
-         return null;
-      }
-
-      final Datastore newStore = tmpStore;
-      final DisplaySettings originalDisplaySettings = theWindow_.getDisplaySettings();
-      final DisplaySettings.Builder newDisplaySettingsBuilder =
-            theWindow_.getDisplaySettings().copyBuilder();
-
-      // TODO: use Overlays instead
-      final Roi roi = theWindow_.getImagePlus().getRoi();
-      
-      Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
-      for (String axis : oldStore.getAxes()) {
-         newSizeCoordsBuilder.index(axis, oldStore.getNextIndex(axis) - 1);
-      }
-      SummaryMetadata oldMetadata = oldStore.getSummaryMetadata();
-      List<String> channelNames = oldMetadata.getChannelNameList();
-      if (channels_ != null) {
-         List<ChannelDisplaySettings> channelDisplaySettings = new ArrayList<>();
-         List<String> chNameList = new ArrayList<>();
-         int index = 0;
-         for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
-            if (channel.getValue()) {
-               chNameList.add(channel.getKey());
-               channelDisplaySettings.add(originalDisplaySettings.getChannelSettings(index));
-            }
-            index++;
-         }
-         channelNames = chNameList;
-         newDisplaySettingsBuilder.channels(channelDisplaySettings);
-      }
-      float  nrToBeCopied = 1;
-      if (channels_ != null && !channels_.isEmpty()) {
-         nrToBeCopied *= channels_.size();
-      }
-      for (String axis : oldStore.getAxes()) {
-         if (mins_.containsKey(axis)) {
-            int min = mins_.get(axis);
-            int max = maxes_.get(axis);
-            newSizeCoordsBuilder.index(axis, max - min + 1);
-            nrToBeCopied *= (max - min + 1);
-         }
-      }
-
-      Integer width = oldMetadata.getImageWidth();
-      if (roi != null) {
-         width = roi.getBounds().width;
-      }
-      Integer height = oldMetadata.getImageHeight();
-      if (roi != null) {
-         height = roi.getBounds().height;
-      }
-
-      CloseViewerListener closeListener = null;
-      int nrCopied = 0;
-
-      try {
-         if (width == null || height == null) {
-            throw new DuplicatorException("Width and/or height is unexpectedly null");
-         }
-
-         // assemble SummaryMetadata for the new store
-         SummaryMetadata.Builder metadataBuilder = oldMetadata.copyBuilder();
-         // Copy only the relevant stage positions
-         if (oldMetadata.getStagePositionList() != null
-                 && !oldMetadata.getStagePositionList().isEmpty()) {
-            if (mins_.containsKey(Coords.P) && maxes_.containsKey(Coords.P)) {
-               List<MultiStagePosition> newStagePositionList = new ArrayList<>();
-               for (int p = mins_.get(Coords.P); p <= maxes_.get(Coords.P); p++) {
-                  newStagePositionList.add(oldMetadata.getStagePositionList().get(p));
-               }
-               metadataBuilder.stagePositions(newStagePositionList);
-            }
-         }
-         newSizeCoordsBuilder.channel(channelNames.size());
-         metadataBuilder
-                 .channelNames(channelNames)
-                 .imageWidth(width)
-                 .imageHeight(height)
-                 .intendedDimensions(newSizeCoordsBuilder.build());
-         newStore.setSummaryMetadata(metadataBuilder.build());
-
-         // The implementations of the store set SummaryMetadata on another thread.
-         // This can lead to disasters, so we have to poll to make sure SummaryMetadata is
-         // there.   Copied from DefaultDataSaver.
-         long startTime = System.currentTimeMillis();
-         boolean timeOut = false;
-         while (!timeOut && newStore.getSummaryMetadata() == null) {
-            if (System.currentTimeMillis() - startTime > 10000) {
-               timeOut = true;
-            }
+      DataProvider originalProvider = theWindow_.getDataProvider();
+      // For file-based datastores, re-open from disk to get proper read-mode file channels.
+      //
+      // Background: MultipageTiffWriter creates its readers with a write-mode constructor
+      // that does not set the file_ field. After freeze(), StorageMultipageTiff.getImage()
+      // starts calling pause() on readers when switching between them, closing their
+      // FileChannel. A paused write-mode reader cannot reopen its channel (file_ is null),
+      // so any subsequent readImage() call causes a NullPointerException.
+      //
+      // The display avoids this because it calls getImagesIgnoringAxes(), which bypasses
+      // getImage() and never triggers pause(). The Duplicator iterates all coords via
+      // getImage(), cycling through multiple readers (one per position file) and hitting
+      // the NPE — causing only the first position/channel to be duplicated before failing.
+      //
+      // The fix: re-open the dataset from disk. loadData() creates fresh read-mode readers
+      // that have file_ set and can safely reopen their channel after a pause().
+      DataProvider oldStore = originalProvider;
+      Datastore reloadedStore = null;
+      if (originalProvider instanceof Datastore) {
+         String savePath = ((Datastore) originalProvider).getSavePath();
+         if (savePath != null && !savePath.isEmpty()) {
             try {
-               Thread.sleep(100);
-            } catch (InterruptedException e) {
-               timeOut = true;
-               studio_.logs().logError(e);
+               reloadedStore = studio_.data().loadData(savePath, true);
+               oldStore = reloadedStore;
+            } catch (IOException ioe) {
+               studio_.logs().showError(ioe, "Failed to re-open dataset from disk");
+               return null;
             }
          }
-         if (timeOut) {
-            studio_.logs().showError("Failed to save data");
+      }
+      // reloadedStore must be closed on every exit path from here on.
+      try {
+         Datastore tmpStore = null;
+         try {
+            if (saveMode_ == null) {
+               tmpStore = studio_.data().createRAMDatastore();
+            } else if (saveMode_ == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+               tmpStore = studio_.data().createSinglePlaneTIFFSeriesDatastore(filePath_);
+            } else if (saveMode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
+               // TODO: read options for parameters here
+               tmpStore = studio_.data().createMultipageTIFFDatastore(filePath_, true, true);
+            } else if (saveMode_ == Datastore.SaveMode.ND_TIFF) {
+               tmpStore = studio_.data().createNDTIFFDatastore(filePath_);
+            }
+         } catch (IOException ioe) {
+            studio_.logs().showError(ioe, "Failed to open new datastore on disk");
             return null;
          }
 
-         newStore.setName(newName_);
-         final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-         copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
-         closeListener = new CloseViewerListener(copyDisplay);
-         copyDisplay.addListener(closeListener, 1);
+         final Datastore newStore = tmpStore;
+         final DisplaySettings originalDisplaySettings = theWindow_.getDisplaySettings();
+         final DisplaySettings.Builder newDisplaySettingsBuilder =
+               theWindow_.getDisplaySettings().copyBuilder();
 
-         Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
-         List<Coords> orderedImageCoords = new ArrayList<>();
-         for (Coords c : unorderedImageCoords) {
-            orderedImageCoords.add(c);
+         // TODO: use Overlays instead
+         final Roi roi = theWindow_.getImagePlus().getRoi();
+
+         Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
+         for (String axis : oldStore.getAxes()) {
+            newSizeCoordsBuilder.index(axis, oldStore.getNextIndex(axis) - 1);
          }
-         final List<String> axisOrder = oldStore.getSummaryMetadata().getOrderedAxes();
-         Collections.reverse(axisOrder);
-
-         Collections.sort(orderedImageCoords, new Comparator<Coords>() {
-            @Override
-            public int compare(Coords o1, Coords o2) {
-               for (String axis : axisOrder) {
-                  if (o1.getIndex(axis)  < o2.getIndex(axis)) {
-                     return -1;
-                  }  else if (o1.getIndex(axis) > o2.getIndex(axis)) {
-                     return 1;
-                  }
+         SummaryMetadata oldMetadata = oldStore.getSummaryMetadata();
+         List<String> channelNames = oldMetadata.getChannelNameList();
+         if (channels_ != null) {
+            List<ChannelDisplaySettings> channelDisplaySettings = new ArrayList<>();
+            List<String> chNameList = new ArrayList<>();
+            int index = 0;
+            for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
+               if (channel.getValue()) {
+                  chNameList.add(channel.getKey());
+                  channelDisplaySettings.add(originalDisplaySettings.getChannelSettings(index));
                }
-               return 0;
+               index++;
             }
-         });
+            channelNames = chNameList;
+            newDisplaySettingsBuilder.channels(channelDisplaySettings);
+         }
+         float  nrToBeCopied = 1;
+         if (channels_ != null && !channels_.isEmpty()) {
+            nrToBeCopied *= channels_.size();
+         }
+         for (String axis : oldStore.getAxes()) {
+            if (mins_.containsKey(axis)) {
+               int min = mins_.get(axis);
+               int max = maxes_.get(axis);
+               newSizeCoordsBuilder.index(axis, max - min + 1);
+               nrToBeCopied *= (max - min + 1);
+            }
+         }
 
-         for (Coords oldCoord : orderedImageCoords) {
-            List<String> oldAxes = oldStore.getAxes();
-            boolean copy = !oldAxes.contains(Coords.CHANNEL);
-            for (String axis : oldStore.getAxes()) {
-               if (axis.equals(Coords.CHANNEL)) {
-                  int index = 0;
-                  for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
-                     if (channel.getValue() && oldCoord.getIndex(axis) == index) {
-                        copy = true;
-                        continue;
+         Integer width = oldMetadata.getImageWidth();
+         if (roi != null) {
+            width = roi.getBounds().width;
+         }
+         Integer height = oldMetadata.getImageHeight();
+         if (roi != null) {
+            height = roi.getBounds().height;
+         }
+
+         CloseViewerListener closeListener = null;
+         int nrCopied = 0;
+
+         try {
+            if (width == null || height == null) {
+               throw new DuplicatorException("Width and/or height is unexpectedly null");
+            }
+
+            // assemble SummaryMetadata for the new store
+            SummaryMetadata.Builder metadataBuilder = oldMetadata.copyBuilder();
+            // Copy only the relevant stage positions
+            if (oldMetadata.getStagePositionList() != null
+                    && !oldMetadata.getStagePositionList().isEmpty()) {
+               if (mins_.containsKey(Coords.P) && maxes_.containsKey(Coords.P)) {
+                  List<MultiStagePosition> newStagePositionList = new ArrayList<>();
+                  for (int p = mins_.get(Coords.P); p <= maxes_.get(Coords.P); p++) {
+                     newStagePositionList.add(oldMetadata.getStagePositionList().get(p));
+                  }
+                  metadataBuilder.stagePositions(newStagePositionList);
+               }
+            }
+            newSizeCoordsBuilder.channel(channelNames.size());
+            metadataBuilder
+                    .channelNames(channelNames)
+                    .imageWidth(width)
+                    .imageHeight(height)
+                    .intendedDimensions(newSizeCoordsBuilder.build());
+            newStore.setSummaryMetadata(metadataBuilder.build());
+
+            // The implementations of the store set SummaryMetadata on another thread.
+            // This can lead to disasters, so we have to poll to make sure SummaryMetadata is
+            // there.   Copied from DefaultDataSaver.
+            long startTime = System.currentTimeMillis();
+            boolean timeOut = false;
+            while (!timeOut && newStore.getSummaryMetadata() == null) {
+               if (System.currentTimeMillis() - startTime > 10000) {
+                  timeOut = true;
+               }
+               try {
+                  Thread.sleep(100);
+               } catch (InterruptedException e) {
+                  timeOut = true;
+                  studio_.logs().logError(e);
+               }
+            }
+            if (timeOut) {
+               studio_.logs().showError("Failed to save data");
+               return null;
+            }
+
+            newStore.setName(newName_);
+            final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+            copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
+            closeListener = new CloseViewerListener(copyDisplay);
+            copyDisplay.addListener(closeListener, 1);
+
+            Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
+            List<Coords> orderedImageCoords = new ArrayList<>();
+            for (Coords c : unorderedImageCoords) {
+               orderedImageCoords.add(c);
+            }
+            final List<String> axisOrder = oldStore.getSummaryMetadata().getOrderedAxes();
+            Collections.reverse(axisOrder);
+
+            Collections.sort(orderedImageCoords, new Comparator<Coords>() {
+               @Override
+               public int compare(Coords o1, Coords o2) {
+                  for (String axis : axisOrder) {
+                     if (o1.getIndex(axis)  < o2.getIndex(axis)) {
+                        return -1;
+                     }  else if (o1.getIndex(axis) > o2.getIndex(axis)) {
+                        return 1;
                      }
-                     index++;
                   }
+                  return 0;
                }
-            }
-            for (String axis : oldStore.getAxes()) {
-               if (copy && mins_.containsKey(axis) && maxes_.containsKey(axis)) {
-                  if (oldCoord.getIndex(axis) < (mins_.get(axis))) {
-                     copy = false;
-                  }
-                  if (oldCoord.getIndex(axis) > maxes_.get(axis)) {
-                     copy = false;
-                  }
-               }
-            }
-            if (copy) {
-               Coords.CoordsBuilder newCoordBuilder = oldCoord.copyBuilder();
-               for (String axis : oldCoord.getAxes()) {
+            });
+
+            for (Coords oldCoord : orderedImageCoords) {
+               List<String> oldAxes = oldStore.getAxes();
+               boolean copy = !oldAxes.contains(Coords.CHANNEL);
+               for (String axis : oldStore.getAxes()) {
                   if (axis.equals(Coords.CHANNEL)) {
-                     if (channels_ != null && channels_.size() > 0) {
-                        int chIndex = oldCoord.getIndex(axis);
-                        if (chIndex < oldMetadata.getChannelNameList().size()) {
-                           String channelName = oldMetadata.getChannelNameList().get(chIndex);
-                           if (channelNames.contains(channelName)) {
-                              int newIndex = channelNames.indexOf(channelName);
-                              newCoordBuilder.index(axis, newIndex);
+                     int index = 0;
+                     for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
+                        if (channel.getValue() && oldCoord.getIndex(axis) == index) {
+                           copy = true;
+                           continue;
+                        }
+                        index++;
+                     }
+                  }
+               }
+               for (String axis : oldStore.getAxes()) {
+                  if (copy && mins_.containsKey(axis) && maxes_.containsKey(axis)) {
+                     if (oldCoord.getIndex(axis) < (mins_.get(axis))) {
+                        copy = false;
+                     }
+                     if (oldCoord.getIndex(axis) > maxes_.get(axis)) {
+                        copy = false;
+                     }
+                  }
+               }
+               if (copy) {
+                  Coords.CoordsBuilder newCoordBuilder = oldCoord.copyBuilder();
+                  for (String axis : oldCoord.getAxes()) {
+                     if (axis.equals(Coords.CHANNEL)) {
+                        if (channels_ != null && channels_.size() > 0) {
+                           int chIndex = oldCoord.getIndex(axis);
+                           if (chIndex < oldMetadata.getChannelNameList().size()) {
+                              String channelName = oldMetadata.getChannelNameList().get(chIndex);
+                              if (channelNames.contains(channelName)) {
+                                 int newIndex = channelNames.indexOf(channelName);
+                                 newCoordBuilder.index(axis, newIndex);
+                              }
                            }
                         }
                      }
+                     if (mins_.containsKey(axis)) {
+                        newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins_.get(axis));
+                     }
                   }
-                  if (mins_.containsKey(axis)) {
-                     newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins_.get(axis));
+                  Image img = oldStore.getImage(oldCoord);
+                  Coords newCoords = newCoordBuilder.build();
+                  Image newImgShallow = img.copyAtCoords(newCoords);
+                  if (roi != null) {
+                     ImageProcessor ip = studio_.data().ij().createProcessor(img);
+                     if (ip != null) {
+                        ip.setRoi(roi);
+                        ImageProcessor copyIp = ip.crop();
+                        newImgShallow = studio_.data().createImage(copyIp.getPixels(),
+                                copyIp.getWidth(), copyIp.getHeight(),
+                                img.getBytesPerPixel(), img.getNumComponents(),
+                                newCoords, newImgShallow.getMetadata());
+                     } else {
+                        throw new DuplicatorException(
+                              "Unsupported pixel type.  Can only copy 8 or 16 bit images.");
+                     }
                   }
-               }
-               Image img = oldStore.getImage(oldCoord);
-               Coords newCoords = newCoordBuilder.build();
-               Image newImgShallow = img.copyAtCoords(newCoords);
-               if (roi != null) {
-                  ImageProcessor ip = studio_.data().ij().createProcessor(img);
-                  if (ip != null) {
-                     ip.setRoi(roi);
-                     ImageProcessor copyIp = ip.crop();
-                     newImgShallow = studio_.data().createImage(copyIp.getPixels(), 
-                             copyIp.getWidth(), copyIp.getHeight(), 
-                             img.getBytesPerPixel(), img.getNumComponents(), 
-                             newCoords, newImgShallow.getMetadata());
-                  } else {
-                     throw new DuplicatorException(
-                           "Unsupported pixel type.  Can only copy 8 or 16 bit images.");
+                  if (closeListener.isCancelled()) {
+                     newStore.freeze();
+                     return null;
                   }
+                  newStore.putImage(newImgShallow);
+                  nrCopied++;
+                  try {
+                     setProgress((int) ((nrCopied / nrToBeCopied) * 100.0));
+                  } catch (IllegalArgumentException iae) {
+                     System.out.println("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
+                  }
+
                }
-               if (closeListener.isCancelled()) {
-                  newStore.freeze();
-                  return null;
-               }
-               newStore.putImage(newImgShallow);
-               nrCopied++;
-               try {
-                  setProgress((int) ((nrCopied / nrToBeCopied) * 100.0));
-               } catch (IllegalArgumentException iae) {
-                  System.out.println("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
-               }
-               
             }
+            if (nrCopied == 0) {
+               copyDisplay.close();
+            }
+         } catch (DatastoreFrozenException ex) {
+            studio_.logs().showError("Can not add data to frozen datastore");
+         } catch (DatastoreRewriteException ex) {
+            studio_.logs().showError(ex, "Can not overwrite data");
+         } catch (DuplicatorException ex) {
+            studio_.logs().showError(ex.getMessage());
+         } catch (IOException ioe) {
+            studio_.logs().showError(ioe, "IOException in Duplicator plugin");
+         }
+
+         closeListener.finishDuplication();
+         try {
+            newStore.freeze();
+         } catch (IOException ioe) {
+            studio_.logs().showError(ioe, "IOException freezing store in Duplicator plugin");
          }
          if (nrCopied == 0) {
-            copyDisplay.close();
+            studio_.logs().showError("Found no images in the requested range",
+                     theWindow_.getWindow());
+            return null;
          }
-      } catch (DatastoreFrozenException ex) {
-         studio_.logs().showError("Can not add data to frozen datastore");
-      } catch (DatastoreRewriteException ex) {
-         studio_.logs().showError(ex, "Can not overwrite data");
-      } catch (DuplicatorException ex) {
-         studio_.logs().showError(ex.getMessage());
-      } catch (IOException ioe) {
-         studio_.logs().showError(ioe, "IOException in Duplicator plugin");
-      }
-
-      closeListener.finishDuplication();
-      try {
-         newStore.freeze();
-      } catch (IOException ioe) {
-         studio_.logs().showError(ioe, "IOException freezing store in Duplicator plugin");
-      }
-      if (nrCopied == 0) {
-         studio_.logs().showError("Found no images in the requested range", theWindow_.getWindow());
+         studio_.displays().manage(newStore);
          return null;
+
+      } finally {
+         closeReloaded(reloadedStore);
       }
-      studio_.displays().manage(newStore);
-      return null;
+   }
+
+   private void closeReloaded(Datastore reloaded) {
+      if (reloaded != null) {
+         try {
+            reloaded.close();
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe, "IOException in Duplicator plugin");
+         }
+      }
    }
    
    @Override
