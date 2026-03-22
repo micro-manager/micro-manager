@@ -139,8 +139,20 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
    protected Void doInBackground() {
       DataProvider originalProvider = theWindow_.getDataProvider();
       // For file-based datastores, re-open from disk to get proper read-mode file channels.
-      // The live datastore's MultipageTiffReader instances were created in write mode and
-      // cannot reliably reopen their file channel after it has been closed (pause()).
+      //
+      // Background: MultipageTiffWriter creates its readers with a write-mode constructor
+      // that does not set the file_ field. After freeze(), StorageMultipageTiff.getImage()
+      // starts calling pause() on readers when switching between them, closing their
+      // FileChannel. A paused write-mode reader cannot reopen its channel (file_ is null),
+      // so any subsequent readImage() call causes a NullPointerException.
+      //
+      // The display avoids this because it calls getImagesIgnoringAxes(), which bypasses
+      // getImage() and never triggers pause(). The Duplicator iterates all coords via
+      // getImage(), cycling through multiple readers (one per position file) and hitting
+      // the NPE — causing only the first position/channel to be duplicated before failing.
+      //
+      // The fix: re-open the dataset from disk. loadData() creates fresh read-mode readers
+      // that have file_ set and can safely reopen their channel after a pause().
       DataProvider oldStore = originalProvider;
       Datastore reloadedStore = null;
       if (originalProvider instanceof Datastore) {

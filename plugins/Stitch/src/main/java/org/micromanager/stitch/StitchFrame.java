@@ -322,9 +322,21 @@ public class StitchFrame extends JDialog {
       }
 
       // For file-based datastores, re-open from disk to get proper read-mode file channels.
-      // The live datastore's MultipageTiffReader instances were created in write mode and
-      // cannot reliably reopen their file channel after it has been closed (pause()).
-      // RAM datastores do not have this issue and are used directly.
+      //
+      // Background: MultipageTiffWriter creates its readers with a write-mode constructor
+      // that does not set the file_ field. Instead the writer hands the reader an already-open
+      // FileChannel via setFileChannel(). After freeze(), StorageMultipageTiff.getImage()
+      // starts calling pause() on readers when it switches between them, closing their
+      // FileChannel. A paused write-mode reader cannot reopen its channel (file_ is null),
+      // so any subsequent readImage() call causes a NullPointerException.
+      //
+      // The display avoids this because it calls getImagesIgnoringAxes(), which bypasses
+      // getImage() and never triggers pause(). The Stitch plugin iterates all coords via
+      // getImage(), cycling through multiple readers and hitting the NPE.
+      //
+      // The fix: re-open the dataset from disk. loadData() creates fresh read-mode readers
+      // that have file_ set and can safely reopen their channel after a pause().
+      // RAM datastores use a different storage backend and are not affected.
       final Datastore reloadedDatastore;
       final DataProvider sourceProvider;
       if (dataProvider_ instanceof Datastore) {
