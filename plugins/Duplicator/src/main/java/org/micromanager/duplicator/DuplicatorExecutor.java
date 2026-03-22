@@ -137,7 +137,24 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
 
    @Override
    protected Void doInBackground() {
-      DataProvider oldStore = theWindow_.getDataProvider();
+      DataProvider originalProvider = theWindow_.getDataProvider();
+      // For file-based datastores, re-open from disk to get proper read-mode file channels.
+      // The live datastore's MultipageTiffReader instances were created in write mode and
+      // cannot reliably reopen their file channel after it has been closed (pause()).
+      DataProvider oldStore = originalProvider;
+      Datastore reloadedStore = null;
+      if (originalProvider instanceof Datastore) {
+         String savePath = ((Datastore) originalProvider).getSavePath();
+         if (savePath != null && !savePath.isEmpty()) {
+            try {
+               reloadedStore = studio_.data().loadData(savePath, true);
+               oldStore = reloadedStore;
+            } catch (IOException ioe) {
+               studio_.logs().showError(ioe, "Failed to re-open dataset from disk");
+               return null;
+            }
+         }
+      }
       Datastore tmpStore = null;
       try {
          if (saveMode_ == null) {
@@ -152,6 +169,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          }
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "Failed to open new datastore on disk");
+         closeReloaded(reloadedStore);
          return null;
       }
 
@@ -346,6 +364,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                }
                if (closeListener.isCancelled()) {
                   newStore.freeze();
+                  closeReloaded(reloadedStore);
                   return null;
                }
                newStore.putImage(newImgShallow);
@@ -377,12 +396,22 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IOException freezing store in Duplicator plugin");
       }
+      closeReloaded(reloadedStore);
       if (nrCopied == 0) {
          studio_.logs().showError("Found no images in the requested range", theWindow_.getWindow());
          return null;
       }
       studio_.displays().manage(newStore);
       return null;
+   }
+
+   private void closeReloaded(Datastore reloaded) {
+      if (reloaded != null) {
+         try {
+            reloaded.close();
+         } catch (IOException ignore) {
+         }
+      }
    }
    
    @Override
