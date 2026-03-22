@@ -367,7 +367,11 @@ public class StitchFrame extends JDialog {
          tiledAdapter = new StitchDataProviderAdapter(sourceProvider);
       } catch (IllegalArgumentException ex) {
          if (reloadedDatastore != null) {
-            try { reloadedDatastore.close(); } catch (IOException ignore) { }
+            try {
+               reloadedDatastore.close();
+            } catch (IOException ioe) {
+               studio_.logs().logError(ioe, "Failed to close StitchDataProviderAdapter");
+            }
          }
          studio_.logs().showError(
                "Cannot determine tile grid positions: " + ex.getMessage(), null);
@@ -516,7 +520,11 @@ public class StitchFrame extends JDialog {
          } finally {
             adapter.close();
             if (datastoreToClose != null) {
-               try { datastoreToClose.close(); } catch (IOException ignore) { }
+               try {
+                  datastoreToClose.close();
+               } catch (IOException ioe) {
+                  studio_.logs().logError(ioe, "IOException in Duplicator plugin");
+               }
             }
          }
       }, "ExportMMTiles-Export").start();

@@ -421,7 +421,8 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       if (reloaded != null) {
          try {
             reloaded.close();
-         } catch (IOException ignore) {
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe, "IOException in Duplicator plugin");
          }
       }
    }
