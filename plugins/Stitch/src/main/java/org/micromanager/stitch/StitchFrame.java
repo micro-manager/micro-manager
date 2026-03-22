@@ -321,63 +321,7 @@ public class StitchFrame extends JDialog {
          return;
       }
 
-      // For file-based datastores, re-open from disk to get proper read-mode file channels.
-      //
-      // Background: MultipageTiffWriter creates its readers with a write-mode constructor
-      // that does not set the file_ field. Instead the writer hands the reader an already-open
-      // FileChannel via setFileChannel(). After freeze(), StorageMultipageTiff.getImage()
-      // starts calling pause() on readers when it switches between them, closing their
-      // FileChannel. A paused write-mode reader cannot reopen its channel (file_ is null),
-      // so any subsequent readImage() call causes a NullPointerException.
-      //
-      // The display avoids this because it calls getImagesIgnoringAxes(), which bypasses
-      // getImage() and never triggers pause(). The Stitch plugin iterates all coords via
-      // getImage(), cycling through multiple readers and hitting the NPE.
-      //
-      // The fix: re-open the dataset from disk. loadData() creates fresh read-mode readers
-      // that have file_ set and can safely reopen their channel after a pause().
-      // RAM datastores use a different storage backend and are not affected.
-      final Datastore reloadedDatastore;
-      final DataProvider sourceProvider;
-      if (dataProvider_ instanceof Datastore) {
-         String savePath = ((Datastore) dataProvider_).getSavePath();
-         if (savePath != null && !savePath.isEmpty()) {
-            Datastore reloaded = null;
-            try {
-               reloaded = studio_.data().loadData(savePath, true);
-            } catch (IOException ex) {
-               studio_.logs().showError(
-                     "Cannot re-open dataset from disk: " + ex.getMessage(), this);
-               return;
-            }
-            reloadedDatastore = reloaded;
-            sourceProvider = reloaded;
-         } else {
-            reloadedDatastore = null;
-            sourceProvider = dataProvider_;
-         }
-      } else {
-         reloadedDatastore = null;
-         sourceProvider = dataProvider_;
-      }
-
-      // Wrap the DataProvider with row/col grid knowledge
-      StitchDataProviderAdapter tiledAdapter;
-      try {
-         tiledAdapter = new StitchDataProviderAdapter(sourceProvider);
-      } catch (IllegalArgumentException ex) {
-         if (reloadedDatastore != null) {
-            try {
-               reloadedDatastore.close();
-            } catch (IOException ioe) {
-               studio_.logs().logError(ioe, "Failed to close StitchDataProviderAdapter");
-            }
-         }
-         studio_.logs().showError(
-               "Cannot determine tile grid positions: " + ex.getMessage(), null);
-         return;
-      }
-
+      // Collect all UI state now, on the EDT, before dispose() and before the thread starts.
       final String selectedChannel = alignChannelCombo_.getItemCount() > 0
             ? (String) alignChannelCombo_.getSelectedItem()
             : null;
@@ -408,51 +352,22 @@ public class StitchFrame extends JDialog {
             ? outputDir + File.separator + namePrefix
             : "";
 
-      // Probe affine transform for orientation correction
-      int[] correction = null;
-      if (correctOrientation) {
-         AffineTransform affine = probeAffineTransform(sourceProvider);
-         correction = ImageTransformUtils.correctionFromAffine(affine);
-         if (correction == null) {
-            studio_.logs().showMessage(
-                  "No pixel size affine transform found in image metadata. "
-                  + "Orientation correction will be skipped.", this);
-         }
-      }
-
-      SummaryMetadata summary = sourceProvider.getSummaryMetadata();
-      final List<String> allChannelNames = getChannelNames(summary);
-      // When no channel names are set in SummaryMetadata, use integer indices as String
-      // channel identifiers so that TileBlender/TileAligner can match them against the
-      // Integer channel values stored in the axes map.
-      final List<String> channelNamesForExport;
-      if (allChannelNames.isEmpty()) {
-         int numCh = sourceProvider.getNextIndex(Coords.CHANNEL);
-         if (numCh <= 0) {
-            numCh = 1;
-         }
-         channelNamesForExport = new ArrayList<>();
-         for (int i = 0; i < numCh; i++) {
-            channelNamesForExport.add(String.valueOf(i));
-         }
+      // Determine the save path to reload from (null = RAM datastore, use directly).
+      // loadData() is slow (filesystem I/O + metadata parsing) so it runs in the export
+      // thread below rather than here on the EDT.
+      final String reloadSavePath;
+      if (dataProvider_ instanceof Datastore) {
+         String sp = ((Datastore) dataProvider_).getSavePath();
+         reloadSavePath = (sp != null && !sp.isEmpty()) ? sp : null;
       } else {
-         channelNamesForExport = allChannelNames;
+         reloadSavePath = null;
       }
 
-      // baseAxes pins the z used for alignment only; channel is handled per-channel
-      HashMap<String, Object> baseAxes = new HashMap<>();
-      baseAxes.put("z", alignZ);
-
-      // alignAxes adds the selected channel for TileAligner (alignment uses one channel)
-      HashMap<String, Object> alignAxes = new HashMap<>(baseAxes);
-      if (selectedChannel != null) {
-         alignAxes.put("channel", selectedChannel);
-      }
-
-      // Capture display settings before dispose() closes the window
+      // Capture display state before dispose() closes the window.
       final DisplaySettings sourceDisplaySettings = displayWindow_.getDisplaySettings();
+      final String datasetName = dataProvider_.getName() + "_stitched";
 
-      // Persist dialog settings to profile
+      // Persist dialog settings to profile.
       settings_.putBoolean(PREF_CORRECT_ORIENTATION, correctOrientation);
       settings_.putBoolean(PREF_ALIGN, align);
       settings_.putBoolean(PREF_BLEND, blend);
@@ -482,25 +397,117 @@ public class StitchFrame extends JDialog {
       progressDialog.setLocationRelativeTo(null);
       progressDialog.setVisible(true);
 
-      final int canvasW = tiledAdapter.getCanvasWidth();
-      final int canvasH = tiledAdapter.getCanvasHeight();
-      final StitchDataProviderAdapter adapter = tiledAdapter;
-      final List<String> chNames = channelNamesForExport;
       final boolean doBlend = blend;
       final boolean doAlign = align;
-      final int[] finalCorrection = correction;
+      final boolean doCorrectOrientation = correctOrientation;
       final boolean toStack = saveToStack;
       final String destPath = outputPath;
-      final String datasetName = dataProvider_.getName() + "_stitched";
       final int exportAlignZ = alignZ;
-
-      final HashMap<String, Object> finalAlignAxes = alignAxes;
       final int finalMaxDisplacement = maxDisplacementPx;
 
-      final Datastore datastoreToClose = reloadedDatastore;
       new Thread(() -> {
+         // For file-based datastores, re-open from disk to get proper read-mode file channels.
+         //
+         // Background: MultipageTiffWriter creates its readers with a write-mode constructor
+         // that does not set the file_ field. Instead the writer hands the reader an already-open
+         // FileChannel via setFileChannel(). After freeze(), StorageMultipageTiff.getImage()
+         // starts calling pause() on readers when it switches between them, closing their
+         // FileChannel. A paused write-mode reader cannot reopen its channel (file_ is null),
+         // so any subsequent readImage() call causes a NullPointerException.
+         //
+         // The display avoids this because it calls getImagesIgnoringAxes(), which bypasses
+         // getImage() and never triggers pause(). The Stitch plugin iterates all coords via
+         // getImage(), cycling through multiple readers and hitting the NPE.
+         //
+         // The fix: re-open the dataset from disk. loadData() creates fresh read-mode readers
+         // that have file_ set and can safely reopen their channel after a pause().
+         // RAM datastores use a different storage backend and are not affected.
+         // loadData() is I/O-bound so it runs here in the background thread.
+         Datastore reloadedDatastore = null;
+         DataProvider sourceProvider = dataProvider_;
+         if (reloadSavePath != null) {
+            try {
+               reloadedDatastore = studio_.data().loadData(reloadSavePath, true);
+               sourceProvider = reloadedDatastore;
+            } catch (IOException ex) {
+               studio_.logs().logError(ex, "Stitch: cannot re-open dataset from disk");
+               final String msg = ex.getMessage();
+               SwingUtilities.invokeLater(() -> {
+                  progressDialog.dispose();
+                  JOptionPane.showMessageDialog(null,
+                        "Cannot re-open dataset from disk: " + msg,
+                        "Export Error", JOptionPane.ERROR_MESSAGE);
+               });
+               return;
+            }
+         }
+
+         // Wrap the DataProvider with row/col grid knowledge.
+         StitchDataProviderAdapter adapter;
          try {
-            buildDatastore(adapter, sourceProvider, baseAxes, finalAlignAxes, chNames,
+            adapter = new StitchDataProviderAdapter(sourceProvider);
+         } catch (IllegalArgumentException ex) {
+            closeQuietly(reloadedDatastore);
+            final String msg = ex.getMessage();
+            SwingUtilities.invokeLater(() -> {
+               progressDialog.dispose();
+               JOptionPane.showMessageDialog(null,
+                     "Cannot determine tile grid positions: " + msg,
+                     "Export Error", JOptionPane.ERROR_MESSAGE);
+            });
+            return;
+         }
+
+         final Datastore finalReloadedDatastore = reloadedDatastore;
+         try {
+            // Probe affine transform for orientation correction.
+            int[] correction = null;
+            if (doCorrectOrientation) {
+               AffineTransform affine = probeAffineTransform(sourceProvider);
+               correction = ImageTransformUtils.correctionFromAffine(affine);
+               if (correction == null) {
+                  SwingUtilities.invokeLater(() ->
+                        studio_.logs().showMessage(
+                              "No pixel size affine transform found in image metadata. "
+                              + "Orientation correction will be skipped.", null));
+               }
+            }
+
+            SummaryMetadata summary = sourceProvider.getSummaryMetadata();
+            final List<String> allChannelNames = getChannelNames(summary);
+            // When no channel names are set in SummaryMetadata, use integer indices as
+            // String channel identifiers so that TileBlender/TileAligner can match them
+            // against the Integer channel values stored in the axes map.
+            final List<String> chNames;
+            if (allChannelNames.isEmpty()) {
+               int numCh = sourceProvider.getNextIndex(Coords.CHANNEL);
+               if (numCh <= 0) {
+                  numCh = 1;
+               }
+               List<String> indexed = new ArrayList<>();
+               for (int i = 0; i < numCh; i++) {
+                  indexed.add(String.valueOf(i));
+               }
+               chNames = indexed;
+            } else {
+               chNames = allChannelNames;
+            }
+
+            // baseAxes pins the z used for alignment only; channel is handled per-channel
+            HashMap<String, Object> baseAxes = new HashMap<>();
+            baseAxes.put("z", exportAlignZ);
+
+            // alignAxes adds the selected channel for TileAligner (alignment uses one channel)
+            HashMap<String, Object> alignAxes = new HashMap<>(baseAxes);
+            if (selectedChannel != null) {
+               alignAxes.put("channel", selectedChannel);
+            }
+
+            final int canvasW = adapter.getCanvasWidth();
+            final int canvasH = adapter.getCanvasHeight();
+            final int[] finalCorrection = correction;
+
+            buildDatastore(adapter, sourceProvider, baseAxes, alignAxes, chNames,
                   canvasW, canvasH, doBlend, doAlign, finalCorrection, finalMaxDisplacement,
                   toStack, destPath, datasetName, exportAlignZ,
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
@@ -519,15 +526,19 @@ public class StitchFrame extends JDialog {
             });
          } finally {
             adapter.close();
-            if (datastoreToClose != null) {
-               try {
-                  datastoreToClose.close();
-               } catch (IOException ioe) {
-                  studio_.logs().logError(ioe, "IOException in Duplicator plugin");
-               }
-            }
+            closeQuietly(finalReloadedDatastore);
          }
       }, "ExportMMTiles-Export").start();
+   }
+
+   private void closeQuietly(Datastore ds) {
+      if (ds != null) {
+         try {
+            ds.close();
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe, "IOException closing reloaded datastore");
+         }
+      }
    }
 
    /**
