@@ -352,17 +352,6 @@ public class StitchFrame extends JDialog {
             ? outputDir + File.separator + namePrefix
             : "";
 
-      // Determine the save path to reload from (null = RAM datastore, use directly).
-      // loadData() is slow (filesystem I/O + metadata parsing) so it runs in the export
-      // thread below rather than here on the EDT.
-      final String reloadSavePath;
-      if (dataProvider_ instanceof Datastore) {
-         String sp = ((Datastore) dataProvider_).getSavePath();
-         reloadSavePath = (sp != null && !sp.isEmpty()) ? sp : null;
-      } else {
-         reloadSavePath = null;
-      }
-
       // Capture display state before dispose() closes the window.
       final DisplaySettings sourceDisplaySettings = displayWindow_.getDisplaySettings();
       final String datasetName = dataProvider_.getName() + "_stitched";
@@ -406,48 +395,11 @@ public class StitchFrame extends JDialog {
       final int finalMaxDisplacement = maxDisplacementPx;
 
       new Thread(() -> {
-         // For file-based datastores, re-open from disk to get proper read-mode file channels.
-         //
-         // Background: MultipageTiffWriter creates its readers with a write-mode constructor
-         // that does not set the file_ field. Instead the writer hands the reader an already-open
-         // FileChannel via setFileChannel(). After freeze(), StorageMultipageTiff.getImage()
-         // starts calling pause() on readers when it switches between them, closing their
-         // FileChannel. A paused write-mode reader cannot reopen its channel (file_ is null),
-         // so any subsequent readImage() call causes a NullPointerException.
-         //
-         // The display avoids this because it calls getImagesIgnoringAxes(), which bypasses
-         // getImage() and never triggers pause(). The Stitch plugin iterates all coords via
-         // getImage(), cycling through multiple readers and hitting the NPE.
-         //
-         // The fix: re-open the dataset from disk. loadData() creates fresh read-mode readers
-         // that have file_ set and can safely reopen their channel after a pause().
-         // RAM datastores use a different storage backend and are not affected.
-         // loadData() is I/O-bound so it runs here in the background thread.
-         Datastore reloadedDatastore = null;
-         DataProvider sourceProvider = dataProvider_;
-         if (reloadSavePath != null) {
-            try {
-               reloadedDatastore = studio_.data().loadData(reloadSavePath, true);
-               sourceProvider = reloadedDatastore;
-            } catch (IOException ex) {
-               studio_.logs().logError(ex, "Stitch: cannot re-open dataset from disk");
-               final String msg = ex.getMessage();
-               SwingUtilities.invokeLater(() -> {
-                  progressDialog.dispose();
-                  JOptionPane.showMessageDialog(null,
-                        "Cannot re-open dataset from disk: " + msg,
-                        "Export Error", JOptionPane.ERROR_MESSAGE);
-               });
-               return;
-            }
-         }
-
          // Wrap the DataProvider with row/col grid knowledge.
          StitchDataProviderAdapter adapter;
          try {
-            adapter = new StitchDataProviderAdapter(sourceProvider);
+            adapter = new StitchDataProviderAdapter(dataProvider_);
          } catch (IllegalArgumentException ex) {
-            closeQuietly(reloadedDatastore);
             final String msg = ex.getMessage();
             SwingUtilities.invokeLater(() -> {
                progressDialog.dispose();
@@ -458,12 +410,11 @@ public class StitchFrame extends JDialog {
             return;
          }
 
-         final Datastore finalReloadedDatastore = reloadedDatastore;
          try {
             // Probe affine transform for orientation correction.
             int[] correction = null;
             if (doCorrectOrientation) {
-               AffineTransform affine = probeAffineTransform(sourceProvider);
+               AffineTransform affine = probeAffineTransform(dataProvider_);
                correction = ImageTransformUtils.correctionFromAffine(affine);
                if (correction == null) {
                   SwingUtilities.invokeLater(() ->
@@ -473,14 +424,14 @@ public class StitchFrame extends JDialog {
                }
             }
 
-            SummaryMetadata summary = sourceProvider.getSummaryMetadata();
+            SummaryMetadata summary = dataProvider_.getSummaryMetadata();
             final List<String> allChannelNames = getChannelNames(summary);
             // When no channel names are set in SummaryMetadata, use integer indices as
             // String channel identifiers so that TileBlender/TileAligner can match them
             // against the Integer channel values stored in the axes map.
             final List<String> chNames;
             if (allChannelNames.isEmpty()) {
-               int numCh = sourceProvider.getNextIndex(Coords.CHANNEL);
+               int numCh = dataProvider_.getNextIndex(Coords.CHANNEL);
                if (numCh <= 0) {
                   numCh = 1;
                }
@@ -507,7 +458,7 @@ public class StitchFrame extends JDialog {
             final int canvasH = adapter.getCanvasHeight();
             final int[] finalCorrection = correction;
 
-            buildDatastore(adapter, sourceProvider, baseAxes, alignAxes, chNames,
+            buildDatastore(adapter, baseAxes, alignAxes, chNames,
                   canvasW, canvasH, doBlend, doAlign, finalCorrection, finalMaxDisplacement,
                   toStack, destPath, datasetName, exportAlignZ,
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
@@ -526,28 +477,16 @@ public class StitchFrame extends JDialog {
             });
          } finally {
             adapter.close();
-            closeQuietly(finalReloadedDatastore);
          }
       }, "ExportMMTiles-Export").start();
-   }
-
-   private void closeQuietly(Datastore ds) {
-      if (ds != null) {
-         try {
-            ds.close();
-         } catch (IOException ioe) {
-            studio_.logs().logError(ioe, "IOException closing reloaded datastore");
-         }
-      }
    }
 
    /**
     * Build an MM Datastore from the stitched/blended tile data and display it.
     *
-    * <p>All pixel assembly happens here — no temp files, no loadData().</p>
+    * <p>All pixel assembly happens here — no temp files.</p>
     */
    private void buildDatastore(StitchDataProviderAdapter adapter,
-                               DataProvider sourceProvider,
                                HashMap<String, Object> baseAxes,
                                HashMap<String, Object> alignAxes,
                                List<String> chNames,
@@ -578,7 +517,7 @@ public class StitchFrame extends JDialog {
 
       try {
          // Step 2: set SummaryMetadata — copy from source, then fix up stitched-specific fields
-         SummaryMetadata srcSummary = sourceProvider.getSummaryMetadata();
+         SummaryMetadata srcSummary = dataProvider_.getSummaryMetadata();
          SummaryMetadata.Builder smBuilder;
          if (srcSummary != null) {
             smBuilder = srcSummary.copyBuilder();
@@ -614,18 +553,18 @@ public class StitchFrame extends JDialog {
 
          // Step 4: build a template Metadata from the first tile (position 0, selected z)
          final Metadata.Builder templateMetaBuilder =
-               probeTemplateMetadata(sourceProvider, alignZ);
+               probeTemplateMetadata(dataProvider_, alignZ);
 
          // Step 5 & 6: composite/stitch — iterates all time points, z slices, channels.
          SwingUtilities.invokeLater(() -> statusLabel.setText("Computing…"));
 
          // raw count from caller; effective count set after probe
          final int numCh = chNames.size();
-         int numZ = sourceProvider.getNextIndex(Coords.Z_SLICE);
+         int numZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
          if (numZ < 1) {
             numZ = 1;
          }
-         int numT = sourceProvider.getNextIndex(Coords.TIME_POINT);
+         int numT = dataProvider_.getNextIndex(Coords.TIME_POINT);
          if (numT < 1) {
             numT = 1;
          }
