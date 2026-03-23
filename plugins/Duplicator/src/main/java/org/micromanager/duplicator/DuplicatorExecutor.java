@@ -288,13 +288,17 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
             boolean copy = !oldAxes.contains(Coords.CHANNEL);
             for (String axis : oldStore.getAxes()) {
                if (axis.equals(Coords.CHANNEL)) {
-                  int index = 0;
-                  for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
-                     if (channel.getValue() && oldCoord.getIndex(axis) == index) {
-                        copy = true;
-                        continue;
+                  if (channels_ == null) {
+                     copy = true;
+                  } else {
+                     int index = 0;
+                     for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
+                        if (channel.getValue() && oldCoord.getIndex(axis) == index) {
+                           copy = true;
+                           continue;
+                        }
+                        index++;
                      }
-                     index++;
                   }
                }
             }
@@ -363,14 +367,21 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          }
       } catch (DatastoreFrozenException ex) {
          studio_.logs().showError("Can not add data to frozen datastore");
+         return null;
       } catch (DatastoreRewriteException ex) {
          studio_.logs().showError(ex, "Can not overwrite data");
+         return null;
       } catch (DuplicatorException ex) {
          studio_.logs().showError(ex.getMessage());
+         return null;
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IOException in Duplicator plugin");
+         return null;
       }
 
+      if (closeListener == null) {
+         return null;
+      }
       closeListener.finishDuplication();
       try {
          newStore.freeze();

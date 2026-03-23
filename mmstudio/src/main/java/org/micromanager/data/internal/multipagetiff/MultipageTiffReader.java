@@ -84,7 +84,6 @@ public final class MultipageTiffReader {
    private File file_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
-   private boolean isWriteMode_ = false;
 
    private StorageMultipageTiff masterStorage_;
    private SummaryMetadata summaryMetadata_;
@@ -185,7 +184,6 @@ public final class MultipageTiffReader {
       summaryMetadata_ = summaryMD;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
       file_ = file;
-      isWriteMode_ = true;
    }
 
    /**
@@ -199,10 +197,6 @@ public final class MultipageTiffReader {
 
    public void setFileChannel(FileChannel fc) {
       fileChannel_ = fc;
-   }
-
-   public boolean isWriteMode() {
-      return isWriteMode_;
    }
 
    /**
