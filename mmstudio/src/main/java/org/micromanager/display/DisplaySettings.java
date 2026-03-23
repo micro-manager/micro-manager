@@ -23,6 +23,7 @@ package org.micromanager.display;
 
 import java.awt.Color;
 import java.util.List;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 
 
 /**
@@ -129,6 +130,8 @@ public interface DisplaySettings {
        * @return builder instance to enable chaining commands
        */
       Builder channels(Iterable<ChannelDisplaySettings> channelSettings);
+
+      Builder intensityScaling(DisplayIntensityRanges ranges);
 
       /**
        * Number of ChannelDisplaySettings in this builder.  Not sure why a builder needs this...
@@ -257,9 +260,6 @@ public interface DisplaySettings {
          int channel, int component, ComponentDisplaySettings settings);
 
 
-
-
-
    /**
     * ColorMode enums.
     */
@@ -292,7 +292,6 @@ public interface DisplaySettings {
 
 
    //////////////////////////////// Deprecated methods below ////////////////////////////////
-
 
    /**
     * This object contains contrast settings for a single channel. It is used

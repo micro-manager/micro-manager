@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
@@ -110,7 +109,7 @@ public class IntensityInspectorPanelController
    private final JCheckBox autostretchCheckBox_ = new JCheckBox();
    private final JSpinner percentileSpinner_ = new JSpinner();
    private final JLabel ignoreLabel_ = new JLabel(")");
-   private final AtomicBoolean changingSpinner_ = new AtomicBoolean(false);
+   private boolean ignoreSpinnerChangeEvents_ = false;
    private Boolean displaySettingsUpdateSuspended_ = false;
    private final JPanel channelHistogramsPanel_ = new JPanel();
 
@@ -240,7 +239,7 @@ public class IntensityInspectorPanelController
       percentileSpinner_.setModel(
             new SpinnerNumberModel(0.0, 0.0, 49.9, 0.1));
       percentileSpinner_.addChangeListener((ChangeEvent e) -> {
-         if (!changingSpinner_.get()) {
+         if (!ignoreSpinnerChangeEvents_) {
             handleAutostretch();
          }
       });
@@ -291,6 +290,7 @@ public class IntensityInspectorPanelController
          if (viewer_ != null) {
             ChannelIntensityController chanController
                   = ChannelIntensityController.create(viewer_, i);
+            chanController.setHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected());
             channelControllers_.add(chanController);
             channelHistogramsPanel_.add(chanController.getChannelPanel(),
                   new CC().growY());
@@ -563,22 +563,20 @@ public class IntensityInspectorPanelController
          return;
       }
 
-      // Setting the autostretch box and changeSpinner, cause their
-      // action handlers to be activates, which will cause the displaysettings
-      // to be changed again.  It seems that the order in which we do things
-      // is important. Call the channels autoscale handlers after setting
-      // the autostrechkBox and percentileSpinner
+      // We may arrive here as a result of UI actions in this insector panel,
+      // or something external. So sync to the panel UI first, but do so
+      // without generating UI actions.
+      gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
       autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
 
       // A spinner's change listener, unlike an action listener, gets notified
-      // upon programmatic changes.  Previously, there was code here to remove
-      // ChangeListeners and add them back after setting the value.  As a
-      // side effect, this cause the spinner to not display its value
-      // There does not seem to be a problem setting the value with the
-      // ChangeListeners still attached, so do the easy thing:
-      changingSpinner_.set(true);
-      percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
-      changingSpinner_.set(false);
+      // upon programmatic changes. Use a flag to suppress re-entrant handling.
+      ignoreSpinnerChangeEvents_ = true;
+      try {
+         percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
+      } finally {
+         ignoreSpinnerChangeEvents_ = false;
+      }
 
       if (settings.isAutoscaleIgnoringZeros()) {
          ignoreLabel_.setText(IGNORE_LABEL);
@@ -599,6 +597,7 @@ public class IntensityInspectorPanelController
       gearMenuIgnoreZerosItem_.setSelected(settings.isAutoscaleIgnoringZeros());
 
       // TODO Disable color mode and show RGB if image is RGB
+
       switch (settings.getColorMode()) {
          case COLOR:
             colorModeComboBox_.setSelectedItem(ColorModeCell.Item.COLOR);

@@ -22,6 +22,7 @@ import java.util.Arrays;
  * @author Mark A. Tsuchida
  */
 public final class IntegerComponentStats {
+   private final Integer bitDepth_;
    private final long[] histogram_;
    private final int binWidthPowerOf2_;
    private final long pixelCount_;
@@ -35,6 +36,7 @@ public final class IntegerComponentStats {
    private final transient long[] cumulativeDistrib_;
 
    public static class Builder {
+      private Integer bitDepth_;
       private long[] histogram_;
       private int binWidthPowerOf2_;
       private long pixelCount_;
@@ -47,6 +49,15 @@ public final class IntegerComponentStats {
       private long sumOfSquares_;
 
       private Builder() {
+      }
+
+      public Builder bitDepth(Integer depth) {
+         Preconditions.checkArgument(depth == null || depth >= 0);
+         if (depth == 0) {
+            depth = null;
+         }
+         bitDepth_ = depth;
+         return this;
       }
 
       public Builder histogram(long[] binsIncludingOutOfRange, int binWidthPowerOf2) {
@@ -149,6 +160,7 @@ public final class IntegerComponentStats {
    }
 
    private IntegerComponentStats(Builder b) {
+      bitDepth_ = b.bitDepth_;
       histogram_ = b.histogram_ != null
             ? Arrays.copyOf(b.histogram_, b.histogram_.length) :
             null;
@@ -162,6 +174,14 @@ public final class IntegerComponentStats {
       sum_ = b.sum_;
       sumOfSquares_ = b.sumOfSquares_;
       cumulativeDistrib_ = computeCumulativeDistribution();
+   }
+
+   public Integer getBitDepth() {
+      // This is usually equal to the bit depth corresponding to the bin count
+      // and bin width, but may be null if the camera bit depth was unknown.
+      // I.e., this is based on knowledge of the data, not the integer type
+      // used to contain it.
+      return bitDepth_;
    }
 
    public long[] getInRangeHistogram() {
@@ -248,28 +268,38 @@ public final class IntegerComponentStats {
       return maximum_;
    }
 
-   public long getAutoscaleMinForQuantile(double q) {
-      if (q >= 0.5) {
-         // Safe, in-range value that is less than max
-         return Math.max(0L, Math.round(getQuantile(0.5)) - 1L);
-      }
-      return Math.round(getQuantile(q));
-   }
+   // Guarantees that the returned (max - min) >= 2. Also guarantees that,
+   // if all pixels have the same value, they will not be at the edge of the
+   // range unless all pixels are zero or saturated.
+   public void getAutoscaleMinMaxForQuantile(double q, long[] minMax) {
+      Preconditions.checkNotNull(minMax);
+      Preconditions.checkArgument(minMax.length == 2);
 
-   public long getAutoscaleMinForQuantileIgnoringZeros(double q) {
-      if (q >= 0.5) {
-         // Safe, in-range value that is less than max
-         return Math.max(0L, Math.round(getQuantileIgnoringZeros(0.5)) - 1L);
-      }
-      return Math.round(getQuantileIgnoringZeros(q));
-   }
+      long min = Math.round(getQuantile(q));
+      // Subtract 1 to convert from bin edge index to intensity value
+      long max = Math.round(getQuantile(1.0 - q)) - 1L;
 
-   public long getAutoscaleMaxForQuantile(double q) {
-      if (q >= 0.5) {
-         // Safe, in-range value that is greater than min
-         return Math.max(1L, Math.round(getQuantile(0.5)));
+      if (max - min < 2) { // Range width < 3
+         // For example, if all pixels have the same intensity I, we will
+         // reach here and 'mid' will equal I.
+         // We may also reach here if all pixels have intensity I or I + 1;
+         // in this case we will end up increasing the range by 1 bin, but
+         // this should be harmless.
+         long mid = (min + max) / 2;
+         if (mid <= getHistogramRangeMin()) {
+            min = getHistogramRangeMin();
+            max = min + 2;
+         } else if (mid >= getHistogramRangeMax()) {
+            max = getHistogramRangeMax();
+            min = max - 2;
+         } else {
+            min = mid - 1;
+            max = mid + 1;
+         }
       }
-      return Math.round(getQuantile(1.0 - q)) - 1L;
+
+      minMax[0] = min;
+      minMax[1] = max;
    }
 
    public long getAutoscaleMaxForQuantileIgnoringZeros(double q) {

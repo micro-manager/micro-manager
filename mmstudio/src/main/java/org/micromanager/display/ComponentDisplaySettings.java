@@ -1,8 +1,10 @@
 package org.micromanager.display;
 
+import org.micromanager.display.internal.DefaultComponentDisplaySettings;
+
 /**
  * Certain cameras (such as RGB cameras) can produce images where each pixel has multiple
- * components.  This inteface determines how these components should be displayed.
+ * components.  This interface determines how these components should be displayed.
  *
  * @author mark
  */
@@ -17,6 +19,8 @@ public interface ComponentDisplaySettings {
 
       Builder scalingRange(long minIntensity, long maxIntensity);
 
+      Builder scalingRange(ComponentIntensityRange range);
+
       Builder scalingGamma(double gamma);
 
       ComponentDisplaySettings build();
@@ -30,5 +34,7 @@ public interface ComponentDisplaySettings {
 
    Builder copyBuilder();
 
-   // TODO Add static builder() in Java 8
+   static Builder builder() {
+      return DefaultComponentDisplaySettings.builder();
+   }
 }

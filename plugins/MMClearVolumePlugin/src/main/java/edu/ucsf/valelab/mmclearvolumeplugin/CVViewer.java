@@ -775,8 +775,9 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                        lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(0);
                ComponentDisplaySettings.Builder ccB =
                      csCopyBuilder.getComponentSettings(j).copyBuilder();
-               ccB.scalingRange(componentStats.getAutoscaleMinForQuantile(extremaPercentage),
-                       componentStats.getAutoscaleMaxForQuantile(extremaPercentage));
+               long[] minMax = new long[2];
+               componentStats.getAutoscaleMinMaxForQuantile(extremaPercentage, minMax);
+               ccB.scalingRange(minMax[0], minMax[1]);
                ccB.scalingGamma(displaySettings.getChannelSettings(ch)
                      .getComponentSettings(j).getScalingGamma());
                csCopyBuilder.component(j, ccB.build());

@@ -26,6 +26,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.histogram.BinMapper1d;
 import net.imglib2.histogram.Histogram1d;
 import net.imglib2.img.Img;
@@ -131,9 +132,6 @@ public final class ImageStatsProcessor {
       final int binCountPowerOf2 =
             Math.min(bitDepth, request.getMaxBinCountPowerOf2());
 
-      // RGB888 images can come with an extra component in the pixel buffer.
-      // TODO XXX Handle this case!
-
       // Determine the overlap between the ROI rect/mask and the image
       boolean useROI;
       Rectangle imageBounds = new Rectangle(0, 0, image.getWidth(), image.getHeight());
@@ -175,14 +173,26 @@ public final class ImageStatsProcessor {
       }
 
       ImageStats result = null;
+      int width = image.getWidth();
+      int height = image.getHeight();
       if (bytesPerSample == 1) {
-         Img<UnsignedByteType> img =
-               ArrayImgs.unsignedBytes((byte[]) image.getRawPixels(),
-                     nComponents, image.getWidth(), image.getHeight());
+         RandomAccessibleInterval<UnsignedByteType> img;
+         if (nComponents == 3) {
+            // Transform BGRA8888 to BGR888 (flipping to RGB is done later)
+            img = ArrayImgs.unsignedBytes((byte[]) image.getRawPixels(),
+                    4, width, height);
+            img = Views.interval(img,
+                    Intervals.createMinSize(
+                            0, 0, 0,
+                            3, width, height));
+         } else {
+            img = ArrayImgs.unsignedBytes((byte[]) image.getRawPixels(),
+                    nComponents, width, height);
+         }
          result = compute(
                clipToRect(img, nComponents, statsBounds),
                mask,
-               nComponents, bitDepth, binCountPowerOf2,
+               nComponents, boxedBitDepth, bitDepth, binCountPowerOf2,
                useROI, index);
       } else if (bytesPerSample == 2) {
          Img<UnsignedShortType> img =
@@ -191,7 +201,7 @@ public final class ImageStatsProcessor {
          result = compute(
                clipToRect(img, nComponents, statsBounds),
                mask,
-               nComponents, bitDepth, binCountPowerOf2,
+               nComponents, boxedBitDepth, bitDepth, binCountPowerOf2,
                useROI, index);
       }
 
@@ -204,8 +214,8 @@ public final class ImageStatsProcessor {
 
    private <T extends IntegerType<T>> ImageStats compute(
          IterableInterval<T> img, IterableInterval<UnsignedByteType> mask,
-         int nComponents, int sampleBitDepth, int binCountPowerOf2,
-         boolean isROI, int index) {
+         int nComponents, Integer metadataBitDepth, int sampleBitDepth,
+         int binCountPowerOf2, boolean isROI, int index) {
       // It's easier to debug if we check first...
       Preconditions.checkArgument(img.numDimensions() == 3);
       Preconditions.checkArgument(img.dimension(0) == nComponents);
@@ -247,14 +257,17 @@ public final class ImageStatsProcessor {
       // Perform the actual computations:
       Cursor<T> dataCursor = img.localizingCursor();
       Cursor<UnsignedByteType> maskCursor = mask.cursor();
-      for (int i = 0; dataCursor.hasNext(); ++i) {
-         int component = i % nComponents;
+      while (dataCursor.hasNext()) {
          T dataSample = dataCursor.next();
          UnsignedByteType maskSample = maskCursor.next();
-
          if (maskSample.getInteger() < MASK_THRESH) {
             continue;
          }
+
+         int[] cxy = new int[3];
+         dataCursor.localize(cxy);
+         // Flip component index to view BGR as RGB
+         int component = nComponents - 1 - cxy[0];
 
          long dataValue = dataSample.getIntegerLong();
 
@@ -280,6 +293,7 @@ public final class ImageStatsProcessor {
             new IntegerComponentStats[nComponents];
       for (int component = 0; component < nComponents; ++component) {
          componentStats[component] = IntegerComponentStats.builder()
+               .bitDepth(metadataBitDepth)
                .histogram(histograms.get(component).toLongArray(),
                      Math.max(0, sampleBitDepth - binCountPowerOf2))
                .pixelCount(counts[component])
@@ -297,7 +311,7 @@ public final class ImageStatsProcessor {
    }
 
    private <T extends IntegerType<T>> IterableInterval<T> clipToRect(
-         Img<T> fullImg, int nComponents, Rectangle statsBounds) {
+         RandomAccessibleInterval<T> fullImg, int nComponents, Rectangle statsBounds) {
       Preconditions.checkNotNull(statsBounds);
       return Views.interval(fullImg,
             Intervals.createMinSize(
