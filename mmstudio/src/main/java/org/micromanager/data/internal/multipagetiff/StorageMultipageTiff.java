@@ -1015,17 +1015,12 @@ public final class StorageMultipageTiff implements Storage {
       }
       try {
          MultipageTiffReader mptReader = coordsToReader_.get(coords);
-         if (!amInWriteMode_ && lastReader_ != null && mptReader != lastReader_) {
+         if (!amInWriteMode_ && lastReader_ != null && mptReader != lastReader_
+               && !lastReader_.isWriteMode()) {
             // this could be optional.  Not doing it can result in large memory leaks.
-            // NOTE: pause() closes the fileChannel of lastReader_. For write-mode readers
-            // (created by MultipageTiffWriter), file_ is never set, so after pause() those
-            // readers cannot reopen their channel. This is safe here because the display
-            // only ever requests one image at a time and rarely revisits a paused reader.
-            // However, any code that iterates getUnorderedImageCoords() and calls getImage()
-            // for every coord (e.g. Stitch, Duplicator) will eventually call getImage() on a
-            // previously paused write-mode reader, triggering a NullPointerException in
-            // createFileChannel(). Such callers must use loadData() to obtain fresh read-mode
-            // readers before iterating.
+            // Skip pause() for write-mode readers: they share their FileChannel with
+            // the writer, and closing it would prevent further reads from that file.
+            // After freeze() the channel remains open and valid for reads.
             lastReader_.pause();
          }
          lastReader_ = mptReader;
