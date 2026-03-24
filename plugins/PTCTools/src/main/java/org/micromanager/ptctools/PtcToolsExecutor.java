@@ -165,7 +165,7 @@ public class PtcToolsExecutor extends Thread {
       @Override
       public void doSequence(JLabel resultLabel) {
 
-         CMMCore core = studio_.getCMMCore(); // to reduce typing
+         final CMMCore core = studio_.getCMMCore(); // to reduce typing
          final int nrFrames = settings_.getInteger(PtcToolsTerms.NRFRAMES, 100);
          final ResultsTable rt = ResultsTable.getResultsTable();
          rt.setPrecision(4);
@@ -182,6 +182,9 @@ public class PtcToolsExecutor extends Thread {
          } catch (ParseException ex) {
             studio_.logs().showError("Minimum exposure should be a number");
             return;
+         }
+         if (minExposure <= 0.0) {
+            minExposure = 0.1;
          }
          double[] exposures = new double[nrExposures];
          double minExpLog = Math.log(minExposure);
