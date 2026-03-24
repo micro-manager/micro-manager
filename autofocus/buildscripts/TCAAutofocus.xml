@@ -1,0 +1,4 @@
+<project name="MMTCAAutofocus" default="jar">
+    <property name="sourcefile" value="src/main/java/org/micromanager/autofocus/TCAAutofocus.java"/>
+	<import file="autofocusbuild.xml"/>
+</project>
