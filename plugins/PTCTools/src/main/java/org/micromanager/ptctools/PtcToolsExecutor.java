@@ -119,7 +119,7 @@ public class PtcToolsExecutor extends Thread {
          Datastore store = studio_.data().createRAMDatastore();
          final SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder();
          final Coords.Builder cb = Coordinates.builder();
-         Coords coords = cb.c(1).p(1).t(nrFrames).z(1).build();
+         Coords coords = cb.t(nrFrames).build();
          try {
             store.setSummaryMetadata(smb.intendedDimensions(coords).startDate(
                   new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())).build());
@@ -296,7 +296,7 @@ public class PtcToolsExecutor extends Thread {
 
    private void runSequence(CMMCore core, Datastore store, int nrFrames,
                             double exposure) throws Exception {
-      final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
+      final Coords.Builder cb = Coordinates.builder();
       core.setExposure(exposure);
       core.startSequenceAcquisition(nrFrames, 0.0, true);
       int frCounter = 0;
@@ -316,7 +316,7 @@ public class PtcToolsExecutor extends Thread {
 
    private void calculateAndAddToStack(ImageStack stack, Datastore store)
          throws IOException, OutOfMemoryError {
-      final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
+      final Coords.Builder cb = Coordinates.builder();
       int nrFrames = store.getNextIndex(Coords.T);
       ImageStack tmpStack = new ImageStack(stack.getWidth(), stack.getHeight());
       for (int i = 0; i < nrFrames; i++) {
@@ -339,10 +339,11 @@ public class PtcToolsExecutor extends Thread {
 
    private ExpMeanStdDev calcExpMeanStdDev(Datastore store) throws IOException {
       ExpMeanStdDev result = new ExpMeanStdDev();
-      final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
+      final Coords.Builder cb = Coordinates.builder();
       final int nrFrames = store.getNextIndex(Coords.T);
       if (nrFrames < 2) {
-         ReportingUtils.showError("Need at least 2 frames to calculate expected mean and standard deviation.");
+         ReportingUtils.showError(
+                  "Need at least 2 frames to calculate expected mean and standard deviation.");
          return result;
       }
       double[] means = new double[nrFrames - 1];
