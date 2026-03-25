@@ -58,6 +58,7 @@ public class PtcToolsFrame extends JFrame {
 
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
+   private JTextField descriptionTF_;
    private JTextField minExpTF_;
    private JTextField maxExpTF_;
    private JSpinner nrFramesSp_;
@@ -84,6 +85,9 @@ public class PtcToolsFrame extends JFrame {
 
       setLayout(new MigLayout("flowx"));
 
+      add(new JLabel(PtcToolsTerms.DESCRIPTION), "");
+      descriptionTF_ = new JTextField(settings_.getString(PtcToolsTerms.DESCRIPTION, ""));
+      add(descriptionTF_, "w 200, wrap");
       add(new JLabel(PtcToolsTerms.MINIMUMEXPOSURE), "");
       minExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE,
             "0.0"));
@@ -129,6 +133,7 @@ public class PtcToolsFrame extends JFrame {
    }
 
    private void storeSettings() {
+      settings_.putString(PtcToolsTerms.DESCRIPTION, descriptionTF_.getText());
       settings_.putString(PtcToolsTerms.MINIMUMEXPOSURE, minExpTF_.getText());
       settings_.putString(PtcToolsTerms.MAXIMUMEXPOSURE, maxExpTF_.getText());
       settings_.putInteger(PtcToolsTerms.NREXPOSURES, (int) nrExpSp_.getValue());

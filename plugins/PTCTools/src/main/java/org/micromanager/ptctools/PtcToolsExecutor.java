@@ -6,7 +6,7 @@
 //
 // AUTHOR:       Nico Stuurman
 //
-// COPYRIGHT:    University of California, San Francisco, 2018
+// COPYRIGHT:    University of California, San Francisco, 2018, 2025
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -25,6 +25,7 @@ package org.micromanager.ptctools;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.Plot;
 import ij.measure.ResultsTable;
 import ij.plugin.ZProjector;
 import ij.process.FloatProcessor;
@@ -65,12 +66,17 @@ public class PtcToolsExecutor extends Thread {
    private ImageStack stack_;
 
    /**
-    * Simple class to hold Avg. Intensity and StdDev of Avg. intensities
-    * for a stack of images at identical exposure time.  Used to
-    * estimate stability of light source
+    * Simple class to hold Avg. Intensity, StdDev of Avg. intensities,
+    * and Average of Std. Deviations for a stack of images at identical
+    * exposure time.
+    * Mean, meanStd_, and meanReadPlusShotNoise can be used to calculate
+    * the Photon Conversion Factor,
+    * stdDev_ can be used to estimate the stability of the light source.
     */
    private class ExpMeanStdDev {
       public double mean_;
+      public double meanStd_; // Std. Dev per image
+      public double meanReadPlusShotNoise_;
       public double stdDev_;
    }
 
@@ -145,6 +151,8 @@ public class PtcToolsExecutor extends Thread {
             rt.incrementCounter();
             rt.addValue("Exposure", 0.0);
             rt.addValue("Mean", cemsd.mean_);
+            rt.addValue("Noise", cemsd.meanStd_);
+            rt.addValue("Read+Shot Noise", cemsd.meanReadPlusShotNoise_);
             rt.addValue("Std.Dev", cemsd.stdDev_);
 
             store.freeze();
@@ -226,6 +234,8 @@ public class PtcToolsExecutor extends Thread {
                rt.incrementCounter();
                rt.addValue("Exposure", realExposure);
                rt.addValue("Mean", cemsd.mean_);
+               rt.addValue("Noise", cemsd.meanStd_);
+               rt.addValue("Read+Shot Noise", cemsd.meanReadPlusShotNoise_);
                rt.addValue("Std.Dev", cemsd.stdDev_);
                store.close();
             } catch (IOException ex) {
@@ -237,6 +247,7 @@ public class PtcToolsExecutor extends Thread {
          }
 
          rt.show("Results");
+         showPtcPlot();
          ij.IJ.showProgress(1.0);
          ImagePlus imp = new ImagePlus("PTCTools stack", stack_);
          imp.setDimensions(2, 1, stack_.getSize() / 2);
@@ -308,12 +319,8 @@ public class PtcToolsExecutor extends Thread {
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
       int nrFrames = store.getNextIndex(Coords.T);
       ImageStack tmpStack = new ImageStack(stack.getWidth(), stack.getHeight());
-      List<ShortProcessor> lc = new ArrayList<>(nrFrames);
       for (int i = 0; i < nrFrames; i++) {
-         ShortProcessor tmpShortProc = new ShortProcessor(stack.getWidth(),
-               stack.getHeight());
-         tmpShortProc.setPixels(store.getImage(cb.t(i).build()).getRawPixels());
-         tmpStack.addSlice(tmpShortProc);
+         tmpStack.addSlice(studio_.data().ij().createProcessor(store.getImage(cb.t(i).build())));
       }
       ZProjector zProj = new ZProjector(new ImagePlus("tmp", tmpStack));
       zProj.setMethod(ZProjector.AVG_METHOD);
@@ -334,15 +341,34 @@ public class PtcToolsExecutor extends Thread {
       ExpMeanStdDev result = new ExpMeanStdDev();
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
       final int nrFrames = store.getNextIndex(Coords.T);
-      double[] means = new double[nrFrames];
-      for (int i = 0; i < nrFrames; i++) {
+      double[] means = new double[nrFrames - 1];
+      double[] stdDevs = new double[nrFrames - 1];
+      double[] readPlusShotNoise = new double[nrFrames - 1];
+      ImageProcessor firstProc = studio_.data().ij().createProcessor(store.getImage(cb.build()));
+      FloatProcessor firstFloat = (FloatProcessor) firstProc.convertToFloat();
+      for (int i = 1; i < nrFrames; i++) {
          Image image = store.getImage(cb.t(i).build());
          ImageProcessor proc = studio_.data().ij().createProcessor(image);
          ImageStatistics stats = ImageStatistics.getStatistics(proc,
                ImageStatistics.MEAN, null);
-         means[i] = stats.mean;
+         means[i - 1] = stats.mean;
+         stdDevs[i - 1] = stats.stdDev;
+         FloatProcessor secondFloat = (FloatProcessor) proc.convertToFloat();
+         float[] firstPixels = (float[]) firstFloat.getPixels();
+         float[] secondPixels = (float[]) secondFloat.getPixels();
+         float[] diffPixels = new float[firstPixels.length];
+         for (int j = 0; j < firstPixels.length; j++) {
+            diffPixels[j] = secondPixels[j] - firstPixels[j];
+         }
+         FloatProcessor diffProc = new FloatProcessor(secondFloat.getWidth(),
+               secondFloat.getHeight(), diffPixels);
+         stats = ImageStatistics.getStatistics(diffProc, ImageStatistics.MEAN, null);
+         readPlusShotNoise[i - 1] = stats.stdDev / Math.sqrt(2);
+
       }
       result.mean_ = avg(means);
+      result.meanStd_ = avg(stdDevs);
+      result.meanReadPlusShotNoise_ = avg(readPlusShotNoise);
       result.stdDev_ = stdDev(means, result.mean_);
 
       return result;
@@ -368,6 +394,150 @@ public class PtcToolsExecutor extends Thread {
       result /= (numbers.length - 1);
 
       return Math.sqrt(result);
+   }
+
+   private void showPtcPlot() {
+      // First entry is the dark frame; use its mean as the offset to subtract
+      double darkMean = expMeanStdDev_.isEmpty() ? 0.0 : expMeanStdDev_.get(0).mean_;
+
+      // Collect mean and stdDev values, skipping entries where either is <= 0
+      // (log-log plot requires positive values); skip the dark frame itself (index 0)
+      List<Double> means = new ArrayList<>();
+      List<Double> stdDevs = new ArrayList<>();
+      for (int i = 1; i < expMeanStdDev_.size(); i++) {
+         ExpMeanStdDev emsd = expMeanStdDev_.get(i);
+         double correctedMean = emsd.mean_ - darkMean;
+         if (correctedMean > 0.0 && emsd.meanReadPlusShotNoise_ > 0.0) {
+            means.add(correctedMean);
+            stdDevs.add(emsd.meanReadPlusShotNoise_);
+         }
+      }
+      if (means.isEmpty()) {
+         return;
+      }
+
+      double[] logMeans = new double[means.size()];
+      double[] logStdDevs = new double[stdDevs.size()];
+      for (int i = 0; i < means.size(); i++) {
+         logMeans[i] = Math.log10(means.get(i));
+         logStdDevs[i] = Math.log10(stdDevs.get(i));
+      }
+
+      // Find the largest contiguous subset of points whose least-squares fitted slope
+      // is within tolerance of 0.5 (shot-noise dominated region), searching from high
+      // signal downward so that a noisy low-signal region is not selected in preference
+      // to the true shot-noise region.
+      final int MIN_POINTS = 3;
+      final double SLOPE_TOLERANCE = 0.15;
+      int bestStart = -1;
+      int bestEnd = -1;
+      double bestSlopeDiff = Double.MAX_VALUE;
+      int nPts = logMeans.length;
+      outer:
+      for (int end = nPts - 1; end >= MIN_POINTS - 1; end--) {
+         for (int start = end - MIN_POINTS + 1; start >= 0; start--) {
+            int len = end - start + 1;
+            double sumX = 0.0;
+            double sumY = 0.0;
+            double sumXX = 0.0;
+            double sumXY = 0.0;
+            for (int k = start; k <= end; k++) {
+               sumX += logMeans[k];
+               sumY += logStdDevs[k];
+               sumXX += logMeans[k] * logMeans[k];
+               sumXY += logMeans[k] * logStdDevs[k];
+            }
+            double denom = len * sumXX - sumX * sumX;
+            if (denom == 0.0) {
+               continue;
+            }
+            double slope = (len * sumXY - sumX * sumY) / denom;
+            double diff = Math.abs(slope - 0.5);
+            if (diff <= SLOPE_TOLERANCE) {
+               if (bestStart < 0 || len > (bestEnd - bestStart + 1)
+                     || (len == (bestEnd - bestStart + 1) && diff < bestSlopeDiff)) {
+                  bestSlopeDiff = diff;
+                  bestStart = start;
+                  bestEnd = end;
+               }
+               // Found a qualifying window ending at this 'end'; no need to
+               // extend further left for this end point
+               break;
+            }
+         }
+         // Once we have found a qualifying region, stop searching lower end points
+         if (bestStart >= 0) {
+            break outer;
+         }
+      }
+
+      Plot plot = new Plot("Photon Transfer Curve", "log10(Mean)", "log10(Std.Dev.)");
+      plot.addPoints(logMeans, logStdDevs, Plot.LINE);
+      plot.addPoints(logMeans, logStdDevs, Plot.CIRCLE);
+
+      String description = settings_.getString(PtcToolsTerms.DESCRIPTION, "");
+      String descriptionPrefix = description.isEmpty() ? "" : description + "\n";
+
+      if (bestStart < 0 || bestSlopeDiff > 0.15) {
+         plot.addLabel(0.05, 0.15, descriptionPrefix
+                  + "No shot-noise region found (slope \u2248 0.5).\n" // degree
+                  + "Try a wider exposure range.");
+      } else {
+         final int n = bestEnd - bestStart + 1;
+         double sumX = 0.0;
+         double sumY = 0.0;
+         double sumXX = 0.0;
+         double sumXY = 0.0;
+         for (int k = bestStart; k <= bestEnd; k++) {
+            sumX += logMeans[k];
+            sumY += logStdDevs[k];
+            sumXX += logMeans[k] * logMeans[k];
+            sumXY += logMeans[k] * logStdDevs[k];
+         }
+         final double slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+
+         // Gain: with slope fixed at 0.5: log(stdDev) = 0.5*log(mean) + b
+         // => stdDev^2 = mean / g  =>  g = 10^(-2*b)
+         double interceptFixed = (sumY - 0.5 * sumX) / n;
+         final double gain = Math.pow(10.0, -2.0 * interceptFixed);
+
+         // Extend the fitted line leftward until it reaches the minimum noise level
+         // (i.e. the lowest logStdDev in the data), and rightward to the last selected point
+         double minLogStdDev = Double.MAX_VALUE;
+         for (double v : logStdDevs) {
+            if (v < minLogStdDev) {
+               minLogStdDev = v;
+            }
+         }
+         // From line equation: logStdDev = 0.5 * logMean + interceptFixed
+         // => logMean = (logStdDev - interceptFixed) / 0.5
+         double xFitMin = (minLogStdDev - interceptFixed) / 0.5;
+         double xFitMax = logMeans[bestEnd];
+         double[] fitX = {xFitMin, xFitMax};
+         double[] fitY = {minLogStdDev, 0.5 * xFitMax + interceptFixed};
+         plot.setColor(java.awt.Color.RED);
+         plot.addPoints(fitX, fitY, Plot.LINE);
+         plot.setColor(java.awt.Color.BLACK);
+
+         double darkStdDev = expMeanStdDev_.get(0).meanReadPlusShotNoise_;
+         double readNoise = darkStdDev * gain;
+
+         // Draw a horizontal green line at the dark-frame noise level (read noise in ADU)
+         double logDarkStdDev = Math.log10(darkStdDev);
+         double[] rnX = {logMeans[0], logMeans[nPts - 1]};
+         double[] rnY = {logDarkStdDev, logDarkStdDev};
+         plot.setColor(java.awt.Color.GREEN);
+         plot.addPoints(rnX, rnY, Plot.LINE);
+         plot.setColor(java.awt.Color.BLACK);
+
+         plot.addLabel(0.05, 0.15,
+               String.format("%sShot-noise fit slope: %.3f\n"
+                        + "Gain (mean/\u03C3\u00B2): %.4f electron/ADU\n" // sigma squared
+                        + "Read noise: %.2f electrons",
+                     descriptionPrefix, slope, gain, readNoise));
+      }
+
+      plot.show();
    }
 
 
