@@ -54,6 +54,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class PtcToolsFrame extends JFrame {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
+   private static final String VERSION = "0.2";
    public static Boolean WINDOWOPEN = false;
 
    private final Studio studio_;
@@ -86,6 +87,7 @@ public class PtcToolsFrame extends JFrame {
 
       setLayout(new MigLayout("flowx"));
 
+      add(new JLabel("Photon Transfer Curve Tools version: " + VERSION), "span 2, wrap");
       add(new JLabel(PtcToolsTerms.DESCRIPTION), "");
       descriptionTF_ = new JTextField(settings_.getString(PtcToolsTerms.DESCRIPTION, ""));
       add(descriptionTF_, "w 200, wrap");
