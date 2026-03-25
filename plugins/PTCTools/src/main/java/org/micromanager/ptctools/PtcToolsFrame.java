@@ -63,6 +63,7 @@ public class PtcToolsFrame extends JFrame {
    private JTextField maxExpTF_;
    private JSpinner nrFramesSp_;
    private JSpinner nrExpSp_;
+   private JSpinner spacingExpSp_;
 
 
    public PtcToolsFrame(Studio studio) {
@@ -106,6 +107,11 @@ public class PtcToolsFrame extends JFrame {
       nrFramesSp_.setModel(new SpinnerNumberModel(
             settings_.getInteger(PtcToolsTerms.NRFRAMES, 100), 1, null, 1));
       add(nrFramesSp_, "w 60, wrap");
+      add(new JLabel(PtcToolsTerms.SPACINGEXPONENT), "");
+      spacingExpSp_ = new JSpinner();
+      spacingExpSp_.setModel(new SpinnerNumberModel(
+            settings_.getDouble(PtcToolsTerms.SPACINGEXPONENT, 0.5), 0.05, 2.0, 0.05));
+      add(spacingExpSp_, "w 60, wrap");
 
       JFrame ptf = this;
       JButton helpButton = new JButton("Help");
@@ -138,6 +144,7 @@ public class PtcToolsFrame extends JFrame {
       settings_.putString(PtcToolsTerms.MAXIMUMEXPOSURE, maxExpTF_.getText());
       settings_.putInteger(PtcToolsTerms.NREXPOSURES, (int) nrExpSp_.getValue());
       settings_.putInteger(PtcToolsTerms.NRFRAMES, (int) nrFramesSp_.getValue());
+      settings_.putDouble(PtcToolsTerms.SPACINGEXPONENT, (double) spacingExpSp_.getValue());
       settings_.putInteger(PtcToolsTerms.WINDOWX, this.getX());
       settings_.putInteger(PtcToolsTerms.WINDOWY, this.getY());
    }

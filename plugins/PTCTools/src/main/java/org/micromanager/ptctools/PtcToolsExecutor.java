@@ -194,10 +194,10 @@ public class PtcToolsExecutor extends Thread {
          if (minExposure <= 0.0) {
             minExposure = 0.1;
          }
+         double spacingExponent = settings_.getDouble(PtcToolsTerms.SPACINGEXPONENT, 0.5);
          double[] exposures = new double[nrExposures];
          double minExpLog = Math.log(minExposure);
          double maxExpLog = Math.log(maxExposure);
-         double expLogStep = (maxExpLog - minExpLog) / (nrExposures - 1);
 
          for (int i = 0; i < nrExposures; i++) {
             final int nr = i;
@@ -209,7 +209,9 @@ public class PtcToolsExecutor extends Thread {
                studio_.logs().logError(ex);
             }
 
-            exposures[i] = Math.exp(minExpLog + i * expLogStep);
+            // Power-law skew: t=1 gives pure log spacing, t>1 clusters points near max
+            double t = Math.pow((double) i / (nrExposures - 1), spacingExponent);
+            exposures[i] = Math.exp(minExpLog + t * (maxExpLog - minExpLog));
 
             Datastore store = studio_.data().createRAMDatastore();
             try {
@@ -355,7 +357,7 @@ public class PtcToolsExecutor extends Thread {
          Image image = store.getImage(cb.t(i).build());
          ImageProcessor proc = studio_.data().ij().createProcessor(image);
          ImageStatistics stats = ImageStatistics.getStatistics(proc,
-               ImageStatistics.MEAN, null);
+               ImageStatistics.MEAN | ImageStatistics.STD_DEV, null);
          means[i - 1] = stats.mean;
          stdDevs[i - 1] = stats.stdDev;
          FloatProcessor secondFloat = (FloatProcessor) proc.convertToFloat();
@@ -367,7 +369,8 @@ public class PtcToolsExecutor extends Thread {
          }
          FloatProcessor diffProc = new FloatProcessor(secondFloat.getWidth(),
                secondFloat.getHeight(), diffPixels);
-         stats = ImageStatistics.getStatistics(diffProc, ImageStatistics.MEAN, null);
+         stats = ImageStatistics.getStatistics(diffProc,
+                  ImageStatistics.MEAN | ImageStatistics.STD_DEV, null);
          readPlusShotNoise[i - 1] = stats.stdDev / Math.sqrt(2);
 
       }
@@ -406,15 +409,19 @@ public class PtcToolsExecutor extends Thread {
       double darkMean = expMeanStdDev_.isEmpty() ? 0.0 : expMeanStdDev_.get(0).mean_;
 
       // Collect mean and stdDev values, skipping entries where either is <= 0
-      // (log-log plot requires positive values); skip the dark frame itself (index 0)
+      // (log-log plot requires positive values); skip the dark frame itself (index 0).
+      // Entries with zero or negative noise are typically saturated frames — log and skip.
+      // ptcIndex[plotIdx] maps each plot array index back to the original expMeanStdDev_ index.
       List<Double> means = new ArrayList<>();
       List<Double> stdDevs = new ArrayList<>();
+      List<Integer> ptcIndex = new ArrayList<>();
       for (int i = 1; i < expMeanStdDev_.size(); i++) {
          ExpMeanStdDev emsd = expMeanStdDev_.get(i);
          double correctedMean = emsd.mean_ - darkMean;
          if (correctedMean > 0.0 && emsd.meanReadPlusShotNoise_ > 0.0) {
             means.add(correctedMean);
             stdDevs.add(emsd.meanReadPlusShotNoise_);
+            ptcIndex.add(i);
          }
       }
       if (means.isEmpty()) {
@@ -432,14 +439,24 @@ public class PtcToolsExecutor extends Thread {
       // is within tolerance of 0.5 (shot-noise dominated region), searching from high
       // signal downward so that a noisy low-signal region is not selected in preference
       // to the true shot-noise region.
+      // For each candidate 'end' point, extend leftward as far as the slope stays within
+      // tolerance to maximise the number of points used in the fit.
       final int MIN_POINTS = 3;
       final double SLOPE_TOLERANCE = 0.15;
+      // When extending a window leftward, stop if the slope degrades more than this
+      // amount from the best slope seen so far in that window.
+      final double EXTENSION_DEGRADATION = 0.01;
       int bestStart = -1;
       int bestEnd = -1;
       double bestSlopeDiff = Double.MAX_VALUE;
       int nPts = logMeans.length;
-      outer:
+      // For each candidate end point (high signal first), find the longest contiguous
+      // window ending there whose fitted slope is within tolerance of 0.5.
+      // Among all end points, pick the window whose slope is closest to 0.5.
+      // Ties are broken by preferring the longer window, then the higher end index.
       for (int end = nPts - 1; end >= MIN_POINTS - 1; end--) {
+         int candidateStart = -1;
+         double candidateSlopeDiff = Double.MAX_VALUE;
          for (int start = end - MIN_POINTS + 1; start >= 0; start--) {
             int len = end - start + 1;
             double sumX = 0.0;
@@ -458,22 +475,34 @@ public class PtcToolsExecutor extends Thread {
             }
             double slope = (len * sumXY - sumX * sumY) / denom;
             double diff = Math.abs(slope - 0.5);
-            if (diff <= SLOPE_TOLERANCE) {
-               if (bestStart < 0 || len > (bestEnd - bestStart + 1)
-                     || (len == (bestEnd - bestStart + 1) && diff < bestSlopeDiff)) {
-                  bestSlopeDiff = diff;
-                  bestStart = start;
-                  bestEnd = end;
+            if (diff <= SLOPE_TOLERANCE
+                  && diff <= candidateSlopeDiff + EXTENSION_DEGRADATION) {
+               // Extend the window left; track the best (minimum) slope diff seen
+               candidateStart = start;
+               if (diff < candidateSlopeDiff) {
+                  candidateSlopeDiff = diff;
                }
-               // Found a qualifying window ending at this 'end'; no need to
-               // extend further left for this end point
+            } else if (candidateStart >= 0) {
+               // Slope drifted out of tolerance or degraded too much — stop extending
                break;
             }
          }
-         // Once we have found a qualifying region, stop searching lower end points
-         if (bestStart >= 0) {
-            break outer;
+         if (candidateStart >= 0) {
+            int candidateLen = end - candidateStart + 1;
+            int bestLen = bestStart >= 0 ? bestEnd - bestStart + 1 : 0;
+            if (candidateSlopeDiff < bestSlopeDiff
+                  || (candidateSlopeDiff == bestSlopeDiff && candidateLen > bestLen)) {
+               bestStart = candidateStart;
+               bestEnd = end;
+               bestSlopeDiff = candidateSlopeDiff;
+            }
          }
+      }
+      if (bestStart >= 0) {
+         studio_.logs().logMessage(String.format(
+               "PTC fit: selected PTC points %d–%d (%d points), slopeDiff=%.4f",
+               ptcIndex.get(bestStart), ptcIndex.get(bestEnd),
+               bestEnd - bestStart + 1, bestSlopeDiff));
       }
 
       Plot plot = new Plot("Photon Transfer Curve", "log10(Mean)", "log10(Std.Dev.)");
