@@ -102,12 +102,12 @@ public class PtcToolsFrame extends JFrame {
       add(new JLabel(PtcToolsTerms.NREXPOSURES), "");
       nrExpSp_ = new JSpinner();
       nrExpSp_.setModel(new SpinnerNumberModel(
-            settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30), 1, null, 1));
+            settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30), 2, null, 1));
       add(nrExpSp_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.NRFRAMES), "");
       nrFramesSp_ = new JSpinner();
       nrFramesSp_.setModel(new SpinnerNumberModel(
-            settings_.getInteger(PtcToolsTerms.NRFRAMES, 100), 1, null, 1));
+            settings_.getInteger(PtcToolsTerms.NRFRAMES, 50), 1, null, 1));
       add(nrFramesSp_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.SPACINGEXPONENT), "");
       spacingExpSp_ = new JSpinner();

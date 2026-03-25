@@ -233,11 +233,21 @@ public class PtcToolsExecutor extends Thread {
                   return;
                }
                expMeanStdDev_.add(cemsd);
+               final int previousRow = rt.getCounter();
                rt.incrementCounter();
                rt.addValue("Exposure", realExposure);
                rt.addValue("Mean", cemsd.mean_);
                rt.addValue("Noise", cemsd.meanStd_);
                rt.addValue("Read+Shot Noise", cemsd.meanReadPlusShotNoise_);
+               if (i > 0) {
+                  rt.addValue("ADU Estimate",
+                           cemsd.mean_
+                                 / (cemsd.meanReadPlusShotNoise_ * cemsd.meanReadPlusShotNoise_));
+                  rt.addValue("Local Slope", ((Math.log(cemsd.meanReadPlusShotNoise_)
+                           - Math.log(rt.getValue("Read+Shot Noise", previousRow - 1))))
+                           / (Math.log(cemsd.mean_) - Math.log(rt.getValue(
+                                    "Mean", previousRow - 1))));
+               }
                rt.addValue("Std.Dev", cemsd.stdDev_);
                store.close();
             } catch (IOException ex) {
@@ -352,7 +362,8 @@ public class PtcToolsExecutor extends Thread {
       double[] stdDevs = new double[nrFrames - 1];
       double[] readPlusShotNoise = new double[nrFrames - 1];
       ImageProcessor firstProc = studio_.data().ij().createProcessor(store.getImage(cb.build()));
-      FloatProcessor firstFloat = (FloatProcessor) firstProc.convertToFloat();
+      float[] firstPixels = (float[]) ((FloatProcessor) firstProc.convertToFloat()).getPixels();
+      final int nPixels = firstPixels.length;
       for (int i = 1; i < nrFrames; i++) {
          Image image = store.getImage(cb.t(i).build());
          ImageProcessor proc = studio_.data().ij().createProcessor(image);
@@ -360,19 +371,19 @@ public class PtcToolsExecutor extends Thread {
                ImageStatistics.MEAN | ImageStatistics.STD_DEV, null);
          means[i - 1] = stats.mean;
          stdDevs[i - 1] = stats.stdDev;
-         FloatProcessor secondFloat = (FloatProcessor) proc.convertToFloat();
-         float[] firstPixels = (float[]) firstFloat.getPixels();
-         float[] secondPixels = (float[]) secondFloat.getPixels();
-         float[] diffPixels = new float[firstPixels.length];
-         for (int j = 0; j < firstPixels.length; j++) {
-            diffPixels[j] = secondPixels[j] - firstPixels[j];
-         }
-         FloatProcessor diffProc = new FloatProcessor(secondFloat.getWidth(),
-               secondFloat.getHeight(), diffPixels);
-         stats = ImageStatistics.getStatistics(diffProc,
-                  ImageStatistics.MEAN | ImageStatistics.STD_DEV, null);
-         readPlusShotNoise[i - 1] = stats.stdDev / Math.sqrt(2);
 
+         // Compute stdDev of (second - first) incrementally via Welford's algorithm,
+         // avoiding allocation of a diff array and a FloatProcessor per frame.
+         float[] secondPixels = (float[]) ((FloatProcessor) proc.convertToFloat()).getPixels();
+         double wMean = 0.0;
+         double wM2 = 0.0;
+         for (int j = 0; j < nPixels; j++) {
+            double diff = secondPixels[j] - firstPixels[j];
+            double delta = diff - wMean;
+            wMean += delta / (j + 1);
+            wM2 += delta * (diff - wMean);
+         }
+         readPlusShotNoise[i - 1] = Math.sqrt(wM2 / (nPixels - 1)) / Math.sqrt(2);
       }
       result.mean_ = avg(means);
       result.meanStd_ = avg(stdDevs);
@@ -442,10 +453,10 @@ public class PtcToolsExecutor extends Thread {
       // For each candidate 'end' point, extend leftward as far as the slope stays within
       // tolerance to maximise the number of points used in the fit.
       final int MIN_POINTS = 3;
-      final double SLOPE_TOLERANCE = 0.15;
+      final double SLOPE_TOLERANCE = 0.050;
       // When extending a window leftward, stop if the slope degrades more than this
       // amount from the best slope seen so far in that window.
-      final double EXTENSION_DEGRADATION = 0.01;
+      final double EXTENSION_DEGRADATION = 0.001;
       int bestStart = -1;
       int bestEnd = -1;
       double bestSlopeDiff = Double.MAX_VALUE;
