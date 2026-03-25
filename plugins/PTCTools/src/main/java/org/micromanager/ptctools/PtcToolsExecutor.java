@@ -341,6 +341,10 @@ public class PtcToolsExecutor extends Thread {
       ExpMeanStdDev result = new ExpMeanStdDev();
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
       final int nrFrames = store.getNextIndex(Coords.T);
+      if (nrFrames < 2) {
+         ReportingUtils.showError("Need at least 2 frames to calculate expected mean and standard deviation.");
+         return result;
+      }
       double[] means = new double[nrFrames - 1];
       double[] stdDevs = new double[nrFrames - 1];
       double[] readPlusShotNoise = new double[nrFrames - 1];
