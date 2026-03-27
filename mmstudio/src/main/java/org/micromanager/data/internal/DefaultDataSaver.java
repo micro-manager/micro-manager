@@ -173,11 +173,15 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
             Thread.sleep(100);
          } catch (InterruptedException e) {
             timeOut = true;
-            studio.logs().logError(e);
+            if (studio != null) {
+               studio.logs().logError(e);
+            }
          }
       }
       if (timeOut) {
-         studio.logs().showError("Failed to save data");
+         if (studio != null) {
+            studio.logs().showError("Failed to save data");
+         }
          return null;
       }
       for (Coords coords : tmp) {
@@ -208,10 +212,14 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       try {
          get();
       } catch (ExecutionException | InterruptedException e) {
-         studio.logs().showError(e, "Failed to save to " + path_);
+         if (studio != null) {
+            studio.logs().showError(e, "Failed to save to " + path_);
+         }
       }
 
-      studio.alerts().postAlert("Finished saving", this.getClass(), path_);
+      if (studio != null) {
+         studio.alerts().postAlert("Finished saving", this.getClass(), path_);
+      }
    }
 
 

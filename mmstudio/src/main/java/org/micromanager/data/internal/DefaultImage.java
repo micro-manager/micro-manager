@@ -413,7 +413,7 @@ public final class DefaultImage implements Image {
       if (pixelType_ == PixelType.GRAY32) {
          int pixelIndex = y * pixelWidth_ + x;
          float val = ((FloatBuffer) rawPixels_).get(pixelIndex);
-         return String.format("%.6g", val);
+         return String.format(java.util.Locale.US, "%.6g", val);
       }
       if (getNumComponents() == 1) {
          return String.format("%d", getIntensityAt(x, y));

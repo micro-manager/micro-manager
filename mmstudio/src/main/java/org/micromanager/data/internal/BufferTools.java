@@ -145,7 +145,6 @@ public final class BufferTools {
          return Arrays.copyOf(arr, arr.length);
       } else if (rawPixels instanceof FloatBuffer) {
          FloatBuffer buf = (FloatBuffer) rawPixels;
-         buf.rewind();
          ByteBuffer bb = ByteBuffer.allocate(buf.remaining() * 4);
          while (buf.hasRemaining()) {
             bb.putFloat(buf.get());

@@ -938,7 +938,7 @@ public final class MultipageTiffWriter {
                   cds.getComponentSettings(0).getScalingMinimum());
             bufferPosition += 8;
             mdBuffer.putDouble(bufferPosition, (double)
-                  cds.getComponentSettings(0).getScalingMinimum());
+                  cds.getComponentSettings(0).getScalingMaximum());
             bufferPosition += 8;
          }
       } else {

@@ -194,7 +194,7 @@ public final class ImageStatsProcessor {
                nComponents, bitDepth, binCountPowerOf2,
                useROI, index);
       } else if (bytesPerSample == 4 && nComponents == 1) {
-         result = computeFloatStats(image, statsBounds, useROI, index);
+         result = computeFloatStats(image, statsBounds, maskBytes, maskBounds, useROI, index);
       }
 
       if (perfMon_ != null) {
@@ -205,6 +205,7 @@ public final class ImageStatsProcessor {
    }
 
    private ImageStats computeFloatStats(Image image, java.awt.Rectangle statsBounds,
+                                        byte[] maskBytes, java.awt.Rectangle maskBounds,
                                         boolean useROI, int index) {
       float[] pixels = (float[]) image.getRawPixels();
       int width = image.getWidth();
@@ -213,9 +214,15 @@ public final class ImageStatsProcessor {
       long count = 0;
       double sum = 0.0;
 
-      // First pass: find min/max (ignoring NaN and Infinity)
+      // First pass: find min/max (ignoring NaN, Infinity, and masked-out pixels)
       for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
          for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
+            if (maskBytes != null) {
+               int maskIdx = (y - maskBounds.y) * maskBounds.width + (x - maskBounds.x);
+               if ((maskBytes[maskIdx] & 0xff) < MASK_THRESH) {
+                  continue;
+               }
+            }
             float v = pixels[y * width + x];
             if (Float.isNaN(v) || Float.isInfinite(v)) {
                continue;
@@ -278,6 +285,12 @@ public final class ImageStatsProcessor {
       float range = fMax - fMin;
       for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
          for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
+            if (maskBytes != null) {
+               int maskIdx = (y - maskBounds.y) * maskBounds.width + (x - maskBounds.x);
+               if ((maskBytes[maskIdx] & 0xff) < MASK_THRESH) {
+                  continue;
+               }
+            }
             float v = pixels[y * width + x];
             if (Float.isNaN(v) || Float.isInfinite(v)) {
                continue;

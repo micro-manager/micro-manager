@@ -59,7 +59,10 @@ public class ManualTiffTest {
     * Path for one of the file sets we use. This is a manually-created (i.e.
     * not using MDA) singleplane TIFF acquisition.
     */
-   private static final String ALPHA2_PATH = System.getProperty("user.dir") + "\\src\\test\\resources\\org\\micromanager\\data\\internal\\alpha_2.0_singleplane_manual";
+   private static final String ALPHA2_PATH = java.nio.file.Paths.get(
+         System.getProperty("user.dir"),
+         "src", "test", "resources", "org", "micromanager", "data", "internal",
+         "alpha_2.0_singleplane_manual").toString();
 
    private static final String COMMENT_KEY = "comment";
    private static final String IMAGE_COMMENT = "This is an image comment";
