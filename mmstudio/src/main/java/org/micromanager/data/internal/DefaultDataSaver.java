@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.micromanager.Studio;
 import org.micromanager.data.Annotation;
@@ -50,7 +51,11 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       duplicate_ = new DefaultDatastore(this.studio);
 
       if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         saver_ = new StorageMultipageTiff(studio.app().getMainWindow(),
+         JFrame frame = null;
+         if (studio != null) {
+            frame = studio.app().getMainWindow();
+         }
+         saver_ = new StorageMultipageTiff(frame,
                duplicate_,
                path_, true, true,
                StorageMultipageTiff.getShouldSplitPositions());

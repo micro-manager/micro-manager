@@ -734,6 +734,9 @@ public final class StorageMultipageTiff implements Storage {
     */
    DisplaySettings getDisplaySettings() {
       MMStudio studio = MMStudio.getInstance();
+      if (studio == null) {
+         return null;
+      }
       DataViewer activeDataViewer = studio.displays().getActiveDataViewer();
       try {
          if (activeDataViewer != null && isViewingOurStore(activeDataViewer)) {
@@ -1074,8 +1077,11 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public static boolean getShouldGenerateMetadataFile() {
-      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
-            .getBoolean(SHOULD_GENERATE_METADATA_FILE, true);
+      if (MMStudio.getInstance() != null) {
+         return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
+                  .getBoolean(SHOULD_GENERATE_METADATA_FILE, true);
+      }
+      return true;
    }
 
    public static void setShouldGenerateMetadataFile(boolean shouldGen) {
@@ -1084,8 +1090,11 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public static boolean getShouldSplitPositions() {
-      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
-            .getBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
+      if (MMStudio.getInstance() != null) {
+         return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
+                  .getBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
+      }
+      return true;
    }
 
    public static void setShouldSplitPositions(boolean shouldSplit) {

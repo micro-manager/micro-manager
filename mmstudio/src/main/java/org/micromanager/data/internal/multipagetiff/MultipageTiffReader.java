@@ -627,6 +627,14 @@ public final class MultipageTiffReader {
                img = new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
                break;
             }
+            case GRAY32: {
+               pixelBuffer.rewind();
+               java.nio.FloatBuffer fb = pixelBuffer.order(byteOrder_).asFloatBuffer();
+               float[] pixels32 = new float[fb.capacity()];
+               fb.get(pixels32);
+               img = new DefaultImage(pixels32, formatPmap, coords, metadata);
+               break;
+            }
             default:
                throw new IOException("Unknown pixel type: " + pixelType.name());
          }

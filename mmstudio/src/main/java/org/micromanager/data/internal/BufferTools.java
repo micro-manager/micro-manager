@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Arrays;
@@ -29,6 +30,11 @@ public final class BufferTools {
 
    public static IntBuffer directBufferFromInts(int[] ints) {
       return ByteBuffer.allocateDirect(4 * ints.length).order(NATIVE_ORDER).asIntBuffer().put(ints);
+   }
+
+   public static FloatBuffer directBufferFromFloats(float[] floats) {
+      return ByteBuffer.allocateDirect(4 * floats.length).order(NATIVE_ORDER).asFloatBuffer()
+            .put(floats);
    }
 
    /**
@@ -82,6 +88,15 @@ public final class BufferTools {
     * @param buffer Direct Buffer to be copied.
     * @return Copy of the Buffer as a Java array
     */
+   public static float[] floatsFromBuffer(FloatBuffer buffer) {
+      synchronized (buffer) {
+         float[] floats = new float[buffer.capacity()];
+         buffer.rewind();
+         buffer.get(floats);
+         return floats;
+      }
+   }
+
    public static Object arrayFromBuffer(Buffer buffer) {
       synchronized (buffer) {
          if (buffer instanceof ByteBuffer) {
@@ -90,6 +105,8 @@ public final class BufferTools {
             return shortsFromBuffer((ShortBuffer) buffer);
          } else if (buffer instanceof IntBuffer) {
             return intsFromBuffer((IntBuffer) buffer);
+         } else if (buffer instanceof FloatBuffer) {
+            return floatsFromBuffer((FloatBuffer) buffer);
          }
       }
       return null;
@@ -126,6 +143,16 @@ public final class BufferTools {
       } else if (rawPixels instanceof ByteBuffer) {
          byte[] arr = ((ByteBuffer) rawPixels).array();
          return Arrays.copyOf(arr, arr.length);
+      } else if (rawPixels instanceof FloatBuffer) {
+         FloatBuffer buf = (FloatBuffer) rawPixels;
+         buf.rewind();
+         ByteBuffer bb = ByteBuffer.allocate(buf.remaining() * 4);
+         while (buf.hasRemaining()) {
+            bb.putFloat(buf.get());
+         }
+         buf.rewind();
+         byte[] arr = bb.array();
+         return Arrays.copyOf(arr, arr.length);
       } else {
          throw new RuntimeException(("Unhandled Case."));
       }
@@ -144,6 +171,8 @@ public final class BufferTools {
          return directBufferFromShorts((short[]) primitiveArray);
       } else if (primitiveArray instanceof int[]) {
          return directBufferFromInts((int[]) primitiveArray);
+      } else if (primitiveArray instanceof float[]) {
+         return directBufferFromFloats((float[]) primitiveArray);
       }
       return null;
    }
@@ -193,6 +222,9 @@ public final class BufferTools {
             break;
          case 2:
             buffer = ShortBuffer.wrap((short[]) pixels);
+            break;
+         case 4:
+            buffer = FloatBuffer.wrap((float[]) pixels);
             break;
          default:
             throw new UnsupportedOperationException("Unimplemented pixel component size");

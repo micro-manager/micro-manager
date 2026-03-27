@@ -193,6 +193,8 @@ public final class ImageStatsProcessor {
                mask,
                nComponents, bitDepth, binCountPowerOf2,
                useROI, index);
+      } else if (bytesPerSample == 4 && nComponents == 1) {
+         result = computeFloatStats(image, statsBounds, useROI, index);
       }
 
       if (perfMon_ != null) {
@@ -200,6 +202,114 @@ public final class ImageStatsProcessor {
       }
 
       return result; // null if we don't know how to compute (TODO FIX)
+   }
+
+   private ImageStats computeFloatStats(Image image, java.awt.Rectangle statsBounds,
+                                        boolean useROI, int index) {
+      float[] pixels = (float[]) image.getRawPixels();
+      int width = image.getWidth();
+      float fMin = Float.MAX_VALUE;
+      float fMax = -Float.MAX_VALUE;
+      long count = 0;
+      double sum = 0.0;
+
+      // First pass: find min/max (ignoring NaN and Infinity)
+      for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
+         for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
+            float v = pixels[y * width + x];
+            if (Float.isNaN(v) || Float.isInfinite(v)) {
+               continue;
+            }
+            count++;
+            sum += v;
+            if (v < fMin) {
+               fMin = v;
+            }
+            if (v > fMax) {
+               fMax = v;
+            }
+         }
+      }
+      if (count == 0) {
+         fMin = 0.0f;
+         fMax = 0.0f;
+      }
+
+      // Second pass: build histogram.
+      // For non-negative floats, build in actual pixel-value coordinates so that
+      // bin i covers [i*binWidth, (i+1)*binWidth). This ensures that histogram
+      // bin coordinates equal pixel values, which is what the display framework
+      // assumes when applying the LUT min/max to the ImageJ FloatProcessor.
+      // For negative floats (unusual in microscopy), fall back to a 256-bin
+      // normalized histogram (bin coords differ from pixel values in that case).
+      final int N_BINS = 256;
+      final boolean nonnegative = (fMin >= 0.0f);
+
+      final int binWidthPow2;
+      final long histMin;
+      final long histMax;
+      if (nonnegative) {
+         // Choose the smallest power-of-2 bin width that keeps at most N_BINS bins
+         // spanning [0, ceil(fMax)].
+         long intRange = (long) Math.ceil(fMax) + 1;
+         int bw = 0;
+         while (((intRange + ((1L << bw) - 1)) >> bw) > N_BINS) {
+            bw++;
+         }
+         binWidthPow2 = bw;
+         histMin = (long) fMin;
+         histMax = (long) Math.ceil(fMax);
+      } else {
+         binWidthPow2 = 0;
+         histMin = (long) fMin;
+         histMax = (long) Math.ceil(fMax);
+      }
+
+      int binWidth = 1 << binWidthPow2;
+      int nBins;
+      if (nonnegative) {
+         nBins = (int) (((long) Math.ceil(fMax) + binWidth) >> binWidthPow2);
+         nBins = Math.max(1, Math.min(nBins, N_BINS));
+      } else {
+         nBins = N_BINS;
+      }
+      long[] hist = new long[nBins + 2]; // [0]=underflow, [1..nBins]=in-range, [nBins+1]=overflow
+
+      float range = fMax - fMin;
+      for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
+         for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
+            float v = pixels[y * width + x];
+            if (Float.isNaN(v) || Float.isInfinite(v)) {
+               continue;
+            }
+            int bin;
+            if (nonnegative) {
+               bin = 1 + (int) (v / binWidth);
+               bin = Math.max(1, Math.min(nBins, bin));
+            } else {
+               if (range == 0.0f) {
+                  bin = 1;
+               } else {
+                  bin = 1 + (int) ((v - fMin) / range * (N_BINS - 1));
+                  bin = Math.max(1, Math.min(N_BINS, bin));
+               }
+            }
+            hist[bin]++;
+         }
+      }
+
+      IntegerComponentStats stats = IntegerComponentStats.builder()
+            .histogram(hist, binWidthPow2)
+            .pixelCount(count)
+            .pixelCountExcludingZeros(count)
+            .usedROI(useROI)
+            .minimum(histMin)
+            .minimumExcludingZeros(histMin)
+            .maximum(histMax)
+            .sum((long) sum)
+            .sumOfSquares(0L)
+            .build();
+      return ImageStats.create(index, stats);
    }
 
    private <T extends IntegerType<T>> ImageStats compute(

@@ -448,7 +448,21 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          }
          long[] data = componentStats.getInRangeHistogram();
          if (data != null) {
-            int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
+            // For 32-bit float images (cameraBits == 32), the histogram is built in
+            // actual pixel-value coordinates with a data-driven number of bins.
+            // Use data.length directly so the X-axis spans the actual pixel range.
+            // For integer images, clamp to (1<<rangeBits)-1 as before, but cap
+            // rangeBits at 30 to avoid Java int-shift overflow (1<<32 == 1).
+            int lengthToUse;
+            if (rangeBits >= 32) {
+               lengthToUse = data.length;
+            } else {
+               int clampedRangeBits = Math.min(rangeBits, 30);
+               lengthToUse = Math.min(data.length, (1 << clampedRangeBits) - 1);
+            }
+            if (lengthToUse <= 0) {
+               lengthToUse = data.length; // safety fallback
+            }
             histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
             histogram_.setROIIndicator(componentStats.isROIStats());
          }
