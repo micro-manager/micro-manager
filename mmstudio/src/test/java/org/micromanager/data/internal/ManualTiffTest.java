@@ -194,6 +194,150 @@ public class ManualTiffTest {
       testTIFFSaveLoad(Datastore.SaveMode.MULTIPAGE_TIFF);
    }
 
+   @Test
+   public void testSinglePlaneTIFFSaveLoadByte() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, PixelTypeCase.GRAY8);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoadByte() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.MULTIPAGE_TIFF, PixelTypeCase.GRAY8);
+   }
+
+   @Test
+   public void testSinglePlaneTIFFSaveLoadShort() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, PixelTypeCase.GRAY16);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoadShort() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.MULTIPAGE_TIFF, PixelTypeCase.GRAY16);
+   }
+
+   @Test
+   public void testSinglePlaneTIFFSaveLoadFloat() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, PixelTypeCase.GRAY32);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoadFloat() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.MULTIPAGE_TIFF, PixelTypeCase.GRAY32);
+   }
+
+   @Test
+   public void testSinglePlaneTIFFSaveLoadRGB() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, PixelTypeCase.RGB32);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoadRGB() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.MULTIPAGE_TIFF, PixelTypeCase.RGB32);
+   }
+
+   private enum PixelTypeCase {
+      GRAY8, GRAY16, GRAY32, RGB32
+   }
+
+   private Image makeTestImage(PixelTypeCase type, Coords coords, Metadata metadata) {
+      final int width = 24;
+      final int height = 16;
+      switch (type) {
+         case GRAY8: {
+            byte[] pixels = new byte[width * height];
+            for (int i = 0; i < height; ++i) {
+               for (int j = 0; j < width; ++j) {
+                  pixels[i * width + j] = (byte) (i * 10 + j);
+               }
+            }
+            return new DefaultImage(pixels, width, height, 1, 1, coords, metadata);
+         }
+         case GRAY16: {
+            short[] pixels = new short[width * height];
+            for (int i = 0; i < height; ++i) {
+               for (int j = 0; j < width; ++j) {
+                  pixels[i * width + j] = (short) (i * 100 + j);
+               }
+            }
+            return new DefaultImage(pixels, width, height, 2, 1, coords, metadata);
+         }
+         case GRAY32: {
+            float[] pixels = new float[width * height];
+            for (int i = 0; i < height; ++i) {
+               for (int j = 0; j < width; ++j) {
+                  pixels[i * width + j] = (i - height / 2) * 10.5f + j * 0.1f;
+               }
+            }
+            return new DefaultImage(pixels, width, height, 4, 1, coords, metadata);
+         }
+         case RGB32: {
+            int[] pixels = new int[width * height];
+            for (int i = 0; i < height; ++i) {
+               for (int j = 0; j < width; ++j) {
+                  int r = (i * 5) & 0xFF;
+                  int g = (j * 7) & 0xFF;
+                  int b = ((i + j) * 3) & 0xFF;
+                  pixels[i * width + j] = (r << 16) | (g << 8) | b;
+               }
+            }
+            return new DefaultImage(pixels, width, height, 4, 3, coords, metadata);
+         }
+         default:
+            throw new IllegalArgumentException("Unknown pixel type: " + type);
+      }
+   }
+
+   private Metadata metadataForPixelType(PixelTypeCase type) {
+      Metadata.Builder base = IMAGES.get(ALPHA2_PATH).get(0).getMetadata().copyBuilderWithNewUUID();
+      switch (type) {
+         case GRAY8:  return base.bitDepth(8).build();
+         case GRAY16: return base.bitDepth(16).build();
+         case GRAY32: return base.bitDepth(32).build();
+         case RGB32:  return base.bitDepth(8).build();
+         default:     return base.build();
+      }
+   }
+
+   private void testTIFFSaveLoadPixelType(Datastore.SaveMode saveMode, PixelTypeCase type) {
+      DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
+      Coords coords = manager.getCoordsBuilder().z(0).time(0).channel(0).stagePosition(0).build();
+      Metadata metadata = metadataForPixelType(type);
+      Image image = makeTestImage(type, coords, metadata);
+      HelperImageInfo info = new HelperImageInfo(coords, metadata,
+            HelperImageInfo.hashPixels(image));
+
+      Datastore store = manager.createRAMDatastore();
+      try {
+         store.setSummaryMetadata(SUMMARIES.get(ALPHA2_PATH));
+         store.putImage(image);
+      } catch (DatastoreFrozenException e) {
+         Assert.fail("Unable to add images or set summary metadata: " + e);
+      } catch (DatastoreRewriteException e) {
+         Assert.fail("Unable to add images or set summary metadata: " + e);
+      } catch (IOException io) {
+         Assert.fail("IOException while adding image to store " + io);
+      }
+
+      File tempDir = Files.createTempDir();
+      String path = tempDir.getPath() + "/test";
+      try {
+         store.save(saveMode, path);
+         store.setSavePath(path);
+      } catch (Exception e) {
+         Assert.fail("IOException while saving store: " + e);
+      }
+
+      System.out.println("Loading " + type + " data from " + path);
+      try {
+         Datastore loadedStore = manager.loadData(path, true);
+         info.test(loadedStore);
+         loadedStore.freeze();
+         loadedStore.close();
+      } catch (IOException e) {
+         Assert.fail("Unable to load " + type + " datastore: " + e);
+      }
+      tempDir.deleteOnExit();
+   }
+
    // Creates a new multipage TIFF, saves it, loads it, and verifies the
    // results are as expected. For convenience, re-uses the summary metadata
    // and image metadata used by the testSinglePlaneTIFFLoad() method.

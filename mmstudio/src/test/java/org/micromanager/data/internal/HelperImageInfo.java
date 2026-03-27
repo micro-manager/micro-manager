@@ -69,6 +69,22 @@ public class HelperImageInfo {
          }
          return result;
       }
+      else if (pixelsArr instanceof float[]) {
+         int result = 0;
+         float[] pixels = (float[]) pixelsArr;
+         for (int i = 0; i < pixels.length; ++i) {
+            result = result * 23 + Float.floatToRawIntBits(pixels[i]);
+         }
+         return result;
+      }
+      else if (pixelsArr instanceof int[]) {
+         int result = 0;
+         int[] pixels = (int[]) pixelsArr;
+         for (int i = 0; i < pixels.length; ++i) {
+            result = result * 23 + pixels[i];
+         }
+         return result;
+      }
       else {
          Assert.fail("Unrecognized pixel type");
          return 0;

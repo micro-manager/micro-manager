@@ -217,7 +217,22 @@ public final class BufferTools {
       Buffer buffer;
       switch (bytesPerPixel) {
          case 1:
-            buffer = ByteBuffer.wrap((byte[]) pixels);
+            if (pixels instanceof int[]) {
+               // RGB32 image: convert int[] (0x00RRGGBB per pixel) to 4-byte-per-pixel
+               // byte[] in B-G-R-0 order to match the PixelType.RGB32 component offsets
+               // {2, 1, 0} and the layout expected by the TIFF save path.
+               int[] ints = (int[]) pixels;
+               byte[] bytes = new byte[ints.length * 4];
+               for (int i = 0; i < ints.length; ++i) {
+                  bytes[i * 4]     = (byte) ( ints[i]        & 0xFF); // B (offset 0)
+                  bytes[i * 4 + 1] = (byte) ((ints[i] >>  8) & 0xFF); // G (offset 1)
+                  bytes[i * 4 + 2] = (byte) ((ints[i] >> 16) & 0xFF); // R (offset 2)
+                  bytes[i * 4 + 3] = 0;                                // pad
+               }
+               buffer = ByteBuffer.wrap(bytes);
+            } else {
+               buffer = ByteBuffer.wrap((byte[]) pixels);
+            }
             break;
          case 2:
             buffer = ShortBuffer.wrap((short[]) pixels);
