@@ -69,7 +69,7 @@ public final class IntegerComponentStats {
       }
 
       public Builder binWidthFloat(double width) {
-         Preconditions.checkArgument(width > 0.0);
+         Preconditions.checkArgument(width >= 0.0);
          binWidthFloat_ = width;
          return this;
       }
@@ -233,9 +233,12 @@ public final class IntegerComponentStats {
       }
       // For integer images (rangeMin_ == 0 and binWidthFloat_ is a power of 2),
       // the last representable value is binWidth*nBins - 1 (e.g. 255 for 8-bit).
-      // For float images (rangeMin_ or binWidthFloat_ may be fractional), the
-      // histogram covers exactly [rangeMin_, rangeMin_ + binWidthFloat_*nBins],
-      // so the upper bound is ceil(fMax) with no subtraction.
+      // For float images with binWidthFloat_ == 0 (constant image, all pixels identical),
+      // the range collapses to a single point: return ceil(rangeMin_).
+      // For all other float images, the upper bound is ceil(fMax).
+      if (binWidthFloat_ == 0.0) {
+         return (long) Math.ceil(rangeMin_);
+      }
       double rawMax = rangeMin_ + binWidthFloat_ * getHistogramBinCount();
       long ceiled = (long) Math.ceil(rawMax);
       if (rangeMin_ == 0.0 && binWidthFloat_ == (1 << binWidthPowerOf2_)) {
@@ -284,19 +287,21 @@ public final class IntegerComponentStats {
    }
 
    public long getAutoscaleMinForQuantile(double q) {
+      long rangeMin = getHistogramRangeMin();
       if (q >= 0.5) {
          // Safe, in-range value that is less than max
-         return Math.round(getQuantile(0.5)) - 1L;
+         return Math.max(rangeMin, Math.round(getQuantile(0.5)) - 1L);
       }
-      return Math.round(getQuantile(q));
+      return Math.max(rangeMin, Math.round(getQuantile(q)));
    }
 
    public long getAutoscaleMinForQuantileIgnoringZeros(double q) {
+      long rangeMin = getHistogramRangeMin();
       if (q >= 0.5) {
          // Safe, in-range value that is less than max
-         return Math.round(getQuantileIgnoringZeros(0.5)) - 1L;
+         return Math.max(rangeMin, Math.round(getQuantileIgnoringZeros(0.5)) - 1L);
       }
-      return Math.round(getQuantileIgnoringZeros(q));
+      return Math.max(rangeMin, Math.round(getQuantileIgnoringZeros(q)));
    }
 
    public long getAutoscaleMaxForQuantile(double q) {

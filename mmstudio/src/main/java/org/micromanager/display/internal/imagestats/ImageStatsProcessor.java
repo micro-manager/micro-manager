@@ -211,10 +211,15 @@ public final class ImageStatsProcessor {
       int width = image.getWidth();
       float fMin = Float.MAX_VALUE;
       float fMax = -Float.MAX_VALUE;
+      float fMinNonZero = Float.MAX_VALUE;
       long count = 0;
+      long countNonZero = 0;
       double sum = 0.0;
+      double sumNonZero = 0.0;
+      double sumOfSquares = 0.0;
 
-      // First pass: find min/max (ignoring NaN, Infinity, and masked-out pixels)
+      // First pass: find min/max, accumulate sum/sumOfSquares/counts
+      // (ignoring NaN, Infinity, and masked-out pixels)
       for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
          for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
             if (maskBytes != null) {
@@ -229,17 +234,28 @@ public final class ImageStatsProcessor {
             }
             count++;
             sum += v;
+            sumOfSquares += (double) v * v;
             if (v < fMin) {
                fMin = v;
             }
             if (v > fMax) {
                fMax = v;
             }
+            if (v != 0.0f) {
+               countNonZero++;
+               sumNonZero += v;
+               if (v < fMinNonZero) {
+                  fMinNonZero = v;
+               }
+            }
          }
       }
       if (count == 0) {
          fMin = 0.0f;
          fMax = 0.0f;
+      }
+      if (countNonZero == 0) {
+         fMinNonZero = 0.0f;
       }
 
       // Second pass: build a 256-bin histogram spanning [fMin, fMax].
@@ -249,7 +265,9 @@ public final class ImageStatsProcessor {
       // ImageJ FloatProcessor LUT. This works for negative fMin as well.
       final int N_BINS = 256;
       final float range = fMax - fMin;
-      final double fBinWidth = (range == 0.0f) ? 1.0 : (double) range / N_BINS;
+      // When all pixels are identical (range == 0), use binWidth=0 as a sentinel so
+      // that getHistogramRangeMax() returns ceil(fMax) rather than fMin + 256.
+      final double fBinWidth = (range == 0.0f) ? 0.0 : (double) range / N_BINS;
 
       // [0]=underflow, [1..N_BINS]=in-range, [N_BINS+1]=overflow
       long[] hist = new long[N_BINS + 2];
@@ -277,18 +295,22 @@ public final class ImageStatsProcessor {
          }
       }
 
+      // sum and sumOfSquares are stored as long in IntegerComponentStats.
+      // Round to the nearest integer so that getMeanIntensity() and
+      // getStandardDeviation() return values that are correct to integer precision,
+      // matching the display which shows mean and stdev rounded to integers.
       IntegerComponentStats stats = IntegerComponentStats.builder()
             .histogram(hist, 0)
             .rangeMin((double) fMin)
             .binWidthFloat(fBinWidth)
             .pixelCount(count)
-            .pixelCountExcludingZeros(count)
+            .pixelCountExcludingZeros(countNonZero)
             .usedROI(useROI)
             .minimum((long) Math.floor(fMin))
-            .minimumExcludingZeros((long) Math.floor(fMin))
+            .minimumExcludingZeros((long) Math.floor(fMinNonZero))
             .maximum((long) Math.ceil(fMax))
-            .sum((long) sum)
-            .sumOfSquares(0L)
+            .sum(Math.round(sum))
+            .sumOfSquares(Math.round(sumOfSquares))
             .build();
       return ImageStats.create(index, stats);
    }

@@ -305,33 +305,40 @@ public class ManualTiffTest {
       HelperImageInfo info = new HelperImageInfo(coords, metadata,
             HelperImageInfo.hashPixels(image));
 
-      Datastore store = manager.createRAMDatastore();
-      try {
-         store.setSummaryMetadata(SUMMARIES.get(ALPHA2_PATH));
-         store.putImage(image);
-      } catch (DatastoreFrozenException e) {
-         Assert.fail("Unable to add images or set summary metadata: " + e);
-      } catch (DatastoreRewriteException e) {
-         Assert.fail("Unable to add images or set summary metadata: " + e);
-      } catch (IOException io) {
-         Assert.fail("IOException while adding image to store " + io);
-      }
-
       File tempDir = Files.createTempDir();
       String path = tempDir.getPath() + "/test";
+      Datastore store = manager.createRAMDatastore();
       try {
-         store.save(saveMode, path);
-         store.setSavePath(path);
-      } catch (Exception e) {
-         Assert.fail("IOException while saving store: " + e);
+         try {
+            store.setSummaryMetadata(SUMMARIES.get(ALPHA2_PATH));
+            store.putImage(image);
+         } catch (DatastoreFrozenException e) {
+            Assert.fail("Unable to add images or set summary metadata: " + e);
+         } catch (DatastoreRewriteException e) {
+            Assert.fail("Unable to add images or set summary metadata: " + e);
+         } catch (IOException io) {
+            Assert.fail("IOException while adding image to store " + io);
+         }
+         try {
+            store.save(saveMode, path);
+            store.setSavePath(path);
+         } catch (Exception e) {
+            Assert.fail("IOException while saving store: " + e);
+         }
+      } finally {
+         store.freeze();
+         store.close();
       }
 
       System.out.println("Loading " + type + " data from " + path);
       try {
          Datastore loadedStore = manager.loadData(path, true);
-         info.test(loadedStore);
-         loadedStore.freeze();
-         loadedStore.close();
+         try {
+            info.test(loadedStore);
+         } finally {
+            loadedStore.freeze();
+            loadedStore.close();
+         }
       } catch (IOException e) {
          Assert.fail("Unable to load " + type + " datastore: " + e);
       }
@@ -374,17 +381,6 @@ public class ManualTiffTest {
       catch (IOException io) {
          Assert.fail("IOException while adding image to store " + io);
       }
-      //try {
-         //Annotation annotation = store.loadAnnotation("comments.txt");
-         PropertyMap.PropertyMapBuilder commentsBuilder = manager.getPropertyMapBuilder();
-         //annotation.setImageAnnotation(image.getCoords(),
-         //      commentsBuilder.putString(COMMENT_KEY, IMAGE_COMMENT).build());
-         //annotation.setGeneralAnnotation(commentsBuilder.putString(COMMENT_KEY,
-         //         SUMMARY_COMMENT).build());
-      //}
-      //catch (IOException e) {
-      //   Assert.fail("Couldn't create comments annotation: " + e);
-      //}
       File tempDir = Files.createTempDir();
       String path = tempDir.getPath() + "/test";
       try {
@@ -392,17 +388,22 @@ public class ManualTiffTest {
          store.setSavePath(path);
       } catch (IOException io) {
          Assert.fail("IOException while saving store " + io);
+      } finally {
+         store.freeze();
+         store.close();
       }
 
       System.out.println("Loading data from " + path);
       try {
          Datastore loadedStore = manager.loadData(path, true);
-         testSummary(ALPHA2_PATH, loadedStore.getSummaryMetadata());
-         info.test(loadedStore);
-         loadedStore.freeze();
-         loadedStore.close();
-      }
-      catch (IOException e) {
+         try {
+            testSummary(ALPHA2_PATH, loadedStore.getSummaryMetadata());
+            info.test(loadedStore);
+         } finally {
+            loadedStore.freeze();
+            loadedStore.close();
+         }
+      } catch (IOException e) {
          Assert.fail("Unable to load newly-generated datastore: " + e);
       }
       tempDir.deleteOnExit();

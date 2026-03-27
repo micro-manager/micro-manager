@@ -207,32 +207,20 @@ public final class BufferTools {
    }
 
    /**
-    * Wraps a primitive array of either byte[] or short[] into a ByteBuffer.
+    * Wraps a primitive array into a Buffer without copying.
+    * Supported: byte[] (bpc=1), short[] (bpc=2), float[] (bpc=4).
+    * For RGB32 images stored as int[], convert to byte[] first using
+    * {@link #rgb32IntToBytes(int[])}, then call this method with bpc=1.
     *
-    * @param pixels byte[] or short[] array
-    * @param bytesPerPixel 1 for byte[], 2 for short[]
-    * @return Buffer (either ByteBuffer or ShortBuffer).
+    * @param pixels primitive array (byte[], short[], or float[])
+    * @param bytesPerPixel 1 for byte[], 2 for short[], 4 for float[]
+    * @return Buffer wrapping the input array (no copy for byte[]/short[]/float[])
     */
    public static Buffer wrapArray(Object pixels, int bytesPerPixel) {
       Buffer buffer;
       switch (bytesPerPixel) {
          case 1:
-            if (pixels instanceof int[]) {
-               // RGB32 image: convert int[] (0x00RRGGBB per pixel) to 4-byte-per-pixel
-               // byte[] in B-G-R-0 order to match the PixelType.RGB32 component offsets
-               // {2, 1, 0} and the layout expected by the TIFF save path.
-               int[] ints = (int[]) pixels;
-               byte[] bytes = new byte[ints.length * 4];
-               for (int i = 0; i < ints.length; ++i) {
-                  bytes[i * 4]     = (byte) (ints[i]         & 0xFF); // B (offset 0)
-                  bytes[i * 4 + 1] = (byte) ((ints[i] >>  8) & 0xFF); // G (offset 1)
-                  bytes[i * 4 + 2] = (byte) ((ints[i] >> 16) & 0xFF); // R (offset 2)
-                  bytes[i * 4 + 3] = 0;                                // pad
-               }
-               buffer = ByteBuffer.wrap(bytes);
-            } else {
-               buffer = ByteBuffer.wrap((byte[]) pixels);
-            }
+            buffer = ByteBuffer.wrap((byte[]) pixels);
             break;
          case 2:
             buffer = ShortBuffer.wrap((short[]) pixels);
@@ -244,6 +232,26 @@ public final class BufferTools {
             throw new UnsupportedOperationException("Unimplemented pixel component size");
       }
       return buffer;
+   }
+
+   /**
+    * Converts an RGB32 int[] pixel array (ImageJ packed 0x00RRGGBB format) to a
+    * byte[] in B-G-R-0 order (4 bytes per pixel) matching PixelType.RGB32's
+    * component offsets {2, 1, 0}.
+    * This is a copy, not a wrap — call once per image construction, not per frame.
+    *
+    * @param ints packed RGB pixels, one int per pixel (0x00RRGGBB)
+    * @return interleaved byte array, 4 bytes per pixel in B, G, R, 0 order
+    */
+   public static byte[] rgb32IntToBytes(int[] ints) {
+      byte[] bytes = new byte[ints.length * 4];
+      for (int i = 0; i < ints.length; ++i) {
+         bytes[i * 4]     = (byte) ( ints[i]        & 0xFF); // B (offset 0)
+         bytes[i * 4 + 1] = (byte) ((ints[i] >>  8) & 0xFF); // G (offset 1)
+         bytes[i * 4 + 2] = (byte) ((ints[i] >> 16) & 0xFF); // R (offset 2)
+         bytes[i * 4 + 3] = 0;                                // pad
+      }
+      return bytes;
    }
 
 }
