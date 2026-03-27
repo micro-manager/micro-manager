@@ -58,6 +58,7 @@ public class SimpleUIFrame extends ConfigurableMainFrame {
    }
 
    @Override
+   @SuppressWarnings("rawtypes")
    public HashMap<String, Setting> getDefaultPluginSettings() {
       /*
        * In this method, declare a HashMap<String, Setting> and then add any useful

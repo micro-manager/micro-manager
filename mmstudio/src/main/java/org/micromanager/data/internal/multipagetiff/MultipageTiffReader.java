@@ -179,10 +179,11 @@ public final class MultipageTiffReader {
     */
    public MultipageTiffReader(StorageMultipageTiff masterStorage,
                               SummaryMetadata summaryMD, PropertyMap summaryPmap,
-                              Image firstImage) {
+                              Image firstImage, File file) {
       masterStorage_ = masterStorage;
       summaryMetadata_ = summaryMD;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
+      file_ = file;
    }
 
    /**

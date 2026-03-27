@@ -71,7 +71,7 @@ public class DragDropListener implements DropTargetListener {
          for (DataFlavor flavor : flavors) {
             if (flavor.isFlavorJavaFileListType()) {
                dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-               java.util.List list = (java.util.List) tr.getTransferData(flavor);
+               java.util.List<?> list = (java.util.List<?>) tr.getTransferData(flavor);
                // we expect only one file.  for now, just use the last one
                for (int j = 0; j < list.size(); j++) {
                   File f = (File) list.get(j);

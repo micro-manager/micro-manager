@@ -65,12 +65,6 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements
       return active_;
    }
 
-   public void enable() {
-      for (Component j : this.getComponents()) {
-         j.setEnabled(true);
-      }
-   }
-
    @Override
    public void selected() {
       active_ = true;

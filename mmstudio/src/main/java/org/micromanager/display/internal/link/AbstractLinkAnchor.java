@@ -46,6 +46,7 @@ public abstract class AbstractLinkAnchor<T> implements LinkAnchor<T> {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public List<LinkAnchor<T>> getLinkablePeers() {
       List<LinkEndpoint> peers = endpoint_.getLinkablePeers();
       List<LinkAnchor<T>> ret = new ArrayList<LinkAnchor<T>>();
@@ -72,6 +73,7 @@ public abstract class AbstractLinkAnchor<T> implements LinkAnchor<T> {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public Collection<LinkAnchor<T>> getLinkedPeers() {
       Set<LinkAnchor<T>> ret = new HashSet<LinkAnchor<T>>();
       for (LinkEndpoint peer : endpoint_.getLinkedPeers()) {

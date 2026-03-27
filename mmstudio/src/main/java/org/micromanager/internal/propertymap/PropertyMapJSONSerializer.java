@@ -149,6 +149,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putBooleanList(key, (List<Boolean>) values);
          }
@@ -186,6 +187,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putByteList(key, (List<Byte>) values);
          }
@@ -223,6 +225,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putShortList(key, (List<Short>) values);
          }
@@ -260,6 +263,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putIntegerList(key, (List<Integer>) values);
          }
@@ -297,6 +301,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putLongList(key, (List<Long>) values);
          }
@@ -334,6 +339,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putFloatList(key, (List<Float>) values);
          }
@@ -371,6 +377,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putDoubleList(key, (List<Double>) values);
          }
@@ -408,6 +415,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putStringList(key, (List<String>) values);
          }
@@ -445,6 +453,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putUUIDList(key, (List<java.util.UUID>) values);
          }
@@ -502,6 +511,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putColorList(key, (List<Color>) values);
          }
@@ -550,6 +560,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putAffineTransformList(key, (List<AffineTransform>) values);
          }
@@ -588,6 +599,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putPropertyMapList(key, (List<PropertyMap>) values);
          }
@@ -636,6 +648,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putRectangleList(key, (List<Rectangle>) values);
          }
@@ -680,6 +693,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putDimensionList(key, (List<Dimension>) values);
          }
@@ -724,6 +738,7 @@ public final class PropertyMapJSONSerializer {
          }
 
          @Override
+         @SuppressWarnings("unchecked")
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putPointList(key, (List<Point>) values);
          }
@@ -829,11 +844,11 @@ public final class PropertyMapJSONSerializer {
       for (String key : map.keySet()) {
          for (ValueType t : ValueType.values()) {
             if (t.getScalarClass().isAssignableFrom(map.getValueTypeForKey(key))) {
-               ret.add(new AbstractMap.SimpleEntry(key,
+               ret.add(new AbstractMap.SimpleEntry<>(key,
                      new TypeAndValue(t, t.extractValue(map, key))));
                break;
             } else if (t.getArrayClass().isAssignableFrom(map.getValueTypeForKey(key))) {
-               ret.add(new AbstractMap.SimpleEntry(key,
+               ret.add(new AbstractMap.SimpleEntry<>(key,
                      new TypeAndValue(t, t.extractArray(map, key))));
                break;
             }

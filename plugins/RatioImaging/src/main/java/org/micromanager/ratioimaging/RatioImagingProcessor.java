@@ -144,7 +144,7 @@ public class RatioImagingProcessor implements Processor {
       
       String[] newNames = new String[chNames.size() + 1];
       for (int i = 0; i < chNames.size(); i++) {
-         newNames[i] = (String) chNames.get(i);
+         newNames[i] = chNames.get(i);
       }
       newNames[chNames.size() ] = "ratio " + ch1Name + "-" + ch2Name;
       ratioIndex_ = chNames.size();

@@ -95,7 +95,7 @@ public final class ExportMovieDlg extends JDialog {
     */
    public static class AxisPanel extends JPanel {
       private final DataProvider store_;
-      private JComboBox axisSelector_;
+      private JComboBox<String> axisSelector_;
       private JSpinner minSpinner_;
       private SpinnerNumberModel minModel_ = null;
       private JSpinner maxSpinner_;

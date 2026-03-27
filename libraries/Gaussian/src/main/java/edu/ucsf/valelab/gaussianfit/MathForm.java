@@ -57,10 +57,10 @@ public class MathForm extends JFrame {
    private static final String SELECTED = "Selected";
    private final UserProfile profile_;
 
-   private JComboBox actionComboBox_;
+   private JComboBox<Object> actionComboBox_;
    private JButton cancelButton_;
-   private JComboBox dataSet1ComboBox_;
-   private JComboBox dataSet2ComboBox_;
+   private JComboBox<Object> dataSet1ComboBox_;
+   private JComboBox<Object> dataSet2ComboBox_;
    private JLabel dataSet1Label_;
    private JLabel actionLabel_;
    private JLabel dataSet2Label_;
@@ -111,9 +111,9 @@ public class MathForm extends JFrame {
     */
    private void initComponents() {
 
-      dataSet1ComboBox_ = new JComboBox();
-      actionComboBox_ = new JComboBox();
-      dataSet2ComboBox_ = new JComboBox();
+      dataSet1ComboBox_ = new JComboBox<Object>();
+      actionComboBox_ = new JComboBox<Object>();
+      dataSet2ComboBox_ = new JComboBox<Object>();
       dataSet1Label_ = new JLabel();
       actionLabel_ = new JLabel();
       dataSet2Label_ = new JLabel();
@@ -132,15 +132,15 @@ public class MathForm extends JFrame {
 
       dataSet1ComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       dataSet1ComboBox_.setModel(
-            new DefaultComboBoxModel(new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
+            new DefaultComboBoxModel<Object>(new Object[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
 
       actionComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      actionComboBox_.setModel(new DefaultComboBoxModel(new String[]{"Subtract"}));
+      actionComboBox_.setModel(new DefaultComboBoxModel<Object>(new Object[]{"Subtract"}));
       actionComboBox_.setSelectedIndex(0);
 
       dataSet2ComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       dataSet2ComboBox_.setModel(
-            new DefaultComboBoxModel(new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
+            new DefaultComboBoxModel<Object>(new Object[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
 
       dataSet1Label_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       dataSet1Label_.setText("DataSet 1");

@@ -199,7 +199,7 @@ public final class FileDialogs {
       String startFile = getSuggestedFile(type);
       File startDir = null;
       if (startFile != null) {
-         startDir = new File(startFile);
+         startDir = new File(startFile.trim());
       }
       File result = promptForFile(parent, title, startDir, selectDirectories,
             load, type.description, type.suffixes, type.suggestFileOnSave, skin);

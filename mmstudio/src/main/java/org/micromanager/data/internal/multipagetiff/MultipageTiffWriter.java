@@ -197,9 +197,6 @@ public final class MultipageTiffWriter {
             (DefaultImage) masterStorage_.getAnyImage());
       summaryPmap = augmentWithDisplaySettings(summaryPmap,
             DefaultDisplaySettings.builder().build());
-      reader_ = new MultipageTiffReader(masterStorage_, summary, summaryPmap,
-            firstImage);
-
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE,
             NonPropertyMapJSONFormats.summaryMetadata().toJSON(summaryPmap).length()
@@ -211,6 +208,8 @@ public final class MultipageTiffWriter {
                   + 2000));
 
       File f = new File(masterStorage.getDiskLocation() + "/" + filename);
+      reader_ = new MultipageTiffReader(masterStorage_, summary, summaryPmap,
+            firstImage, f);
       f.createNewFile();
       raFile_ = new RandomAccessFile(f, "rw");
       try {

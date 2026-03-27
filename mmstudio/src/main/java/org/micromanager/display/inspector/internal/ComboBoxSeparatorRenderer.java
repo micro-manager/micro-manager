@@ -25,19 +25,20 @@ import javax.swing.ListCellRenderer;
  *
  * @author Mark A. Tsuchida
  */
-class ComboBoxSeparatorRenderer implements ListCellRenderer {
-   private final ListCellRenderer parent_;
+class ComboBoxSeparatorRenderer implements ListCellRenderer<Object> {
+   private final ListCellRenderer<Object> parent_;
 
-   public static ComboBoxSeparatorRenderer create(ListCellRenderer parent) {
-      return new ComboBoxSeparatorRenderer(parent);
+   @SuppressWarnings("unchecked")
+   public static ComboBoxSeparatorRenderer create(ListCellRenderer<?> parent) {
+      return new ComboBoxSeparatorRenderer((ListCellRenderer<Object>) parent);
    }
 
-   private ComboBoxSeparatorRenderer(ListCellRenderer parent) {
+   private ComboBoxSeparatorRenderer(ListCellRenderer<Object> parent) {
       parent_ = parent;
    }
 
    @Override
-   public Component getListCellRendererComponent(JList list, Object value,
+   public Component getListCellRendererComponent(JList<?> list, Object value,
                                                  int index, boolean isSelected,
                                                  boolean cellHasFocus) {
       if (value instanceof JSeparator) {

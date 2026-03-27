@@ -78,8 +78,8 @@ final class CriterionDialog extends JDialog {
 
    private final JRadioButton focusRadio_;
    private final JRadioButton xyRadio_;
-   private final JComboBox focusDeviceCombo_;
-   private final JComboBox xyDeviceCombo_;
+   private final JComboBox<String> focusDeviceCombo_;
+   private final JComboBox<String> xyDeviceCombo_;
    private final JTextField focusThreshField_;
    private final JTextField xyThreshField_;
    private final JCheckBox shouldPollCheckBox_;
@@ -144,7 +144,7 @@ final class CriterionDialog extends JDialog {
       focusPanel_.setBorder(new ComponentTitledBorder(focusRadio_,
             focusPanel_, BorderFactory.createEtchedBorder()));
       focusPanel_.add(new JLabel("Focus Device: "));
-      focusDeviceCombo_ = new JComboBox(getAvailableFocusDevices());
+      focusDeviceCombo_ = new JComboBox<>(getAvailableFocusDevices());
       focusPanel_.add(focusDeviceCombo_, "wrap");
       focusPanel_.add(new JLabel("Threshold: "));
       focusThreshField_ = new JTextField(Double.toString(focusThreshUm_));
@@ -174,7 +174,7 @@ final class CriterionDialog extends JDialog {
       xyPanel_.setBorder(new ComponentTitledBorder(xyRadio_,
             xyPanel_, BorderFactory.createEtchedBorder()));
       xyPanel_.add(new JLabel("XY Stage Device: "));
-      xyDeviceCombo_ = new JComboBox(getAvailableXYStageDevices());
+      xyDeviceCombo_ = new JComboBox<>(getAvailableXYStageDevices());
       xyPanel_.add(xyDeviceCombo_, "wrap");
       xyPanel_.add(new JLabel("Threshold: "));
       xyThreshField_ = new JTextField(Double.toString(xyThreshUm_));

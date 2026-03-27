@@ -162,7 +162,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
 
       // TODO: use Overlays instead
       final Roi roi = theWindow_.getImagePlus().getRoi();
-      
+
       Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
       for (String axis : oldStore.getAxes()) {
          newSizeCoordsBuilder.index(axis, oldStore.getNextIndex(axis) - 1);
@@ -288,13 +288,17 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
             boolean copy = !oldAxes.contains(Coords.CHANNEL);
             for (String axis : oldStore.getAxes()) {
                if (axis.equals(Coords.CHANNEL)) {
-                  int index = 0;
-                  for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
-                     if (channel.getValue() && oldCoord.getIndex(axis) == index) {
-                        copy = true;
-                        continue;
+                  if (channels_ == null) {
+                     copy = true;
+                  } else {
+                     int index = 0;
+                     for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
+                        if (channel.getValue() && oldCoord.getIndex(axis) == index) {
+                           copy = true;
+                           continue;
+                        }
+                        index++;
                      }
-                     index++;
                   }
                }
             }
@@ -335,9 +339,9 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                   if (ip != null) {
                      ip.setRoi(roi);
                      ImageProcessor copyIp = ip.crop();
-                     newImgShallow = studio_.data().createImage(copyIp.getPixels(), 
-                             copyIp.getWidth(), copyIp.getHeight(), 
-                             img.getBytesPerPixel(), img.getNumComponents(), 
+                     newImgShallow = studio_.data().createImage(copyIp.getPixels(),
+                             copyIp.getWidth(), copyIp.getHeight(),
+                             img.getBytesPerPixel(), img.getNumComponents(),
                              newCoords, newImgShallow.getMetadata());
                   } else {
                      throw new DuplicatorException(
@@ -355,7 +359,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                } catch (IllegalArgumentException iae) {
                   System.out.println("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
                }
-               
+
             }
          }
          if (nrCopied == 0) {
@@ -363,14 +367,21 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          }
       } catch (DatastoreFrozenException ex) {
          studio_.logs().showError("Can not add data to frozen datastore");
+         return null;
       } catch (DatastoreRewriteException ex) {
          studio_.logs().showError(ex, "Can not overwrite data");
+         return null;
       } catch (DuplicatorException ex) {
          studio_.logs().showError(ex.getMessage());
+         return null;
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IOException in Duplicator plugin");
+         return null;
       }
 
+      if (closeListener == null) {
+         return null;
+      }
       closeListener.finishDuplication();
       try {
          newStore.freeze();
@@ -378,13 +389,14 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          studio_.logs().showError(ioe, "IOException freezing store in Duplicator plugin");
       }
       if (nrCopied == 0) {
-         studio_.logs().showError("Found no images in the requested range", theWindow_.getWindow());
+         studio_.logs().showError("Found no images in the requested range",
+                  theWindow_.getWindow());
          return null;
       }
       studio_.displays().manage(newStore);
       return null;
    }
-   
+
    @Override
    public void done() {
       setProgress(100);

@@ -66,7 +66,7 @@ public class SharpnessInspectorController extends AbstractInspectorPanelControll
       });
         
       panel_.addScanRequestedListener((evt) -> {
-         SwingWorker worker = new SwingWorker() {
+         SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
                @Override
                protected Object doInBackground() throws Exception {
                   SharpnessInspectorController.this.beginScan(evt.intervalUm(), evt.rangeUm());
