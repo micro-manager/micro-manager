@@ -71,6 +71,8 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
+               Engine.getCore().logMessage("zStack Iterator Next, zIndex_: " + zIndex_);
+
                if (event == null) {
                   zIndex_++;
                   return null;
@@ -150,6 +152,8 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
+               Engine.getCore().logMessage("Timelapse Iterator Next, frameIndex_: " + frameIndex_);
+
                AcquisitionEvent timePointEvent = event.copy();
                timePointEvent.setMinimumStartTime((long) (intervalMs * frameIndex_));
                timePointEvent.setTimeIndex(frameIndex_);
@@ -191,6 +195,7 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
+               Engine.getCore().logMessage("Channel Iterator Next, index: " + index);
                // For Slice, Channel Acquisitions with channels not doing Z Stacks
                if (!channelList.get(index).doZStack()) {
                   if (event.getZIndex() != null) {
@@ -216,6 +221,7 @@ public class MDAAcqEventModules {
                boolean hasZOffsets = channelList.stream().map(t -> t.zOffset())
                            .filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
                Double zPos;
+               Engine.getCore().logMessage("Channel Iterator, event zPos: " + (event.getZPosition()==null ? "null" : event.getZPosition() + ", hasZOffsets: " + hasZOffsets)); 
                if (event.getZPosition() == null) {
                   if (hasZOffsets) {
                      try {
