@@ -251,7 +251,8 @@ public final class ImageStatsProcessor {
       final float range = fMax - fMin;
       final double fBinWidth = (range == 0.0f) ? 1.0 : (double) range / N_BINS;
 
-      long[] hist = new long[N_BINS + 2]; // [0]=underflow, [1..N_BINS]=in-range, [N_BINS+1]=overflow
+      // [0]=underflow, [1..N_BINS]=in-range, [N_BINS+1]=overflow
+      long[] hist = new long[N_BINS + 2];
 
       for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
          for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {

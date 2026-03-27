@@ -224,7 +224,7 @@ public final class BufferTools {
                int[] ints = (int[]) pixels;
                byte[] bytes = new byte[ints.length * 4];
                for (int i = 0; i < ints.length; ++i) {
-                  bytes[i * 4]     = (byte) ( ints[i]        & 0xFF); // B (offset 0)
+                  bytes[i * 4]     = (byte) (ints[i]         & 0xFF); // B (offset 0)
                   bytes[i * 4 + 1] = (byte) ((ints[i] >>  8) & 0xFF); // G (offset 1)
                   bytes[i * 4 + 2] = (byte) ((ints[i] >> 16) & 0xFF); // R (offset 2)
                   bytes[i * 4 + 3] = 0;                                // pad

@@ -205,7 +205,7 @@ public final class HistogramView extends JPanel {
       Preconditions.checkArgument(rangeMax > rangeMin);
       addComponentIfNecessary(component);
       ComponentState state = componentStates_.get(component);
-      boolean rangeChanged = (rangeMin != state.rangeMin_ || rangeMax != state.rangeMax_);
+      final boolean rangeChanged = (rangeMin != state.rangeMin_ || rangeMax != state.rangeMax_);
       state.graph_ = Arrays.copyOf(graph, graphLen);
       state.rangeMin_ = rangeMin;
       state.rangeMax_ = rangeMax;
