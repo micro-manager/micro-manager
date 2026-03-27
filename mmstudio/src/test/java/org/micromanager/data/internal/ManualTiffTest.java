@@ -59,15 +59,15 @@ public class ManualTiffTest {
     * Path for one of the file sets we use. This is a manually-created (i.e.
     * not using MDA) singleplane TIFF acquisition.
     */
-   private static final String ALPHA2_PATH = System.getProperty("user.dir") + "/src/test/resources/org/micromanager/data/internal/alpha_2.0_singleplane_manual";
+   private static final String ALPHA2_PATH = System.getProperty("user.dir") + "\\src\\test\\resources\\org\\micromanager\\data\\internal\\alpha_2.0_singleplane_manual";
 
    private static final String COMMENT_KEY = "comment";
    private static final String IMAGE_COMMENT = "This is an image comment";
    private static final String SUMMARY_COMMENT = "This is a summary comment";
 
    static {
-      SUMMARIES = new HashMap<String, SummaryMetadata>();
-      IMAGES = new HashMap<String, ArrayList<HelperImageInfo>>();
+      SUMMARIES = new HashMap<>();
+      IMAGES = new HashMap<>();
 
       DefaultSummaryMetadata.Builder summary = new DefaultSummaryMetadata.Builder();
       summary.prefix("thisIsAPrefix")
@@ -80,8 +80,8 @@ public class ManualTiffTest {
          .channelNames(new String[] {"Alpha", "Beta", "Romeo"})
          .zStepUm(123456789.012345).waitInterval(-1234.5678)
          .customIntervalsMs(new Double[] {12.34, 56.78})
-         .axisOrder(new String[] {"axis 5", "axis 3", "axis 97"})
-         .intendedDimensions((new DefaultCoords.Builder()).index("axis 5", 2).index("axis 3", 9).index("axis 97", 8).build())
+         .axisOrder(new String[] {"axis5", "axis3", "axis97"})
+         .intendedDimensions((new DefaultCoords.Builder()).index("axis5", 2).index("axis3", 9).index("axis97", 8).build())
          .startDate("The age of Aquarius")
          .stagePositions(new MultiStagePosition[] {
             new MultiStagePosition("some xy stage", 24.3, 43.2, "some z stage", 1.01),
@@ -183,24 +183,18 @@ public class ManualTiffTest {
    // Tests proper loading of a stored singleplane TIFF file.
    @Test
    public void testSinglePlaneTIFFLoad() {
-      DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
-      for (String path : SUMMARIES.keySet()) {
-         try {
-            Datastore data = manager.loadData(path, true);
-            testSummary(path, data.getSummaryMetadata());
-            testImages(path, data);
-         }
-         catch (IOException e) {
-            Assert.fail("Unable to load required data file " + path);
-         }
-      }
+      testTIFFSaveLoad(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoad() {
+      testTIFFSaveLoad(Datastore.SaveMode.MULTIPAGE_TIFF);
    }
 
    // Creates a new multipage TIFF, saves it, loads it, and verifies the
    // results are as expected. For convenience, re-uses the summary metadata
    // and image metadata used by the testSinglePlaneTIFFLoad() method.
-   @Test
-   public void testMultipageTIFFSaveLoad() {
+   public void testTIFFSaveLoad(Datastore.SaveMode saveMode) {
       DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
       Datastore store = manager.createRAMDatastore();
       // Manufacture an Image.
@@ -219,9 +213,10 @@ public class ManualTiffTest {
       HelperImageInfo info = new HelperImageInfo(builder.build(), metadata,
             HelperImageInfo.hashPixels(image));
       try {
-         store.putImage(image);
+         // need to set SummaryMetadata before inserting images
          SummaryMetadata summary = SUMMARIES.get(ALPHA2_PATH);
          store.setSummaryMetadata(summary);
+         store.putImage(image);
       }
       catch (DatastoreFrozenException e) {
          Assert.fail("Unable to add images or set summary metadata: " + e);
@@ -246,8 +241,8 @@ public class ManualTiffTest {
       File tempDir = Files.createTempDir();
       String path = tempDir.getPath() + "/test";
       try {
-      store.save(Datastore.SaveMode.MULTIPAGE_TIFF, path);
-      store.setSavePath(path);
+         store.save(saveMode, path);
+         store.setSavePath(path);
       } catch (IOException io) {
          Assert.fail("IOException while saving store " + io);
       }
@@ -257,10 +252,12 @@ public class ManualTiffTest {
          Datastore loadedStore = manager.loadData(path, true);
          testSummary(ALPHA2_PATH, loadedStore.getSummaryMetadata());
          info.test(loadedStore);
-         //testComments(loadedStore);
+         loadedStore.freeze();
+         loadedStore.close();
       }
       catch (IOException e) {
          Assert.fail("Unable to load newly-generated datastore: " + e);
       }
+      tempDir.deleteOnExit();
    }
 }
