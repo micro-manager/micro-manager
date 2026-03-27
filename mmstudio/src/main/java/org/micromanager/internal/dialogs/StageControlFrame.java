@@ -122,6 +122,7 @@ public final class StageControlFrame extends JFrame {
    private JPanel xyPanel_;
    private JLabel xyPositionLabel_;
    private final JPanel[] zPanel_ = new JPanel[MAX_NUM_Z_PANELS];
+   @SuppressWarnings({"unchecked", "rawtypes"})
    private final JComboBox<String>[] zDriveSelect_ = new JComboBox[MAX_NUM_Z_PANELS];
    private final JRadioButton[] zDriveActiveButtons_ = new JRadioButton[MAX_NUM_Z_PANELS];
    private final ButtonGroup zDriveActiveGroup_ = new ButtonGroup();

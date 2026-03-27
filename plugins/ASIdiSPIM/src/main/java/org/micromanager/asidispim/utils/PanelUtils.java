@@ -417,7 +417,7 @@ public class PanelUtils {
     * @param defaultVal - if no value exists in properties/preferences then this is added
     * @return constructed JComboBox
     */
-   public JComboBox makeDropDownBox(String[] vals,
+   public JComboBox<String> makeDropDownBox(String[] vals,
          Devices.Keys [] devKeys, Properties.Keys propKey,
          String defaultVal) {
       /**
@@ -425,11 +425,11 @@ public class PanelUtils {
        * Updates the model in the params class with any GUI changes
        */
       class StringBoxListener implements ActionListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
-         private final JComboBox box_;
+         private final JComboBox<String> box_;
          private final Devices.Keys [] devKeys_;
          private final Properties.Keys propKey_;
 
-         public StringBoxListener(JComboBox box, Devices.Keys [] devKeys, Properties.Keys propKey) {
+         public StringBoxListener(JComboBox<String> box, Devices.Keys [] devKeys, Properties.Keys propKey) {
             box_ = box;
             devKeys_ = devKeys;
             propKey_ = propKey;
@@ -474,7 +474,7 @@ public class PanelUtils {
       }
       
       String origVal = props_.getPropValueString(devKeys[0], propKey);
-      JComboBox jcb = new JComboBox(vals);
+      JComboBox<String> jcb = new JComboBox<>(vals);
       jcb.setSelectedItem(origVal);
       StringBoxListener l = new StringBoxListener(jcb, devKeys, propKey);
       jcb.addActionListener(l);
@@ -493,7 +493,7 @@ public class PanelUtils {
     * @param devKey
     * @return constructed JComboBox
     */
-   public JComboBox makeDropDownBox(String[] vals,
+   public JComboBox<String> makeDropDownBox(String[] vals,
          Devices.Keys devKey, Properties.Keys propKey,
          String defaultVal) {
       return makeDropDownBox(vals, new Devices.Keys[]{devKey}, propKey, defaultVal);
@@ -698,7 +698,7 @@ public class PanelUtils {
       }
 
       JFormattedTextField tf = new JFormattedTextField();
-      tf.setValue((int) prefs_.getInt(prefNode, prefKey, defaultValue));
+      tf.setValue(prefs_.getInt(prefNode, prefKey, defaultValue));
       tf.setColumns(numColumns);
       PropertyChangeListener listener = new FieldListener(tf, prefNode, prefKey);
       tf.addPropertyChangeListener("value", listener);
@@ -809,7 +809,7 @@ public class PanelUtils {
     * @param jcb - combo box to which listener will be added
     * @param lastListener - listener that will be added at the end
     */
-   public void addListenerLast(JComboBox jcb, final ActionListener lastListener) {
+   public void addListenerLast(JComboBox<?> jcb, final ActionListener lastListener) {
       final ActionListener [] origListeners = jcb.getActionListeners();
       for (ActionListener list : origListeners) {
          jcb.removeActionListener(list);

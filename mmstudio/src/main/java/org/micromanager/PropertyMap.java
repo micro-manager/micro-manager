@@ -731,7 +731,7 @@ public interface PropertyMap {
    Set<String> getKeys();
 
    @Deprecated
-   Class getPropertyType(String key);
+   Class<?> getPropertyType(String key);
 
    @Deprecated
    void save(String path) throws IOException;

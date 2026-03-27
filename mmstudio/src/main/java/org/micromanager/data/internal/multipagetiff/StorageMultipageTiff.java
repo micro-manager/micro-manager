@@ -488,6 +488,10 @@ public final class StorageMultipageTiff implements Storage {
                  0, positionToFileSet_.size());
       }
       try {
+         // This can happen if no writing task has been submitted yet
+         if (omeMetadata_ == null) {
+            throw new IOException("omeMetadata is null. No writing task submitted before closing");
+         }
          int count = 0;
          if (progressBar != null) {
             progressBar.setProgress(count);
@@ -936,6 +940,10 @@ public final class StorageMultipageTiff implements Storage {
       }
    }
 
+   // NOTE: getImagesIgnoringAxes() calls readImage() directly on each reader, bypassing
+   // getImage() and therefore never calling pause(). This means the display (which uses
+   // this method to fetch all channels at once) never triggers the write-mode reader
+   // NullPointerException described in getImage() above.
    @Override
    public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
          throws IOException {
@@ -1009,6 +1017,9 @@ public final class StorageMultipageTiff implements Storage {
          MultipageTiffReader mptReader = coordsToReader_.get(coords);
          if (!amInWriteMode_ && lastReader_ != null && mptReader != lastReader_) {
             // this could be optional.  Not doing it can result in large memory leaks.
+            // After freeze() (amInWriteMode_ == false), write-mode readers have file_ set
+            // and can reopen their channel via createFileChannel() after pause(), so it is
+            // safe to pause them here just like read-mode readers.
             lastReader_.pause();
          }
          lastReader_ = mptReader;

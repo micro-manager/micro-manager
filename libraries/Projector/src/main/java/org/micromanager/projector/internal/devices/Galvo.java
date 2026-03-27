@@ -77,7 +77,7 @@ public class Galvo implements ProjectionDevice {
 
    @Override
    public void waitForDevice() {
-      Future result = galvoExecutor_.submit(() -> {
+      Future<?> result = galvoExecutor_.submit(() -> {
          // do nothing;
       });
       try {

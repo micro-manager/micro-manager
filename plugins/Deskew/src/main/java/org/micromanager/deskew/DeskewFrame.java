@@ -2,9 +2,11 @@ package org.micromanager.deskew;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +21,7 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
@@ -109,6 +112,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private JTextField outputPath_;
    private JButton browseButton_;
    private JButton copyDirButton_;
+   private JButton interruptExploreButton_;
    private boolean eventsRegistered_ = false;
 
    /**
@@ -162,6 +166,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    private void initComponents() {
       super.setTitle(DIALOG_TITLE);
+      URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("flowx"));
 
@@ -467,6 +475,37 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       startExploreButton.addActionListener(e -> startExplore());
       explorePanel.add(startExploreButton, "wrap");
 
+      interruptExploreButton_ = new JButton("Interrupt");
+      interruptExploreButton_.setToolTipText(
+            "Stop tile acquisition after the current tile finishes.");
+      interruptExploreButton_.setEnabled(false);
+      interruptExploreButton_.addActionListener(e -> exploreManager_.interruptAcquisition());
+      explorePanel.add(interruptExploreButton_);
+
+      JButton exploreHelpButton = new JButton("Help");
+      exploreHelpButton.addActionListener(e -> JOptionPane.showMessageDialog(
+            this,
+            "Navigation:\n"
+                  + "  Right-drag: pan view\n"
+                  + "  Scroll wheel: zoom in/out\n"
+                  + "\n"
+                  + "Tile selection (live explore):\n"
+                  + "  Right-click: select tile\n"
+                  + "  Left-drag: expand selection\n"
+                  + "  Left-click: acquire (or queue) selected tiles\n"
+                  + "  Interrupt: stop all queued and running acquisitions\n"
+                  + "  Ctrl+left-click: move stage to position\n"
+                  + "\n"
+                  + "View controls:\n"
+                  + "  Center: pan to center of dataset (keep zoom)\n"
+                  + "  No Zoom: zoom to 1:1 and center on dataset\n"
+                  + "\n"
+                  + "Export:\n"
+                  + "  Click Export, drag to draw ROI, then confirm export\n"
+                  + "  Click anywhere to dismiss the ROI",
+            "Deskew Explore Help", JOptionPane.PLAIN_MESSAGE));
+      explorePanel.add(exploreHelpButton, "wrap");
+
       add(explorePanel, "span, growx, wrap");
       add(new JSeparator(), "span 5, growx, wrap");
       JButton processButton = new JButton("Process");
@@ -656,8 +695,27 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
               "Select Deskew Explore Dataset",
               FileDialogs.MM_DATA_SET);
       if (result != null) {
+         // Remember the parent directory so the next Open starts one level up.
+         File parent = result.getParentFile();
+         if (parent != null) {
+            FileDialogs.storePath(FileDialogs.MM_DATA_SET, parent);
+         }
          exploreManager_.openExplore(result.getAbsolutePath());
       }
+   }
+
+   /**
+    * Enables or disables the Interrupt button based on whether acquisition is running.
+    * Called from DeskewExploreManager on the acquisition thread; switches to EDT.
+    *
+    * @param inProgress true while a multi-tile acquisition is running
+    */
+   public void setAcquisitionInProgress(boolean inProgress) {
+      SwingUtilities.invokeLater(() -> {
+         if (interruptExploreButton_ != null) {
+            interruptExploreButton_.setEnabled(inProgress);
+         }
+      });
    }
 
    @Subscribe

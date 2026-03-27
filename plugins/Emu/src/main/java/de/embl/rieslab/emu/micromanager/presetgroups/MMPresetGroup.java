@@ -11,7 +11,7 @@ import mmcorej.StrVector;
  */
 public class MMPresetGroup {
 
-   private final ArrayList<MMProperty> affectedmmprops_;
+   private final ArrayList<MMProperty<?>> affectedmmprops_;
    private final StrVector presets_;
    private final String name_;
 
@@ -22,7 +22,7 @@ public class MMPresetGroup {
     * @param config          StrVector of the preset group entries returned by Micro-manager.
     * @param affectedmmprops List of the MMproperties affected by the configuration group.
     */
-   public MMPresetGroup(String name, StrVector config, ArrayList<MMProperty> affectedmmprops) {
+   public MMPresetGroup(String name, StrVector config, ArrayList<MMProperty<?>> affectedmmprops) {
       name_ = name;
       presets_ = config;
       affectedmmprops_ = affectedmmprops;
@@ -97,7 +97,7 @@ public class MMPresetGroup {
     *
     * @return List of MMproperties.
     */
-   public ArrayList<MMProperty> getAffectedProperties() {
+   public ArrayList<MMProperty<?>> getAffectedProperties() {
       return affectedmmprops_;
    }
 }

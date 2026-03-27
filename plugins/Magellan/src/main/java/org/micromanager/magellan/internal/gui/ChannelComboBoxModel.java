@@ -18,7 +18,7 @@ import org.micromanager.magellan.internal.misc.Log;
  *
  * @author henrypinkard
  */
-public class ChannelComboBoxModel  extends DefaultComboBoxModel {
+public class ChannelComboBoxModel extends DefaultComboBoxModel<String> {
   
    private int selected_ = 0; 
    
@@ -74,7 +74,7 @@ public class ChannelComboBoxModel  extends DefaultComboBoxModel {
    }
    
    @Override
-   public Object getSelectedItem() {
+   public String getSelectedItem() {
       return getElementAt(selected_);
    }
 
@@ -84,7 +84,7 @@ public class ChannelComboBoxModel  extends DefaultComboBoxModel {
    }
 
    @Override
-   public Object getElementAt(int index) {
+   public String getElementAt(int index) {
       return getChannelGroups()[index];
    }
 

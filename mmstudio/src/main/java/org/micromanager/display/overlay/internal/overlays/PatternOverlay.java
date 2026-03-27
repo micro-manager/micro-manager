@@ -88,7 +88,7 @@ public class PatternOverlay extends AbstractOverlay {
             float sizeImgPx = (patternSize / 100.0f) * Math.min(width, height);
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Crosshair Size: %d px",
-                     (int) Math.round(sizeImgPx));
+                     Math.round(sizeImgPx));
             } else {
                return String.format("Crosshair Size: %.1f \u00B5m", // micro-m, i.e. micron
                      sizeImgPx * umPerImagePixel);
@@ -113,7 +113,7 @@ public class PatternOverlay extends AbstractOverlay {
             float vSizeImgPx = patternSize * height / 100.0f;
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Crosshair Size: %d x %d px",
-                     (int) Math.round(hSizeImgPx), (int) Math.round(vSizeImgPx));
+                     Math.round(hSizeImgPx), Math.round(vSizeImgPx));
             } else {
                return String.format("Crosshair Size: %.1f x %.1f \u00B5m", // micro-m, i.e. micron
                      hSizeImgPx * umPerImagePixel, vSizeImgPx * umPerImagePixel);
@@ -125,8 +125,8 @@ public class PatternOverlay extends AbstractOverlay {
          @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
             int nDivs = 2 + 9 * patternSize / 101;
-            float hPixPerDiv = (float) width / nDivs;
-            float vPixPerDiv = (float) height / nDivs;
+            float hPixPerDiv = width / nDivs;
+            float vPixPerDiv = height / nDivs;
             for (int i = 0; i < nDivs; ++i) {
                g.draw(new Line2D.Float(0.0f, i * vPixPerDiv,
                      width, i * vPixPerDiv));
@@ -139,11 +139,11 @@ public class PatternOverlay extends AbstractOverlay {
          String getSizeString(int patternSize, double umPerImagePixel,
                               float width, float height) {
             int nDivs = 2 + 9 * patternSize / 101;
-            float hPixPerDiv = (float) width / nDivs;
-            float vPixPerDiv = (float) height / nDivs;
+            float hPixPerDiv = width / nDivs;
+            float vPixPerDiv = height / nDivs;
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Grid Cell Size: %d x %d px",
-                     (int) Math.round(hPixPerDiv), (int) Math.round(vPixPerDiv));
+                     Math.round(hPixPerDiv), Math.round(vPixPerDiv));
             } else {
                return String.format("Grid Cell Size: %.1f x %.1f \u00B5m", // micro-m, i.e. micron
                      hPixPerDiv * umPerImagePixel, vPixPerDiv * umPerImagePixel);
@@ -155,7 +155,7 @@ public class PatternOverlay extends AbstractOverlay {
          @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
             int nominalDivs = 2 + 9 * patternSize / 101;
-            float pixPerDiv = (float) Math.min(width, height) / nominalDivs;
+            float pixPerDiv = Math.min(width, height) / nominalDivs;
             int nDivs = 1 + (int) Math.ceil(Math.max(width, height) / pixPerDiv);
             // The center lines are drawn twice, which is okay.
             for (int i = 0; i < nDivs / 2; ++i) {
@@ -174,10 +174,10 @@ public class PatternOverlay extends AbstractOverlay {
          String getSizeString(int patternSize, double umPerImagePixel,
                               float width, float height) {
             int nominalDivs = 2 + 9 * patternSize / 101;
-            float pixPerDiv = (float) Math.min(width, height) / nominalDivs;
+            float pixPerDiv = Math.min(width, height) / nominalDivs;
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Grid Cell Size: %d px",
-                     (int) Math.round(pixPerDiv));
+                     Math.round(pixPerDiv));
             } else {
                return String.format("Grid Cell Size: %.1f \u00B5m", // micro-m, i.e. micron
                      pixPerDiv * umPerImagePixel);
@@ -199,7 +199,7 @@ public class PatternOverlay extends AbstractOverlay {
             float dImgPx = patternSize * Math.max(width, height) / 100.0f * (float) Math.sqrt(2);
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Circle Diameter: %d px",
-                     (int) Math.round(dImgPx));
+                     Math.round(dImgPx));
             } else {
                return String.format("Circle Diameter: %.1f \u00B5m", // micro-m, i.e. micron
                      dImgPx * umPerImagePixel);
@@ -229,7 +229,7 @@ public class PatternOverlay extends AbstractOverlay {
             for (int i = 1; i <= N; ++i) {
                float dImgPx = d0ImgPx * (i / (float) N);
                if (Double.isNaN(umPerImagePixel)) {
-                  sb.append(String.format("%d", (int) Math.round(dImgPx)));
+                  sb.append(String.format("%d", Math.round(dImgPx)));
                } else {
                   sb.append(String.format("%.1f", dImgPx * umPerImagePixel));
                }
@@ -323,11 +323,11 @@ public class PatternOverlay extends AbstractOverlay {
    }
 
    private JPanel configUI_;
-   private JComboBox patternTypeComboBox_;
+   private JComboBox<PatternType> patternTypeComboBox_;
    private JSlider patternSizeSlider_;
    private JFormattedTextField patternSizeTextBox_;
    private JLabel patternSizeLabel_;
-   private JComboBox colorComboBox_;
+   private JComboBox<PatternColor> colorComboBox_;
    private JCheckBox showSizeCheckBox_;
 
    private boolean programmaticallySettingConfiguration_ = false;
@@ -427,13 +427,13 @@ public class PatternOverlay extends AbstractOverlay {
          return;
       }
 
-      patternTypeComboBox_ = new JComboBox(PatternType.values());
+      patternTypeComboBox_ = new JComboBox<>(PatternType.values());
       patternTypeComboBox_.addActionListener((ActionEvent e) -> {
          patternType_ = (PatternType) patternTypeComboBox_.getSelectedItem();
          fireOverlayConfigurationChanged();
       });
 
-      colorComboBox_ = new JComboBox(PatternColor.values());
+      colorComboBox_ = new JComboBox<>(PatternColor.values());
       colorComboBox_.setMaximumRowCount(PatternColor.values().length);
       colorComboBox_.addActionListener((ActionEvent e) -> {
          color_ = (PatternColor) colorComboBox_.getSelectedItem();

@@ -197,7 +197,7 @@ public class DuplicatorPluginFrame extends JDialog {
 
                super.add(new JLabel(axis));
                SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
-                     (int) ourProvider_.getNextIndex(axis), 1);
+                     ourProvider_.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
                minSpinners.put(axis, minSpinner);
@@ -221,8 +221,8 @@ public class DuplicatorPluginFrame extends JDialog {
                });
                super.add(minSpinner, "wmin 60");
 
-               model = new SpinnerNumberModel((int) ourProvider_.getNextIndex(axis),
-                     1, (int) ourProvider_.getNextIndex(axis), 1);
+               model = new SpinnerNumberModel(ourProvider_.getNextIndex(axis),
+                     1, ourProvider_.getNextIndex(axis), 1);
                maxes.put(axis, ourProvider_.getNextIndex(axis) - 1);
                final JSpinner maxSpinner = new JSpinner(model);
                maxSpinners.put(axis, maxSpinner);
