@@ -421,9 +421,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          if (settings.isAutoscaleIgnoringZeros()) {
             min = componentStats.getMinIntensityExcludingZeros();
          }
-         intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
+         intensityStatsPanel_.setMin(Long.toString(min));
          long max = componentStats.getMaxIntensity();
-         intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
+         intensityStatsPanel_.setMax(Long.toString(max));
          long mean = componentStats.getMeanIntensity();
          if (settings.isAutoscaleIgnoringZeros()) {
             mean = componentStats.getMeanIntensityExcludingZeros();
@@ -437,6 +437,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                String.format("%1.2e", stdev));
 
          cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
+         updateHistoRangeControlsEnabled();
          ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
                viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
 
@@ -450,20 +451,25 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          if (data != null) {
             // For 32-bit float images (cameraBits == 32), the histogram is built in
             // actual pixel-value coordinates with a data-driven number of bins.
-            // Use data.length directly so the X-axis spans the actual pixel range.
-            // For integer images, clamp to (1<<rangeBits)-1 as before, but cap
-            // rangeBits at 30 to avoid Java int-shift overflow (1<<32 == 1).
-            int lengthToUse;
+            // For float images (cameraBits == 32): pass actual pixel-value range
+            // [floor(fMin), ceil(fMax)] so the histogram X-axis shows real pixel values.
+            // For integer images: use the bit-depth combo box selection as before,
+            // capping at 30 bits to avoid Java int-shift overflow (1<<32 == 1).
             if (rangeBits >= 32) {
-               lengthToUse = data.length;
+               long rangeMin = componentStats.getHistogramRangeMin();
+               long rangeMax = componentStats.getHistogramRangeMax();
+               if (rangeMax <= rangeMin) {
+                  rangeMax = rangeMin + 1;
+               }
+               histogram_.setComponentGraph(component, data, data.length, rangeMin, rangeMax);
             } else {
                int clampedRangeBits = Math.min(rangeBits, 30);
-               lengthToUse = Math.min(data.length, (1 << clampedRangeBits) - 1);
+               int lengthToUse = Math.min(data.length, (1 << clampedRangeBits) - 1);
+               if (lengthToUse <= 0) {
+                  lengthToUse = data.length;
+               }
+               histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
             }
-            if (lengthToUse <= 0) {
-               lengthToUse = data.length; // safety fallback
-            }
-            histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
             histogram_.setROIIndicator(componentStats.isROIStats());
          }
 
@@ -493,17 +499,25 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                      .getComponentSettings(component);
          max = Math.min(componentStats.getHistogramRangeMax(),
                componentSettings.getScalingMaximum());
-         min = Math.max(0, Math.min(max - 1,
+         long rangeMin = componentStats.getHistogramRangeMin();
+         min = Math.max(rangeMin, Math.min(max - 1,
                componentSettings.getScalingMinimum()));
       }
       histogram_.setComponentScaling(component, min, max);
    }
 
    @MustCallOnEDT
+   private void updateHistoRangeControlsEnabled() {
+      boolean isFloat = cameraBits_ != null && cameraBits_ >= 32;
+      histoRangeComboBox_.setEnabled(!isFloat);
+      histoRangeDownButton_.setEnabled(!isFloat && histoRangeComboBox_.getSelectedIndex() > 0);
+      histoRangeUpButton_.setEnabled(!isFloat
+            && histoRangeComboBox_.getSelectedIndex() < histoRangeComboBoxModel_.getSize() - 2);
+   }
+
+   @MustCallOnEDT
    private void updateHistoRangeButtonStates() {
-      int index = histoRangeComboBox_.getSelectedIndex();
-      histoRangeDownButton_.setEnabled(index > 0);
-      histoRangeUpButton_.setEnabled(index < histoRangeComboBoxModel_.getSize() - 2);
+      updateHistoRangeControlsEnabled();
       DisplaySettings oldDisplaySettings;
       DisplaySettings newDisplaySettings;
       do {

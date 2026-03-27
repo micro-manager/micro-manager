@@ -24,6 +24,11 @@ import java.util.Arrays;
 public final class IntegerComponentStats {
    private final long[] histogram_;
    private final int binWidthPowerOf2_;
+   // For float images: actual pixel-value start of bin 1 and width of each bin.
+   // For integer images these default to 0.0 and (1 << binWidthPowerOf2_) respectively,
+   // reproducing the previous behavior exactly.
+   private final double rangeMin_;
+   private final double binWidthFloat_;
    private final long pixelCount_;
    private final long pixelCountExcludingZeros_;
    private final boolean usedROI_;
@@ -37,6 +42,8 @@ public final class IntegerComponentStats {
    public static class Builder {
       private long[] histogram_;
       private int binWidthPowerOf2_;
+      private double rangeMin_ = 0.0;
+      private double binWidthFloat_ = -1.0; // sentinel: -1 → use 1 << binWidthPowerOf2_
       private long pixelCount_;
       private long pixelCountExcludingZeros_;
       private boolean usedROI_;
@@ -53,6 +60,17 @@ public final class IntegerComponentStats {
          Preconditions.checkArgument(binsIncludingOutOfRange.length >= 2);
          histogram_ = binsIncludingOutOfRange;
          binWidthPowerOf2_ = binWidthPowerOf2;
+         return this;
+      }
+
+      public Builder rangeMin(double min) {
+         rangeMin_ = min;
+         return this;
+      }
+
+      public Builder binWidthFloat(double width) {
+         Preconditions.checkArgument(width > 0.0);
+         binWidthFloat_ = width;
          return this;
       }
 
@@ -153,6 +171,8 @@ public final class IntegerComponentStats {
             ? Arrays.copyOf(b.histogram_, b.histogram_.length) :
             null;
       binWidthPowerOf2_ = b.binWidthPowerOf2_;
+      rangeMin_ = b.rangeMin_;
+      binWidthFloat_ = (b.binWidthFloat_ >= 0.0) ? b.binWidthFloat_ : (1 << b.binWidthPowerOf2_);
       pixelCount_ = b.pixelCount_;
       pixelCountExcludingZeros_ = b.pixelCountExcludingZeros_;
       usedROI_ = b.usedROI_;
@@ -199,15 +219,30 @@ public final class IntegerComponentStats {
       return 1 << binWidthPowerOf2_;
    }
 
+   public double getHistogramRangeMinDouble() {
+      return rangeMin_;
+   }
+
    public long getHistogramRangeMin() {
-      return 0;
+      return (long) Math.floor(rangeMin_);
    }
 
    public long getHistogramRangeMax() {
       if (histogram_ == null) {
          return 0;
       }
-      return (long) getHistogramBinWidth() * getHistogramBinCount() - 1;
+      // For integer images (rangeMin_ == 0 and binWidthFloat_ is a power of 2),
+      // the last representable value is binWidth*nBins - 1 (e.g. 255 for 8-bit).
+      // For float images (rangeMin_ or binWidthFloat_ may be fractional), the
+      // histogram covers exactly [rangeMin_, rangeMin_ + binWidthFloat_*nBins],
+      // so the upper bound is ceil(fMax) with no subtraction.
+      double rawMax = rangeMin_ + binWidthFloat_ * getHistogramBinCount();
+      long ceiled = (long) Math.ceil(rawMax);
+      if (rangeMin_ == 0.0 && binWidthFloat_ == (1 << binWidthPowerOf2_)) {
+         // Integer image: last valid sample value is one below the bin-count boundary
+         return ceiled - 1;
+      }
+      return ceiled;
    }
 
    public long getPixelCount() {
@@ -251,7 +286,7 @@ public final class IntegerComponentStats {
    public long getAutoscaleMinForQuantile(double q) {
       if (q >= 0.5) {
          // Safe, in-range value that is less than max
-         return Math.max(0L, Math.round(getQuantile(0.5)) - 1L);
+         return Math.round(getQuantile(0.5)) - 1L;
       }
       return Math.round(getQuantile(q));
    }
@@ -259,7 +294,7 @@ public final class IntegerComponentStats {
    public long getAutoscaleMinForQuantileIgnoringZeros(double q) {
       if (q >= 0.5) {
          // Safe, in-range value that is less than max
-         return Math.max(0L, Math.round(getQuantileIgnoringZeros(0.5)) - 1L);
+         return Math.round(getQuantileIgnoringZeros(0.5)) - 1L;
       }
       return Math.round(getQuantileIgnoringZeros(q));
    }
@@ -301,7 +336,7 @@ public final class IntegerComponentStats {
 
       if (countBelowQuantile <= cumDistrib[0] && cumDistrib[0] > 0) {
          // Quantile is below histogram range
-         return getHistogramRangeMin();
+         return getHistogramRangeMinDouble();
       }
       if (countBelowQuantile > cumDistrib[cumDistrib.length - 2]) {
          // Quantile is above histogram range
@@ -323,12 +358,11 @@ public final class IntegerComponentStats {
       binIndex = binarySearch(cumDistrib, 1, cumDistrib.length - 1,
             (long) Math.floor(countBelowQuantile));
 
-      int binWidth = getHistogramBinWidth();
-      long leftEdge = (long) (binIndex - 1) * binWidth;
+      double leftEdge = rangeMin_ + (binIndex - 1) * binWidthFloat_;
       double binFraction =
             (countBelowQuantile - cumDistrib[binIndex - 1])
                   / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
-      return leftEdge + binFraction * binWidth;
+      return leftEdge + binFraction * binWidthFloat_;
    }
 
 
@@ -356,7 +390,7 @@ public final class IntegerComponentStats {
 
       if (countBelowQuantile < cumDistrib[2] && cumDistrib[2] > 0) {
          // Quantile is below histogram range
-         return getHistogramRangeMin() + 1;
+         return getHistogramRangeMinDouble() + binWidthFloat_;
       }
       if (countBelowQuantile > cumDistrib[cumDistrib.length - 2]) {
          // Quantile is above histogram range
@@ -378,12 +412,11 @@ public final class IntegerComponentStats {
       binIndex = binarySearch(cumDistrib, 2, cumDistrib.length - 1,
             (long) Math.floor(countBelowQuantile));
 
-      int binWidth = getHistogramBinWidth();
-      long leftEdge = (long) (binIndex - 1) * binWidth;
+      double leftEdge = rangeMin_ + (binIndex - 1) * binWidthFloat_;
       double binFraction =
              (countBelowQuantile - cumDistrib[binIndex - 1])
                  / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
-      return leftEdge + binFraction * binWidth;
+      return leftEdge + binFraction * binWidthFloat_;
    }
 
    private long[] computeCumulativeDistribution() {

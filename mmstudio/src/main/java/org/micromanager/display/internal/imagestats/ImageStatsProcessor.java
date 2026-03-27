@@ -242,47 +242,17 @@ public final class ImageStatsProcessor {
          fMax = 0.0f;
       }
 
-      // Second pass: build histogram.
-      // For non-negative floats, build in actual pixel-value coordinates so that
-      // bin i covers [i*binWidth, (i+1)*binWidth). This ensures that histogram
-      // bin coordinates equal pixel values, which is what the display framework
-      // assumes when applying the LUT min/max to the ImageJ FloatProcessor.
-      // For negative floats (unusual in microscopy), fall back to a 256-bin
-      // normalized histogram (bin coords differ from pixel values in that case).
+      // Second pass: build a 256-bin histogram spanning [fMin, fMax].
+      // bin width = (fMax - fMin) / N_BINS (floating-point, not power-of-2).
+      // Storing rangeMin_ = fMin and binWidthFloat_ in IntegerComponentStats means
+      // getQuantile() returns actual pixel values, which are passed directly to the
+      // ImageJ FloatProcessor LUT. This works for negative fMin as well.
       final int N_BINS = 256;
-      final boolean nonnegative = (fMin >= 0.0f);
+      final float range = fMax - fMin;
+      final double fBinWidth = (range == 0.0f) ? 1.0 : (double) range / N_BINS;
 
-      final int binWidthPow2;
-      final long histMin;
-      final long histMax;
-      if (nonnegative) {
-         // Choose the smallest power-of-2 bin width that keeps at most N_BINS bins
-         // spanning [0, ceil(fMax)].
-         long intRange = (long) Math.ceil(fMax) + 1;
-         int bw = 0;
-         while (((intRange + ((1L << bw) - 1)) >> bw) > N_BINS) {
-            bw++;
-         }
-         binWidthPow2 = bw;
-         histMin = (long) fMin;
-         histMax = (long) Math.ceil(fMax);
-      } else {
-         binWidthPow2 = 0;
-         histMin = (long) fMin;
-         histMax = (long) Math.ceil(fMax);
-      }
+      long[] hist = new long[N_BINS + 2]; // [0]=underflow, [1..N_BINS]=in-range, [N_BINS+1]=overflow
 
-      int binWidth = 1 << binWidthPow2;
-      int nBins;
-      if (nonnegative) {
-         nBins = (int) (((long) Math.ceil(fMax) + binWidth) >> binWidthPow2);
-         nBins = Math.max(1, Math.min(nBins, N_BINS));
-      } else {
-         nBins = N_BINS;
-      }
-      long[] hist = new long[nBins + 2]; // [0]=underflow, [1..nBins]=in-range, [nBins+1]=overflow
-
-      float range = fMax - fMin;
       for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
          for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
             if (maskBytes != null) {
@@ -296,29 +266,26 @@ public final class ImageStatsProcessor {
                continue;
             }
             int bin;
-            if (nonnegative) {
-               bin = 1 + (int) (v / binWidth);
-               bin = Math.max(1, Math.min(nBins, bin));
+            if (range == 0.0f) {
+               bin = 1;
             } else {
-               if (range == 0.0f) {
-                  bin = 1;
-               } else {
-                  bin = 1 + (int) ((v - fMin) / range * (N_BINS - 1));
-                  bin = Math.max(1, Math.min(N_BINS, bin));
-               }
+               bin = 1 + (int) Math.floor((v - fMin) / fBinWidth);
+               bin = Math.max(1, Math.min(N_BINS, bin));
             }
             hist[bin]++;
          }
       }
 
       IntegerComponentStats stats = IntegerComponentStats.builder()
-            .histogram(hist, binWidthPow2)
+            .histogram(hist, 0)
+            .rangeMin((double) fMin)
+            .binWidthFloat(fBinWidth)
             .pixelCount(count)
             .pixelCountExcludingZeros(count)
             .usedROI(useROI)
-            .minimum(histMin)
-            .minimumExcludingZeros(histMin)
-            .maximum(histMax)
+            .minimum((long) Math.floor(fMin))
+            .minimumExcludingZeros((long) Math.floor(fMin))
+            .maximum((long) Math.ceil(fMax))
             .sum((long) sum)
             .sumOfSquares(0L)
             .build();
