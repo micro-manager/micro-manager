@@ -28,6 +28,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
@@ -181,9 +182,13 @@ public final class DefaultImage implements Image {
     * Generates a DefaultImage from pixels, minimal image info, and the
     * supplied coords and metadata.
     *
-    * <p>Input pixels will be used directly (i.e., they are not copied).
+    * <p>For byte[], short[], and float[] inputs the pixel array is used directly
+    * (wrapped in a Buffer, not copied). For int[] RGB32 inputs the pixels are
+    * converted from packed 0x00RRGGBB format to an interleaved B-G-R-0 byte[]
+    * (one allocation per call); all other array types are zero-copy.
     *
-    * @param pixels   Image pixels.  Should be a Java array of bytes or shorts (not null).
+    * @param pixels   Image pixels: byte[] (GRAY8), short[] (GRAY16), float[] (GRAY32),
+    *                 or int[] (RGB32, packed 0x00RRGGBB). Must not be null.
     * @param coords   Coords to be used for this new image (can be null).
     * @param metadata Metadata to be used this new image (can be null).
     * @throws IllegalArgumentException thrown when pixels is null
@@ -203,7 +208,14 @@ public final class DefaultImage implements Image {
          bpc = 2;
       } else if (pixels instanceof int[] && bytesPerPixel == 4
             && numComponents == 3) {
+         // Convert packed 0x00RRGGBB int[] to interleaved B-G-R-0 byte[] so that
+         // wrapArray() gets a plain byte[] and the copy is explicit here, not hidden
+         // inside BufferTools.
+         pixels = BufferTools.rgb32IntToBytes((int[]) pixels);
          bpc = 1;
+      } else if (pixels instanceof float[] && bytesPerPixel == 4
+            && numComponents == 1) {
+         bpc = 4;
       } else {
          throw new UnsupportedOperationException("Unsupported pixel data type");
       }
@@ -235,6 +247,8 @@ public final class DefaultImage implements Image {
          bytesPerComponent = 1;
       } else if (source.getRawPixels() instanceof short[]) {
          bytesPerComponent = 2;
+      } else if (source.getRawPixels() instanceof float[]) {
+         bytesPerComponent = 4;
       }
       rawPixels_ = BufferTools.wrapArray(source.getRawPixels(), bytesPerComponent);
 
@@ -249,6 +263,8 @@ public final class DefaultImage implements Image {
          bpc = 1;
       } else if (rawPixels_ instanceof ShortBuffer) {
          bpc = 2;
+      } else if (rawPixels_ instanceof FloatBuffer) {
+         bpc = 4;
       } else {
          throw new UnsupportedOperationException("Unsupported pixel data type");
       }
@@ -317,6 +333,10 @@ public final class DefaultImage implements Image {
          int[] tmp = (int[]) original;
          length = tmp.length;
          copy = new int[length];
+      } else if (original instanceof float[]) {
+         float[] tmp = (float[]) original;
+         length = tmp.length;
+         copy = new float[length];
       } else {
          throw new RuntimeException("Unrecognized pixel type " + original.getClass());
       }
@@ -339,6 +359,8 @@ public final class DefaultImage implements Image {
          result = (Object) new byte[length];
       } else if (rawPixels_ instanceof ShortBuffer) {
          result = (Object) new short[length];
+      } else if (rawPixels_ instanceof FloatBuffer) {
+         result = (Object) new float[length];
       } else {
          ReportingUtils.logError("Unrecognized pixel buffer type.");
          return null;
@@ -349,6 +371,8 @@ public final class DefaultImage implements Image {
             ((byte[]) result)[i] = ((ByteBuffer) rawPixels_).get(sourceIndex);
          } else if (rawPixels_ instanceof ShortBuffer) {
             ((short[]) result)[i] = ((ShortBuffer) rawPixels_).get(sourceIndex);
+         } else if (rawPixels_ instanceof FloatBuffer) {
+            ((float[]) result)[i] = ((FloatBuffer) rawPixels_).get(sourceIndex);
          }
       }
       return result;
@@ -375,6 +399,8 @@ public final class DefaultImage implements Image {
             return ImageUtils.unsignedValue(((ByteBuffer) rawPixels_).get(sampleIndex));
          case 2:
             return ImageUtils.unsignedValue(((ShortBuffer) rawPixels_).get(sampleIndex));
+         case 4:
+            return (long) ((FloatBuffer) rawPixels_).get(sampleIndex);
          default:
             throw new AssertionError("Unimplemented sample size");
       }
@@ -392,15 +418,20 @@ public final class DefaultImage implements Image {
 
    @Override
    public String getIntensityStringAt(int x, int y) {
+      if (pixelType_ == PixelType.GRAY32) {
+         int pixelIndex = y * pixelWidth_ + x;
+         float val = ((FloatBuffer) rawPixels_).get(pixelIndex);
+         return String.format(java.util.Locale.US, "%.6g", val);
+      }
       if (getNumComponents() == 1) {
          return String.format("%d", getIntensityAt(x, y));
       } else {
          String result = "(";
          for (int i = 0; i < getNumComponents(); ++i) {
-            result += String.format("%d", getComponentIntensityAt(x, y, i));
             if (i != 0) {
                result += ", ";
             }
+            result += String.format("%d", getComponentIntensityAt(x, y, i));
          }
          return result + ")";
       }

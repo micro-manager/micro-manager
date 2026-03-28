@@ -1132,10 +1132,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // TODO: Remember changes in component display settings?
             ijBridge_.mm2ijSetChannelColor(i, channelSettings.getColor());
             if (!autostretch) {
-               int max = Math.max(1, (int) Math.min(Integer.MAX_VALUE,
-                     componentSettings.getScalingMaximum()));
-               int min = (int) Math.min(max - 1,
-                     componentSettings.getScalingMinimum());
+               int max = (int) Math.min(Integer.MAX_VALUE,
+                     componentSettings.getScalingMaximum());
+               if (max < 1) {
+                  max = 1;
+               }
+               int min = (int) componentSettings.getScalingMinimum();
+               min = Math.min(max - 1, min);
                ijBridge_.mm2ijSetIntensityScaling(i, min, max);
             }
             double gamma = componentSettings.getScalingGamma();

@@ -193,6 +193,8 @@ public final class ImageStatsProcessor {
                mask,
                nComponents, bitDepth, binCountPowerOf2,
                useROI, index);
+      } else if (bytesPerSample == 4 && nComponents == 1) {
+         result = computeFloatStats(image, statsBounds, maskBytes, maskBounds, useROI, index);
       }
 
       if (perfMon_ != null) {
@@ -200,6 +202,117 @@ public final class ImageStatsProcessor {
       }
 
       return result; // null if we don't know how to compute (TODO FIX)
+   }
+
+   private ImageStats computeFloatStats(Image image, java.awt.Rectangle statsBounds,
+                                        byte[] maskBytes, java.awt.Rectangle maskBounds,
+                                        boolean useROI, int index) {
+      float[] pixels = (float[]) image.getRawPixels();
+      int width = image.getWidth();
+      float fMin = Float.MAX_VALUE;
+      float fMax = -Float.MAX_VALUE;
+      float fMinNonZero = Float.MAX_VALUE;
+      long count = 0;
+      long countNonZero = 0;
+      double sum = 0.0;
+      double sumNonZero = 0.0;
+      double sumOfSquares = 0.0;
+
+      // First pass: find min/max, accumulate sum/sumOfSquares/counts
+      // (ignoring NaN, Infinity, and masked-out pixels)
+      for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
+         for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
+            if (maskBytes != null) {
+               int maskIdx = (y - maskBounds.y) * maskBounds.width + (x - maskBounds.x);
+               if ((maskBytes[maskIdx] & 0xff) < MASK_THRESH) {
+                  continue;
+               }
+            }
+            float v = pixels[y * width + x];
+            if (Float.isNaN(v) || Float.isInfinite(v)) {
+               continue;
+            }
+            count++;
+            sum += v;
+            sumOfSquares += (double) v * v;
+            if (v < fMin) {
+               fMin = v;
+            }
+            if (v > fMax) {
+               fMax = v;
+            }
+            if (v != 0.0f) {
+               countNonZero++;
+               sumNonZero += v;
+               if (v < fMinNonZero) {
+                  fMinNonZero = v;
+               }
+            }
+         }
+      }
+      if (count == 0) {
+         fMin = 0.0f;
+         fMax = 0.0f;
+      }
+      if (countNonZero == 0) {
+         fMinNonZero = 0.0f;
+      }
+
+      // Second pass: build a 256-bin histogram spanning [fMin, fMax].
+      // bin width = (fMax - fMin) / N_BINS (floating-point, not power-of-2).
+      // Storing rangeMin_ = fMin and binWidthFloat_ in IntegerComponentStats means
+      // getQuantile() returns actual pixel values, which are passed directly to the
+      // ImageJ FloatProcessor LUT. This works for negative fMin as well.
+      final int N_BINS = 256;
+      final float range = fMax - fMin;
+      // When all pixels are identical (range == 0), use binWidth=0 as a sentinel so
+      // that getHistogramRangeMax() returns ceil(fMax) rather than fMin + 256.
+      final double fBinWidth = (range == 0.0f) ? 0.0 : (double) range / N_BINS;
+
+      // [0]=underflow, [1..N_BINS]=in-range, [N_BINS+1]=overflow
+      long[] hist = new long[N_BINS + 2];
+
+      for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
+         for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
+            if (maskBytes != null) {
+               int maskIdx = (y - maskBounds.y) * maskBounds.width + (x - maskBounds.x);
+               if ((maskBytes[maskIdx] & 0xff) < MASK_THRESH) {
+                  continue;
+               }
+            }
+            float v = pixels[y * width + x];
+            if (Float.isNaN(v) || Float.isInfinite(v)) {
+               continue;
+            }
+            int bin;
+            if (range == 0.0f) {
+               bin = 1;
+            } else {
+               bin = 1 + (int) Math.floor((v - fMin) / fBinWidth);
+               bin = Math.max(1, Math.min(N_BINS, bin));
+            }
+            hist[bin]++;
+         }
+      }
+
+      // sum and sumOfSquares are stored as long in IntegerComponentStats.
+      // Round to the nearest integer so that getMeanIntensity() and
+      // getStandardDeviation() return values that are correct to integer precision,
+      // matching the display which shows mean and stdev rounded to integers.
+      IntegerComponentStats stats = IntegerComponentStats.builder()
+            .histogram(hist, 0)
+            .rangeMin((double) fMin)
+            .binWidthFloat(fBinWidth)
+            .pixelCount(count)
+            .pixelCountExcludingZeros(countNonZero)
+            .usedROI(useROI)
+            .minimum((long) Math.floor(fMin))
+            .minimumExcludingZeros((long) Math.floor(fMinNonZero))
+            .maximum((long) Math.ceil(fMax))
+            .sum(Math.round(sum))
+            .sumOfSquares(Math.round(sumOfSquares))
+            .build();
+      return ImageStats.create(index, stats);
    }
 
    private <T extends IntegerType<T>> ImageStats compute(
