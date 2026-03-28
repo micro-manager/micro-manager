@@ -4,12 +4,12 @@
 set -e
 
 usage() {
-    echo "Usage: $0 -b STAGEDIR | -D DMGNAME" 1>&2
-    echo "   -b STAGEDIR -- sign all the binaries in the stage directory" 1>&2
-    echo "   -D DMGNAME  -- sign the given .dmg file" 1>&2
-    echo "   -v          -- print some debug info" 1>&2
+    echo "Usage: $0 -d DIR | -1 BINARY [codesign-options]" 1>&2
+    echo "  Exactly one of the following options is required" 1>&2
+    echo "   -d DIR  -- sign all the binaries in DIR" 1>&2
+    echo "   -1 FILE -- sign a single file (or .app bundle, DMG)" 1>&2
     echo 1>&2
-    echo "The keychain containing the certificate must be set up." 1>&2
+    echo "The keychain containing the certificate must be unlocked." 1>&2
     echo 1>&2
     echo "Environment:" 1>&2
     echo "  MM_CODESIGN_CERT -- Name, in keychain, of the certificate" 1>&2
@@ -17,16 +17,15 @@ usage() {
 }
 
 sign_binaries=
-sign_dmg=
-verbose=no
-while getopts ":b:D:" o; do
-   case $o in
-      b) sign_binaries="$OPTARG" ;;
-      D) sign_dmg="$OPTARG" ;;
-      v) verbose=yes ;;
-      *) usage ;;
-   esac
-done
+sign_one_file=
+getopts ":d:1:" o
+case $o in
+   d) sign_binaries="$OPTARG" ;;
+   1) sign_one_file="$OPTARG" ;;
+   *) usage ;;
+esac
+# Remove the option and its arg from $@, leaving the codesign options
+shift; shift
 
 if [ -z "$MM_CODESIGN_CERT" ]; then
    echo "Certificate name not set (MM_CODESIGN_CERT)" 1>&2
@@ -53,8 +52,6 @@ sign_if_binary() {
    filetype="$(file "$file")"
    if [[ "$filetype" == *" Mach-O "* ]]; then
       sign_and_verify "$file" "$@"
-   elif [ $verbose = yes ]; then
-      echo "Not a binary: $file"
    fi
 }
 
@@ -68,18 +65,10 @@ if [ ! -z "$sign_binaries" ]; then
    #   because we're calling a shell function
    readarray -d '' -t files < <(find "$sign_binaries" -type f -print0)
    for file in "${files[@]}"; do
-      sign_if_binary "$file" --options runtime
+      sign_if_binary "$file" "$@"
    done
-
-   # The ImageJ.app launcher bundle (which contains a shell script; no binary)
-   sign_and_verify "$sign_binaries/ImageJ.app"
 fi
 
-
-##
-## Sign disk image
-##
-
-if [ ! -z "$sign_dmg" ]; then
-   sign_and_verify "$sign_dmg"
+if [ ! -z "$sign_one_file" ]; then
+   sign_and_verify "$sign_one_file" "$@"
 fi
