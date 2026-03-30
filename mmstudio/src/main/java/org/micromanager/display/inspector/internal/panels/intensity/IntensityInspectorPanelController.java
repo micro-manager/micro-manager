@@ -421,30 +421,32 @@ public class IntensityInspectorPanelController
    private void handleAutostretch() {
       boolean enabled = autostretchCheckBox_.isSelected();
       double percentile = (Double) percentileSpinner_.getValue();
+      if (!enabled) {
+         // When turning autostretch off, freeze the current autoscaled values
+         // into DisplaySettings so the image doesn't snap back to the previous
+         // manual range. Do this before disabling autostretch so that
+         // handleAutoscale() can still read the current stats.
+         displaySettingsUpdateSuspended_ = true;
+         for (ChannelIntensityController ch : channelControllers_) {
+            ch.handleAutoscale();
+         }
+         displaySettingsUpdateSuspended_ = false;
+         // Disable RGB autostretch tracking. Must be done here (not in
+         // newDisplaySettings) because we always keep DisplaySettings.isAutostretchEnabled()
+         // false for RGB images, so that field can't be used to detect the transition.
+         for (ChannelIntensityController ch : channelControllers_) {
+            ch.setRgbAutostretchEnabled(false);
+         }
+      }
       DisplaySettings oldSettings;
       DisplaySettings newSettings;
-      // boolean needToSetFixedMinMaxToAutoscaled = false;
       do {
          oldSettings = viewer_.getDisplaySettings();
-         //needToSetFixedMinMaxToAutoscaled = !enabled && oldSettings.isAutostretchEnabled();
          newSettings = oldSettings.copyBuilder()
                .autostretch(enabled)
                .autoscaleIgnoredPercentile(percentile)
                .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
-      /*
-      if (needToSetFixedMinMaxToAutoscaled) {
-         // When autostretch is turned off, rather than snapping back to
-         // whatever the range was before autostretch was enabled, we want to
-         // keep the current actual range. That can be accomplished by the
-         // equivalent of clicking on Auto Once for each channel.
-         displaySettingsUpdateSuspended_ = true;
-         for (ChannelIntensityController ch : channelControllers_) {
-              ch.handleAutoscale();
-         }
-         displaySettingsUpdateSuspended_ = false;
-      }
-      */
    }
 
    @MustCallOnEDT
@@ -567,7 +569,13 @@ public class IntensityInspectorPanelController
       // or something external. So sync to the panel UI first, but do so
       // without generating UI actions.
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
-      autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
+      // For RGB images, autostretch is managed by ChannelIntensityController (kept off
+      // in DisplaySettings to prevent the display engine from interfering). Use
+      // rgbAutostretchEnabled_ from the first channel controller as the authoritative state.
+      boolean autostretchOn = settings.isAutostretchEnabled()
+            || (!channelControllers_.isEmpty()
+                  && channelControllers_.get(0).isRgbAutostretchEnabled());
+      autostretchCheckBox_.setSelected(autostretchOn);
 
       // A spinner's change listener, unlike an action listener, gets notified
       // upon programmatic changes. Use a flag to suppress re-entrant handling.
@@ -584,13 +592,7 @@ public class IntensityInspectorPanelController
          ignoreLabel_.setText(")");
       }
 
-      if (autostretchCheckBox_.isSelected() && !settings.isAutostretchEnabled()) {
-         displaySettingsUpdateSuspended_ = true;
-         for (ChannelIntensityController ch : channelControllers_) {
-            ch.handleAutoscale();
-         }
-         displaySettingsUpdateSuspended_ = false;
-      }
+
 
       gearMenuLogYAxisItem_.setSelected(settings.isHistogramLogarithmic());
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());

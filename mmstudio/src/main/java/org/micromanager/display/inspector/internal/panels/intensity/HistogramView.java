@@ -811,16 +811,28 @@ public final class HistogramView extends JPanel {
             return null;
          }
 
+         // Find the first and last bins with non-zero count to avoid drawing
+         // a flat zero-count line at the edges of the histogram.
+         int firstNonZero = 0;
+         while (firstNonZero < data.length && data[firstNonZero] == 0.0f) {
+            firstNonZero++;
+         }
+         int lastNonZero = data.length - 1;
+         while (lastNonZero > firstNonZero && data[lastNonZero] == 0.0f) {
+            lastNonZero--;
+         }
+
          state.cachedPath_ =
                new Path2D.Float(Path2D.WIND_EVEN_ODD, 2 * data.length + 2);
-         state.cachedPath_.moveTo(0.0f, (float) rect.height);
-         for (int i = 0; i < data.length; ++i) {
+         float startX = firstNonZero * pixelsPerBin;
+         state.cachedPath_.moveTo(startX, (float) rect.height);
+         for (int i = firstNonZero; i <= lastNonZero; ++i) {
             float x = i * pixelsPerBin;
             float y = rect.height - dataScaling * data[i];
             state.cachedPath_.lineTo(x, y);                // Vertical
             state.cachedPath_.lineTo(x + pixelsPerBin, y); // Horizontal
          }
-         state.cachedPath_.lineTo((float) rect.width, (float) rect.height);
+         state.cachedPath_.lineTo((lastNonZero + 1) * pixelsPerBin, (float) rect.height);
          if (fillHistograms_) {
             state.cachedPath_.closePath();
          }
