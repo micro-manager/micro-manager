@@ -211,14 +211,29 @@ public final class HistogramView extends JPanel {
    public void clearGraphs() {
       nullRectsAndMappingPath();
       for (ComponentState state : componentStates_) {
-         state.graph_ = null;
-         state.rangeMax_ = 0;
-         state.scalingMin_ = 0;
-         state.scalingMax_ = 0;
-         state.cachedInterpolatedLogScaledGraph_ = null;
-         state.cachedPath_ = null;
+         clearComponentState(state);
       }
       repaint();
+   }
+
+   public void clearComponentGraph(int component) {
+      if (component >= componentStates_.size()) {
+         return;
+      }
+      if (component == selectedComponent_) {
+         nullRectsAndMappingPath();
+      }
+      clearComponentState(componentStates_.get(component));
+      repaint();
+   }
+
+   private void clearComponentState(ComponentState state) {
+      state.graph_ = null;
+      state.rangeMax_ = 0;
+      state.scalingMin_ = 0;
+      state.scalingMax_ = 0;
+      state.cachedInterpolatedLogScaledGraph_ = null;
+      state.cachedPath_ = null;
    }
 
    public void setComponentColor(int component, Color color, Color highlightColor) {
@@ -592,6 +607,9 @@ public final class HistogramView extends JPanel {
    private void drawComponentScalingLimits(int component, Graphics2D g) {
       Rectangle rect = getGraphRect();
       ComponentState state = componentStates_.get(component);
+      if (state.rangeMax_ <= 0) {
+         return;
+      }
       float binCount = state.rangeMax_ + 1;
       float loXPos = getScalingHandlePos(component, false);
       if (loXPos < rect.x) { // Prevent from being clipped

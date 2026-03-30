@@ -422,21 +422,16 @@ public class IntensityInspectorPanelController
       boolean enabled = autostretchCheckBox_.isSelected();
       double percentile = (Double) percentileSpinner_.getValue();
       if (!enabled) {
-         // When turning autostretch off, freeze the current autoscaled values
-         // into DisplaySettings so the image doesn't snap back to the previous
-         // manual range. Do this before disabling autostretch so that
-         // handleAutoscale() can still read the current stats.
+         // Freeze the current autoscaled values into DisplaySettings before disabling,
+         // so the image doesn't snap back to the prior manual range.
+         // Also clear rgbAutostretchEnabled here — we can't detect the transition via
+         // DisplaySettings.isAutostretchEnabled() because we keep that false for RGB.
          displaySettingsUpdateSuspended_ = true;
          for (ChannelIntensityController ch : channelControllers_) {
             ch.handleAutoscale();
-         }
-         displaySettingsUpdateSuspended_ = false;
-         // Disable RGB autostretch tracking. Must be done here (not in
-         // newDisplaySettings) because we always keep DisplaySettings.isAutostretchEnabled()
-         // false for RGB images, so that field can't be used to detect the transition.
-         for (ChannelIntensityController ch : channelControllers_) {
             ch.setRgbAutostretchEnabled(false);
          }
+         displaySettingsUpdateSuspended_ = false;
       }
       DisplaySettings oldSettings;
       DisplaySettings newSettings;

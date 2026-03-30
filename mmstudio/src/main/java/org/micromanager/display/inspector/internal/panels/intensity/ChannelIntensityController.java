@@ -52,15 +52,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private final JToggleButton channelVisibleButton_ = new JToggleButton();
    private static final int COMPONENT_WHITE = 3;
    private double[] whiteRatios_ = null; // non-null when white mode is active
-   private long whiteMasterMax_ = 0; // master max shown by white handle; = max(R,G,B)
-   // When white mode is active, we manage autostretch ourselves to preserve
-   // ratios. DisplaySettings.isAutostretchEnabled() is kept false so the
-   // display engine's independent-per-component autostretch doesn't fire.
-   // This flag remembers that the user actually wants autostretch on.
-   // For RGB images, autostretch is managed here rather than in DisplayUIController
-   // so that we can honour the selected component and white-mode ratios.
-   // DisplaySettings.isAutostretchEnabled() is kept false; this flag tracks the
-   // user's actual intent.
+   private long whiteMainMax_ = 0; // main max shown by white handle; = max(R,G,B)
+   // For RGB images we manage autostretch here (not in DisplayUIController) so we
+   // can honour the selected component and white-mode ratios.
+   // DisplaySettings.isAutostretchEnabled() is kept false to prevent the display
+   // engine from interfering; this flag tracks the user's actual intent.
    private boolean rgbAutostretchEnabled_ = false;
    private boolean suppressAutostretchDetection_ = false;
 
@@ -496,6 +492,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       int numComponents = stats_.getNumberOfComponents();
       setRGBMode(numComponents > 1);
 
+      boolean whiteMode = getSelectedComponent() == COMPONENT_WHITE;
       for (int c = 0; c < numComponents; c++) {
          IntegerComponentStats cStats = stats_.getComponentStats(c);
          long[] data = cStats.getInRangeHistogram();
@@ -507,29 +504,25 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          }
          updateScalingIndicators(displaySettings, cStats, c);
       }
+      if (whiteMode) {
+         updateWhiteScalingIndicator(displaySettings, stats_.getComponentStats(0));
+      }
    }
 
    @MustCallOnEDT
+   // Updates the histogram's scaling indicator (dotted lines + handle) for a single
+   // R/G/B component (indices 0–2). Always reflects the component's own
+   // ComponentDisplaySettings — independent of white mode.
    private void updateScalingIndicators(DisplaySettings settings,
                                         IntegerComponentStats componentStats, int component) {
       long min;
       long max;
-      boolean whiteMode = getSelectedComponent() == COMPONENT_WHITE;
       if (settings.isAutostretchEnabled()) {
          double q = settings.getAutoscaleIgnoredQuantile();
          long[] minMax = new long[2];
          componentStats.getAutoscaleMinMaxForQuantile(q, minMax);
          min = minMax[0];
          max = minMax[1];
-      } else if (whiteMode && component == 0) {
-         // White mode: show the virtual master max at the handle (not Red's raw max),
-         // so the white handle position is independent of Red's ComponentDisplaySettings.
-         ComponentDisplaySettings componentSettings =
-               settings.getChannelSettings(channelIndex_).getComponentSettings(0);
-         min = Math.max(0, componentSettings.getScalingMinimum());
-         max = whiteMasterMax_ > 0 ? whiteMasterMax_
-               : Math.min(componentStats.getHistogramRangeMax(),
-                          componentSettings.getScalingMaximum());
       } else {
          ComponentDisplaySettings componentSettings =
                settings.getChannelSettings(channelIndex_)
@@ -540,6 +533,28 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                componentSettings.getScalingMinimum()));
       }
       histogram_.setComponentScaling(component, min, max);
+   }
+
+   // Updates the white handle (HistogramView slot COMPONENT_WHITE) to show
+   // whiteMainMax_ as the draggable position. Uses component 0's rangeMax and
+   // min for positioning since white mode operates in the same intensity space.
+   private void updateWhiteScalingIndicator(DisplaySettings settings,
+                                            IntegerComponentStats comp0Stats) {
+      long rangeMax = comp0Stats.getHistogramRangeMax();
+      long max = whiteMainMax_ > 0
+            ? Math.min(whiteMainMax_, rangeMax)
+            : Math.min(settings.getChannelSettings(channelIndex_)
+                  .getComponentSettings(0).getScalingMaximum(), rangeMax);
+      ComponentDisplaySettings comp0Settings =
+            settings.getChannelSettings(channelIndex_).getComponentSettings(0);
+      long min = Math.max(0, comp0Settings.getScalingMinimum());
+      // Feed component 3 the same graph data as component 0 so that rangeMax_ is
+      // set in HistogramView (required for handle position calculation).
+      long[] graph = comp0Stats.getInRangeHistogram();
+      if (graph != null && rangeMax > 0) {
+         histogram_.setComponentGraph(COMPONENT_WHITE, graph, graph.length, rangeMax);
+         histogram_.setComponentScaling(COMPONENT_WHITE, min, max);
+      }
    }
 
    @MustCallOnEDT
@@ -623,8 +638,13 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          componentButtons_[i].setVisible(isRGB);
       }
 
-      // Reapply display settings with correct component handling
-      newDisplaySettings(viewer_.getDisplaySettings());
+      if (isRGB && !wasRGB) {
+         // Auto-select White when entering RGB mode for the first time.
+         handleComponentSelection(COMPONENT_WHITE);
+      } else {
+         // Reapply display settings with correct component handling
+         newDisplaySettings(viewer_.getDisplaySettings());
+      }
    }
 
    @MustCallOnEDT
@@ -634,16 +654,21 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
       if (component == COMPONENT_WHITE) {
          captureWhiteRatios();
-         histogram_.setComponentColor(0, Color.WHITE, Color.WHITE);
-         histogram_.setSelectedComponent(0);
+         // Use HistogramView slot 3 for the white handle so that Red (slot 0)
+         // keeps its own independent dotted line and handle.
+         histogram_.setComponentColor(0, Color.RED, Color.RED);
+         histogram_.setComponentColor(COMPONENT_WHITE, Color.WHITE, Color.WHITE);
+         histogram_.setSelectedComponent(COMPONENT_WHITE);
       } else {
          whiteRatios_ = null;
-         whiteMasterMax_ = 0;
+         whiteMainMax_ = 0;
+         // Deactivate the white slot so its dotted line disappears.
+         histogram_.clearComponentGraph(COMPONENT_WHITE);
          histogram_.setComponentColor(0, Color.RED, Color.RED);
          histogram_.setSelectedComponent(component);
       }
       // Refresh scaling indicators immediately so the handle position reflects the
-      // new mode (white master max vs Red's individual max) without waiting for the
+      // new mode (white main max vs Red's individual max) without waiting for the
       // next stats update.
       statsOrRangeChanged();
       // If autostretch is active (managed by us), re-apply for the new selection
@@ -659,7 +684,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             return i;
          }
       }
-      return 0; // Shouldn't reach
+      return 0; // component 0 selected by default
    }
 
    @MustCallOnEDT
@@ -679,13 +704,13 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             effectiveMax[c] = settingsMax == Long.MAX_VALUE ? 255 : settingsMax;
          }
       }
-      long masterMax = Math.max(effectiveMax[0], Math.max(effectiveMax[1], effectiveMax[2]));
-      whiteMasterMax_ = masterMax;
-      if (masterMax > 0) {
+      long mainMax = Math.max(effectiveMax[0], Math.max(effectiveMax[1], effectiveMax[2]));
+      whiteMainMax_ = mainMax;
+      if (mainMax > 0) {
          whiteRatios_ = new double[] {
-               (double) effectiveMax[0] / masterMax,
-               (double) effectiveMax[1] / masterMax,
-               (double) effectiveMax[2] / masterMax
+               (double) effectiveMax[0] / mainMax,
+               (double) effectiveMax[1] / mainMax,
+               (double) effectiveMax[2] / mainMax
          };
       } else {
          whiteRatios_ = new double[] {1.0, 1.0, 1.0};
@@ -713,17 +738,20 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
    }
 
-   @MustCallOnEDT
-   private void restoreAutostretchInSettings() {
-      DisplaySettings oldSettings;
-      DisplaySettings newSettings;
-      do {
-         oldSettings = viewer_.getDisplaySettings();
-         if (oldSettings.isAutostretchEnabled()) {
-            return;
-         }
-         newSettings = oldSettings.copyBuilder().autostretch(true).build();
-      } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
+   // Returns {mainMax, commonMin} across all components at the given quantile.
+   // mainMax = brightest autoscale max, so the white handle lands at the image's
+   // true peak value rather than an inflated implied value.
+   private long[] computeWhiteAutoscaleRange(double q) {
+      long mainMax = 0;
+      long commonMin = Long.MAX_VALUE;
+      int nComponents = stats_.getNumberOfComponents();
+      for (int c = 0; c < nComponents; c++) {
+         long[] minMax = new long[2];
+         stats_.getComponentStats(c).getAutoscaleMinMaxForQuantile(q, minMax);
+         if (minMax[1] > mainMax) { mainMax = minMax[1]; }
+         if (minMax[0] < commonMin) { commonMin = minMax[0]; }
+      }
+      return new long[] { mainMax, commonMin == Long.MAX_VALUE ? 0 : commonMin };
    }
 
    @MustCallOnEDT
@@ -734,40 +762,23 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       DisplaySettings oldDisplaySettings;
       DisplaySettings newDisplaySettings;
       double q = viewer_.getDisplaySettings().getAutoscaleIgnoredQuantile();
-      int nComponents = stats_.getNumberOfComponents();
       int selectedComponent = getSelectedComponent();
 
       if (selectedComponent == COMPONENT_WHITE) {
-         // White mode: scale all components proportionally
          if (whiteRatios_ == null) {
             captureWhiteRatios();
          }
-         // masterMax = brightest autoscale max across all components.
-         // This is the actual peak pixel value in the image, so the white handle
-         // lands at the image's true maximum rather than an inflated implied value.
-         long masterAutoscaleMax = 0;
-         long commonMin = Long.MAX_VALUE;
-         for (int c = 0; c < nComponents; c++) {
-            long[] minMax = new long[2];
-            stats_.getComponentStats(c).getAutoscaleMinMaxForQuantile(q, minMax);
-            if (minMax[1] > masterAutoscaleMax) {
-               masterAutoscaleMax = minMax[1];
-            }
-            if (minMax[0] < commonMin) {
-               commonMin = minMax[0];
-            }
-         }
-         final long masterMax = masterAutoscaleMax;
-         whiteMasterMax_ = masterMax;
-         final long sharedMin = commonMin == Long.MAX_VALUE ? 0 : commonMin;
+         long[] range = computeWhiteAutoscaleRange(q);
+         whiteMainMax_ = range[0];
+         final long sharedMin = range[1];
+         int nComponents = stats_.getNumberOfComponents();
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
             ChannelDisplaySettings channelSettings =
                   oldDisplaySettings.getChannelSettings(channelIndex_);
             ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
             for (int c = 0; c < nComponents; c++) {
-               long scaledMax = Math.round(whiteRatios_[c] * masterMax);
-               scaledMax = Math.max(scaledMax, sharedMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_), sharedMin + 1);
                builder.component(c,
                      channelSettings.getComponentSettings(c).copyBuilder()
                            .scalingRange(sharedMin, scaledMax).build());
@@ -778,7 +789,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                   .build();
          } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       } else {
-         // Single component selected: only autoscale that component, leave others unchanged
+         // Single component: only autoscale the selected component, leave others unchanged.
          long[] minMax = new long[2];
          stats_.getComponentStats(selectedComponent).getAutoscaleMinMaxForQuantile(q, minMax);
          final long newMin = minMax[0];
@@ -799,6 +810,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
 
    private void handleFullscale() {
+      int nComponents = stats_.getNumberOfComponents();
+      long fullMax = 1 << stats_.getComponentStats(0).getBitDepth();
+      if (fullMax < 0) {
+         fullMax = Long.MAX_VALUE;
+      }
+      int sel = getSelectedComponent();
+      if (sel == COMPONENT_WHITE && whiteRatios_ == null) {
+         captureWhiteRatios();
+      }
+      if (sel == COMPONENT_WHITE) {
+         whiteMainMax_ = fullMax;
+      }
+      final long finalFullMax = fullMax;
       DisplaySettings oldDisplaySettings;
       DisplaySettings newDisplaySettings;
       do {
@@ -806,30 +830,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          ChannelDisplaySettings channelSettings =
                oldDisplaySettings.getChannelSettings(channelIndex_);
          ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
-         int nComponents = stats_.getNumberOfComponents();
-         long fullMax = 1 << stats_.getComponentStats(0).getBitDepth();
-         if (fullMax < 0) {
-            fullMax = Long.MAX_VALUE;
-         }
-         if (getSelectedComponent() == COMPONENT_WHITE) {
-            if (whiteRatios_ == null) {
-               captureWhiteRatios();
-            }
-            whiteMasterMax_ = fullMax;
+         if (sel == COMPONENT_WHITE) {
             for (int i = 0; i < nComponents; ++i) {
-               long scaledMax = Math.round(whiteRatios_[i] * fullMax);
-               scaledMax = Math.max(scaledMax, 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[i] * finalFullMax), 1L);
                builder.component(i,
                      channelSettings.getComponentSettings(i).copyBuilder()
-                           .scalingRange(0L, scaledMax)
-                           .build());
+                           .scalingRange(0L, scaledMax).build());
             }
          } else {
-            int sel = getSelectedComponent();
             builder.component(sel,
                   channelSettings.getComponentSettings(sel).copyBuilder()
-                        .scalingRange(0L, fullMax)
-                        .build());
+                        .scalingRange(0L, finalFullMax).build());
          }
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithChannelSettings(channelIndex_, builder.build())
@@ -852,24 +863,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             if (whiteRatios_ == null) {
                captureWhiteRatios();
             }
-            // masterMax = brightest autoscale max across all components.
-            long masterAutoscaleMax = 0;
-            long commonMin = Long.MAX_VALUE;
+            long[] range = computeWhiteAutoscaleRange(q);
+            whiteMainMax_ = range[0];
+            long commonMin = range[1];
             for (int i = 0; i < nComponents; ++i) {
-               IntegerComponentStats stats = stats_.getComponentStats(i);
-               long[] minMax = new long[2];
-               stats.getAutoscaleMinMaxForQuantile(q, minMax);
-               if (minMax[1] > masterAutoscaleMax) {
-                  masterAutoscaleMax = minMax[1];
-               }
-               if (minMax[0] < commonMin) {
-                  commonMin = minMax[0];
-               }
-            }
-            whiteMasterMax_ = masterAutoscaleMax;
-            for (int i = 0; i < nComponents; ++i) {
-               long scaledMax = Math.round(whiteRatios_[i] * masterAutoscaleMax);
-               scaledMax = Math.max(scaledMax, commonMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[i] * whiteMainMax_), commonMin + 1);
                builder.component(i,
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(commonMin, scaledMax).build());
@@ -891,7 +889,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    @Override
    public void histogramScalingMinChanged(int component, long newMin) {
-      if (getSelectedComponent() == COMPONENT_WHITE) {
+      rgbAutostretchEnabled_ = false;
+      if (component == COMPONENT_WHITE) {
          applyAbsoluteMinToAllComponents(newMin);
          return;
       }
@@ -919,7 +918,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    @Override
    public void histogramScalingMaxChanged(int component, long newMax) {
-      if (getSelectedComponent() == COMPONENT_WHITE) {
+      rgbAutostretchEnabled_ = false;
+      if (component == COMPONENT_WHITE) {
          applyProportionalMaxScaling(newMax);
          return;
       }
@@ -950,9 +950,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          captureWhiteRatios();
       }
       // newMasterMax is the value the white handle was dragged to — this IS the
-      // master max directly (updateScalingIndicators now shows whiteMasterMax_ at
+      // main max directly (updateScalingIndicators now shows whiteMainMax_ at
       // the handle, not Red's raw max, so no division is needed).
-      whiteMasterMax_ = newMasterMax;
+      whiteMainMax_ = newMasterMax;
       DisplaySettings oldDisplaySettings;
       DisplaySettings newDisplaySettings;
       do {
@@ -1077,14 +1077,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
       boolean whiteMode = getSelectedComponent() == COMPONENT_WHITE;
       for (int c = 0; c < numComponents; c++) {
-         Color color;
-         if (numComponents <= 1) {
-            color = channelSettings.getColor();
-         } else if (whiteMode && c == 0) {
-            color = Color.WHITE;
-         } else {
-            color = RGB_COLORS[c];
-         }
+         Color color = numComponents <= 1 ? channelSettings.getColor() : RGB_COLORS[c];
          Color highlight = numComponents <= 1 ? Color.YELLOW : color;
          histogram_.setComponentColor(c, color, highlight);
 
@@ -1092,6 +1085,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             IntegerComponentStats componentStats = stats_.getComponentStats(c);
             updateScalingIndicators(settings, componentStats, c);
          }
+      }
+      if (whiteMode && stats_ != null) {
+         updateWhiteScalingIndicator(settings, stats_.getComponentStats(0));
       }
    }
 
