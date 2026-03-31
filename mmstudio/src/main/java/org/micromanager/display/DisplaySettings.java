@@ -23,7 +23,6 @@ package org.micromanager.display;
 
 import java.awt.Color;
 import java.util.List;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 
 
 /**

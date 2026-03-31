@@ -160,6 +160,9 @@ public final class DefaultChannelDisplaySettings
       @Override
       public Builder intensityScaling(ChannelIntensityRanges ranges) {
          int nComponents = ranges.getNumberOfComponents();
+         if (nComponents == 0) {
+            return this;
+         }
          Builder ret = this;
          ret = ret.component(nComponents - 1);
          for (int c = 0; c < nComponents; ++c) {
@@ -201,37 +204,33 @@ public final class DefaultChannelDisplaySettings
    }
 
    /**
-    * Embeds white balance data into a ChannelDisplaySettings.Builder so it is
-    * persisted to the user profile. No-op if the builder is not a
-    * DefaultChannelDisplaySettings.Builder or if the data is not set.
-    *
-    * @param builder     The builder to update in place.
-    * @param whiteMainMax The master max for white mode (0 = not set).
-    * @param whiteRatios  The RGB ratios for white mode (null = not set).
+    * Returns the stored white-mode main max from a ChannelDisplaySettings, or 0
+    * if none is stored.
     */
+   public static long getStoredWhiteMainMax(ChannelDisplaySettings settings) {
+      if (settings instanceof DefaultChannelDisplaySettings) {
+         return ((DefaultChannelDisplaySettings) settings).whiteMainMax_;
+      }
+      return 0;
+   }
+
    /**
-    * Extracts white balance data from a ChannelDisplaySettings if it was
-    * previously stored there, returning {whiteMainMax, r, g, b} or null if
-    * no white balance data is present.
-    *
-    * @param settings The channel settings to read from.
-    * @return double[] {whiteMainMax, ratioR, ratioG, ratioB}, or null if not set.
+    * Returns the stored white-mode RGB ratios from a ChannelDisplaySettings, or
+    * null if none are stored.
     */
-   public static double[] extractWhiteBalance(ChannelDisplaySettings settings) {
+   public static double[] getStoredWhiteRatios(ChannelDisplaySettings settings) {
       if (settings instanceof DefaultChannelDisplaySettings) {
          DefaultChannelDisplaySettings dcds = (DefaultChannelDisplaySettings) settings;
-         if (dcds.whiteRatios_ != null && dcds.whiteMainMax_ > 0) {
-            return new double[] {
-                  dcds.whiteMainMax_,
-                  dcds.whiteRatios_[0],
-                  dcds.whiteRatios_[1],
-                  dcds.whiteRatios_[2]
-            };
-         }
+         return dcds.whiteRatios_ != null ? dcds.whiteRatios_.clone() : null;
       }
       return null;
    }
 
+   /**
+    * Embeds white balance data into a ChannelDisplaySettings.Builder so it is
+    * persisted to the user profile. No-op if the builder is not a
+    * DefaultChannelDisplaySettings.Builder or if the data is not set.
+    */
    public static void applyWhiteBalance(ChannelDisplaySettings.Builder builder,
                                         long whiteMainMax, double[] whiteRatios) {
       if (whiteRatios != null && whiteMainMax > 0 && builder instanceof Builder) {

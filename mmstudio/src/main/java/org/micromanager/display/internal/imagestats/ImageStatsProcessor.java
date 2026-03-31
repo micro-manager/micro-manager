@@ -264,10 +264,8 @@ public final class ImageStatsProcessor {
             continue;
          }
 
-         int[] cxy = new int[3];
-         dataCursor.localize(cxy);
          // Flip component index to view BGR as RGB
-         int component = nComponents - 1 - cxy[0];
+         int component = nComponents - 1 - dataCursor.getIntPosition(0);
 
          long dataValue = dataSample.getIntegerLong();
 

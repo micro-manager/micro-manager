@@ -200,6 +200,9 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       @Override
       public Builder intensityScaling(DisplayIntensityRanges ranges) {
          int nChannels = ranges.getNumberOfChannels();
+         if (nChannels == 0) {
+            return this;
+         }
          Builder ret = this;
          ret = ret.channel(nChannels - 1);
          for (int ch = 0; ch < nChannels; ++ch) {

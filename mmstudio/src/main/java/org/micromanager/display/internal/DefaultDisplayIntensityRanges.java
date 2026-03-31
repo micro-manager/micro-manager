@@ -51,7 +51,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
       @Override
       public Builder componentRanges(int channel, List<ComponentIntensityRange> ranges) {
-         ensureNumChannels(channel);
+         ensureNumChannels(channel + 1);
          channelBuilders_.get(channel).componentRanges(ranges);
          return this;
       }
@@ -78,7 +78,8 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
          channelRanges_.add(chanBuilder.build());
       }
       // Normalize by removing any channels with zero components at the end
-      while (channelRanges_.get(channelRanges_.size() - 1).getNumberOfComponents() == 0) {
+      while (!channelRanges_.isEmpty()
+            && channelRanges_.get(channelRanges_.size() - 1).getNumberOfComponents() == 0) {
          channelRanges_.remove(channelRanges_.size() - 1);
       }
    }
@@ -95,7 +96,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
    @Override
    public int getChannelNumberOfComponents(int channel) {
-      if (channel > channelRanges_.size()) {
+      if (channel < 0 || channel >= channelRanges_.size()) {
          return 0;
       }
       return channelRanges_.get(channel).getNumberOfComponents();
@@ -103,7 +104,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
    @Override
    public long getComponentMinimum(int channel, int component) {
-      if (channel > channelRanges_.size()) {
+      if (channel < 0 || channel >= channelRanges_.size()) {
          return 0;
       }
       return channelRanges_.get(channel).getComponentMinimum(component);
@@ -111,7 +112,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
    @Override
    public long getComponentMaximum(int channel, int component) {
-      if (channel > channelRanges_.size()) {
+      if (channel < 0 || channel >= channelRanges_.size()) {
          return Long.MAX_VALUE;
       }
       return channelRanges_.get(channel).getComponentMaximum(component);
@@ -119,7 +120,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
    @Override
    public ComponentIntensityRange getComponentRange(int channel, int component) {
-      if (channel > channelRanges_.size()) {
+      if (channel < 0 || channel >= channelRanges_.size()) {
          return ComponentIntensityRange.builder().build();
       }
       return channelRanges_.get(channel).getComponentRange(component);
@@ -127,7 +128,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
    @Override
    public ChannelIntensityRanges getChannelRanges(int channel) {
-      if (channel > channelRanges_.size()) {
+      if (channel < 0 || channel >= channelRanges_.size()) {
          return ChannelIntensityRanges.builder().build();
       }
       return channelRanges_.get(channel);
@@ -135,7 +136,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
    @Override
    public List<ComponentIntensityRange> getAllComponentRanges(int channel) {
-      if (channel > channelRanges_.size()) {
+      if (channel < 0 || channel >= channelRanges_.size()) {
          return Lists.newArrayList();
       }
       return channelRanges_.get(channel).getAllComponentRanges();
@@ -143,7 +144,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
    @Override
    public List<Long> getComponentMinima(int channel) {
-      if (channel > channelRanges_.size()) {
+      if (channel < 0 || channel >= channelRanges_.size()) {
          return Lists.newArrayList();
       }
       return channelRanges_.get(channel).getComponentMinima();
@@ -151,7 +152,7 @@ public class DefaultDisplayIntensityRanges implements DisplayIntensityRanges {
 
    @Override
    public List<Long> getComponentMaxima(int channel) {
-      if (channel > channelRanges_.size()) {
+      if (channel < 0 || channel >= channelRanges_.size()) {
          return Lists.newArrayList();
       }
       return channelRanges_.get(channel).getComponentMaxima();

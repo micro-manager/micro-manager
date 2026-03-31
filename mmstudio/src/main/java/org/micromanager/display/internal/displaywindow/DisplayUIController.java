@@ -1199,11 +1199,19 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
 
          int nComponents = stats.getNumberOfComponents();
+         boolean ignoreZeros = settings.isAutoscaleIgnoringZeros();
          for (int compo = 0; compo < nComponents; compo++) {
-            long[] minMax = new long[2];
-            stats.getComponentStats(compo).getAutoscaleMinMaxForQuantile(q, minMax);
-            long min = minMax[0];
-            long max = minMax[1];
+            long min;
+            long max;
+            if (ignoreZeros) {
+               min = 0L;
+               max = stats.getComponentStats(compo).getAutoscaleMaxForQuantileIgnoringZeros(q);
+            } else {
+               long[] minMax = new long[2];
+               stats.getComponentStats(compo).getAutoscaleMinMaxForQuantile(q, minMax);
+               min = minMax[0];
+               max = minMax[1];
+            }
 
 
             // NS 2019-08-15: We really do need to write the min and max to

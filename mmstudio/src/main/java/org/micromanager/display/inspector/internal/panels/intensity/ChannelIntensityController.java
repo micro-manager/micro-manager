@@ -65,7 +65,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private long[] lastPickedValues_ = null; // pixel values tracked while in pick mode
 
    private final JToggleButton[] componentButtons_ = new JToggleButton[4];
-   private final javax.swing.JButton whiteBalanceButton_ = new javax.swing.JButton("White Balance");
+   private final JButton whiteBalanceButton_ = new JButton("White Balance");
 
    private final HistogramView histogram_ = HistogramView.create();
    private final JButton histoRangeDownButton_ = new JButton();
@@ -474,19 +474,24 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       // In white mode, show stats for component 0 (Red) as representative
       int statsComponent = (selectedComponent == COMPONENT_WHITE) ? 0 : selectedComponent;
       IntegerComponentStats selectedStats = stats_.getComponentStats(statsComponent);
-      long min = selectedStats.getMinIntensity();
+
+      final DisplaySettings displaySettings = viewer_.getDisplaySettings();
+      boolean ignoreZeros = displaySettings.isAutoscaleIgnoringZeros();
+
+      long min = ignoreZeros ? selectedStats.getMinIntensityExcludingZeros()
+                             : selectedStats.getMinIntensity();
       intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
       long max = selectedStats.getMaxIntensity();
       intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
-      long mean = selectedStats.getMeanIntensity();
+      long mean = ignoreZeros ? selectedStats.getMeanIntensityExcludingZeros()
+                              : selectedStats.getMeanIntensity();
       intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
-      double stdev = selectedStats.getStandardDeviation();
+      double stdev = ignoreZeros ? selectedStats.getStandardDeviationExcludingZeros()
+                                 : selectedStats.getStandardDeviation();
       intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
             String.format("%1.2e", stdev));
 
       cameraBits_ = stats_.getComponentStats(0).getBitDepth();
-
-      final DisplaySettings displaySettings = viewer_.getDisplaySettings();
       ChannelDisplaySettings chanDispSettings = histoRangeComboBoxModel_.getBits(
               displaySettings.getChannelSettings(channelIndex_), cameraBits_);
 
@@ -668,9 +673,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          componentButtons_[i].setSelected(i == component);
       }
       if (component == COMPONENT_WHITE) {
-         captureWhiteRatios();
-         // Immediately persist the ratios (and recompute per-component maxima) so
-         // that a first-seen channel does not store raw Long.MAX_VALUE defaults.
+         // applyCurrentWhiteRatios() calls captureWhiteRatios() internally when needed.
+         // Calling it here ensures first-seen channels immediately persist sensible
+         // values rather than raw Long.MAX_VALUE defaults.
          applyCurrentWhiteRatios();
          // Use HistogramView slot 3 for the white handle so that Red (slot 0)
          // keeps its own independent dotted line and handle.
@@ -720,10 +725,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private void restoreWhiteBalanceFromSettings() {
       ChannelDisplaySettings ch =
             viewer_.getDisplaySettings().getChannelSettings(channelIndex_);
-      double[] wb = DefaultChannelDisplaySettings.extractWhiteBalance(ch);
-      if (wb != null) {
-         whiteMainMax_ = (long) wb[0];
-         whiteRatios_ = new double[] {wb[1], wb[2], wb[3]};
+      long storedMax = DefaultChannelDisplaySettings.getStoredWhiteMainMax(ch);
+      double[] storedRatios = DefaultChannelDisplaySettings.getStoredWhiteRatios(ch);
+      if (storedMax > 0 && storedRatios != null) {
+         whiteMainMax_ = storedMax;
+         whiteRatios_ = storedRatios;
          // Recompute per-component scaling from the restored ratios so the
          // display is consistent rather than showing the raw stored component values.
          applyCurrentWhiteRatios();
@@ -761,14 +767,6 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       } else {
          whiteRatios_ = new double[] {1.0, 1.0, 1.0};
       }
-   }
-
-   /**
-    * Embeds the current white balance state (whiteMainMax_ and whiteRatios_) into a
-    * ChannelDisplaySettings builder so it gets persisted to the user profile.
-    */
-   private void applyWhiteBalanceToBuilder(ChannelDisplaySettings.Builder builder) {
-      DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
    }
 
    boolean isRgbAutostretchEnabled() {
@@ -837,7 +835,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                      channelSettings.getComponentSettings(c).copyBuilder()
                            .scalingRange(sharedMin, scaledMax).build());
             }
-            applyWhiteBalanceToBuilder(builder);
+            DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
             newDisplaySettings = oldDisplaySettings
                   .copyBuilderWithChannelSettings(channelIndex_, builder.build())
                   .autostretch(false)
@@ -866,9 +864,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    private void handleFullscale() {
       int nComponents = stats_.getNumberOfComponents();
-      long fullMax = 1 << stats_.getComponentStats(0).getBitDepth();
-      if (fullMax < 0) {
-         fullMax = Long.MAX_VALUE;
+      Integer bitDepth = stats_.getComponentStats(0).getBitDepth();
+      long fullMax;
+      if (bitDepth == null) {
+         fullMax = stats_.getComponentStats(0).getHistogramRangeMax();
+      } else {
+         fullMax = bitDepth >= 63 ? Long.MAX_VALUE : (1L << bitDepth) - 1L;
       }
       int sel = getSelectedComponent();
       if (sel == COMPONENT_WHITE && whiteRatios_ == null) {
@@ -892,7 +893,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(0L, scaledMax).build());
             }
-            applyWhiteBalanceToBuilder(builder);
+            DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
          } else {
             builder.component(sel,
                   channelSettings.getComponentSettings(sel).copyBuilder()
@@ -915,7 +916,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                oldDisplaySettings.getChannelSettings(channelIndex_);
          ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
          int nComponents = stats_.getNumberOfComponents();
-         if (getSelectedComponent() == COMPONENT_WHITE) {
+         int sel = getSelectedComponent();
+         if (sel == COMPONENT_WHITE) {
             if (whiteRatios_ == null) {
                captureWhiteRatios();
             }
@@ -928,9 +930,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(commonMin, scaledMax).build());
             }
-            applyWhiteBalanceToBuilder(builder);
+            DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
          } else {
-            int sel = getSelectedComponent();
             IntegerComponentStats stats = stats_.getComponentStats(sel);
             long[] minMax = new long[2];
             stats.getAutoscaleMinMaxForQuantile(q, minMax);
@@ -1026,7 +1027,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                         .scalingMaximum(scaledMax)
                         .build());
          }
-         applyWhiteBalanceToBuilder(builder);
+         DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithChannelSettings(channelIndex_, builder.build())
                .autostretch(false)
@@ -1051,7 +1052,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                         .scalingMinimum(clampedMin)
                         .build());
          }
-         applyWhiteBalanceToBuilder(builder);
+         DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithChannelSettings(channelIndex_, builder.build())
                .autostretch(false)
@@ -1486,7 +1487,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             builder.component(c, channelSettings.getComponentSettings(c)
                   .copyBuilder().scalingRange(currentMin, scaledMax).build());
          }
-         applyWhiteBalanceToBuilder(builder);
+         DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
          newDisplaySettings = oldDisplaySettings.copyBuilder()
                .channel(channelIndex_, builder.build()).build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));

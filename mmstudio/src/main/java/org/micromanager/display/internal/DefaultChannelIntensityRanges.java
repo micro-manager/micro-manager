@@ -14,29 +14,34 @@ public class DefaultChannelIntensityRanges implements ChannelIntensityRanges {
       private long[] ranges_; // May be null
 
       private void ensureNumComponents(int nComponents) {
-         int addedComponents = 0;
          if (ranges_ == null) {
-            addedComponents = nComponents;
             ranges_ = new long[2 * nComponents];
+            for (int i = 0; i < nComponents; ++i) {
+               ranges_[2 * i + 1] = Long.MAX_VALUE;
+            }
          } else if (ranges_.length < 2 * nComponents) {
-            addedComponents = nComponents - ranges_.length / 2;
+            int existingComponents = ranges_.length / 2;
             ranges_ = Arrays.copyOf(ranges_, 2 * nComponents);
-         }
-         for (int i = 0; i < addedComponents; ++i) {
-            ranges_[2 * i + 1] = Long.MAX_VALUE;
+            for (int i = existingComponents; i < nComponents; ++i) {
+               ranges_[2 * i + 1] = Long.MAX_VALUE;
+            }
          }
       }
 
       private void trimComponents(int nComponents) {
-         if (ranges_.length > 2 * nComponents) {
+         if (ranges_ != null && ranges_.length > 2 * nComponents) {
             ranges_ = Arrays.copyOfRange(ranges_, 0, 2 * nComponents);
          }
       }
 
       private void normalize() {
-         for (int c = ranges_.length / 2; c >= 0; c -= 2) {
+         if (ranges_ == null) {
+            return; // already null (no components set)
+         }
+         for (int c = ranges_.length / 2 - 1; c >= 0; --c) {
             if (ranges_[2 * c] != 0 || ranges_[2 * c + 1] != Long.MAX_VALUE) {
-               ranges_ = Arrays.copyOfRange(ranges_, 0, 2 * c);
+               // c is the last non-default component; keep components 0..c inclusive
+               ranges_ = Arrays.copyOfRange(ranges_, 0, 2 * (c + 1));
                return;
             }
          }
@@ -114,7 +119,7 @@ public class DefaultChannelIntensityRanges implements ChannelIntensityRanges {
 
    @Override
    public long getComponentMinimum(int component) {
-      if (component > getNumberOfComponents()) {
+      if (component < 0 || component >= getNumberOfComponents()) {
          return 0;
       }
       return ranges_[2 * component];
@@ -122,7 +127,7 @@ public class DefaultChannelIntensityRanges implements ChannelIntensityRanges {
 
    @Override
    public long getComponentMaximum(int component) {
-      if (component > getNumberOfComponents()) {
+      if (component < 0 || component >= getNumberOfComponents()) {
          return Long.MAX_VALUE;
       }
       return ranges_[2 * component + 1];
@@ -130,7 +135,7 @@ public class DefaultChannelIntensityRanges implements ChannelIntensityRanges {
 
    @Override
    public ComponentIntensityRange getComponentRange(int component) {
-      if (component > getNumberOfComponents()) {
+      if (component < 0 || component >= getNumberOfComponents()) {
          return ComponentIntensityRange.builder().build();
       }
       return ComponentIntensityRange.builder()
