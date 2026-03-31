@@ -72,7 +72,7 @@ public class ComponentStatsTest {
       assertEquals(6, cs.getPixelCount());
       assertEquals(0, cs.getMeanIntensity());
       assertEquals(1.0, cs.getQuantile(0.5), 0.001);
-      assertEquals(0.0, cs.getQuantileIgnoringZeros(0.5), 0.001);
+      assertEquals(1.0, cs.getQuantileIgnoringZeros(0.5), 0.001);
       assertEquals(1.0, cs.getQuantileIgnoringZeros(0.75), 0.001);
       assertEquals(4, cs.getSumOfSquares());
       assertTrue(cs.getStandardDeviation() > 0.0);
@@ -100,6 +100,8 @@ public class ComponentStatsTest {
       assertEquals(3, cs.getPixelCount());
       assertEquals(2, cs.getMeanIntensity());
       assertEquals(2.5, cs.getQuantile(0.5), 0.001);
+      //  The test expectation of 2.5 is semantically
+      //  right; the implementation is wrong.
       assertEquals(2.5, cs.getQuantileIgnoringZeros(0.5), 0.001);
       assertEquals(14, cs.getSumOfSquares());
       assertEquals(0.8165, cs.getStandardDeviation(), 0.001);

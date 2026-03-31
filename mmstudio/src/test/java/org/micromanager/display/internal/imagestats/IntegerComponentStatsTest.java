@@ -20,6 +20,7 @@ public class IntegerComponentStatsTest {
 
    @Test
    public void testGetQuantile() {
+      // histogram_[1]=1 means 1 pixel at intensity 0; quantile is bin-edge based.
       IntegerComponentStats s = IntegerComponentStats.builder().
             histogram(new long[] { 0, 1, 0 }, 0).pixelCount(1).build();
       assertEquals(0.0, s.getQuantile(0.0), e);
@@ -27,7 +28,7 @@ public class IntegerComponentStatsTest {
       assertEquals(0.5, s.getQuantile(0.5), e);
 
       s = IntegerComponentStats.builder().
-            histogram(new long[] { 0, 1, 2, 0 }, 0).pixelCount(3).build();
+            histogram(new long[] { 0, 1, 2, 0 }, 0).pixelCount(3).maximum(1).build();
       assertEquals(0.0, s.getQuantile(0.0), e);
       assertEquals(1.25, s.getQuantile(0.5), e);
       assertEquals(2.0, s.getQuantile(1.0), e);
@@ -46,23 +47,37 @@ public class IntegerComponentStatsTest {
 
    // Helper: build stats from a histogram (no out-of-range bins) with bin width 1.
    // histogram[i] = count of pixels with intensity i. Range is [0, histogram.length-1].
+   // Sets minimum to the first non-zero bin and maximum to the last non-zero bin.
    private static IntegerComponentStats buildStats(long[] histogram) {
       long[] full = new long[histogram.length + 2];
       System.arraycopy(histogram, 0, full, 1, histogram.length);
       long count = 0;
-      for (long c : histogram) {
-         count += c;
+      long minimum = 0;
+      long maximum = histogram.length - 1;
+      boolean foundMin = false;
+      for (int i = 0; i < histogram.length; i++) {
+         count += histogram[i];
+         if (histogram[i] > 0) {
+            if (!foundMin) {
+               minimum = i;
+               foundMin = true;
+            }
+            maximum = i;
+         }
       }
       return IntegerComponentStats.builder()
             .histogram(full, 0)
             .pixelCount(count)
+            .minimum(minimum)
+            .maximum(maximum)
             .build();
    }
 
    @Test
    public void testAutoscaleNormalRange() {
-      // 256 bins, pixel counts spread across the range — quantile 0 should give
-      // min=0, max=254 (last bin edge - 1).
+      // 256 bins, uniform distribution. With q=0.0 and min=0, max=255:
+      // getQuantile(0.0) returns minimum_=0, getQuantile(1.0) returns maximum_+1=256,
+      // so max = round(256)-1 = 255. Range = [0, 255], width=255 >= 2.
       long[] hist = new long[256];
       for (int i = 0; i < 256; i++) {
          hist[i] = 1;
@@ -71,7 +86,7 @@ public class IntegerComponentStatsTest {
       long[] minMax = new long[2];
       s.getAutoscaleMinMaxForQuantile(0.0, minMax);
       assertEquals(0L, minMax[0]);
-      assertEquals(254L, minMax[1]);
+      assertEquals(255L, minMax[1]);
       assertTrue(minMax[1] - minMax[0] >= 2);
    }
 
