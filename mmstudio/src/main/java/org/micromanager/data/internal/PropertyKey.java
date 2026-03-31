@@ -1245,6 +1245,10 @@ public enum PropertyKey {
 
    SCALING_MAX("ScalingMax", ComponentDisplaySettings.class),
 
+   WHITE_MAIN_MAX("WhiteMainMax", ChannelDisplaySettings.class),
+
+   WHITE_RATIOS("WhiteRatios", ChannelDisplaySettings.class),
+
    SCOPE_DATA("ScopeData", "scopeData", Metadata.class) {
       @Override
       public String getDescription() {
