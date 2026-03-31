@@ -28,6 +28,7 @@ import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
+import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.internal.utils.MustCallOnEDT;
@@ -59,8 +60,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    // engine from interfering; this flag tracks the user's actual intent.
    private boolean rgbAutostretchEnabled_ = false;
    private boolean suppressAutostretchDetection_ = false;
+   private boolean pickingWhiteBalancePoint_ = false;
+   private long[] lastPickedValues_ = null; // pixel values tracked while in pick mode
 
    private final JToggleButton[] componentButtons_ = new JToggleButton[4];
+   private final javax.swing.JButton whiteBalanceButton_ = new javax.swing.JButton("White Balance");
 
    private final HistogramView histogram_ = HistogramView.create();
    private final JButton histoRangeDownButton_ = new JButton();
@@ -354,6 +358,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       channelPanel_.add(fullscaleButton, new CC().pushX().wrap());
       JButton autostretchOnceButton = new JButton("Auto Once");
       channelPanel_.add(autostretchOnceButton, new CC().pushX().wrap("rel"));
+      whiteBalanceButton_.setVisible(false);
+      whiteBalanceButton_.addActionListener((ActionEvent e) -> showWhiteBalancePopup());
+      channelPanel_.add(whiteBalanceButton_, new CC().pushX().wrap());
 
       histoPanel_.setLayout(new MigLayout(
             new LC().fill().insets("0").gridGap("0", "0")));
@@ -637,6 +644,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       for (int i = 0; i < componentButtons_.length; i++) {
          componentButtons_[i].setVisible(isRGB);
       }
+      if (!isRGB) {
+         whiteBalanceButton_.setVisible(false);
+      }
 
       if (isRGB && !wasRGB) {
          // Auto-select White when entering RGB mode for the first time.
@@ -659,13 +669,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          histogram_.setComponentColor(0, Color.RED, Color.RED);
          histogram_.setComponentColor(COMPONENT_WHITE, Color.WHITE, Color.WHITE);
          histogram_.setSelectedComponent(COMPONENT_WHITE);
+         whiteBalanceButton_.setVisible(true);
       } else {
          whiteRatios_ = null;
          whiteMainMax_ = 0;
+         pickingWhiteBalancePoint_ = false;
+         lastPickedValues_ = null;
          // Deactivate the white slot so its dotted line disappears.
          histogram_.clearComponentGraph(COMPONENT_WHITE);
          histogram_.setComponentColor(0, Color.RED, Color.RED);
          histogram_.setSelectedComponent(component);
+         whiteBalanceButton_.setVisible(false);
       }
       // Refresh scaling indicators immediately so the handle position reflects the
       // new mode (white main max vs Red's individual max) without waiting for the
@@ -1099,31 +1113,337 @@ public final class ChannelIntensityController implements HistogramView.Listener 
     */
    @Subscribe
    public void onEvent(DataViewerMousePixelInfoChangedEvent e) {
+      if (pickingWhiteBalancePoint_) {
+         // In pick mode, track the current pixel values but wait for a click to apply.
+         if (e.isInfoAvailable()) {
+            long[] values = getPixelValuesForChannel(e);
+            if (values != null && values.length >= 3) {
+               lastPickedValues_ = values;
+            }
+         }
+         return;
+      }
+
       histogram_.clearComponentHighlights();
       if (!e.isInfoAvailable()) {
          return;
       }
 
+      long[] values = getPixelValuesForChannel(e);
+      if (values != null) {
+         for (int component = 0; component < values.length; ++component) {
+            histogram_.setComponentHighlight(component, values[component]);
+         }
+      }
+   }
+
+   private long[] getPixelValuesForChannel(DataViewerMousePixelInfoChangedEvent e) {
       // Channel-less case
       if (channelIndex_ == 0 && e.getNumberOfCoords() == 1) {
          Coords coords = e.getAllCoords().get(0);
          if (!coords.hasAxis(Coords.CHANNEL)) {
-            long[] values = e.getComponentValuesForCoords(coords);
-            for (int component = 0; component < values.length; ++component) {
-               histogram_.setComponentHighlight(component, values[component]);
-            }
-            return;
+            return e.getComponentValuesForCoords(coords);
          }
       }
-
       for (Coords coords : e.getAllCoords()) {
          if (coords.getChannel() == channelIndex_) {
-            long[] values = e.getComponentValuesForCoords(coords);
-            for (int component = 0; component < values.length; ++component) {
-               histogram_.setComponentHighlight(component, values[component]);
-            }
-            return;
+            return e.getComponentValuesForCoords(coords);
          }
       }
+      return null;
+   }
+
+   @MustCallOnEDT
+   private void showWhiteBalancePopup() {
+      javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
+      menu.add(new javax.swing.AbstractAction("From picked point") {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            startPickedPointWhiteBalance();
+         }
+      });
+      menu.add(new javax.swing.AbstractAction("From average intensity") {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            applyAverageIntensityWhiteBalance();
+         }
+      });
+      menu.add(new javax.swing.AbstractAction("From color temperature...") {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            showColorTemperatureDialog();
+         }
+      });
+      menu.show(whiteBalanceButton_, 0, whiteBalanceButton_.getHeight());
+   }
+
+   @MustCallOnEDT
+   private void showColorTemperatureDialog() {
+      // Snapshot settings so we can restore on Cancel.
+      final DisplaySettings settingsOnOpen = viewer_.getDisplaySettings();
+      final double[] ratiosOnOpen = whiteRatios_ == null ? null : whiteRatios_.clone();
+      final long mainMaxOnOpen = whiteMainMax_;
+
+      java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(whiteBalanceButton_);
+      javax.swing.JDialog dialog = new javax.swing.JDialog(owner, "Color Temperature",
+            java.awt.Dialog.ModalityType.MODELESS);
+      dialog.setLayout(new MigLayout(new LC().insets("8").fillX()));
+
+      // Slider: 2000K–10000K
+      final int MIN_K = 2000;
+      final int MAX_K = 10000;
+      final int DEFAULT_K = whiteRatios_ != null
+            ? estimateColorTemperature(whiteRatios_, MIN_K, MAX_K) : 6500;
+      final javax.swing.JSlider slider = new javax.swing.JSlider(MIN_K, MAX_K, DEFAULT_K);
+      slider.setMajorTickSpacing(2000);
+      slider.setMinorTickSpacing(500);
+      slider.setPaintTicks(true);
+
+      // Text field showing K value
+      final javax.swing.JTextField kField = new javax.swing.JTextField(
+            Integer.toString(DEFAULT_K), 6);
+
+      // Color swatch showing the illuminant color
+      final javax.swing.JPanel colorSwatch = new javax.swing.JPanel() {
+         @Override
+         protected void paintComponent(java.awt.Graphics g) {
+            super.paintComponent(g);
+            g.setColor(getBackground());
+            g.fillRect(0, 0, getWidth(), getHeight());
+         }
+      };
+      colorSwatch.setPreferredSize(new java.awt.Dimension(48, 24));
+      colorSwatch.setBorder(BorderFactory.createLineBorder(java.awt.Color.GRAY));
+      colorSwatch.setOpaque(true);
+
+      // Lay out: label + field + swatch on first row, slider spanning full width
+      dialog.add(new javax.swing.JLabel("Temperature (K):"));
+      dialog.add(kField, new CC().width("60!").gapAfter("rel"));
+      dialog.add(colorSwatch, new CC().wrap());
+      dialog.add(slider, new CC().spanX().growX().wrap("rel"));
+
+      // OK / Cancel buttons
+      javax.swing.JButton okButton = new javax.swing.JButton("OK");
+      javax.swing.JButton cancelButton = new javax.swing.JButton("Cancel");
+      dialog.add(okButton, new CC().spanX().split(2).tag("ok"));
+      dialog.add(cancelButton, new CC().tag("cancel"));
+
+      // Shared update logic: apply balance and update swatch
+      final Runnable applyTemperature = new Runnable() {
+         @Override
+         public void run() {
+            int k = slider.getValue();
+            int[] rgb = colorTemperatureToRgb(k);
+            colorSwatch.setBackground(new java.awt.Color(rgb[0], rgb[1], rgb[2]));
+            colorSwatch.repaint();
+            applyColorTemperatureWhiteBalance(k);
+         }
+      };
+
+      slider.addChangeListener(e -> {
+         kField.setText(Integer.toString(slider.getValue()));
+         applyTemperature.run();
+      });
+
+      kField.addActionListener(e -> {
+         try {
+            int k = Integer.parseInt(kField.getText().trim());
+            k = Math.max(MIN_K, Math.min(MAX_K, k));
+            slider.setValue(k);  // triggers changeListener → applyTemperature
+         } catch (NumberFormatException ex) {
+            kField.setText(Integer.toString(slider.getValue()));
+         }
+      });
+
+      okButton.addActionListener(e -> dialog.dispose());
+
+      cancelButton.addActionListener(e -> {
+         // Restore settings from before the dialog opened
+         whiteRatios_ = ratiosOnOpen;
+         whiteMainMax_ = mainMaxOnOpen;
+         DisplaySettings current;
+         do {
+            current = viewer_.getDisplaySettings();
+         } while (!viewer_.compareAndSetDisplaySettings(current, settingsOnOpen));
+         statsOrRangeChanged();
+         dialog.dispose();
+      });
+
+      // Seed the swatch without applying a balance change
+      int[] initRgb = colorTemperatureToRgb(DEFAULT_K);
+      colorSwatch.setBackground(new java.awt.Color(initRgb[0], initRgb[1], initRgb[2]));
+
+      dialog.pack();
+      dialog.setLocationRelativeTo(whiteBalanceButton_);
+      dialog.setVisible(true);
+   }
+
+   /**
+    * Estimates the color temperature in Kelvin that best matches the given white ratios,
+    * by finding the K in [minK, maxK] whose correction ratios minimize squared error.
+    */
+   private static int estimateColorTemperature(double[] ratios, int minK, int maxK) {
+      int bestK = 6500;
+      double bestError = Double.MAX_VALUE;
+      for (int k = minK; k <= maxK; k++) {
+         int[] illuminant = colorTemperatureToRgb(k);
+         double minIlluminant = Math.min(illuminant[0], Math.min(illuminant[1], illuminant[2]));
+         if (minIlluminant <= 0) {
+            continue;
+         }
+         double[] correctionRatios = new double[] {
+               minIlluminant / illuminant[0],
+               minIlluminant / illuminant[1],
+               minIlluminant / illuminant[2]
+         };
+         double error = 0;
+         for (int c = 0; c < 3; c++) {
+            double diff = ratios[c] - correctionRatios[c];
+            error += diff * diff;
+         }
+         if (error < bestError) {
+            bestError = error;
+            bestK = k;
+         }
+      }
+      return bestK;
+   }
+
+   /**
+    * Converts a color temperature in Kelvin to an approximate RGB illuminant color.
+    * Based on Tanner Helland's algorithm (http://www.tannerhelland.com/4435/).
+    * Output values are in the range 0–255.
+    */
+   private static int[] colorTemperatureToRgb(int kelvin) {
+      double t = Math.max(1000, Math.min(40000, kelvin)) / 100.0;
+      int r, g, b;
+
+      if (t <= 66) {
+         r = 255;
+      } else {
+         r = (int) (329.698727446 * Math.pow(t - 60, -0.1332047592));
+         r = Math.max(0, Math.min(255, r));
+      }
+
+      if (t <= 66) {
+         g = (int) (99.4708025861 * Math.log(t) - 161.1195681661);
+      } else {
+         g = (int) (288.1221695283 * Math.pow(t - 60, -0.0755148492));
+      }
+      g = Math.max(0, Math.min(255, g));
+
+      if (t >= 66) {
+         b = 255;
+      } else if (t <= 19) {
+         b = 0;
+      } else {
+         b = (int) (138.5177312231 * Math.log(t - 10) - 305.0447927307);
+         b = Math.max(0, Math.min(255, b));
+      }
+
+      return new int[] {r, g, b};
+   }
+
+   @MustCallOnEDT
+   private void applyColorTemperatureWhiteBalance(int kelvin) {
+      int[] illuminant = colorTemperatureToRgb(kelvin);
+      // Correction is the inverse: channels with less illuminant light get boosted.
+      // Normalize so the smallest correction = 1.0 (i.e. the brightest illuminant
+      // channel drives the others relative to it).
+      double minIlluminant = Math.min(illuminant[0], Math.min(illuminant[1], illuminant[2]));
+      if (minIlluminant <= 0) {
+         return;
+      }
+      whiteRatios_ = new double[] {
+            minIlluminant / illuminant[0],
+            minIlluminant / illuminant[1],
+            minIlluminant / illuminant[2]
+      };
+      applyCurrentWhiteRatios();
+   }
+
+   @MustCallOnEDT
+   private void startPickedPointWhiteBalance() {
+      lastPickedValues_ = null;
+      pickingWhiteBalancePoint_ = true;
+   }
+
+   @MustCallOnEDT
+   private void applyPickedPointWhiteBalance(long[] pixelValues) {
+      long maxVal = 0;
+      for (long v : pixelValues) {
+         if (v > maxVal) { maxVal = v; }
+      }
+      if (maxVal == 0) {
+         return; // can't balance a black pixel
+      }
+      whiteRatios_ = new double[] {
+            (double) pixelValues[0] / maxVal,
+            (double) pixelValues[1] / maxVal,
+            (double) pixelValues[2] / maxVal
+      };
+      applyCurrentWhiteRatios();
+   }
+
+   @MustCallOnEDT
+   private void applyAverageIntensityWhiteBalance() {
+      if (stats_ == null || stats_.getNumberOfComponents() < 3) {
+         return;
+      }
+      long[] means = new long[3];
+      for (int c = 0; c < 3; c++) {
+         means[c] = stats_.getComponentStats(c).getMeanIntensityExcludingZeros();
+      }
+      long maxMean = Math.max(means[0], Math.max(means[1], means[2]));
+      if (maxMean == 0) {
+         return;
+      }
+      whiteRatios_ = new double[] {
+            (double) means[0] / maxMean,
+            (double) means[1] / maxMean,
+            (double) means[2] / maxMean
+      };
+      applyCurrentWhiteRatios();
+   }
+
+   @Subscribe
+   public void onEvent(DisplayMouseEvent e) {
+      if (!pickingWhiteBalancePoint_) {
+         return;
+      }
+      if (e.getEvent().getID() == java.awt.event.MouseEvent.MOUSE_PRESSED
+            && javax.swing.SwingUtilities.isLeftMouseButton(e.getEvent())) {
+         pickingWhiteBalancePoint_ = false;
+         final long[] values = lastPickedValues_;
+         lastPickedValues_ = null;
+         if (values != null) {
+            javax.swing.SwingUtilities.invokeLater(() -> applyPickedPointWhiteBalance(values));
+         }
+      }
+   }
+
+   @MustCallOnEDT
+   private void applyCurrentWhiteRatios() {
+      if (whiteMainMax_ <= 0) {
+         captureWhiteRatios();
+      }
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
+      do {
+         oldDisplaySettings = viewer_.getDisplaySettings();
+         ChannelDisplaySettings channelSettings =
+               oldDisplaySettings.getChannelSettings(channelIndex_);
+         ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
+         for (int c = 0; c < 3; c++) {
+            long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_), 1L);
+            long currentMin = channelSettings.getComponentSettings(c).getScalingMinimum();
+            scaledMax = Math.max(scaledMax, currentMin + 1);
+            builder.component(c, channelSettings.getComponentSettings(c)
+                  .copyBuilder().scalingRange(currentMin, scaledMax).build());
+         }
+         newDisplaySettings = oldDisplaySettings.copyBuilder()
+               .channel(channelIndex_, builder.build()).build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+      statsOrRangeChanged();
    }
 }
