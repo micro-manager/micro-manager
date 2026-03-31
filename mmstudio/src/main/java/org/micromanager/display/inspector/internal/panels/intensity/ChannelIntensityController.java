@@ -1428,8 +1428,13 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    /**
     * Converts a color temperature in Kelvin to an approximate RGB illuminant color.
-    * Based on Tanner Helland's algorithm (http://www.tannerhelland.com/4435/).
-    * Output values are in the range 0–255.
+    * Output values are in the range 0-255.
+    *
+    * <p>Algorithm by Tanner Helland, based on blackbody data by Mitchell Charity.
+    * Licensed under CC BY-SA 4.0.
+    * Source: https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html
+    *
+    * <p>Suitable for display purposes; not intended for scientific use.
     */
    private static int[] colorTemperatureToRgb(int kelvin) {
       double t = Math.max(1000, Math.min(40000, kelvin)) / 100.0;
