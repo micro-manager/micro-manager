@@ -292,13 +292,22 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                g.fillPolygon(tx, ty, 3);
             }
          }
-         @Override public int getIconWidth()  { return 14; }
-         @Override public int getIconHeight() { return 14; }
+
+         @Override public int getIconWidth()  {
+            return 14;
+         }
+
+         @Override public int getIconHeight() {
+            return 14;
+         }
+
       };
    }
 
-   private static final Icon WHITE_ICON_ACTIVE   = makeFilledSquareIcon(Color.WHITE, Color.DARK_GRAY, true);
-   private static final Icon WHITE_ICON_INACTIVE = makeFilledSquareIcon(new Color(180, 180, 180), Color.GRAY, false);
+   private static final Icon WHITE_ICON_ACTIVE   = makeFilledSquareIcon(Color.WHITE,
+            Color.DARK_GRAY, true);
+   private static final Icon WHITE_ICON_INACTIVE = makeFilledSquareIcon(new Color(
+            180, 180, 180), Color.GRAY, false);
 
 
    /**
@@ -800,8 +809,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       for (int c = 0; c < nComponents; c++) {
          long[] minMax = new long[2];
          stats_.getComponentStats(c).getAutoscaleMinMaxForQuantile(q, minMax);
-         if (minMax[1] > mainMax) { mainMax = minMax[1]; }
-         if (minMax[0] < commonMin) { commonMin = minMax[0]; }
+         if (minMax[1] > mainMax) {
+            mainMax = minMax[1];
+         }
+         if (minMax[0] < commonMin) {
+            commonMin = minMax[0];
+         }
       }
       return new long[] { mainMax, commonMin == Long.MAX_VALUE ? 0 : commonMin };
    }
@@ -830,12 +843,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                   oldDisplaySettings.getChannelSettings(channelIndex_);
             ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
             for (int c = 0; c < nComponents; c++) {
-               long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_), sharedMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_),
+                        sharedMin + 1);
                builder.component(c,
                      channelSettings.getComponentSettings(c).copyBuilder()
                            .scalingRange(sharedMin, scaledMax).build());
             }
-            DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
+            DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_,
+                     whiteRatios_);
             newDisplaySettings = oldDisplaySettings
                   .copyBuilderWithChannelSettings(channelIndex_, builder.build())
                   .autostretch(false)
@@ -863,7 +878,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
 
    private void handleFullscale() {
-      int nComponents = stats_.getNumberOfComponents();
+      final int nComponents = stats_.getNumberOfComponents();
       Integer bitDepth = stats_.getComponentStats(0).getBitDepth();
       long fullMax;
       if (bitDepth == null) {
@@ -925,7 +940,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             whiteMainMax_ = range[0];
             long commonMin = range[1];
             for (int i = 0; i < nComponents; ++i) {
-               long scaledMax = Math.max(Math.round(whiteRatios_[i] * whiteMainMax_), commonMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[i] * whiteMainMax_),
+                        commonMin + 1);
                builder.component(i,
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(commonMin, scaledMax).build());
@@ -1183,6 +1199,22 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
    }
 
+   @Subscribe
+   public void onEvent(DisplayMouseEvent e) {
+      if (!pickingWhiteBalancePoint_) {
+         return;
+      }
+      if (e.getEvent().getID() == java.awt.event.MouseEvent.MOUSE_PRESSED
+               && javax.swing.SwingUtilities.isLeftMouseButton(e.getEvent())) {
+         pickingWhiteBalancePoint_ = false;
+         final long[] values = lastPickedValues_;
+         lastPickedValues_ = null;
+         if (values != null) {
+            javax.swing.SwingUtilities.invokeLater(() -> applyPickedPointWhiteBalance(values));
+         }
+      }
+   }
+
    private long[] getPixelValuesForChannel(DataViewerMousePixelInfoChangedEvent e) {
       // Channel-less case
       if (channelIndex_ == 0 && e.getNumberOfCoords() == 1) {
@@ -1362,8 +1394,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
     */
    private static int[] colorTemperatureToRgb(int kelvin) {
       double t = Math.max(1000, Math.min(40000, kelvin)) / 100.0;
-      int r, g, b;
 
+      int r;
       if (t <= 66) {
          r = 255;
       } else {
@@ -1371,6 +1403,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          r = Math.max(0, Math.min(255, r));
       }
 
+      int g;
       if (t <= 66) {
          g = (int) (99.4708025861 * Math.log(t) - 161.1195681661);
       } else {
@@ -1378,6 +1411,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
       g = Math.max(0, Math.min(255, g));
 
+      int b;
       if (t >= 66) {
          b = 255;
       } else if (t <= 19) {
@@ -1418,7 +1452,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private void applyPickedPointWhiteBalance(long[] pixelValues) {
       long maxVal = 0;
       for (long v : pixelValues) {
-         if (v > maxVal) { maxVal = v; }
+         if (v > maxVal) {
+            maxVal = v;
+         }
       }
       if (maxVal == 0) {
          return; // can't balance a black pixel
@@ -1450,22 +1486,6 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             (double) means[2] / maxMean
       };
       applyCurrentWhiteRatios();
-   }
-
-   @Subscribe
-   public void onEvent(DisplayMouseEvent e) {
-      if (!pickingWhiteBalancePoint_) {
-         return;
-      }
-      if (e.getEvent().getID() == java.awt.event.MouseEvent.MOUSE_PRESSED
-            && javax.swing.SwingUtilities.isLeftMouseButton(e.getEvent())) {
-         pickingWhiteBalancePoint_ = false;
-         final long[] values = lastPickedValues_;
-         lastPickedValues_ = null;
-         if (values != null) {
-            javax.swing.SwingUtilities.invokeLater(() -> applyPickedPointWhiteBalance(values));
-         }
-      }
    }
 
    @MustCallOnEDT
