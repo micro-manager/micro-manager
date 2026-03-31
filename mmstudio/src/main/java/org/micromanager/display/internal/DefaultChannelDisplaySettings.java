@@ -233,9 +233,18 @@ public final class DefaultChannelDisplaySettings
     */
    public static void applyWhiteBalance(ChannelDisplaySettings.Builder builder,
                                         long whiteMainMax, double[] whiteRatios) {
-      if (whiteRatios != null && whiteMainMax > 0 && builder instanceof Builder) {
-         ((Builder) builder).whiteMainMax(whiteMainMax).whiteRatios(whiteRatios);
+      if (whiteRatios == null || whiteMainMax <= 0 || !(builder instanceof Builder)) {
+         return;
       }
+      if (whiteRatios.length != 3) {
+         return;
+      }
+      for (double r : whiteRatios) {
+         if (!Double.isFinite(r) || r <= 0.0) {
+            return;
+         }
+      }
+      ((Builder) builder).whiteMainMax(whiteMainMax).whiteRatios(whiteRatios);
    }
 
    public static ChannelDisplaySettings.Builder builder() {

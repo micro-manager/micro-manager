@@ -541,10 +541,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       long max;
       if (settings.isAutostretchEnabled()) {
          double q = settings.getAutoscaleIgnoredQuantile();
-         long[] minMax = new long[2];
-         componentStats.getAutoscaleMinMaxForQuantile(q, minMax);
-         min = minMax[0];
-         max = minMax[1];
+         if (settings.isAutoscaleIgnoringZeros()) {
+            min = 0L;
+            max = componentStats.getAutoscaleMaxForQuantileIgnoringZeros(q);
+         } else {
+            long[] minMax = new long[2];
+            componentStats.getAutoscaleMinMaxForQuantile(q, minMax);
+            min = minMax[0];
+            max = minMax[1];
+         }
       } else {
          ComponentDisplaySettings componentSettings =
                settings.getChannelSettings(channelIndex_)
@@ -802,18 +807,27 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    // Returns {mainMax, commonMin} across all components at the given quantile.
    // mainMax = brightest autoscale max, so the white handle lands at the image's
    // true peak value rather than an inflated implied value.
-   private long[] computeWhiteAutoscaleRange(double q) {
+   private long[] computeWhiteAutoscaleRange(double q, boolean ignoreZeros) {
       long mainMax = 0;
       long commonMin = Long.MAX_VALUE;
       int nComponents = stats_.getNumberOfComponents();
       for (int c = 0; c < nComponents; c++) {
-         long[] minMax = new long[2];
-         stats_.getComponentStats(c).getAutoscaleMinMaxForQuantile(q, minMax);
-         if (minMax[1] > mainMax) {
-            mainMax = minMax[1];
+         long cMax;
+         long cMin;
+         if (ignoreZeros) {
+            cMax = stats_.getComponentStats(c).getAutoscaleMaxForQuantileIgnoringZeros(q);
+            cMin = 0L;
+         } else {
+            long[] minMax = new long[2];
+            stats_.getComponentStats(c).getAutoscaleMinMaxForQuantile(q, minMax);
+            cMax = minMax[1];
+            cMin = minMax[0];
          }
-         if (minMax[0] < commonMin) {
-            commonMin = minMax[0];
+         if (cMax > mainMax) {
+            mainMax = cMax;
+         }
+         if (cMin < commonMin) {
+            commonMin = cMin;
          }
       }
       return new long[] { mainMax, commonMin == Long.MAX_VALUE ? 0 : commonMin };
@@ -827,13 +841,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       DisplaySettings oldDisplaySettings;
       DisplaySettings newDisplaySettings;
       double q = viewer_.getDisplaySettings().getAutoscaleIgnoredQuantile();
+      boolean ignoreZeros = viewer_.getDisplaySettings().isAutoscaleIgnoringZeros();
       int selectedComponent = getSelectedComponent();
 
       if (selectedComponent == COMPONENT_WHITE) {
          if (whiteRatios_ == null) {
             captureWhiteRatios();
          }
-         long[] range = computeWhiteAutoscaleRange(q);
+         long[] range = computeWhiteAutoscaleRange(q, ignoreZeros);
          whiteMainMax_ = range[0];
          final long sharedMin = range[1];
          int nComponents = stats_.getNumberOfComponents();
@@ -858,10 +873,18 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       } else {
          // Single component: only autoscale the selected component, leave others unchanged.
-         long[] minMax = new long[2];
-         stats_.getComponentStats(selectedComponent).getAutoscaleMinMaxForQuantile(q, minMax);
-         final long newMin = minMax[0];
-         final long newMax = minMax[1];
+         final long newMin;
+         final long newMax;
+         if (ignoreZeros) {
+            newMin = 0L;
+            newMax = stats_.getComponentStats(selectedComponent)
+                  .getAutoscaleMaxForQuantileIgnoringZeros(q);
+         } else {
+            long[] minMax = new long[2];
+            stats_.getComponentStats(selectedComponent).getAutoscaleMinMaxForQuantile(q, minMax);
+            newMin = minMax[0];
+            newMax = minMax[1];
+         }
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
             ChannelDisplaySettings channelSettings =
@@ -927,6 +950,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       do {
          oldDisplaySettings = viewer_.getDisplaySettings();
          double q = oldDisplaySettings.getAutoscaleIgnoredQuantile();
+         boolean ignoreZeros = oldDisplaySettings.isAutoscaleIgnoringZeros();
          ChannelDisplaySettings channelSettings =
                oldDisplaySettings.getChannelSettings(channelIndex_);
          ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
@@ -936,7 +960,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             if (whiteRatios_ == null) {
                captureWhiteRatios();
             }
-            long[] range = computeWhiteAutoscaleRange(q);
+            long[] range = computeWhiteAutoscaleRange(q, ignoreZeros);
             whiteMainMax_ = range[0];
             long commonMin = range[1];
             for (int i = 0; i < nComponents; ++i) {
@@ -949,11 +973,20 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             DefaultChannelDisplaySettings.applyWhiteBalance(builder, whiteMainMax_, whiteRatios_);
          } else {
             IntegerComponentStats stats = stats_.getComponentStats(sel);
-            long[] minMax = new long[2];
-            stats.getAutoscaleMinMaxForQuantile(q, minMax);
+            long min;
+            long max;
+            if (ignoreZeros) {
+               min = 0L;
+               max = stats.getAutoscaleMaxForQuantileIgnoringZeros(q);
+            } else {
+               long[] minMax = new long[2];
+               stats.getAutoscaleMinMaxForQuantile(q, minMax);
+               min = minMax[0];
+               max = minMax[1];
+            }
             builder.component(sel,
                   channelSettings.getComponentSettings(sel).copyBuilder()
-                        .scalingRange(minMax[0], minMax[1]).build());
+                        .scalingRange(min, max).build());
          }
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithChannelSettings(channelIndex_, builder.build())
@@ -1257,8 +1290,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    @MustCallOnEDT
    private void showColorTemperatureDialog() {
-      // Snapshot settings so we can restore on Cancel.
-      final DisplaySettings settingsOnOpen = viewer_.getDisplaySettings();
+      // Snapshot only the channel settings we will modify, so Cancel can revert
+      // just this channel without clobbering unrelated concurrent changes.
+      final ChannelDisplaySettings channelOnOpen =
+            viewer_.getDisplaySettings().getChannelSettings(channelIndex_);
       final double[] ratiosOnOpen = whiteRatios_ == null ? null : whiteRatios_.clone();
       final long mainMaxOnOpen = whiteMainMax_;
 
@@ -1336,13 +1371,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       okButton.addActionListener(e -> dialog.dispose());
 
       cancelButton.addActionListener(e -> {
-         // Restore settings from before the dialog opened
+         // Revert only this channel's scaling — leave all other display changes intact.
          whiteRatios_ = ratiosOnOpen;
          whiteMainMax_ = mainMaxOnOpen;
          DisplaySettings current;
+         DisplaySettings reverted;
          do {
             current = viewer_.getDisplaySettings();
-         } while (!viewer_.compareAndSetDisplaySettings(current, settingsOnOpen));
+            reverted = current
+                  .copyBuilderWithChannelSettings(channelIndex_, channelOnOpen)
+                  .build();
+         } while (!viewer_.compareAndSetDisplaySettings(current, reverted));
          statsOrRangeChanged();
          dialog.dispose();
       });
