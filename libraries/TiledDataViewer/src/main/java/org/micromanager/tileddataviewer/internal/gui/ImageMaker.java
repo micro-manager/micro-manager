@@ -218,15 +218,15 @@ public class ImageMaker {
 
                //recompute 8 bit image
                channelProcessors_.get(c).recompute();
-               {
-                  NDVImageProcessor proc = channelProcessors_.get(c);
-                  boolean noPixels = (proc instanceof NDVImageProcessorRGB)
-                        ? ((NDVImageProcessorRGB) proc).rProcessor_.reds == null
-                        : proc.reds == null;
-                  if (noPixels) {
-                     continue; // No pixels yet
+                  {
+                     NDVImageProcessor proc = channelProcessors_.get(c);
+                     boolean noPixels = (proc instanceof NDVImageProcessorRGB)
+                           ? ((NDVImageProcessorRGB) proc).rProcessor_.reds == null
+                           : proc.reds == null;
+                     if (noPixels) {
+                        continue; // No pixels yet
+                     }
                   }
-               }
                if (firstActive) {
                   if (channelProcessors_.get(c) instanceof NDVImageProcessorRGB) {
                      byte[] bytesR = ((NDVImageProcessorRGB) channelProcessors_.get(c)).rProcessor_

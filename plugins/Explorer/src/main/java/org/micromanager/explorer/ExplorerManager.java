@@ -1291,7 +1291,8 @@ public class ExplorerManager {
          // PixelType has no builder method — inject directly into the PropertyMap
          return DefaultSummaryMetadata.fromPropertyMap(
                sm.toPropertyMap().copyBuilder()
-                     .putString("PixelType", isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"))
+                     .putString("PixelType",
+                              isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"))
                      .build());
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: failed to build summary metadata");

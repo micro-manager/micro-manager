@@ -135,9 +135,12 @@ public class ExportImageExporter {
             final float rgb32Range = Math.max(1f, Math.min(255f, cMax) - rgb32Min);
             byte[] bytes = (byte[]) img.pix;
             for (int i = 0; i < dsW * dsH; i++) {
-               rAcc[i] += Math.min(1f, Math.max(0f, ((bytes[4 * i + 2] & 0xFF) - rgb32Min) / rgb32Range));
-               gAcc[i] += Math.min(1f, Math.max(0f, ((bytes[4 * i + 1] & 0xFF) - rgb32Min) / rgb32Range));
-               bAcc[i] += Math.min(1f, Math.max(0f, ((bytes[4 * i    ] & 0xFF) - rgb32Min) / rgb32Range));
+               rAcc[i] += Math.min(1f,
+                        Math.max(0f, ((bytes[4 * i + 2] & 0xFF) - rgb32Min) / rgb32Range));
+               gAcc[i] += Math.min(1f,
+                        Math.max(0f, ((bytes[4 * i + 1] & 0xFF) - rgb32Min) / rgb32Range));
+               bAcc[i] += Math.min(1f,
+                        Math.max(0f, ((bytes[4 * i    ] & 0xFF) - rgb32Min) / rgb32Range));
             }
          } else {
             String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
