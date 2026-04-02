@@ -105,27 +105,6 @@ public class ExportImageExporter {
 
       for (int c = 0; c < numChannels; c++) {
          String chName = channelNames.get(c);
-         String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
-         int color = 0xFFFFFF;
-         int cMin  = 0;
-         int cMax  = 65535;
-         if (displaySettings_ != null) {
-            try {
-               JSONObject chSettings = displaySettings_.optJSONObject(displayKey);
-               if (chSettings != null) {
-                  color = chSettings.optInt("Color", 0xFFFFFF) & 0xFFFFFF;
-                  cMin  = chSettings.optInt("Min", 0);
-                  cMax  = chSettings.optInt("Max", 65535);
-               }
-            } catch (Exception e) {
-               // use defaults
-            }
-         }
-         float range = Math.max(1, cMax - cMin);
-
-         float chR = ((color >> 16) & 0xFF) / 255f;
-         float chG = ((color >>  8) & 0xFF) / 255f;
-         float chB = (color         & 0xFF) / 255f;
 
          HashMap<String, Object> axes = new HashMap<>(baseAxes);
          if (chName != null) {
@@ -136,13 +115,60 @@ public class ExportImageExporter {
             continue;
          }
 
-         short[] pixels = (short[]) img.pix;
-         for (int i = 0; i < pixels.length; i++) {
-            float norm = Math.min(1f, Math.max(0f,
-                    ((pixels[i] & 0xFFFF) - cMin) / range));
-            rAcc[i] += norm * chR;
-            gAcc[i] += norm * chG;
-            bAcc[i] += norm * chB;
+         if (img.pix instanceof byte[]) {
+            // RGB32: BGRA byte[] layout — apply per-channel contrast (cMin/cMax in [0,255]).
+            String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
+            int cMin = 0;
+            int cMax = 255;
+            if (displaySettings_ != null) {
+               try {
+                  JSONObject chSettings = displaySettings_.optJSONObject(displayKey);
+                  if (chSettings != null) {
+                     cMin = chSettings.optInt("Min", 0);
+                     cMax = chSettings.optInt("Max", 255);
+                  }
+               } catch (Exception e) {
+                  // use defaults
+               }
+            }
+            final float rgb32Min = Math.min(255f, Math.max(0f, cMin));
+            final float rgb32Range = Math.max(1f, Math.min(255f, cMax) - rgb32Min);
+            byte[] bytes = (byte[]) img.pix;
+            for (int i = 0; i < dsW * dsH; i++) {
+               rAcc[i] += Math.min(1f, Math.max(0f, ((bytes[4 * i + 2] & 0xFF) - rgb32Min) / rgb32Range));
+               gAcc[i] += Math.min(1f, Math.max(0f, ((bytes[4 * i + 1] & 0xFF) - rgb32Min) / rgb32Range));
+               bAcc[i] += Math.min(1f, Math.max(0f, ((bytes[4 * i    ] & 0xFF) - rgb32Min) / rgb32Range));
+            }
+         } else {
+            String displayKey = (chName != null) ? chName : "NO_CHANNEL_PRESENT";
+            int color = 0xFFFFFF;
+            int cMin  = 0;
+            int cMax  = 65535;
+            if (displaySettings_ != null) {
+               try {
+                  JSONObject chSettings = displaySettings_.optJSONObject(displayKey);
+                  if (chSettings != null) {
+                     color = chSettings.optInt("Color", 0xFFFFFF) & 0xFFFFFF;
+                     cMin  = chSettings.optInt("Min", 0);
+                     cMax  = chSettings.optInt("Max", 65535);
+                  }
+               } catch (Exception e) {
+                  // use defaults
+               }
+            }
+            float range = Math.max(1, cMax - cMin);
+            float chR = ((color >> 16) & 0xFF) / 255f;
+            float chG = ((color >>  8) & 0xFF) / 255f;
+            float chB = (color         & 0xFF) / 255f;
+
+            short[] pixels = (short[]) img.pix;
+            for (int i = 0; i < pixels.length; i++) {
+               float norm = Math.min(1f, Math.max(0f,
+                       ((pixels[i] & 0xFFFF) - cMin) / range));
+               rAcc[i] += norm * chR;
+               gAcc[i] += norm * chG;
+               bAcc[i] += norm * chB;
+            }
          }
       }
 
