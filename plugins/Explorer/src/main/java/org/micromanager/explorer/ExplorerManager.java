@@ -1057,6 +1057,8 @@ public class ExplorerManager {
          tags.put("Height", image.getHeight());
          tags.put("BitDepth", bitDepth_);
          tags.put("PixelType", isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"));
+         tags.put("BytesPerPixel", isRGB_ ? 4 : (bitDepth_ <= 8 ? 1 : 2));
+         tags.put("NumComponents", isRGB_ ? 3 : 1);
          tags.put("PixelSizeUm", pixelSizeUm_);
 
          // Per-image metadata for MM Inspector "Plane Metadata" panel
