@@ -54,6 +54,17 @@ public interface ChannelDisplaySettings {
 
       Builder component(int component, ComponentDisplaySettings settings);
 
+      /**
+       * Sets the intensity scaling (min/max) for all components of this channel in one call.
+       *
+       * <p>This is a convenience alternative to calling
+       * {@link #component(int, ComponentDisplaySettings)} once per component.
+       * Only min and max are transferred; any gamma values already set on existing
+       * component settings are preserved.
+       *
+       * @param ranges per-component intensity ranges for this channel
+       * @return this builder
+       */
       Builder intensityScaling(ChannelIntensityRanges ranges);
 
       int getNumberOfComponents();

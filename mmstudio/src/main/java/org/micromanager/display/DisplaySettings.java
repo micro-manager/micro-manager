@@ -130,6 +130,17 @@ public interface DisplaySettings {
        */
       Builder channels(Iterable<ChannelDisplaySettings> channelSettings);
 
+      /**
+       * Sets the intensity scaling (min/max) for all channels and components in one call.
+       *
+       * <p>This is a convenience alternative to calling
+       * {@link #channel(int, ChannelDisplaySettings)} once per channel.
+       * Only min and max are transferred per component; gamma values already set on
+       * existing component settings are preserved.
+       *
+       * @param ranges per-channel, per-component intensity ranges for the whole display
+       * @return this builder
+       */
       Builder intensityScaling(DisplayIntensityRanges ranges);
 
       /**

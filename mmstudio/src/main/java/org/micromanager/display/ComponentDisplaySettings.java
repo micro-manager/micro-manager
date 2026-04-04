@@ -19,6 +19,15 @@ public interface ComponentDisplaySettings {
 
       Builder scalingRange(long minIntensity, long maxIntensity);
 
+      /**
+       * Sets both minimum and maximum scaling values from a {@link ComponentIntensityRange}.
+       *
+       * <p>Convenience overload for
+       * {@link #scalingRange(long, long) scalingRange(range.getMinimum(), range.getMaximum())}.
+       *
+       * @param range source of min/max values
+       * @return this builder
+       */
       Builder scalingRange(ComponentIntensityRange range);
 
       Builder scalingGamma(double gamma);
