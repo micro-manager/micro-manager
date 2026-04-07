@@ -26,6 +26,7 @@ package org.micromanager.internal.dialogs;
 import ij.ImageJ;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,6 +98,8 @@ public final class IJVersionCheckDlg extends JDialog {
     */
    public IJVersionCheckDlg(Studio studio, String badVersion) {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       setName("ImageJ Version Check");
       setModal(true);
 

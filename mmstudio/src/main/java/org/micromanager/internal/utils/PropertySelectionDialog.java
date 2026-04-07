@@ -24,6 +24,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -117,6 +118,8 @@ public final class PropertySelectionDialog extends JDialog {
    private PropertySelectionDialog(Frame parent, String title, Studio studio,
                                    PropertyMap properties) {
       super(parent, title, true);  // Modal
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       this.studio_ = studio;
       this.originalProperties_ = properties;
 

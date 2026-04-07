@@ -17,6 +17,7 @@ package org.micromanager.pmqi;
 
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.Toolkit;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.logging.Level;
@@ -133,6 +134,8 @@ public class WhiteBalanceUI extends JFrame {
    private final String camera_;
 
    public WhiteBalanceUI(Studio gui) throws Exception {
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       gui_ = gui;
       try {
          core_ = gui_.getCMMCore();

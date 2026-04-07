@@ -3,6 +3,7 @@ package edu.umassmed.pgfocus;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Toolkit;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -96,7 +97,8 @@ public class PGFocusFrame extends JFrame {
     * Creates pgFocus.
     */
    public PGFocusFrame(Studio gui) {
-
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
       gui_ = gui;
       core_ = gui.getCMMCore();

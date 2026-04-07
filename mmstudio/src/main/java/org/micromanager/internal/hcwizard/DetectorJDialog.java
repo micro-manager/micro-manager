@@ -6,6 +6,7 @@
 
 package org.micromanager.internal.hcwizard;
 
+import java.awt.Toolkit;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -34,6 +35,8 @@ public final class DetectorJDialog extends JDialog {
     */
    public DetectorJDialog(java.awt.Dialog parent, boolean modal) {
       super(parent, modal);
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       initComponents();
       cancelRequest_ = false;
    }

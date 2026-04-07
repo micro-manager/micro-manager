@@ -31,6 +31,7 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
@@ -56,6 +57,8 @@ public class GUFrame extends JFrame {
 
    public GUFrame(Studio studio, Class<?> caller) {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       caller_ = caller;
       studio_ = studio;
       prefPrefix_ = "";
@@ -63,6 +66,8 @@ public class GUFrame extends JFrame {
 
    public GUFrame(Studio studio, Class<?> caller, String prefPrefix) {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       caller_ = caller;
       studio_ = studio;
       prefPrefix_ = prefPrefix;

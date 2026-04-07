@@ -1,5 +1,6 @@
 package org.micromanager.pairedstagecontrol;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,6 +45,8 @@ public class PairedStageControlFrame extends JFrame {
     * @param studio - what do we do without it?
     */
    public PairedStageControlFrame(Studio studio, String multiStageName) {
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       studio_ = studio;
       rpm_ = new RPModel();
       multiStageName_ = multiStageName;

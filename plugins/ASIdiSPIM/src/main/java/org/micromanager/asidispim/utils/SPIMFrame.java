@@ -33,6 +33,7 @@ import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import java.awt.Toolkit;
 import javax.swing.JFrame;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
@@ -54,12 +55,16 @@ public class SPIMFrame extends JFrame {
    
    public SPIMFrame(Studio gui) {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       gui_ = gui;
       prefPrefix_ = "";
    }
 
    public SPIMFrame(Studio gui, String prefPrefix) {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       gui_ = gui;
       prefPrefix_ = prefPrefix;
    }

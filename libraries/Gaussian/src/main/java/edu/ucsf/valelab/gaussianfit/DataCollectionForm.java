@@ -315,7 +315,8 @@ public class DataCollectionForm extends JFrame {
     * Creates new form DataCollectionForm
     */
    private DataCollectionForm(Studio studio) {
-
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       studio_ = studio;
 
       mainTableModel_ = new DataTableModel();

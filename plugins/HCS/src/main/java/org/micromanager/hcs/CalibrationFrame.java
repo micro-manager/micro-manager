@@ -25,6 +25,7 @@ package org.micromanager.hcs;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
@@ -84,7 +85,8 @@ public class CalibrationFrame extends JFrame {
     */
    public CalibrationFrame(final Studio studio, final SBSPlate plate,
                            final SiteGenerator siteGenerator) {
-
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       final JFrame ourFrame = this;
       final MutablePropertyMapView settings = studio.profile().getSettings(this.getClass());
       super.setTitle("Calibrate XY Stage");

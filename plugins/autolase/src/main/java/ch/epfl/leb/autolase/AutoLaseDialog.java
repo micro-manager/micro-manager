@@ -6,6 +6,7 @@
 package ch.epfl.leb.autolase;
 
 import java.awt.Color;
+import java.awt.Toolkit;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -45,6 +46,8 @@ public class AutoLaseDialog extends JDialog
     */
    public AutoLaseDialog(java.awt.Frame parent, boolean modal, AutoLase autoLase) {
       super(parent, modal);
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       initComponents();
 
       this.autoLase = autoLase;

@@ -22,6 +22,7 @@
 package org.micromanager.display.inspector.internal.panels.sharpnessinspector.ui;
 
 import java.awt.Color;
+import java.awt.Toolkit;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.NumberFormat;
@@ -276,6 +277,8 @@ public class SharpnessInspectorPanel extends JPanel {
 
       public ScanDialog() {
          super(SwingUtilities.getWindowAncestor(SharpnessInspectorPanel.this));
+         setIconImage(Toolkit.getDefaultToolkit().getImage(
+               getClass().getResource("/org/micromanager/icons/microscope.gif")));
          this.setLayout(new MigLayout());
          this.setLocationRelativeTo(SharpnessInspectorPanel.this);
          this.setTitle("Scan Parameters");

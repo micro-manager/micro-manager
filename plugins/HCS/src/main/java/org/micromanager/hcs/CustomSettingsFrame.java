@@ -1,5 +1,6 @@
 package org.micromanager.hcs;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileWriter;
@@ -43,6 +44,8 @@ public class CustomSettingsFrame extends JFrame {
     */
    public CustomSettingsFrame(Studio studio, SiteGenerator parent) {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       studio_ = studio;
       parent_ = parent;
       super.setLayout(new MigLayout("flowx"));

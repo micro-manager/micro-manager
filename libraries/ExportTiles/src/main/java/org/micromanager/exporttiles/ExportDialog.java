@@ -1,5 +1,6 @@
 package org.micromanager.exporttiles;
 
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.io.File;
 import java.util.prefs.Preferences;
@@ -62,6 +63,8 @@ public class ExportDialog extends JDialog {
 
    public ExportDialog(Window owner, int numResLevels, int roiW, int roiH) {
       super(owner, "Export Image", ModalityType.APPLICATION_MODAL);
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       numResLevels_ = numResLevels;
       roiW_ = roiW;
       roiH_ = roiH;

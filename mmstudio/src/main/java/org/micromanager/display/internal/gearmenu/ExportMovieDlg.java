@@ -27,6 +27,7 @@ package org.micromanager.display.internal.gearmenu;
 import com.bulenkov.iconloader.IconLoader;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -256,6 +257,8 @@ public final class ExportMovieDlg extends JDialog {
     */
    public ExportMovieDlg(Studio studio, DisplayWindow display) {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       studio_ = studio;
       skin_ = studio.app().getApplicationSkin();
 

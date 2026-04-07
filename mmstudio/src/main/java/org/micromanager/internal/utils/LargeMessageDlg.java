@@ -48,6 +48,8 @@ public final class LargeMessageDlg extends JDialog {
     */
    public LargeMessageDlg(String title, String message) {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowOpened(WindowEvent e) {

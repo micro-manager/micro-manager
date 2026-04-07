@@ -24,6 +24,7 @@ import ij.measure.ResultsTable;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import java.awt.Frame;
+import java.awt.Toolkit;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
@@ -96,6 +97,8 @@ public class IntelligentAcquisitionFrame extends JFrame {
     * @param gui - Reference to MM script interface
     */
    public IntelligentAcquisitionFrame(Studio gui) {
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       gui_ = gui;
       core_ = gui_.getCMMCore();
 

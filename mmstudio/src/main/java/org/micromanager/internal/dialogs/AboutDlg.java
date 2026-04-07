@@ -62,6 +62,8 @@ public final class AboutDlg extends JDialog {
     */
    public AboutDlg() {
       super();
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       Dimension winSize = new Dimension(384, 392);
       setSize(winSize);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

@@ -22,6 +22,7 @@ package org.micromanager.demodisplay;
 import com.google.common.eventbus.EventBus;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.Graphics;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -62,6 +63,8 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
    public DemoDisplay(Studio studio) {
       super("Demo Display");
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       studio_ = studio;
       // Ensure we start with valid, if empty, DisplaySettings.
       settings_ = studio_.displays().displaySettingsBuilder().build();

@@ -25,6 +25,7 @@ import static org.micromanager.data.internal.DefaultDatastore.getPreferredSaveMo
 import static org.micromanager.data.internal.DefaultDatastore.setPreferredSaveMode;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -120,6 +121,8 @@ public class DuplicatorPluginFrame extends JDialog {
     * @param window Viewer on the data we would like to duplicate
     */
    public DuplicatorPluginFrame(Studio studio, DisplayWindow window) {
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       studio_ = studio;
       final DuplicatorPluginFrame ourFrame = this;
       final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
