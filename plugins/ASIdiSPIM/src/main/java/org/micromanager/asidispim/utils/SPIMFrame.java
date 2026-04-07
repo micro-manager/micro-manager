@@ -20,6 +20,7 @@
 //
 // CVS:          $Id$
 //
+
 package org.micromanager.asidispim.utils;
 
 import java.awt.Frame;
@@ -28,12 +29,11 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import java.awt.Toolkit;
 import javax.swing.JFrame;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
@@ -79,6 +79,7 @@ public class SPIMFrame extends JFrame {
     * Accounts for screen size changes between invocations or if screen
     * is removed (e.g. had 2 monitors and go to 1).
     * TODO: this code is duplicated between here and MMDialog.
+    *
     * @param x new WINDOW_X position if current value isn't valid
     * @param y new WINDOW_Y position if current value isn't valid
     */
@@ -133,8 +134,8 @@ public class SPIMFrame extends JFrame {
       do {
          foundOverlap = false;
          for (Frame frame : Frame.getFrames()) {
-            if (frame != this && frame.getClass() == getClass() &&
-                  frame.getLocation().equals(newLoc)) {
+            if (frame != this && frame.getClass() == getClass()
+                     && frame.getLocation().equals(newLoc)) {
                foundOverlap = true;
                newLoc.x += 22;
                newLoc.y += 22;
@@ -148,11 +149,12 @@ public class SPIMFrame extends JFrame {
       setLocation(newLoc);
    }
 
-    /**
+   /**
     * Load window position and size from profile if possible.
     * If not possible then sets them from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
+    *
     * @param x - X position of this dialog if preference value invalid
     * @param y - y position of this dialog if preference value invalid
     * @param width - width of this dialog if preference value invalid
@@ -168,11 +170,12 @@ public class SPIMFrame extends JFrame {
       });
    }
    
-    /**
+   /**
     * Load window position and size from profile if possible.
     * If not possible then sets it from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
+    *
     * @param x - X position of this dialog if preference value invalid
     * @param y - y position of this dialog if preference value invalid
     */
