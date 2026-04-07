@@ -134,8 +134,10 @@ public class WhiteBalanceUI extends JFrame {
    private final String camera_;
 
    public WhiteBalanceUI(Studio gui) throws Exception {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       gui_ = gui;
       try {
          core_ = gui_.getCMMCore();

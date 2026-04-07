@@ -44,8 +44,10 @@ public class CustomSettingsFrame extends JFrame {
     */
    public CustomSettingsFrame(Studio studio, SiteGenerator parent) {
       super();
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       parent_ = parent;
       super.setLayout(new MigLayout("flowx"));

@@ -22,8 +22,10 @@ public class HCSAbout extends JDialog {
     * @param parent The HCS plugin GUI.
     */
    public HCSAbout(SiteGenerator parent) {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       super.setModal(true);
       super.setTitle("About HCS Site Generator " + HCSPlugin.VERSION_INFO);
       super.setBounds(200, 200, 462, 273);

@@ -46,8 +46,10 @@ public class AutoLaseDialog extends JDialog
     */
    public AutoLaseDialog(java.awt.Frame parent, boolean modal, AutoLase autoLase) {
       super(parent, modal);
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       initComponents();
 
       this.autoLase = autoLase;

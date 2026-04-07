@@ -97,8 +97,10 @@ public class PGFocusFrame extends JFrame {
     * Creates pgFocus.
     */
    public PGFocusFrame(Studio gui) {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
 
       gui_ = gui;
       core_ = gui.getCMMCore();

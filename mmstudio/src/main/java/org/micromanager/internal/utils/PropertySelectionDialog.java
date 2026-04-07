@@ -118,8 +118,10 @@ public final class PropertySelectionDialog extends JDialog {
    private PropertySelectionDialog(Frame parent, String title, Studio studio,
                                    PropertyMap properties) {
       super(parent, title, true);  // Modal
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       this.studio_ = studio;
       this.originalProperties_ = properties;
 

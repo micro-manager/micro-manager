@@ -57,8 +57,10 @@ public class GUFrame extends JFrame {
 
    public GUFrame(Studio studio, Class<?> caller) {
       super();
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       caller_ = caller;
       studio_ = studio;
       prefPrefix_ = "";
@@ -66,8 +68,10 @@ public class GUFrame extends JFrame {
 
    public GUFrame(Studio studio, Class<?> caller, String prefPrefix) {
       super();
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       caller_ = caller;
       studio_ = studio;
       prefPrefix_ = prefPrefix;

@@ -97,8 +97,10 @@ public class IntelligentAcquisitionFrame extends JFrame {
     * @param gui - Reference to MM script interface
     */
    public IntelligentAcquisitionFrame(Studio gui) {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       gui_ = gui;
       core_ = gui_.getCMMCore();
 

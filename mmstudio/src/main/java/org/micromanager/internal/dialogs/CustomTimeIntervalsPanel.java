@@ -229,8 +229,10 @@ public final class CustomTimeIntervalsPanel extends JPanel {
 
       public LogTimeDialog() {
          super();
-         setIconImage(Toolkit.getDefaultToolkit().getImage(
-               getClass().getResource("/org/micromanager/icons/microscope.gif")));
+         java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+         if (iconUrl != null) {
+            setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+         }
          this.setModal(true);
          this.setSize(new Dimension(520, 300));
          this.setResizable(false);
@@ -587,8 +589,10 @@ public final class CustomTimeIntervalsPanel extends JPanel {
 
       public LinearTimeDialog() {
          super();
-         setIconImage(Toolkit.getDefaultToolkit().getImage(
-               getClass().getResource("/org/micromanager/icons/microscope.gif")));
+         java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+         if (iconUrl != null) {
+            setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+         }
          this.setModal(true);
          this.setSize(new Dimension(350, 200));
          this.setResizable(false);

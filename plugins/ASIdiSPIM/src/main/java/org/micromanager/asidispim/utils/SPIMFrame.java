@@ -55,16 +55,20 @@ public class SPIMFrame extends JFrame {
    
    public SPIMFrame(Studio gui) {
       super();
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       gui_ = gui;
       prefPrefix_ = "";
    }
 
    public SPIMFrame(Studio gui, String prefPrefix) {
       super();
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       gui_ = gui;
       prefPrefix_ = prefPrefix;
    }

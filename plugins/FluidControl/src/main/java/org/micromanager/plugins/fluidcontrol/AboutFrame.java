@@ -10,8 +10,10 @@ public class AboutFrame extends JFrame {
 
    AboutFrame() {
       super("About");
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
       super.setResizable(false);
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

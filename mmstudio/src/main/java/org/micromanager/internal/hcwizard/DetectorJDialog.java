@@ -35,8 +35,10 @@ public final class DetectorJDialog extends JDialog {
     */
    public DetectorJDialog(java.awt.Dialog parent, boolean modal) {
       super(parent, modal);
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       initComponents();
       cancelRequest_ = false;
    }

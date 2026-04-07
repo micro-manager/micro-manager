@@ -85,8 +85,10 @@ public class CalibrationFrame extends JFrame {
     */
    public CalibrationFrame(final Studio studio, final SBSPlate plate,
                            final SiteGenerator siteGenerator) {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       final JFrame ourFrame = this;
       final MutablePropertyMapView settings = studio.profile().getSettings(this.getClass());
       super.setTitle("Calibrate XY Stage");

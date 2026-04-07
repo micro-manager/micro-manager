@@ -63,8 +63,10 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
    public DemoDisplay(Studio studio) {
       super("Demo Display");
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       // Ensure we start with valid, if empty, DisplaySettings.
       settings_ = studio_.displays().displaySettingsBuilder().build();

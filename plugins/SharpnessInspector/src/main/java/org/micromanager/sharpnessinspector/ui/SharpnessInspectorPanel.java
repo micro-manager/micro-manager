@@ -277,8 +277,10 @@ public class SharpnessInspectorPanel extends JPanel {
 
       public ScanDialog() {
          super(SwingUtilities.getWindowAncestor(SharpnessInspectorPanel.this));
-         setIconImage(Toolkit.getDefaultToolkit().getImage(
-               getClass().getResource("/org/micromanager/icons/microscope.gif")));
+         java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+         if (iconUrl != null) {
+            setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+         }
          this.setLayout(new MigLayout());
          this.setLocationRelativeTo(SharpnessInspectorPanel.this);
          this.setTitle("Scan Parameters");

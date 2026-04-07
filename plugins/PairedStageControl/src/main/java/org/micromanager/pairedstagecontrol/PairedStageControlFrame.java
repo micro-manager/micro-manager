@@ -45,8 +45,10 @@ public class PairedStageControlFrame extends JFrame {
     * @param studio - what do we do without it?
     */
    public PairedStageControlFrame(Studio studio, String multiStageName) {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       rpm_ = new RPModel();
       multiStageName_ = multiStageName;

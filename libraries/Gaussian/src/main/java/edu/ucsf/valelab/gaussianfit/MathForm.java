@@ -75,8 +75,10 @@ public class MathForm extends JFrame {
     * @param dataSets2 - dataSet to be shown in slot 2 of the dialog
     */
    public MathForm(UserProfile profile, int[] dataSets1, int[] dataSets2) {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       profile_ = profile;
       initComponents();
 

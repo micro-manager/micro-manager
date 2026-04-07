@@ -257,8 +257,10 @@ public final class ExportMovieDlg extends JDialog {
     */
    public ExportMovieDlg(Studio studio, DisplayWindow display) {
       super();
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       skin_ = studio.app().getApplicationSkin();
 

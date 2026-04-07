@@ -192,8 +192,10 @@ public class MainForm extends JFrame {
     * @param studio Instance of the Micro-Manager 2.0 api
     */
    public MainForm(Studio studio) {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       int nrThreads = ij.Prefs.getThreads();
       if (nrThreads > 8) {

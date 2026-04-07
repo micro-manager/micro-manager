@@ -98,8 +98,10 @@ public final class IJVersionCheckDlg extends JDialog {
     */
    public IJVersionCheckDlg(Studio studio, String badVersion) {
       super();
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       setName("ImageJ Version Check");
       setModal(true);
 

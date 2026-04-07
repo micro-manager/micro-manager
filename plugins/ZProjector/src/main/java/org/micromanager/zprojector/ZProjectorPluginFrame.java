@@ -68,8 +68,10 @@ public class ZProjectorPluginFrame extends JDialog {
     * @param window The DataViewer that we are working on
     */
    public ZProjectorPluginFrame(Studio studio, DisplayWindow window) {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       settings_ = studio_.profile().getSettings(ZProjectorPlugin.class);
       final ZProjectorPluginFrame cpFrame = this;
