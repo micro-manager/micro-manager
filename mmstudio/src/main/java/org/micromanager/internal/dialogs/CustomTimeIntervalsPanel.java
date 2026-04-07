@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
@@ -228,6 +229,10 @@ public final class CustomTimeIntervalsPanel extends JPanel {
 
       public LogTimeDialog() {
          super();
+         java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+         if (iconUrl != null) {
+            setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+         }
          this.setModal(true);
          this.setSize(new Dimension(520, 300));
          this.setResizable(false);
@@ -584,6 +589,10 @@ public final class CustomTimeIntervalsPanel extends JPanel {
 
       public LinearTimeDialog() {
          super();
+         java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+         if (iconUrl != null) {
+            setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+         }
          this.setModal(true);
          this.setSize(new Dimension(350, 200));
          this.setResizable(false);
