@@ -166,7 +166,7 @@ public class PGFocusFrame extends JFrame {
 
          super(new BorderLayout());
 
-         final String title = "pgFocus";
+         String title = "pgFocus";
 
          core_ = core;
 
