@@ -2101,7 +2101,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.relativeZSlice(zRelativeAbsolute_ == 0);  // 0 == relative, 1 == absolute
          try {
             // the default Z stage that will be used in the MDA should be set at this point
-            ssb.zReference(mmStudio_.core().getPosition());
+            if (mmStudio_.core().getFocusDevice() != null
+                  && !mmStudio_.core().getFocusDevice().isEmpty()) {
+               ssb.zReference(mmStudio_.core().getPosition());
+            } else {
+               ssb.zReference(0.0);
+            }
          } catch (Exception ex) {
             mmStudio_.logs().logError(ex, "Failed to get Z Position from Core.");
             // continue, zReference will be set to 0
