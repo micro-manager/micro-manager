@@ -27,7 +27,6 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Plot;
 import ij.measure.ResultsTable;
-import ij.plugin.ZProjector;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -39,6 +38,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JButton;
@@ -77,6 +77,7 @@ public class PtcToolsExecutor extends Thread {
       public double mean_;
       public double meanStd_; // Std. Dev per image
       public double meanReadPlusShotNoise_;
+      public double medianReadPlusShotNoise_;
       public double stdDev_;
    }
 
@@ -98,13 +99,7 @@ public class PtcToolsExecutor extends Thread {
       @Override
       public void doSequence(JLabel resultLabel) {
 
-         try {
-            SwingUtilities.invokeAndWait(() -> {
-               resultLabel.setText("Collecting dark images...");
-            });
-         } catch (InterruptedException | InvocationTargetException ex) {
-            studio_.logs().logError(ex);
-         }
+         SwingUtilities.invokeLater(() -> resultLabel.setText("Acquiring dark images..."));
 
          CMMCore core = studio_.getCMMCore(); // to reduce typing
          final int nrFrames = settings_.getInteger(PtcToolsTerms.NRFRAMES, 100);
@@ -115,18 +110,6 @@ public class PtcToolsExecutor extends Thread {
          stack_ = new ImageStack((int) core.getImageWidth(),
                (int) core.getImageHeight());
 
-         // temporary store to hold images while calculating mean and stdDev
-         Datastore store = studio_.data().createRAMDatastore();
-         final SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder();
-         final Coords.Builder cb = Coordinates.builder();
-         Coords coords = cb.t(nrFrames).build();
-         try {
-            store.setSummaryMetadata(smb.intendedDimensions(coords).startDate(
-                  new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())).build());
-         } catch (IOException ex) {
-            // should never happen with a RAMDatastore...
-         }
-
          double exposure;
          try {
             exposure = NumberUtils.displayStringToDouble(
@@ -136,17 +119,25 @@ public class PtcToolsExecutor extends Thread {
             return;
          }
 
+         // temporary store to hold images while calculating mean and stdDev
+         Datastore store = studio_.data().createRAMDatastore();
          try {
-            runSequence(core, store, nrFrames, exposure);
-         } catch (Exception ex) {
-            studio_.logs().showError(ex, "Error while acquiring images");
-            return;
-         }
+            final SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder();
+            final Coords.Builder cb = Coordinates.builder();
+            Coords coords = cb.t(nrFrames).build();
+            try {
+               store.setSummaryMetadata(smb.intendedDimensions(coords).startDate(
+                     new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())).build());
+            } catch (IOException ex) {
+               // should never happen with a RAMDatastore...
+            }
 
-         // TODO: make sure that we have 16-bit (short) images
-         try {
+            runSequence(core, store, nrFrames, exposure);
+
+            SwingUtilities.invokeLater(() -> resultLabel.setText("Calculating..."));
+            // TODO: make sure that we have 16-bit (short) images
             calculateAndAddToStack(stack_, store);
-            ExpMeanStdDev cemsd = calcExpMeanStdDev(store);
+            ExpMeanStdDev cemsd = calcExpMeanStdDev(store, true);
             expMeanStdDev_.add(cemsd);
             rt.incrementCounter();
             rt.addValue("Exposure", 0.0);
@@ -154,12 +145,18 @@ public class PtcToolsExecutor extends Thread {
             rt.addValue("Noise", cemsd.meanStd_);
             rt.addValue("Read+Shot Noise", cemsd.meanReadPlusShotNoise_);
             rt.addValue("Std.Dev", cemsd.stdDev_);
-
-            store.freeze();
-            store.close();
-         } catch (IOException ex) {
-            studio_.logs().showError(ex, "Error while calculating mean and stdDev");
+         } catch (Exception ex) {
+            studio_.logs().showError(ex, "Error while acquiring or processing dark images");
             return;
+         } catch (OutOfMemoryError ex) {
+            studio_.logs().showError("Out of memory while processing dark images");
+            return;
+         } finally {
+            try {
+               store.close();
+            } catch (IOException ex) {
+               studio_.logs().logError(ex);
+            }
          }
 
          PtcSequenceRunner sr = new LightSequence();
@@ -201,13 +198,8 @@ public class PtcToolsExecutor extends Thread {
 
          for (int i = 0; i < nrExposures; i++) {
             final int nr = i;
-            try {
-               SwingUtilities.invokeAndWait(() -> {
-                  resultLabel.setText("working on exposure: " + nr + "(of " + nrExposures + ")");
-               });
-            } catch (InterruptedException | InvocationTargetException ex) {
-               studio_.logs().logError(ex);
-            }
+            SwingUtilities.invokeLater(() -> resultLabel.setText(
+                  "Acquiring exposure " + (nr + 1) + " of " + nrExposures + "..."));
 
             // Power-law skew: t=1 gives pure log spacing, t>1 clusters points near max
             double t = Math.pow((double) i / (nrExposures - 1), spacingExponent);
@@ -216,15 +208,12 @@ public class PtcToolsExecutor extends Thread {
             Datastore store = studio_.data().createRAMDatastore();
             try {
                runSequence(core, store, nrFrames, exposures[i]);
-            } catch (Exception ex) {
-               studio_.logs().showError(ex, "Error while acquiring images");
-               return;
-            }
 
-            // TODO: make sure that we have 16-bit (short) images
-            try {
+               SwingUtilities.invokeLater(() -> resultLabel.setText(
+                     "Calculating (exposure " + (nr + 1) + " of " + nrExposures + ")..."));
+               // TODO: make sure that we have 16-bit (short) images
                calculateAndAddToStack(stack_, store);
-               ExpMeanStdDev cemsd = calcExpMeanStdDev(store);
+               ExpMeanStdDev cemsd = calcExpMeanStdDev(store, false);
                double realExposure;
                try {
                   realExposure = core.getExposure();
@@ -249,10 +238,18 @@ public class PtcToolsExecutor extends Thread {
                                     "Mean", previousRow - 1))));
                }
                rt.addValue("Std.Dev", cemsd.stdDev_);
-               store.close();
-            } catch (IOException ex) {
-               studio_.logs().showError(ex, "Error while calculating mean and stdDev");
+            } catch (Exception ex) {
+               studio_.logs().showError(ex, "Error while acquiring or processing images");
                return;
+            } catch (OutOfMemoryError ex) {
+               studio_.logs().showError("Out of memory while processing images");
+               return;
+            } finally {
+               try {
+                  store.close();
+               } catch (IOException ex) {
+                  studio_.logs().logError(ex);
+               }
             }
             System.gc();
 
@@ -287,14 +284,18 @@ public class PtcToolsExecutor extends Thread {
       });
       JButton okButton = new JButton("OK");
       okButton.addActionListener((ActionEvent e) -> {
+         okButton.setEnabled(false);
          Thread t = new Thread(() -> {
-            sr.doSequence(resultLabel);
             try {
-               SwingUtilities.invokeAndWait(() -> {
-                  dialog.dispose();
-               });
-            } catch (InterruptedException | InvocationTargetException ex) {
-               // Logger.getLogger(PtcToolsExecutor.class.getName()).log(Level.SEVERE, null, ex);
+               sr.doSequence(resultLabel);
+            } catch (OutOfMemoryError ex) {
+               studio_.logs().showError("Out of memory — aborting PTC acquisition.");
+            } finally {
+               try {
+                  SwingUtilities.invokeAndWait(() -> dialog.dispose());
+               } catch (InterruptedException | InvocationTargetException ex) {
+                  studio_.logs().logError(ex);
+               }
             }
          });
          t.start();
@@ -313,7 +314,8 @@ public class PtcToolsExecutor extends Thread {
       core.startSequenceAcquisition(nrFrames, 0.0, true);
       int frCounter = 0;
       // TODO: this can hang
-      while (core.isSequenceRunning() || core.getRemainingImageCount() > 0) {
+      while ((frCounter < nrFrames)
+            && (core.isSequenceRunning() || core.getRemainingImageCount() > 0)) {
          if (core.getRemainingImageCount() > 0) {
             TaggedImage nextImage = core.popNextTaggedImage();
             if (nextImage != null) {
@@ -324,32 +326,48 @@ public class PtcToolsExecutor extends Thread {
          }
       }
       store.freeze();
+      if (core.isSequenceRunning()) {
+         core.stopSequenceAcquisition();
+      }
    }
 
    private void calculateAndAddToStack(ImageStack stack, Datastore store)
          throws IOException, OutOfMemoryError {
       final Coords.Builder cb = Coordinates.builder();
-      int nrFrames = store.getNextIndex(Coords.T);
-      ImageStack tmpStack = new ImageStack(stack.getWidth(), stack.getHeight());
-      for (int i = 0; i < nrFrames; i++) {
-         tmpStack.addSlice(studio_.data().ij().createProcessor(store.getImage(cb.t(i).build())));
-      }
-      ZProjector zProj = new ZProjector(new ImagePlus("tmp", tmpStack));
-      zProj.setMethod(ZProjector.AVG_METHOD);
-      zProj.doProjection();
-      ImagePlus meanP = zProj.getProjection();
-      FloatProcessor mean = (FloatProcessor) meanP.getProcessor().convertToFloat();
-      zProj.setMethod(ZProjector.SD_METHOD);
-      zProj.doProjection();
-      ImagePlus stdDevP = zProj.getProjection();
-      FloatProcessor stdDev = (FloatProcessor) stdDevP.getProcessor().convertToFloat();
+      final int nrFrames = store.getNextIndex(Coords.T);
+      final int nPixels = stack.getWidth() * stack.getHeight();
 
-      stack.addSlice(mean);
-      stack.addSlice(stdDev);
+      // Welford's online algorithm for per-pixel mean and variance.
+      // Processes one frame at a time — O(nPixels) extra memory instead of
+      // duplicating the entire frame stack as ZProjector required.
+      double[] pixelMean = new double[nPixels];
+      double[] pixelM2 = new double[nPixels];
+      for (int i = 0; i < nrFrames; i++) {
+         ImageProcessor proc = studio_.data().ij().createProcessor(
+               store.getImage(cb.t(i).build()));
+         float[] pixels = (float[]) ((FloatProcessor) proc.convertToFloat()).getPixels();
+         for (int j = 0; j < nPixels; j++) {
+            double delta = pixels[j] - pixelMean[j];
+            pixelMean[j] += delta / (i + 1);
+            pixelM2[j] += delta * (pixels[j] - pixelMean[j]);
+         }
+      }
+
+      float[] meanPixels = new float[nPixels];
+      float[] stdDevPixels = new float[nPixels];
+      for (int j = 0; j < nPixels; j++) {
+         meanPixels[j] = (float) pixelMean[j];
+         stdDevPixels[j] = nrFrames > 1
+               ? (float) Math.sqrt(pixelM2[j] / (nrFrames - 1)) : 0.0f;
+      }
+
+      stack.addSlice(new FloatProcessor(stack.getWidth(), stack.getHeight(), meanPixels, null));
+      stack.addSlice(new FloatProcessor(stack.getWidth(), stack.getHeight(), stdDevPixels, null));
    }
 
 
-   private ExpMeanStdDev calcExpMeanStdDev(Datastore store) throws IOException {
+   private ExpMeanStdDev calcExpMeanStdDev(Datastore store, boolean computeMedian)
+         throws IOException {
       ExpMeanStdDev result = new ExpMeanStdDev();
       final Coords.Builder cb = Coordinates.builder();
       final int nrFrames = store.getNextIndex(Coords.T);
@@ -388,6 +406,9 @@ public class PtcToolsExecutor extends Thread {
       result.mean_ = avg(means);
       result.meanStd_ = avg(stdDevs);
       result.meanReadPlusShotNoise_ = avg(readPlusShotNoise);
+      if (computeMedian) {
+         result.medianReadPlusShotNoise_ = median(readPlusShotNoise);
+      }
       result.stdDev_ = stdDev(means, result.mean_);
 
       return result;
@@ -413,6 +434,18 @@ public class PtcToolsExecutor extends Thread {
       result /= (numbers.length - 1);
 
       return Math.sqrt(result);
+   }
+
+   public static double median(double[] numbers) {
+      if (numbers.length == 0) {
+         return 0.0;
+      }
+      double[] sorted = numbers.clone();
+      Arrays.sort(sorted);
+      int mid = sorted.length / 2;
+      return (sorted.length % 2 == 0)
+            ? (sorted[mid - 1] + sorted[mid]) / 2.0
+            : sorted[mid];
    }
 
    private void showPtcPlot() {
@@ -566,6 +599,7 @@ public class PtcToolsExecutor extends Thread {
 
          double darkStdDev = expMeanStdDev_.get(0).meanReadPlusShotNoise_;
          double readNoise = darkStdDev * gain;
+         double medianReadNoise = expMeanStdDev_.get(0).medianReadPlusShotNoise_ * gain;
 
          // Draw a horizontal green line at the dark-frame noise level (read noise in ADU)
          double logDarkStdDev = Math.log10(darkStdDev);
@@ -578,8 +612,9 @@ public class PtcToolsExecutor extends Thread {
          plot.addLabel(0.05, 0.15,
                String.format("%sShot-noise fit slope: %.3f\n"
                         + "Gain (mean/\u03C3\u00B2): %.4f electron/ADU\n" // sigma squared
-                        + "Read noise: %.2f electrons",
-                     descriptionPrefix, slope, gain, readNoise));
+                        + "Read noise (mean): %.2f electrons\n"
+                        + "Read noise (median): %.2f electrons",
+                     descriptionPrefix, slope, gain, readNoise, medianReadNoise));
       }
 
       plot.show();
