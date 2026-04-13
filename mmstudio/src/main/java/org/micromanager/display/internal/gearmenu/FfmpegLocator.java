@@ -90,18 +90,22 @@ public final class FfmpegLocator {
             ProcessBuilder pb = new ProcessBuilder("which", "ffmpeg");
             pb.redirectErrorStream(true);
             Process proc = pb.start();
-            BufferedReader br = new BufferedReader(
-                  new InputStreamReader(proc.getInputStream()));
-            String line = br.readLine();
-            proc.waitFor();
-            if (line != null && !line.isEmpty()) {
-               File f = new File(line.trim());
-               if (f.isFile() && f.canExecute()) {
-                  return f.getAbsolutePath();
+            try (BufferedReader br = new BufferedReader(
+                  new InputStreamReader(proc.getInputStream()))) {
+               String line = br.readLine();
+               proc.waitFor();
+               if (line != null && !line.isEmpty()) {
+                  File f = new File(line.trim());
+                  if (f.isFile() && f.canExecute()) {
+                     return f.getAbsolutePath();
+                  }
                }
+            } catch (InterruptedException e) {
+               proc.destroy();
+               Thread.currentThread().interrupt();
             }
-         } catch (IOException | InterruptedException e) {
-            // Ignore; fall through to return null.
+         } catch (IOException e) {
+            // which not available or ffmpeg not found; fall through to return null.
          }
          return null;
       }

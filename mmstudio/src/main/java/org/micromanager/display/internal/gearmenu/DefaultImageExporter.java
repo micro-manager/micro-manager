@@ -41,7 +41,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
@@ -403,6 +402,11 @@ public final class DefaultImageExporter implements ImageExporter {
             throw new IllegalArgumentException(
                      "ffmpeg path has not been set for OUTPUT_MOVIE format");
          }
+         File ffmpeg = new File(ffmpegPath_);
+         if (!ffmpeg.isFile() || !ffmpeg.canExecute()) {
+            throw new IllegalArgumentException(
+                  "ffmpeg executable not found or not executable: " + ffmpegPath_);
+         }
       }
       return coords;
    }
@@ -614,31 +618,23 @@ public final class DefaultImageExporter implements ImageExporter {
       if (tempDir_ == null) {
          String dirPath = System.getProperty("java.io.tmpdir")
                + File.separator + "mm_export_" + System.currentTimeMillis();
-         tempDir_ = new File(dirPath);
-         if (!tempDir_.mkdirs()) {
+         File candidate = new File(dirPath);
+         if (!candidate.mkdirs()) {
             logManager_.logError("Could not create temp directory for ffmpeg export: " + dirPath);
             return;
          }
+         tempDir_ = candidate;
          frameIndex_ = 0;
       }
       frameIndex_++;
-      String frameName = String.format("frame_%06d.jpg", frameIndex_);
+      // Write lossless PNG so the quality slider maps exclusively to the
+      // H.264 CRF in runFfmpeg() with no intermediate lossy step.
+      String frameName = String.format("frame_%06d.png", frameIndex_);
       File frameFile = new File(tempDir_, frameName);
-
-      float quality = jpegQuality_ / 100.0f;
-      ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
-      ImageWriteParam param = writer.getDefaultWriteParam();
-      param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-      param.setCompressionQuality(quality);
       try {
-         ImageOutputStream stream = ImageIO.createImageOutputStream(frameFile);
-         writer.setOutput(stream);
-         writer.write(null, new IIOImage(image, null, null), param);
-         stream.close();
+         ImageIO.write(image, "png", frameFile);
       } catch (IOException e) {
          logManager_.logError(e, "Error writing temp frame for ffmpeg export");
-      } finally {
-         writer.dispose();
       }
    }
 
@@ -657,7 +653,7 @@ public final class DefaultImageExporter implements ImageExporter {
       if (fps <= 0) {
          fps = 10.0;
       }
-      String framePattern = new File(tempDir_, "frame_%06d.jpg").getAbsolutePath();
+      String framePattern = new File(tempDir_, "frame_%06d.png").getAbsolutePath();
       String outputFile = getOutputFilename("");
 
       List<String> command = new ArrayList<String>();
@@ -705,8 +701,8 @@ public final class DefaultImageExporter implements ImageExporter {
          exitCode = process.waitFor();
       } catch (InterruptedException e) {
          process.destroy();
-         logManager_.logError(e, "Interrupted while waiting for ffmpeg");
-         return;
+         Thread.currentThread().interrupt();
+         throw new IOException("Interrupted while waiting for ffmpeg", e);
       }
 
       if (exitCode != 0) {

@@ -100,9 +100,13 @@ public interface ImageExporter {
     * Set the path to the ffmpeg executable. Required when the output format is
     * OUTPUT_MOVIE. Ignored for other formats.
     *
+    * <p>This method has a default no-op implementation so that existing
+    * implementations of this interface remain source- and binary-compatible.
+    *
     * @param ffmpegPath Absolute path to the ffmpeg binary.
     */
-   void setFfmpegPath(String ffmpegPath);
+   default void setFfmpegPath(String ffmpegPath) {
+   }
 
    /**
     * Set the path to save images to, and the filename prefix to use when
