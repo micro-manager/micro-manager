@@ -1908,7 +1908,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                + "Available memory (approximate estimate: " + availableMemoryMB
                + " MB) may not be sufficient. "
                + "Once memory is full, the acquisition may slow down or fail.</p>"
-               + "<p width='400'>See <a style=\"" + style
+               + "<p width='400'>Check \"Save Images\", or see <a style=\"" + style
                +
                "\" href=https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Memory_Settings> "
                + " the configuration guide</a> for ways to make more memory available.</p>"
