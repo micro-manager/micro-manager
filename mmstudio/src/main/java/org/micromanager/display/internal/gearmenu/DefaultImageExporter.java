@@ -400,7 +400,8 @@ public final class DefaultImageExporter implements ImageExporter {
                   directory_, prefix_));
          }
          if (ffmpegPath_ == null) {
-            throw new IllegalArgumentException("ffmpeg path has not been set for OUTPUT_MOVIE format");
+            throw new IllegalArgumentException(
+                     "ffmpeg path has not been set for OUTPUT_MOVIE format");
          }
       }
       return coords;
@@ -650,7 +651,7 @@ public final class DefaultImageExporter implements ImageExporter {
     */
    private void runFfmpeg() throws IOException {
       // Map quality 1-100 → CRF 51-0 (higher quality = lower CRF).
-      int crf = (int) Math.round(51.0 * (1.0 - (jpegQuality_ - 1) / 99.0));
+      final int crf = (int) Math.round(51.0 * (1.0 - (jpegQuality_ - 1) / 99.0));
 
       double fps = display_.getPlaybackSpeedFps();
       if (fps <= 0) {
