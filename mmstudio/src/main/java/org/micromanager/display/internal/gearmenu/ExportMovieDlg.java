@@ -82,8 +82,10 @@ public final class ExportMovieDlg extends JDialog {
    private static final String FORMAT_GIF = "GIF";
    private static final String FORMAT_IMAGEJ = "ImageJ stack window";
    private static final String FORMAT_SYSTEM_CLIPBOARD = "System Clipboard";
+   private static final String FORMAT_MOVIE = "Movie (ffmpeg)";
    private static final String[] OUTPUT_FORMATS = {
-         FORMAT_PNG, FORMAT_JPEG, FORMAT_AVI, FORMAT_GIF, FORMAT_IMAGEJ, FORMAT_SYSTEM_CLIPBOARD
+         FORMAT_PNG, FORMAT_JPEG, FORMAT_AVI, FORMAT_GIF,
+         FORMAT_IMAGEJ, FORMAT_SYSTEM_CLIPBOARD, FORMAT_MOVIE
    };
    private static final String DEFAULT_USE_LABEL = "Use Label";
    private static final Boolean USE_LABEL = true;
@@ -306,11 +308,14 @@ public final class ExportMovieDlg extends JDialog {
             "split 4, flowx");
       outputFormatSelector_ = new JComboBox<>(OUTPUT_FORMATS);
       outputFormatSelector_.addActionListener(e -> {
-         // Show/hide the JPEG quality controls.
+         // Show/hide the quality controls.
          String selection = (String) outputFormatSelector_.getSelectedItem();
-         if (selection.equals(FORMAT_JPEG) || selection.equals(FORMAT_AVI)) {
+         if (selection.equals(FORMAT_JPEG) || selection.equals(FORMAT_AVI)
+               || selection.equals(FORMAT_MOVIE)) {
             jpegPanel_.removeAll();
-            jpegPanel_.add(new JLabel("JPEG quality(%): "));
+            String qualityLabel = selection.equals(FORMAT_MOVIE)
+                  ? "Quality(%): " : "JPEG quality(%): ";
+            jpegPanel_.add(new JLabel(qualityLabel));
             jpegPanel_.add(jpegQualitySpinner_);
          } else {
             jpegPanel_.removeAll();
@@ -389,6 +394,18 @@ public final class ExportMovieDlg extends JDialog {
 
       // Set output format.
       String mode = (String) outputFormatSelector_.getSelectedItem();
+
+      // For ffmpeg export, locate ffmpeg before showing the save dialog so
+      // we don't ask for a file path only to fail on a missing binary.
+      String ffmpegPath = null;
+      if (mode.contentEquals(FORMAT_MOVIE)) {
+         ffmpegPath = FfmpegLocator.findOrLocate(studio_, this);
+         if (ffmpegPath == null) {
+            // User cancelled or ffmpeg could not be located.
+            return;
+         }
+      }
+
       ImageExporter.OutputFormat format = ImageExporter.OutputFormat.OUTPUT_PNG;
       String suffix = "png";
       if (mode.contentEquals(FORMAT_JPEG)) {
@@ -404,10 +421,16 @@ public final class ExportMovieDlg extends JDialog {
          format = ImageExporter.OutputFormat.OUTPUT_IMAGEJ;
       } else if (mode.contentEquals(FORMAT_SYSTEM_CLIPBOARD)) {
          format = ImageExporter.OutputFormat.OUTPUT_CLIPBOARD;
+      } else if (mode.contentEquals(FORMAT_MOVIE)) {
+         format = ImageExporter.OutputFormat.OUTPUT_MOVIE;
+         suffix = "mp4";
       }
       final String[] fss = {suffix};
       exporter.setOutputFormat(format);
       exporter.setUseLabel(useLabel);
+      if (ffmpegPath != null) {
+         exporter.setFfmpegPath(ffmpegPath);
+      }
 
       // Get save path if relevant.
       String base = System.getProperty("user.home");
@@ -444,8 +467,15 @@ public final class ExportMovieDlg extends JDialog {
             studio_.logs().showError(e, "Unable to save to that directory");
             return;
          }
-      } else if (mode.equals(FORMAT_AVI) || mode.equals(FORMAT_GIF)) {
-         String title = mode. equals(FORMAT_AVI) ? "Save AVI as" : "Save GIF as";
+      } else if (mode.equals(FORMAT_AVI) || mode.equals(FORMAT_GIF) || mode.equals(FORMAT_MOVIE)) {
+         String title;
+         if (mode.equals(FORMAT_AVI)) {
+            title = "Save AVI as";
+         } else if (mode.equals(FORMAT_GIF)) {
+            title = "Save GIF as";
+         } else {
+            title = "Save movie as";
+         }
          File output = FileDialogs.promptForFile(this,
                   title,
                   path,
@@ -467,7 +497,8 @@ public final class ExportMovieDlg extends JDialog {
             studio_.profile().getSettings(ExportMovieDlg.class)
                      .putString(EXPORT_LOCATION, directory);
             String fileName = output.getName();
-            if (fileName.endsWith(".avi") || fileName.endsWith(".gif")) {
+            if (fileName.endsWith(".avi") || fileName.endsWith(".gif")
+                  || fileName.endsWith(".mp4")) {
                fileName = fileName.substring(0, fileName.length() - 4);
             }
             exporter.setSaveInfo(directory, fileName);

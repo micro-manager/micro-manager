@@ -34,11 +34,14 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
@@ -149,6 +152,9 @@ public final class DefaultImageExporter implements ImageExporter {
    private final AtomicBoolean doneFlag_;
    private boolean isSingleShot_;
    private int jpegQuality_ = 90;
+   private String ffmpegPath_ = null;
+   private int frameIndex_ = 0;
+   private File tempDir_ = null;
 
    private BufferedImage currentImage_ = null;
    private Graphics currentGraphics_ = null;
@@ -177,6 +183,11 @@ public final class DefaultImageExporter implements ImageExporter {
    @Override
    public void setOutputQuality(int quality) {
       jpegQuality_ = quality;
+   }
+
+   @Override
+   public void setFfmpegPath(String ffmpegPath) {
+      ffmpegPath_ = ffmpegPath;
    }
 
    @Override
@@ -266,6 +277,8 @@ public final class DefaultImageExporter implements ImageExporter {
                            currentImage_.getHeight());
                   }
                   addToStack(stack_, currentImage_);
+               } else if (format_ == OutputFormat.OUTPUT_MOVIE) {
+                  writeTempFrame(currentImage_);
                } else if (format_ == OutputFormat.OUTPUT_CLIPBOARD) {
                   TransferableImage transferable = new TransferableImage(currentImage_);
                   Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, null);
@@ -380,6 +393,15 @@ public final class DefaultImageExporter implements ImageExporter {
             }
             sequenceNum_ = 0;
          }
+      } else if (format_ == OutputFormat.OUTPUT_MOVIE) {
+         if (directory_ == null || prefix_ == null) {
+            throw new IllegalArgumentException(String.format(
+                  "Save parameters for exporter were not properly set (directory %s, prefix %s)",
+                  directory_, prefix_));
+         }
+         if (ffmpegPath_ == null) {
+            throw new IllegalArgumentException("ffmpeg path has not been set for OUTPUT_MOVIE format");
+         }
       }
       return coords;
    }
@@ -409,6 +431,7 @@ public final class DefaultImageExporter implements ImageExporter {
       suffix = (format_ == OutputFormat.OUTPUT_PNG) ? "png" : suffix;
       suffix = (format_ == OutputFormat.OUTPUT_AVI) ? "avi" : suffix;
       suffix = (format_ == OutputFormat.OUTPUT_GIF) ? "gif" : suffix;
+      suffix = (format_ == OutputFormat.OUTPUT_MOVIE) ? "mp4" : suffix;
       return String.format("%s/%s%s.%s", directory_, prefix_, label, suffix);
    }
 
@@ -471,6 +494,9 @@ public final class DefaultImageExporter implements ImageExporter {
          // Nothing to do.
          return;
       }
+      // Reset temp frame state for a fresh export.
+      tempDir_ = null;
+      frameIndex_ = 0;
       display_.registerForEvents(this);
 
       // This thread will handle telling the display window to display new
@@ -555,6 +581,16 @@ public final class DefaultImageExporter implements ImageExporter {
                }
             }
          }
+         // Handle ffmpeg movie export.
+         if (format_ == OutputFormat.OUTPUT_MOVIE && tempDir_ != null) {
+            try {
+               runFfmpeg();
+            } catch (IOException e) {
+               logManager_.showError(e, "Error running ffmpeg");
+            } finally {
+               deleteTempDir();
+            }
+         }
       });
 
       doneFlag_.set(false);
@@ -567,6 +603,133 @@ public final class DefaultImageExporter implements ImageExporter {
       while (!doneFlag_.get()) {
          Thread.sleep(100);
       }
+   }
+
+   /**
+    * Writes a single frame as a JPEG to the temporary directory used for
+    * ffmpeg movie export.
+    */
+   private void writeTempFrame(BufferedImage image) {
+      if (tempDir_ == null) {
+         String dirPath = System.getProperty("java.io.tmpdir")
+               + File.separator + "mm_export_" + System.currentTimeMillis();
+         tempDir_ = new File(dirPath);
+         if (!tempDir_.mkdirs()) {
+            logManager_.logError("Could not create temp directory for ffmpeg export: " + dirPath);
+            return;
+         }
+         frameIndex_ = 0;
+      }
+      frameIndex_++;
+      String frameName = String.format("frame_%06d.jpg", frameIndex_);
+      File frameFile = new File(tempDir_, frameName);
+
+      float quality = jpegQuality_ / 100.0f;
+      ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+      ImageWriteParam param = writer.getDefaultWriteParam();
+      param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+      param.setCompressionQuality(quality);
+      try {
+         ImageOutputStream stream = ImageIO.createImageOutputStream(frameFile);
+         writer.setOutput(stream);
+         writer.write(null, new IIOImage(image, null, null), param);
+         stream.close();
+      } catch (IOException e) {
+         logManager_.logError(e, "Error writing temp frame for ffmpeg export");
+      } finally {
+         writer.dispose();
+      }
+   }
+
+   /**
+    * Invokes ffmpeg to encode the collected temp frames into an MP4 file.
+    * Maps the jpegQuality_ value (1-100) to an H.264 CRF value (51-0).
+    *
+    * @throws IOException if ffmpeg cannot be started or exits with a non-zero
+    *                     exit code (the exception message includes ffmpeg output).
+    */
+   private void runFfmpeg() throws IOException {
+      // Map quality 1-100 → CRF 51-0 (higher quality = lower CRF).
+      int crf = (int) Math.round(51.0 * (1.0 - (jpegQuality_ - 1) / 99.0));
+
+      double fps = display_.getPlaybackSpeedFps();
+      if (fps <= 0) {
+         fps = 10.0;
+      }
+      String framePattern = new File(tempDir_, "frame_%06d.jpg").getAbsolutePath();
+      String outputFile = getOutputFilename("");
+
+      List<String> command = new ArrayList<String>();
+      command.add(ffmpegPath_);
+      command.add("-framerate");
+      command.add(String.valueOf(fps));
+      command.add("-i");
+      command.add(framePattern);
+      // Ensure even dimensions required by libx264.
+      command.add("-vf");
+      command.add("scale=trunc(iw/2)*2:trunc(ih/2)*2");
+      command.add("-c:v");
+      command.add("libx264");
+      command.add("-crf");
+      command.add(String.valueOf(crf));
+      command.add("-preset");
+      command.add("medium");
+      command.add("-pix_fmt");
+      command.add("yuv420p");
+      command.add(outputFile);
+
+      ProcessBuilder pb = new ProcessBuilder(command);
+      pb.redirectErrorStream(true);
+      Process process;
+      try {
+         process = pb.start();
+      } catch (IOException e) {
+         throw new IOException("Failed to start ffmpeg at: " + ffmpegPath_, e);
+      }
+
+      StringBuilder ffmpegOutput = new StringBuilder();
+      try {
+         BufferedReader br = new BufferedReader(
+               new InputStreamReader(process.getInputStream()));
+         String line;
+         while ((line = br.readLine()) != null) {
+            ffmpegOutput.append(line).append("\n");
+         }
+      } catch (IOException e) {
+         logManager_.logError(e, "Error reading ffmpeg output");
+      }
+
+      int exitCode;
+      try {
+         exitCode = process.waitFor();
+      } catch (InterruptedException e) {
+         process.destroy();
+         logManager_.logError(e, "Interrupted while waiting for ffmpeg");
+         return;
+      }
+
+      if (exitCode != 0) {
+         throw new IOException("ffmpeg exited with code " + exitCode
+               + ".\nffmpeg output:\n" + ffmpegOutput.toString());
+      }
+   }
+
+   /**
+    * Deletes all files in the temp directory and the directory itself.
+    */
+   private void deleteTempDir() {
+      if (tempDir_ == null) {
+         return;
+      }
+      File[] files = tempDir_.listFiles();
+      if (files != null) {
+         for (File f : files) {
+            f.delete();
+         }
+      }
+      tempDir_.delete();
+      tempDir_ = null;
+      frameIndex_ = 0;
    }
 
    private class TransferableImage implements Transferable {
