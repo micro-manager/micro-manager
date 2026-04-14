@@ -265,18 +265,6 @@ public final class AnimationPlayer {
    // Instruction application
    // -----------------------------------------------------------------------
 
-   /**
-    * Returns the value for parameter slot {@code index} of the instruction.
-    * If a script function name is stored in that slot it is evaluated with
-    * {@code frame} as the argument; otherwise the literal value is returned.
-    */
-   private double resolveParam(AnimationInstruction instr, int index, int frame) {
-      if (instr.paramFunctions != null && instr.paramFunctions[index] != null) {
-         return scriptFunctions_.evaluate(instr.paramFunctions[index], frame);
-      }
-      return instr.params[index];
-   }
-
    private void applyInstruction(AnimationInstruction instr, int frame) {
       double et = easedProgress(instr, frame);
 
@@ -651,9 +639,8 @@ public final class AnimationPlayer {
       }
 
       StringBuilder ffmpegOutput = new StringBuilder();
-      try {
-         BufferedReader br = new BufferedReader(
-               new InputStreamReader(process.getInputStream()));
+      try (BufferedReader br = new BufferedReader(
+            new InputStreamReader(process.getInputStream()))) {
          String line;
          while ((line = br.readLine()) != null) {
             ffmpegOutput.append(line).append("\n");

@@ -1034,6 +1034,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          return;
       }
       float[] clipBox = clearVolumeRenderer_.getClipBox();
+      if (clipBox == null) {
+         // Renderer not yet fully initialised; use a default full-range box.
+         clipBox = new float[]{-1f, 1f, -1f, 1f, -1f, 1f};
+      }
       if (min != null) {
          clipBox[axis * 2] = min;
       }

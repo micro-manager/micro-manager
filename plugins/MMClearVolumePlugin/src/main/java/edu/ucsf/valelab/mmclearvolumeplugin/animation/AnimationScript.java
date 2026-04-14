@@ -47,6 +47,19 @@ public final class AnimationScript {
    private static final Pattern CHANNEL_NUMBER_PATTERN =
          Pattern.compile("\\bchannel\\s+(\\d+)\\b", Pattern.CASE_INSENSITIVE);
 
+   /** Matches the two frame numbers in a "From frame N to frame M" line. */
+   private static final Pattern FROM_TO_PATTERN = Pattern.compile(
+         "from\\s+frame\\s+(\\S+)\\s+to\\s+frame\\s+(\\S+)",
+         Pattern.CASE_INSENSITIVE);
+
+   /** Matches the frame number in an "At frame N" line. */
+   private static final Pattern AT_FRAME_PATTERN = Pattern.compile(
+         "at\\s+frame\\s+(\\S+)",
+         Pattern.CASE_INSENSITIVE);
+
+   /** Matches a non-negative integer (digits only, no sign, no decimal). */
+   private static final Pattern INTEGER_PATTERN = Pattern.compile("^[0-9]+$");
+
    /**
     * Matches a bare identifier used in place of a number:
     * a word that starts with a letter and contains only letters, digits, or _.
@@ -178,25 +191,46 @@ public final class AnimationScript {
    // Interval parsing
    // -----------------------------------------------------------------------
 
-   /** Returns [beginFrame, endFrame], or null if the line is not an interval. */
+   /**
+    * Returns [beginFrame, endFrame], or null if the line is not an interval.
+    *
+    * <p>Frame numbers must be non-negative integers. Floating-point values,
+    * negative numbers, and reversed intervals (begin &gt; end) are rejected
+    * with a descriptive error.
+    */
    private static int[] parseInterval(String line) {
-      String lower = line.toLowerCase();
-      List<Double> nums = extractNumbers(line);
-
-      if (lower.startsWith("from frame") && lower.contains("to frame")) {
-         if (nums.size() < 2) {
-            return null;
+      Matcher fromTo = FROM_TO_PATTERN.matcher(line);
+      if (fromTo.find()) {
+         int begin = parseFrameNumber(fromTo.group(1), line);
+         int end   = parseFrameNumber(fromTo.group(2), line);
+         if (begin > end) {
+            throw new IllegalArgumentException(
+                  "Reversed interval: begin frame " + begin
+                        + " is after end frame " + end + " in: " + line);
          }
-         return new int[]{nums.get(0).intValue(), nums.get(1).intValue()};
+         return new int[]{begin, end};
       }
-      if (lower.startsWith("at frame")) {
-         if (nums.isEmpty()) {
-            return null;
-         }
-         int f = nums.get(0).intValue();
+
+      Matcher atFrame = AT_FRAME_PATTERN.matcher(line);
+      if (atFrame.find()) {
+         int f = parseFrameNumber(atFrame.group(1), line);
          return new int[]{f, f};
       }
+
       return null;
+   }
+
+   /**
+    * Parses a frame-number token, throwing a descriptive error if it is not
+    * a non-negative integer.
+    */
+   private static int parseFrameNumber(String token, String context) {
+      if (!INTEGER_PATTERN.matcher(token).matches()) {
+         throw new IllegalArgumentException(
+               "Frame number must be a non-negative integer, got '"
+                     + token + "' in: " + context);
+      }
+      return Integer.parseInt(token);
    }
 
    /**
