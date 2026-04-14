@@ -66,22 +66,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       super();
       studio_ = studio;
       
-      //studio_ = studio;
       panel_.setLayout(new MigLayout("flowx"));
-      /*
-      final JCheckBox attachToNewCheckBox = new JCheckBox ("Use for all");
-      attachToNewCheckBox.setToolTipText("Open all new data in ClearVolume");
-      attachToNew_.set(studio.profile().getBoolean(this.getClass(), 
-              USE_FOR_ALL, false));
-      attachToNewCheckBox.setSelected(attachToNew_.get());
-      attachToNewCheckBox.addActionListener((ActionEvent e) -> {
-         attachToNew_.set(attachToNewCheckBox.isSelected());
-         studio.profile().setBoolean(this.getClass(), USE_FOR_ALL, 
-                 attachToNewCheckBox.isSelected());
-      });
-      panel_.add(attachToNewCheckBox, "span 4, wrap");
-      */
-      
       panel_.add(new JSeparator(SwingConstants.HORIZONTAL), "span 4, growx, pushx, wrap");
            
       JButton resetButton = new JButton("Reset");

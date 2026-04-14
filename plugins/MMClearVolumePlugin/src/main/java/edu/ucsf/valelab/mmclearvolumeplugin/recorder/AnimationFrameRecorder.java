@@ -28,6 +28,11 @@ public class AnimationFrameRecorder extends VideoRecorderBase {
    private volatile CountDownLatch latch_ = new CountDownLatch(0);
    private volatile BufferedImage lastFrame_ = null;
 
+   /** Reusable pixel buffer; reallocated only when the drawable size changes. */
+   private ByteBuffer pixelBuf_ = null;
+   private int bufWidth_  = 0;
+   private int bufHeight_ = 0;
+
    public AnimationFrameRecorder() {
       super();
       // Disable the rate limiter in the base class by setting a very high
@@ -101,17 +106,24 @@ public class AnimationFrameRecorder extends VideoRecorderBase {
       final int width = pGLAutoDrawable.getSurfaceWidth();
       final int height = pGLAutoDrawable.getSurfaceHeight();
 
-      ByteBuffer buf = ByteBuffer.allocateDirect(width * height * 3)
-            .order(ByteOrder.nativeOrder());
+      // Reuse the direct buffer across frames; reallocate only on size change.
+      if (pixelBuf_ == null || width != bufWidth_ || height != bufHeight_) {
+         pixelBuf_ = ByteBuffer.allocateDirect(width * height * 3)
+               .order(ByteOrder.nativeOrder());
+         bufWidth_  = width;
+         bufHeight_ = height;
+      } else {
+         pixelBuf_.clear();
+      }
 
       final GL gl = pGLAutoDrawable.getGL();
       gl.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);
       gl.glReadPixels(0, 0, width, height,
-            GL.GL_RGB, GL.GL_UNSIGNED_BYTE, buf);
+            GL.GL_RGB, GL.GL_UNSIGNED_BYTE, pixelBuf_);
 
       mLastImageTimePoint = System.nanoTime();
 
-      lastFrame_ = RecorderUtils.makeBufferedImage(width, height, buf);
+      lastFrame_ = RecorderUtils.makeBufferedImage(width, height, pixelBuf_);
       latch_.countDown();
       return true;
    }

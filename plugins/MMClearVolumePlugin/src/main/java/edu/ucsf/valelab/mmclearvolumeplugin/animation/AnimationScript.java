@@ -40,6 +40,14 @@ public final class AnimationScript {
          Pattern.compile("[-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?");
 
    /**
+    * Matches the channel number that must immediately follow the keyword
+    * "channel": optional whitespace then one or more digits.
+    * Rejects floating-point values so "channel 1.5" is caught early.
+    */
+   private static final Pattern CHANNEL_NUMBER_PATTERN =
+         Pattern.compile("\\bchannel\\s+(\\d+)\\b", Pattern.CASE_INSENSITIVE);
+
+   /**
     * Matches a bare identifier used in place of a number:
     * a word that starts with a letter and contains only letters, digits, or _.
     * We only accept it in positions where a number is expected and a number
@@ -281,12 +289,18 @@ public final class AnimationScript {
                                                    int beginFrame, int endFrame,
                                                    Easing easing) {
       if (lower.contains("channel")) {
-         if (params.isEmpty()) {
-            throw new IllegalArgumentException("Missing channel number in: " + text);
+         // Parse the channel number directly from the text so that a missing
+         // or non-integer channel number is caught immediately, rather than
+         // silently mis-treating the first value parameter as the channel.
+         Matcher chMatcher = CHANNEL_NUMBER_PATTERN.matcher(text);
+         if (!chMatcher.find()) {
+            throw new IllegalArgumentException(
+                  "Missing or invalid channel number after 'channel' in: " + text
+                        + " (expected an integer, e.g. 'change channel 0 intensity to 0.5')");
          }
-         // Channel number is the first *numeric* value (must be literal).
-         int ch = (int) params.getNumber(0, text);
-         // Remaining parameters start at index 1.
+         int ch = Integer.parseInt(chMatcher.group(1));
+         // Remaining value parameters start at index 1 in params
+         // (index 0 is the channel number, consumed above).
 
          if (lower.contains("intensity")) {
             if (lower.contains("min intensity")) {
@@ -501,8 +515,9 @@ public final class AnimationScript {
                                          int[] paramIndices, int minCount,
                                          int channel, Easing easing) {
          if (values_.length < minCount) {
-            // Allow short lists when all missing slots are filled with 0.
-            // (Existing behaviour: getOrZero → 0.0.)
+            throw new IllegalArgumentException(
+                  action + " requires " + minCount + " parameter(s) but "
+                        + values_.length + " were found.");
          }
          double[] p = new double[paramIndices.length];
          String[] fn = null;

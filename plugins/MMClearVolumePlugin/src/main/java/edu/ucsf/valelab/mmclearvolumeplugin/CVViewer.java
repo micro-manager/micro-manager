@@ -695,16 +695,34 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    /**
-    * Installs a video recorder on the renderer without toggling its active
-    * state or triggering a redraw.  Intended for use by
-    * {@link edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer},
-    * which controls the active state and redraws itself.
+    * Installs (or removes) a video recorder on the renderer without toggling
+    * its active state or triggering a redraw.  Intended for use by
+    * {@link edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer}.
+    *
+    * <p>Safe to call from any thread. The call is marshalled to the EDT via
+    * {@link SwingUtilities#invokeAndWait} so that the write to the renderer's
+    * (non-volatile) {@code mVideoRecorder} field is flushed through a full
+    * memory barrier before the caller proceeds to trigger a redraw.  This
+    * guarantees that the OpenGL render thread sees the new recorder when it
+    * next executes the screenshot callback.
     *
     * @param recorder the recorder to install; pass {@code null} to remove
     */
    public void setAnimationRecorder(VideoRecorderInterface recorder) {
-      if (clearVolumeRenderer_ != null) {
+      if (clearVolumeRenderer_ == null) {
+         return;
+      }
+      if (SwingUtilities.isEventDispatchThread()) {
          clearVolumeRenderer_.setVideoRecorder(recorder);
+      } else {
+         try {
+            SwingUtilities.invokeAndWait(
+                  () -> clearVolumeRenderer_.setVideoRecorder(recorder));
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         } catch (java.lang.reflect.InvocationTargetException e) {
+            throw new RuntimeException("setAnimationRecorder failed", e.getCause());
+         }
       }
    }
    
@@ -781,7 +799,13 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                   double[] gamma, boolean[] layerVisible,
                   clearvolume.transferf.TransferFunction[] transferFunctions) {
          // Deep-copy the quaternion so mutations don't alias.
-         this.quaternion = new com.jogamp.opengl.math.Quaternion(quaternion);
+         // Substitute an identity quaternion when the renderer returns null.
+         if (quaternion != null) {
+            this.quaternion = new com.jogamp.opengl.math.Quaternion(quaternion);
+         } else {
+            this.quaternion = new com.jogamp.opengl.math.Quaternion();
+            this.quaternion.setIdentity();
+         }
          this.translationX = tx;
          this.translationY = ty;
          this.translationZ = tz;

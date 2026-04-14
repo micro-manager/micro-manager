@@ -449,16 +449,18 @@ public final class AnimationPlayer {
       az /= len;
 
       Quaternion current = viewer_.getQuaternion();
+      // Always work on a private copy so we never mutate the renderer's
+      // internal quaternion instance in place (aliasing / thread-safety).
+      Quaternion q = (current != null) ? new Quaternion(current) : new Quaternion();
       if (current == null) {
-         current = new Quaternion();
-         current.setIdentity();
+         q.setIdentity();
       }
       // rotateByAngleNormalAxis expects the angle in radians and a normalised axis.
-      // It applies the rotation in-place: current = current * delta.
+      // It applies the rotation in-place on our private copy.
       float rad = (float) (deg * DEG_TO_RAD);
-      current.rotateByAngleNormalAxis(rad, ax, ay, az);
-      current.normalize();
-      viewer_.setQuaternion(current);
+      q.rotateByAngleNormalAxis(rad, ax, ay, az);
+      q.normalize();
+      viewer_.setQuaternion(q);
    }
 
    // -----------------------------------------------------------------------
