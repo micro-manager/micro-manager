@@ -126,8 +126,11 @@ public final class ScriptFunctions {
          int pos = bodyStart;
          while (pos < scriptBody.length() && depth > 0) {
             char c = scriptBody.charAt(pos);
-            if (c == '{') depth++;
-            else if (c == '}') depth--;
+            if (c == '{') {
+               depth++;
+            } else if (c == '}') {
+               depth--;
+            }
             pos++;
          }
          if (depth != 0) {
@@ -257,9 +260,15 @@ public final class ScriptFunctions {
          skipWhitespace();
          while (pos_ < expr_.length()) {
             char c = expr_.charAt(pos_);
-            if (c == '+') { pos_++; v += parseTerm(); }
-            else if (c == '-') { pos_++; v -= parseTerm(); }
-            else break;
+            if (c == '+') {
+               pos_++;
+               v += parseTerm();
+            } else if (c == '-') {
+               pos_++;
+               v -= parseTerm();
+            } else {
+               break;
+            }
             skipWhitespace();
          }
          return v;
@@ -271,10 +280,18 @@ public final class ScriptFunctions {
          skipWhitespace();
          while (pos_ < expr_.length()) {
             char c = expr_.charAt(pos_);
-            if (c == '*') { pos_++; v *= parseUnary(); }
-            else if (c == '/') { pos_++; v /= parseUnary(); }
-            else if (c == '%') { pos_++; v %= parseUnary(); }
-            else break;
+            if (c == '*') {
+               pos_++;
+               v *= parseUnary();
+            } else if (c == '/') {
+               pos_++;
+               v /= parseUnary();
+            } else if (c == '%') {
+               pos_++;
+               v %= parseUnary();
+            } else {
+               break;
+            }
             skipWhitespace();
          }
          return v;
@@ -356,9 +373,15 @@ public final class ScriptFunctions {
       }
 
       private double resolveIdentifier(String name) {
-         if ("t".equals(name)) return t_;
-         if ("PI".equals(name)) return Math.PI;
-         if ("E".equals(name))  return Math.E;
+         if ("t".equals(name)) {
+            return t_;
+         }
+         if ("PI".equals(name)) {
+            return Math.PI;
+         }
+         if ("E".equals(name))  {
+            return Math.E;
+         }
          throw new IllegalArgumentException("Unknown identifier: " + name);
       }
 
