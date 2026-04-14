@@ -1,16 +1,15 @@
 package edu.ucsf.valelab.mmclearvolumeplugin.uielements;
 
 import edu.ucsf.valelab.mmclearvolumeplugin.CVViewer;
-import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationInstruction;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer.ExportTarget;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationScript;
+import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationScript.ParseResult;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -150,15 +149,15 @@ public final class AnimationScriptDlg extends JDialog {
 
    private void startAnimation() {
       String scriptText = scriptArea_.getText();
-      List<AnimationInstruction> instructions;
+      ParseResult parsed;
       try {
-         instructions = AnimationScript.parse(scriptText);
+         parsed = AnimationScript.parse(scriptText);
       } catch (IllegalArgumentException ex) {
          statusLabel_.setText("Parse error: " + ex.getMessage());
          return;
       }
 
-      if (instructions.isEmpty()) {
+      if (parsed.instructions.isEmpty()) {
          statusLabel_.setText("Script contains no instructions.");
          return;
       }
@@ -195,7 +194,8 @@ public final class AnimationScriptDlg extends JDialog {
       saveSettings();
 
       final AnimationPlayer player = new AnimationPlayer(
-            viewer_, instructions, totalFrames, fps, target,
+            viewer_, parsed.instructions, parsed.scriptFunctions,
+            totalFrames, fps, target,
             ffmpegPath, outputPath, studio_.getLogManager());
       currentPlayer_ = player;
 
@@ -304,10 +304,17 @@ public final class AnimationScriptDlg extends JDialog {
    }
 
    private static String getDefaultScript() {
-      return "# 3D Animation Script\n"
-            + "# Example: full rotation over 120 frames\n"
+      return "# 3D Animation Script  (Wan et al. 2019 animation language)\n"
+            + "# Lines starting with # are comments.\n"
+            + "# A 'script' block at the end can define JavaScript functions\n"
+            + "# to use as dynamic parameters (called with the frame number).\n"
             + "#\n"
             + "From frame 0 to frame 119:\n"
-            + "- rotate by 360 degrees horizontally ease-in-out\n";
+            + "- rotate by 360 degrees horizontally ease-in-out\n"
+            + "- zoom by a factor of zoomFn\n"
+            + "script\n"
+            + "function zoomFn(t) {\n"
+            + "    return 0.6 - 0.3 * abs(sin(2 * PI * t / 120));\n"
+            + "}\n";
    }
 }

@@ -102,8 +102,21 @@ public final class AnimationInstruction {
     *   <li>CHANGE_CH_COLOR: [r, g, b] (0–255)</li>
     *   <li>CHANGE_CH_WEIGHT: [weight] (0–1)</li>
     * </ul>
+    *
+    * <p>A params entry may be {@link Double#NaN} when the corresponding
+    * {@link #paramFunctions} slot names a script function that supplies the
+    * value at runtime.
     */
    public final double[] params;
+
+   /**
+    * Per-parameter script function names, parallel to {@link #params}.
+    * A non-null entry at index {@code i} means {@code params[i]} should be
+    * replaced at runtime by calling the named script function with the current
+    * frame number as its argument.  May be {@code null} if no parameter of
+    * this instruction uses a script function.
+    */
+   public final String[] paramFunctions;
 
    /**
     * Zero-based channel index for channel-specific actions, or -1 for
@@ -117,10 +130,18 @@ public final class AnimationInstruction {
    public AnimationInstruction(int beginFrame, int endFrame,
                                ActionType action, double[] params,
                                int channel, Easing easing) {
+      this(beginFrame, endFrame, action, params, null, channel, easing);
+   }
+
+   public AnimationInstruction(int beginFrame, int endFrame,
+                               ActionType action, double[] params,
+                               String[] paramFunctions,
+                               int channel, Easing easing) {
       this.beginFrame = beginFrame;
       this.endFrame = endFrame;
       this.action = action;
       this.params = params.clone();
+      this.paramFunctions = paramFunctions == null ? null : paramFunctions.clone();
       this.channel = channel;
       this.easing = easing;
    }
