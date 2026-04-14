@@ -44,8 +44,15 @@ public final class AnimationPlayer {
 
    /** Where captured frames should be sent. */
    public enum ExportTarget {
+      /** Collect frames into an ImageJ stack window. */
       IMAGEJ,
-      FFMPEG
+      /** Write an MP4 via ffmpeg. */
+      FFMPEG,
+      /**
+       * Preview only: drive the viewer at the requested frame rate without
+       * capturing or saving anything.
+       */
+      PREVIEW
    }
 
    private static final double DEG_TO_RAD = Math.PI / 180.0;
@@ -111,6 +118,11 @@ public final class AnimationPlayer {
     * @throws InterruptedException if the playback thread is interrupted
     */
    public void play() throws IOException, InterruptedException {
+      if (target_ == ExportTarget.PREVIEW) {
+         playPreview();
+         return;
+      }
+
       // Export setup.
       ImageStack stack = null;             // used for IMAGEJ target
       File tempDir = null;                 // used for FFMPEG target
@@ -188,6 +200,36 @@ public final class AnimationPlayer {
             ImagePlus ip = new ImagePlus("3D Animation", finalStack);
             ip.show();
          });
+      }
+   }
+
+   /**
+    * Preview mode: applies instructions and paces playback at the requested
+    * fps, but does not capture or save any frames.
+    */
+   private void playPreview() throws InterruptedException {
+      long frameIntervalMs = (fps_ > 0) ? (1000L / fps_) : 100L;
+
+      for (int frame = 0; frame < totalFrames_; frame++) {
+         if (stopped_) {
+            break;
+         }
+
+         long frameStart = System.currentTimeMillis();
+
+         for (AnimationInstruction instr : instructions_) {
+            if (frame >= instr.beginFrame && frame <= instr.endFrame) {
+               applyInstruction(instr, frame);
+            }
+         }
+
+         viewer_.addTranslationZ(0f);  // force a redraw
+
+         long elapsed = System.currentTimeMillis() - frameStart;
+         long remaining = frameIntervalMs - elapsed;
+         if (remaining > 0) {
+            Thread.sleep(remaining);
+         }
       }
    }
 

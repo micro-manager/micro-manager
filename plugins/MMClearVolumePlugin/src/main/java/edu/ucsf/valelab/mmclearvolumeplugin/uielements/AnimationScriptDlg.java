@@ -39,6 +39,7 @@ public final class AnimationScriptDlg extends JDialog {
    private static final String KEY_TOTAL_FRAMES = "cv animation total frames";
    private static final String KEY_EXPORT_TARGET = "cv animation export target";
 
+   private static final String TARGET_PREVIEW = "Preview";
    private static final String TARGET_IMAGEJ = "ImageJ stack";
    private static final String TARGET_FFMPEG = "Movie (ffmpeg)";
 
@@ -99,7 +100,7 @@ public final class AnimationScriptDlg extends JDialog {
       // Export target selector.
       panel.add(new JLabel("Export to:"), "split 2, flowx");
       exportTargetCombo_ = new JComboBox<>(
-            new String[]{TARGET_IMAGEJ, TARGET_FFMPEG});
+            new String[]{TARGET_PREVIEW, TARGET_IMAGEJ, TARGET_FFMPEG});
       exportTargetCombo_.setSelectedItem(loadExportTarget());
       panel.add(exportTargetCombo_, "");
 
@@ -165,8 +166,9 @@ public final class AnimationScriptDlg extends JDialog {
       int fps = (Integer) fpsSpinner_.getValue();
       int totalFrames = (Integer) totalFramesSpinner_.getValue();
       String targetStr = (String) exportTargetCombo_.getSelectedItem();
-      ExportTarget target = TARGET_FFMPEG.equals(targetStr)
-            ? ExportTarget.FFMPEG : ExportTarget.IMAGEJ;
+      ExportTarget target = TARGET_FFMPEG.equals(targetStr) ? ExportTarget.FFMPEG
+            : TARGET_PREVIEW.equals(targetStr) ? ExportTarget.PREVIEW
+            : ExportTarget.IMAGEJ;
 
       String ffmpegPath = null;
       String outputPath = null;
@@ -201,7 +203,7 @@ public final class AnimationScriptDlg extends JDialog {
 
       runButton_.setEnabled(false);
       stopButton_.setEnabled(true);
-      statusLabel_.setText("Running…");
+      statusLabel_.setText(target == ExportTarget.PREVIEW ? "Previewing…" : "Running…");
 
       final String finalOutputPath = outputPath;
       Thread animThread = new Thread(() -> {
@@ -210,6 +212,8 @@ public final class AnimationScriptDlg extends JDialog {
             SwingUtilities.invokeLater(() -> {
                statusLabel_.setText(target == ExportTarget.FFMPEG
                      ? "Done — saved to: " + finalOutputPath
+                     : target == ExportTarget.PREVIEW
+                     ? "Preview finished."
                      : "Done — ImageJ stack opened.");
             });
          } catch (InterruptedException ie) {
@@ -253,6 +257,7 @@ public final class AnimationScriptDlg extends JDialog {
       browseButton_.setVisible(isFfmpeg);
       pack();
    }
+
 
    private void browseForOutput() {
       JFileChooser chooser = new JFileChooser();
