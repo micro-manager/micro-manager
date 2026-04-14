@@ -9,16 +9,15 @@ import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.net.URI;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -29,6 +28,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.gearmenu.FfmpegLocator;
@@ -89,7 +89,7 @@ public final class AnimationScriptDlg extends JDialog {
       }
 
       // "fill" makes the panel track the dialog size; "flowy" stacks rows top-down.
-      JPanel panel = new JPanel(new MigLayout("fill, flowy, insets 8"));
+      final JPanel panel = new JPanel(new MigLayout("fill, flowy, insets 8"));
 
       // Script editor — label + Save/Load buttons on one row.
       JButton saveScriptButton = new JButton("Save…");
@@ -143,7 +143,7 @@ public final class AnimationScriptDlg extends JDialog {
       runButton_ = new JButton("Run");
       stopButton_ = new JButton("Stop");
       stopButton_.setEnabled(false);
-      JButton closeButton = new JButton("Close");
+      final JButton closeButton = new JButton("Close");
 
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener((ActionEvent e) -> openHelp());
