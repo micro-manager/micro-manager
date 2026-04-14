@@ -4,7 +4,9 @@ package edu.ucsf.valelab.mmclearvolumeplugin;
 import edu.ucsf.valelab.mmclearvolumeplugin.recorder.CVSnapshot;
 import edu.ucsf.valelab.mmclearvolumeplugin.recorder.CVVideoRecorder;
 import edu.ucsf.valelab.mmclearvolumeplugin.slider.RangeSlider;
+import edu.ucsf.valelab.mmclearvolumeplugin.uielements.AnimationScriptDlg;
 import edu.ucsf.valelab.mmclearvolumeplugin.uielements.ScrollerPanel;
+import org.micromanager.Studio;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -40,6 +42,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
 
    private final JPanel panel_ = new JPanel();
 
+   private final Studio studio_;
    private CVViewer viewer_;
    
    public static final int SLIDERRANGE = 256;
@@ -58,8 +61,9 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    private static boolean expanded_ = true;
    private final CVVideoRecorder recorder_;
    
-   public CVInspectorPanelController() {
+   public CVInspectorPanelController(Studio studio) {
       super();
+      studio_ = studio;
       
       //studio_ = studio;
       panel_.setLayout(new MigLayout("flowx"));
@@ -178,8 +182,17 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
             recorder_.stopRecording();
          }
       });
-      panel_.add(recordButton, "wrap");
-      
+      panel_.add(recordButton, "");
+
+      final JButton scriptButton = new JButton("Script...");
+      scriptButton.setToolTipText("Open 3D animation script editor");
+      scriptButton.addActionListener((ActionEvent e) -> {
+         if (getViewer() != null) {
+            new AnimationScriptDlg(studio_, getViewer());
+         }
+      });
+      panel_.add(scriptButton, "wrap");
+
    }
    
    /*

@@ -693,6 +693,20 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       });
       SwingUtilities.invokeLater(dt);
    }
+
+   /**
+    * Installs a video recorder on the renderer without toggling its active
+    * state or triggering a redraw.  Intended for use by
+    * {@link edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer},
+    * which controls the active state and redraws itself.
+    *
+    * @param recorder the recorder to install; pass {@code null} to remove
+    */
+   public void setAnimationRecorder(VideoRecorderInterface recorder) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setVideoRecorder(recorder);
+      }
+   }
    
    public void toggleRecording() {
       Runnable dt = new Thread(() -> clearVolumeRenderer_.toggleRecording());
@@ -738,6 +752,162 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
       return null;
    }
+
+   // -----------------------------------------------------------------------
+   // Animation support — thin wrappers used by AnimationPlayer
+   // -----------------------------------------------------------------------
+
+   /** Returns the renderer's current rotation quaternion, or null if not ready. */
+   public com.jogamp.opengl.math.Quaternion getQuaternion() {
+      if (clearVolumeRenderer_ != null) {
+         return clearVolumeRenderer_.getQuaternion();
+      }
+      return null;
+   }
+
+   /** Sets the renderer's rotation quaternion. */
+   public void setQuaternion(com.jogamp.opengl.math.Quaternion q) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setQuaternion(q);
+      }
+   }
+
+   public float getTranslationX() {
+      return clearVolumeRenderer_ != null ? clearVolumeRenderer_.getTranslationX() : 0f;
+   }
+
+   public float getTranslationY() {
+      return clearVolumeRenderer_ != null ? clearVolumeRenderer_.getTranslationY() : 0f;
+   }
+
+   public float getTranslationZ() {
+      return clearVolumeRenderer_ != null ? clearVolumeRenderer_.getTranslationZ() : 0f;
+   }
+
+   public void setTranslationX(float x) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTranslationX(x);
+      }
+   }
+
+   public void setTranslationY(float y) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTranslationY(y);
+      }
+   }
+
+   public void setTranslationZ(float z) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTranslationZ(z);
+      }
+   }
+
+   public void addTranslationX(float dx) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.addTranslationX(dx);
+      }
+   }
+
+   public void addTranslationY(float dy) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.addTranslationY(dy);
+      }
+   }
+
+   public void addTranslationZ(float dz) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.addTranslationZ(dz);
+      }
+   }
+
+   public void requestDisplay() {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.requestDisplay();
+      }
+   }
+
+   /**
+    * Sets the min value of the transfer function range for a channel.
+    * Reads the current max and keeps it unchanged.
+    */
+   public void setTransferFunctionMin(int channel, float min) {
+      if (clearVolumeRenderer_ != null) {
+         // ClearVolume only has setTransferFunctionRange(ch, min, max).
+         // We need the current max; use displaySettings as the source of truth.
+         ChannelDisplaySettings cd = displaySettings_.getChannelSettings(channel);
+         float max = (float) cd.getComponentSettings(0).getScalingMaximum() / maxValue_;
+         clearVolumeRenderer_.setTransferFunctionRange(channel, min, max);
+      }
+   }
+
+   /**
+    * Sets the max value of the transfer function range for a channel.
+    * Reads the current min and keeps it unchanged.
+    */
+   public void setTransferFunctionMax(int channel, float max) {
+      if (clearVolumeRenderer_ != null) {
+         ChannelDisplaySettings cd = displaySettings_.getChannelSettings(channel);
+         float min = (float) cd.getComponentSettings(0).getScalingMinimum() / maxValue_;
+         clearVolumeRenderer_.setTransferFunctionRange(channel, min, max);
+      }
+   }
+
+   public void setTransferFunctionRange(int channel, float min, float max) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTransferFunctionRange(channel, min, max);
+      }
+   }
+
+   public void setGamma(int channel, double gamma) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setGamma(channel, gamma);
+      }
+   }
+
+   public void setChannelColor(int channel, Color color) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTransferFunction(channel,
+               clearvolume.transferf.TransferFunctions.getGradientForColor(color));
+      }
+   }
+
+   public void setChannelVisible(int channel, boolean visible) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setLayerVisible(channel, visible);
+      }
+   }
+
+   /**
+    * Sets a clip-box axis range directly using normalised -1…1 values.
+    * If min or max is null the corresponding bound is left unchanged.
+    *
+    * @param axis 0=X, 1=Y, 2=Z
+    * @param min  new minimum, or null to leave unchanged
+    * @param max  new maximum, or null to leave unchanged
+    */
+   public void setClipMinMax(int axis, Float min, Float max) {
+      if (clearVolumeRenderer_ == null) {
+         return;
+      }
+      float[] clipBox = clearVolumeRenderer_.getClipBox();
+      if (min != null) {
+         clipBox[axis * 2] = min;
+      }
+      if (max != null) {
+         clipBox[axis * 2 + 1] = max;
+      }
+      clearVolumeRenderer_.setClipBox(clipBox);
+   }
+
+   /**
+    * Sets both bounds of a clip-box axis using normalised -1…1 values.
+    *
+    * @param axis 0=X, 1=Y, 2=Z
+    */
+   public void setClipRange(int axis, float min, float max) {
+      setClipMinMax(axis, min, max);
+   }
+
 
    /**
     * Find the first DisplayWindow attached to this dataprovider.
