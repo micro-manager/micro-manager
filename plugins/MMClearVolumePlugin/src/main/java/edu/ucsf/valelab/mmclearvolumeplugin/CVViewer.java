@@ -957,6 +957,27 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 
+   public float getTransferRangeMin(int channel) {
+      if (clearVolumeRenderer_ != null) {
+         return (float) clearVolumeRenderer_.getTransferRangeMin(channel);
+      }
+      return 0f;
+   }
+
+   public float getTransferRangeMax(int channel) {
+      if (clearVolumeRenderer_ != null) {
+         return (float) clearVolumeRenderer_.getTransferRangeMax(channel);
+      }
+      return 1f;
+   }
+
+   public double getGamma(int channel) {
+      if (clearVolumeRenderer_ != null) {
+         return clearVolumeRenderer_.getGamma(channel);
+      }
+      return 1.0;
+   }
+
    public void setGamma(int channel, double gamma) {
       if (clearVolumeRenderer_ != null) {
          clearVolumeRenderer_.setGamma(channel, gamma);

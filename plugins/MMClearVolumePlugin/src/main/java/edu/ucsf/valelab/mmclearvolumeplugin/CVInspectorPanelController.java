@@ -6,7 +6,6 @@ import edu.ucsf.valelab.mmclearvolumeplugin.recorder.CVVideoRecorder;
 import edu.ucsf.valelab.mmclearvolumeplugin.slider.RangeSlider;
 import edu.ucsf.valelab.mmclearvolumeplugin.uielements.AnimationScriptDlg;
 import edu.ucsf.valelab.mmclearvolumeplugin.uielements.ScrollerPanel;
-import org.micromanager.Studio;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -17,6 +16,7 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
@@ -60,6 +60,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    
    private static boolean expanded_ = true;
    private final CVVideoRecorder recorder_;
+   private AnimationScriptDlg scriptDlg_ = null;
    
    public CVInspectorPanelController(Studio studio) {
       super();
@@ -188,7 +189,12 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       scriptButton.setToolTipText("Open 3D animation script editor");
       scriptButton.addActionListener((ActionEvent e) -> {
          if (getViewer() != null) {
-            new AnimationScriptDlg(studio_, getViewer());
+            if (scriptDlg_ != null && scriptDlg_.isVisible()) {
+               scriptDlg_.toFront();
+               scriptDlg_.requestFocus();
+            } else {
+               scriptDlg_ = new AnimationScriptDlg(studio_, getViewer());
+            }
          }
       });
       panel_.add(scriptButton, "wrap");
@@ -278,7 +284,12 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       detachDataViewer();
       
       viewer_ = (CVViewer) viewer;
-      
+
+      // If the script dialog is open, redirect it to the new viewer.
+      if (scriptDlg_ != null && scriptDlg_.isVisible()) {
+         scriptDlg_.setViewer(viewer_);
+      }
+
       // update range sliders with clipped region of current viewer
       float[] clipBox = viewer_.getClipBox();
       if (clipBox != null) {

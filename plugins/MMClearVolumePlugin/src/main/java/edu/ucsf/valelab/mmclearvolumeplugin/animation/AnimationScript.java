@@ -593,6 +593,7 @@ public final class AnimationScript {
    }
 
    private static final java.util.Set<String> RESERVED_WORDS;
+
    static {
       RESERVED_WORDS = new java.util.HashSet<String>();
       for (String w : new String[]{

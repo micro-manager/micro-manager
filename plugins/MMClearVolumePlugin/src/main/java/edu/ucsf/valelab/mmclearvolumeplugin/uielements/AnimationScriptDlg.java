@@ -54,7 +54,7 @@ public final class AnimationScriptDlg extends JDialog {
    private static final String TARGET_FFMPEG = "Movie (ffmpeg)";
 
    private final Studio studio_;
-   private final CVViewer viewer_;
+   private volatile CVViewer viewer_;
 
    private final javax.swing.JTextArea scriptArea_;
    private final JSpinner fpsSpinner_;
@@ -78,7 +78,7 @@ public final class AnimationScriptDlg extends JDialog {
     */
    public AnimationScriptDlg(Studio studio, CVViewer viewer) {
       // null owner so the window gets its own Windows taskbar entry.
-      super((java.awt.Frame) null, "3D Animation Script", false);
+      super((java.awt.Frame) null, "3D Animation Script — " + viewer.getName(), false);
       studio_ = studio;
       viewer_ = viewer;
 
@@ -177,6 +177,19 @@ public final class AnimationScriptDlg extends JDialog {
    // -----------------------------------------------------------------------
    // Animation control
    // -----------------------------------------------------------------------
+
+   /**
+    * Updates the viewer that this dialog animates. Called when the Inspector
+    * switches to a different ClearVolume viewer so the already-open dialog
+    * follows the frontmost viewer automatically. Has no effect while an
+    * animation is currently running.
+    */
+   public void setViewer(CVViewer viewer) {
+      if (currentPlayer_ == null) {
+         viewer_ = viewer;
+         setTitle("3D Animation Script — " + viewer.getName());
+      }
+   }
 
    private void startAnimation() {
       String scriptText = scriptArea_.getText();
@@ -429,7 +442,10 @@ public final class AnimationScriptDlg extends JDialog {
             + "- zoom by a factor of zoomFn\n"
             + "script\n"
             + "function zoomFn(t) {\n"
-            + "    return 0.6 - 0.3 * abs(sin(2 * PI * t / 120));\n"
+            + "    // Smooth arc: 0.1x at t=0, peaks at 3.0x near t=60, returns to 0.1x at t=119.\n"
+            + "    var pos  = 0.1 + 2.9 * sin(PI * t / 119);\n"
+            + "    var prev = 0.1 + 2.9 * sin(PI * (t - 1) / 119);\n"
+            + "    return pos - prev;\n"
             + "}\n";
    }
 }

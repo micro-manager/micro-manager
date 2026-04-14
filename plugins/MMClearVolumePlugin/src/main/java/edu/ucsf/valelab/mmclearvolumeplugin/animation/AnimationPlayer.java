@@ -15,7 +15,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import org.micromanager.LogManager;
@@ -71,6 +73,14 @@ public final class AnimationPlayer {
    private volatile boolean stopped_ = false;
 
    /**
+    * Lazily populated map from (instruction identity × paramIndex) to the
+    * viewer's actual value at the instruction's beginFrame. Used to
+    * interpolate from the true starting state rather than from 0.
+    * Key encoding: System.identityHashCode(instr) * 100 + paramIndex.
+    */
+   private final Map<Long, Double> startValues_ = new HashMap<Long, Double>();
+
+   /**
     * Creates an AnimationPlayer.
     *
     * @param viewer          the CVViewer to animate
@@ -123,6 +133,7 @@ public final class AnimationPlayer {
     * @throws InterruptedException if the playback thread is interrupted
     */
    public void play() throws IOException, InterruptedException {
+      startValues_.clear();
       if (target_ == ExportTarget.PREVIEW) {
          playPreview();
          return;
@@ -486,27 +497,89 @@ public final class AnimationPlayer {
    }
 
    /**
-    * For "change to value" instructions: interpolates from the start of the
-    * interval value (params[0]) toward params[0] using {@code et}. Because
-    * ClearVolume exposes no "get current value" for all parameters, we treat
-    * params[0] as the *target* and interpolate from 0 → target. Callers that
-    * need a true start→end interpolation should use two instructions or accept
-    * that the curve begins from whatever the initial state happens to be.
+    * For "change to value" instructions: interpolates from the viewer's actual
+    * value at {@code beginFrame} to the script-specified target using the
+    * eased progress {@code et ∈ [0,1]}.
     *
-    * <p>In practice this is fine: scripts typically specify a single target
-    * value ("change channel 1 min intensity to 0.1") and rely on the initial
-    * viewer state as the starting point.
+    * <p>On the first call for a given instruction/paramIndex pair (i.e. when
+    * {@code frame == instr.beginFrame}), the current viewer value is read and
+    * cached as the start value.  Subsequent frames interpolate
+    * {@code start + (target - start) * et}.
     *
     * <p>If the instruction has a script function for this parameter slot, the
     * function is called with the current frame number and its return value is
-    * used directly (no easing multiplication).
+    * used directly (no interpolation).
     */
    private double targetForParam(AnimationInstruction instr, int paramIndex,
                                  int frame, double et) {
       if (instr.paramFunctions != null && instr.paramFunctions[paramIndex] != null) {
          return scriptFunctions_.evaluate(instr.paramFunctions[paramIndex], frame);
       }
-      return instr.params[paramIndex] * et;
+      double target = instr.params[paramIndex];
+      long key = (long) System.identityHashCode(instr) * 100 + paramIndex;
+      if (!startValues_.containsKey(key)) {
+         startValues_.put(key, readStartValue(instr, paramIndex));
+      }
+      double start = startValues_.get(key);
+      return start + (target - start) * et;
+   }
+
+   /**
+    * Reads the viewer's current value for the parameter at {@code paramIndex}
+    * of {@code instr}, to use as the interpolation start value.
+    */
+   private double readStartValue(AnimationInstruction instr, int paramIndex) {
+      float[] clip;
+      switch (instr.action) {
+         case CHANGE_CLIP_MIN_X:
+         case CHANGE_CLIP_MAX_X:
+         case CHANGE_CLIP_X:
+            clip = viewer_.getClipBox();
+            if (clip == null) {
+               return 0.0;
+            }
+            return paramIndex == 0 ? clip[0] : clip[1];
+         case CHANGE_CLIP_MIN_Y:
+         case CHANGE_CLIP_MAX_Y:
+         case CHANGE_CLIP_Y:
+            clip = viewer_.getClipBox();
+            if (clip == null) {
+               return 0.0;
+            }
+            return paramIndex == 0 ? clip[2] : clip[3];
+         case CHANGE_CLIP_MIN_Z:
+         case CHANGE_FRONT_CLIP:
+            clip = viewer_.getClipBox();
+            return clip != null ? clip[4] : 0.0;
+         case CHANGE_CLIP_MAX_Z:
+         case CHANGE_BACK_CLIP:
+            clip = viewer_.getClipBox();
+            return clip != null ? clip[5] : 0.0;
+         case CHANGE_CLIP_Z:
+         case CHANGE_FRONT_BACK_CLIP:
+            clip = viewer_.getClipBox();
+            if (clip == null) {
+               return 0.0;
+            }
+            return paramIndex == 0 ? clip[4] : clip[5];
+         case CHANGE_CH_MIN_INTENSITY:
+            return viewer_.getTransferRangeMin(instr.channel);
+         case CHANGE_CH_MAX_INTENSITY:
+            return viewer_.getTransferRangeMax(instr.channel);
+         case CHANGE_CH_INTENSITY:
+            if (paramIndex == 0) {
+               return viewer_.getTransferRangeMin(instr.channel);
+            }
+            if (paramIndex == 1) {
+               return viewer_.getTransferRangeMax(instr.channel);
+            }
+            return viewer_.getGamma(instr.channel);
+         case CHANGE_CH_INTENSITY_GAMMA:
+            return viewer_.getGamma(instr.channel);
+         default:
+            // For actions without a readable start value, fall back to 0.
+            return 0.0;
+      }
    }
 
    /**
