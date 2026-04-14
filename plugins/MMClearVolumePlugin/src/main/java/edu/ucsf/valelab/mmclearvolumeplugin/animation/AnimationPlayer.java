@@ -65,6 +65,7 @@ public final class AnimationPlayer {
    private final ExportTarget target_;
    private final String ffmpegPath_;     // null for IMAGEJ target
    private final String outputPath_;     // full path for MP4 output (FFMPEG only)
+   private final boolean restoreState_;  // restore viewer state after playback
    private final LogManager log_;
 
    private volatile boolean stopped_ = false;
@@ -80,6 +81,8 @@ public final class AnimationPlayer {
     * @param target          export destination
     * @param ffmpegPath      path to ffmpeg binary (required for FFMPEG target)
     * @param outputPath      full output file path for MP4 (required for FFMPEG target)
+    * @param restoreState    if true, the viewer is returned to its pre-animation
+    *                        state when playback ends (or is stopped)
     * @param log             Micro-Manager log manager for warnings
     */
    public AnimationPlayer(CVViewer viewer,
@@ -90,6 +93,7 @@ public final class AnimationPlayer {
                           ExportTarget target,
                           String ffmpegPath,
                           String outputPath,
+                          boolean restoreState,
                           LogManager log) {
       viewer_ = viewer;
       instructions_ = instructions;
@@ -99,6 +103,7 @@ public final class AnimationPlayer {
       target_ = target;
       ffmpegPath_ = ffmpegPath;
       outputPath_ = outputPath;
+      restoreState_ = restoreState;
       log_ = log;
    }
 
@@ -122,6 +127,8 @@ public final class AnimationPlayer {
          playPreview();
          return;
       }
+
+      CVViewer.ViewerState savedState = restoreState_ ? viewer_.snapshotState() : null;
 
       // Export setup.
       ImageStack stack = null;             // used for IMAGEJ target
@@ -184,6 +191,9 @@ public final class AnimationPlayer {
          // Disarm and remove the recorder regardless of how the loop exits.
          recorder.setActive(false);
          viewer_.setAnimationRecorder(null);
+         if (restoreState_ && savedState != null) {
+            viewer_.restoreState(savedState);
+         }
          if (target_ == ExportTarget.FFMPEG && tempDir != null) {
             try {
                runFfmpeg(tempDir, pngIndex);
@@ -208,27 +218,34 @@ public final class AnimationPlayer {
     * fps, but does not capture or save any frames.
     */
    private void playPreview() throws InterruptedException {
+      CVViewer.ViewerState savedState = restoreState_ ? viewer_.snapshotState() : null;
       long frameIntervalMs = (fps_ > 0) ? (1000L / fps_) : 100L;
 
-      for (int frame = 0; frame < totalFrames_; frame++) {
-         if (stopped_) {
-            break;
-         }
+      try {
+         for (int frame = 0; frame < totalFrames_; frame++) {
+            if (stopped_) {
+               break;
+            }
 
-         long frameStart = System.currentTimeMillis();
+            long frameStart = System.currentTimeMillis();
 
-         for (AnimationInstruction instr : instructions_) {
-            if (frame >= instr.beginFrame && frame <= instr.endFrame) {
-               applyInstruction(instr, frame);
+            for (AnimationInstruction instr : instructions_) {
+               if (frame >= instr.beginFrame && frame <= instr.endFrame) {
+                  applyInstruction(instr, frame);
+               }
+            }
+
+            viewer_.addTranslationZ(0f);  // force a redraw
+
+            long elapsed = System.currentTimeMillis() - frameStart;
+            long remaining = frameIntervalMs - elapsed;
+            if (remaining > 0) {
+               Thread.sleep(remaining);
             }
          }
-
-         viewer_.addTranslationZ(0f);  // force a redraw
-
-         long elapsed = System.currentTimeMillis() - frameStart;
-         long remaining = frameIntervalMs - elapsed;
-         if (remaining > 0) {
-            Thread.sleep(remaining);
+      } finally {
+         if (restoreState_ && savedState != null) {
+            viewer_.restoreState(savedState);
          }
       }
    }
@@ -372,6 +389,11 @@ public final class AnimationPlayer {
          case CHANGE_CH_WEIGHT:
             viewer_.setChannelVisible(instr.channel,
                   targetForParam(instr, 0, frame, et) > 0.5);
+            break;
+
+         // ---- Channel visibility (direct boolean) ----
+         case CHANGE_CH_VISIBLE:
+            viewer_.setChannelVisible(instr.channel, instr.params[0] >= 0.5);
             break;
 
          // ---- Unsupported alpha actions ----

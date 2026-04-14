@@ -342,6 +342,18 @@ public final class AnimationScript {
                   new int[]{1}, 2, ch, easing);
          }
 
+         if (lower.contains("visib")) {
+            // Extract the token(s) after the last keyword by looking at what
+            // follows "to " (or the end of the line).  Accept "on", "show",
+            // "true" as visible; "off", "hide", "false" (or anything else) as hidden.
+            String tail = lower.replaceAll(".*\\bto\\b", "").trim();
+            boolean visible = tail.startsWith("on") || tail.startsWith("show")
+                  || tail.startsWith("true");
+            return new AnimationInstruction(beginFrame, endFrame,
+                  ActionType.CHANGE_CH_VISIBLE,
+                  new double[]{visible ? 1.0 : 0.0}, null, ch, easing);
+         }
+
          throw new IllegalArgumentException("Unrecognised channel change: " + text);
       }
 
@@ -592,7 +604,8 @@ public final class AnimationScript {
             "bounding", "box", "min", "max", "to",
             "intensity", "gamma", "alpha", "color", "colour",
             "weight", "front", "back", "clipping", "and", "the",
-            "from", "at", "x", "y", "z"
+            "from", "at", "x", "y", "z",
+            "visible", "visibility", "show", "hide", "on", "off"
       }) {
          RESERVED_WORDS.add(w);
       }

@@ -59,9 +59,10 @@ public final class AnimationInstruction {
       CHANGE_CH_ALPHA,           // (min, max, gamma)
       CHANGE_CH_ALPHA_GAMMA,
 
-      // Channel color and weight
+      // Channel color, weight, and visibility
       CHANGE_CH_COLOR,           // (r, g, b) in 0-255
-      CHANGE_CH_WEIGHT,          // approximated via layer visibility
+      CHANGE_CH_WEIGHT,          // approximated via layer visibility (threshold 0.5)
+      CHANGE_CH_VISIBLE,         // [1.0 = visible, 0.0 = hidden] — direct boolean
    }
 
    /** Easing functions controlling the interpolation curve. */

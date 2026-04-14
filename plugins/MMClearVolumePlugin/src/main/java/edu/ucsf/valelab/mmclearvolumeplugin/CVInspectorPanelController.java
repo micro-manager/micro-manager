@@ -159,7 +159,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
             getViewer().attachRecorder(snapper);
          }
       });
-      panel_.add(snapButton, "span 4, split 2, center");
+      panel_.add(snapButton, "span 4, split 3, center");
       
       final JButton recordButton = new JButton("Record"); 
       recordButton.setToolTipText("Record 3D viewer");

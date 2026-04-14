@@ -5,12 +5,20 @@ import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer.ExportTarget;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationScript;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationScript.ParseResult;
-import java.awt.Dimension;
+import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.net.URI;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -38,6 +46,8 @@ public final class AnimationScriptDlg extends JDialog {
    private static final String KEY_FPS = "cv animation fps";
    private static final String KEY_TOTAL_FRAMES = "cv animation total frames";
    private static final String KEY_EXPORT_TARGET = "cv animation export target";
+   private static final String KEY_LAST_DIR = "cv animation last directory";
+   private static final String KEY_RESTORE_STATE = "cv animation restore state";
 
    private static final String TARGET_PREVIEW = "Preview";
    private static final String TARGET_IMAGEJ = "ImageJ stack";
@@ -53,6 +63,7 @@ public final class AnimationScriptDlg extends JDialog {
    private final JLabel outputLabel_;
    private final JTextField outputField_;
    private final JButton browseButton_;
+   private final JCheckBox restoreStateCheck_;
    private final JButton runButton_;
    private final JButton stopButton_;
    private final JLabel statusLabel_;
@@ -66,6 +77,7 @@ public final class AnimationScriptDlg extends JDialog {
     * @param viewer the ClearVolume viewer to animate
     */
    public AnimationScriptDlg(Studio studio, CVViewer viewer) {
+      // null owner so the window gets its own Windows taskbar entry.
       super((java.awt.Frame) null, "3D Animation Script", false);
       studio_ = studio;
       viewer_ = viewer;
@@ -76,17 +88,26 @@ public final class AnimationScriptDlg extends JDialog {
          setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
       }
 
-      JPanel panel = new JPanel(new MigLayout("flowy, insets 8"));
+      // "fill" makes the panel track the dialog size; "flowy" stacks rows top-down.
+      JPanel panel = new JPanel(new MigLayout("fill, flowy, insets 8"));
 
-      // Script editor.
-      panel.add(new JLabel("Animation script:"), "");
+      // Script editor — label + Save/Load buttons on one row.
+      JButton saveScriptButton = new JButton("Save…");
+      saveScriptButton.setToolTipText("Save script to a file");
+      saveScriptButton.addActionListener((ActionEvent e) -> saveScriptToFile());
+      JButton loadScriptButton = new JButton("Load…");
+      loadScriptButton.setToolTipText("Load script from a file");
+      loadScriptButton.addActionListener((ActionEvent e) -> loadScriptFromFile());
+      panel.add(new JLabel("Animation script:"), "split 3, flowx");
+      panel.add(saveScriptButton, "");
+      panel.add(loadScriptButton, "");
+
       scriptArea_ = new javax.swing.JTextArea(20, 60);
       scriptArea_.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
       scriptArea_.setTabSize(4);
       scriptArea_.setText(loadScript());
       JScrollPane scrollPane = new JScrollPane(scriptArea_);
-      scrollPane.setPreferredSize(new Dimension(600, 320));
-      panel.add(scrollPane, "growx, pushx");
+      panel.add(scrollPane, "grow, push");
 
       // FPS and total frames on one row.
       panel.add(new JLabel("Frames per second:"), "split 4, flowx");
@@ -104,6 +125,11 @@ public final class AnimationScriptDlg extends JDialog {
       exportTargetCombo_.setSelectedItem(loadExportTarget());
       panel.add(exportTargetCombo_, "");
 
+      // Restore-state checkbox.
+      restoreStateCheck_ = new JCheckBox(
+            "Restore viewer state after animation", loadRestoreState());
+      panel.add(restoreStateCheck_, "");
+
       // Output file row (visible only for ffmpeg).
       outputLabel_ = new JLabel("Output file (.mp4):");
       outputField_ = new JTextField(40);
@@ -119,6 +145,9 @@ public final class AnimationScriptDlg extends JDialog {
       stopButton_.setEnabled(false);
       JButton closeButton = new JButton("Close");
 
+      JButton helpButton = new JButton("Help");
+      helpButton.addActionListener((ActionEvent e) -> openHelp());
+
       runButton_.addActionListener((ActionEvent e) -> startAnimation());
       stopButton_.addActionListener((ActionEvent e) -> stopAnimation());
       closeButton.addActionListener((ActionEvent e) -> {
@@ -126,9 +155,10 @@ public final class AnimationScriptDlg extends JDialog {
          dispose();
       });
 
-      panel.add(runButton_, "split 3, flowx, align right");
+      panel.add(runButton_, "split 4, flowx, align right");
       panel.add(stopButton_, "");
       panel.add(closeButton, "");
+      panel.add(helpButton, "");
 
       // Status line.
       statusLabel_ = new JLabel(" ");
@@ -138,7 +168,7 @@ public final class AnimationScriptDlg extends JDialog {
       exportTargetCombo_.addActionListener((ActionEvent e) -> updateOutputRowVisibility());
       updateOutputRowVisibility();
 
-      getContentPane().add(panel);
+      getContentPane().add(panel, java.awt.BorderLayout.CENTER);
       pack();
       setLocationRelativeTo(null);
       setVisible(true);
@@ -198,7 +228,9 @@ public final class AnimationScriptDlg extends JDialog {
       final AnimationPlayer player = new AnimationPlayer(
             viewer_, parsed.instructions, parsed.scriptFunctions,
             totalFrames, fps, target,
-            ffmpegPath, outputPath, studio_.getLogManager());
+            ffmpegPath, outputPath,
+            restoreStateCheck_.isSelected(),
+            studio_.getLogManager());
       currentPlayer_ = player;
 
       runButton_.setEnabled(false);
@@ -238,6 +270,14 @@ public final class AnimationScriptDlg extends JDialog {
       animThread.start();
    }
 
+   private void openHelp() {
+      try {
+         Desktop.getDesktop().browse(new URI("https://micro-manager.org/3DScript"));
+      } catch (Exception ex) {
+         statusLabel_.setText("Could not open browser: " + ex.getMessage());
+      }
+   }
+
    private void stopAnimation() {
       AnimationPlayer p = currentPlayer_;
       if (p != null) {
@@ -274,6 +314,69 @@ public final class AnimationScriptDlg extends JDialog {
    }
 
    // -----------------------------------------------------------------------
+   // Script file I/O
+   // -----------------------------------------------------------------------
+
+   private JFileChooser makeScriptChooser() {
+      JFileChooser chooser = new JFileChooser();
+      chooser.setFileFilter(
+            new FileNameExtensionFilter("ClearVolume animation script (*.cvs)", "cvs"));
+      chooser.setAcceptAllFileFilterUsed(true);
+      String lastDir = studio_.profile().getSettings(AnimationScriptDlg.class)
+            .getString(KEY_LAST_DIR, null);
+      if (lastDir != null) {
+         chooser.setCurrentDirectory(new File(lastDir));
+      }
+      return chooser;
+   }
+
+   private void saveScriptToFile() {
+      JFileChooser chooser = makeScriptChooser();
+      chooser.setDialogTitle("Save animation script");
+      chooser.setSelectedFile(new File("animation.cvs"));
+      if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+         return;
+      }
+      File file = chooser.getSelectedFile();
+      if (!file.getName().contains(".")) {
+         file = new File(file.getAbsolutePath() + ".cvs");
+      }
+      studio_.profile().getSettings(AnimationScriptDlg.class)
+            .putString(KEY_LAST_DIR, file.getParent());
+      try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+         writer.write(scriptArea_.getText());
+         statusLabel_.setText("Saved to: " + file.getName());
+      } catch (IOException ex) {
+         statusLabel_.setText("Save failed: " + ex.getMessage());
+         studio_.getLogManager().logError(ex, "Failed to save animation script");
+      }
+   }
+
+   private void loadScriptFromFile() {
+      JFileChooser chooser = makeScriptChooser();
+      chooser.setDialogTitle("Load animation script");
+      if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+         return;
+      }
+      File file = chooser.getSelectedFile();
+      studio_.profile().getSettings(AnimationScriptDlg.class)
+            .putString(KEY_LAST_DIR, file.getParent());
+      StringBuilder sb = new StringBuilder();
+      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+         String line;
+         while ((line = reader.readLine()) != null) {
+            sb.append(line).append("\n");
+         }
+         scriptArea_.setText(sb.toString());
+         scriptArea_.setCaretPosition(0);
+         statusLabel_.setText("Loaded: " + file.getName());
+      } catch (IOException ex) {
+         statusLabel_.setText("Load failed: " + ex.getMessage());
+         studio_.getLogManager().logError(ex, "Failed to load animation script");
+      }
+   }
+
+   // -----------------------------------------------------------------------
    // Profile persistence
    // -----------------------------------------------------------------------
 
@@ -286,6 +389,8 @@ public final class AnimationScriptDlg extends JDialog {
             .putInteger(KEY_TOTAL_FRAMES, (Integer) totalFramesSpinner_.getValue());
       studio_.profile().getSettings(AnimationScriptDlg.class)
             .putString(KEY_EXPORT_TARGET, (String) exportTargetCombo_.getSelectedItem());
+      studio_.profile().getSettings(AnimationScriptDlg.class)
+            .putBoolean(KEY_RESTORE_STATE, restoreStateCheck_.isSelected());
    }
 
    private String loadScript() {
@@ -306,6 +411,11 @@ public final class AnimationScriptDlg extends JDialog {
    private String loadExportTarget() {
       return studio_.profile().getSettings(AnimationScriptDlg.class)
             .getString(KEY_EXPORT_TARGET, TARGET_IMAGEJ);
+   }
+
+   private boolean loadRestoreState() {
+      return studio_.profile().getSettings(AnimationScriptDlg.class)
+            .getBoolean(KEY_RESTORE_STATE, true);
    }
 
    private static String getDefaultScript() {

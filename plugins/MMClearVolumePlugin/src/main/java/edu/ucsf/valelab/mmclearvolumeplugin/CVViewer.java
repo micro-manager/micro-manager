@@ -754,8 +754,107 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    // -----------------------------------------------------------------------
-   // Animation support — thin wrappers used by AnimationPlayer
+   // Animation support — state snapshot/restore and thin wrappers
    // -----------------------------------------------------------------------
+
+   /**
+    * Immutable snapshot of all renderer state that an animation can modify.
+    * Obtain via {@link CVViewer#snapshotState()} and restore via
+    * {@link CVViewer#restoreState(ViewerState)}.
+    */
+   public static final class ViewerState {
+      public final com.jogamp.opengl.math.Quaternion quaternion;
+      public final float translationX;
+      public final float translationY;
+      public final float translationZ;
+      public final float[] clipBox;            // length-6 copy
+      public final double[] transferRangeMin;  // per channel
+      public final double[] transferRangeMax;  // per channel
+      public final double[] gamma;             // per channel
+      public final boolean[] layerVisible;     // per channel
+      public final clearvolume.transferf.TransferFunction[] transferFunctions; // per channel
+
+      ViewerState(com.jogamp.opengl.math.Quaternion quaternion,
+                  float tx, float ty, float tz,
+                  float[] clipBox,
+                  double[] transferRangeMin, double[] transferRangeMax,
+                  double[] gamma, boolean[] layerVisible,
+                  clearvolume.transferf.TransferFunction[] transferFunctions) {
+         // Deep-copy the quaternion so mutations don't alias.
+         this.quaternion = new com.jogamp.opengl.math.Quaternion(quaternion);
+         this.translationX = tx;
+         this.translationY = ty;
+         this.translationZ = tz;
+         this.clipBox = clipBox.clone();
+         this.transferRangeMin = transferRangeMin.clone();
+         this.transferRangeMax = transferRangeMax.clone();
+         this.gamma = gamma.clone();
+         this.layerVisible = layerVisible.clone();
+         // TransferFunction objects are treated as immutable (ClearVolume
+         // never mutates them in place), so a shallow copy is sufficient.
+         this.transferFunctions = transferFunctions.clone();
+      }
+   }
+
+   /**
+    * Captures a snapshot of the renderer state that an animation may change.
+    * Returns null if the renderer is not yet initialised.
+    */
+   public ViewerState snapshotState() {
+      if (clearVolumeRenderer_ == null) {
+         return null;
+      }
+      int nCh = clearVolumeRenderer_.getNumberOfRenderLayers();
+      double[] rangeMin = new double[nCh];
+      double[] rangeMax = new double[nCh];
+      double[] gamma    = new double[nCh];
+      boolean[] visible = new boolean[nCh];
+      clearvolume.transferf.TransferFunction[] tfs =
+            new clearvolume.transferf.TransferFunction[nCh];
+      for (int ch = 0; ch < nCh; ch++) {
+         rangeMin[ch] = clearVolumeRenderer_.getTransferRangeMin(ch);
+         rangeMax[ch] = clearVolumeRenderer_.getTransferRangeMax(ch);
+         gamma[ch]    = clearVolumeRenderer_.getGamma(ch);
+         visible[ch]  = clearVolumeRenderer_.isLayerVisible(ch);
+         tfs[ch]      = clearVolumeRenderer_.getTransferFunction(ch);
+      }
+      float[] clipBox = clearVolumeRenderer_.getClipBox();
+      return new ViewerState(
+            clearVolumeRenderer_.getQuaternion(),
+            clearVolumeRenderer_.getTranslationX(),
+            clearVolumeRenderer_.getTranslationY(),
+            clearVolumeRenderer_.getTranslationZ(),
+            clipBox != null ? clipBox : new float[6],
+            rangeMin, rangeMax, gamma, visible, tfs);
+   }
+
+   /**
+    * Restores renderer state previously captured by {@link #snapshotState()}.
+    * Does nothing if {@code state} is null or the renderer is not ready.
+    */
+   public void restoreState(ViewerState state) {
+      if (state == null || clearVolumeRenderer_ == null) {
+         return;
+      }
+      clearVolumeRenderer_.setQuaternion(
+            new com.jogamp.opengl.math.Quaternion(state.quaternion));
+      clearVolumeRenderer_.setTranslationX(state.translationX);
+      clearVolumeRenderer_.setTranslationY(state.translationY);
+      clearVolumeRenderer_.setTranslationZ(state.translationZ);
+      clearVolumeRenderer_.setClipBox(state.clipBox);
+      int nCh = Math.min(state.transferRangeMin.length,
+            clearVolumeRenderer_.getNumberOfRenderLayers());
+      for (int ch = 0; ch < nCh; ch++) {
+         clearVolumeRenderer_.setTransferFunctionRange(
+               ch, (float) state.transferRangeMin[ch], (float) state.transferRangeMax[ch]);
+         clearVolumeRenderer_.setGamma(ch, state.gamma[ch]);
+         clearVolumeRenderer_.setLayerVisible(ch, state.layerVisible[ch]);
+         if (state.transferFunctions[ch] != null) {
+            clearVolumeRenderer_.setTransferFunction(ch, state.transferFunctions[ch]);
+         }
+      }
+      clearVolumeRenderer_.requestDisplay();
+   }
 
    /** Returns the renderer's current rotation quaternion, or null if not ready. */
    public com.jogamp.opengl.math.Quaternion getQuaternion() {
