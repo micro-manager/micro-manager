@@ -357,6 +357,9 @@ public final class AnimationScriptDlg extends JDialog {
       if (confirmDiscardChanges()) {
          saveSettings();
          studio_.events().unregisterForEvents(this);
+         if (scriptAssistantDlg_ != null) {
+            scriptAssistantDlg_.dispose();
+         }
          dispose();
       }
    }

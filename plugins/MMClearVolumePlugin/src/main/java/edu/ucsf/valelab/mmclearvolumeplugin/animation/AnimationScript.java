@@ -245,21 +245,22 @@ public final class AnimationScript {
    /**
     * For a non-prefix interval line (no trailing {@code :}), strips the
     * interval portion and returns the rest as the action text.
+    *
+    * <p>Uses the same {@link #FROM_TO_PATTERN} / {@link #AT_FRAME_PATTERN}
+    * regexes that {@link #parseInterval} relies on, so the frame-number token
+    * is matched identically (including any trailing punctuation that
+    * {@link #parseFrameNumber} would strip).
     */
    private static String extractActionText(String line) {
       String lower = line.toLowerCase();
       int idx = -1;
       if (lower.startsWith("from frame") && lower.contains("to frame")) {
-         Matcher m = Pattern.compile(
-               "from\\s+frame\\s+[0-9]+\\s+to\\s+frame\\s+[0-9]+\\s*",
-               Pattern.CASE_INSENSITIVE).matcher(line);
+         Matcher m = FROM_TO_PATTERN.matcher(line);
          if (m.find()) {
             idx = m.end();
          }
       } else if (lower.startsWith("at frame")) {
-         Matcher m = Pattern.compile(
-               "at\\s+frame\\s+[0-9]+\\s*",
-               Pattern.CASE_INSENSITIVE).matcher(line);
+         Matcher m = AT_FRAME_PATTERN.matcher(line);
          if (m.find()) {
             idx = m.end();
          }

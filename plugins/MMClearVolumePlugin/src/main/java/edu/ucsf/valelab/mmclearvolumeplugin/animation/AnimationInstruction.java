@@ -4,8 +4,8 @@ package edu.ucsf.valelab.mmclearvolumeplugin.animation;
  * Represents a single parsed instruction from a 3D animation script.
  *
  * <p>The animation language is described in:
- * Wan et al. (2019) Nature Methods, "The iLastik interactive learning and
- * segmentation toolkit". Each instruction covers a time interval [beginFrame,
+ * Wan et al. (2019) Nature Methods, "The 3Dscript animation language".
+ * Each instruction covers a time interval [beginFrame,
  * endFrame] (inclusive), an action type, action parameters, an optional
  * channel index, and an easing function.
  *

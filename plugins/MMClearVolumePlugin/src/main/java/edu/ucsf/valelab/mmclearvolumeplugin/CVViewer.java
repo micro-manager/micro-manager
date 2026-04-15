@@ -848,7 +848,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             clearVolumeRenderer_.getTranslationX(),
             clearVolumeRenderer_.getTranslationY(),
             clearVolumeRenderer_.getTranslationZ(),
-            clipBox != null ? clipBox : new float[6],
+            clipBox != null ? clipBox : new float[]{-1f, 1f, -1f, 1f, -1f, 1f},
             rangeMin, rangeMax, gamma, visible, tfs);
    }
 
