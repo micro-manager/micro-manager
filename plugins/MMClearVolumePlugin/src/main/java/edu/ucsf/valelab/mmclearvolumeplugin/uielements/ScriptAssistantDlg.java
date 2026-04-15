@@ -400,7 +400,7 @@ public final class ScriptAssistantDlg extends JDialog {
       int removedIndex = selectedIndex_;
       keyframes_.remove(removedIndex);
       // After removal select the card just before the removed one (or none).
-      int newSelection = keyframes_.isEmpty() ? -1
+      final int newSelection = keyframes_.isEmpty() ? -1
             : Math.max(0, removedIndex - 1);
       selectedIndex_ = -1; // clear before rebuild so setSelectedIndex works cleanly
       // Rebuild the reel (simpler than tracking individual card components).
