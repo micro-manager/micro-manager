@@ -76,6 +76,7 @@ public final class AnimationScriptDlg extends JDialog {
    private final JTextField statusLabel_;
 
    private volatile AnimationPlayer currentPlayer_ = null;
+   private ScriptAssistantDlg scriptAssistantDlg_ = null;
 
    /** The script text as last saved to / loaded from a file or the profile. */
    private String savedScript_;
@@ -111,10 +112,15 @@ public final class AnimationScriptDlg extends JDialog {
       JButton defaultScriptButton = new JButton("Default");
       defaultScriptButton.setToolTipText("Replace the script with the built-in example");
       defaultScriptButton.addActionListener((ActionEvent e) -> loadDefaultScript());
-      panel.add(new JLabel("Animation script:"), "split 4, flowx");
+      JButton scriptAssistantButton = new JButton("Script Assistant\u2026");
+      scriptAssistantButton.setToolTipText(
+            "Interactively build a script by capturing viewer keyframes");
+      scriptAssistantButton.addActionListener((ActionEvent e) -> openScriptAssistant());
+      panel.add(new JLabel("Animation script:"), "split 5, flowx");
       panel.add(saveScriptButton, "");
       panel.add(loadScriptButton, "");
       panel.add(defaultScriptButton, "");
+      panel.add(scriptAssistantButton, "");
 
       scriptArea_ = new javax.swing.JTextArea(20, 60);
       scriptArea_.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -214,8 +220,22 @@ public final class AnimationScriptDlg extends JDialog {
    public void setViewer(CVViewer viewer) {
       if (currentPlayer_ == null) {
          viewer_ = viewer;
-         setTitle("3D Animation Script — " + viewer.getName());
+         setTitle("3D Animation Script \u2014 " + viewer.getName());
+         // Stale reference — next click will open a fresh assistant for the new viewer.
+         scriptAssistantDlg_ = null;
       }
+   }
+
+   private void openScriptAssistant() {
+      if (scriptAssistantDlg_ != null && scriptAssistantDlg_.isVisible()) {
+         scriptAssistantDlg_.toFront();
+         return;
+      }
+      scriptAssistantDlg_ = new ScriptAssistantDlg(viewer_,
+            (String generated) -> {
+               scriptArea_.replaceSelection(generated);
+               statusLabel_.setText("Script inserted from Script Assistant.");
+            });
    }
 
    private void startAnimation() {
@@ -352,8 +372,18 @@ public final class AnimationScriptDlg extends JDialog {
       if (p != null) {
          p.stop();
       }
+      // Prompt to save unsaved script changes before the app closes.
+      // confirmDiscardChanges() shows the Save/Discard/Cancel dialog; if the
+      // user cancels we cancel the shutdown so they can save manually.
+      if (!confirmDiscardChanges()) {
+         event.cancelShutdown();
+         return;
+      }
       saveSettings();
       studio_.events().unregisterForEvents(this);
+      if (scriptAssistantDlg_ != null) {
+         scriptAssistantDlg_.dispose();
+      }
       dispose();
    }
 
