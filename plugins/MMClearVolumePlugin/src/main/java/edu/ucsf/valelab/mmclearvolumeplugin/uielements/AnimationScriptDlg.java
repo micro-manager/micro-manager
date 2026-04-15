@@ -9,6 +9,8 @@ import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -22,6 +24,8 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -66,9 +70,12 @@ public final class AnimationScriptDlg extends JDialog {
    private final JCheckBox restoreStateCheck_;
    private final JButton runButton_;
    private final JButton stopButton_;
-   private final JLabel statusLabel_;
+   private final JTextField statusLabel_;
 
    private volatile AnimationPlayer currentPlayer_ = null;
+
+   /** The script text as last saved to / loaded from a file or the profile. */
+   private String savedScript_;
 
    /**
     * Creates and immediately shows the dialog.
@@ -91,21 +98,26 @@ public final class AnimationScriptDlg extends JDialog {
       // "fill" makes the panel track the dialog size; "flowy" stacks rows top-down.
       final JPanel panel = new JPanel(new MigLayout("fill, flowy, insets 8"));
 
-      // Script editor — label + Save/Load buttons on one row.
+      // Script editor — label + Save/Load/Default buttons on one row.
       JButton saveScriptButton = new JButton("Save…");
       saveScriptButton.setToolTipText("Save script to a file");
       saveScriptButton.addActionListener((ActionEvent e) -> saveScriptToFile());
       JButton loadScriptButton = new JButton("Load…");
       loadScriptButton.setToolTipText("Load script from a file");
       loadScriptButton.addActionListener((ActionEvent e) -> loadScriptFromFile());
-      panel.add(new JLabel("Animation script:"), "split 3, flowx");
+      JButton defaultScriptButton = new JButton("Default");
+      defaultScriptButton.setToolTipText("Replace the script with the built-in example");
+      defaultScriptButton.addActionListener((ActionEvent e) -> loadDefaultScript());
+      panel.add(new JLabel("Animation script:"), "split 4, flowx");
       panel.add(saveScriptButton, "");
       panel.add(loadScriptButton, "");
+      panel.add(defaultScriptButton, "");
 
       scriptArea_ = new javax.swing.JTextArea(20, 60);
       scriptArea_.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
       scriptArea_.setTabSize(4);
-      scriptArea_.setText(loadScript());
+      savedScript_ = loadScript();
+      scriptArea_.setText(savedScript_);
       JScrollPane scrollPane = new JScrollPane(scriptArea_);
       panel.add(scrollPane, "grow, push");
 
@@ -150,9 +162,16 @@ public final class AnimationScriptDlg extends JDialog {
 
       runButton_.addActionListener((ActionEvent e) -> startAnimation());
       stopButton_.addActionListener((ActionEvent e) -> stopAnimation());
-      closeButton.addActionListener((ActionEvent e) -> {
-         saveSettings();
-         dispose();
+      closeButton.addActionListener((ActionEvent e) -> closeDialog());
+
+      // Intercept the window-close button (X) and app-exit so we can prompt
+      // the user to save unsaved changes.
+      setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            closeDialog();
+         }
       });
 
       panel.add(runButton_, "split 4, flowx, align right");
@@ -160,8 +179,12 @@ public final class AnimationScriptDlg extends JDialog {
       panel.add(closeButton, "");
       panel.add(helpButton, "");
 
-      // Status line.
-      statusLabel_ = new JLabel(" ");
+      // Status line — use a non-editable JTextField so the text can be
+      // selected and copied (e.g. to paste a parse error into a bug report).
+      statusLabel_ = new JTextField(" ");
+      statusLabel_.setEditable(false);
+      statusLabel_.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+      statusLabel_.setBackground(UIManager.getColor("Panel.background"));
       panel.add(statusLabel_, "growx");
 
       // Show/hide output row based on export target.
@@ -299,9 +322,48 @@ public final class AnimationScriptDlg extends JDialog {
       statusLabel_.setText("Stopping…");
    }
 
+   private void closeDialog() {
+      if (confirmDiscardChanges()) {
+         saveSettings();
+         dispose();
+      }
+   }
+
    // -----------------------------------------------------------------------
    // UI helpers
    // -----------------------------------------------------------------------
+
+   /** Returns true if the script has been edited since the last save/load. */
+   private boolean isScriptModified() {
+      return !scriptArea_.getText().equals(savedScript_);
+   }
+
+   /**
+    * If the script has unsaved changes, asks the user whether to save first.
+    * Returns true if it is safe to discard/replace the current script
+    * (user chose Save and it succeeded, or chose Discard), false if the
+    * user cancelled.
+    */
+   private boolean confirmDiscardChanges() {
+      if (!isScriptModified()) {
+         return true;
+      }
+      int choice = JOptionPane.showOptionDialog(
+            this,
+            "The script has unsaved changes. Save before continuing?",
+            "Unsaved Changes",
+            JOptionPane.YES_NO_CANCEL_OPTION,
+            JOptionPane.WARNING_MESSAGE,
+            null,
+            new String[]{"Save", "Discard", "Cancel"},
+            "Save");
+      if (choice == 0) {        // Save
+         saveScriptToFile();
+         // If still modified the save was cancelled — treat as Cancel.
+         return !isScriptModified();
+      }
+      return choice == 1;       // Discard; Cancel (2 or closed) → false
+   }
 
    private void updateOutputRowVisibility() {
       boolean isFfmpeg = TARGET_FFMPEG.equals(exportTargetCombo_.getSelectedItem());
@@ -343,6 +405,16 @@ public final class AnimationScriptDlg extends JDialog {
       return chooser;
    }
 
+   private void loadDefaultScript() {
+      if (!confirmDiscardChanges()) {
+         return;
+      }
+      savedScript_ = getDefaultScript();
+      scriptArea_.setText(savedScript_);
+      scriptArea_.setCaretPosition(0);
+      statusLabel_.setText("Default script loaded.");
+   }
+
    private void saveScriptToFile() {
       JFileChooser chooser = makeScriptChooser();
       chooser.setDialogTitle("Save animation script");
@@ -357,7 +429,9 @@ public final class AnimationScriptDlg extends JDialog {
       studio_.profile().getSettings(AnimationScriptDlg.class)
             .putString(KEY_LAST_DIR, file.getParent());
       try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-         writer.write(scriptArea_.getText());
+         String text = scriptArea_.getText();
+         writer.write(text);
+         savedScript_ = text;
          statusLabel_.setText("Saved to: " + file.getName());
       } catch (IOException ex) {
          statusLabel_.setText("Save failed: " + ex.getMessage());
@@ -366,6 +440,9 @@ public final class AnimationScriptDlg extends JDialog {
    }
 
    private void loadScriptFromFile() {
+      if (!confirmDiscardChanges()) {
+         return;
+      }
       JFileChooser chooser = makeScriptChooser();
       chooser.setDialogTitle("Load animation script");
       if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
@@ -380,7 +457,8 @@ public final class AnimationScriptDlg extends JDialog {
          while ((line = reader.readLine()) != null) {
             sb.append(line).append("\n");
          }
-         scriptArea_.setText(sb.toString());
+         savedScript_ = sb.toString();
+         scriptArea_.setText(savedScript_);
          scriptArea_.setCaretPosition(0);
          statusLabel_.setText("Loaded: " + file.getName());
       } catch (IOException ex) {
@@ -437,14 +515,14 @@ public final class AnimationScriptDlg extends JDialog {
             + "# A 'script' block at the end can define JavaScript functions\n"
             + "# to use as dynamic parameters (called with the frame number).\n"
             + "#\n"
-            + "From frame 0 to frame 119:\n"
+            + "From frame 1 to frame 120:\n"
             + "- rotate by 360 degrees horizontally ease-in-out\n"
             + "- zoom by a factor of zoomFn\n"
             + "script\n"
             + "function zoomFn(t) {\n"
-            + "    // Smooth arc: 0.1x at t=0, peaks at 3.0x near t=60, returns to 0.1x at t=119.\n"
-            + "    var pos  = 0.1 + 2.9 * sin(PI * t / 119);\n"
-            + "    var prev = 0.1 + 2.9 * sin(PI * (t - 1) / 119);\n"
+            + "    // Smooth arc: 0.1x at t=1, peaks at 3.0x near t=60, returns to 0.1x at t=120.\n"
+            + "    var pos  = 0.1 + 2.9 * sin(PI * (t - 1) / 119);\n"
+            + "    var prev = 0.1 + 2.9 * sin(PI * (t - 2) / 119);\n"
             + "    return pos - prev;\n"
             + "}\n";
    }

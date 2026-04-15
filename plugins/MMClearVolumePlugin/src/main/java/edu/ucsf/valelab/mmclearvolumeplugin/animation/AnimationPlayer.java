@@ -395,6 +395,21 @@ public final class AnimationPlayer {
             viewer_.setChannelVisible(instr.channel, instr.params[0] >= 0.5);
             break;
 
+         // ---- Time axis ----
+         case CHANGE_TIME: {
+            // Two-param form "change time from A to B": params[0]=start, params[1]=target.
+            // One-param form "change time to B":        params[0]=target.
+            int targetIdx = instr.params.length >= 2 ? 1 : 0;
+            double raw = targetForParam(instr, targetIdx, frame, et);
+            // Script functions return 1-based time points; subtract 1 to get 0-based.
+            // Literal params are already stored 0-based (adjusted at parse time).
+            boolean isFunction = instr.paramFunctions != null
+                  && instr.paramFunctions[targetIdx] != null;
+            int t = (int) Math.round(isFunction ? raw - 1.0 : raw);
+            viewer_.setTimePoint(t);
+            break;
+         }
+
          // ---- Unsupported alpha actions ----
          case CHANGE_CH_MIN_ALPHA:
          case CHANGE_CH_MAX_ALPHA:
@@ -503,7 +518,8 @@ public final class AnimationPlayer {
    private double targetForParam(AnimationInstruction instr, int paramIndex,
                                  int frame, double et) {
       if (instr.paramFunctions != null && instr.paramFunctions[paramIndex] != null) {
-         return scriptFunctions_.evaluate(instr.paramFunctions[paramIndex], frame);
+         // Script functions receive 1-based frame numbers, matching the script language.
+         return scriptFunctions_.evaluate(instr.paramFunctions[paramIndex], frame + 1);
       }
       double target = instr.params[paramIndex];
       long key = (long) System.identityHashCode(instr) * 100 + paramIndex;
@@ -566,6 +582,14 @@ public final class AnimationPlayer {
             return viewer_.getGamma(instr.channel);
          case CHANGE_CH_INTENSITY_GAMMA:
             return viewer_.getGamma(instr.channel);
+         case CHANGE_TIME:
+            // Two-param form "change time from A to B": params[0]=start, params[1]=target.
+            // The start value is the explicit params[0], not the viewer's current position.
+            // One-param form "change time to B": params[0]=target, start from viewer.
+            if (instr.params.length >= 2) {
+               return instr.params[0]; // explicit start, already 0-based
+            }
+            return viewer_.getCurrentTimePoint();
          default:
             // For actions without a readable start value, fall back to 0.
             return 0.0;
@@ -580,7 +604,8 @@ public final class AnimationPlayer {
     */
    private double deltaForParam(AnimationInstruction instr, int paramIndex, int frame) {
       if (instr.paramFunctions != null && instr.paramFunctions[paramIndex] != null) {
-         return scriptFunctions_.evaluate(instr.paramFunctions[paramIndex], frame);
+         // Script functions receive 1-based frame numbers, matching the script language.
+         return scriptFunctions_.evaluate(instr.paramFunctions[paramIndex], frame + 1);
       }
       return instr.params[paramIndex] * easedProgressDelta(instr, frame);
    }

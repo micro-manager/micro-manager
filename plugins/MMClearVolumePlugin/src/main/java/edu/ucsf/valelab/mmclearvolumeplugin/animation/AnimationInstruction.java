@@ -63,6 +63,9 @@ public final class AnimationInstruction {
       CHANGE_CH_COLOR,           // (r, g, b) in 0-255
       CHANGE_CH_WEIGHT,          // approximated via layer visibility (threshold 0.5)
       CHANGE_CH_VISIBLE,         // [1.0 = visible, 0.0 = hidden] — direct boolean
+
+      // Dataset time axis
+      CHANGE_TIME,               // change time to N  (N = 1-based in script; stored 0-based)
    }
 
    /** Easing functions controlling the interpolation curve. */
@@ -102,6 +105,9 @@ public final class AnimationInstruction {
     *   <li>CHANGE_CH_INTENSITY_GAMMA / _ALPHA_GAMMA: [gamma]</li>
     *   <li>CHANGE_CH_COLOR: [r, g, b] (0–255)</li>
     *   <li>CHANGE_CH_WEIGHT: [weight] (0–1)</li>
+    *   <li>CHANGE_TIME one-param form: [targetTimePointIndex] — start comes from viewer</li>
+    *   <li>CHANGE_TIME two-param form: [startTimePointIndex, targetTimePointIndex] — explicit start</li>
+    *   <li>(Both forms store indices 0-based internally; script syntax is 1-based)</li>
     * </ul>
     *
     * <p>A params entry may be {@link Double#NaN} when the corresponding

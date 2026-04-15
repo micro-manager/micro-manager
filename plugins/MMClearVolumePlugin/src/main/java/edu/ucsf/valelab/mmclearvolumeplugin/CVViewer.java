@@ -1008,6 +1008,28 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 
+   /**
+    * Returns the current 0-based time-point index being displayed,
+    * or 0 if no position has been set yet.
+    */
+   public int getCurrentTimePoint() {
+      return lastDisplayedCoords_ != null ? lastDisplayedCoords_.getT() : 0;
+   }
+
+   /**
+    * Jumps to the given 0-based time-point index, clamping to the valid range.
+    * No-op if the data provider or current position is not yet initialised.
+    */
+   public void setTimePoint(int t) {
+      Coords current = lastDisplayedCoords_;
+      if (current == null || dataProvider_ == null) {
+         return;
+      }
+      int maxT = dataProvider_.getNextIndex(Coords.TIME_POINT);
+      int clamped = Math.max(0, Math.min(maxT - 1, t));
+      setDisplayPosition(current.copyBuilder().t(clamped).build());
+   }
+
    public void setChannelColor(int channel, Color color) {
       if (clearVolumeRenderer_ != null) {
          clearVolumeRenderer_.setTransferFunction(channel,

@@ -192,11 +192,12 @@ public final class AnimationScript {
    // -----------------------------------------------------------------------
 
    /**
-    * Returns [beginFrame, endFrame], or null if the line is not an interval.
+    * Returns [beginFrame, endFrame] (0-based internally), or null if the line
+    * is not an interval.
     *
-    * <p>Frame numbers must be non-negative integers. Floating-point values,
-    * negative numbers, and reversed intervals (begin &gt; end) are rejected
-    * with a descriptive error.
+    * <p>Frame numbers in the script are 1-based (matching the Micro-Manager UI)
+    * and are converted to 0-based here. Floating-point values, numbers below 1,
+    * and reversed intervals are rejected with a descriptive error.
     */
    private static int[] parseInterval(String line) {
       Matcher fromTo = FROM_TO_PATTERN.matcher(line);
@@ -205,8 +206,8 @@ public final class AnimationScript {
          int end   = parseFrameNumber(fromTo.group(2), line);
          if (begin > end) {
             throw new IllegalArgumentException(
-                  "Reversed interval: begin frame " + begin
-                        + " is after end frame " + end + " in: " + line);
+                  "Reversed interval: begin frame " + (begin + 1)
+                        + " is after end frame " + (end + 1) + " in: " + line);
          }
          return new int[]{begin, end};
       }
@@ -221,16 +222,24 @@ public final class AnimationScript {
    }
 
    /**
-    * Parses a frame-number token, throwing a descriptive error if it is not
-    * a non-negative integer.
+    * Parses a 1-based frame-number token and returns the equivalent 0-based
+    * index. Trailing punctuation (e.g. a colon or period) is stripped before
+    * validation. Throws if the token is not a positive integer.
     */
    private static int parseFrameNumber(String token, String context) {
-      if (!INTEGER_PATTERN.matcher(token).matches()) {
+      // Strip any trailing non-alphanumeric characters (e.g. ":", ".", ",").
+      String stripped = token.replaceAll("[^a-zA-Z0-9]+$", "");
+      if (!INTEGER_PATTERN.matcher(stripped).matches()) {
          throw new IllegalArgumentException(
-               "Frame number must be a non-negative integer, got '"
+               "Frame number must be a positive integer, got '"
                      + token + "' in: " + context);
       }
-      return Integer.parseInt(token);
+      int n = Integer.parseInt(stripped);
+      if (n < 1) {
+         throw new IllegalArgumentException(
+               "Frame numbers are 1-based; got " + n + " in: " + context);
+      }
+      return n - 1;  // convert to 0-based
    }
 
    /**
@@ -330,9 +339,14 @@ public final class AnimationScript {
          if (!chMatcher.find()) {
             throw new IllegalArgumentException(
                   "Missing or invalid channel number after 'channel' in: " + text
-                        + " (expected an integer, e.g. 'change channel 0 intensity to 0.5')");
+                        + " (expected an integer, e.g. 'change channel 1 intensity to 0.5')");
          }
-         int ch = Integer.parseInt(chMatcher.group(1));
+         // Script uses 1-based channel numbers; convert to 0-based internally.
+         int ch = Integer.parseInt(chMatcher.group(1)) - 1;
+         if (ch < 0) {
+            throw new IllegalArgumentException(
+                  "Channel number must be 1 or greater in: " + text);
+         }
          // Remaining value parameters start at index 1 in params
          // (index 0 is the channel number, consumed above).
 
@@ -408,6 +422,40 @@ public final class AnimationScript {
       if (lower.contains("bounding box") || lower.contains("clipping")
             || lower.contains("front") || lower.contains("back")) {
          return parseClipChange(text, lower, params, beginFrame, endFrame, easing);
+      }
+
+      if (lower.contains("time")) {
+         // Syntax A: "change time to <n>"          — one param, target only.
+         // Syntax B: "change time from <a> to <n>" — two params, explicit start + target.
+         // All values are 1-based in the script; we subtract 1 to store 0-based.
+         // params[0] = start (or target if only one param); params[1] = target if present.
+         // Script-function values: the -1 is applied at playback time in AnimationPlayer.
+         boolean hasTwoParams = params.size() >= 2;
+         if (hasTwoParams) {
+            // Two-param form: store [start, target] both 0-based.
+            AnimationInstruction instr = params.toInstruction(beginFrame, endFrame,
+                  ActionType.CHANGE_TIME, new int[]{0, 1}, 2, -1, easing);
+            if (instr.paramFunctions == null
+                  || (instr.paramFunctions[0] == null && instr.paramFunctions[1] == null)) {
+               return new AnimationInstruction(beginFrame, endFrame,
+                     ActionType.CHANGE_TIME,
+                     new double[]{instr.params[0] - 1.0, instr.params[1] - 1.0},
+                     null, -1, easing);
+            }
+            // Script function(s): return as-is; AnimationPlayer applies -1 at playback.
+            return instr;
+         } else {
+            // One-param form: store [target] 0-based (start comes from viewer).
+            AnimationInstruction instr = params.toInstruction(beginFrame, endFrame,
+                  ActionType.CHANGE_TIME, new int[]{0}, 1, -1, easing);
+            if (instr.paramFunctions == null || instr.paramFunctions[0] == null) {
+               return new AnimationInstruction(beginFrame, endFrame,
+                     ActionType.CHANGE_TIME,
+                     new double[]{instr.params[0] - 1.0},
+                     null, -1, easing);
+            }
+            return instr;
+         }
       }
 
       throw new IllegalArgumentException("Unrecognised change action: " + text);
@@ -655,7 +703,8 @@ public final class AnimationScript {
             "intensity", "gamma", "alpha", "color", "colour",
             "weight", "front", "back", "clipping", "and", "the",
             "from", "at", "x", "y", "z",
-            "visible", "visibility", "show", "hide", "on", "off"
+            "visible", "visibility", "show", "hide", "on", "off",
+            "time", "timepoint"
       }) {
          RESERVED_WORDS.add(w);
       }
