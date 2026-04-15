@@ -853,6 +853,23 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    /**
+    * Resets the renderer to its default state: identity rotation, default
+    * translation (Z set by the renderer to fit the volume), and a full-volume
+    * clip box (-1 to 1 on every axis).
+    *
+    * <p>This is the baseline that animation {@code reset} instructions restore
+    * to — it is reproducible regardless of what the viewer looked like before
+    * the script started.
+    */
+   public void resetToDefault() {
+      if (clearVolumeRenderer_ == null) {
+         return;
+      }
+      clearVolumeRenderer_.resetRotationTranslation();
+      clearVolumeRenderer_.setClipBox(new float[]{-1f, 1f, -1f, 1f, -1f, 1f});
+   }
+
+   /**
     * Restores renderer state previously captured by {@link #snapshotState()}.
     * Does nothing if {@code state} is null or the renderer is not ready.
     */

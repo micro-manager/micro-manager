@@ -88,6 +88,13 @@ public final class AnimationPlayer {
          new IdentityHashMap<AnimationInstruction, double[]>();
 
    /**
+    * Snapshot of the viewer state taken at the start of {@link #play()}.
+    * Used to restore the viewer after playback when {@link #restoreState_}
+    * is true. Null before {@code play()} is called.
+    */
+   private CVViewer.ViewerState playStartState_ = null;
+
+   /**
     * Creates an AnimationPlayer.
     *
     * @param viewer          the CVViewer to animate
@@ -148,12 +155,15 @@ public final class AnimationPlayer {
     */
    public void play() throws IOException, InterruptedException {
       startValues_.clear();
+      // Snapshot the pre-animation state for the optional post-playback restore.
+      playStartState_ = viewer_.snapshotState();
+
       if (target_ == ExportTarget.PREVIEW) {
          playPreview();
          return;
       }
 
-      CVViewer.ViewerState savedState = restoreState_ ? viewer_.snapshotState() : null;
+      CVViewer.ViewerState savedState = restoreState_ ? playStartState_ : null;
 
       // Export setup.
       ImageStack stack = null;             // used for IMAGEJ target
@@ -267,7 +277,7 @@ public final class AnimationPlayer {
     * fps, but does not capture or save any frames.
     */
    private void playPreview() throws InterruptedException {
-      CVViewer.ViewerState savedState = restoreState_ ? viewer_.snapshotState() : null;
+      CVViewer.ViewerState savedState = restoreState_ ? playStartState_ : null;
       long frameIntervalMs = (fps_ > 0) ? (1000L / fps_) : 100L;
 
       try {
@@ -447,6 +457,18 @@ public final class AnimationPlayer {
             viewer_.setTimePoint(t);
             break;
          }
+
+         // ---- Reset to default state ----
+         case RESET:
+            // Restore identity rotation, default translation, and full clip box
+            // so that subsequent absolute instructions in the same block land at
+            // reproducible positions regardless of the viewer state when Play was
+            // clicked.
+            viewer_.resetToDefault();
+            // Clear cached start values so that interpolating instructions
+            // in the same frame re-read the viewer state after the reset.
+            startValues_.clear();
+            break;
 
          // ---- Unsupported alpha actions ----
          case CHANGE_CH_MIN_ALPHA:

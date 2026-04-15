@@ -66,6 +66,12 @@ public final class AnimationInstruction {
 
       // Dataset time axis
       CHANGE_TIME,               // change time to N  (N = 1-based in script; stored 0-based)
+
+      // Viewer reset — restores the default state (identity rotation, default
+      // translation, full clip box) as a known baseline before applying
+      // absolute-delta instructions.  Reproducible regardless of the viewer
+      // state when the script was started.
+      RESET,
    }
 
    /** Easing functions controlling the interpolation curve. */

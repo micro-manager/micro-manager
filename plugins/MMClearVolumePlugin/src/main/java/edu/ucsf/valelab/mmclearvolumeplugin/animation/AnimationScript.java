@@ -282,6 +282,12 @@ public final class AnimationScript {
       // Extract numbers AND identifiers that appear in value positions.
       ParamList params = extractParams(text);
 
+      // --- Reset ---
+      if (lower.startsWith("reset")) {
+         return new AnimationInstruction(beginFrame, endFrame,
+               ActionType.RESET, new double[0], null, -1, Easing.LINEAR);
+      }
+
       // --- Rotation ---
       if (lower.contains("rotate")) {
          if (lower.contains("horizontally")) {
@@ -721,7 +727,8 @@ public final class AnimationScript {
             "weight", "front", "back", "clipping", "and", "the",
             "from", "at", "x", "y", "z",
             "visible", "visibility", "show", "hide", "on", "off",
-            "time", "timepoint"
+            "time", "timepoint",
+            "reset"
       }) {
          RESERVED_WORDS.add(w);
       }

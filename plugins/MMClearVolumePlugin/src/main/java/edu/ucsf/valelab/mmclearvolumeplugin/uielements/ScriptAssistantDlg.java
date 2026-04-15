@@ -12,6 +12,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +94,7 @@ public final class ScriptAssistantDlg extends JDialog {
    private final JComboBox<String> easingCombo_;
    private final JCheckBox includeColorsCheck_;
    private final JButton addKfButton_;
-   private final JButton removeLastButton_;
+   private final JButton removeSelectedButton_;
    private final JButton generateButton_;
    private final JTextField statusLabel_;
 
@@ -103,6 +105,9 @@ public final class ScriptAssistantDlg extends JDialog {
    private final CVViewer viewer_;
    private final Consumer<String> scriptConsumer_;
    private final List<Keyframe> keyframes_ = new ArrayList<Keyframe>();
+
+   /** 0-based index of the currently selected card, or −1 if none selected. */
+   private int selectedIndex_ = -1;
 
    // -----------------------------------------------------------------------
    // Constructor
@@ -159,20 +164,21 @@ public final class ScriptAssistantDlg extends JDialog {
       addKfButton_ = new JButton("Add Keyframe");
       addKfButton_.setToolTipText(
             "Capture the current viewer state as the next keyframe");
-      removeLastButton_ = new JButton("Remove Last");
-      removeLastButton_.setToolTipText("Remove the last keyframe from the reel");
+      removeSelectedButton_ = new JButton("Remove Selected");
+      removeSelectedButton_.setToolTipText(
+            "Remove the selected keyframe from the reel");
       generateButton_ = new JButton("Generate Script");
       generateButton_.setToolTipText(
             "Generate a script block transitioning between the captured keyframes");
       final JButton cancelButton = new JButton("Cancel");
 
       addKfButton_.addActionListener((ActionEvent e) -> captureKeyframe());
-      removeLastButton_.addActionListener((ActionEvent e) -> removeLast());
+      removeSelectedButton_.addActionListener((ActionEvent e) -> removeSelected());
       generateButton_.addActionListener((ActionEvent e) -> doGenerate());
       cancelButton.addActionListener((ActionEvent e) -> dispose());
 
       southPanel.add(addKfButton_, "split 4, flowx, align right");
-      southPanel.add(removeLastButton_, "");
+      southPanel.add(removeSelectedButton_, "");
       southPanel.add(generateButton_, "");
       southPanel.add(cancelButton, "wrap");
 
@@ -245,11 +251,12 @@ public final class ScriptAssistantDlg extends JDialog {
             addCardToReel(kf, keyframes_.size());
             reelPanel_.revalidate();
             reelPanel_.repaint();
+            // Select the newly added card.
+            setSelectedIndex(keyframes_.size() - 1);
             // Scroll to the rightmost card.
-            javax.swing.SwingUtilities.invokeLater(() ->
+            SwingUtilities.invokeLater(() ->
                   reelScroll_.getHorizontalScrollBar().setValue(
                         reelScroll_.getHorizontalScrollBar().getMaximum()));
-            updateButtonStates();
             statusLabel_.setText("Keyframe " + keyframes_.size() + " added.");
             addKfButton_.setEnabled(true);
          });
@@ -282,17 +289,25 @@ public final class ScriptAssistantDlg extends JDialog {
    // -----------------------------------------------------------------------
 
    private void addCardToReel(Keyframe kf, int index) {
-      KeyframeCard card = new KeyframeCard(kf, index);
-      reelPanel_.add(card, "");
+      // The card's position in the reel is index-1 (0-based).
+      final int cardIndex = index - 1;
+      KeyframeCard card = new KeyframeCard(kf, index,
+            () -> setSelectedIndex(cardIndex));
+      reelPanel_.add(card);
    }
 
    /**
     * Panel representing one keyframe in the reel strip.
     */
    private static final class KeyframeCard extends JPanel {
+      private static final java.awt.Color SELECTED_COLOR =
+            UIManager.getColor("List.selectionBackground") != null
+                  ? UIManager.getColor("List.selectionBackground")
+                  : new java.awt.Color(0x3875D7);
+
       private final Keyframe kf_;
 
-      KeyframeCard(Keyframe kf, int index) {
+      KeyframeCard(Keyframe kf, int index, Runnable onSelect) {
          super(new MigLayout("insets 4, flowy, alignx center"));
          kf_ = kf;
          setBorder(BorderFactory.createEtchedBorder());
@@ -320,6 +335,25 @@ public final class ScriptAssistantDlg extends JDialog {
 
          // Index label.
          add(new JLabel("KF " + index), "alignx center");
+
+         // Clicking anywhere on the card (or its children) selects it.
+         MouseAdapter selectOnClick = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+               onSelect.run();
+            }
+         };
+         addMouseListener(selectOnClick);
+         imgLabel.addMouseListener(selectOnClick);
+         // Frame field gets focus normally; clicking it also selects the card.
+         frameField.addMouseListener(selectOnClick);
+      }
+
+      /** Highlights or un-highlights this card to reflect selection state. */
+      void setSelected(boolean selected) {
+         setBorder(selected
+               ? BorderFactory.createLineBorder(SELECTED_COLOR, 2)
+               : BorderFactory.createEtchedBorder());
       }
 
       private void validateFrameField(JTextField field) {
@@ -336,14 +370,39 @@ public final class ScriptAssistantDlg extends JDialog {
    }
 
    // -----------------------------------------------------------------------
-   // Remove last
+   // Selection
    // -----------------------------------------------------------------------
 
-   private void removeLast() {
-      if (keyframes_.isEmpty()) {
+   /**
+    * Sets the selected card index and repaints the reel to reflect the new
+    * selection highlight.  Pass −1 to deselect all.
+    */
+   private void setSelectedIndex(int index) {
+      selectedIndex_ = index;
+      // Update border on every card to reflect the new selection state.
+      java.awt.Component[] cards = reelPanel_.getComponents();
+      for (int i = 0; i < cards.length; i++) {
+         if (cards[i] instanceof KeyframeCard) {
+            ((KeyframeCard) cards[i]).setSelected(i == index);
+         }
+      }
+      updateButtonStates();
+   }
+
+   // -----------------------------------------------------------------------
+   // Remove selected
+   // -----------------------------------------------------------------------
+
+   private void removeSelected() {
+      if (selectedIndex_ < 0 || selectedIndex_ >= keyframes_.size()) {
          return;
       }
-      keyframes_.remove(keyframes_.size() - 1);
+      int removedIndex = selectedIndex_;
+      keyframes_.remove(removedIndex);
+      // After removal select the card just before the removed one (or none).
+      int newSelection = keyframes_.isEmpty() ? -1
+            : Math.max(0, removedIndex - 1);
+      selectedIndex_ = -1; // clear before rebuild so setSelectedIndex works cleanly
       // Rebuild the reel (simpler than tracking individual card components).
       reelPanel_.removeAll();
       for (int i = 0; i < keyframes_.size(); i++) {
@@ -351,10 +410,11 @@ public final class ScriptAssistantDlg extends JDialog {
       }
       reelPanel_.revalidate();
       reelPanel_.repaint();
-      updateButtonStates();
+      setSelectedIndex(newSelection);
       statusLabel_.setText(keyframes_.isEmpty()
             ? "All keyframes removed."
-            : "Last keyframe removed. " + keyframes_.size() + " keyframe(s) remain.");
+            : "Keyframe " + (removedIndex + 1) + " removed. "
+                  + keyframes_.size() + " keyframe(s) remain.");
    }
 
    // -----------------------------------------------------------------------
@@ -433,10 +493,14 @@ public final class ScriptAssistantDlg extends JDialog {
       List<String> out = new ArrayList<String>();
       CVViewer.ViewerState s = kf.state;
 
+      // Emit "reset" first: restores the pre-animation baseline in the player
+      // before any rotation/translation deltas are applied, making the init
+      // block fully reproducible regardless of the viewer's current state.
+      out.add("reset");
+
       // The script language expresses rotation and translation as *deltas*, not
-      // absolute set. For the initial state block we treat the delta as the full
-      // rotation/translation from identity/zero — so the viewer snaps to the
-      // recorded position at the first frame.
+      // absolute set. Because "reset" restores the known baseline first, the
+      // deltas below land on a reproducible starting point.
 
       // Rotation: decompose the keyframe quaternion into axis-angle.
       // Q applied to the identity quaternion gives the full rotation to reach this state.
@@ -777,7 +841,7 @@ public final class ScriptAssistantDlg extends JDialog {
    // -----------------------------------------------------------------------
 
    private void updateButtonStates() {
-      removeLastButton_.setEnabled(keyframes_.size() > 1);
+      removeSelectedButton_.setEnabled(selectedIndex_ >= 0);
       generateButton_.setEnabled(keyframes_.size() >= 2);
    }
 }
