@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -72,13 +72,20 @@ public final class AnimationPlayer {
 
    private volatile boolean stopped_ = false;
 
+   /** Temp dir holding PNG frames for ffmpeg export; null when not in use. */
+   private volatile File activeTempDir_ = null;
+
+   /** The running ffmpeg process; null when not in use. */
+   private volatile Process activeFfmpegProcess_ = null;
+
    /**
-    * Lazily populated map from (instruction identity × paramIndex) to the
-    * viewer's actual value at the instruction's beginFrame. Used to
-    * interpolate from the true starting state rather than from 0.
-    * Key encoding: System.identityHashCode(instr) * 100 + paramIndex.
+    * Lazily populated map from instruction identity to an array of per-param
+    * start values. Indexed as {@code startValues_.get(instr)[paramIndex]}.
+    * Uses {@link IdentityHashMap} so keys are compared by reference, not
+    * hashCode, eliminating any collision risk from {@code identityHashCode}.
     */
-   private final Map<Long, Double> startValues_ = new HashMap<Long, Double>();
+   private final Map<AnimationInstruction, double[]> startValues_ =
+         new IdentityHashMap<AnimationInstruction, double[]>();
 
    /**
     * Creates an AnimationPlayer.
@@ -115,14 +122,21 @@ public final class AnimationPlayer {
       outputPath_ = outputPath;
       restoreState_ = restoreState;
       log_ = log;
+
    }
 
    /**
-    * Requests that playback stop after the current frame completes.
+    * Requests that playback stop. Sets the stop flag so the frame loop exits
+    * after the current frame, and also destroys any running ffmpeg process so
+    * that an in-progress export unblocks immediately.
     * Safe to call from any thread.
     */
    public void stop() {
       stopped_ = true;
+      Process p = activeFfmpegProcess_;
+      if (p != null) {
+         p.destroy();
+      }
    }
 
    /**
@@ -153,6 +167,7 @@ public final class AnimationPlayer {
          if (!tempDir.mkdirs()) {
             throw new IOException("Cannot create temp directory: " + dirPath);
          }
+         activeTempDir_ = tempDir;  // expose to shutdown hook
       }
 
       // Install the frame recorder directly (no toggle/redraw side effects).
@@ -160,6 +175,7 @@ public final class AnimationPlayer {
       AnimationFrameRecorder recorder = new AnimationFrameRecorder();
       viewer_.setAnimationRecorder(recorder);
 
+      Throwable captureError = null;
       try {
          for (int frame = 0; frame < totalFrames_; frame++) {
             if (stopped_) {
@@ -198,6 +214,8 @@ public final class AnimationPlayer {
                ImageIO.write(img, "png", frameFile);
             }
          }
+      } catch (IOException | RuntimeException ex) {
+         captureError = ex;
       } finally {
          // Disarm and remove the recorder regardless of how the loop exits.
          recorder.setActive(false);
@@ -205,13 +223,33 @@ public final class AnimationPlayer {
          if (restoreState_ && savedState != null) {
             viewer_.restoreState(savedState);
          }
-         if (target_ == ExportTarget.FFMPEG && tempDir != null) {
-            try {
+      }
+
+      // Run ffmpeg only if capture completed without error; if ffmpeg fails
+      // and there was already a capture error, attach it as suppressed so the
+      // original root cause is not masked.
+      if (target_ == ExportTarget.FFMPEG && tempDir != null) {
+         try {
+            if (captureError == null) {
                runFfmpeg(tempDir, pngIndex);
-            } finally {
-               deleteTempDir(tempDir);
             }
+         } catch (IOException ffmpegEx) {
+            if (captureError != null) {
+               ffmpegEx.addSuppressed(captureError);
+            }
+            throw ffmpegEx;
+         } finally {
+            deleteTempDir(tempDir);
+            activeTempDir_ = null;
          }
+      }
+
+      // Re-throw any capture error now that cleanup is done.
+      if (captureError instanceof IOException) {
+         throw (IOException) captureError;
+      }
+      if (captureError instanceof RuntimeException) {
+         throw (RuntimeException) captureError;
       }
 
       // Show ImageJ result on EDT.
@@ -522,11 +560,15 @@ public final class AnimationPlayer {
          return scriptFunctions_.evaluate(instr.paramFunctions[paramIndex], frame + 1);
       }
       double target = instr.params[paramIndex];
-      long key = (long) System.identityHashCode(instr) * 100 + paramIndex;
-      if (!startValues_.containsKey(key)) {
-         startValues_.put(key, readStartValue(instr, paramIndex));
+      double[] starts = startValues_.get(instr);
+      if (starts == null) {
+         starts = new double[instr.params.length];
+         for (int i = 0; i < starts.length; i++) {
+            starts[i] = readStartValue(instr, i);
+         }
+         startValues_.put(instr, starts);
       }
-      double start = startValues_.get(key);
+      double start = starts[paramIndex];
       return start + (target - start) * et;
    }
 
@@ -662,6 +704,7 @@ public final class AnimationPlayer {
       } catch (IOException e) {
          throw new IOException("Failed to start ffmpeg at: " + ffmpegPath_, e);
       }
+      activeFfmpegProcess_ = process;  // expose to shutdown hook
 
       StringBuilder ffmpegOutput = new StringBuilder();
       try (BufferedReader br = new BufferedReader(
@@ -681,6 +724,8 @@ public final class AnimationPlayer {
          process.destroy();
          Thread.currentThread().interrupt();
          throw new IOException("Interrupted while waiting for ffmpeg", e);
+      } finally {
+         activeFfmpegProcess_ = null;  // process is done; clear shutdown-hook reference
       }
 
       if (exitCode != 0) {

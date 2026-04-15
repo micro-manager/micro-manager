@@ -645,17 +645,34 @@ public final class AnimationScript {
       List<double[]> numEntries = new ArrayList<double[]>(); // [position, value]
       List<Object[]> idEntries = new ArrayList<Object[]>();  // [position(double), name(String)]
 
+      // Collect number spans [start, end) so we can exclude identifiers that
+      // fall inside them (e.g. the 'e' in "1e-3" would otherwise be picked up
+      // as a separate identifier token by IDENTIFIER_PATTERN).
+      List<int[]> numSpans = new ArrayList<int[]>(); // [start, end]
       Matcher nm = NUMBER_PATTERN.matcher(text);
       while (nm.find()) {
+         numSpans.add(new int[]{nm.start(), nm.end()});
          numEntries.add(new double[]{nm.start(), Double.parseDouble(nm.group())});
       }
 
-      // Identifiers — skip reserved words.
+      // Identifiers — skip reserved words and any identifier whose start
+      // position falls inside a number span already matched above.
       Matcher im = IDENTIFIER_PATTERN.matcher(text);
       while (im.find()) {
          String word = im.group(1);
-         if (!isReservedWord(word.toLowerCase())) {
-            idEntries.add(new Object[]{(double) im.start(), word});
+         if (isReservedWord(word.toLowerCase())) {
+            continue;
+         }
+         int idStart = im.start();
+         boolean insideNumber = false;
+         for (int[] span : numSpans) {
+            if (idStart >= span[0] && idStart < span[1]) {
+               insideNumber = true;
+               break;
+            }
+         }
+         if (!insideNumber) {
+            idEntries.add(new Object[]{(double) idStart, word});
          }
       }
 

@@ -19,6 +19,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import javax.swing.JButton;
+import org.micromanager.events.ShutdownCommencingEvent;
+import com.google.common.eventbus.Subscribe;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -70,6 +72,7 @@ public final class AnimationScriptDlg extends JDialog {
    private final JCheckBox restoreStateCheck_;
    private final JButton runButton_;
    private final JButton stopButton_;
+   private final JButton closeButton_;
    private final JTextField statusLabel_;
 
    private volatile AnimationPlayer currentPlayer_ = null;
@@ -155,14 +158,14 @@ public final class AnimationScriptDlg extends JDialog {
       runButton_ = new JButton("Run");
       stopButton_ = new JButton("Stop");
       stopButton_.setEnabled(false);
-      final JButton closeButton = new JButton("Close");
+      closeButton_ = new JButton("Close");
 
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener((ActionEvent e) -> openHelp());
 
       runButton_.addActionListener((ActionEvent e) -> startAnimation());
       stopButton_.addActionListener((ActionEvent e) -> stopAnimation());
-      closeButton.addActionListener((ActionEvent e) -> closeDialog());
+      closeButton_.addActionListener((ActionEvent e) -> closeDialog());
 
       // Intercept the window-close button (X) and app-exit so we can prompt
       // the user to save unsaved changes.
@@ -176,7 +179,7 @@ public final class AnimationScriptDlg extends JDialog {
 
       panel.add(runButton_, "split 4, flowx, align right");
       panel.add(stopButton_, "");
-      panel.add(closeButton, "");
+      panel.add(closeButton_, "");
       panel.add(helpButton, "");
 
       // Status line — use a non-editable JTextField so the text can be
@@ -194,6 +197,7 @@ public final class AnimationScriptDlg extends JDialog {
       getContentPane().add(panel, java.awt.BorderLayout.CENTER);
       pack();
       setLocationRelativeTo(null);
+      studio_.events().registerForEvents(this);
       setVisible(true);
    }
 
@@ -271,6 +275,7 @@ public final class AnimationScriptDlg extends JDialog {
 
       runButton_.setEnabled(false);
       stopButton_.setEnabled(true);
+      closeButton_.setEnabled(false);
       statusLabel_.setText(target == ExportTarget.PREVIEW ? "Previewing…" : "Running…");
 
       final String finalOutputPath = outputPath;
@@ -298,6 +303,7 @@ public final class AnimationScriptDlg extends JDialog {
             SwingUtilities.invokeLater(() -> {
                runButton_.setEnabled(true);
                stopButton_.setEnabled(false);
+               closeButton_.setEnabled(true);
                currentPlayer_ = null;
             });
          }
@@ -323,10 +329,32 @@ public final class AnimationScriptDlg extends JDialog {
    }
 
    private void closeDialog() {
+      if (currentPlayer_ != null) {
+         // Animation is running — Close is disabled via the button, but the
+         // window-X can still fire this path on some platforms. Ignore it.
+         return;
+      }
       if (confirmDiscardChanges()) {
          saveSettings();
+         studio_.events().unregisterForEvents(this);
          dispose();
       }
+   }
+
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      if (event.isCanceled()) {
+         return;
+      }
+      // Stop any running animation so the background thread doesn't outlive MM,
+      // and clean up the ffmpeg process and temp dir via AnimationPlayer.stop().
+      AnimationPlayer p = currentPlayer_;
+      if (p != null) {
+         p.stop();
+      }
+      saveSettings();
+      studio_.events().unregisterForEvents(this);
+      dispose();
    }
 
    // -----------------------------------------------------------------------

@@ -122,16 +122,27 @@ public final class ScriptFunctions {
          int bodyStart = m.end();
 
          // Find the matching closing brace by counting depth.
+         // Skip // line comments so braces inside them don't affect the count.
          int depth = 1;
          int pos = bodyStart;
          while (pos < scriptBody.length() && depth > 0) {
             char c = scriptBody.charAt(pos);
-            if (c == '{') {
+            if (c == '/' && pos + 1 < scriptBody.length()
+                  && scriptBody.charAt(pos + 1) == '/') {
+               // Skip to end of line.
+               pos += 2;
+               while (pos < scriptBody.length() && scriptBody.charAt(pos) != '\n') {
+                  pos++;
+               }
+            } else if (c == '{') {
                depth++;
+               pos++;
             } else if (c == '}') {
                depth--;
+               pos++;
+            } else {
+               pos++;
             }
-            pos++;
          }
          if (depth != 0) {
             throw new IllegalArgumentException(
