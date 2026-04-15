@@ -1,5 +1,6 @@
 package edu.ucsf.valelab.mmclearvolumeplugin.uielements;
 
+import com.google.common.eventbus.Subscribe;
 import edu.ucsf.valelab.mmclearvolumeplugin.CVViewer;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer.ExportTarget;
@@ -19,8 +20,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import javax.swing.JButton;
-import org.micromanager.events.ShutdownCommencingEvent;
-import com.google.common.eventbus.Subscribe;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -38,6 +37,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.gearmenu.FfmpegLocator;
+import org.micromanager.events.ShutdownCommencingEvent;
 
 /**
  * Dialog that provides a text editor for 3D animation scripts, and controls
