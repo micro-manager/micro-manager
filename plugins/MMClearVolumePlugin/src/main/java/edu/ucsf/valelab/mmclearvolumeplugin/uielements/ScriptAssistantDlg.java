@@ -116,7 +116,7 @@ public final class ScriptAssistantDlg extends JDialog {
     *                       when the user clicks "Generate Script"
     */
    public ScriptAssistantDlg(CVViewer viewer, Consumer<String> scriptConsumer) {
-      super((java.awt.Frame) null, "Script Reel \u2014 " + viewer.getName(), false);
+      super((java.awt.Frame) null, "Script Reel - " + viewer.getName(), false);
       viewer_ = viewer;
       scriptConsumer_ = scriptConsumer;
 
@@ -154,7 +154,7 @@ public final class ScriptAssistantDlg extends JDialog {
       panel.add(reelScroll_, java.awt.BorderLayout.CENTER);
 
       // ---- South: buttons + status bar ----
-      JPanel southPanel = new JPanel(new MigLayout("insets 0, fillx, flowy"));
+      final JPanel southPanel = new JPanel(new MigLayout("insets 0, fillx, flowy"));
 
       addKfButton_ = new JButton("Add Keyframe");
       addKfButton_.setToolTipText(
@@ -164,7 +164,7 @@ public final class ScriptAssistantDlg extends JDialog {
       generateButton_ = new JButton("Generate Script");
       generateButton_.setToolTipText(
             "Generate a script block transitioning between the captured keyframes");
-      JButton cancelButton = new JButton("Cancel");
+      final JButton cancelButton = new JButton("Cancel");
 
       addKfButton_.addActionListener((ActionEvent e) -> captureKeyframe());
       removeLastButton_.addActionListener((ActionEvent e) -> removeLast());
@@ -202,7 +202,7 @@ public final class ScriptAssistantDlg extends JDialog {
 
    private void captureKeyframe() {
       addKfButton_.setEnabled(false);
-      statusLabel_.setText("Capturing\u2026");
+      statusLabel_.setText("Capturing...");
 
       // Compute the next frame number on the EDT before spawning the thread,
       // so we read keyframes_ only from the EDT.
@@ -213,7 +213,7 @@ public final class ScriptAssistantDlg extends JDialog {
          final CVViewer.ViewerState state = viewer_.snapshotState();
          if (state == null) {
             SwingUtilities.invokeLater(() -> {
-               statusLabel_.setText("Viewer not ready \u2014 cannot capture.");
+               statusLabel_.setText("Viewer not ready - cannot capture.");
                addKfButton_.setEnabled(true);
             });
             return;
@@ -366,7 +366,7 @@ public final class ScriptAssistantDlg extends JDialog {
       for (int i = 0; i < keyframes_.size() - 1; i++) {
          if (keyframes_.get(i).frameNumber >= keyframes_.get(i + 1).frameNumber) {
             statusLabel_.setText(
-                  "Warning: frame numbers not strictly increasing \u2014 script may be incorrect.");
+                  "Warning: frame numbers not strictly increasing - script may be incorrect.");
             break;
          }
       }

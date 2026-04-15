@@ -112,7 +112,7 @@ public final class AnimationScriptDlg extends JDialog {
       JButton defaultScriptButton = new JButton("Default");
       defaultScriptButton.setToolTipText("Replace the script with the built-in example");
       defaultScriptButton.addActionListener((ActionEvent e) -> loadDefaultScript());
-      JButton scriptAssistantButton = new JButton("Script Assistant\u2026");
+      JButton scriptAssistantButton = new JButton("Script Assistant...");
       scriptAssistantButton.setToolTipText(
             "Interactively build a script by capturing viewer keyframes");
       scriptAssistantButton.addActionListener((ActionEvent e) -> openScriptAssistant());
@@ -220,7 +220,7 @@ public final class AnimationScriptDlg extends JDialog {
    public void setViewer(CVViewer viewer) {
       if (currentPlayer_ == null) {
          viewer_ = viewer;
-         setTitle("3D Animation Script \u2014 " + viewer.getName());
+         setTitle("3D Animation Script - " + viewer.getName());
          // Stale reference — next click will open a fresh assistant for the new viewer.
          scriptAssistantDlg_ = null;
       }
