@@ -106,7 +106,8 @@ public final class AnimationInstruction {
     *   <li>CHANGE_CH_COLOR: [r, g, b] (0–255)</li>
     *   <li>CHANGE_CH_WEIGHT: [weight] (0–1)</li>
     *   <li>CHANGE_TIME one-param form: [targetTimePointIndex] — start comes from viewer</li>
-    *   <li>CHANGE_TIME two-param form: [startTimePointIndex, targetTimePointIndex] — explicit start</li>
+    *   <li>CHANGE_TIME two-param form:
+    *       [startTimePointIndex, targetTimePointIndex] — explicit start</li>
     *   <li>(Both forms store indices 0-based internally; script syntax is 1-based)</li>
     * </ul>
     *
