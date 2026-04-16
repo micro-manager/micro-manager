@@ -48,6 +48,7 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.internal.utils.ProgressBar;
 
 /**
  * Does the actual Duplication.
@@ -63,6 +64,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
    private final LinkedHashMap<String, Boolean> channels_;
    private final Datastore.SaveMode saveMode_;
    private final String filePath_;
+   private ProgressBar progressBar_;
 
    private class CloseViewerListener extends DataViewerListener {
       private final DataViewer viewer_;
@@ -135,6 +137,25 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       filePath_ = filePath;
    }
 
+   public void setProgressBar(ProgressBar pb) {
+      progressBar_ = pb;
+   }
+
+   /**
+    * Freeze the store on error paths, suppressing any secondary IOException
+    * so the original error message is not hidden.
+    */
+   private void freezeQuietly(Datastore store) {
+      if (store == null) {
+         return;
+      }
+      try {
+         store.freeze();
+      } catch (IOException ioe) {
+         studio_.logs().logError(ioe, "IOException freezing store after duplication error");
+      }
+   }
+
    @Override
    protected Void doInBackground() {
       DataProvider oldStore = theWindow_.getDataProvider();
@@ -183,9 +204,10 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          channelNames = chNameList;
          newDisplaySettingsBuilder.channels(channelDisplaySettings);
       }
-      float  nrToBeCopied = 1;
+      float nrToBeCopied = 1;
       if (channels_ != null && !channels_.isEmpty()) {
-         nrToBeCopied *= channels_.size();
+         long selectedChannels = channels_.values().stream().filter(v -> v).count();
+         nrToBeCopied *= Math.max(1, selectedChannels);
       }
       for (String axis : oldStore.getAxes()) {
          if (mins_.containsKey(axis)) {
@@ -207,6 +229,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
 
       CloseViewerListener closeListener = null;
       int nrCopied = 0;
+      boolean success = false;
 
       try {
          if (width == null || height == null) {
@@ -252,6 +275,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          }
          if (timeOut) {
             studio_.logs().showError("Failed to save data");
+            freezeQuietly(newStore);
             return null;
          }
 
@@ -266,7 +290,9 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          for (Coords c : unorderedImageCoords) {
             orderedImageCoords.add(c);
          }
-         final List<String> axisOrder = oldStore.getSummaryMetadata().getOrderedAxes();
+         // Defensive copy before reversing to avoid mutating the live metadata list.
+         final List<String> axisOrder =
+               new ArrayList<>(oldStore.getSummaryMetadata().getOrderedAxes());
          Collections.reverse(axisOrder);
 
          Collections.sort(orderedImageCoords, new Comparator<Coords>() {
@@ -291,11 +317,15 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                   if (channels_ == null) {
                      copy = true;
                   } else {
+                     // Walk the ordered channel map to find whether the channel at
+                     // this coord index is selected.  Default false so deselected
+                     // channels are never copied.
+                     copy = false;
                      int index = 0;
                      for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
                         if (channel.getValue() && oldCoord.getIndex(axis) == index) {
                            copy = true;
-                           continue;
+                           break;
                         }
                         index++;
                      }
@@ -349,7 +379,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                   }
                }
                if (closeListener.isCancelled()) {
-                  newStore.freeze();
+                  freezeQuietly(newStore);
                   return null;
                }
                newStore.putImage(newImgShallow);
@@ -357,7 +387,8 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                try {
                   setProgress((int) ((nrCopied / nrToBeCopied) * 100.0));
                } catch (IllegalArgumentException iae) {
-                  System.out.println("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
+                  studio_.logs().logMessage("Duplicator: unexpected progress value: "
+                        + (int) (nrCopied / nrToBeCopied * 100.0));
                }
 
             }
@@ -365,21 +396,32 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          if (nrCopied == 0) {
             copyDisplay.close();
          }
+         success = true;
+      } catch (OutOfMemoryError oom) {
+         studio_.logs().showError(
+               "Out of memory while duplicating data.  "
+               + "Try duplicating a smaller range or freeing memory.");
+         freezeQuietly(newStore);
+         return null;
       } catch (DatastoreFrozenException ex) {
          studio_.logs().showError("Can not add data to frozen datastore");
+         freezeQuietly(newStore);
          return null;
       } catch (DatastoreRewriteException ex) {
          studio_.logs().showError(ex, "Can not overwrite data");
+         freezeQuietly(newStore);
          return null;
       } catch (DuplicatorException ex) {
          studio_.logs().showError(ex.getMessage());
+         freezeQuietly(newStore);
          return null;
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IOException in Duplicator plugin");
+         freezeQuietly(newStore);
          return null;
       }
 
-      if (closeListener == null) {
+      if (!success || closeListener == null) {
          return null;
       }
       closeListener.finishDuplication();
@@ -400,6 +442,9 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
    @Override
    public void done() {
       setProgress(100);
+      if (progressBar_ != null) {
+         progressBar_.setVisible(false);
+      }
       studio_.alerts().postAlert("Finished duplicating", this.getClass(), newName_);
    }
 }

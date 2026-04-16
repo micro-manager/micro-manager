@@ -155,13 +155,11 @@ public class DuplicatorPluginFrame extends JDialog {
          }
       }
       int nrNoChannelAxes = axes.size();
-      ;
       if (usesChannels) {
          nrNoChannelAxes = nrNoChannelAxes - 1;
          List<String> channelNameList = ourProvider_.getSummaryMetadata().getChannelNameList();
          if (channelNameList.size() > 0) {
             super.add(new JLabel(Coords.C));
-            ;
          }
          for (int i = 0; i < channelNameList.size(); i++) {
             String channelName = channelNameList.get(i);
@@ -324,6 +322,7 @@ public class DuplicatorPluginFrame extends JDialog {
             cpFrame.dispose();
             final ProgressBar pb = new ProgressBar(ourWindow_.getWindow(),
                   "Duplicating..", 0, 100);
+            de.setProgressBar(pb);
             de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                if ("progress".equals(evt.getPropertyName())) {
                   pb.setProgress((Integer) evt.getNewValue());
