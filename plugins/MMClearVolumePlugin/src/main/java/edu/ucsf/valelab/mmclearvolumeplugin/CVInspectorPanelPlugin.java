@@ -38,7 +38,7 @@ public final class CVInspectorPanelPlugin implements InspectorPanelPlugin {
 
    @Override
    public InspectorPanelController createPanelController(Studio studio) {
-      return new CVInspectorPanelController();
+      return new CVInspectorPanelController(studio);
    }
 
 }
