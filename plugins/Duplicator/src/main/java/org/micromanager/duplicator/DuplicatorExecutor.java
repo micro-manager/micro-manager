@@ -65,6 +65,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
    private final Datastore.SaveMode saveMode_;
    private final String filePath_;
    private ProgressBar progressBar_;
+   private boolean success_ = false;
 
    private class CloseViewerListener extends DataViewerListener {
       private final DataViewer viewer_;
@@ -432,7 +433,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          return null;
       }
       studio_.displays().manage(newStore);
-      success = true;
+      success_ = true;
       return null;
    }
 
@@ -441,7 +442,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       if (progressBar_ != null) {
          progressBar_.setVisible(false);
       }
-      if (success) {
+      if (success_) {
          setProgress(100);
          studio_.alerts().postAlert("Finished duplicating", this.getClass(), newName_);
       }
