@@ -22,7 +22,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -51,7 +51,7 @@ public class PlatePanel extends JPanel {
 
    private final SBSPlate plate_;
    private WellPositionList[] wells_;
-   private Hashtable<String, Integer> wellMap_;
+   private HashMap<String, Integer> wellMap_;
    private WellBox[] wellBoxes_;
    private Rectangle activeRect_;
    private final Rectangle stagePointer_;
@@ -75,8 +75,8 @@ public class PlatePanel extends JPanel {
    private Point anchor_;
    private Point previous_;
 
-   public static Color LIGHT_YELLOW = new Color(255, 255, 145);
-   public static Color LIGHT_GREEN = new Color(204, 224, 201);
+   private static final Color LIGHT_YELLOW = new Color(255, 255, 145);
+   private static final Color LIGHT_GREEN = new Color(204, 224, 201);
    private DrawingParams drawingParams_;
    private double zStagePos_;
 
@@ -199,7 +199,7 @@ public class PlatePanel extends JPanel {
       cameraYFieldOfView_ = studio_.core().getPixelSizeUm() * height;
       stagePointer_ = new Rectangle(3, 3);
       siteIndicator_ = new Rectangle(4, 4);
-      wellMap_ = new Hashtable<>();
+      wellMap_ = new HashMap<>();
       xyStagePos_ = new Point2D.Double(0.0, 0.0);
       zStagePos_ = 0.0;
 
@@ -251,7 +251,7 @@ public class PlatePanel extends JPanel {
       
       rescale();
       wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
-      wellMap_ = new Hashtable<>();
+      wellMap_ = new HashMap<>();
       for (int i = 0; i < wellBoxes_.length; i++) {
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());         
          wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), i);
@@ -309,7 +309,25 @@ public class PlatePanel extends JPanel {
                      }
                   });
                } catch (Exception e2) {
-                  studio_.logs().logError(e2.getMessage());
+                  final String msg = e2.getMessage();
+                  if (msg != null && msg.contains("timed out")) {
+                     SwingUtilities.invokeLater(() -> {
+                        studio_.logs().showError(
+                              "XY stage move timed out. "
+                              + "Consider increasing the Core \"TimeoutMs\" property "
+                              + "in the Device Property Browser.",
+                              PlatePanel.this);
+                        // Re-read actual stage position now that the dialog is dismissed.
+                        try {
+                           refreshStagePosition();
+                        } catch (HCSException hcse) {
+                           studio_.logs().logError(hcse, "HCS: failed to refresh stage position");
+                        }
+                        repaint();
+                     });
+                  } else {
+                     studio_.logs().logError(msg);
+                  }
                }
             }
          });
@@ -371,6 +389,9 @@ public class PlatePanel extends JPanel {
    
    private void drawSelRect(Point pt) {
       Graphics2D g = (Graphics2D) getGraphics();
+      if (g == null) {
+         return;
+      }
       g.setXORMode(getBackground());
       g.drawRect(anchor_.x, anchor_.y, pt.x - anchor_.x, pt.y - anchor_.y);
       g.setPaintMode();
@@ -750,8 +771,7 @@ public class PlatePanel extends JPanel {
    void selectWell(int row, int col, boolean sel) {
       int index = wellMap_.get(getWellKey(row, col));
       wellBoxes_[index].selected = sel;
-      Graphics2D g = (Graphics2D) getGraphics();
-      wellBoxes_[index].draw(g);
+      repaint();
    }
    
    void clearSelection() {
@@ -764,8 +784,7 @@ public class PlatePanel extends JPanel {
    void activateWell(int row, int col, boolean act) {
       int index = wellMap_.get(getWellKey(row, col));
       wellBoxes_[index].active = act;
-      Graphics2D g = (Graphics2D) getGraphics();
-      wellBoxes_[index].draw(g);
+      repaint();
    }
 
    void clearActive() {
@@ -796,6 +815,12 @@ public class PlatePanel extends JPanel {
    public void setLockAspect(boolean state) {
       lockAspect_ = state;
       rescale();
+   }
+
+   @Override
+   public void removeNotify() {
+      super.removeNotify();
+      executorService_.shutdown();
    }
 
    private Point2D.Double offsetCorrectedXYPosition(Point2D.Double xyStagePos) {

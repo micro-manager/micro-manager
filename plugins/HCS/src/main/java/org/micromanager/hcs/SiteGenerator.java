@@ -431,6 +431,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    @Override
    public void dispose() {
       saveSettings();
+      super.dispose();
    }
 
    protected void saveSettings() {
@@ -676,8 +677,19 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
 
    private PositionList generateSitesInWell() {
-      int rows = Integer.parseInt(rowsField_.getText());
-      int cols = Integer.parseInt(columnsField_.getText());
+      int rows;
+      int cols;
+      try {
+         rows = Integer.parseInt(rowsField_.getText().trim());
+         cols = Integer.parseInt(columnsField_.getText().trim());
+      } catch (NumberFormatException nfe) {
+         studio_.logs().logError("HCS: invalid rows/cols value — must be integers");
+         return new PositionList();
+      }
+      if (rows <= 0 || cols <= 0) {
+         studio_.logs().logError("HCS: rows and cols must be positive integers");
+         return new PositionList();
+      }
       PositionList sites = new PositionList();
       if (visitOrderInWell_.getSelectedItem().equals(CASCADE_ORDER)) {
          for (int col = 0; col < cols; col++) {
@@ -715,6 +727,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       }
 
+      if (sites.getNumberOfPositions() == 0 && rows * cols > 0) {
+         studio_.logs().showMessage(
+               "No imaging sites fall within the well boundaries. "
+               + "Try reducing the spacing or the number of rows/columns.");
+      }
       return sites;
    }
 

@@ -45,25 +45,28 @@ public class AFPlane {
             y3 = getY(msp);
             z3 = getZ(msp);
 
-            for (int i = 0; i < msp.size(); i++) {
-               StagePosition sp = msp.get(i);
-               if (sp.is1DStagePosition()) {
-                  zStage_ = sp.getStageDeviceLabel();
+            // Extract Z stage name from the first position that has one.
+            for (MultiStagePosition pos : posList) {
+               for (int i = 0; i < pos.size(); i++) {
+                  StagePosition sp = pos.get(i);
+                  if (sp.is1DStagePosition()) {
+                     zStage_ = sp.getStageDeviceLabel();
+                     break;
+                  }
+               }
+               if (zStage_ != null) {
+                  break;
                }
             }
-            if (zStage_.equals("")) {
+            if (zStage_ == null || zStage_.isEmpty()) {
                throw new NoSuchStageException("No 1D stage found in the stage list");
             }
 
-            if (x1 != 0.0 && x2 != 0.0 && x3 != 0.0
-                  && y1 != 0.0 && y2 != 0.0 && y3 != 0.0
-                  && z1 != 0.0 && z2 != 0.0 && z3 != 0.0) {
-               a = y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2);
-               b = z1 * (x2 - x3) + z2 * (x3 - x1) + z3 * (x1 - x2);
-               c = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
-               d = -(x1 * (y2 * z3 - y3 * z2) + x2 * (y3 * z1 - y1 * z3)
-                     + x3 * (y1 * z2 - y2 * z1));
-            }
+            a = y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2);
+            b = z1 * (x2 - x3) + z2 * (x3 - x1) + z3 * (x1 - x2);
+            c = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
+            d = -(x1 * (y2 * z3 - y3 * z2) + x2 * (y3 * z1 - y1 * z3)
+                  + x3 * (y1 * z2 - y2 * z1));
             valid_ = true;
 
          } catch (NoSuchStageException nsse) {
