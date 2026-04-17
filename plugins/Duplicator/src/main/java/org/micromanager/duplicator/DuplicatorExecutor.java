@@ -384,12 +384,8 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                }
                newStore.putImage(newImgShallow);
                nrCopied++;
-               try {
-                  setProgress((int) ((nrCopied / nrToBeCopied) * 100.0));
-               } catch (IllegalArgumentException iae) {
-                  studio_.logs().logMessage("Duplicator: unexpected progress value: "
-                        + (int) (nrCopied / nrToBeCopied * 100.0));
-               }
+               int pct = (int) Math.min(99, (nrCopied / nrToBeCopied) * 100.0);
+               setProgress(Math.max(0, pct));
 
             }
          }
@@ -436,15 +432,18 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          return null;
       }
       studio_.displays().manage(newStore);
+      success = true;
       return null;
    }
 
    @Override
    public void done() {
-      setProgress(100);
       if (progressBar_ != null) {
          progressBar_.setVisible(false);
       }
-      studio_.alerts().postAlert("Finished duplicating", this.getClass(), newName_);
+      if (success) {
+         setProgress(100);
+         studio_.alerts().postAlert("Finished duplicating", this.getClass(), newName_);
+      }
    }
 }
