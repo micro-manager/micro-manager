@@ -326,7 +326,7 @@ public class PlatePanel extends JPanel {
                         repaint();
                      });
                   } else {
-                     studio_.logs().logError(msg);
+                     studio_.logs().logError(e2, "HCS: XY stage move failed");
                   }
                }
             }
@@ -821,6 +821,9 @@ public class PlatePanel extends JPanel {
    public void removeNotify() {
       super.removeNotify();
       executorService_.shutdown();
+      if (studio_ != null) {
+         studio_.events().unregisterForEvents(this);
+      }
    }
 
    private Point2D.Double offsetCorrectedXYPosition(Point2D.Double xyStagePos) {

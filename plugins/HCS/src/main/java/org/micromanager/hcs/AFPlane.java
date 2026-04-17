@@ -67,6 +67,16 @@ public class AFPlane {
             c = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
             d = -(x1 * (y2 * z3 - y3 * z2) + x2 * (y3 * z1 - y1 * z3)
                   + x3 * (y1 * z2 - y2 * z1));
+            // c is the signed area of the XY triangle (times 2). If it is
+            // near zero the three points are collinear and no unique plane
+            // can be fitted — leave valid_ false so callers won't use it.
+            // The threshold (1 µm²) is negligibly small compared to any
+            // real inter-well spacing.
+            if (Math.abs(c) < 1.0) {
+               throw new NoSuchStageException(
+                     "3-point AF plane is degenerate: the three positions are collinear "
+                     + "or too close together to define a unique plane.");
+            }
             valid_ = true;
 
          } catch (NoSuchStageException nsse) {
@@ -81,12 +91,11 @@ public class AFPlane {
    }
 
    public double getZPos(double x, double y) {
-      if (c == 0.0) {
+      // c is guaranteed non-zero when valid_ is true; guard defensively anyway.
+      if (!valid_ || c == 0.0) {
          return 0.0;
       }
-
-      double z = (-d - a * x - b * y) / c;
-      return z;
+      return (-d - a * x - b * y) / c;
    }
 
    public String getZStage() {
