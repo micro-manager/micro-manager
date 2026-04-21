@@ -35,4 +35,26 @@
 	<target name="clean">
 		<run-all target="clean"/>
 	</target>
+
+	<target name="unittest">
+		<junit printsummary="yes" showoutput="true" haltonfailure="true">
+			<classpath>
+				<pathelement location="../dependencies/artifacts/test/junit-4.11.jar"/>
+				<pathelement location="../dependencies/artifacts/test/hamcrest-core-1.3.jar"/>
+				<pathelement location="./build/intermediates/Classes/autofocus/MMComputeBestFocus"/>
+				<pathelement location="../build/Java/mmstudio/MMJ_.jar"/>
+				<pathelement location="../build/Java/mmcore/MMCoreJ.jar"/>
+				<fileset dir="../dependencies/artifacts/compile" includes="*.jar"/>
+				<fileset dir="../dependencies/artifacts/runtime" includes="*.jar"/>
+			</classpath>
+
+			<formatter type="plain" />
+
+			<batchtest todir="./test-reports">
+				<fileset dir="src/test/java">
+					<include name="**/*Test.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
 </project>

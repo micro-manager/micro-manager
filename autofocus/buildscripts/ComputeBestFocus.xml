@@ -1,0 +1,46 @@
+<project name="MMComputeBestFocus" default="jar">
+	<property name="srcdir" value=".."/>
+	<property name="testdir" value="../src/test/java"/>
+    <property name="sourcefile1" value="src/main/java/org/micromanager/autofocus/tca_af/ComputeBestFocusFromSampledImages.java"/>
+    <property name="sourcefile2" value="src/main/java/org/micromanager/autofocus/tca_af/LocalSmoothingSplineFit.java"/>
+	<import file="autofocusbuild.xml"/>
+
+	<target name="test-compile" depends="jar">
+		<mkdir dir="${mm.java.test.intdir}/MMComputeBestFocus"/>
+		<mm-javac srcdir="${testdir}" destdir="${mm.java.test.intdir}/MMComputeBestFocus">
+			<classpath>
+				<path refid="project.classpath"/>
+				<pathelement location="${mm.java.lib.mmcorej}"/>
+				<pathelement location="${mm.java.lib.mmstudio}"/>
+				<pathelement location="${mm.java.mmlibraries}"/>
+				<fileset dir="${mm.java.mmlibraries}" includes="*.jar" />
+				<pathelement location="${mm.java.test.lib.dir}/junit-4.11.jar"/>
+				<pathelement location="${mm.java.test.lib.dir}/hamcrest-core-1.3.jar"/>
+				<pathelement location="${intdir}"/>
+			</classpath>
+		</mm-javac>
+	</target>
+
+	<target name="test" depends="test-compile">
+		<mkdir dir="${mm.java.test.reportdir}/MMComputeBestFocus"/>
+		<junit printsummary="yes" showoutput="true" haltonfailure="true">
+			<classpath>
+				<path refid="project.classpath"/>
+				<pathelement location="${mm.java.lib.mmcorej}"/>
+				<pathelement location="${mm.java.lib.mmstudio}"/>
+				<pathelement location="${mm.java.mmlibraries}"/>
+				<fileset dir="${mm.java.mmlibraries}" includes="*.jar" />
+				<pathelement location="${mm.java.test.lib.dir}/junit-4.11.jar"/>
+				<pathelement location="${mm.java.test.lib.dir}/hamcrest-core-1.3.jar"/>
+				<pathelement location="${intdir}"/>
+				<pathelement location="${mm.java.test.intdir}/MMComputeBestFocus"/>
+			</classpath>
+			<formatter type="plain" />
+			<batchtest todir="${mm.java.test.reportdir}/MMComputeBestFocus">
+				<fileset dir="${testdir}">
+					<include name="**/*Test.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+</project>

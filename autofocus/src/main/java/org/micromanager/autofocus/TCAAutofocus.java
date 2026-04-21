@@ -28,16 +28,21 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+import org.micromanager.autofocus.tca_af.ComputeBestFocusFromSampledImages;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
+
 
 /**
  */
@@ -52,6 +57,8 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private static final String KEY_CROP_SIZE = "Crop ratio";
    private static final String KEY_CHANNEL = "Channel";
    private static final String NOCHANNEL = "";
+   private static final String KEY_REL_Z_MIN = "Relative Z min";
+   private static final String KEY_REL_Z_MAX = "Relative Z max";
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    
    private static final String AF_DEVICE_NAME = "TCA AF";
@@ -67,6 +74,8 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    public double thres_ = 0.02;
    public double cropSize_ = 0.2;
    public String channel_ = "";
+   private double rel_z_min_ = -80.0;
+   private double rel_z_max_ = 40.0;
 
    private boolean verbose_ = true; // displaying debug info or not
    private String channelGroup_;
@@ -84,6 +93,8 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       super.createProperty(KEY_THRES, Double.toString(thres_));
       super.createProperty(KEY_CROP_SIZE, Double.toString(cropSize_));
       super.createProperty(KEY_CHANNEL, channel_);
+      super.createProperty(KEY_REL_Z_MIN, Double.toString(rel_z_min_));
+      super.createProperty(KEY_REL_Z_MAX, Double.toString(rel_z_max_));
    }
 
 
@@ -97,8 +108,11 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          thres_ = Double.parseDouble(getPropertyValue(KEY_THRES));
          cropSize_ = Double.parseDouble(getPropertyValue(KEY_CROP_SIZE));
          channel_ = getPropertyValue(KEY_CHANNEL);
-      
+         rel_z_min_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MIN));
+         rel_z_max_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAX));
+
       } catch (Exception e) {
+
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
@@ -157,15 +171,16 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
 
 
 
-
+         /*
          //set z-distance to the lowest z-distance of the stack
          curDist_ = core_.getPosition(core_.getFocusDevice());
          double baseDist = curDist_ - sizeFirst_ * numFirst_;
+
          core_.setPosition(core_.getFocusDevice(), baseDist);
          core_.waitForDevice(core_.getFocusDevice());
          delayTime(300);
          IJ.log(" Before rough search: " + curDist_);
-
+         
          //Rough search
          double curSh;
          for (int i = 0; i < 2 * numFirst_ + 1; i++) {
@@ -184,39 +199,47 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
             }
 
          }
+         */
+         List<ImageProcessor> imageProcessors = new ArrayList<>();
 
-         baseDist = bestDist - sizeSecond_ * numSecond_;
-         core_.setPosition(core_.getFocusDevice(), baseDist);
-         delayTime(100);
+         List<Double> zSampledList = new ArrayList<>();
+         double deltaz = 1;
 
-         bestSh = 0;
+         // create list of z positions with equal spacing based on number of images and assumed deltaz_samp
 
-         //Fine search
-         for (int i = 0; i < 2 * numSecond_ + 1; i++) {
-            core_.setPosition(core_.getFocusDevice(), baseDist + i * sizeSecond_);
+         //double rel_z_min = -80.0;
+         //double rel_z_max = 40.0;
+         int numImages = (int) ((rel_z_max_ - rel_z_min_) / deltaz) + 1;
+         double original_z = core_.getPosition(core_.getFocusDevice());
+
+
+         for (int i = 0; i < numImages; i++) {
+            core_.setPosition(core_.getFocusDevice(), rel_z_min_ + original_z + i * deltaz);
             core_.waitForDevice(core_.getFocusDevice());
-
             curDist_ = core_.getPosition(core_.getFocusDevice());
+            System.out.println("Moved to Z position: " + curDist_);
+            snapSingleImage();
+            delayTime(50);
+            imageProcessors.add(ipCurrent_);
+
+            zSampledList.add(curDist_ - original_z);
+         }
+         System.out.println("Created Z positions list, deltaZ = " + deltaz);
+
+         double z_ini = 0.0;
+         double deltaz_samp = deltaz;
+         double[] zSampled = zSampledList.stream().mapToDouble(Double::doubleValue).toArray();
+
+         ComputeBestFocusFromSampledImages.Results results =
+               ComputeBestFocusFromSampledImages.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled);
+
+         if(Double.isNaN(results.z_best_focus)){
+            IJ.log("Unable to estimate best focus position. Please check the input parameters and try again.");
+         }else{
+            core_.setPosition(core_.getFocusDevice(), results.z_best_focus);
             // indx =1;
             snapSingleImage();
-            // indx =0;    
-
-            curSh = computeScore(ipCurrent_);
-
-            if (curSh > bestSh) {
-               bestSh = curSh;
-               bestDist = curDist_;
-            } else if (bestSh - curSh > thres_ * bestSh && bestDist < 5000) {
-               break;
-            }
-            //===IJ.log(String.valueOf(curDist)+" "+String.valueOf(curSh)+" "+String.valueOf(tcur));
          }
-
-         IJ.log("BEST_DIST_SECOND" + bestDist + " BEST_SH_SECOND" + bestSh);
-
-         core_.setPosition(core_.getFocusDevice(), bestDist);
-         // indx =1;
-         snapSingleImage();
          // indx =0;  
          core_.setShutterOpen(shutterOpen);
          core_.setAutoShutter(autoShutter);
