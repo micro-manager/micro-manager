@@ -35,6 +35,7 @@ import ij.io.FileSaver;
 import ij.io.Opener;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
@@ -296,6 +297,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             numComponents = 1;
          } else if (proc instanceof ShortProcessor) {
             bytesPerPixel = 2;
+            numComponents = 1;
+         } else if (proc instanceof FloatProcessor) {
+            bytesPerPixel = 4;
             numComponents = 1;
          } else if (proc instanceof ColorProcessor) {
             bytesPerPixel = 4;
@@ -561,6 +565,10 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             // Short
             proc = new ShortProcessor(width, height);
             proc.setPixels((short[]) pixels);
+         } else if (numComponents == 1 && bytesPerPixel == 4) {
+            // Float
+            proc = new FloatProcessor(width, height);
+            proc.setPixels((float[]) pixels);
          } else {
             throw new IllegalArgumentException(String.format(
                   "Unexpected image format with %d bytes per pixel and %d components",
