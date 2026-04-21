@@ -305,6 +305,11 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             return null;
          }
          Object pixels = proc.getPixels();
+         // ColorProcessor.getPixels() returns int[] (packed 0xAARRGGBB).
+         // Convert to interleaved B-G-R-0 byte[] that DefaultImage expects.
+         if (proc instanceof ColorProcessor) {
+            pixels = BufferTools.rgb32IntToBytes((int[]) pixels);
+         }
          return new DefaultImage(pixels, width, height,
                bytesPerPixel, numComponents, coords, metadata);
       } catch (IllegalArgumentException ex) {
