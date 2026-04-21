@@ -279,7 +279,7 @@ public class ManualTiffTest {
                   pixels[i * width + j] = (r << 16) | (g << 8) | b;
                }
             }
-            return new DefaultImage(pixels, width, height, 4, 3, coords, metadata);
+            return new DefaultImage(BufferTools.rgb32IntToBytes(pixels), width, height, 4, 3, coords, metadata);
          }
          default:
             throw new IllegalArgumentException("Unknown pixel type: " + type);
@@ -326,8 +326,12 @@ public class ManualTiffTest {
             Assert.fail("IOException while saving store: " + e);
          }
       } finally {
-         store.freeze();
-         store.close();
+         try {
+            store.freeze();
+            store.close();
+         } catch (IOException e) {
+            Assert.fail("IOException while closing store: " + e);
+         }
       }
 
       System.out.println("Loading " + type + " data from " + path);
@@ -389,8 +393,16 @@ public class ManualTiffTest {
       } catch (IOException io) {
          Assert.fail("IOException while saving store " + io);
       } finally {
-         store.freeze();
-         store.close();
+         try {
+            store.freeze();
+         } catch (IOException e) {
+            Assert.fail("IOException while freezing store: " + e);
+         }
+         try {
+            store.close();
+         } catch (IOException e) {
+            Assert.fail("IOException while closing store: " + e);
+         }
       }
 
       System.out.println("Loading data from " + path);
