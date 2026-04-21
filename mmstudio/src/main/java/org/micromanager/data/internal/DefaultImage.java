@@ -182,13 +182,10 @@ public final class DefaultImage implements Image {
     * Generates a DefaultImage from pixels, minimal image info, and the
     * supplied coords and metadata.
     *
-    * <p>For byte[], short[], and float[] inputs the pixel array is used directly
-    * (wrapped in a Buffer, not copied). For int[] RGB32 inputs the pixels are
-    * converted from packed 0x00RRGGBB format to an interleaved B-G-R-0 byte[]
-    * (one allocation per call); all other array types are zero-copy.
+    * <p>The pixel array is used directly (wrapped in a Buffer, not copied).
     *
-    * @param pixels   Image pixels: byte[] (GRAY8), short[] (GRAY16), float[] (GRAY32),
-    *                 or int[] (RGB32, packed 0x00RRGGBB). Must not be null.
+    * @param pixels   Image pixels: byte[] (GRAY8 or RGB), short[] (GRAY16), float[] (GRAY32).
+    *                 Must not be null.
     * @param coords   Coords to be used for this new image (can be null).
     * @param metadata Metadata to be used this new image (can be null).
     * @throws IllegalArgumentException thrown when pixels is null
@@ -206,13 +203,6 @@ public final class DefaultImage implements Image {
          bpc = 1;
       } else if (pixels instanceof short[]) {
          bpc = 2;
-      } else if (pixels instanceof int[] && bytesPerPixel == 4
-            && numComponents == 3) {
-         // Convert packed 0x00RRGGBB int[] to interleaved B-G-R-0 byte[] so that
-         // wrapArray() gets a plain byte[] and the copy is explicit here, not hidden
-         // inside BufferTools.
-         pixels = BufferTools.rgb32IntToBytes((int[]) pixels);
-         bpc = 1;
       } else if (pixels instanceof float[] && bytesPerPixel == 4
             && numComponents == 1) {
          bpc = 4;
