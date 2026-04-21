@@ -29,6 +29,7 @@ public final class IntegerComponentStats {
    // reproducing the previous behavior exactly.
    private final double rangeMin_;
    private final double binWidthFloat_;
+   private final boolean isFloat_;
    private final long pixelCount_;
    private final long pixelCountExcludingZeros_;
    private final boolean usedROI_;
@@ -44,6 +45,7 @@ public final class IntegerComponentStats {
       private int binWidthPowerOf2_;
       private double rangeMin_ = 0.0;
       private double binWidthFloat_ = -1.0; // sentinel: -1 → use 1 << binWidthPowerOf2_
+      private boolean isFloat_ = false;
       private long pixelCount_;
       private long pixelCountExcludingZeros_;
       private boolean usedROI_;
@@ -71,6 +73,11 @@ public final class IntegerComponentStats {
       public Builder binWidthFloat(double width) {
          Preconditions.checkArgument(width >= 0.0);
          binWidthFloat_ = width;
+         return this;
+      }
+
+      public Builder isFloat(boolean isFloat) {
+         isFloat_ = isFloat;
          return this;
       }
 
@@ -142,6 +149,7 @@ public final class IntegerComponentStats {
       int binWidthPow2 = Integer.numberOfTrailingZeros(a.getHistogramBinWidth());
       return builder()
             .histogram(merged, binWidthPow2)
+            .isFloat(a.isFloat() || b.isFloat())
             .pixelCount(a.getPixelCount() + b.getPixelCount())
             .pixelCountExcludingZeros(
                   a.getPixelCountExcludingZeros()
@@ -173,6 +181,7 @@ public final class IntegerComponentStats {
       binWidthPowerOf2_ = b.binWidthPowerOf2_;
       rangeMin_ = b.rangeMin_;
       binWidthFloat_ = (b.binWidthFloat_ >= 0.0) ? b.binWidthFloat_ : (1 << b.binWidthPowerOf2_);
+      isFloat_ = b.isFloat_;
       pixelCount_ = b.pixelCount_;
       pixelCountExcludingZeros_ = b.pixelCountExcludingZeros_;
       usedROI_ = b.usedROI_;
@@ -227,21 +236,25 @@ public final class IntegerComponentStats {
       return (long) Math.floor(rangeMin_);
    }
 
+   public boolean isFloat() {
+      return isFloat_;
+   }
+
    public long getHistogramRangeMax() {
       if (histogram_ == null) {
          return 0;
       }
-      // For integer images (rangeMin_ == 0 and binWidthFloat_ is a power of 2),
-      // the last representable value is binWidth*nBins - 1 (e.g. 255 for 8-bit).
       // For float images with binWidthFloat_ == 0 (constant image, all pixels identical),
       // the range collapses to a single point: return ceil(rangeMin_).
       // For all other float images, the upper bound is ceil(fMax).
+      // For integer images, the last representable value is
+      // binWidth*nBins - 1 (e.g. 255 for 8-bit).
       if (binWidthFloat_ == 0.0) {
          return (long) Math.ceil(rangeMin_);
       }
       double rawMax = rangeMin_ + binWidthFloat_ * getHistogramBinCount();
       long ceiled = (long) Math.ceil(rawMax);
-      if (rangeMin_ == 0.0 && binWidthFloat_ == (1 << binWidthPowerOf2_)) {
+      if (!isFloat_) {
          // Integer image: last valid sample value is one below the bin-count boundary
          return ceiled - 1;
       }

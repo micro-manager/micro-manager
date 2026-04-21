@@ -301,6 +301,7 @@ public final class ImageStatsProcessor {
       // matching the display which shows mean and stdev rounded to integers.
       IntegerComponentStats stats = IntegerComponentStats.builder()
             .histogram(hist, 0)
+            .isFloat(true)
             .rangeMin((double) fMin)
             .binWidthFloat(fBinWidth)
             .pixelCount(count)

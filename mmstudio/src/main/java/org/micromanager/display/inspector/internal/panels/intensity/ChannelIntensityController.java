@@ -449,13 +449,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          }
          long[] data = componentStats.getInRangeHistogram();
          if (data != null) {
-            // For 32-bit float images (cameraBits == 32), the histogram is built in
-            // actual pixel-value coordinates with a data-driven number of bins.
-            // For float images (cameraBits == 32): pass actual pixel-value range
-            // [floor(fMin), ceil(fMax)] so the histogram X-axis shows real pixel values.
-            // For integer images: use the bit-depth combo box selection as before,
+            // For float images: the histogram is built in actual pixel-value coordinates
+            // with a data-driven range [floor(fMin), ceil(fMax)] so the X-axis shows
+            // real pixel values. For integer images: use the bit-depth combo box selection,
             // capping at 30 bits to avoid Java int-shift overflow (1<<32 == 1).
-            if (rangeBits >= 32) {
+            if (componentStats.isFloat()) {
                long rangeMin = componentStats.getHistogramRangeMin();
                long rangeMax = componentStats.getHistogramRangeMax();
                if (rangeMax <= rangeMin) {
@@ -508,7 +506,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    @MustCallOnEDT
    private void updateHistoRangeControlsEnabled() {
-      boolean isFloat = cameraBits_ != null && cameraBits_ >= 32;
+      boolean isFloat = stats_ != null
+            && stats_.getNumberOfComponents() > 0
+            && stats_.getComponentStats(0).isFloat();
       histoRangeComboBox_.setEnabled(!isFloat);
       histoRangeDownButton_.setEnabled(!isFloat && histoRangeComboBox_.getSelectedIndex() > 0);
       histoRangeUpButton_.setEnabled(!isFloat
