@@ -13,12 +13,12 @@ import java.util.Arrays;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.stat.StatUtils;
-import org.micromanager.autofocus.tca_af.LocalSmoothingSplineFit;
+
 /**
  * Java translation of compute_best_focus_from_sampled_imagesfor_460nm_updated.m
  * Computes best focus from sampled images using various focus metrics.
  */
-public class ComputeBestFocusFromSampledImages {
+public class ComputeBestFocus460nm {
 
     // Settings class equivalent to MATLAB struct
     public static class Settings {

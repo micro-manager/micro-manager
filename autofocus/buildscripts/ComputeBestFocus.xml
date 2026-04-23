@@ -1,8 +1,11 @@
 <project name="MMComputeBestFocus" default="jar">
+	<property name="mm.src.dir" value="../../../micro-manager-emi/"/>
 	<property name="srcdir" value=".."/>
 	<property name="testdir" value="../src/test/java"/>
-    <property name="sourcefile1" value="src/main/java/org/micromanager/autofocus/tca_af/ComputeBestFocusFromSampledImages.java"/>
-    <property name="sourcefile2" value="src/main/java/org/micromanager/autofocus/tca_af/LocalSmoothingSplineFit.java"/>
+    <property name="sourcefile" value="src/main/java/org/micromanager/autofocus/tca_af/ComputeBestFocus460nm.java"/>
+	<property name="sourcefile2" value="src/main/java/org/micromanager/autofocus/tca_af/LocalSmoothingSplineFit.java"/>
+	<property name="sourcefile3" value="src/main/java/org/micromanager/autofocus/tca_af/ComputeBestFocusNADH.java"/>
+
 	<import file="autofocusbuild.xml"/>
 
 	<target name="test-compile" depends="jar">

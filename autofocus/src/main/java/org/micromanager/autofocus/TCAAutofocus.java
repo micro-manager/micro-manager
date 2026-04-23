@@ -28,21 +28,29 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Color;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
-import org.micromanager.autofocus.tca_af.ComputeBestFocusFromSampledImages;
+import org.micromanager.autofocus.tca_af.ComputeBestFocus460nm;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
+import org.jfree.data.xy.XYSeries;
+import org.micromanager.imageprocessing.curvefit.PlotUtils;
 
 /**
  */
@@ -59,6 +67,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private static final String NOCHANNEL = "";
    private static final String KEY_REL_Z_MIN = "Relative Z min";
    private static final String KEY_REL_Z_MAX = "Relative Z max";
+   private static final String KEY_DELTA_Z = "Delta Z";
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    
    private static final String AF_DEVICE_NAME = "TCA AF";
@@ -73,9 +82,10 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    public int numSecond_ = 5;
    public double thres_ = 0.02;
    public double cropSize_ = 0.2;
+   public double deltaz_ = 1.0;
    public String channel_ = "";
-   private double rel_z_min_ = -80.0;
-   private double rel_z_max_ = 40.0;
+   private double rel_z_min_ = -10.0;
+   private double rel_z_max_ = 10.0;
 
    private boolean verbose_ = true; // displaying debug info or not
    private String channelGroup_;
@@ -86,27 +96,17 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
     *
     */
    public TCAAutofocus() {
-      super.createProperty(KEY_SIZE_FIRST, Double.toString(sizeFirst_));
-      super.createProperty(KEY_NUM_FIRST, Integer.toString(numFirst_));
-      super.createProperty(KEY_SIZE_SECOND, Double.toString(sizeSecond_));
-      super.createProperty(KEY_NUM_SECOND, Integer.toString(numSecond_));
-      super.createProperty(KEY_THRES, Double.toString(thres_));
-      super.createProperty(KEY_CROP_SIZE, Double.toString(cropSize_));
       super.createProperty(KEY_CHANNEL, channel_);
       super.createProperty(KEY_REL_Z_MIN, Double.toString(rel_z_min_));
       super.createProperty(KEY_REL_Z_MAX, Double.toString(rel_z_max_));
+      super.createProperty(KEY_DELTA_Z, Double.toString(deltaz_));
    }
 
 
    @Override
    public void applySettings() {
       try {
-         sizeFirst_ = Double.parseDouble(getPropertyValue(KEY_SIZE_FIRST));
-         numFirst_ = Integer.parseInt(getPropertyValue(KEY_NUM_FIRST));
-         sizeSecond_ = Double.parseDouble(getPropertyValue(KEY_SIZE_SECOND));
-         numSecond_ = Integer.parseInt(getPropertyValue(KEY_NUM_SECOND));
-         thres_ = Double.parseDouble(getPropertyValue(KEY_THRES));
-         cropSize_ = Double.parseDouble(getPropertyValue(KEY_CROP_SIZE));
+         deltaz_ = Double.parseDouble(getPropertyValue(KEY_DELTA_Z));
          channel_ = getPropertyValue(KEY_CHANNEL);
          rel_z_min_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MIN));
          rel_z_max_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAX));
@@ -166,76 +166,46 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          if (core_.getShutterDevice().trim().length() > 0) {
             core_.waitForDevice(core_.getShutterDevice());
          }
-         //delay_time(3000);
-
-
-
-
-         /*
-         //set z-distance to the lowest z-distance of the stack
-         curDist_ = core_.getPosition(core_.getFocusDevice());
-         double baseDist = curDist_ - sizeFirst_ * numFirst_;
-
-         core_.setPosition(core_.getFocusDevice(), baseDist);
-         core_.waitForDevice(core_.getFocusDevice());
-         delayTime(300);
-         IJ.log(" Before rough search: " + curDist_);
          
-         //Rough search
-         double curSh;
-         for (int i = 0; i < 2 * numFirst_ + 1; i++) {
-            core_.setPosition(core_.getFocusDevice(), baseDist + i * sizeFirst_);
-            core_.waitForDevice(core_.getFocusDevice());
-            curDist_ = core_.getPosition(core_.getFocusDevice());
-            snapSingleImage();
-
-            curSh = computeScore(ipCurrent_);
-
-            if (curSh > bestSh) {
-               bestSh = curSh;
-               bestDist = curDist_;
-            } else if (bestSh - curSh > thres_ * bestSh && bestDist < 5000) {
-               break;
-            }
-
-         }
-         */
          List<ImageProcessor> imageProcessors = new ArrayList<>();
 
          List<Double> zSampledList = new ArrayList<>();
-         double deltaz = 1;
+         //double deltaz = 1;
 
          // create list of z positions with equal spacing based on number of images and assumed deltaz_samp
 
          //double rel_z_min = -80.0;
          //double rel_z_max = 40.0;
-         int numImages = (int) ((rel_z_max_ - rel_z_min_) / deltaz) + 1;
+         int numImages = (int) ((rel_z_max_ - rel_z_min_) / deltaz_) + 1;
          double original_z = core_.getPosition(core_.getFocusDevice());
 
 
          for (int i = 0; i < numImages; i++) {
-            core_.setPosition(core_.getFocusDevice(), rel_z_min_ + original_z + i * deltaz);
+            core_.setPosition(core_.getFocusDevice(), rel_z_min_ + original_z + i * deltaz_);
             core_.waitForDevice(core_.getFocusDevice());
             curDist_ = core_.getPosition(core_.getFocusDevice());
-            System.out.println("Moved to Z position: " + curDist_);
             snapSingleImage();
             delayTime(50);
             imageProcessors.add(ipCurrent_);
 
             zSampledList.add(curDist_ - original_z);
          }
-         System.out.println("Created Z positions list, deltaZ = " + deltaz);
+         IJ.log("Created Z positions list, deltaZ = " + deltaz_);
 
          double z_ini = 0.0;
-         double deltaz_samp = deltaz;
+         double deltaz_samp = deltaz_;
          double[] zSampled = zSampledList.stream().mapToDouble(Double::doubleValue).toArray();
 
-         ComputeBestFocusFromSampledImages.Results results =
-               ComputeBestFocusFromSampledImages.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled);
+         ComputeBestFocus460nm.Results results =
+               ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled);
+         double bestZ = original_z;
 
          if(Double.isNaN(results.z_best_focus)){
             IJ.log("Unable to estimate best focus position. Please check the input parameters and try again.");
+            core_.setPosition(core_.getFocusDevice(), original_z);
+
          }else{
+            bestZ = results.z_best_focus;
             core_.setPosition(core_.getFocusDevice(), results.z_best_focus);
             // indx =1;
             snapSingleImage();
@@ -243,12 +213,69 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          // indx =0;  
          core_.setShutterOpen(shutterOpen);
          core_.setAutoShutter(autoShutter);
+         IJ.log("Focus scores computed, plotting results...");
 
+         // Plot data:
+         SortedMap<Double, Double> focusScoreMap = new TreeMap<>();
+         int m = 0; // metric ID
+         IJ.log("Will only plot curve for metric " + results.metricNames[m]);
+         try {
+            for (int i = 0; i < zSampled.length; i++) {
+               double score = results.metricValuesNorm[i][m];
+               focusScoreMap.put(zSampled[i]+original_z, score);
+            }
+         } catch (Exception e) {
+            IJ.log("Error while populating focus score map: " + e.getMessage());
+         }   
+         
+         //IJ.log("focusScoreMap: " + focusScoreMap);
+
+          
+         XYSeries xySeries = new XYSeries("Focus Score from images");
+         focusScoreMap.forEach(xySeries::add);
+          
+         XYSeries xySeriesFitted = new XYSeries("Fitted Focus Score");
+         // populate xySeriesFitted with data from results.smoothCurvesNorm[m]
+         for (int i = 0; i < results.zFine.length; i++) {
+            xySeriesFitted.add(results.zFine[i]+original_z, results.smoothCurvesNorm[i][m]);
+         }
+
+         /*
+         
+         try {
+            saveXYSeriesToCsv(xySeries, "focus_scores.csv");
+            saveXYSeriesToCsv(xySeriesFitted, "fitted_focus_scores.csv");
+         } catch (IOException e) {
+            IJ.log("Error while saving focus scores to CSV: " + e.getMessage());
+         }
+         */
+
+         XYSeries[] data = {xySeries, xySeriesFitted};
+
+         boolean[] shapes = {true, false};
+         PlotUtils pu = new PlotUtils(app_);
+         pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes, "", bestZ);
 
          IJ.log("Total Time: " + (System.currentTimeMillis() - t0));
       } catch (Exception e) {
          IJ.error(e.getMessage());
       }     
+   }
+   private static void saveXYSeriesToCsv(XYSeries series, String filePath) throws IOException {
+      try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+
+         // Optional header
+         writer.write("X,Y");
+         writer.newLine();
+
+         for (int i = 0; i < series.getItemCount(); i++) {
+               double x = series.getX(i).doubleValue();
+               double y = series.getY(i).doubleValue();
+
+               writer.write(x + "," + y);
+               writer.newLine();
+         }
+      }
    }
 
    //take a snapshot and save pixel values in ipCurrent_
