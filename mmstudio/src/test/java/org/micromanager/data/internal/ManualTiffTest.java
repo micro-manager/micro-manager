@@ -59,15 +59,18 @@ public class ManualTiffTest {
     * Path for one of the file sets we use. This is a manually-created (i.e.
     * not using MDA) singleplane TIFF acquisition.
     */
-   private static final String ALPHA2_PATH = System.getProperty("user.dir") + "/src/test/resources/org/micromanager/data/internal/alpha_2.0_singleplane_manual";
+   private static final String ALPHA2_PATH = java.nio.file.Paths.get(
+         System.getProperty("user.dir"),
+         "src", "test", "resources", "org", "micromanager", "data", "internal",
+         "alpha_2.0_singleplane_manual").toString();
 
    private static final String COMMENT_KEY = "comment";
    private static final String IMAGE_COMMENT = "This is an image comment";
    private static final String SUMMARY_COMMENT = "This is a summary comment";
 
    static {
-      SUMMARIES = new HashMap<String, SummaryMetadata>();
-      IMAGES = new HashMap<String, ArrayList<HelperImageInfo>>();
+      SUMMARIES = new HashMap<>();
+      IMAGES = new HashMap<>();
 
       DefaultSummaryMetadata.Builder summary = new DefaultSummaryMetadata.Builder();
       summary.prefix("thisIsAPrefix")
@@ -80,8 +83,8 @@ public class ManualTiffTest {
          .channelNames(new String[] {"Alpha", "Beta", "Romeo"})
          .zStepUm(123456789.012345).waitInterval(-1234.5678)
          .customIntervalsMs(new Double[] {12.34, 56.78})
-         .axisOrder(new String[] {"axis 5", "axis 3", "axis 97"})
-         .intendedDimensions((new DefaultCoords.Builder()).index("axis 5", 2).index("axis 3", 9).index("axis 97", 8).build())
+         .axisOrder(new String[] {"axis5", "axis3", "axis97"})
+         .intendedDimensions((new DefaultCoords.Builder()).index("axis5", 2).index("axis3", 9).index("axis97", 8).build())
          .startDate("The age of Aquarius")
          .stagePositions(new MultiStagePosition[] {
             new MultiStagePosition("some xy stage", 24.3, 43.2, "some z stage", 1.01),
@@ -183,24 +186,173 @@ public class ManualTiffTest {
    // Tests proper loading of a stored singleplane TIFF file.
    @Test
    public void testSinglePlaneTIFFLoad() {
-      DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
-      for (String path : SUMMARIES.keySet()) {
-         try {
-            Datastore data = manager.loadData(path, true);
-            testSummary(path, data.getSummaryMetadata());
-            testImages(path, data);
+      testTIFFSaveLoad(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoad() {
+      testTIFFSaveLoad(Datastore.SaveMode.MULTIPAGE_TIFF);
+   }
+
+   @Test
+   public void testSinglePlaneTIFFSaveLoadByte() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, PixelTypeCase.GRAY8);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoadByte() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.MULTIPAGE_TIFF, PixelTypeCase.GRAY8);
+   }
+
+   @Test
+   public void testSinglePlaneTIFFSaveLoadShort() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, PixelTypeCase.GRAY16);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoadShort() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.MULTIPAGE_TIFF, PixelTypeCase.GRAY16);
+   }
+
+   @Test
+   public void testSinglePlaneTIFFSaveLoadFloat() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, PixelTypeCase.GRAY32);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoadFloat() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.MULTIPAGE_TIFF, PixelTypeCase.GRAY32);
+   }
+
+   @Test
+   public void testSinglePlaneTIFFSaveLoadRGB() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, PixelTypeCase.RGB32);
+   }
+
+   @Test
+   public void testMultipageTIFFSaveLoadRGB() {
+      testTIFFSaveLoadPixelType(Datastore.SaveMode.MULTIPAGE_TIFF, PixelTypeCase.RGB32);
+   }
+
+   private enum PixelTypeCase {
+      GRAY8, GRAY16, GRAY32, RGB32
+   }
+
+   private Image makeTestImage(PixelTypeCase type, Coords coords, Metadata metadata) {
+      final int width = 24;
+      final int height = 16;
+      switch (type) {
+         case GRAY8: {
+            byte[] pixels = new byte[width * height];
+            for (int i = 0; i < height; ++i) {
+               for (int j = 0; j < width; ++j) {
+                  pixels[i * width + j] = (byte) (i * 10 + j);
+               }
+            }
+            return new DefaultImage(pixels, width, height, 1, 1, coords, metadata);
          }
-         catch (IOException e) {
-            Assert.fail("Unable to load required data file " + path);
+         case GRAY16: {
+            short[] pixels = new short[width * height];
+            for (int i = 0; i < height; ++i) {
+               for (int j = 0; j < width; ++j) {
+                  pixels[i * width + j] = (short) (i * 100 + j);
+               }
+            }
+            return new DefaultImage(pixels, width, height, 2, 1, coords, metadata);
+         }
+         case GRAY32: {
+            float[] pixels = new float[width * height];
+            for (int i = 0; i < height; ++i) {
+               for (int j = 0; j < width; ++j) {
+                  pixels[i * width + j] = (i - height / 2) * 10.5f + j * 0.1f;
+               }
+            }
+            return new DefaultImage(pixels, width, height, 4, 1, coords, metadata);
+         }
+         case RGB32: {
+            int[] pixels = new int[width * height];
+            for (int i = 0; i < height; ++i) {
+               for (int j = 0; j < width; ++j) {
+                  int r = (i * 5) & 0xFF;
+                  int g = (j * 7) & 0xFF;
+                  int b = ((i + j) * 3) & 0xFF;
+                  pixels[i * width + j] = (r << 16) | (g << 8) | b;
+               }
+            }
+            return new DefaultImage(BufferTools.rgb32IntToBytes(pixels), width, height, 4, 3, coords, metadata);
+         }
+         default:
+            throw new IllegalArgumentException("Unknown pixel type: " + type);
+      }
+   }
+
+   private Metadata metadataForPixelType(PixelTypeCase type) {
+      Metadata.Builder base = IMAGES.get(ALPHA2_PATH).get(0).getMetadata().copyBuilderWithNewUUID();
+      switch (type) {
+         case GRAY8:  return base.bitDepth(8).build();
+         case GRAY16: return base.bitDepth(16).build();
+         case GRAY32: return base.bitDepth(32).build();
+         case RGB32:  return base.bitDepth(8).build();
+         default:     return base.build();
+      }
+   }
+
+   private void testTIFFSaveLoadPixelType(Datastore.SaveMode saveMode, PixelTypeCase type) {
+      DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
+      Coords coords = manager.getCoordsBuilder().z(0).time(0).channel(0).stagePosition(0).build();
+      Metadata metadata = metadataForPixelType(type);
+      Image image = makeTestImage(type, coords, metadata);
+      HelperImageInfo info = new HelperImageInfo(coords, metadata,
+            HelperImageInfo.hashPixels(image));
+
+      File tempDir = Files.createTempDir();
+      String path = tempDir.getPath() + "/test";
+      Datastore store = manager.createRAMDatastore();
+      try {
+         try {
+            store.setSummaryMetadata(SUMMARIES.get(ALPHA2_PATH));
+            store.putImage(image);
+         } catch (DatastoreFrozenException e) {
+            Assert.fail("Unable to add images or set summary metadata: " + e);
+         } catch (DatastoreRewriteException e) {
+            Assert.fail("Unable to add images or set summary metadata: " + e);
+         } catch (IOException io) {
+            Assert.fail("IOException while adding image to store " + io);
+         }
+         try {
+            store.save(saveMode, path);
+            store.setSavePath(path);
+         } catch (Exception e) {
+            Assert.fail("IOException while saving store: " + e);
+         }
+      } finally {
+         try {
+            store.freeze();
+            store.close();
+         } catch (IOException e) {
+            Assert.fail("IOException while closing store: " + e);
          }
       }
+
+      System.out.println("Loading " + type + " data from " + path);
+      try {
+         Datastore loadedStore = manager.loadData(path, true);
+         try {
+            info.test(loadedStore);
+         } finally {
+            loadedStore.freeze();
+            loadedStore.close();
+         }
+      } catch (IOException e) {
+         Assert.fail("Unable to load " + type + " datastore: " + e);
+      }
+      tempDir.deleteOnExit();
    }
 
    // Creates a new multipage TIFF, saves it, loads it, and verifies the
    // results are as expected. For convenience, re-uses the summary metadata
    // and image metadata used by the testSinglePlaneTIFFLoad() method.
-   @Test
-   public void testMultipageTIFFSaveLoad() {
+   public void testTIFFSaveLoad(Datastore.SaveMode saveMode) {
       DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
       Datastore store = manager.createRAMDatastore();
       // Manufacture an Image.
@@ -219,9 +371,10 @@ public class ManualTiffTest {
       HelperImageInfo info = new HelperImageInfo(builder.build(), metadata,
             HelperImageInfo.hashPixels(image));
       try {
-         store.putImage(image);
+         // need to set SummaryMetadata before inserting images
          SummaryMetadata summary = SUMMARIES.get(ALPHA2_PATH);
          store.setSummaryMetadata(summary);
+         store.putImage(image);
       }
       catch (DatastoreFrozenException e) {
          Assert.fail("Unable to add images or set summary metadata: " + e);
@@ -232,35 +385,39 @@ public class ManualTiffTest {
       catch (IOException io) {
          Assert.fail("IOException while adding image to store " + io);
       }
-      //try {
-         //Annotation annotation = store.loadAnnotation("comments.txt");
-         PropertyMap.PropertyMapBuilder commentsBuilder = manager.getPropertyMapBuilder();
-         //annotation.setImageAnnotation(image.getCoords(),
-         //      commentsBuilder.putString(COMMENT_KEY, IMAGE_COMMENT).build());
-         //annotation.setGeneralAnnotation(commentsBuilder.putString(COMMENT_KEY,
-         //         SUMMARY_COMMENT).build());
-      //}
-      //catch (IOException e) {
-      //   Assert.fail("Couldn't create comments annotation: " + e);
-      //}
       File tempDir = Files.createTempDir();
       String path = tempDir.getPath() + "/test";
       try {
-      store.save(Datastore.SaveMode.MULTIPAGE_TIFF, path);
-      store.setSavePath(path);
+         store.save(saveMode, path);
+         store.setSavePath(path);
       } catch (IOException io) {
          Assert.fail("IOException while saving store " + io);
+      } finally {
+         try {
+            store.freeze();
+         } catch (IOException e) {
+            Assert.fail("IOException while freezing store: " + e);
+         }
+         try {
+            store.close();
+         } catch (IOException e) {
+            Assert.fail("IOException while closing store: " + e);
+         }
       }
 
       System.out.println("Loading data from " + path);
       try {
          Datastore loadedStore = manager.loadData(path, true);
-         testSummary(ALPHA2_PATH, loadedStore.getSummaryMetadata());
-         info.test(loadedStore);
-         //testComments(loadedStore);
-      }
-      catch (IOException e) {
+         try {
+            testSummary(ALPHA2_PATH, loadedStore.getSummaryMetadata());
+            info.test(loadedStore);
+         } finally {
+            loadedStore.freeze();
+            loadedStore.close();
+         }
+      } catch (IOException e) {
          Assert.fail("Unable to load newly-generated datastore: " + e);
       }
+      tempDir.deleteOnExit();
    }
 }
