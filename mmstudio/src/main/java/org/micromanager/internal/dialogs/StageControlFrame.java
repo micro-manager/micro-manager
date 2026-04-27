@@ -362,13 +362,16 @@ public final class StageControlFrame extends JFrame {
             // user edits any value in this dialog.
             String selectedDrive = (String) zDriveSelect_[idx].getSelectedItem();
             if (selectedDrive != null && !selectedDrive.isEmpty()) {
-               try {
+               Object smallVal = zStepTextsSmall_[idx].getValue();
+               Object medVal = zStepTextsMedium_[idx].getValue();
+               if (smallVal instanceof Number && medVal instanceof Number) {
                   settings_.putDouble(SMALL_MOVEMENT_Z + selectedDrive,
-                        NumberUtils.displayStringToDouble(zStepTextsSmall_[idx].getText()));
+                        ((Number) smallVal).doubleValue());
                   settings_.putDouble(MEDIUM_MOVEMENT_Z + selectedDrive,
-                        NumberUtils.displayStringToDouble(zStepTextsMedium_[idx].getText()));
-               } catch (ParseException pex) {
-                  studio_.logs().logError("Error parsing Z step size in Stage Control Frame");
+                        ((Number) medVal).doubleValue());
+               } else {
+                  studio_.logs().logError("Z step size field has unexpected value type for drive \""
+                        + selectedDrive + "\": small=" + smallVal + ", medium=" + medVal);
                }
             }
 

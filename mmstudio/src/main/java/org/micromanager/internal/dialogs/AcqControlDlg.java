@@ -1626,14 +1626,15 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             zDriveCombo_.addItem(zDrives.get(i));
          }
          String focusDevice = mmStudio_.core().getFocusDevice();
-         zDriveCombo_.setSelectedItem(focusDevice.isEmpty() ? "" : focusDevice);
+         boolean hasFocus = focusDevice != null && !focusDevice.isEmpty();
+         zDriveCombo_.setSelectedItem(hasFocus ? focusDevice : "");
          try {
             zDriveCombo_.setVisible(true);
             double pixelSize = mmStudio_.core().getPixelSizeUm();
             if (pixelSize != 0.0) {
                proposedZStepLabel_.setText(getOptimalZStep(true));
             }
-            if (!mmStudio_.core().getFocusDevice().isEmpty()) {
+            if (hasFocus) {
                zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
                         mmStudio_.core().getPosition()));
             }
