@@ -27,6 +27,7 @@ import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
+import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.utils.AffineUtils;
@@ -140,6 +141,28 @@ public class MMCache {
    public void onStagePositionChanged(StagePositionChangedEvent event) {
       if (event.getDeviceName().equals(zStageLabel_)) {
          updateZPos(event.getPos());
+      }
+   }
+
+   /**
+    * Handles Core property changes; updates zStageLabel_ when Core.Focus is reassigned.
+    *
+    * @param event Holds device, property, and new value.
+    */
+   @Subscribe
+   public void onPropertyChanged(PropertyChangedEvent event) {
+      if ("Core".equals(event.getDevice()) && "Focus".equals(event.getProperty())) {
+         zStageLabel_ = event.getValue() == null ? "" : event.getValue();
+         double zPos = 0.0;
+         try {
+            if (zStageLabel_.length() > 0) {
+               zPos = core_.getPosition(zStageLabel_);
+            }
+         } catch (Exception e) {
+            ReportingUtils.showError(e, "Failed to get Z stage position");
+         }
+         zPos_ = zPos;
+         updateInfoDisplay();
       }
    }
 
