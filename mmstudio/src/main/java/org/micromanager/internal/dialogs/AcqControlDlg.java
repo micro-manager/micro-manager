@@ -1693,7 +1693,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          for (ActionListener al : actionListeners) {
             zDriveCombo_.removeActionListener(al);
          }
-         zDriveCombo_.setSelectedItem(focusDevice == null || focusDevice.isEmpty() ? "" : focusDevice);
+         zDriveCombo_.setSelectedItem(focusDevice == null
+                  || focusDevice.isEmpty() ? "" : focusDevice);
          for (ActionListener al : actionListeners) {
             zDriveCombo_.addActionListener(al);
          }
