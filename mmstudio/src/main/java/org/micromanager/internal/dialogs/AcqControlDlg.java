@@ -1621,10 +1621,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             zDriveCombo_.removeActionListener(al);
          }
          zDriveCombo_.removeAllItems();
+         zDriveCombo_.addItem("");
          for (int i = 0; i < zDrives.size(); i++) {
             zDriveCombo_.addItem(zDrives.get(i));
          }
-         zDriveCombo_.setSelectedItem(mmStudio_.core().getFocusDevice());
+         String focusDevice = mmStudio_.core().getFocusDevice();
+         zDriveCombo_.setSelectedItem(focusDevice.isEmpty() ? "" : focusDevice);
          try {
             zDriveCombo_.setVisible(true);
             double pixelSize = mmStudio_.core().getPixelSizeUm();
@@ -1685,9 +1687,22 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onPropertyChangedEvent(PropertyChangedEvent pce) {
       if ("Core".equals(pce.getDevice()) && ("Focus".equals(pce.getProperty()))) {
+         String focusDevice = pce.getValue();
+         ActionListener[] actionListeners = zDriveCombo_.getActionListeners();
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.removeActionListener(al);
+         }
+         zDriveCombo_.setSelectedItem(focusDevice == null || focusDevice.isEmpty() ? "" : focusDevice);
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.addActionListener(al);
+         }
          try {
-            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
-                     mmStudio_.core().getPosition()));
+            if (focusDevice != null && !focusDevice.isEmpty()) {
+               zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
+                        mmStudio_.core().getPosition()));
+            } else {
+               zDrivePositionLabel_.setText("");
+            }
          } catch (Exception e) {
             mmStudio_.logs().logError(e, "Failed to get Z drive position from core.");
          }
@@ -1785,13 +1800,17 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (newZDrive != null && !newZDrive.equals(mmStudio_.core().getFocusDevice())) {
          try {
             mmStudio_.core().setFocusDevice(newZDrive);
-            double position = mmStudio_.core().getPosition();
-            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(position));
-            if (ABSOLUTE_Z.equals(zValCombo_.getSelectedItem())) {
-               // New Z drive: to avoid danger, set start and end to the current position
-               zStart_.setValue(position);
-               zEnd_.setValue(position);
-            } // if relative Z, it should be safe and logical to keep it where it is.
+            if (newZDrive.isEmpty()) {
+               zDrivePositionLabel_.setText("");
+            } else {
+               double position = mmStudio_.core().getPosition();
+               zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(position));
+               if (ABSOLUTE_Z.equals(zValCombo_.getSelectedItem())) {
+                  // New Z drive: to avoid danger, set start and end to the current position
+                  zStart_.setValue(position);
+                  zEnd_.setValue(position);
+               } // if relative Z, it should be safe and logical to keep it where it is.
+            }
          } catch (Exception e) {
             mmStudio_.logs().logError(e, "Failed to set focus device");
          }
