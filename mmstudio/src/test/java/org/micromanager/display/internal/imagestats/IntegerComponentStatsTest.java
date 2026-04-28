@@ -21,13 +21,13 @@ public class IntegerComponentStatsTest {
    @Test
    public void testGetQuantile() {
       // histogram_[1]=1 means 1 pixel at intensity 0; quantile is bin-edge based.
-      IntegerComponentStats s = IntegerComponentStats.builder().
+      ComponentStats s = ComponentStats.builder().
             histogram(new long[] { 0, 1, 0 }, 0).pixelCount(1).build();
       assertEquals(0.0, s.getQuantile(0.0), e);
       assertEquals(1.0, s.getQuantile(1.0), e);
       assertEquals(0.5, s.getQuantile(0.5), e);
 
-      s = IntegerComponentStats.builder().
+      s = ComponentStats.builder().
             histogram(new long[] { 0, 1, 2, 0 }, 0).pixelCount(3).maximum(1).build();
       assertEquals(0.0, s.getQuantile(0.0), e);
       assertEquals(1.25, s.getQuantile(0.5), e);
@@ -36,7 +36,7 @@ public class IntegerComponentStatsTest {
 
    @Test
    public void testGetQuantileOutOfRange() {
-      IntegerComponentStats s = IntegerComponentStats.builder().
+      ComponentStats s = ComponentStats.builder().
             histogram(new long[] { 1, 1, 1, 1 }, 0).pixelCount(4).build();
       assertEquals(0.0, s.getQuantile(0.0), e);
       assertEquals(0.0, s.getQuantile(0.25), e);
@@ -48,7 +48,7 @@ public class IntegerComponentStatsTest {
    // Helper: build stats from a histogram (no out-of-range bins) with bin width 1.
    // histogram[i] = count of pixels with intensity i. Range is [0, histogram.length-1].
    // Sets minimum to the first non-zero bin and maximum to the last non-zero bin.
-   private static IntegerComponentStats buildStats(long[] histogram) {
+   private static ComponentStats buildStats(long[] histogram) {
       long[] full = new long[histogram.length + 2];
       System.arraycopy(histogram, 0, full, 1, histogram.length);
       long count = 0;
@@ -65,7 +65,7 @@ public class IntegerComponentStatsTest {
             maximum = i;
          }
       }
-      return IntegerComponentStats.builder()
+      return ComponentStats.builder()
             .histogram(full, 0)
             .pixelCount(count)
             .minimum(minimum)
@@ -82,7 +82,7 @@ public class IntegerComponentStatsTest {
       for (int i = 0; i < 256; i++) {
          hist[i] = 1;
       }
-      IntegerComponentStats s = buildStats(hist);
+      ComponentStats s = buildStats(hist);
       long[] minMax = new long[2];
       s.getAutoscaleMinMaxForQuantile(0.0, minMax);
       assertEquals(0L, minMax[0]);
@@ -95,7 +95,7 @@ public class IntegerComponentStatsTest {
       // All pixels have intensity 100; range should be widened to [99, 101].
       long[] hist = new long[256];
       hist[100] = 1000;
-      IntegerComponentStats s = buildStats(hist);
+      ComponentStats s = buildStats(hist);
       long[] minMax = new long[2];
       s.getAutoscaleMinMaxForQuantile(0.0, minMax);
       assertEquals(99L, minMax[0]);
@@ -109,7 +109,7 @@ public class IntegerComponentStatsTest {
       // mid == 0 == getHistogramRangeMin(), so min=0, max=2.
       long[] hist = new long[256];
       hist[0] = 500;
-      IntegerComponentStats s = buildStats(hist);
+      ComponentStats s = buildStats(hist);
       long[] minMax = new long[2];
       s.getAutoscaleMinMaxForQuantile(0.0, minMax);
       assertEquals(0L, minMax[0]);
@@ -123,7 +123,7 @@ public class IntegerComponentStatsTest {
       // mid == 255 == getHistogramRangeMax(), so max=255, min=253.
       long[] hist = new long[256];
       hist[255] = 500;
-      IntegerComponentStats s = buildStats(hist);
+      ComponentStats s = buildStats(hist);
       long[] minMax = new long[2];
       s.getAutoscaleMinMaxForQuantile(0.0, minMax);
       assertEquals(255L, minMax[1]);
@@ -137,7 +137,7 @@ public class IntegerComponentStatsTest {
       long[] hist = new long[256];
       hist[50] = 100;
       hist[51] = 100;
-      IntegerComponentStats s = buildStats(hist);
+      ComponentStats s = buildStats(hist);
       long[] minMax = new long[2];
       s.getAutoscaleMinMaxForQuantile(0.0, minMax);
       assertTrue(minMax[1] - minMax[0] >= 2);
@@ -152,7 +152,7 @@ public class IntegerComponentStatsTest {
       for (int i = 0; i < 256; i++) {
          java.util.Arrays.fill(hist, 0);
          hist[i] = 1;
-         IntegerComponentStats s = buildStats(hist);
+         ComponentStats s = buildStats(hist);
          s.getAutoscaleMinMaxForQuantile(0.0, minMax);
          assertTrue("width < 2 at intensity " + i, minMax[1] - minMax[0] >= 2);
       }

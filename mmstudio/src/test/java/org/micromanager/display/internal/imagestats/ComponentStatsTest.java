@@ -47,13 +47,13 @@ public class ComponentStatsTest {
 
    @Test
    public void testEmpty() {
-      IntegerComponentStats cs = IntegerComponentStats.builder().build();
+      ComponentStats cs = ComponentStats.builder().build();
       assertNull(cs.getInRangeHistogram());
    }
 
    @Test
    public void testSize1() {
-      IntegerComponentStats cs = IntegerComponentStats.builder()
+      ComponentStats cs = ComponentStats.builder()
                   .histogram(new long[] {1, 2, 3}, 0)
                   .pixelCount(6)
                   .minimum(-1)
@@ -80,7 +80,7 @@ public class ComponentStatsTest {
 
    @Test
    public void testSize2() {
-      IntegerComponentStats cs = IntegerComponentStats.builder()
+      ComponentStats cs = ComponentStats.builder()
             .histogram(new long[] { 0, 1, 2, 0 }, 1)
             .pixelCount(3)
             .minimum(0)
@@ -116,7 +116,7 @@ public class ComponentStatsTest {
       hist[128] = 94;
       hist[255] = 2;
       hist[256] = 1;
-      IntegerComponentStats cs = IntegerComponentStats.builder()
+      ComponentStats cs = ComponentStats.builder()
             .histogram(hist, 0)
             .pixelCount(100)
             .minimum(0)
@@ -148,7 +148,7 @@ public class ComponentStatsTest {
       for (int i = 1; i < 257; ++i) {
          hist[i] = 5;
       }
-      IntegerComponentStats cs = IntegerComponentStats.builder()
+      ComponentStats cs = ComponentStats.builder()
             .histogram(hist, 8)
             .pixelCount(5 * 256)
             .minimum(0)

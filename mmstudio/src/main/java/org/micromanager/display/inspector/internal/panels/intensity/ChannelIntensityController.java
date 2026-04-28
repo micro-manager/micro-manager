@@ -22,15 +22,14 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
-import org.micromanager.data.Image;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
+import org.micromanager.display.internal.imagestats.ComponentStats;
 import org.micromanager.display.internal.imagestats.ImageStats;
-import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
@@ -61,6 +60,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    // engine from interfering; this flag tracks the user's actual intent.
    private boolean rgbAutostretchEnabled_ = false;
    private boolean suppressAutostretchDetection_ = false;
+   // Non-null for float images: one mapper per component, rebuilt on each statsOrRangeChanged().
+   private FloatCoordinateMapper[] floatMappers_ = null;
    private boolean pickingWhiteBalancePoint_ = false;
    private long[] lastPickedValues_ = null; // pixel values tracked while in pick mode
 
@@ -482,7 +483,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       int selectedComponent = getSelectedComponent();
       // In white mode, show stats for component 0 (Red) as representative
       int statsComponent = (selectedComponent == COMPONENT_WHITE) ? 0 : selectedComponent;
-      IntegerComponentStats selectedStats = stats_.getComponentStats(statsComponent);
+      ComponentStats selectedStats = stats_.getComponentStats(statsComponent);
 
       final DisplaySettings displaySettings = viewer_.getDisplaySettings();
       boolean ignoreZeros = displaySettings.isAutoscaleIgnoringZeros();
@@ -517,7 +518,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
       boolean whiteMode = getSelectedComponent() == COMPONENT_WHITE;
       for (int c = 0; c < numComponents; c++) {
-         IntegerComponentStats cStats = stats_.getComponentStats(c);
+         ComponentStats cStats = stats_.getComponentStats(c);
          long[] data = cStats.getInRangeHistogram();
          if (data != null) {
             // For float images: the histogram is built in actual pixel-value coordinates
@@ -525,13 +526,24 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             // real pixel values. For integer images: use the bit-depth combo box selection,
             // capping at 30 bits to avoid Java int-shift overflow (1<<32 == 1).
             if (cStats.isFloat()) {
-               long rangeMin = cStats.getHistogramRangeMin();
-               long rangeMax = cStats.getHistogramRangeMax();
-               if (rangeMax <= rangeMin) {
-                  rangeMax = rangeMin + 1;
+               // Use bin-index coordinate space: rangeMin=0, rangeMax=binCount (~256).
+               // The X axis shows bin indices; labels are formatted as pixel values via
+               // the FloatCoordinateMapper wired into HistogramView.
+               FloatCoordinateMapper mapper = new FloatCoordinateMapper(cStats);
+               if (floatMappers_ == null || floatMappers_.length != numComponents) {
+                  floatMappers_ = new FloatCoordinateMapper[numComponents];
                }
-               histogram_.setComponentGraph(c, data, data.length, rangeMin, rangeMax);
+               floatMappers_[c] = mapper;
+               long binCount = Math.max(1L, mapper.getBinCount());
+               histogram_.setComponentGraph(c, data, data.length, 0L, binCount);
+               histogram_.setComponentFloatMapper(c, mapper);
+               histogram_.setComponentRangeMaxLabel(c, mapper.formatBinIndex(binCount));
             } else {
+               if (c == 0) {
+                  floatMappers_ = null; // integer image: clear all mappers
+               }
+               histogram_.setComponentFloatMapper(c, null);
+               histogram_.setComponentRangeMaxLabel(c, null);
                int clampedRangeBits = Math.min(rangeBits, 30);
                int lengthToUse = Math.min(data.length, (1 << clampedRangeBits) - 1);
                if (lengthToUse <= 0) {
@@ -553,7 +565,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    // R/G/B component (indices 0–2). Always reflects the component's own
    // ComponentDisplaySettings — independent of white mode.
    private void updateScalingIndicators(DisplaySettings settings,
-                                        IntegerComponentStats componentStats, int component) {
+                                        ComponentStats componentStats, int component) {
       long min;
       long max;
       if (settings.isAutostretchEnabled()) {
@@ -567,10 +579,25 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             min = minMax[0];
             max = minMax[1];
          }
+         // For float images the histogram X-axis is in bin-index space; convert.
+         min = toStoredScalingValue(component, min);
+         max = toStoredScalingValue(component, max);
       } else {
          ComponentDisplaySettings componentSettings =
                settings.getChannelSettings(channelIndex_)
                      .getComponentSettings(component);
+         if (componentStats.isFloat() && floatMappers_ != null
+               && component < floatMappers_.length && floatMappers_[component] != null) {
+            FloatCoordinateMapper mapper = floatMappers_[component];
+            int binCount = mapper.getBinCount();
+            long storedMax = componentSettings.getScalingMaximum();
+            long storedMin = componentSettings.getScalingMinimum();
+            long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
+                              : Math.min(binCount, storedMax);
+            long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
+            histogram_.setComponentScaling(component, clampedMin, clampedMax);
+            return;
+         }
          max = Math.min(componentStats.getHistogramRangeMax(),
                componentSettings.getScalingMaximum());
          long rangeMin = componentStats.getHistogramRangeMin();
@@ -583,7 +610,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    // Updates the white handle (HistogramView slot COMPONENT_WHITE) to show
    // whiteMainMax_ as the max handle and whiteMainMin_ as the min handle.
    private void updateWhiteScalingIndicator(DisplaySettings settings,
-                                            IntegerComponentStats comp0Stats) {
+                                            ComponentStats comp0Stats) {
       long rangeMax = comp0Stats.getHistogramRangeMax();
       long max = whiteMainMax_ > 0
             ? Math.min(whiteMainMax_, rangeMax)
@@ -799,6 +826,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       rgbAutostretchEnabled_ = enabled;
    }
 
+   private long toStoredScalingValue(int component, long pixelValue) {
+      if (floatMappers_ != null && component < floatMappers_.length
+            && floatMappers_[component] != null) {
+         return floatMappers_[component].pixelValueToBinIndex((double) pixelValue);
+      }
+      return pixelValue;
+   }
+
    @MustCallOnEDT
    private void turnOffAutostretchInSettings() {
       DisplaySettings oldSettings;
@@ -889,8 +924,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       } else {
          // Single component: only autoscale the selected component, leave others unchanged.
-         final long newMin;
-         final long newMax;
+         long newMin;
+         long newMax;
          if (ignoreZeros) {
             newMin = 0L;
             newMax = stats_.getComponentStats(selectedComponent)
@@ -901,6 +936,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             newMin = minMax[0];
             newMax = minMax[1];
          }
+         newMin = toStoredScalingValue(selectedComponent, newMin);
+         newMax = toStoredScalingValue(selectedComponent, newMax);
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
             ChannelDisplaySettings channelSettings =
@@ -918,14 +955,18 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    private void handleFullscale() {
       final int nComponents = stats_.getNumberOfComponents();
+      int sel = getSelectedComponent();
       Integer bitDepth = stats_.getComponentStats(0).getBitDepth();
       long fullMax;
-      if (bitDepth == null) {
+      int floatSel = (sel == COMPONENT_WHITE) ? 0 : sel;
+      if (floatMappers_ != null && floatSel < floatMappers_.length
+            && floatMappers_[floatSel] != null) {
+         fullMax = floatMappers_[floatSel].getBinCount();
+      } else if (bitDepth == null) {
          fullMax = stats_.getComponentStats(0).getHistogramRangeMax();
       } else {
          fullMax = bitDepth >= 63 ? Long.MAX_VALUE : (1L << bitDepth) - 1L;
       }
-      int sel = getSelectedComponent();
       if (sel == COMPONENT_WHITE && whiteRatios_ == null) {
          captureWhiteRatios();
       }
@@ -992,7 +1033,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             }
 
          } else {
-            IntegerComponentStats stats = stats_.getComponentStats(sel);
+            ComponentStats stats = stats_.getComponentStats(sel);
             long min;
             long max;
             if (ignoreZeros) {
@@ -1004,6 +1045,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                min = minMax[0];
                max = minMax[1];
             }
+            min = toStoredScalingValue(sel, min);
+            max = toStoredScalingValue(sel, max);
             builder.component(sel,
                   channelSettings.getComponentSettings(sel).copyBuilder()
                         .scalingRange(min, max).build());
@@ -1215,7 +1258,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          histogram_.setComponentColor(c, color, highlight);
 
          if (stats_ != null) {
-            IntegerComponentStats componentStats = stats_.getComponentStats(c);
+            ComponentStats componentStats = stats_.getComponentStats(c);
             updateScalingIndicators(settings, componentStats, c);
          }
       }
@@ -1251,7 +1294,13 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       long[] values = getPixelValuesForChannel(e);
       if (values != null) {
          for (int component = 0; component < values.length; ++component) {
-            histogram_.setComponentHighlight(component, values[component]);
+            long highlightValue = values[component];
+            if (floatMappers_ != null && component < floatMappers_.length
+                  && floatMappers_[component] != null) {
+               highlightValue = floatMappers_[component].pixelValueToBinIndex(
+                     (double) highlightValue);
+            }
+            histogram_.setComponentHighlight(component, highlightValue);
          }
       }
    }

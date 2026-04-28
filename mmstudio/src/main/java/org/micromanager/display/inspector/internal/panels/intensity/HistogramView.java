@@ -75,6 +75,10 @@ public final class HistogramView extends JPanel {
       long highlightIntensity_ = -1; // Negative = off
       long scalingMin_ = 0;
       long scalingMax_ = rangeMax_;
+      // Non-null for float images: converts bin-index longs to pixel-value strings.
+      FloatCoordinateMapper floatMapper_ = null;
+      // Optional label override for the range-max tick (e.g. "1.000" for bin-index 256).
+      String rangeMaxLabel_ = null;
 
       float[] cachedInterpolatedLogScaledGraph_;
       Path2D.Float cachedPath_;
@@ -240,6 +244,8 @@ public final class HistogramView extends JPanel {
       state.rangeMax_ = 0;
       state.scalingMin_ = 0;
       state.scalingMax_ = 0;
+      state.floatMapper_ = null;
+      state.rangeMaxLabel_ = null;
       state.cachedInterpolatedLogScaledGraph_ = null;
       state.cachedPath_ = null;
    }
@@ -297,6 +303,23 @@ public final class HistogramView extends JPanel {
    public long getComponentScalingMax(int component) {
       Preconditions.checkElementIndex(component, componentStates_.size());
       return componentStates_.get(component).scalingMax_;
+   }
+
+   public void setComponentFloatMapper(int component, FloatCoordinateMapper mapper) {
+      Preconditions.checkArgument(component >= 0);
+      addComponentIfNecessary(component);
+      componentStates_.get(component).floatMapper_ = mapper;
+      if (component == selectedComponent_) {
+         nullRectsAndMappingPath();
+      }
+      repaint();
+   }
+
+   public void setComponentRangeMaxLabel(int component, String label) {
+      Preconditions.checkArgument(component >= 0);
+      addComponentIfNecessary(component);
+      componentStates_.get(component).rangeMaxLabel_ = label;
+      repaint();
    }
 
    /**
@@ -412,7 +435,9 @@ public final class HistogramView extends JPanel {
          Rectangle rect = getGraphRect();
          ComponentState state = componentStates_.get(component);
          long intensity = top ? state.scalingMax_ : state.scalingMin_;
-         String text = Long.toString(intensity);
+         String text = (state.floatMapper_ != null)
+               ? state.floatMapper_.formatBinIndex(intensity)
+               : Long.toString(intensity);
 
          int x = (int) getScalingHandlePos(component, top);
 
@@ -587,7 +612,10 @@ public final class HistogramView extends JPanel {
             return; // Only draw if all components have the same max
          }
       }
-      String text = Long.toString(rangeMax);
+      ComponentState first = componentStates_.get(0);
+      String text = (first.rangeMaxLabel_ != null)
+            ? first.rangeMaxLabel_
+            : Long.toString(rangeMax);
       Rectangle rect = getGraphRect();
       Point graphBottomRight = new Point(rect.x + rect.width, rect.y + rect.height);
 
@@ -716,7 +744,9 @@ public final class HistogramView extends JPanel {
          return;
       }
       long intensity = top ? state.scalingMax_ : state.scalingMin_;
-      final String text = Long.toString(intensity);
+      final String text = (state.floatMapper_ != null)
+            ? state.floatMapper_.formatBinIndex(intensity)
+            : Long.toString(intensity);
 
       float x = getScalingHandlePos(component, top);
       if (x < rect.x - 1 || x > rect.x + rect.width) {
@@ -1071,6 +1101,14 @@ public final class HistogramView extends JPanel {
 
    private void startScalingEdit(final boolean top) {
       final ComponentState state = componentStates_.get(selectedComponent_);
+      if (state.floatMapper_ != null) {
+         startFloatScalingEdit(top, state);
+      } else {
+         startIntegerScalingEdit(top, state);
+      }
+   }
+
+   private void startIntegerScalingEdit(final boolean top, final ComponentState state) {
       long intensity = top ? state.scalingMax_ : state.scalingMin_;
       long min = top ? state.scalingMin_ + 1 : state.rangeMin_;
       long max = top ? state.rangeMax_ : state.scalingMax_ - 1;
@@ -1091,6 +1129,39 @@ public final class HistogramView extends JPanel {
       });
       JPopupMenu popup = new JPopupMenu();
       popup.add(scalingSpinner);
+      popup.validate();
+      int x = (int) getScalingHandlePos(selectedComponent_, top)
+            - popup.getPreferredSize().width / 2;
+      int y = top ? -popup.getPreferredSize().height : getBounds().height;
+      popup.show(this, x, y);
+   }
+
+   private void startFloatScalingEdit(final boolean top, final ComponentState state) {
+      final FloatCoordinateMapper mapper = state.floatMapper_;
+      long curBin = top ? state.scalingMax_ : state.scalingMin_;
+      long minBin = top ? state.scalingMin_ + 1 : 0;
+      long maxBin = top ? (long) mapper.getBinCount() : state.scalingMax_ - 1;
+      double curVal = mapper.binIndexToPixelValue(curBin);
+      double minVal = mapper.binIndexToPixelValue(minBin);
+      double maxVal = mapper.binIndexToPixelValue(maxBin);
+      double step = mapper.getBinWidth();
+      final JSpinner spinner = new JSpinner(
+            new SpinnerNumberModel(curVal, minVal, maxVal, step));
+      spinner.addChangeListener((ChangeEvent e) -> {
+         double val = ((Number) spinner.getValue()).doubleValue();
+         long binIdx = mapper.pixelValueToBinIndex(val);
+         if (top) {
+            binIdx = Math.max(state.scalingMin_ + 1, binIdx);
+            setComponentScaling(selectedComponent_, state.scalingMin_, binIdx);
+            listeners_.fire().histogramScalingMaxChanged(selectedComponent_, binIdx);
+         } else {
+            binIdx = Math.min(state.scalingMax_ - 1, binIdx);
+            setComponentScaling(selectedComponent_, binIdx, state.scalingMax_);
+            listeners_.fire().histogramScalingMinChanged(selectedComponent_, binIdx);
+         }
+      });
+      JPopupMenu popup = new JPopupMenu();
+      popup.add(spinner);
       popup.validate();
       int x = (int) getScalingHandlePos(selectedComponent_, top)
             - popup.getPreferredSize().width / 2;

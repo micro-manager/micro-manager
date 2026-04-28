@@ -458,6 +458,15 @@ public final class ImageJBridge {
    }
 
    @MustCallOnEDT
+   public void mm2ijSetFloatIntensityScaling(int channelOrComponent,
+                                              double min, double max, boolean defer) {
+      colorModeStrategy_.applyFloatScaling(channelOrComponent, min, max, defer);
+      if (!defer) {
+         mm2ijRepaint();
+      }
+   }
+
+   @MustCallOnEDT
    public void mm2ijSetIntensityGamma(int channelOrComponent, double gamma) {
       colorModeStrategy_.applyGamma(channelOrComponent, gamma);
       mm2ijRepaint();

@@ -21,7 +21,7 @@ import java.util.Arrays;
  *
  * @author Mark A. Tsuchida
  */
-public final class IntegerComponentStats {
+public final class ComponentStats {
    private final Integer bitDepth_;
    private final long[] histogram_;
    private final int binWidthPowerOf2_;
@@ -132,8 +132,8 @@ public final class IntegerComponentStats {
          return this;
       }
 
-      public IntegerComponentStats build() {
-         return new IntegerComponentStats(this);
+      public ComponentStats build() {
+         return new ComponentStats(this);
       }
    }
 
@@ -149,8 +149,8 @@ public final class IntegerComponentStats {
     * @param b second stats
     * @return merged stats representing the union of both pixel populations
     */
-   public static IntegerComponentStats merge(
-         IntegerComponentStats a, IntegerComponentStats b) {
+   public static ComponentStats merge(
+            ComponentStats a, ComponentStats b) {
       long[] histA = getFullHistogram(a);
       long[] histB = getFullHistogram(b);
       long[] merged = new long[histA.length];
@@ -176,7 +176,7 @@ public final class IntegerComponentStats {
             .build();
    }
 
-   private static long[] getFullHistogram(IntegerComponentStats s) {
+   private static long[] getFullHistogram(ComponentStats s) {
       long[] inRange = s.getInRangeHistogram();
       long[] full = new long[inRange.length + 2];
       full[0] = s.getPixelCountBelowRange();
@@ -185,7 +185,7 @@ public final class IntegerComponentStats {
       return full;
    }
 
-   private IntegerComponentStats(Builder b) {
+   private ComponentStats(Builder b) {
       bitDepth_ = b.bitDepth_;
       histogram_ = b.histogram_ != null
             ? Arrays.copyOf(b.histogram_, b.histogram_.length) :
@@ -246,6 +246,10 @@ public final class IntegerComponentStats {
          return 0;
       }
       return 1 << binWidthPowerOf2_;
+   }
+
+   public double getBinWidthDouble() {
+      return binWidthFloat_;
    }
 
    public double getHistogramRangeMinDouble() {

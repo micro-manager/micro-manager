@@ -309,7 +309,7 @@ public final class ImageStatsProcessor {
       // Round to the nearest integer so that getMeanIntensity() and
       // getStandardDeviation() return values that are correct to integer precision,
       // matching the display which shows mean and stdev rounded to integers.
-      IntegerComponentStats stats = IntegerComponentStats.builder()
+      ComponentStats stats = ComponentStats.builder()
             .histogram(hist, 0)
             .isFloat(true)
             .rangeMin((double) fMin)
@@ -401,10 +401,10 @@ public final class ImageStatsProcessor {
          sumsOfSquares[component] += dataValue * dataValue;
       }
 
-      IntegerComponentStats[] componentStats =
-            new IntegerComponentStats[nComponents];
+      ComponentStats[] componentStats =
+            new ComponentStats[nComponents];
       for (int component = 0; component < nComponents; ++component) {
-         componentStats[component] = IntegerComponentStats.builder()
+         componentStats[component] = ComponentStats.builder()
                .bitDepth(metadataBitDepth)
                .histogram(histograms.get(component).toLongArray(),
                      Math.max(0, sampleBitDepth - binCountPowerOf2))

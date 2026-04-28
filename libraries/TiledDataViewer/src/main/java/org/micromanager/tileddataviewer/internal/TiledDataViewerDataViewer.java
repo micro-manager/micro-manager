@@ -42,10 +42,10 @@ import org.micromanager.display.internal.event.DefaultDisplayDidShowImageEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ComponentStats;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
-import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
@@ -732,9 +732,9 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    private static ImageStats mergeImageStats(ImageStats a, ImageStats b) {
       int nComponents = Math.min(
             a.getNumberOfComponents(), b.getNumberOfComponents());
-      IntegerComponentStats[] merged = new IntegerComponentStats[nComponents];
+      ComponentStats[] merged = new ComponentStats[nComponents];
       for (int c = 0; c < nComponents; c++) {
-         merged[c] = IntegerComponentStats.merge(
+         merged[c] = ComponentStats.merge(
                a.getComponentStats(c), b.getComponentStats(c));
       }
       return ImageStats.create(a.getIndex(), merged);

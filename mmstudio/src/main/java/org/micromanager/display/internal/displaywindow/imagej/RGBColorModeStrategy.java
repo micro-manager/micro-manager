@@ -114,6 +114,12 @@ class RGBColorModeStrategy implements ColorModeStrategy {
    }
 
    @Override
+   public void applyFloatScaling(int component, double min, double max, boolean defer) {
+      // RGBColorModeStrategy operates on byte (0-255) pixel values — clamp to that range.
+      applyScaling(component, (int) Math.max(0, min), (int) Math.min(255, max), defer);
+   }
+
+   @Override
    public void applyScaling(int component, int min, int max, boolean defer) {
       Preconditions.checkArgument(min >= 0);
       Preconditions.checkArgument(max >= min);

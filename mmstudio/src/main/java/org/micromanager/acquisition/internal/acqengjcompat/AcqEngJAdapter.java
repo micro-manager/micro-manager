@@ -605,8 +605,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                posList,
                chSpecs,
                null);
-      } else if ((acquisitionSettings.useChannels() && !chSpecs.isEmpty())
-               || acquisitionSettings.useAutofocus()) {
+      } else if (((acquisitionSettings.useChannels() && !chSpecs.isEmpty())
+               || acquisitionSettings.useAutofocus())
+               && !studio_.core().getFocusDevice().isEmpty()) {
          // add a fake z stack so that the channel z-offsets and AF are handles correctly
          if (acquisitionSettings.usePositionList()
                   && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {

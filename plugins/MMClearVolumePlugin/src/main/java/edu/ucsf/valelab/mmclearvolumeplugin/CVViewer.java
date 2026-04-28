@@ -44,7 +44,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,10 +78,10 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ComponentStats;
 import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
-import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.WindowPositioning;
 
@@ -1128,7 +1127,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             ChannelDisplaySettings.Builder csCopyBuilder = 
                     displaySettings.getChannelSettings(ch).copyBuilder();
             for (int j = 0; j < image.getNumComponents(); ++j) {
-               IntegerComponentStats componentStats = 
+               ComponentStats componentStats =
                        lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(0);
                ComponentDisplaySettings.Builder ccB =
                      csCopyBuilder.getComponentSettings(j).copyBuilder();

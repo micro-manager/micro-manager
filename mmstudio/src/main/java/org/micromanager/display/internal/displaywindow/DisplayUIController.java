@@ -98,6 +98,7 @@ import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ComponentStats;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.overlay.Overlay;
@@ -1132,14 +1133,30 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // TODO: Remember changes in component display settings?
             ijBridge_.mm2ijSetChannelColor(i, channelSettings.getColor());
             if (!autostretch) {
-               int max = (int) Math.min(Integer.MAX_VALUE,
-                     componentSettings.getScalingMaximum());
-               if (max < 1) {
-                  max = 1;
+               ComponentStats cStats = getDisplayedComponentStats(i, 0);
+               if (cStats != null && cStats.isFloat()) {
+                  long storedMin = componentSettings.getScalingMinimum();
+                  long storedMax = componentSettings.getScalingMaximum();
+                  int binCount = cStats.getHistogramBinCount();
+                  double binWidth = cStats.getBinWidthDouble();
+                  double rangeMin = cStats.getHistogramRangeMinDouble();
+                  long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
+                        : Math.min(binCount, storedMax);
+                  long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
+                  double fMin = rangeMin + clampedMin * binWidth;
+                  double fMax = rangeMin + clampedMax * binWidth;
+                  fMax = Math.max(fMin + binWidth, fMax);
+                  ijBridge_.mm2ijSetFloatIntensityScaling(i, fMin, fMax, false);
+               } else {
+                  int max = (int) Math.min(Integer.MAX_VALUE,
+                        componentSettings.getScalingMaximum());
+                  if (max < 1) {
+                     max = 1;
+                  }
+                  int min = (int) componentSettings.getScalingMinimum();
+                  min = Math.min(max - 1, min);
+                  ijBridge_.mm2ijSetIntensityScaling(i, min, max, false);
                }
-               int min = (int) componentSettings.getScalingMinimum();
-               min = Math.min(max - 1, min);
-               ijBridge_.mm2ijSetIntensityScaling(i, min, max, false);
             }
             double gamma = componentSettings.getScalingGamma();
             ijBridge_.mm2ijSetIntensityGamma(i, gamma);
@@ -1156,12 +1173,29 @@ public final class DisplayUIController implements Closeable, WindowListener,
             for (int i = 0; i < nComponents; ++i) {
                ComponentDisplaySettings componentSettings
                      = settings.getChannelSettings(0).getComponentSettings(i);
-               int max = Math.min(Integer.MAX_VALUE,
-                     (int) componentSettings.getScalingMaximum());
-               int min = Math.max(1, (Math.min(max - 1,
-                     (int) componentSettings.getScalingMinimum())));
-               max = Math.max(min + 1, max);
-               ijBridge_.mm2ijSetIntensityScaling(i, min, max, i < nComponents - 1);
+               boolean defer = i < nComponents - 1;
+               ComponentStats cStats = getDisplayedComponentStats(chNr, i);
+               if (cStats != null && cStats.isFloat()) {
+                  long storedMin = componentSettings.getScalingMinimum();
+                  long storedMax = componentSettings.getScalingMaximum();
+                  int binCount = cStats.getHistogramBinCount();
+                  double binWidth = cStats.getBinWidthDouble();
+                  double rangeMin = cStats.getHistogramRangeMinDouble();
+                  long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
+                        : Math.min(binCount, storedMax);
+                  long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
+                  double fMin = rangeMin + clampedMin * binWidth;
+                  double fMax = rangeMin + clampedMax * binWidth;
+                  fMax = Math.max(fMin + binWidth, fMax);
+                  ijBridge_.mm2ijSetFloatIntensityScaling(i, fMin, fMax, defer);
+               } else {
+                  int max = Math.min(Integer.MAX_VALUE,
+                        (int) componentSettings.getScalingMaximum());
+                  int min = Math.max(1, (Math.min(max - 1,
+                        (int) componentSettings.getScalingMinimum())));
+                  max = Math.max(min + 1, max);
+                  ijBridge_.mm2ijSetIntensityScaling(i, min, max, defer);
+               }
             }
          }
       }
@@ -1242,15 +1276,49 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // modifying the DisplaySettings instance passed to us, which had
             // autostretch enabled (see, immutability is really nice!).
             // It will still be nice to remove this if we ever can.
-            DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
-                  settings.getChannelSettings(ch).getComponentSettings(compo);
-            dcds.hackScalingMinimum(min);
-            dcds.hackScalingMaximum(max);
-
             int ijIndex = nComponents > 1 ? compo : ch;
             boolean defer = nComponents > 1 && compo < nComponents - 1;
-            ijBridge_.mm2ijSetIntensityScaling(ijIndex, (int) min, (int) max, defer);
+
+            ComponentStats cStats = stats.getComponentStats(compo);
+            DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
+                  settings.getChannelSettings(ch).getComponentSettings(compo);
+            if (cStats.isFloat()) {
+               // min/max are actual pixel values from quantile computation.
+               // Pass pixel values directly to ImageJ; store bin indices in dcds for the inspector.
+               double binWidth = cStats.getBinWidthDouble();
+               double rangeMin = cStats.getHistogramRangeMinDouble();
+               long storedMin = binWidth != 0.0
+                     ? Math.max(0L, Math.round((min - rangeMin) / binWidth)) : 0L;
+               long storedMax = binWidth != 0.0
+                     ? Math.max(0L, Math.round((max - rangeMin) / binWidth)) : 0L;
+               dcds.hackScalingMinimum(storedMin);
+               dcds.hackScalingMaximum(storedMax);
+               ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, (double) min, (double) max, defer);
+            } else {
+               dcds.hackScalingMinimum(min);
+               dcds.hackScalingMaximum(max);
+               ijBridge_.mm2ijSetIntensityScaling(ijIndex, (int) min, (int) max, defer);
+            }
          }
+      }
+   }
+
+   private ComponentStats getDisplayedComponentStats(int channel, int component) {
+      if (displayedImages_ == null) {
+         return null;
+      }
+      try {
+         int statsIndex = 0;
+         for (int i = 0; i < displayedImages_.getRequest().getNumberOfImages(); ++i) {
+            Coords c = displayedImages_.getRequest().getImage(i).getCoords();
+            if (c.hasAxis(Coords.CHANNEL) && c.getChannel() == channel) {
+               statsIndex = i;
+               break;
+            }
+         }
+         return displayedImages_.getResult().get(statsIndex).getComponentStats(component);
+      } catch (IndexOutOfBoundsException e) {
+         return null;
       }
    }
 
