@@ -11,6 +11,7 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
@@ -69,6 +70,11 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
       }
       if (proc instanceof ColorProcessor) {
          return 255;
+      }
+      if (proc instanceof FloatProcessor) {
+         // Float images don't have a fixed sample max; return a large value
+         // so the LUT range is not clamped when no explicit max is set.
+         return Integer.MAX_VALUE;
       }
       throw new UnsupportedOperationException("Unsupported ImageProcessor type");
    }

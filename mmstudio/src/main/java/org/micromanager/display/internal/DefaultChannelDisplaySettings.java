@@ -25,9 +25,6 @@ public final class DefaultChannelDisplaySettings
    private final int histoRangeBits_;
    private final boolean useCameraRange_;
    private final List<ComponentDisplaySettings> componentSettings_;
-   private final long whiteMainMax_;    // 0 = not set; master max for white mode
-   private final double[] whiteRatios_; // null = not set; RGB ratios for white mode
-
 
    private static final class Builder
          implements ChannelDisplaySettings.Builder {
@@ -40,8 +37,6 @@ public final class DefaultChannelDisplaySettings
       private boolean useCameraRange_ = true;
       private final List<ComponentDisplaySettings> componentSettings_ =
             new ArrayList<>();
-      private long whiteMainMax_ = 0;
-      private double[] whiteRatios_ = null;
 
       private Builder() {
          componentSettings_.add(DefaultComponentDisplaySettings.builder().build());
@@ -186,65 +181,11 @@ public final class DefaultChannelDisplaySettings
          return componentSettings_.get(component);
       }
 
-      public Builder whiteMainMax(long max) {
-         whiteMainMax_ = max;
-         return this;
-      }
-
-      public Builder whiteRatios(double[] ratios) {
-         whiteRatios_ = ratios != null ? ratios.clone() : null;
-         return this;
-      }
-
       @Override
       public ChannelDisplaySettings build() {
          return new DefaultChannelDisplaySettings(this);
       }
 
-   }
-
-   /**
-    * Returns the stored white-mode main max from a ChannelDisplaySettings, or 0
-    * if none is stored.
-    */
-   public static long getStoredWhiteMainMax(ChannelDisplaySettings settings) {
-      if (settings instanceof DefaultChannelDisplaySettings) {
-         return ((DefaultChannelDisplaySettings) settings).whiteMainMax_;
-      }
-      return 0;
-   }
-
-   /**
-    * Returns the stored white-mode RGB ratios from a ChannelDisplaySettings, or
-    * null if none are stored.
-    */
-   public static double[] getStoredWhiteRatios(ChannelDisplaySettings settings) {
-      if (settings instanceof DefaultChannelDisplaySettings) {
-         DefaultChannelDisplaySettings dcds = (DefaultChannelDisplaySettings) settings;
-         return dcds.whiteRatios_ != null ? dcds.whiteRatios_.clone() : null;
-      }
-      return null;
-   }
-
-   /**
-    * Embeds white balance data into a ChannelDisplaySettings.Builder so it is
-    * persisted to the user profile. No-op if the builder is not a
-    * DefaultChannelDisplaySettings.Builder or if the data is not set.
-    */
-   public static void applyWhiteBalance(ChannelDisplaySettings.Builder builder,
-                                        long whiteMainMax, double[] whiteRatios) {
-      if (whiteRatios == null || whiteMainMax <= 0 || !(builder instanceof Builder)) {
-         return;
-      }
-      if (whiteRatios.length != 3) {
-         return;
-      }
-      for (double r : whiteRatios) {
-         if (!Double.isFinite(r) || r <= 0.0) {
-            return;
-         }
-      }
-      ((Builder) builder).whiteMainMax(whiteMainMax).whiteRatios(whiteRatios);
    }
 
    public static ChannelDisplaySettings.Builder builder() {
@@ -260,8 +201,6 @@ public final class DefaultChannelDisplaySettings
       histoRangeBits_ = builder.histoRangeBits_;
       useCameraRange_ = builder.useCameraRange_;
       componentSettings_ = new ArrayList<>(builder.componentSettings_);
-      whiteMainMax_ = builder.whiteMainMax_;
-      whiteRatios_ = builder.whiteRatios_ != null ? builder.whiteRatios_.clone() : null;
    }
 
    @Override
@@ -317,14 +256,6 @@ public final class DefaultChannelDisplaySettings
       return new ArrayList<>(componentSettings_);
    }
 
-   public long getWhiteMainMax() {
-      return whiteMainMax_;
-   }
-
-   public double[] getWhiteRatios() {
-      return whiteRatios_ != null ? whiteRatios_.clone() : null;
-   }
-
    @Override
    public ChannelDisplaySettings.Builder copyBuilder() {
       Builder builder = new Builder();
@@ -337,8 +268,6 @@ public final class DefaultChannelDisplaySettings
       builder.useCameraRange_ = useCameraRange_;
       builder.componentSettings_.clear();
       builder.componentSettings_.addAll(componentSettings_);
-      builder.whiteMainMax_ = whiteMainMax_;
-      builder.whiteRatios_ = whiteRatios_ != null ? whiteRatios_.clone() : null;
       return builder;
    }
 
@@ -397,12 +326,6 @@ public final class DefaultChannelDisplaySettings
             .putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_)
             .putBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), useCameraRange_)
             .putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings);
-      if (whiteMainMax_ > 0) {
-         pmBuilder.putLong(PropertyKey.WHITE_MAIN_MAX.key(), whiteMainMax_);
-      }
-      if (whiteRatios_ != null) {
-         pmBuilder.putDoubleList(PropertyKey.WHITE_RATIOS.key(), whiteRatios_);
-      }
       return pmBuilder.build();
    }
 
@@ -446,16 +369,6 @@ public final class DefaultChannelDisplaySettings
          b.useCameraHistoRange(pMap.getBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(),
                b.useCameraRange_));
       }
-      if (pMap.containsLong(PropertyKey.WHITE_MAIN_MAX.key())) {
-         b.whiteMainMax(pMap.getLong(PropertyKey.WHITE_MAIN_MAX.key(), 0L));
-      }
-      if (pMap.containsDoubleList(PropertyKey.WHITE_RATIOS.key())) {
-         double[] ratios = pMap.getDoubleList(PropertyKey.WHITE_RATIOS.key());
-         if (ratios.length == 3) {
-            b.whiteRatios(ratios);
-         }
-      }
-
       return b;
    }
 

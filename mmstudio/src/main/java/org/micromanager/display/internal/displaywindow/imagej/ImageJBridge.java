@@ -576,6 +576,8 @@ public final class ImageJBridge {
          blankPixels = new byte[((byte[]) templatePixels).length];
       } else if (templatePixels instanceof short[]) {
          blankPixels = new short[((short[]) templatePixels).length];
+      } else if (templatePixels instanceof float[]) {
+         blankPixels = new float[((float[]) templatePixels).length];
       } else if (templatePixels instanceof int[]) {
          blankPixels = new int[((int[]) templatePixels).length];
       } else if (templatePixels instanceof long[]) {

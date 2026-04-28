@@ -1621,17 +1621,20 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             zDriveCombo_.removeActionListener(al);
          }
          zDriveCombo_.removeAllItems();
+         zDriveCombo_.addItem("");
          for (int i = 0; i < zDrives.size(); i++) {
             zDriveCombo_.addItem(zDrives.get(i));
          }
-         zDriveCombo_.setSelectedItem(mmStudio_.core().getFocusDevice());
+         String focusDevice = mmStudio_.core().getFocusDevice();
+         boolean hasFocus = focusDevice != null && !focusDevice.isEmpty();
+         zDriveCombo_.setSelectedItem(hasFocus ? focusDevice : "");
          try {
             zDriveCombo_.setVisible(true);
             double pixelSize = mmStudio_.core().getPixelSizeUm();
             if (pixelSize != 0.0) {
                proposedZStepLabel_.setText(getOptimalZStep(true));
             }
-            if (!mmStudio_.core().getFocusDevice().isEmpty()) {
+            if (hasFocus) {
                zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
                         mmStudio_.core().getPosition()));
             }
@@ -1685,9 +1688,23 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onPropertyChangedEvent(PropertyChangedEvent pce) {
       if ("Core".equals(pce.getDevice()) && ("Focus".equals(pce.getProperty()))) {
+         String focusDevice = pce.getValue();
+         ActionListener[] actionListeners = zDriveCombo_.getActionListeners();
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.removeActionListener(al);
+         }
+         zDriveCombo_.setSelectedItem(focusDevice == null
+                  || focusDevice.isEmpty() ? "" : focusDevice);
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.addActionListener(al);
+         }
          try {
-            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
-                     mmStudio_.core().getPosition()));
+            if (focusDevice != null && !focusDevice.isEmpty()) {
+               zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
+                        mmStudio_.core().getPosition()));
+            } else {
+               zDrivePositionLabel_.setText("");
+            }
          } catch (Exception e) {
             mmStudio_.logs().logError(e, "Failed to get Z drive position from core.");
          }
@@ -1785,13 +1802,17 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (newZDrive != null && !newZDrive.equals(mmStudio_.core().getFocusDevice())) {
          try {
             mmStudio_.core().setFocusDevice(newZDrive);
-            double position = mmStudio_.core().getPosition();
-            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(position));
-            if (ABSOLUTE_Z.equals(zValCombo_.getSelectedItem())) {
-               // New Z drive: to avoid danger, set start and end to the current position
-               zStart_.setValue(position);
-               zEnd_.setValue(position);
-            } // if relative Z, it should be safe and logical to keep it where it is.
+            if (newZDrive.isEmpty()) {
+               zDrivePositionLabel_.setText("");
+            } else {
+               double position = mmStudio_.core().getPosition();
+               zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(position));
+               if (ABSOLUTE_Z.equals(zValCombo_.getSelectedItem())) {
+                  // New Z drive: to avoid danger, set start and end to the current position
+                  zStart_.setValue(position);
+                  zEnd_.setValue(position);
+               } // if relative Z, it should be safe and logical to keep it where it is.
+            }
          } catch (Exception e) {
             mmStudio_.logs().logError(e, "Failed to set focus device");
          }
@@ -1908,7 +1929,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                + "Available memory (approximate estimate: " + availableMemoryMB
                + " MB) may not be sufficient. "
                + "Once memory is full, the acquisition may slow down or fail.</p>"
-               + "<p width='400'>See <a style=\"" + style
+               + "<p width='400'>Check \"Save Images\", or see <a style=\"" + style
                +
                "\" href=https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Memory_Settings> "
                + " the configuration guide</a> for ways to make more memory available.</p>"
@@ -2101,7 +2122,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.relativeZSlice(zRelativeAbsolute_ == 0);  // 0 == relative, 1 == absolute
          try {
             // the default Z stage that will be used in the MDA should be set at this point
-            ssb.zReference(mmStudio_.core().getPosition());
+            if (mmStudio_.core().getFocusDevice() != null
+                  && !mmStudio_.core().getFocusDevice().isEmpty()) {
+               ssb.zReference(mmStudio_.core().getPosition());
+            } else {
+               ssb.zReference(0.0);
+            }
          } catch (Exception ex) {
             mmStudio_.logs().logError(ex, "Failed to get Z Position from Core.");
             // continue, zReference will be set to 0

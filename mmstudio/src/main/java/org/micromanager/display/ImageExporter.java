@@ -64,7 +64,11 @@ public interface ImageExporter {
       /**
        * Output to the System Clipboard, will only work for a single image.
        */
-      OUTPUT_CLIPBOARD
+      OUTPUT_CLIPBOARD,
+      /**
+       * Output as an MP4 video using ffmpeg.
+       */
+      OUTPUT_MOVIE
    }
 
    /**
@@ -85,12 +89,24 @@ public interface ImageExporter {
 
    /**
     * Set the image quality. This is currently only relevant if the output
-    * format is OUTPUT_JPG.
+    * format is OUTPUT_JPG or OUTPUT_MOVIE.
     *
     * @param quality An integer quality ranging from 1 through 100. The default
     *                value is 90.
     */
    void setOutputQuality(int quality);
+
+   /**
+    * Set the path to the ffmpeg executable. Required when the output format is
+    * OUTPUT_MOVIE. Ignored for other formats.
+    *
+    * <p>This method has a default no-op implementation so that existing
+    * implementations of this interface remain source- and binary-compatible.
+    *
+    * @param ffmpegPath Absolute path to the ffmpeg binary.
+    */
+   default void setFfmpegPath(String ffmpegPath) {
+   }
 
    /**
     * Set the path to save images to, and the filename prefix to use when

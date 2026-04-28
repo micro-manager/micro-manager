@@ -693,6 +693,38 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       });
       SwingUtilities.invokeLater(dt);
    }
+
+   /**
+    * Installs (or removes) a video recorder on the renderer without toggling
+    * its active state or triggering a redraw.  Intended for use by
+    * {@link edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationPlayer}.
+    *
+    * <p>Safe to call from any thread. The call is marshalled to the EDT via
+    * {@link SwingUtilities#invokeAndWait} so that the write to the renderer's
+    * (non-volatile) {@code mVideoRecorder} field is flushed through a full
+    * memory barrier before the caller proceeds to trigger a redraw.  This
+    * guarantees that the OpenGL render thread sees the new recorder when it
+    * next executes the screenshot callback.
+    *
+    * @param recorder the recorder to install; pass {@code null} to remove
+    */
+   public void setAnimationRecorder(VideoRecorderInterface recorder) {
+      if (clearVolumeRenderer_ == null) {
+         return;
+      }
+      if (SwingUtilities.isEventDispatchThread()) {
+         clearVolumeRenderer_.setVideoRecorder(recorder);
+      } else {
+         try {
+            SwingUtilities.invokeAndWait(
+                  () -> clearVolumeRenderer_.setVideoRecorder(recorder));
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         } catch (java.lang.reflect.InvocationTargetException e) {
+            throw new RuntimeException("setAnimationRecorder failed", e.getCause());
+         }
+      }
+   }
    
    public void toggleRecording() {
       Runnable dt = new Thread(() -> clearVolumeRenderer_.toggleRecording());
@@ -738,6 +770,331 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
       return null;
    }
+
+   // -----------------------------------------------------------------------
+   // Animation support — state snapshot/restore and thin wrappers
+   // -----------------------------------------------------------------------
+
+   /**
+    * Immutable snapshot of all renderer state that an animation can modify.
+    * Obtain via {@link CVViewer#snapshotState()} and restore via
+    * {@link CVViewer#restoreState(ViewerState)}.
+    */
+   public static final class ViewerState {
+      public final com.jogamp.opengl.math.Quaternion quaternion;
+      public final float translationX;
+      public final float translationY;
+      public final float translationZ;
+      public final float[] clipBox;            // length-6 copy
+      public final double[] transferRangeMin;  // per channel
+      public final double[] transferRangeMax;  // per channel
+      public final double[] gamma;             // per channel
+      public final boolean[] layerVisible;     // per channel
+      public final clearvolume.transferf.TransferFunction[] transferFunctions; // per channel
+
+      ViewerState(com.jogamp.opengl.math.Quaternion quaternion,
+                  float tx, float ty, float tz,
+                  float[] clipBox,
+                  double[] transferRangeMin, double[] transferRangeMax,
+                  double[] gamma, boolean[] layerVisible,
+                  clearvolume.transferf.TransferFunction[] transferFunctions) {
+         // Deep-copy the quaternion so mutations don't alias.
+         // Substitute an identity quaternion when the renderer returns null.
+         if (quaternion != null) {
+            this.quaternion = new com.jogamp.opengl.math.Quaternion(quaternion);
+         } else {
+            this.quaternion = new com.jogamp.opengl.math.Quaternion();
+            this.quaternion.setIdentity();
+         }
+         this.translationX = tx;
+         this.translationY = ty;
+         this.translationZ = tz;
+         this.clipBox = clipBox.clone();
+         this.transferRangeMin = transferRangeMin.clone();
+         this.transferRangeMax = transferRangeMax.clone();
+         this.gamma = gamma.clone();
+         this.layerVisible = layerVisible.clone();
+         // TransferFunction objects are treated as immutable (ClearVolume
+         // never mutates them in place), so a shallow copy is sufficient.
+         this.transferFunctions = transferFunctions.clone();
+      }
+   }
+
+   /**
+    * Captures a snapshot of the renderer state that an animation may change.
+    * Returns null if the renderer is not yet initialised.
+    */
+   public ViewerState snapshotState() {
+      if (clearVolumeRenderer_ == null) {
+         return null;
+      }
+      int nCh = clearVolumeRenderer_.getNumberOfRenderLayers();
+      double[] rangeMin = new double[nCh];
+      double[] rangeMax = new double[nCh];
+      double[] gamma    = new double[nCh];
+      boolean[] visible = new boolean[nCh];
+      clearvolume.transferf.TransferFunction[] tfs =
+            new clearvolume.transferf.TransferFunction[nCh];
+      for (int ch = 0; ch < nCh; ch++) {
+         rangeMin[ch] = clearVolumeRenderer_.getTransferRangeMin(ch);
+         rangeMax[ch] = clearVolumeRenderer_.getTransferRangeMax(ch);
+         gamma[ch]    = clearVolumeRenderer_.getGamma(ch);
+         visible[ch]  = clearVolumeRenderer_.isLayerVisible(ch);
+         tfs[ch]      = clearVolumeRenderer_.getTransferFunction(ch);
+      }
+      float[] clipBox = clearVolumeRenderer_.getClipBox();
+      return new ViewerState(
+            clearVolumeRenderer_.getQuaternion(),
+            clearVolumeRenderer_.getTranslationX(),
+            clearVolumeRenderer_.getTranslationY(),
+            clearVolumeRenderer_.getTranslationZ(),
+            clipBox != null ? clipBox : new float[]{-1f, 1f, -1f, 1f, -1f, 1f},
+            rangeMin, rangeMax, gamma, visible, tfs);
+   }
+
+   /**
+    * Resets the renderer to its default state: identity rotation, default
+    * translation (Z set by the renderer to fit the volume), and a full-volume
+    * clip box (-1 to 1 on every axis).
+    *
+    * <p>This is the baseline that animation {@code reset} instructions restore
+    * to — it is reproducible regardless of what the viewer looked like before
+    * the script started.
+    */
+   public void resetToDefault() {
+      if (clearVolumeRenderer_ == null) {
+         return;
+      }
+      clearVolumeRenderer_.resetRotationTranslation();
+      clearVolumeRenderer_.setClipBox(new float[]{-1f, 1f, -1f, 1f, -1f, 1f});
+   }
+
+   /**
+    * Restores renderer state previously captured by {@link #snapshotState()}.
+    * Does nothing if {@code state} is null or the renderer is not ready.
+    */
+   public void restoreState(ViewerState state) {
+      if (state == null || clearVolumeRenderer_ == null) {
+         return;
+      }
+      clearVolumeRenderer_.setQuaternion(
+            new com.jogamp.opengl.math.Quaternion(state.quaternion));
+      clearVolumeRenderer_.setTranslationX(state.translationX);
+      clearVolumeRenderer_.setTranslationY(state.translationY);
+      clearVolumeRenderer_.setTranslationZ(state.translationZ);
+      clearVolumeRenderer_.setClipBox(state.clipBox);
+      int nCh = Math.min(state.transferRangeMin.length,
+            clearVolumeRenderer_.getNumberOfRenderLayers());
+      for (int ch = 0; ch < nCh; ch++) {
+         clearVolumeRenderer_.setTransferFunctionRange(
+               ch, (float) state.transferRangeMin[ch], (float) state.transferRangeMax[ch]);
+         clearVolumeRenderer_.setGamma(ch, state.gamma[ch]);
+         clearVolumeRenderer_.setLayerVisible(ch, state.layerVisible[ch]);
+         if (state.transferFunctions[ch] != null) {
+            clearVolumeRenderer_.setTransferFunction(ch, state.transferFunctions[ch]);
+         }
+      }
+      clearVolumeRenderer_.requestDisplay();
+   }
+
+   /** Returns the renderer's current rotation quaternion, or null if not ready. */
+   public com.jogamp.opengl.math.Quaternion getQuaternion() {
+      if (clearVolumeRenderer_ != null) {
+         return clearVolumeRenderer_.getQuaternion();
+      }
+      return null;
+   }
+
+   /** Sets the renderer's rotation quaternion. */
+   public void setQuaternion(com.jogamp.opengl.math.Quaternion q) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setQuaternion(q);
+      }
+   }
+
+   public float getTranslationX() {
+      return clearVolumeRenderer_ != null ? clearVolumeRenderer_.getTranslationX() : 0f;
+   }
+
+   public float getTranslationY() {
+      return clearVolumeRenderer_ != null ? clearVolumeRenderer_.getTranslationY() : 0f;
+   }
+
+   public float getTranslationZ() {
+      return clearVolumeRenderer_ != null ? clearVolumeRenderer_.getTranslationZ() : 0f;
+   }
+
+   public void setTranslationX(float x) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTranslationX(x);
+      }
+   }
+
+   public void setTranslationY(float y) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTranslationY(y);
+      }
+   }
+
+   public void setTranslationZ(float z) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTranslationZ(z);
+      }
+   }
+
+   public void addTranslationX(float dx) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.addTranslationX(dx);
+      }
+   }
+
+   public void addTranslationY(float dy) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.addTranslationY(dy);
+      }
+   }
+
+   public void addTranslationZ(float dz) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.addTranslationZ(dz);
+      }
+   }
+
+   public void requestDisplay() {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.requestDisplay();
+      }
+   }
+
+   /**
+    * Sets the min value of the transfer function range for a channel.
+    * Reads the current max and keeps it unchanged.
+    */
+   public void setTransferFunctionMin(int channel, float min) {
+      if (clearVolumeRenderer_ != null) {
+         // ClearVolume only has setTransferFunctionRange(ch, min, max).
+         // We need the current max; use displaySettings as the source of truth.
+         ChannelDisplaySettings cd = displaySettings_.getChannelSettings(channel);
+         float max = (float) cd.getComponentSettings(0).getScalingMaximum() / maxValue_;
+         clearVolumeRenderer_.setTransferFunctionRange(channel, min, max);
+      }
+   }
+
+   /**
+    * Sets the max value of the transfer function range for a channel.
+    * Reads the current min and keeps it unchanged.
+    */
+   public void setTransferFunctionMax(int channel, float max) {
+      if (clearVolumeRenderer_ != null) {
+         ChannelDisplaySettings cd = displaySettings_.getChannelSettings(channel);
+         float min = (float) cd.getComponentSettings(0).getScalingMinimum() / maxValue_;
+         clearVolumeRenderer_.setTransferFunctionRange(channel, min, max);
+      }
+   }
+
+   public void setTransferFunctionRange(int channel, float min, float max) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTransferFunctionRange(channel, min, max);
+      }
+   }
+
+   public float getTransferRangeMin(int channel) {
+      if (clearVolumeRenderer_ != null) {
+         return (float) clearVolumeRenderer_.getTransferRangeMin(channel);
+      }
+      return 0f;
+   }
+
+   public float getTransferRangeMax(int channel) {
+      if (clearVolumeRenderer_ != null) {
+         return (float) clearVolumeRenderer_.getTransferRangeMax(channel);
+      }
+      return 1f;
+   }
+
+   public double getGamma(int channel) {
+      if (clearVolumeRenderer_ != null) {
+         return clearVolumeRenderer_.getGamma(channel);
+      }
+      return 1.0;
+   }
+
+   public void setGamma(int channel, double gamma) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setGamma(channel, gamma);
+      }
+   }
+
+   /**
+    * Returns the current 0-based time-point index being displayed,
+    * or 0 if no position has been set yet.
+    */
+   public int getCurrentTimePoint() {
+      return lastDisplayedCoords_ != null ? lastDisplayedCoords_.getT() : 0;
+   }
+
+   /**
+    * Jumps to the given 0-based time-point index, clamping to the valid range.
+    * No-op if the data provider or current position is not yet initialised.
+    */
+   public void setTimePoint(int t) {
+      Coords current = lastDisplayedCoords_;
+      if (current == null || dataProvider_ == null) {
+         return;
+      }
+      int maxT = dataProvider_.getNextIndex(Coords.TIME_POINT);
+      int clamped = Math.max(0, Math.min(maxT - 1, t));
+      setDisplayPosition(current.copyBuilder().t(clamped).build());
+   }
+
+   public void setChannelColor(int channel, Color color) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setTransferFunction(channel,
+               clearvolume.transferf.TransferFunctions.getGradientForColor(color));
+      }
+   }
+
+   public void setChannelVisible(int channel, boolean visible) {
+      if (clearVolumeRenderer_ != null) {
+         clearVolumeRenderer_.setLayerVisible(channel, visible);
+      }
+   }
+
+   /**
+    * Sets a clip-box axis range directly using normalised -1…1 values.
+    * If min or max is null the corresponding bound is left unchanged.
+    *
+    * @param axis 0=X, 1=Y, 2=Z
+    * @param min  new minimum, or null to leave unchanged
+    * @param max  new maximum, or null to leave unchanged
+    */
+   public void setClipMinMax(int axis, Float min, Float max) {
+      if (clearVolumeRenderer_ == null) {
+         return;
+      }
+      float[] clipBox = clearVolumeRenderer_.getClipBox();
+      if (clipBox == null) {
+         // Renderer not yet fully initialised; use a default full-range box.
+         clipBox = new float[]{-1f, 1f, -1f, 1f, -1f, 1f};
+      }
+      if (min != null) {
+         clipBox[axis * 2] = min;
+      }
+      if (max != null) {
+         clipBox[axis * 2 + 1] = max;
+      }
+      clearVolumeRenderer_.setClipBox(clipBox);
+   }
+
+   /**
+    * Sets both bounds of a clip-box axis using normalised -1…1 values.
+    *
+    * @param axis 0=X, 1=Y, 2=Z
+    */
+   public void setClipRange(int axis, float min, float max) {
+      setClipMinMax(axis, min, max);
+   }
+
 
    /**
     * Find the first DisplayWindow attached to this dataprovider.
