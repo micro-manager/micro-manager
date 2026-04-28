@@ -92,7 +92,16 @@ public final class NumberUtils {
    }
 
    public static double displayStringToDouble(Object numberString) throws ParseException {
-      return FORMAT.parse((String) numberString).doubleValue();
+      String s = (String) numberString;
+      try {
+         // Double.parseDouble always uses "." as the decimal separator (US/core format).
+         // Prefer this so that "1.0" is never misinterpreted as 10 in locales where
+         // "." is the grouping separator (e.g., German locale).
+         return Double.parseDouble(s);
+      } catch (NumberFormatException e) {
+         // Fall back to locale-aware parsing for locale-specific input like "1,0".
+         return FORMAT.parse(s).doubleValue();
+      }
    }
 
 
