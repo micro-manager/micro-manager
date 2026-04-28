@@ -1117,9 +1117,9 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
           
       DisplaySettings.Builder newSettingsBuilder = displaySettings.copyBuilder();
       Coords baseCoords = getDisplayedImages().get(0).getCoords();
-      double extremaPercentage = displaySettings.getAutoscaleIgnoredPercentile();
-      if (extremaPercentage < 0.0) {
-         extremaPercentage = 0.0;
+      double extremaQuantile = displaySettings.getAutoscaleIgnoredQuantile();
+      if (extremaQuantile < 0.0) {
+         extremaQuantile = 0.0;
       }
       for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ++ch) {
          Image image = dataProvider_.getImage(baseCoords.copyBuilder().channel(ch).build());
@@ -1128,11 +1128,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                     displaySettings.getChannelSettings(ch).copyBuilder();
             for (int j = 0; j < image.getNumComponents(); ++j) {
                ComponentStats componentStats =
-                       lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(0);
+                       lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(j);
                ComponentDisplaySettings.Builder ccB =
                      csCopyBuilder.getComponentSettings(j).copyBuilder();
                long[] minMax = new long[2];
-               componentStats.getAutoscaleMinMaxForQuantile(extremaPercentage, minMax);
+               componentStats.getAutoscaleMinMaxForQuantile(extremaQuantile, minMax);
                ccB.scalingRange(minMax[0], minMax[1]);
                ccB.scalingGamma(displaySettings.getChannelSettings(ch)
                      .getComponentSettings(j).getScalingGamma());

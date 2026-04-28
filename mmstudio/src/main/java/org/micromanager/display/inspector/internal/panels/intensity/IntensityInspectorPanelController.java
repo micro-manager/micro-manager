@@ -560,7 +560,7 @@ public class IntensityInspectorPanelController
          return;
       }
 
-      // We may arrive here as a result of UI actions in this insector panel,
+      // We may arrive here as a result of UI actions in this inspector panel,
       // or something external. So sync to the panel UI first, but do so
       // without generating UI actions.
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());

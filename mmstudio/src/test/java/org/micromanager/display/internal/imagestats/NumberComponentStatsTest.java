@@ -12,8 +12,8 @@ import static org.junit.Assert.*;
  *
  * @author mark
  */
-public class IntegerComponentStatsTest {
-   public IntegerComponentStatsTest() {
+public class NumberComponentStatsTest {
+   public NumberComponentStatsTest() {
    }
 
    private static final double e = 0.001;
