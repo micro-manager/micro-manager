@@ -717,7 +717,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          applyCurrentWhiteRatios();
          // Use HistogramView slot 3 for the white handle so that Red (slot 0)
          // keeps its own independent dotted line and handle.
-         histogram_.setComponentColor(0, Color.RED, Color.RED);
+         for (int c = 0; c < RGB_COLORS.length; c++) {
+            histogram_.setComponentColor(c, RGB_COLORS[c], RGB_COLORS[c]);
+         }
          histogram_.setComponentColor(COMPONENT_WHITE, Color.WHITE, Color.WHITE);
          histogram_.setSelectedComponent(COMPONENT_WHITE);
          whiteBalanceButton_.setVisible(true);
@@ -810,13 +812,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
    }
 
-   // Returns {mainMax, commonMin} across all components at the given quantile.
-   // mainMax = brightest autoscale max, so the white handle lands at the image's
-   // true peak value rather than an inflated implied value.
+   // Returns {mainMax, commonMin, cMax[0], cMax[1], cMax[2]} across all components
+   // at the given quantile. mainMax = brightest autoscale max so the white handle
+   // lands at the image's true peak value. Per-component maxes are used to recompute
+   // white ratios from actual image content rather than stale captured values.
    private long[] computeWhiteAutoscaleRange(double q, boolean ignoreZeros) {
       long mainMax = 0;
       long commonMin = Long.MAX_VALUE;
       int nComponents = stats_.getNumberOfComponents();
+      long[] cMaxes = new long[nComponents];
       for (int c = 0; c < nComponents; c++) {
          long cMax;
          long cMin;
@@ -829,6 +833,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             cMax = minMax[1];
             cMin = minMax[0];
          }
+         cMaxes[c] = cMax;
          if (cMax > mainMax) {
             mainMax = cMax;
          }
@@ -836,7 +841,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             commonMin = cMin;
          }
       }
-      return new long[] { mainMax, commonMin == Long.MAX_VALUE ? 0 : commonMin };
+      long[] result = new long[2 + nComponents];
+      result[0] = mainMax;
+      result[1] = commonMin == Long.MAX_VALUE ? 0 : commonMin;
+      System.arraycopy(cMaxes, 0, result, 2, nComponents);
+      return result;
    }
 
    @MustCallOnEDT
@@ -851,22 +860,24 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       int selectedComponent = getSelectedComponent();
 
       if (selectedComponent == COMPONENT_WHITE) {
-         if (whiteRatios_ == null) {
-            captureWhiteRatios();
-         }
          long[] range = computeWhiteAutoscaleRange(q, ignoreZeros);
          whiteMainMax_ = range[0];
          final long sharedMin = range[1];
          whiteMainMin_ = sharedMin;
          int nComponents = stats_.getNumberOfComponents();
+         // Recompute ratios from actual per-component image maxima so that white
+         // mode reflects true color balance rather than stale default values.
+         whiteRatios_ = new double[nComponents];
+         for (int c = 0; c < nComponents; c++) {
+            whiteRatios_[c] = whiteMainMax_ > 0 ? (double) range[2 + c] / whiteMainMax_ : 1.0;
+         }
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
             ChannelDisplaySettings channelSettings =
                   oldDisplaySettings.getChannelSettings(channelIndex_);
             ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
             for (int c = 0; c < nComponents; c++) {
-               long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_),
-                        sharedMin + 1);
+               long scaledMax = Math.max(range[2 + c], sharedMin + 1);
                builder.component(c,
                      channelSettings.getComponentSettings(c).copyBuilder()
                            .scalingRange(sharedMin, scaledMax).build());
@@ -963,16 +974,18 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          int nComponents = stats_.getNumberOfComponents();
          int sel = getSelectedComponent();
          if (sel == COMPONENT_WHITE) {
-            if (whiteRatios_ == null) {
-               captureWhiteRatios();
-            }
             long[] range = computeWhiteAutoscaleRange(q, ignoreZeros);
             whiteMainMax_ = range[0];
             long commonMin = range[1];
             whiteMainMin_ = commonMin;
+            // Recompute ratios from actual per-component image maxima so that white
+            // mode reflects true color balance rather than stale default values.
+            whiteRatios_ = new double[nComponents];
             for (int i = 0; i < nComponents; ++i) {
-               long scaledMax = Math.max(Math.round(whiteRatios_[i] * whiteMainMax_),
-                        commonMin + 1);
+               whiteRatios_[i] = whiteMainMax_ > 0 ? (double) range[2 + i] / whiteMainMax_ : 1.0;
+            }
+            for (int i = 0; i < nComponents; ++i) {
+               long scaledMax = Math.max(range[2 + i], commonMin + 1);
                builder.component(i,
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(commonMin, scaledMax).build());
