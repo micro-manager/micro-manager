@@ -236,6 +236,7 @@ public final class HistogramView extends JPanel {
 
    private void clearComponentState(ComponentState state) {
       state.graph_ = null;
+      state.rangeMin_ = 0;
       state.rangeMax_ = 0;
       state.scalingMin_ = 0;
       state.scalingMax_ = 0;
@@ -1104,7 +1105,6 @@ public final class HistogramView extends JPanel {
             + state.rangeMin_);
       intensity = Math.max(state.rangeMin_, Math.min(state.rangeMax_, intensity));
       if (top) {
-         intensity--;
          intensity = Math.max(state.scalingMin_ + 1, intensity);
          setComponentScaling(selectedComponent_, state.scalingMin_, intensity);
          listeners_.fire().histogramScalingMaxChanged(selectedComponent_, intensity);
@@ -1154,7 +1154,6 @@ public final class HistogramView extends JPanel {
       }
       intensity = Math.max(state.rangeMin_, Math.min(state.rangeMax_, intensity));
       if (top) {
-         intensity--;
          intensity = Math.max(state.scalingMin_ + 1, intensity);
          setComponentScaling(selectedComponent_, state.scalingMin_, intensity);
          listeners_.fire().histogramScalingMaxChanged(selectedComponent_, intensity);
