@@ -1091,32 +1091,47 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (!event.isAcquisitionFinishedEvent()) {
                try {
+                  final int lastZIndex = sequenceSettings.slices().size() - 1;
+                  final int lastChannelIndex = sequenceSettings.channels().size() - 1;
+                  final boolean isLastZ = event.getZIndex() == lastZIndex;
+                  final boolean isLastChannel =
+                        (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
+                              == lastChannelIndex;
+                  // Channel-first modes: Z is the inner loop (CHANNEL_SLICE).
+                  // Slice-first modes: channel is the inner loop (SLICE_CHANNEL).
+                  final boolean channelFirst =
+                        sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                        || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE;
                   if (sequenceSettings.keepShutterOpenSlices()
                         && sequenceSettings.keepShutterOpenChannels()) {
-                        if (event.getZIndex() == sequenceSettings.slices().size() - 1
-                              && (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
-                                 == sequenceSettings.channels().size() - 1) {
-                           core_.setShutterOpen(false);
-                           core_.setAutoShutter(true);
-                        }
-                     } else {
+                     // Keep shutter open through the entire C×Z block; close only at the end.
+                     if (isLastZ && isLastChannel) {
+                        core_.setShutterOpen(false);
+                        core_.setAutoShutter(true);
+                     }
+                  } else {
                      if (!event.isZSequenced() && sequenceSettings.keepShutterOpenSlices()) {
-                        if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                        // Channel-first: close at end of each channel's z-stack (last Z per C).
+                        // Slice-first: Z is outer, so close only at the very end of all slices
+                        //   (last Z AND last C, since channels are the inner loop).
+                        if (isLastZ && (channelFirst || isLastChannel)) {
                            core_.setShutterOpen(false);
                            core_.setAutoShutter(true);
                         }
                      }
                      if (!event.isConfigGroupSequenced()
                            && sequenceSettings.keepShutterOpenChannels()) {
-                        if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
-                              == sequenceSettings.channels().size() - 1) {
+                        // Slice-first: close at end of each slice's channel group (last C per Z).
+                        // Channel-first: C is outer, so close only at the very end of all channels
+                        //   (last C AND last Z, since slices are the inner loop).
+                        if (isLastChannel && (!channelFirst || isLastZ)) {
                            core_.setShutterOpen(false);
                            core_.setAutoShutter(true);
                         }
                      }
                   }
                } catch (Exception ex) {
-                  studio_.logs().logError(ex, "Failed to open shutter");
+                  studio_.logs().logError(ex, "Failed to close shutter");
                }
             }
             return event;
@@ -1124,7 +1139,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public void close() {
-            // nothing to do here
+            // Safety net: ensure the shutter is closed and auto-shutter restored even if the
+            // acquisition was aborted or ended without hitting a "last index" condition.
+            try {
+               core_.setShutterOpen(false);
+               core_.setAutoShutter(true);
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Failed to close shutter on acquisition finish");
+            }
          }
       };
    }
