@@ -112,8 +112,13 @@ public class TileBlender {
          if (probe.pix instanceof short[]) {
             nPix = ((short[]) probe.pix).length;
          } else if (probe.pix instanceof byte[]) {
-            // RGB32: 4 bytes per pixel
             int bpp = (probe.tags != null) ? probe.tags.optInt("BytesPerPixel", 1) : 1;
+            String pt = (probe.tags != null) ? probe.tags.optString("PixelType", "") : "";
+            // Treat as RGB32 (4 bytes/pixel) when BytesPerPixel==4, PixelType=="RGB32",
+            // or when BytesPerPixel was not written but PixelType indicates RGB.
+            if (bpp == 1 && "RGB32".equals(pt)) {
+               bpp = 4;
+            }
             nPix = ((byte[]) probe.pix).length / bpp;
          } else {
             continue;
@@ -249,14 +254,24 @@ public class TileBlender {
                      ? taggedImage.tags.optInt("BytesPerPixel", 1) : 1;
                int nc  = (taggedImage.tags != null)
                      ? taggedImage.tags.optInt("NumComponents", 1) : 1;
+               String pixelType = (taggedImage.tags != null)
+                     ? taggedImage.tags.optString("PixelType", "") : "";
                int fullTileW = (taggedImage.tags != null)
                      ? taggedImage.tags.optInt("Width", 0) : 0;
-               if (bpp == 4 && nc == 3) {
-                  // RGB32 (BGRA byte[], 4 bytes per pixel): accumulate R/G/B directly,
-                  // bypassing min/max and channel-color mapping (tile is already colored).
+               int fullTileH = (taggedImage.tags != null)
+                     ? taggedImage.tags.optInt("Height", 0) : 0;
+               boolean isRGB32 = (bpp == 4 && nc == 3) || "RGB32".equals(pixelType)
+                     || (fullTileW > 0 && fullTileH > 0
+                        && tilePix.length == fullTileW * fullTileH * 4);
+               if (isRGB32) {
+                  // RGB32 (BGRA byte[], 4 bytes per pixel): extract R/G/B and apply
+                  // per-channel contrast (cMin/cMax are in [0,255] for 8-bit components).
                   if (fullTileW <= 0) {
                      fullTileW = dsTileW * scale;
                   }
+                  // cMin/cMax from display settings are 16-bit scale; clamp to 8-bit range.
+                  final float rgb32Min = Math.min(255f, Math.max(0f, cMin));
+                  final float rgb32Range = Math.max(1f, Math.min(255f, cMax) - rgb32Min);
                   for (int py = interY0; py < interY1; py++) {
                      for (int px = interX0; px < interX1; px++) {
                         int tx = px - tileOriginX;
@@ -269,9 +284,12 @@ public class TileBlender {
                            continue;
                         }
                         // BGRA layout: byte 0=B, 1=G, 2=R, 3=A
-                        float tB = (tilePix[byteOff]     & 0xFF) / 255f;
-                        float tG = (tilePix[byteOff + 1] & 0xFF) / 255f;
-                        float tR = (tilePix[byteOff + 2] & 0xFF) / 255f;
+                        float tB = Math.min(1f, Math.max(0f,
+                              ((tilePix[byteOff]     & 0xFF) - rgb32Min) / rgb32Range));
+                        float tG = Math.min(1f, Math.max(0f,
+                              ((tilePix[byteOff + 1] & 0xFF) - rgb32Min) / rgb32Range));
+                        float tR = Math.min(1f, Math.max(0f,
+                              ((tilePix[byteOff + 2] & 0xFF) - rgb32Min) / rgb32Range));
                         int outIdx = (py - dsRoiY) * dsRoiW + (px - dsRoiX);
                         rAcc[outIdx] += tR * w;
                         gAcc[outIdx] += tG * w;

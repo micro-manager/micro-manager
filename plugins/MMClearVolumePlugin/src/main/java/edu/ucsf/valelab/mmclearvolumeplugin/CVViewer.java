@@ -44,7 +44,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,10 +78,10 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ComponentStats;
 import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
-import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.WindowPositioning;
 
@@ -1118,9 +1117,9 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
           
       DisplaySettings.Builder newSettingsBuilder = displaySettings.copyBuilder();
       Coords baseCoords = getDisplayedImages().get(0).getCoords();
-      double extremaPercentage = displaySettings.getAutoscaleIgnoredPercentile();
-      if (extremaPercentage < 0.0) {
-         extremaPercentage = 0.0;
+      double extremaQuantile = displaySettings.getAutoscaleIgnoredQuantile();
+      if (extremaQuantile < 0.0) {
+         extremaQuantile = 0.0;
       }
       for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ++ch) {
          Image image = dataProvider_.getImage(baseCoords.copyBuilder().channel(ch).build());
@@ -1128,12 +1127,13 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             ChannelDisplaySettings.Builder csCopyBuilder = 
                     displaySettings.getChannelSettings(ch).copyBuilder();
             for (int j = 0; j < image.getNumComponents(); ++j) {
-               IntegerComponentStats componentStats = 
-                       lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(0);
+               ComponentStats componentStats =
+                       lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(j);
                ComponentDisplaySettings.Builder ccB =
                      csCopyBuilder.getComponentSettings(j).copyBuilder();
-               ccB.scalingRange(componentStats.getAutoscaleMinForQuantile(extremaPercentage),
-                       componentStats.getAutoscaleMaxForQuantile(extremaPercentage));
+               long[] minMax = new long[2];
+               componentStats.getAutoscaleMinMaxForQuantile(extremaQuantile, minMax);
+               ccB.scalingRange(minMax[0], minMax[1]);
                ccB.scalingGamma(displaySettings.getChannelSettings(ch)
                      .getComponentSettings(j).getScalingGamma());
                csCopyBuilder.component(j, ccB.build());

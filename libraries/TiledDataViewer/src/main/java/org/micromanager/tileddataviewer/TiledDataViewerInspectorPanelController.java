@@ -4,7 +4,6 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Window;
 import java.awt.geom.Point2D;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JButton;

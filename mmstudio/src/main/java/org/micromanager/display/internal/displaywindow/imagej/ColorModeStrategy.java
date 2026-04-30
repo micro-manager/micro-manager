@@ -21,7 +21,9 @@ interface ColorModeStrategy {
 
    void applyColor(int index, Color color);
 
-   void applyScaling(int index, int min, int max);
+   void applyScaling(int index, int min, int max, boolean defer);
+
+   void applyFloatScaling(int index, double min, double max, boolean defer);
 
    void applyGamma(int index, double gamma);
 

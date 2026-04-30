@@ -31,20 +31,29 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
    private final List<Integer> maxima_ = new ArrayList<Integer>();
    private final List<Double> gammas_ = new ArrayList<Double>();
    private boolean highlightHiLo_ = false;
+   // Float-precision overrides for min/max (non-null entry wins over integer list).
+   private final List<Double> floatMinima_ = new ArrayList<Double>();
+   private final List<Double> floatMaxima_ = new ArrayList<Double>();
 
    private List<LUT> cachedLUTs_;
 
    protected AbstractColorModeStrategy(int nColors) {
    }
 
-   private int getMinimum(int index) {
+   private double getMinDouble(int index) {
+      if (index < floatMinima_.size() && floatMinima_.get(index) != null) {
+         return floatMinima_.get(index);
+      }
       if (index >= minima_.size()) {
          return 0;
       }
       return minima_.get(index);
    }
 
-   private int getMaximum(int index) {
+   private double getMaxDouble(int index) {
+      if (index < floatMaxima_.size() && floatMaxima_.get(index) != null) {
+         return floatMaxima_.get(index);
+      }
       if (index >= maxima_.size()) {
          return getSampleMax();
       }
@@ -124,8 +133,8 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
 
    private void applyToMonochromeImagePlus() {
       LUT lut = getCachedLUT(0);
-      lut.min = getMinimum(0);
-      lut.max = getMaximum(0);
+      lut.min = getMinDouble(0);
+      lut.max = getMaxDouble(0);
       imagePlus_.getProcessor().setLut(lut);
    }
 
@@ -135,13 +144,13 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
       int nChannels = ((IMMImagePlus) compositeImage).getNChannelsWithoutSideEffect();
       for (int i = 0; i < nChannels; ++i) {
          LUT lut = getCachedLUT(i);
-         lut.min = getMinimum(i);
-         lut.max = getMaximum(i);
+         lut.min = getMinDouble(i);
+         lut.max = getMaxDouble(i);
          compositeImage.setChannelLut(lut, i + 1);
          if (compositeImage.getMode() == CompositeImage.COMPOSITE) {
             ImageProcessor proc = compositeImage.getProcessor(i + 1);
             if (proc != null) { // ImageJ may not have allocated it yet
-               proc.setMinAndMax(getMinimum(i), getMaximum(i));
+               proc.setMinAndMax(getMinDouble(i), getMaxDouble(i));
             }
          }
       }
@@ -156,8 +165,8 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
       // (This may not be strictly necessary but is harmless.)
       int channel = compositeImage.getChannel() - 1;
       LUT lut = getCachedLUT(channel);
-      lut.min = getMinimum(channel);
-      lut.max = getMaximum(channel);
+      lut.min = getMinDouble(channel);
+      lut.max = getMaxDouble(channel);
       compositeImage.getProcessor().setLut(lut);
    }
 
@@ -186,7 +195,8 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
    }
 
    @Override
-   public void applyScaling(int index, int min, int max) {
+   public void applyScaling(int index, int min, int max, boolean defer) {
+      Preconditions.checkArgument(min >= 0);
       Preconditions.checkArgument(max >= min);
       if (minima_.size() <= index) {
          minima_.addAll(Collections.nCopies(index + 1 - minima_.size(), 0));
@@ -197,7 +207,31 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
       }
       minima_.set(index, min);
       maxima_.set(index, max);
-      apply();
+      // Clear any float override so integer path takes effect.
+      if (index < floatMinima_.size()) {
+         floatMinima_.set(index, null);
+      }
+      if (index < floatMaxima_.size()) {
+         floatMaxima_.set(index, null);
+      }
+      if (!defer) {
+         apply();
+      }
+   }
+
+   @Override
+   public void applyFloatScaling(int index, double min, double max, boolean defer) {
+      while (floatMinima_.size() <= index) {
+         floatMinima_.add(null);
+      }
+      while (floatMaxima_.size() <= index) {
+         floatMaxima_.add(null);
+      }
+      floatMinima_.set(index, min);
+      floatMaxima_.set(index, max);
+      if (!defer) {
+         apply();
+      }
    }
 
    @Override
@@ -226,6 +260,8 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
    @Override
    public void releaseImagePlus() {
       imagePlus_ = null;
+      floatMinima_.clear();
+      floatMaxima_.clear();
       flushCachedLUTs();
    }
 }

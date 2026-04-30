@@ -123,6 +123,7 @@ public class ExplorerManager {
    private double overlapPercentage_ = 10.0;
    private volatile boolean acquisitionInterrupted_ = false;
    private final AtomicInteger pendingBatches_ = new AtomicInteger(0);
+   private boolean isRGB_ = false;
 
    public ExplorerManager(Studio studio, ExplorerFrame frame) {
       studio_ = studio;
@@ -168,6 +169,12 @@ public class ExplorerManager {
          cameraWidth_ = (int) studio_.core().getImageWidth();
          cameraHeight_ = (int) studio_.core().getImageHeight();
          bitDepth_ = (int) studio_.core().getImageBitDepth();
+         try {
+            isRGB_ = studio_.core().getNumberOfComponents() > 1;
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Explorer: could not determine camera component count");
+            isRGB_ = false;
+         }
          pixelSizeUm_ = studio_.core().getPixelSizeUm();
          if (pixelSizeUm_ <= 0) {
             pixelSizeUm_ = 1.0;
@@ -203,7 +210,7 @@ public class ExplorerManager {
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
-               summaryMetadataJson, pixelSizeUm_, false);
+               summaryMetadataJson, pixelSizeUm_, isRGB_);
          mm2Viewer_.setAccumulateStats(true);
 
          initDisplaySettings(summaryMetadataJson);
@@ -271,6 +278,7 @@ public class ExplorerManager {
          final int imageWidth = summaryMetadata.optInt("Width", 512);
          final int imageHeight = summaryMetadata.optInt("Height", 512);
          bitDepth_ = summaryMetadata.optInt("BitDepth", 16);
+         isRGB_ = "RGB32".equals(summaryMetadata.optString("PixelType", ""));
          pixelSizeUm_ = summaryMetadata.optDouble("PixelSize_um", 1.0);
          if (pixelSizeUm_ <= 0) {
             pixelSizeUm_ = 1.0;
@@ -327,7 +335,7 @@ public class ExplorerManager {
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
-               summaryMetadata, pixelSizeUm_, false);
+               summaryMetadata, pixelSizeUm_, isRGB_);
          mm2Viewer_.setAccumulateStats(true);
 
          // Load saved MM display settings or derive from heuristics
@@ -1048,7 +1056,9 @@ public class ExplorerManager {
          tags.put("Width", image.getWidth());
          tags.put("Height", image.getHeight());
          tags.put("BitDepth", bitDepth_);
-         tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
+         tags.put("PixelType", isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"));
+         tags.put("BytesPerPixel", isRGB_ ? 4 : (bitDepth_ <= 8 ? 1 : 2));
+         tags.put("NumComponents", isRGB_ ? 3 : 1);
          tags.put("PixelSizeUm", pixelSizeUm_);
 
          // Per-image metadata for MM Inspector "Plane Metadata" panel
@@ -1101,7 +1111,7 @@ public class ExplorerManager {
                  image.getRawPixels(),
                  tags,
                  axes,
-                 false,
+                 isRGB_,
                  bitDepth_,
                  image.getHeight(),
                  image.getWidth());
@@ -1281,7 +1291,8 @@ public class ExplorerManager {
          // PixelType has no builder method — inject directly into the PropertyMap
          return DefaultSummaryMetadata.fromPropertyMap(
                sm.toPropertyMap().copyBuilder()
-                     .putString("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16")
+                     .putString("PixelType",
+                              isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"))
                      .build());
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: failed to build summary metadata");
