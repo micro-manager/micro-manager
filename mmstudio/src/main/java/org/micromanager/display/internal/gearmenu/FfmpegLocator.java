@@ -208,11 +208,13 @@ public final class FfmpegLocator {
     */
    private static String buildInstallInstructions() {
       if (JavaUtils.isWindows()) {
-         return "On Windows: download ffmpeg from <b>https://ffmpeg.org/download.html</b><br>"
+         return "On Windows: download ffmpeg from "
+               + "<a href=https://ffmpeg.org/download.html>https://ffmpeg.org/download.html</a><br>"
                + "and add it to your PATH, or use 'Locate ffmpeg...' to find the executable.";
       } else if (JavaUtils.isMac()) {
          return "On macOS: install via Homebrew with: <b>brew install ffmpeg</b><br>"
-               + "or download from <b>https://ffmpeg.org/download.html</b>.";
+               + "or download from "
+               + "<a href=https://ffmpeg.org/download.html>https://ffmpeg.org/download.html</a><br>";
       } else {
          return "On Linux: install via your package manager, e.g.:<br>"
                + "&nbsp;&nbsp;<b>sudo apt install ffmpeg</b><br>"
