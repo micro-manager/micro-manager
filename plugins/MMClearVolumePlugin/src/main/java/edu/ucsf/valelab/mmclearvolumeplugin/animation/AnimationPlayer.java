@@ -2,7 +2,6 @@ package edu.ucsf.valelab.mmclearvolumeplugin.animation;
 
 import com.jogamp.opengl.math.Quaternion;
 import edu.ucsf.valelab.mmclearvolumeplugin.CVViewer;
-import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationInstruction.ActionType;
 import edu.ucsf.valelab.mmclearvolumeplugin.animation.AnimationInstruction.Easing;
 import edu.ucsf.valelab.mmclearvolumeplugin.recorder.AnimationFrameRecorder;
 import ij.ImagePlus;

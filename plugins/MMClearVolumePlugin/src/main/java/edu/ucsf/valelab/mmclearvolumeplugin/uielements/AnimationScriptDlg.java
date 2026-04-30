@@ -103,10 +103,10 @@ public final class AnimationScriptDlg extends JDialog {
       final JPanel panel = new JPanel(new MigLayout("fill, flowy, insets 8"));
 
       // Script editor — label + Save/Load/Default buttons on one row.
-      JButton saveScriptButton = new JButton("Save…");
+      JButton saveScriptButton = new JButton("Save...");
       saveScriptButton.setToolTipText("Save script to a file");
       saveScriptButton.addActionListener((ActionEvent e) -> saveScriptToFile());
-      JButton loadScriptButton = new JButton("Load…");
+      JButton loadScriptButton = new JButton("Load...");
       loadScriptButton.setToolTipText("Load script from a file");
       loadScriptButton.addActionListener((ActionEvent e) -> loadScriptFromFile());
       JButton defaultScriptButton = new JButton("Default");
@@ -245,11 +245,13 @@ public final class AnimationScriptDlg extends JDialog {
          parsed = AnimationScript.parse(scriptText);
       } catch (IllegalArgumentException ex) {
          statusLabel_.setText("Parse error: " + ex.getMessage());
+         studio_.logs().showError("Parse error: " + ex.getMessage(), this);
          return;
       }
 
       if (parsed.instructions.isEmpty()) {
          statusLabel_.setText("Script contains no instructions.");
+         studio_.logs().showError("Script contains no instructions.", this);
          return;
       }
 
@@ -267,11 +269,13 @@ public final class AnimationScriptDlg extends JDialog {
          ffmpegPath = FfmpegLocator.findOrLocate(studio_, this);
          if (ffmpegPath == null) {
             statusLabel_.setText("ffmpeg not found — export cancelled.");
+            studio_.logs().showError("ffmpeg not found - export cancelled", this);
             return;
          }
          outputPath = outputField_.getText().trim();
          if (outputPath.isEmpty()) {
             statusLabel_.setText("Please specify an output .mp4 file.");
+            studio_.logs().showError("Please specify an output .mp4 file.", this);
             return;
          }
          if (!outputPath.endsWith(".mp4")) {
@@ -279,6 +283,7 @@ public final class AnimationScriptDlg extends JDialog {
          }
          if (new File(outputPath).exists()) {
             statusLabel_.setText("Output file already exists: " + outputPath);
+            studio_.logs().showError("Output file already exists: " + outputPath, this);
             return;
          }
       }
