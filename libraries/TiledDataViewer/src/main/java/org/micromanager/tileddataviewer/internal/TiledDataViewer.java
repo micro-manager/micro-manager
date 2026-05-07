@@ -574,6 +574,11 @@ public class TiledDataViewer implements TiledDataViewerAPI {
             }
          });
       } else {
+         // Give the acquisition a chance to veto the close (e.g. to show a
+         // save-data dialog).  If it returns false, leave the window open.
+         if (acq_ != null && !acq_.requestToClose()) {
+            return;
+         }
          //check to stop acquisiton?, return here if the attempt to close window unsuccesslful
          if (acq_ != null && !acq_.isFinished()) {
             int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",

@@ -23,6 +23,8 @@
 package org.micromanager.internal.positionlist.utils;
 
 import java.awt.Component;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -31,6 +33,7 @@ import mmcorej.StrVector;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -157,8 +160,39 @@ public final class TileCreator {
       double offsetXUm = (totalSizeXUm - boundingXUm) / 2;
       double offsetYUm = (totalSizeYUm - boundingYUm) / 2;
 
+      // Compute per-tile step vectors in stage space.
+      // With an affine transform, moving one tile to the right in camera-pixel space
+      // corresponds to affine * (tileWidthPx, 0) in stage microns — not simply
+      // (tileSizeXUm, 0).  Similarly for the Y direction.
+      // Without a valid affine we fall back to the existing axis-aligned behaviour.
+      final AffineTransform affine = getPixelSizeAffine(pixelSizeUm);
+      final double stepXdx; // stage-X component of "one step right"
+      final double stepXdy; // stage-Y component of "one step right"
+      final double stepYdx; // stage-X component of "one step down"
+      final double stepYdy; // stage-Y component of "one step down"
+      if (affine != null) {
+         double tileWidthPx  = tileSizeXUm / pixelSizeUm;
+         double tileHeightPx = tileSizeYUm / pixelSizeUm;
+         Point2D.Double stepX = new Point2D.Double();
+         Point2D.Double stepY = new Point2D.Double();
+         affine.transform(new Point2D.Double(tileWidthPx, 0), stepX);
+         affine.transform(new Point2D.Double(0, tileHeightPx), stepY);
+         stepXdx = stepX.x;
+         stepXdy = stepX.y;
+         stepYdx = stepY.x;
+         stepYdy = stepY.y;
+      } else {
+         stepXdx = tileSizeXUm;
+         stepXdy = 0;
+         stepYdx = 0;
+         stepYdy = tileSizeYUm;
+      }
+
+      // Origin of the grid in stage space: top-left corner adjusted for centering offset.
+      final double originX = minX - offsetXUm;
+      final double originY = minY - offsetYUm;
+
       PositionList posList = new PositionList();
-      // todo handle mirrorX mirrorY
       for (int y = 0; y < nrImagesY; y++) {
          for (int x = 0; x < nrImagesX; x++) {
             // on even rows go left to right, on odd rows right to left
@@ -171,8 +205,8 @@ public final class TileCreator {
             // Add XY position
             // xyStage is not null; we've checked above.
             msp.setDefaultXYStage(xyStage);
-            double dx = minX - offsetXUm + (tmpX * tileSizeXUm);
-            double dy = minY - offsetYUm + (y * tileSizeYUm);
+            double dx = originX + tmpX * stepXdx + y * stepYdx;
+            double dy = originY + tmpX * stepXdy + y * stepYdy;
             StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
             msp.add(spXY);
 
@@ -359,6 +393,25 @@ public final class TileCreator {
          posList.addPosition(msp);
       }
       return posList;
+   }
+
+   /**
+    * Returns the validated pixel-size affine transform (camera pixels → stage microns),
+    * or null if none is available or it fails the 10 % consistency check against pixelSizeUm.
+    * The MM core affine always has zero translation terms, so it can be used directly
+    * to transform pixel-delta vectors to stage-micron-delta vectors.
+    */
+   private AffineTransform getPixelSizeAffine(double pixelSizeUm) {
+      try {
+         AffineTransform at = AffineUtils.doubleToAffine(core_.getPixelSizeAffine(true));
+         double affinePixelSize = AffineUtils.deducePixelSize(at);
+         if (Math.abs(pixelSizeUm - affinePixelSize) > 0.1 * pixelSizeUm) {
+            return null;
+         }
+         return at;
+      } catch (Exception e) {
+         return null;
+      }
    }
 
    private boolean isSwappedXY() {
