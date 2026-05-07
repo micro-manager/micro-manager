@@ -3,6 +3,8 @@ package org.micromanager.explorer;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,7 @@ import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
@@ -120,6 +123,10 @@ public class ExplorerManager {
    private double initialStageX_ = 0;
    private double initialStageY_ = 0;
    private double pixelSizeUm_ = 1.0;
+   // Affine: camera-pixel delta → stage-micron delta. Null = use scalar fallback.
+   private AffineTransform pixelSizeAffine_ = null;
+   // Pre-computed inverse: stage-micron delta → camera-pixel delta.
+   private AffineTransform pixelSizeAffineInverse_ = null;
    private double overlapPercentage_ = 10.0;
    private volatile boolean acquisitionInterrupted_ = false;
    private final AtomicInteger pendingBatches_ = new AtomicInteger(0);
@@ -188,6 +195,7 @@ public class ExplorerManager {
          // Stage step in microns = camera FOV × pixel size
          stageTileWidthUm_ = cameraWidth_ * pixelSizeUm_;
          stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
+         loadPixelSizeAffine();
 
          // Initial tile-grid estimate uses camera dimensions (corrected after first acq)
          dataSource_.setTileDimensions(cameraWidth_, cameraHeight_);
@@ -627,14 +635,8 @@ public class ExplorerManager {
          }
       }
 
-      if (mm2Viewer_ != null) {
-         mm2Viewer_.closeWithoutNDViewer();
-      }
-      mm2Viewer_ = null;
-      mm2DataProvider_ = null;
-      viewer_ = null;
-
       if (loadedData_) {
+         closeViewerReferences();
          stopExplore(false);
          return true;
       }
@@ -659,11 +661,9 @@ public class ExplorerManager {
                     "Save");
 
             if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
+               // User cancelled — leave the viewer open.
                studio_.logs().logMessage("Explorer: close cancelled, data remains in: "
                         + storageDir_);
-               if (!calledFromShutdown) {
-                  stopExplore(false);
-               }
                viewerClosing_ = false;
                return false;
             } else if (choice == 0) {
@@ -693,8 +693,18 @@ public class ExplorerManager {
          }
       }
 
+      closeViewerReferences();
       stopExplore(true);
       return true;
+   }
+
+   private void closeViewerReferences() {
+      if (mm2Viewer_ != null) {
+         mm2Viewer_.closeWithoutNDViewer();
+      }
+      mm2Viewer_ = null;
+      mm2DataProvider_ = null;
+      viewer_ = null;
    }
 
    private boolean saveDataTo(File destDir) {
@@ -827,6 +837,43 @@ public class ExplorerManager {
    }
 
    /**
+    * Loads and validates the pixel-size affine transform from the core.
+    * Sets pixelSizeAffine_ / pixelSizeAffineInverse_ on success, leaves both null
+    * (scalar fallback) on any failure or if the affine does not match pixelSizeUm_.
+    * The MM core affine has zero translation terms, so AffineTransform.transform()
+    * on a pixel-delta Point2D gives the correct stage-micron delta.
+    */
+   private void loadPixelSizeAffine() {
+      pixelSizeAffine_ = null;
+      pixelSizeAffineInverse_ = null;
+      if (pixelSizeUm_ <= 0) {
+         return;
+      }
+      try {
+         AffineTransform at = AffineUtils.doubleToAffine(
+               studio_.core().getPixelSizeAffine(true));
+         double affinePixelSize = AffineUtils.deducePixelSize(at);
+         if (Math.abs(pixelSizeUm_ - affinePixelSize) > 0.1 * pixelSizeUm_) {
+            studio_.logs().logMessage("Explorer: affine pixel size " + affinePixelSize
+                  + " differs from declared " + pixelSizeUm_
+                  + " by >10%; using scalar coordinate conversion");
+            return;
+         }
+         pixelSizeAffine_ = at;
+         try {
+            pixelSizeAffineInverse_ = at.createInverse();
+         } catch (NoninvertibleTransformException e) {
+            studio_.logs().logMessage(
+                  "Explorer: pixel-size affine is singular; using scalar coordinate conversion");
+            pixelSizeAffine_ = null;
+         }
+      } catch (Exception e) {
+         studio_.logs().logMessage("Explorer: could not load pixel-size affine ("
+               + e.getMessage() + "); using scalar coordinate conversion");
+      }
+   }
+
+   /**
     * Acquires multiple tiles sequentially, moving the stage between positions.
     * Stage step is based on the camera FOV × pixel size (stageTileWidthUm_/stageTileHeightUm_).
     */
@@ -853,8 +900,9 @@ public class ExplorerManager {
             // Stage step in microns: derived from camera FOV (not pipeline-output tile size).
             // The pipeline may resize images, but the stage still moves by the camera FOV.
             double overlapFraction = overlapPercentage_ / 100.0;
-            double effectiveStepWidthUm = stageTileWidthUm_ * (1.0 - overlapFraction);
-            double effectiveStepHeightUm = stageTileHeightUm_ * (1.0 - overlapFraction);
+            // Effective tile step in camera-pixel space (affine operates on camera pixels).
+            double effectivePixelStepX = cameraWidth_  * (1.0 - overlapFraction);
+            double effectivePixelStepY = cameraHeight_ * (1.0 - overlapFraction);
 
             for (Point tile : tiles) {
                if (acquisitionInterrupted_) {
@@ -863,8 +911,21 @@ public class ExplorerManager {
                int row = tile.x;
                int col = tile.y;
 
-               double targetX = initialStageX_ + col * effectiveStepWidthUm;
-               double targetY = initialStageY_ + row * effectiveStepHeightUm;
+               double targetX;
+               double targetY;
+               if (pixelSizeAffine_ != null) {
+                  Point2D.Double pixelOffset = new Point2D.Double(
+                        col * effectivePixelStepX, row * effectivePixelStepY);
+                  Point2D.Double stageOffset = new Point2D.Double();
+                  pixelSizeAffine_.transform(pixelOffset, stageOffset);
+                  targetX = initialStageX_ + stageOffset.x;
+                  targetY = initialStageY_ + stageOffset.y;
+               } else {
+                  double effectiveStepWidthUm  = stageTileWidthUm_  * (1.0 - overlapFraction);
+                  double effectiveStepHeightUm = stageTileHeightUm_ * (1.0 - overlapFraction);
+                  targetX = initialStageX_ + col * effectiveStepWidthUm;
+                  targetY = initialStageY_ + row * effectiveStepHeightUm;
+               }
 
                studio_.core().setXYPosition(targetX, targetY);
                studio_.core().waitForDevice(studio_.core().getXYStageDevice());
@@ -967,9 +1028,7 @@ public class ExplorerManager {
                continue;
             }
             int channelIndex = c.getChannel();
-            String[] chNames = summaryMeta.getChannelNames();
-            String channelName = (chNames != null && channelIndex < chNames.length)
-                  ? chNames[channelIndex] : "Default";
+            String channelName = summaryMeta.getSafeChannelName(channelIndex);
             HashMap<String, Object> axes = storeImage(img, row, col, channelName);
             if (axes != null) {
                storedAxes.add(axes);
@@ -1157,20 +1216,27 @@ public class ExplorerManager {
       int overlapPixels = (int) Math.round(tw * overlapPercentage_ / 100.0);
       double effectiveTileWidth = tw - overlapPixels;
       double effectiveTileHeight = th - overlapPixels;
-      // NDTiff canvas coords: tile (row,col) occupies [col*effectiveTileWidth,
-      // (col+1)*effectiveTileWidth).
-      // Stage step per tile = stageTileWidthUm_ * (1 - overlap) / pixelSizeUm_ pixels.
-      // Scale maps stage-offset pixels to NDTiff canvas pixels.
-      double stageStepX = stageTileWidthUm_ > 0
-               ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-               : effectiveTileWidth;
-      double stageStepY = stageTileHeightUm_ > 0
-               ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-               : effectiveTileHeight;
-      double scaleX = effectiveTileWidth / stageStepX;
-      double scaleY = effectiveTileHeight / stageStepY;
-      double pixelX = (stageX - initialStageX_) / pixelSizeUm_ * scaleX + effectiveTileWidth / 2.0;
-      double pixelY = (stageY - initialStageY_) / pixelSizeUm_ * scaleY + effectiveTileHeight / 2.0;
+      double stageOffsetX = stageX - initialStageX_;
+      double stageOffsetY = stageY - initialStageY_;
+
+      double camPixelDeltaX;
+      double camPixelDeltaY;
+      if (pixelSizeAffineInverse_ != null) {
+         // Apply inverse affine: stage-micron delta → camera-pixel delta.
+         Point2D.Double stageOffset = new Point2D.Double(stageOffsetX, stageOffsetY);
+         Point2D.Double camDelta = new Point2D.Double();
+         pixelSizeAffineInverse_.transform(stageOffset, camDelta);
+         camPixelDeltaX = camDelta.x;
+         camPixelDeltaY = camDelta.y;
+      } else {
+         camPixelDeltaX = stageOffsetX / pixelSizeUm_;
+         camPixelDeltaY = stageOffsetY / pixelSizeUm_;
+      }
+      // Scale from camera-pixel space to canvas (pipeline-output) pixel space.
+      double pipelineScaleX = (tw > 0 && cameraWidth_  > 0) ? (double) tw / cameraWidth_  : 1.0;
+      double pipelineScaleY = (th > 0 && cameraHeight_ > 0) ? (double) th / cameraHeight_ : 1.0;
+      double pixelX = camPixelDeltaX * pipelineScaleX + effectiveTileWidth  / 2.0;
+      double pixelY = camPixelDeltaY * pipelineScaleY + effectiveTileHeight / 2.0;
       return new Point2D.Double(pixelX, pixelY);
    }
 
@@ -1231,20 +1297,35 @@ public class ExplorerManager {
             double effectiveTileWidth = tw - overlapPixels;
             double effectiveTileHeight = th - overlapPixels;
 
-            double stageStepX = stageTileWidthUm_ > 0
-                  ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-                     : effectiveTileWidth;
-            double stageStepY = stageTileHeightUm_ > 0
-                  ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-                     : effectiveTileHeight;
-            double scaleX = stageStepX / effectiveTileWidth;
-            double scaleY = stageStepY / effectiveTileHeight;
-
             double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
             double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
 
-            double targetX = initialStageX_ + offsetPixelX * pixelSizeUm_ * scaleX;
-            double targetY = initialStageY_ + offsetPixelY * pixelSizeUm_ * scaleY;
+            double targetX;
+            double targetY;
+            if (pixelSizeAffine_ != null) {
+               // Convert canvas-pixel delta to camera-pixel delta, then apply affine.
+               double pipelineScaleX = (tw > 0 && cameraWidth_  > 0)
+                     ? (double) cameraWidth_  / tw : 1.0;
+               double pipelineScaleY = (th > 0 && cameraHeight_ > 0)
+                     ? (double) cameraHeight_ / th : 1.0;
+               Point2D.Double camPixelDelta = new Point2D.Double(
+                     offsetPixelX * pipelineScaleX, offsetPixelY * pipelineScaleY);
+               Point2D.Double stageOffset = new Point2D.Double();
+               pixelSizeAffine_.transform(camPixelDelta, stageOffset);
+               targetX = initialStageX_ + stageOffset.x;
+               targetY = initialStageY_ + stageOffset.y;
+            } else {
+               double stageStepX = stageTileWidthUm_ > 0
+                     ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
+                        : effectiveTileWidth;
+               double stageStepY = stageTileHeightUm_ > 0
+                     ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
+                        : effectiveTileHeight;
+               double scaleX = stageStepX / effectiveTileWidth;
+               double scaleY = stageStepY / effectiveTileHeight;
+               targetX = initialStageX_ + offsetPixelX * pixelSizeUm_ * scaleX;
+               targetY = initialStageY_ + offsetPixelY * pixelSizeUm_ * scaleY;
+            }
 
             studio_.core().setXYPosition(targetX, targetY);
             studio_.core().waitForDevice(studio_.core().getXYStageDevice());
