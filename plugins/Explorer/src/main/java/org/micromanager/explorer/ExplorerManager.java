@@ -452,6 +452,16 @@ public class ExplorerManager {
             return true; // Prevents "Finish Acquisition?" dialog on close
          }
 
+         /**
+          * Called on the EDT when the user clicks the viewer's X button.
+          * Shows the save/discard/cancel dialog when there is unsaved data.
+          * Returns false (vetoing the close) if the user clicks Cancel.
+          */
+         @Override
+         public boolean requestToClose() {
+            return promptForUnsavedData();
+         }
+
          @Override
          public void abort() {
          }
@@ -603,20 +613,17 @@ public class ExplorerManager {
       if (event.isCanceled() || !exploring_) {
          return;
       }
-      shutdownInProgress_ = true;
-      boolean proceeded = onViewerClosed(true);
-      if (!proceeded) {
+      if (!promptForUnsavedData()) {
          event.cancelShutdown();
+         return;
       }
+      shutdownInProgress_ = true;
+      onViewerClosed();
    }
 
    public void onViewerClosed() {
-      onViewerClosed(false);
-   }
-
-   private boolean onViewerClosed(boolean calledFromShutdown) {
       if (!exploring_ || viewerClosing_) {
-         return true;
+         return;
       }
       viewerClosing_ = true;
 
@@ -635,67 +642,71 @@ public class ExplorerManager {
          }
       }
 
+      closeViewerReferences();
+      stopExplore(!loadedData_);
+   }
+
+   /**
+    * Shows the save/discard/cancel dialog when there is unsaved Explorer data.
+    * Returns true if the caller should proceed (data was saved or discarded),
+    * false if the user cancelled.  Returns true immediately when there is no
+    * unsaved data (loaded-data sessions, empty storage, etc.).
+    * Must be called on the EDT.
+    */
+   private boolean promptForUnsavedData() {
       if (loadedData_) {
-         closeViewerReferences();
-         stopExplore(false);
          return true;
       }
-
       boolean hasData = false;
       try {
-         hasData = storage_ != null && !storage_.isFinished() && !storage_.getAxesSet().isEmpty();
+         hasData = storage_ != null && !storage_.isFinished()
+               && !storage_.getAxesSet().isEmpty();
       } catch (Exception e) {
-         studio_.logs().logMessage("Explorer: could not check storage state: " + e.getMessage());
+         studio_.logs().logMessage(
+               "Explorer: could not check storage state: " + e.getMessage());
       }
-
-      if (hasData) {
-         while (true) {
-            int choice = JOptionPane.showOptionDialog(
-                    null,
-                    "Save the acquired Explorer data?",
-                    "Save Explorer Data",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    new String[]{"Save", "Discard", "Cancel"},
-                    "Save");
-
-            if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
-               // User cancelled — leave the viewer open.
-               studio_.logs().logMessage("Explorer: close cancelled, data remains in: "
-                        + storageDir_);
-               viewerClosing_ = false;
-               return false;
-            } else if (choice == 0) {
-               JFileChooser chooser = new JFileChooser();
-               chooser.setDialogTitle("Save Explorer Data");
-               chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-               String suggestedPath = FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET);
-               if (suggestedPath != null) {
-                  File suggested = new File(suggestedPath);
-                  File dir = suggested.isDirectory() ? suggested : suggested.getParentFile();
-                  if (dir != null) {
-                     chooser.setCurrentDirectory(dir);
-                  }
+      if (!hasData) {
+         return true;
+      }
+      while (true) {
+         int choice = JOptionPane.showOptionDialog(
+                 null,
+                 "Save the acquired Explorer data?",
+                 "Save Explorer Data",
+                 JOptionPane.YES_NO_CANCEL_OPTION,
+                 JOptionPane.QUESTION_MESSAGE,
+                 null,
+                 new String[]{"Save", "Discard", "Cancel"},
+                 "Save");
+         if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
+            studio_.logs().logMessage(
+                  "Explorer: close cancelled, data remains in: " + storageDir_);
+            return false;
+         } else if (choice == 0) {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Save Explorer Data");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            String suggestedPath = FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET);
+            if (suggestedPath != null) {
+               File suggested = new File(suggestedPath);
+               File dir = suggested.isDirectory() ? suggested : suggested.getParentFile();
+               if (dir != null) {
+                  chooser.setCurrentDirectory(dir);
                }
-               chooser.setSelectedFile(new File(acqName_));
-               if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                  File destDir = chooser.getSelectedFile();
-                  FileDialogs.storePath(FileDialogs.MM_DATA_SET, destDir);
-                  writeSettingsToTempDir();
-                  if (saveDataTo(destDir)) {
-                     break;
-                  }
-               }
-            } else {
-               break; // Discard
             }
+            chooser.setSelectedFile(new File(acqName_));
+            if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+               File destDir = chooser.getSelectedFile();
+               FileDialogs.storePath(FileDialogs.MM_DATA_SET, destDir);
+               writeSettingsToTempDir();
+               if (saveDataTo(destDir)) {
+                  return true;
+               }
+            }
+         } else {
+            return true; // Discard
          }
       }
-
-      closeViewerReferences();
-      stopExplore(true);
-      return true;
    }
 
    private void closeViewerReferences() {

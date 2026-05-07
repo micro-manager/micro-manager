@@ -80,9 +80,11 @@ public class XYNavigator {
          if (userData == null) {
             return null;
          }
-         // Both keys must be present for the flipper to have touched this image.
-         if (!userData.containsKey("ImageFlipper-Rotation")
-               || !userData.containsKey("ImageFlipper-Mirror")) {
+         // Both keys must be present with the correct types for the flipper to have
+         // touched this image.  Type-specific checks avoid ClassCastException if
+         // unrelated metadata happens to use the same key names with different types.
+         if (!userData.containsInteger("ImageFlipper-Rotation")
+               || !userData.containsString("ImageFlipper-Mirror")) {
             return null;
          }
          int rotation = userData.getInteger("ImageFlipper-Rotation", 0);
@@ -106,9 +108,10 @@ public class XYNavigator {
          } else if (rotation == 270) {
             correction.quadrantRotate(3); // CCW 270° = inverse of CW 270°
          }
-         // Step 2: undo the mirror (mirror-X is self-inverse)
+         // Step 2: undo the mirror — pre-multiply so mirror is applied AFTER rotate(-N),
+         // giving correction = M * R(-N) rather than R(-N) * M.
          if (mirrored) {
-            correction.scale(-1.0, 1.0);
+            correction.preConcatenate(AffineTransform.getScaleInstance(-1.0, 1.0));
          }
          return correction;
       } catch (Exception e) {
