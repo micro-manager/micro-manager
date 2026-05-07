@@ -1224,9 +1224,10 @@ public class ExplorerManager {
       if (tw <= 0 || th <= 0 || pixelSizeUm_ <= 0) {
          return null;
       }
-      int overlapPixels = (int) Math.round(tw * overlapPercentage_ / 100.0);
-      double effectiveTileWidth = tw - overlapPixels;
-      double effectiveTileHeight = th - overlapPixels;
+      int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+      int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
+      double effectiveTileWidth = tw - overlapPixelsX;
+      double effectiveTileHeight = th - overlapPixelsY;
       double stageOffsetX = stageX - initialStageX_;
       double stageOffsetY = stageY - initialStageY_;
 
@@ -1304,9 +1305,10 @@ public class ExplorerManager {
          try {
             int tw = dataSource_ != null ? dataSource_.getTileWidth() : cameraWidth_;
             int th = dataSource_ != null ? dataSource_.getTileHeight() : cameraHeight_;
-            int overlapPixels = (int) Math.round(tw * overlapPercentage_ / 100.0);
-            double effectiveTileWidth = tw - overlapPixels;
-            double effectiveTileHeight = th - overlapPixels;
+            int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+            int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
+            double effectiveTileWidth = tw - overlapPixelsX;
+            double effectiveTileHeight = th - overlapPixelsY;
 
             double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
             double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
