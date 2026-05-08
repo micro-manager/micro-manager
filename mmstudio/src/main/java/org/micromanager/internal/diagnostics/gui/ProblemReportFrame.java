@@ -11,6 +11,10 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
+import java.awt.Toolkit;
+import java.net.URL;
+import org.micromanager.internal.utils.WindowPositioning;
+
 class ProblemReportFrame extends javax.swing.JFrame {
    private final ProblemReportController controller_;
 
@@ -22,7 +26,6 @@ class ProblemReportFrame extends javax.swing.JFrame {
    ProblemReportFrame(ProblemReportController controller) {
       super("Problem Report");
       setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
-      setLocationRelativeTo(null);
 
       controller_ = controller;
 
@@ -51,6 +54,13 @@ class ProblemReportFrame extends javax.swing.JFrame {
       add(controlPanelPanel_);
       pack();
       setMinimumSize(getPreferredSize());
+
+      URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
+      setLocationRelativeTo(null);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
    }
 
    void close() {
