@@ -94,9 +94,6 @@ public class MDAAcqEventModules {
                      throw new RuntimeException(e);
                   }
                }
-               if (positionList == null) {
-                  event.setStageCoordinate(Engine.getCore().getFocusDevice(), zOrigin);
-               }
                double zPos = 0.0;
 
                if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
