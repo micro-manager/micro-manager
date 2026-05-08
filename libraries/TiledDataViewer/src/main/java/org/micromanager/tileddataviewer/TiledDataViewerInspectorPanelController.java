@@ -193,7 +193,7 @@ public final class TiledDataViewerInspectorPanelController
 
    @Override
    public String getTitle() {
-      return "NDViewer2 Controls";
+      return "Tiled Data Viewer (Explorer) Controls";
    }
 
    @Override
