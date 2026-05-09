@@ -1735,6 +1735,15 @@ public class DeskewExploreManager {
          tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
          tags.put("PixelSizeUm", pixelSizeUm_);
 
+         // Stage position for this tile (mirrors the calculation in acquireMultipleTiles)
+         int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
+         int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
+         int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+         double effectiveTileWidthUm = (tileWidth - overlapPixels) * pixelSizeUm_;
+         double effectiveTileHeightUm = (tileHeight - overlapPixels) * pixelSizeUm_;
+         tags.put("XPositionUm", initialStageX_ + col * effectiveTileWidthUm);
+         tags.put("YPositionUm", initialStageY_ + row * effectiveTileHeightUm);
+
          // Set up axes using AcqEngMetadata
          // Store channel as STRING (channel name) for NDViewer
          // AxesBridge will translate between string names and integer indices
