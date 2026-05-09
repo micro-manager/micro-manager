@@ -110,6 +110,7 @@ public final class TiledDataViewerInspectorPanelController
       v.getCanvasJPanel().setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       setStatus("Draw a selection on the image");
 
+      TiledDataViewerOverlayerPlugin previousOverlay = viewer_.getOverlayerPlugin();
       ExportSelectionOverlay exportOverlay = new ExportSelectionOverlay(v);
       viewer_.setOverlayerPlugin(exportOverlay);
 
@@ -125,15 +126,16 @@ public final class TiledDataViewerInspectorPanelController
                             el[0].currentMouseLocation_);
                     el[0].setOnDismiss(() -> {
                        lastRoi_ = null;
-                       viewer_.setOverlayerPlugin(null);
+                       viewer_.setOverlayerPlugin(previousOverlay);
                        v.resetCanvasMouseListener();
                        v.update();
                        setStatus(null);
                     });
                     setStatus("Click to dismiss selection");
                  } else {
-                    viewer_.setOverlayerPlugin(null);
+                    viewer_.setOverlayerPlugin(previousOverlay);
                     v.resetCanvasMouseListener();
+                    v.update();
                     setStatus(null);
                  }
               },
