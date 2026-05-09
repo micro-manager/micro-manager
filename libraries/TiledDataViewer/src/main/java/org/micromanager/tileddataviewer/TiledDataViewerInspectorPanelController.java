@@ -48,7 +48,7 @@ public final class TiledDataViewerInspectorPanelController
       studio_ = studio;
       statusLabel_ = new JLabel(" ");
       exportButton_ = new JButton("Export...");
-      posListButton_ = new JButton("Create Position...");
+      posListButton_ = new JButton("Create Positions...");
       panel_ = buildPanel();
    }
 
