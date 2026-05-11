@@ -993,6 +993,11 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       externalOverlayerPlugin_ = plugin;
    }
 
+   @Override
+   public TiledDataViewerOverlayerPlugin getOverlayerPlugin() {
+      return externalOverlayerPlugin_;
+   }
+
    /**
     * Close the viewer and release resources.
     */
