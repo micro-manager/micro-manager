@@ -255,18 +255,30 @@ public final class TiledDataViewerInspectorPanelController
     * Converts a full-resolution pixel ROI to a stage-coordinate position list and
     * installs it as the active MM position list.
     *
-    * <p>The conversion uses the pixel size and, if available, the pixel-size affine
-    * transform read from the dataset's stored image metadata. The grid fills the ROI
-    * using the camera FOV (from the stored tile dimensions) with the overlap stored
-    * in the summary metadata. Positions are ordered in a serpentine pattern to minimise
-    * stage travel.</p>
+    * <p>Two independent sources are used:</p>
+    * <ul>
+    *   <li><b>Dataset metadata</b> — the stored {@code XPositionUm}/{@code YPositionUm}
+    *       tile tags and the stored {@code PixelSize_um} are used to convert canvas
+    *       pixels to stage coordinates. These always reflect the original acquisition,
+    *       regardless of which microscope is currently connected.</li>
+    *   <li><b>Live hardware</b> — the current camera FOV ({@code CMMCore.getImageWidth()}/
+    *       {@code getImageHeight()}) and pixel-size affine
+    *       ({@code CMMCore.getPixelSizeAffine(true)})
+    *       determine the grid step and tile size for the new position list. This allows
+    *       the user to plan a re-acquisition with a different objective.</li>
+    * </ul>
+    * <p>If the live pixel size differs from the stored one a warning is shown in the
+    * status bar (but the position list is still created). Falls back to stored tile
+    * dimensions / scalar pixel size when the camera or affine is unavailable.</p>
+    * <p>The tile overlap is read from the dataset's summary metadata. Positions are
+    * ordered in a serpentine pattern to minimise stage travel.</p>
     */
    private void createPositionListFromRoi(int[] roi) {
       TiledDataViewerDataProviderAPI dp =
                (TiledDataViewerDataProviderAPI) viewer_.getDataProvider();
       TiledDataProviderAPI storage = dp.getStorage();
 
-      // ---- 1. Probe one tile for pixel size, tile dimensions, and a reference stage pos ----
+      // ---- 1. Probe one tile for a reference stage position and stored pixel size ----
       JSONObject summary = storage.getSummaryMetadata();
 
       // Find a representative tile: any axes that has XPositionUm/YPositionUm in tags.
@@ -289,45 +301,102 @@ public final class TiledDataViewerInspectorPanelController
          return;
       }
 
-      // Tile dimensions from tags (reliable) or fallback to summary.
-      int tileW = probeTile.tags.optInt("Width", 0);
-      int tileH = probeTile.tags.optInt("Height", 0);
-      if (tileW <= 0 && summary != null) {
-         tileW = summary.optInt("Width", 512);
+      // Stored pixel size — used only for canvas-pixel → stage-coordinate conversion,
+      // so the ROI drawn on the dataset maps correctly to stage space regardless of
+      // which objective is currently on the microscope.
+      double storedPixelSizeUm = summary != null ? summary.optDouble("PixelSize_um", 0.0) : 0.0;
+      if (storedPixelSizeUm <= 0.0) {
+         storedPixelSizeUm = probeTile.tags.optDouble("PixelSizeUm", 1.0);
       }
-      if (tileH <= 0 && summary != null) {
-         tileH = summary.optInt("Height", tileW);
-      }
-      if (tileW <= 0) {
-         tileW = 512;
-      }
-      if (tileH <= 0) {
-         tileH = tileW;
+      if (storedPixelSizeUm <= 0.0) {
+         storedPixelSizeUm = 1.0;
       }
 
-      double pixelSizeUm = summary != null ? summary.optDouble("PixelSize_um", 0.0) : 0.0;
-
-      // Pixel size fallback from per-tile tags.
-      if (pixelSizeUm <= 0.0) {
-         pixelSizeUm = probeTile.tags.optDouble("PixelSizeUm", 1.0);
+      // ---- 2. Live hardware: affine + FOV for the new position grid ----
+      // These reflect the current objective and are independent of storedPixelSizeUm.
+      AffineTransform pixToStage = null;
+      double livePixelSizeUm = 0.0;
+      try {
+         AffineTransform at = AffineUtils.doubleToAffine(
+               studio_.core().getPixelSizeAffine(true));
+         livePixelSizeUm = AffineUtils.deducePixelSize(at);
+         if (livePixelSizeUm > 0.0) {
+            pixToStage = at;
+         }
+      } catch (Exception ignore) {
+         // No live core or no affine configured — scalar fallback below.
       }
-      if (pixelSizeUm <= 0.0) {
-         pixelSizeUm = 1.0;
+      if (livePixelSizeUm <= 0.0) {
+         livePixelSizeUm = storedPixelSizeUm;
       }
 
-      // Overlap from summary metadata.
+      // Camera FOV from live hardware; fall back to stored tile dimensions.
+      int tileW = 0;
+      int tileH = 0;
+      boolean liveHardwareAvailable = false;
+      try {
+         tileW = (int) studio_.core().getImageWidth();
+         tileH = (int) studio_.core().getImageHeight();
+         liveHardwareAvailable = tileW > 0 && tileH > 0;
+      } catch (Exception ignore) {
+         // Camera unavailable — use stored tile dimensions below.
+      }
+      if (!liveHardwareAvailable) {
+         tileW = probeTile.tags.optInt("Width", 0);
+         if (tileW <= 0 && summary != null) {
+            tileW = summary.optInt("Width", 512);
+         }
+         if (tileW <= 0) {
+            tileW = 512;
+         }
+         tileH = probeTile.tags.optInt("Height", 0);
+         if (tileH <= 0 && summary != null) {
+            tileH = summary.optInt("Height", tileW);
+         }
+         if (tileH <= 0) {
+            tileH = tileW;
+         }
+      }
+
+      // Warn if pixel size changed (different objective), but still proceed.
+      if (liveHardwareAvailable
+            && Math.abs(livePixelSizeUm - storedPixelSizeUm) > 0.01 * storedPixelSizeUm) {
+         setStatus(String.format(
+               "Warning: live pixel size (%.4f µm) differs from dataset (%.4f µm) — "
+               + "positions sized for current objective",
+               livePixelSizeUm, storedPixelSizeUm));
+      }
+
+      // Overlap from summary metadata (dataset property, not hardware-dependent).
       int overlapX = summary != null ? summary.optInt("GridPixelOverlapX", 0) : 0;
       int overlapY = summary != null ? summary.optInt("GridPixelOverlapY", 0) : 0;
+      if (overlapX >= tileW || overlapY >= tileH) {
+         JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(panel_),
+               String.format("Cannot create position list: overlap (%d×%d px) is >= "
+                     + "tile size (%d×%d px).", overlapX, overlapY, tileW, tileH),
+               "Create Position List", JOptionPane.WARNING_MESSAGE);
+         return;
+      }
 
-      // Reference tile: its canvas-pixel top-left corner and its stage center.
+      // ---- 3. Reference point: map one stored tile's canvas position to its stage position ----
+      // The canvas pixel grid was laid out with the stored tile dims and stored pixel size.
+      // Use stored tile dims here so refPixCenter is correct relative to the canvas.
+      int storedTileW = probeTile.tags.optInt("Width", tileW);
+      int storedTileH = probeTile.tags.optInt("Height", tileH);
+      if (storedTileW <= 0) {
+         storedTileW = tileW;
+      }
+      if (storedTileH <= 0) {
+         storedTileH = tileH;
+      }
       int refRow = probeAxes.get("row") instanceof Integer ? (Integer) probeAxes.get("row") : 0;
       int refCol = probeAxes.get("column") instanceof Integer
             ? (Integer) probeAxes.get("column") : 0;
-      int stepPxX = tileW - overlapX;
-      int stepPxY = tileH - overlapY;
+      int storedStepPxX = storedTileW - overlapX;
+      int storedStepPxY = storedTileH - overlapY;
       // Canvas pixel position of the center of this reference tile.
-      double refPixCenterX = refCol * stepPxX + tileW / 2.0;
-      double refPixCenterY = refRow * stepPxY + tileH / 2.0;
+      double refPixCenterX = refCol * storedStepPxX + storedTileW / 2.0;
+      double refPixCenterY = refRow * storedStepPxY + storedTileH / 2.0;
 
       double refStageX;
       double refStageY;
@@ -341,34 +410,30 @@ public final class TiledDataViewerInspectorPanelController
          return;
       }
 
-      // ---- 2. Build pixel→stage affine transform ----
-      // Try the pixel-size affine from the live core first; fall back to scalar.
-      AffineTransform pixToStage = null;
-      try {
-         AffineTransform at = AffineUtils.doubleToAffine(
-               studio_.core().getPixelSizeAffine(true));
-         double affinePixelSize = AffineUtils.deducePixelSize(at);
-         if (Math.abs(pixelSizeUm - affinePixelSize) <= 0.1 * pixelSizeUm) {
-            pixToStage = at;
-         }
-      } catch (Exception ignore) {
-         // No live core available or no affine configured — scalar fallback below.
-      }
-
-      // ---- 3. Compute ROI corners in stage space ----
+      // ---- 4. Compute ROI corners in stage space ----
       // ROI is in full-res pixels. Convert each corner to stage coords.
       int roiX = roi[0];
       int roiY = roi[1];
       int roiW = roi[2];
       int roiH = roi[3];
 
-      Point2D.Double stageTopLeft     = pixelToStage(roiX,        roiY,
-            refPixCenterX, refPixCenterY, refStageX, refStageY, pixelSizeUm, pixToStage);
-      Point2D.Double stageBottomRight = pixelToStage(roiX + roiW, roiY + roiH,
-            refPixCenterX, refPixCenterY, refStageX, refStageY, pixelSizeUm, pixToStage);
+      // Canvas pixels → stage: use stored pixel size so the ROI maps correctly regardless
+      // of which objective is currently mounted.  Transform all 4 corners so that
+      // rotation/shear in the affine does not produce a wrong bounding box.
+      Point2D.Double stageTL = pixelToStage(roiX,        roiY,
+            refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm, null);
+      Point2D.Double stageTR = pixelToStage(roiX + roiW, roiY,
+            refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm, null);
+      Point2D.Double stageBL = pixelToStage(roiX,        roiY + roiH,
+            refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm, null);
+      Point2D.Double stageBR = pixelToStage(roiX + roiW, roiY + roiH,
+            refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm, null);
 
-      // ---- 4. Compute step vectors in stage space for one camera FOV (minus overlap) ----
-      // Step = affine * (stepPx, 0) and affine * (0, stepPx).
+      // ---- 5. Compute step vectors for the new acquisition grid ----
+      // Live tile dims (current camera FOV) minus overlap pixels = step in canvas pixels.
+      // The affine converts that pixel step to stage microns; scalar fallback uses livePixelSizeUm.
+      int stepPxX = tileW - overlapX;
+      int stepPxY = tileH - overlapY;
       final double stageStepXdx; // stage-X component when moving one tile to the right
       final double stageStepXdy; // stage-Y component when moving one tile to the right
       final double stageStepYdx; // stage-X component when moving one tile down
@@ -383,10 +448,10 @@ public final class TiledDataViewerInspectorPanelController
          stageStepYdx = sy.x;
          stageStepYdy = sy.y;
       } else {
-         stageStepXdx = stepPxX * pixelSizeUm;
+         stageStepXdx = stepPxX * livePixelSizeUm;
          stageStepXdy = 0;
          stageStepYdx = 0;
-         stageStepYdy = stepPxY * pixelSizeUm;
+         stageStepYdy = stepPxY * livePixelSizeUm;
       }
 
       // Step magnitude for grid sizing.
@@ -399,54 +464,81 @@ public final class TiledDataViewerInspectorPanelController
          return;
       }
 
-      // ---- 5. Grid dimensions: how many tiles to fill the ROI ----
-      // ROI size in stage space (approximation using axis-aligned bounding box of corners).
-      double roiStageW = Math.abs(stageBottomRight.x - stageTopLeft.x);
-      double roiStageH = Math.abs(stageBottomRight.y - stageTopLeft.y);
-      // Camera FOV in stage units.
-      double fovW = pixToStage != null
-            ? Math.sqrt(stageStepXdx * stageStepXdx / (stepPxX * stepPxX) * tileW * tileW
-                        + stageStepXdy * stageStepXdy / (stepPxX * stepPxX) * tileW * tileW)
-            : tileW * pixelSizeUm;
-      double fovH = pixToStage != null
-            ? Math.sqrt(stageStepYdx * stageStepYdx / (stepPxY * stepPxY) * tileH * tileH
-                        + stageStepYdy * stageStepYdy / (stepPxY * stepPxY) * tileH * tileH)
-            : tileH * pixelSizeUm;
-
-      int nCols = Math.max(1, (int) Math.ceil((roiStageW + fovW - stepMagX) / stepMagX));
-      int nRows = Math.max(1, (int) Math.ceil((roiStageH + fovH - stepMagY) / stepMagY));
-
-      // ---- 6. Grid origin: center the grid over the ROI ----
-      // Center of the ROI in stage space.
-      double roiStageCenterX = (stageTopLeft.x + stageBottomRight.x) / 2.0;
-      double roiStageCenterY = (stageTopLeft.y + stageBottomRight.y) / 2.0;
-      // Total grid extent.
-      double gridW = (nCols - 1) * stepMagX + fovW;
-      double gridH = (nRows - 1) * stepMagY + fovH;
-      // Top-left tile center of the grid.
-      double originX = roiStageCenterX - gridW / 2.0 + fovW / 2.0;
-      double originY = roiStageCenterY - gridH / 2.0 + fovH / 2.0;
-
-      // Unit vectors for the step directions.
+      // ---- 6. Grid dimensions and center: project all 4 ROI corners onto step axes ----
+      // Unit vectors along each scan direction.
       double uxX = stageStepXdx / stepMagX;
       double uxY = stageStepXdy / stepMagX;
       double uyX = stageStepYdx / stepMagY;
       double uyY = stageStepYdy / stepMagY;
 
-      // ---- 7. Build position list (serpentine) ----
+      // Project each corner onto both scan axes.
+      double[] projX = {
+         stageTL.x * uxX + stageTL.y * uxY,
+         stageTR.x * uxX + stageTR.y * uxY,
+         stageBL.x * uxX + stageBL.y * uxY,
+         stageBR.x * uxX + stageBR.y * uxY
+      };
+      double[] projY = {
+         stageTL.x * uyX + stageTL.y * uyY,
+         stageTR.x * uyX + stageTR.y * uyY,
+         stageBL.x * uyX + stageBL.y * uyY,
+         stageBR.x * uyX + stageBR.y * uyY
+      };
+
+      double projXMin = Math.min(Math.min(projX[0], projX[1]), Math.min(projX[2], projX[3]));
+      double projXMax = Math.max(Math.max(projX[0], projX[1]), Math.max(projX[2], projX[3]));
+      double projYMin = Math.min(Math.min(projY[0], projY[1]), Math.min(projY[2], projY[3]));
+      double projYMax = Math.max(Math.max(projY[0], projY[1]), Math.max(projY[2], projY[3]));
+
+      double roiExtentX = projXMax - projXMin; // ROI width along the column-step axis
+      double roiExtentY = projYMax - projYMin; // ROI height along the row-step axis
+
+      // Camera FOV in stage units along each scan axis.
+      double fovW = pixToStage != null
+            ? Math.sqrt(stageStepXdx * stageStepXdx / (stepPxX * stepPxX) * tileW * tileW
+                        + stageStepXdy * stageStepXdy / (stepPxX * stepPxX) * tileW * tileW)
+            : tileW * livePixelSizeUm;
+      double fovH = pixToStage != null
+            ? Math.sqrt(stageStepYdx * stageStepYdx / (stepPxY * stepPxY) * tileH * tileH
+                        + stageStepYdy * stageStepYdy / (stepPxY * stepPxY) * tileH * tileH)
+            : tileH * livePixelSizeUm;
+
+      int nCols = Math.max(1, (int) Math.ceil((roiExtentX + fovW - stepMagX) / stepMagX));
+      int nRows = Math.max(1, (int) Math.ceil((roiExtentY + fovH - stepMagY) / stepMagY));
+
+      // ---- 7. Grid origin: center the grid over the ROI ----
+      // ROI center expressed as projections onto the scan axes, then lifted to stage space.
+      double roiCenterProjX = (projXMin + projXMax) / 2.0;
+      double roiCenterProjY = (projYMin + projYMax) / 2.0;
+      // Grid origin: center the grid over the ROI along each scan axis independently,
+      // then reconstruct the stage-space point.  Working in projection space is correct
+      // under rotation/shear; adding scalar offsets to stage-space coordinates is not.
+      double gridExtentX = (nCols - 1) * stepMagX; // distance from col-0 to last col center
+      double gridExtentY = (nRows - 1) * stepMagY;
+      // Projection of the first tile center (col=0, row=0) onto each scan axis.
+      double originProjX = roiCenterProjX - gridExtentX / 2.0;
+      double originProjY = roiCenterProjY - gridExtentY / 2.0;
+      // Lift back to stage space.
+      double originX = originProjX * uxX + originProjY * uyX;
+      double originY = originProjX * uxY + originProjY * uyY;
+
+      // ---- 8. Build position list (serpentine) ----
       String xyStage;
       try {
          xyStage = studio_.core().getXYStageDevice();
       } catch (Exception e) {
-         xyStage = "";
+         xyStage = null;
       }
-      if (xyStage == null) {
-         xyStage = "";
+      if (xyStage == null || xyStage.isEmpty()) {
+         JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(panel_),
+               "Cannot create position list: no XY stage device is configured.",
+               "Create Position List", JOptionPane.WARNING_MESSAGE);
+         return;
       }
 
       PositionList posList = new PositionList();
-      final double overlapXUm = overlapX * pixelSizeUm;
-      final double overlapYUm = overlapY * pixelSizeUm;
+      final double overlapXUm = overlapX * livePixelSizeUm;
+      final double overlapYUm = overlapY * livePixelSizeUm;
 
       for (int row = 0; row < nRows; row++) {
          for (int col = 0; col < nCols; col++) {
@@ -458,9 +550,7 @@ public final class TiledDataViewerInspectorPanelController
 
             MultiStagePosition msp = new MultiStagePosition();
             msp.setDefaultXYStage(xyStage);
-            if (!xyStage.isEmpty()) {
-               msp.add(StagePosition.create2D(xyStage, stageX, stageY));
-            }
+            msp.add(StagePosition.create2D(xyStage, stageX, stageY));
             msp.setLabel("Pos-" + FMT_POS.format(row) + "_" + FMT_POS.format(c));
             msp.setGridCoordinates(row, c);
             msp.setProperty("OverlapUmX",
