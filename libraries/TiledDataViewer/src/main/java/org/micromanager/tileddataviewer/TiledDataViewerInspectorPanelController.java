@@ -40,10 +40,8 @@ public final class TiledDataViewerInspectorPanelController
    private TiledDataViewerDataViewerAPI viewer_;
    private static boolean expanded_ = true;
 
-   // Last confirmed ROI in full-resolution pixels [x, y, w, h]; null when none.
+   // Last confirmed export ROI in full-resolution pixels [x, y, w, h]; null when none.
    private int[] lastRoi_ = null;
-   // Last confirmed position-list ROI in full-resolution pixels [x, y, w, h]; null when none.
-   private int[] lastPosListRoi_ = null;
 
    public TiledDataViewerInspectorPanelController(Studio studio) {
       studio_ = studio;
@@ -207,15 +205,18 @@ public final class TiledDataViewerInspectorPanelController
       ExportSelectionOverlay selectionOverlay = new ExportSelectionOverlay(v);
       viewer_.setOverlayerPlugin(selectionOverlay);
 
+      // roiAccepted[0] is set to true when a valid drag completes.
+      // Used by the completion handler to decide whether to freeze the overlay; a local
+      // flag avoids any race with the async SwingWorker done().
+      boolean[] roiAccepted = {false};
       ExportMouseListener[] el = new ExportMouseListener[1];
       el[0] = new ExportMouseListener(v,
               () -> {
                  v.getCanvasJPanel().setCursor(Cursor.getDefaultCursor());
-                 if (lastPosListRoi_ != null) {
+                 if (roiAccepted[0]) {
                     selectionOverlay.freezeRoi(el[0].mouseDragStartPoint_,
                             el[0].currentMouseLocation_);
                     el[0].setOnDismiss(() -> {
-                       lastPosListRoi_ = null;
                        viewer_.setOverlayerPlugin(previousOverlay);
                        v.resetCanvasMouseListener();
                        v.update();
@@ -229,7 +230,10 @@ public final class TiledDataViewerInspectorPanelController
                     setStatus(null);
                  }
               },
-              this::onPosListRoiSelected);
+              (dragStart, dragEnd) -> {
+                 roiAccepted[0] = true;
+                 onPosListRoiSelected(dragStart, dragEnd);
+              });
       selectionOverlay.setExportMouseListener(el[0]);
       v.setCustomCanvasMouseListener(el[0]);
    }
@@ -244,8 +248,8 @@ public final class TiledDataViewerInspectorPanelController
       int y2 = (int) (viewOffset.y + Math.max(dragStart.y, dragEnd.y) / mag);
       int roiW = Math.max(1, x2 - x1);
       int roiH = Math.max(1, y2 - y1);
-      lastPosListRoi_ = new int[]{x1, y1, roiW, roiH};
-      createPositionListFromRoi(lastPosListRoi_);
+      int[] roi = new int[]{x1, y1, roiW, roiH};
+      createPositionListFromRoi(roi);
    }
 
    /**
@@ -586,7 +590,6 @@ public final class TiledDataViewerInspectorPanelController
                existing.addPosition(posList.getPosition(i));
             }
             studio_.positions().setPositionList(existing);
-            lastPosListRoi_ = null;
             studio_.app().showPositionList();
             if (warning == null) {
                setStatus("Added " + posList.getNumberOfPositions() + " positions");
@@ -628,14 +631,12 @@ public final class TiledDataViewerInspectorPanelController
    public void attachDataViewer(DataViewer viewer) {
       viewer_ = (TiledDataViewerDataViewerAPI) viewer;
       lastRoi_ = null;
-      lastPosListRoi_ = null;
    }
 
    @Override
    public void detachDataViewer() {
       viewer_ = null;
       lastRoi_ = null;
-      lastPosListRoi_ = null;
       setStatus(null);
    }
 
