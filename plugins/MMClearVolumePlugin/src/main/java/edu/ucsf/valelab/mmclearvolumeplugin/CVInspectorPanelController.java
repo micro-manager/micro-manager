@@ -4,6 +4,7 @@ package edu.ucsf.valelab.mmclearvolumeplugin;
 import edu.ucsf.valelab.mmclearvolumeplugin.recorder.CVSnapshot;
 import edu.ucsf.valelab.mmclearvolumeplugin.recorder.CVVideoRecorder;
 import edu.ucsf.valelab.mmclearvolumeplugin.slider.RangeSlider;
+import edu.ucsf.valelab.mmclearvolumeplugin.uielements.AnimationScriptDlg;
 import edu.ucsf.valelab.mmclearvolumeplugin.uielements.ScrollerPanel;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -15,6 +16,7 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
@@ -40,6 +42,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
 
    private final JPanel panel_ = new JPanel();
 
+   private final Studio studio_;
    private CVViewer viewer_;
    
    public static final int SLIDERRANGE = 256;
@@ -57,26 +60,13 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    
    private static boolean expanded_ = true;
    private final CVVideoRecorder recorder_;
+   private AnimationScriptDlg scriptDlg_ = null;
    
-   public CVInspectorPanelController() {
+   public CVInspectorPanelController(Studio studio) {
       super();
+      studio_ = studio;
       
-      //studio_ = studio;
       panel_.setLayout(new MigLayout("flowx"));
-      /*
-      final JCheckBox attachToNewCheckBox = new JCheckBox ("Use for all");
-      attachToNewCheckBox.setToolTipText("Open all new data in ClearVolume");
-      attachToNew_.set(studio.profile().getBoolean(this.getClass(), 
-              USE_FOR_ALL, false));
-      attachToNewCheckBox.setSelected(attachToNew_.get());
-      attachToNewCheckBox.addActionListener((ActionEvent e) -> {
-         attachToNew_.set(attachToNewCheckBox.isSelected());
-         studio.profile().setBoolean(this.getClass(), USE_FOR_ALL, 
-                 attachToNewCheckBox.isSelected());
-      });
-      panel_.add(attachToNewCheckBox, "span 4, wrap");
-      */
-      
       panel_.add(new JSeparator(SwingConstants.HORIZONTAL), "span 4, growx, pushx, wrap");
            
       JButton resetButton = new JButton("Reset");
@@ -155,7 +145,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
             getViewer().attachRecorder(snapper);
          }
       });
-      panel_.add(snapButton, "span 4, split 2, center");
+      panel_.add(snapButton, "span 4, split 3, center");
       
       final JButton recordButton = new JButton("Record"); 
       recordButton.setToolTipText("Record 3D viewer");
@@ -178,8 +168,22 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
             recorder_.stopRecording();
          }
       });
-      panel_.add(recordButton, "wrap");
-      
+      panel_.add(recordButton, "");
+
+      final JButton scriptButton = new JButton("Script...");
+      scriptButton.setToolTipText("Open 3D animation script editor");
+      scriptButton.addActionListener((ActionEvent e) -> {
+         if (getViewer() != null) {
+            if (scriptDlg_ != null && scriptDlg_.isVisible()) {
+               scriptDlg_.toFront();
+               scriptDlg_.requestFocus();
+            } else {
+               scriptDlg_ = new AnimationScriptDlg(studio_, getViewer());
+            }
+         }
+      });
+      panel_.add(scriptButton, "wrap");
+
    }
    
    /*
@@ -265,7 +269,12 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       detachDataViewer();
       
       viewer_ = (CVViewer) viewer;
-      
+
+      // If the script dialog is open, redirect it to the new viewer.
+      if (scriptDlg_ != null && scriptDlg_.isVisible()) {
+         scriptDlg_.setViewer(viewer_);
+      }
+
       // update range sliders with clipped region of current viewer
       float[] clipBox = viewer_.getClipBox();
       if (clipBox != null) {

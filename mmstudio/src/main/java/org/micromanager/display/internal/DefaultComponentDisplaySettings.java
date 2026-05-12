@@ -5,6 +5,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ComponentDisplaySettings;
+import org.micromanager.display.ComponentIntensityRange;
 
 /**
  * @author mark
@@ -41,6 +42,11 @@ public final class DefaultComponentDisplaySettings
       }
 
       @Override
+      public Builder scalingRange(ComponentIntensityRange range) {
+         return scalingRange(range.getMinimum(), range.getMaximum());
+      }
+
+      @Override
       public Builder scalingGamma(double gamma) {
          Preconditions.checkArgument(gamma > 0.0);
          gamma_ = gamma;
@@ -73,11 +79,11 @@ public final class DefaultComponentDisplaySettings
       return scalingMax_;
    }
 
-   public void setScalingMinimum(long min) {
+   public void hackScalingMinimum(long min) {
       scalingMin_ = min;
    }
-
-   public void setScalingMaximum(long max) {
+   
+   public void hackScalingMaximum(long max) {
       scalingMax_ = max;
    }
 

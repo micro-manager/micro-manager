@@ -264,15 +264,12 @@ public class SBSPlate {
 
    public void load(String path) throws HCSException {
       StringBuilder contents = new StringBuilder();
-      try {
-         // read metadata from file            
-         BufferedReader input = new BufferedReader(new FileReader(path));
+      try (BufferedReader input = new BufferedReader(new FileReader(path))) {
          String line;
          while ((line = input.readLine()) != null) {
             contents.append(line);
             contents.append(System.getProperty("line.separator"));
          }
-         input.close();
          restore(contents.toString());
       } catch (IOException e) {
          throw new HCSException(e);
@@ -281,10 +278,8 @@ public class SBSPlate {
    }
 
    public void save(String path) throws HCSException {
-      try {
-         FileWriter fw = new FileWriter(path);
+      try (FileWriter fw = new FileWriter(path)) {
          fw.write(serialize());
-         fw.close();
       } catch (IOException e) {
          throw new HCSException("Unable to create plate definition file: " + e.getMessage());
       }
@@ -328,10 +323,10 @@ public class SBSPlate {
          plate = new JSONObject(ser);
          numRows_ = plate.getInt(ROWS);
          numColumns_ = plate.getInt(COLS);
-         wellSpacingX_ = plate.getInt(WELL_SPACING_X);
-         wellSpacingY_ = plate.getInt(WELL_SPACING_Y);
-         sizeXUm_ = plate.getInt(PLATE_SIZE_X);
-         sizeYUm_ = plate.getInt(PLATE_SIZE_Y);
+         wellSpacingX_ = plate.getDouble(WELL_SPACING_X);
+         wellSpacingY_ = plate.getDouble(WELL_SPACING_Y);
+         sizeXUm_ = plate.getDouble(PLATE_SIZE_X);
+         sizeYUm_ = plate.getDouble(PLATE_SIZE_Y);
          id_ = plate.getString(ID);
          description_ = plate.getString(DESCRIPTION);
          firstWellX_ = plate.getDouble(FIRST_WELL_X);
@@ -457,7 +452,7 @@ public class SBSPlate {
          return "";
       }
 
-      // build the row label
+      // build the row label (least-significant letter first, then reverse)
       int tempRow = row;
       StringBuilder label = new StringBuilder();
       while (tempRow > 0) {
@@ -465,7 +460,7 @@ public class SBSPlate {
          label.append(ROW_ALPHABET[letterIndex]);
          tempRow = (tempRow - 1) / ROW_ALPHABET.length;
       }
-      return label.toString();
+      return label.reverse().toString();
    }
 
    private void generateWells() throws HCSException {
@@ -645,7 +640,8 @@ public class SBSPlate {
       if (circular_) {
          return (x * x + y * y < (wellSizeX_ * wellSizeY_ * 0.25));
       } else {
-         return (x < wellSizeX_ * 0.5 && y < wellSizeY_ * 0.5);
+         return (x > -wellSizeX_ * 0.5 && x < wellSizeX_ * 0.5
+               && y > -wellSizeY_ * 0.5 && y < wellSizeY_ * 0.5);
       }
    }
 

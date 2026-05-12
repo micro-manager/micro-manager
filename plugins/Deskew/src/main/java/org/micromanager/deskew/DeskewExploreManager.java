@@ -1296,11 +1296,22 @@ public class DeskewExploreManager {
             int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
             int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
 
-            // Account for overlap: overlap pixel count is derived from X tile width only,
-            // so both axes subtract the same number of pixels (not the same percentage).
-            int overlapPixels = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
-            double effectiveTileWidthUm = (tileWidth - overlapPixels) * pixelSizeUm_;
-            double effectiveTileHeightUm = (tileHeight - overlapPixels) * pixelSizeUm_;
+            // Use GridPixelOverlapX/Y from summary metadata when available (set after the
+            // first tile, rotation-adjusted).  Fall back to separate per-axis percentage
+            // calculation so width and height overlaps are always computed independently.
+            JSONObject summaryMeta = storage_.getSummaryMetadata();
+            int overlapX;
+            int overlapY;
+            if (summaryMeta != null && summaryMeta.has("GridPixelOverlapX")
+                  && summaryMeta.has("GridPixelOverlapY")) {
+               overlapX = summaryMeta.optInt("GridPixelOverlapX", 0);
+               overlapY = summaryMeta.optInt("GridPixelOverlapY", 0);
+            } else {
+               overlapX = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+               overlapY = (int) Math.round(tileHeight * overlapPercentage_ / 100.0);
+            }
+            double effectiveTileWidthUm = (tileWidth - overlapX) * pixelSizeUm_;
+            double effectiveTileHeightUm = (tileHeight - overlapY) * pixelSizeUm_;
 
             for (Point tile : tiles) {
                if (acquisitionInterrupted_) {
@@ -1734,6 +1745,29 @@ public class DeskewExploreManager {
          tags.put("BitDepth", bitDepth_);
          tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
          tags.put("PixelSizeUm", pixelSizeUm_);
+
+         // Stage position for this tile.
+         // Prefer GridPixelOverlapX/Y from summary metadata (set after the first tile is
+         // acquired, rotation-adjusted) so XPositionUm/YPositionUm stay consistent with
+         // the dataset's actual tile layout.  Fall back to the symmetric overlapPercentage_
+         // calculation when the summary has not been updated yet (first tile, row=col=0).
+         int tileWidth = projectedWidth_ > 0 ? projectedWidth_ : estimatedTileWidth_;
+         int tileHeight = projectedHeight_ > 0 ? projectedHeight_ : estimatedTileHeight_;
+         JSONObject summaryMeta = storage_.getSummaryMetadata();
+         int overlapX;
+         int overlapY;
+         if (summaryMeta != null && summaryMeta.has("GridPixelOverlapX")
+               && summaryMeta.has("GridPixelOverlapY")) {
+            overlapX = summaryMeta.optInt("GridPixelOverlapX", 0);
+            overlapY = summaryMeta.optInt("GridPixelOverlapY", 0);
+         } else {
+            overlapX = (int) Math.round(tileWidth * overlapPercentage_ / 100.0);
+            overlapY = (int) Math.round(tileHeight * overlapPercentage_ / 100.0);
+         }
+         double effectiveTileWidthUm = (tileWidth - overlapX) * pixelSizeUm_;
+         double effectiveTileHeightUm = (tileHeight - overlapY) * pixelSizeUm_;
+         tags.put("XPositionUm", initialStageX_ + col * effectiveTileWidthUm);
+         tags.put("YPositionUm", initialStageY_ + row * effectiveTileHeightUm);
 
          // Set up axes using AcqEngMetadata
          // Store channel as STRING (channel name) for NDViewer

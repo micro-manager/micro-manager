@@ -69,6 +69,11 @@ public final class ProgressBar extends JPanel {
    private void initialize() {
       frame_ = new JFrame(windowName_);
       frame_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      java.net.URL iconUrl =
+            getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         frame_.setIconImage(java.awt.Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       frame_.setBounds(0, 0, 250 + 12 * windowName_.length(), 110);
 
       progressBar_ = new JProgressBar(start_, end_);
@@ -133,6 +138,7 @@ public final class ProgressBar extends JPanel {
       progressBar_.setMinimum(min);
       progressBar_.setMaximum(max);
    }
+
 
    /*
    public static void main(String[] args) {

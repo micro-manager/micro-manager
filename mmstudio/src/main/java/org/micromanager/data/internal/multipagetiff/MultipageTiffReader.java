@@ -607,24 +607,30 @@ public final class MultipageTiffReader {
                break;
             }
             case RGB32: {
-               byte[] pixelsARGB = new byte[(int) (4 * data.bytesPerImage / 3)];
-               int i = 0;
-               for (byte b : pixelBuffer.array()) {
-                  // need to swap byte 0 and 2: saved order is RGBA, but we want BGRA
-                  if (i % 4 == 0) {
-                     pixelsARGB[i + 2] = b;
-                  } else if (i % 2 == 0) {
-                     pixelsARGB[i - 2] = b;
-                  } else {
-                     pixelsARGB[i] = b;
-                  }
-                  i++;
-                  if ((i + 1) % 4 == 0) {
-                     pixelsARGB[i] = 0;
-                     i++;
-                  }
+               // TIFF stores RGB as 3 bytes/pixel (R, G, B).
+               // Expand to 4 bytes/pixel (B, G, R, 0) to match PixelType.RGB32
+               // component offsets {2, 1, 0}. Use absolute get() rather than array()
+               // so this works with both direct and heap ByteBuffers.
+               int nPixels = (int) (data.bytesPerImage / 3);
+               byte[] pixelsARGB = new byte[nPixels * 4];
+               for (int px = 0; px < nPixels; px++) {
+                  byte r = pixelBuffer.get(px * 3);
+                  byte g = pixelBuffer.get(px * 3 + 1);
+                  byte b = pixelBuffer.get(px * 3 + 2);
+                  pixelsARGB[px * 4]     = b; // offset 0 = B
+                  pixelsARGB[px * 4 + 1] = g; // offset 1 = G
+                  pixelsARGB[px * 4 + 2] = r; // offset 2 = R
+                  pixelsARGB[px * 4 + 3] = 0; // pad
                }
                img = new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
+               break;
+            }
+            case GRAY32: {
+               pixelBuffer.rewind();
+               java.nio.FloatBuffer fb = pixelBuffer.order(byteOrder_).asFloatBuffer();
+               float[] pixels32 = new float[fb.capacity()];
+               fb.get(pixels32);
+               img = new DefaultImage(pixels32, formatPmap, coords, metadata);
                break;
             }
             default:

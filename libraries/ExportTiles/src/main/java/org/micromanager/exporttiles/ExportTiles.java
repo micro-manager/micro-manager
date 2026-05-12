@@ -60,7 +60,7 @@ public class ExportTiles {
       progressDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       JProgressBar bar = new JProgressBar(0, 100);
       bar.setStringPainted(true);
-      JLabel label = new JLabel("Preparing…");
+      JLabel label = new JLabel("Preparing...");
       progressDialog.getContentPane().setLayout(new MigLayout("insets 12, gap 8", "[grow]"));
       progressDialog.getContentPane().add(label, "wrap");
       progressDialog.getContentPane().add(bar, "growx, wrap");
@@ -77,10 +77,10 @@ public class ExportTiles {
                             pct -> SwingUtilities.invokeLater(() -> {
                                bar.setValue(pct);
                                if (opts.align && pct < 50) {
-                                  label.setText("Aligning tiles… " + (pct * 2) + "%");
+                                  label.setText("Aligning tiles... " + (pct * 2) + "%");
                                } else {
                                   int blendPct = opts.align ? (pct - 50) * 2 : pct;
-                                  label.setText("Compositing… " + blendPct + "%");
+                                  label.setText("Compositing... " + blendPct + "%");
                                }
                             }));
             SwingUtilities.invokeLater(() -> {

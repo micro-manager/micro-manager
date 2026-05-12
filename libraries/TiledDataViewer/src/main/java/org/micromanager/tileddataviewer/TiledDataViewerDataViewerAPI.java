@@ -73,6 +73,11 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
    void setOverlayerPlugin(TiledDataViewerOverlayerPlugin plugin);
 
    /**
+    * Return the current external overlayer plugin, or null if none is set.
+    */
+   TiledDataViewerOverlayerPlugin getOverlayerPlugin();
+
+   /**
     * Return the NDViewer channel names as they are keyed in storage and in
     * the display-settings JSON. Use these as the channel name list for ExportTiles
     * instead of the MM SummaryMetadata channel names, which may be null/empty.

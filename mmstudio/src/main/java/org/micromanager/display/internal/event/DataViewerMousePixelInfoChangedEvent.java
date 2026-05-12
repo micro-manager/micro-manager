@@ -26,6 +26,8 @@ public class DataViewerMousePixelInfoChangedEvent {
    private final String[] indexingAxes_;
    private final List<Coords> coords_ = new ArrayList<Coords>();
    private final List<long[]> values_ = new ArrayList<long[]>();
+   // Preformatted intensity strings; null entries mean fall back to formatting values_[i] as longs.
+   private final List<String> valueStrings_ = new ArrayList<String>();
 
    public static DataViewerMousePixelInfoChangedEvent fromImage(int x, int y,
                                                                 Image image) {
@@ -43,6 +45,7 @@ public class DataViewerMousePixelInfoChangedEvent {
 
       List<Coords> coords = new ArrayList<Coords>();
       List<long[]> componentValues = new ArrayList<long[]>();
+      List<String> valueStrings = new ArrayList<String>();
       for (Image image : images) {
          Preconditions.checkNotNull(image);
          Coords c = image.getCoords();
@@ -52,8 +55,12 @@ public class DataViewerMousePixelInfoChangedEvent {
          }
          coords.add(cb.build());
          componentValues.add(image.getComponentIntensitiesAt(x, y));
+         valueStrings.add(image.getIntensityStringAt(x, y));
       }
-      return create(x, y, indexingAxes, coords, componentValues);
+      DataViewerMousePixelInfoChangedEvent event =
+            create(x, y, indexingAxes, coords, componentValues);
+      event.valueStrings_.addAll(valueStrings);
+      return event;
    }
 
    public static DataViewerMousePixelInfoChangedEvent create(int x, int y,
@@ -154,6 +161,10 @@ public class DataViewerMousePixelInfoChangedEvent {
    }
 
    public String getComponentValuesStringForCoords(Coords coords) {
+      int i = coords_.indexOf(coords);
+      if (i >= 0 && i < valueStrings_.size() && valueStrings_.get(i) != null) {
+         return valueStrings_.get(i);
+      }
       long[] values = getComponentValuesForCoords(coords);
       if (values.length == 1) {
          return String.valueOf(values[0]);

@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
@@ -110,7 +109,7 @@ public class IntensityInspectorPanelController
    private final JCheckBox autostretchCheckBox_ = new JCheckBox();
    private final JSpinner percentileSpinner_ = new JSpinner();
    private final JLabel ignoreLabel_ = new JLabel(")");
-   private final AtomicBoolean changingSpinner_ = new AtomicBoolean(false);
+   private boolean ignoreSpinnerChangeEvents_ = false;
    private Boolean displaySettingsUpdateSuspended_ = false;
    private final JPanel channelHistogramsPanel_ = new JPanel();
 
@@ -240,7 +239,7 @@ public class IntensityInspectorPanelController
       percentileSpinner_.setModel(
             new SpinnerNumberModel(0.0, 0.0, 49.9, 0.1));
       percentileSpinner_.addChangeListener((ChangeEvent e) -> {
-         if (!changingSpinner_.get()) {
+         if (!ignoreSpinnerChangeEvents_) {
             handleAutostretch();
          }
       });
@@ -291,6 +290,7 @@ public class IntensityInspectorPanelController
          if (viewer_ != null) {
             ChannelIntensityController chanController
                   = ChannelIntensityController.create(viewer_, i);
+            chanController.setHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected());
             channelControllers_.add(chanController);
             channelHistogramsPanel_.add(chanController.getChannelPanel(),
                   new CC().growY());
@@ -421,30 +421,27 @@ public class IntensityInspectorPanelController
    private void handleAutostretch() {
       boolean enabled = autostretchCheckBox_.isSelected();
       double percentile = (Double) percentileSpinner_.getValue();
+      if (!enabled) {
+         // Freeze the current autoscaled values into DisplaySettings before disabling,
+         // so the image doesn't snap back to the prior manual range.
+         // Also clear rgbAutostretchEnabled here — we can't detect the transition via
+         // DisplaySettings.isAutostretchEnabled() because we keep that false for RGB.
+         displaySettingsUpdateSuspended_ = true;
+         for (ChannelIntensityController ch : channelControllers_) {
+            ch.handleAutoscale();
+            ch.setRgbAutostretchEnabled(false);
+         }
+         displaySettingsUpdateSuspended_ = false;
+      }
       DisplaySettings oldSettings;
       DisplaySettings newSettings;
-      // boolean needToSetFixedMinMaxToAutoscaled = false;
       do {
          oldSettings = viewer_.getDisplaySettings();
-         //needToSetFixedMinMaxToAutoscaled = !enabled && oldSettings.isAutostretchEnabled();
          newSettings = oldSettings.copyBuilder()
                .autostretch(enabled)
                .autoscaleIgnoredPercentile(percentile)
                .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
-      /*
-      if (needToSetFixedMinMaxToAutoscaled) {
-         // When autostretch is turned off, rather than snapping back to
-         // whatever the range was before autostretch was enabled, we want to
-         // keep the current actual range. That can be accomplished by the
-         // equivalent of clicking on Auto Once for each channel.
-         displaySettingsUpdateSuspended_ = true;
-         for (ChannelIntensityController ch : channelControllers_) {
-              ch.handleAutoscale();
-         }
-         displaySettingsUpdateSuspended_ = false;
-      }
-      */
    }
 
    @MustCallOnEDT
@@ -563,22 +560,26 @@ public class IntensityInspectorPanelController
          return;
       }
 
-      // Setting the autostretch box and changeSpinner, cause their
-      // action handlers to be activates, which will cause the displaysettings
-      // to be changed again.  It seems that the order in which we do things
-      // is important. Call the channels autoscale handlers after setting
-      // the autostrechkBox and percentileSpinner
-      autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
+      // We may arrive here as a result of UI actions in this inspector panel,
+      // or something external. So sync to the panel UI first, but do so
+      // without generating UI actions.
+      gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
+      // For RGB images, autostretch is managed by ChannelIntensityController (kept off
+      // in DisplaySettings to prevent the display engine from interfering). Use
+      // rgbAutostretchEnabled_ from the first channel controller as the authoritative state.
+      boolean autostretchOn = settings.isAutostretchEnabled()
+            || (!channelControllers_.isEmpty()
+                  && channelControllers_.get(0).isRgbAutostretchEnabled());
+      autostretchCheckBox_.setSelected(autostretchOn);
 
       // A spinner's change listener, unlike an action listener, gets notified
-      // upon programmatic changes.  Previously, there was code here to remove
-      // ChangeListeners and add them back after setting the value.  As a
-      // side effect, this cause the spinner to not display its value
-      // There does not seem to be a problem setting the value with the
-      // ChangeListeners still attached, so do the easy thing:
-      changingSpinner_.set(true);
-      percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
-      changingSpinner_.set(false);
+      // upon programmatic changes. Use a flag to suppress re-entrant handling.
+      ignoreSpinnerChangeEvents_ = true;
+      try {
+         percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
+      } finally {
+         ignoreSpinnerChangeEvents_ = false;
+      }
 
       if (settings.isAutoscaleIgnoringZeros()) {
          ignoreLabel_.setText(IGNORE_LABEL);
@@ -586,19 +587,14 @@ public class IntensityInspectorPanelController
          ignoreLabel_.setText(")");
       }
 
-      if (autostretchCheckBox_.isSelected() && !settings.isAutostretchEnabled()) {
-         displaySettingsUpdateSuspended_ = true;
-         for (ChannelIntensityController ch : channelControllers_) {
-            ch.handleAutoscale();
-         }
-         displaySettingsUpdateSuspended_ = false;
-      }
+
 
       gearMenuLogYAxisItem_.setSelected(settings.isHistogramLogarithmic());
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
       gearMenuIgnoreZerosItem_.setSelected(settings.isAutoscaleIgnoringZeros());
 
       // TODO Disable color mode and show RGB if image is RGB
+
       switch (settings.getColorMode()) {
          case COLOR:
             colorModeComboBox_.setSelectedItem(ColorModeCell.Item.COLOR);

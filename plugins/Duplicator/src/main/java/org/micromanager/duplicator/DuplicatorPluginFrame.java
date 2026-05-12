@@ -25,6 +25,7 @@ import static org.micromanager.data.internal.DefaultDatastore.getPreferredSaveMo
 import static org.micromanager.data.internal.DefaultDatastore.setPreferredSaveMode;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -120,6 +121,10 @@ public class DuplicatorPluginFrame extends JDialog {
     * @param window Viewer on the data we would like to duplicate
     */
    public DuplicatorPluginFrame(Studio studio, DisplayWindow window) {
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       final DuplicatorPluginFrame ourFrame = this;
       final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
@@ -150,13 +155,11 @@ public class DuplicatorPluginFrame extends JDialog {
          }
       }
       int nrNoChannelAxes = axes.size();
-      ;
       if (usesChannels) {
          nrNoChannelAxes = nrNoChannelAxes - 1;
          List<String> channelNameList = ourProvider_.getSummaryMetadata().getChannelNameList();
          if (channelNameList.size() > 0) {
             super.add(new JLabel(Coords.C));
-            ;
          }
          for (int i = 0; i < channelNameList.size(); i++) {
             String channelName = channelNameList.get(i);
@@ -319,6 +322,7 @@ public class DuplicatorPluginFrame extends JDialog {
             cpFrame.dispose();
             final ProgressBar pb = new ProgressBar(ourWindow_.getWindow(),
                   "Duplicating..", 0, 100);
+            de.setProgressBar(pb);
             de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                if ("progress".equals(evt.getPropertyName())) {
                   pb.setProgress((Integer) evt.getNewValue());

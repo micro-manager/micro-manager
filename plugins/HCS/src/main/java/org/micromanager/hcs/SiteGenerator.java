@@ -431,6 +431,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    @Override
    public void dispose() {
       saveSettings();
+      super.dispose();
    }
 
    protected void saveSettings() {
@@ -663,9 +664,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
          threePtList_ = PositionList.newInstance(plist);
          focusPlane_ = new AFPlane(threePtList_.getPositions());
-         if (focusPlane_.isValid()) {
-            threePlaneDrive_.setText(ZPLANESTAGE + focusPlane_.getZStage());
+         if (!focusPlane_.isValid()) {
+            displayError("Could not fit a focus plane to the three selected positions. "
+                  + "Make sure the points are not collinear.");
+            focusPlane_ = null;
+            return;
          }
+         threePlaneDrive_.setText(ZPLANESTAGE + focusPlane_.getZStage());
          chckbxThreePt_.setSelected(true);
          platePanel_.repaint();
 
@@ -676,8 +681,26 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
 
    private PositionList generateSitesInWell() {
-      int rows = Integer.parseInt(rowsField_.getText());
-      int cols = Integer.parseInt(columnsField_.getText());
+      int rows;
+      int cols;
+      try {
+         rows = Integer.parseInt(rowsField_.getText().trim());
+         cols = Integer.parseInt(columnsField_.getText().trim());
+      } catch (NumberFormatException nfe) {
+         studio_.logs().showMessage(
+               "Rows and columns must be integers. "
+               + "Got: rows=\"" + rowsField_.getText().trim()
+               + "\", columns=\"" + columnsField_.getText().trim() + "\".",
+               this);
+         return new PositionList();
+      }
+      if (rows <= 0 || cols <= 0) {
+         studio_.logs().showMessage(
+               "Rows and columns must be positive integers. "
+               + "Got: rows=" + rows + ", columns=" + cols + ".",
+               this);
+         return new PositionList();
+      }
       PositionList sites = new PositionList();
       if (visitOrderInWell_.getSelectedItem().equals(CASCADE_ORDER)) {
          for (int col = 0; col < cols; col++) {
@@ -715,6 +738,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       }
 
+      if (sites.getNumberOfPositions() == 0 && rows * cols > 0) {
+         studio_.logs().showMessage(
+               "No imaging sites fall within the well boundaries. "
+               + "Try reducing the spacing or the number of rows/columns.");
+      }
       return sites;
    }
 
