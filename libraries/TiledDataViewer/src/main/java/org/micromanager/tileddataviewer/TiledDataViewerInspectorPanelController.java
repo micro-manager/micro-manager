@@ -423,17 +423,23 @@ public final class TiledDataViewerInspectorPanelController
             int roiW = roi[2];
             int roiH = roi[3];
 
-            // Canvas pixels → stage: use stored pixel size so the ROI maps correctly
-            // regardless of which objective is currently mounted.  Transform all 4 corners
-            // so that rotation/shear in the affine does not produce a wrong bounding box.
+            // Canvas pixels → stage: use the live affine so that axis orientation
+            // (including any camera-X / stage-X inversion, e.g. affine (-0.3, 0, 0, 0.3))
+            // is preserved.  The scalar storedPixelSizeUm is only used as a fallback when
+            // no live affine is available.  Transform all 4 corners so that rotation/shear
+            // does not produce a wrong bounding box.
             Point2D.Double stageTL = pixelToStage(roiX,        roiY,
-                  refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm, null);
+                  refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
+                  pixToStage);
             Point2D.Double stageTR = pixelToStage(roiX + roiW, roiY,
-                  refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm, null);
+                  refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
+                  pixToStage);
             Point2D.Double stageBL = pixelToStage(roiX,        roiY + roiH,
-                  refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm, null);
+                  refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
+                  pixToStage);
             Point2D.Double stageBR = pixelToStage(roiX + roiW, roiY + roiH,
-                  refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm, null);
+                  refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
+                  pixToStage);
 
             // ---- 5. Compute step vectors for the new acquisition grid ----
             int stepPxX = tileW - overlapX;
