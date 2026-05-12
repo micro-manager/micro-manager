@@ -315,7 +315,10 @@ public class DataCollectionForm extends JFrame {
     * Creates new form DataCollectionForm
     */
    private DataCollectionForm(Studio studio) {
-
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
 
       mainTableModel_ = new DataTableModel();

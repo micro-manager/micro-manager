@@ -9,8 +9,8 @@ import org.scijava.plugin.Plugin;
 
 @Plugin(type = InspectorPanelPlugin.class,
       priority = Priority.NORMAL - 50.0,
-      name = "NDViewer2 Controls",
-      description = "Zoom, view, and export controls for NDViewer2")
+      name = "Explorer Controls",
+      description = "Zoom, view, and export controls for Explorer/TiledDataViewer")
 public final class TiledDataViewerInspectorPanelPlugin implements InspectorPanelPlugin {
 
    @Override

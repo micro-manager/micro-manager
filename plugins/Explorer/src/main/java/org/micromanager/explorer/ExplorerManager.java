@@ -3,6 +3,8 @@ package org.micromanager.explorer;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,7 @@ import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
@@ -120,9 +123,14 @@ public class ExplorerManager {
    private double initialStageX_ = 0;
    private double initialStageY_ = 0;
    private double pixelSizeUm_ = 1.0;
+   // Affine: camera-pixel delta → stage-micron delta. Null = use scalar fallback.
+   private AffineTransform pixelSizeAffine_ = null;
+   // Pre-computed inverse: stage-micron delta → camera-pixel delta.
+   private AffineTransform pixelSizeAffineInverse_ = null;
    private double overlapPercentage_ = 10.0;
    private volatile boolean acquisitionInterrupted_ = false;
    private final AtomicInteger pendingBatches_ = new AtomicInteger(0);
+   private boolean isRGB_ = false;
 
    public ExplorerManager(Studio studio, ExplorerFrame frame) {
       studio_ = studio;
@@ -168,6 +176,12 @@ public class ExplorerManager {
          cameraWidth_ = (int) studio_.core().getImageWidth();
          cameraHeight_ = (int) studio_.core().getImageHeight();
          bitDepth_ = (int) studio_.core().getImageBitDepth();
+         try {
+            isRGB_ = studio_.core().getNumberOfComponents() > 1;
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Explorer: could not determine camera component count");
+            isRGB_ = false;
+         }
          pixelSizeUm_ = studio_.core().getPixelSizeUm();
          if (pixelSizeUm_ <= 0) {
             pixelSizeUm_ = 1.0;
@@ -181,6 +195,7 @@ public class ExplorerManager {
          // Stage step in microns = camera FOV × pixel size
          stageTileWidthUm_ = cameraWidth_ * pixelSizeUm_;
          stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
+         loadPixelSizeAffine();
 
          // Initial tile-grid estimate uses camera dimensions (corrected after first acq)
          dataSource_.setTileDimensions(cameraWidth_, cameraHeight_);
@@ -203,7 +218,7 @@ public class ExplorerManager {
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
-               summaryMetadataJson, pixelSizeUm_, false);
+               summaryMetadataJson, pixelSizeUm_, isRGB_);
          mm2Viewer_.setAccumulateStats(true);
 
          initDisplaySettings(summaryMetadataJson);
@@ -271,6 +286,7 @@ public class ExplorerManager {
          final int imageWidth = summaryMetadata.optInt("Width", 512);
          final int imageHeight = summaryMetadata.optInt("Height", 512);
          bitDepth_ = summaryMetadata.optInt("BitDepth", 16);
+         isRGB_ = "RGB32".equals(summaryMetadata.optString("PixelType", ""));
          pixelSizeUm_ = summaryMetadata.optDouble("PixelSize_um", 1.0);
          if (pixelSizeUm_ <= 0) {
             pixelSizeUm_ = 1.0;
@@ -327,7 +343,7 @@ public class ExplorerManager {
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
          mm2Viewer_ = TiledDataViewerFactory.createDataViewer(
                studio_, dataSource_, acqInterface, mm2DataProvider_,
-               summaryMetadata, pixelSizeUm_, false);
+               summaryMetadata, pixelSizeUm_, isRGB_);
          mm2Viewer_.setAccumulateStats(true);
 
          // Load saved MM display settings or derive from heuristics
@@ -434,6 +450,16 @@ public class ExplorerManager {
          @Override
          public boolean isFinished() {
             return true; // Prevents "Finish Acquisition?" dialog on close
+         }
+
+         /**
+          * Called on the EDT when the user clicks the viewer's X button.
+          * Shows the save/discard/cancel dialog when there is unsaved data.
+          * Returns false (vetoing the close) if the user clicks Cancel.
+          */
+         @Override
+         public boolean requestToClose() {
+            return promptForUnsavedData();
          }
 
          @Override
@@ -587,20 +613,17 @@ public class ExplorerManager {
       if (event.isCanceled() || !exploring_) {
          return;
       }
-      shutdownInProgress_ = true;
-      boolean proceeded = onViewerClosed(true);
-      if (!proceeded) {
+      if (!promptForUnsavedData()) {
          event.cancelShutdown();
+         return;
       }
+      shutdownInProgress_ = true;
+      onViewerClosed();
    }
 
    public void onViewerClosed() {
-      onViewerClosed(false);
-   }
-
-   private boolean onViewerClosed(boolean calledFromShutdown) {
       if (!exploring_ || viewerClosing_) {
-         return true;
+         return;
       }
       viewerClosing_ = true;
 
@@ -619,74 +642,80 @@ public class ExplorerManager {
          }
       }
 
+      closeViewerReferences();
+      stopExplore(!loadedData_);
+   }
+
+   /**
+    * Shows the save/discard/cancel dialog when there is unsaved Explorer data.
+    * Returns true if the caller should proceed (data was saved or discarded),
+    * false if the user cancelled.  Returns true immediately when there is no
+    * unsaved data (loaded-data sessions, empty storage, etc.).
+    * Must be called on the EDT.
+    */
+   private boolean promptForUnsavedData() {
+      if (loadedData_) {
+         return true;
+      }
+      boolean hasData = false;
+      try {
+         hasData = storage_ != null && !storage_.isFinished()
+               && !storage_.getAxesSet().isEmpty();
+      } catch (Exception e) {
+         studio_.logs().logMessage(
+               "Explorer: could not check storage state: " + e.getMessage());
+      }
+      if (!hasData) {
+         return true;
+      }
+      while (true) {
+         int choice = JOptionPane.showOptionDialog(
+                 null,
+                 "Save the acquired Explorer data?",
+                 "Save Explorer Data",
+                 JOptionPane.YES_NO_CANCEL_OPTION,
+                 JOptionPane.QUESTION_MESSAGE,
+                 null,
+                 new String[]{"Save", "Discard", "Cancel"},
+                 "Save");
+         if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
+            studio_.logs().logMessage(
+                  "Explorer: close cancelled, data remains in: " + storageDir_);
+            return false;
+         } else if (choice == 0) {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Save Explorer Data");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            String suggestedPath = FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET);
+            if (suggestedPath != null) {
+               File suggested = new File(suggestedPath);
+               File dir = suggested.isDirectory() ? suggested : suggested.getParentFile();
+               if (dir != null) {
+                  chooser.setCurrentDirectory(dir);
+               }
+            }
+            chooser.setSelectedFile(new File(acqName_));
+            if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+               File destDir = chooser.getSelectedFile();
+               FileDialogs.storePath(FileDialogs.MM_DATA_SET, destDir);
+               writeSettingsToTempDir();
+               if (saveDataTo(destDir)) {
+                  return true;
+               }
+            }
+         } else {
+            return true; // Discard
+         }
+      }
+   }
+
+   private void closeViewerReferences() {
       if (mm2Viewer_ != null) {
          mm2Viewer_.closeWithoutNDViewer();
       }
       mm2Viewer_ = null;
       mm2DataProvider_ = null;
       viewer_ = null;
-
-      if (loadedData_) {
-         stopExplore(false);
-         return true;
-      }
-
-      boolean hasData = false;
-      try {
-         hasData = storage_ != null && !storage_.isFinished() && !storage_.getAxesSet().isEmpty();
-      } catch (Exception e) {
-         studio_.logs().logMessage("Explorer: could not check storage state: " + e.getMessage());
-      }
-
-      if (hasData) {
-         while (true) {
-            int choice = JOptionPane.showOptionDialog(
-                    null,
-                    "Save the acquired Explorer data?",
-                    "Save Explorer Data",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    new String[]{"Save", "Discard", "Cancel"},
-                    "Save");
-
-            if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
-               studio_.logs().logMessage("Explorer: close cancelled, data remains in: "
-                        + storageDir_);
-               if (!calledFromShutdown) {
-                  stopExplore(false);
-               }
-               viewerClosing_ = false;
-               return false;
-            } else if (choice == 0) {
-               JFileChooser chooser = new JFileChooser();
-               chooser.setDialogTitle("Save Explorer Data");
-               chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-               String suggestedPath = FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET);
-               if (suggestedPath != null) {
-                  File suggested = new File(suggestedPath);
-                  File dir = suggested.isDirectory() ? suggested : suggested.getParentFile();
-                  if (dir != null) {
-                     chooser.setCurrentDirectory(dir);
-                  }
-               }
-               chooser.setSelectedFile(new File(acqName_));
-               if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                  File destDir = chooser.getSelectedFile();
-                  FileDialogs.storePath(FileDialogs.MM_DATA_SET, destDir);
-                  writeSettingsToTempDir();
-                  if (saveDataTo(destDir)) {
-                     break;
-                  }
-               }
-            } else {
-               break; // Discard
-            }
-         }
-      }
-
-      stopExplore(true);
-      return true;
    }
 
    private boolean saveDataTo(File destDir) {
@@ -819,6 +848,43 @@ public class ExplorerManager {
    }
 
    /**
+    * Loads and validates the pixel-size affine transform from the core.
+    * Sets pixelSizeAffine_ / pixelSizeAffineInverse_ on success, leaves both null
+    * (scalar fallback) on any failure or if the affine does not match pixelSizeUm_.
+    * The MM core affine has zero translation terms, so AffineTransform.transform()
+    * on a pixel-delta Point2D gives the correct stage-micron delta.
+    */
+   private void loadPixelSizeAffine() {
+      pixelSizeAffine_ = null;
+      pixelSizeAffineInverse_ = null;
+      if (pixelSizeUm_ <= 0) {
+         return;
+      }
+      try {
+         AffineTransform at = AffineUtils.doubleToAffine(
+               studio_.core().getPixelSizeAffine(true));
+         double affinePixelSize = AffineUtils.deducePixelSize(at);
+         if (Math.abs(pixelSizeUm_ - affinePixelSize) > 0.1 * pixelSizeUm_) {
+            studio_.logs().logMessage("Explorer: affine pixel size " + affinePixelSize
+                  + " differs from declared " + pixelSizeUm_
+                  + " by >10%; using scalar coordinate conversion");
+            return;
+         }
+         pixelSizeAffine_ = at;
+         try {
+            pixelSizeAffineInverse_ = at.createInverse();
+         } catch (NoninvertibleTransformException e) {
+            studio_.logs().logMessage(
+                  "Explorer: pixel-size affine is singular; using scalar coordinate conversion");
+            pixelSizeAffine_ = null;
+         }
+      } catch (Exception e) {
+         studio_.logs().logMessage("Explorer: could not load pixel-size affine ("
+               + e.getMessage() + "); using scalar coordinate conversion");
+      }
+   }
+
+   /**
     * Acquires multiple tiles sequentially, moving the stage between positions.
     * Stage step is based on the camera FOV × pixel size (stageTileWidthUm_/stageTileHeightUm_).
     */
@@ -845,8 +911,9 @@ public class ExplorerManager {
             // Stage step in microns: derived from camera FOV (not pipeline-output tile size).
             // The pipeline may resize images, but the stage still moves by the camera FOV.
             double overlapFraction = overlapPercentage_ / 100.0;
-            double effectiveStepWidthUm = stageTileWidthUm_ * (1.0 - overlapFraction);
-            double effectiveStepHeightUm = stageTileHeightUm_ * (1.0 - overlapFraction);
+            // Effective tile step in camera-pixel space (affine operates on camera pixels).
+            double effectivePixelStepX = cameraWidth_  * (1.0 - overlapFraction);
+            double effectivePixelStepY = cameraHeight_ * (1.0 - overlapFraction);
 
             for (Point tile : tiles) {
                if (acquisitionInterrupted_) {
@@ -855,8 +922,21 @@ public class ExplorerManager {
                int row = tile.x;
                int col = tile.y;
 
-               double targetX = initialStageX_ + col * effectiveStepWidthUm;
-               double targetY = initialStageY_ + row * effectiveStepHeightUm;
+               double targetX;
+               double targetY;
+               if (pixelSizeAffine_ != null) {
+                  Point2D.Double pixelOffset = new Point2D.Double(
+                        col * effectivePixelStepX, row * effectivePixelStepY);
+                  Point2D.Double stageOffset = new Point2D.Double();
+                  pixelSizeAffine_.transform(pixelOffset, stageOffset);
+                  targetX = initialStageX_ + stageOffset.x;
+                  targetY = initialStageY_ + stageOffset.y;
+               } else {
+                  double effectiveStepWidthUm  = stageTileWidthUm_  * (1.0 - overlapFraction);
+                  double effectiveStepHeightUm = stageTileHeightUm_ * (1.0 - overlapFraction);
+                  targetX = initialStageX_ + col * effectiveStepWidthUm;
+                  targetY = initialStageY_ + row * effectiveStepHeightUm;
+               }
 
                studio_.core().setXYPosition(targetX, targetY);
                studio_.core().waitForDevice(studio_.core().getXYStageDevice());
@@ -959,9 +1039,7 @@ public class ExplorerManager {
                continue;
             }
             int channelIndex = c.getChannel();
-            String[] chNames = summaryMeta.getChannelNames();
-            String channelName = (chNames != null && channelIndex < chNames.length)
-                  ? chNames[channelIndex] : "Default";
+            String channelName = summaryMeta.getSafeChannelName(channelIndex);
             HashMap<String, Object> axes = storeImage(img, row, col, channelName);
             if (axes != null) {
                storedAxes.add(axes);
@@ -1048,7 +1126,9 @@ public class ExplorerManager {
          tags.put("Width", image.getWidth());
          tags.put("Height", image.getHeight());
          tags.put("BitDepth", bitDepth_);
-         tags.put("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16");
+         tags.put("PixelType", isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"));
+         tags.put("BytesPerPixel", isRGB_ ? 4 : (bitDepth_ <= 8 ? 1 : 2));
+         tags.put("NumComponents", isRGB_ ? 3 : 1);
          tags.put("PixelSizeUm", pixelSizeUm_);
 
          // Per-image metadata for MM Inspector "Plane Metadata" panel
@@ -1101,7 +1181,7 @@ public class ExplorerManager {
                  image.getRawPixels(),
                  tags,
                  axes,
-                 false,
+                 isRGB_,
                  bitDepth_,
                  image.getHeight(),
                  image.getWidth());
@@ -1144,23 +1224,31 @@ public class ExplorerManager {
       if (tw <= 0 || th <= 0 || pixelSizeUm_ <= 0) {
          return null;
       }
-      int overlapPixels = (int) Math.round(tw * overlapPercentage_ / 100.0);
-      double effectiveTileWidth = tw - overlapPixels;
-      double effectiveTileHeight = th - overlapPixels;
-      // NDTiff canvas coords: tile (row,col) occupies [col*effectiveTileWidth,
-      // (col+1)*effectiveTileWidth).
-      // Stage step per tile = stageTileWidthUm_ * (1 - overlap) / pixelSizeUm_ pixels.
-      // Scale maps stage-offset pixels to NDTiff canvas pixels.
-      double stageStepX = stageTileWidthUm_ > 0
-               ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-               : effectiveTileWidth;
-      double stageStepY = stageTileHeightUm_ > 0
-               ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-               : effectiveTileHeight;
-      double scaleX = effectiveTileWidth / stageStepX;
-      double scaleY = effectiveTileHeight / stageStepY;
-      double pixelX = (stageX - initialStageX_) / pixelSizeUm_ * scaleX + effectiveTileWidth / 2.0;
-      double pixelY = (stageY - initialStageY_) / pixelSizeUm_ * scaleY + effectiveTileHeight / 2.0;
+      int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+      int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
+      double effectiveTileWidth = tw - overlapPixelsX;
+      double effectiveTileHeight = th - overlapPixelsY;
+      double stageOffsetX = stageX - initialStageX_;
+      double stageOffsetY = stageY - initialStageY_;
+
+      double camPixelDeltaX;
+      double camPixelDeltaY;
+      if (pixelSizeAffineInverse_ != null) {
+         // Apply inverse affine: stage-micron delta → camera-pixel delta.
+         Point2D.Double stageOffset = new Point2D.Double(stageOffsetX, stageOffsetY);
+         Point2D.Double camDelta = new Point2D.Double();
+         pixelSizeAffineInverse_.transform(stageOffset, camDelta);
+         camPixelDeltaX = camDelta.x;
+         camPixelDeltaY = camDelta.y;
+      } else {
+         camPixelDeltaX = stageOffsetX / pixelSizeUm_;
+         camPixelDeltaY = stageOffsetY / pixelSizeUm_;
+      }
+      // Scale from camera-pixel space to canvas (pipeline-output) pixel space.
+      double pipelineScaleX = (tw > 0 && cameraWidth_  > 0) ? (double) tw / cameraWidth_  : 1.0;
+      double pipelineScaleY = (th > 0 && cameraHeight_ > 0) ? (double) th / cameraHeight_ : 1.0;
+      double pixelX = camPixelDeltaX * pipelineScaleX + effectiveTileWidth  / 2.0;
+      double pixelY = camPixelDeltaY * pipelineScaleY + effectiveTileHeight / 2.0;
       return new Point2D.Double(pixelX, pixelY);
    }
 
@@ -1217,24 +1305,40 @@ public class ExplorerManager {
          try {
             int tw = dataSource_ != null ? dataSource_.getTileWidth() : cameraWidth_;
             int th = dataSource_ != null ? dataSource_.getTileHeight() : cameraHeight_;
-            int overlapPixels = (int) Math.round(tw * overlapPercentage_ / 100.0);
-            double effectiveTileWidth = tw - overlapPixels;
-            double effectiveTileHeight = th - overlapPixels;
-
-            double stageStepX = stageTileWidthUm_ > 0
-                  ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-                     : effectiveTileWidth;
-            double stageStepY = stageTileHeightUm_ > 0
-                  ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-                     : effectiveTileHeight;
-            double scaleX = stageStepX / effectiveTileWidth;
-            double scaleY = stageStepY / effectiveTileHeight;
+            int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+            int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
+            double effectiveTileWidth = tw - overlapPixelsX;
+            double effectiveTileHeight = th - overlapPixelsY;
 
             double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
             double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
 
-            double targetX = initialStageX_ + offsetPixelX * pixelSizeUm_ * scaleX;
-            double targetY = initialStageY_ + offsetPixelY * pixelSizeUm_ * scaleY;
+            double targetX;
+            double targetY;
+            if (pixelSizeAffine_ != null) {
+               // Convert canvas-pixel delta to camera-pixel delta, then apply affine.
+               double pipelineScaleX = (tw > 0 && cameraWidth_  > 0)
+                     ? (double) cameraWidth_  / tw : 1.0;
+               double pipelineScaleY = (th > 0 && cameraHeight_ > 0)
+                     ? (double) cameraHeight_ / th : 1.0;
+               Point2D.Double camPixelDelta = new Point2D.Double(
+                     offsetPixelX * pipelineScaleX, offsetPixelY * pipelineScaleY);
+               Point2D.Double stageOffset = new Point2D.Double();
+               pixelSizeAffine_.transform(camPixelDelta, stageOffset);
+               targetX = initialStageX_ + stageOffset.x;
+               targetY = initialStageY_ + stageOffset.y;
+            } else {
+               double stageStepX = stageTileWidthUm_ > 0
+                     ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
+                        : effectiveTileWidth;
+               double stageStepY = stageTileHeightUm_ > 0
+                     ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
+                        : effectiveTileHeight;
+               double scaleX = stageStepX / effectiveTileWidth;
+               double scaleY = stageStepY / effectiveTileHeight;
+               targetX = initialStageX_ + offsetPixelX * pixelSizeUm_ * scaleX;
+               targetY = initialStageY_ + offsetPixelY * pixelSizeUm_ * scaleY;
+            }
 
             studio_.core().setXYPosition(targetX, targetY);
             studio_.core().waitForDevice(studio_.core().getXYStageDevice());
@@ -1281,7 +1385,8 @@ public class ExplorerManager {
          // PixelType has no builder method — inject directly into the PropertyMap
          return DefaultSummaryMetadata.fromPropertyMap(
                sm.toPropertyMap().copyBuilder()
-                     .putString("PixelType", bitDepth_ <= 8 ? "GRAY8" : "GRAY16")
+                     .putString("PixelType",
+                              isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"))
                      .build());
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: failed to build summary metadata");

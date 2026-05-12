@@ -218,6 +218,15 @@ public class ImageMaker {
 
                //recompute 8 bit image
                channelProcessors_.get(c).recompute();
+                  {
+                     NDVImageProcessor proc = channelProcessors_.get(c);
+                     boolean noPixels = (proc instanceof NDVImageProcessorRGB)
+                           ? ((NDVImageProcessorRGB) proc).rProcessor_.reds == null
+                           : proc.reds == null;
+                     if (noPixels) {
+                        continue; // No pixels yet
+                     }
+                  }
                if (firstActive) {
                   if (channelProcessors_.get(c) instanceof NDVImageProcessorRGB) {
                      byte[] bytesR = ((NDVImageProcessorRGB) channelProcessors_.get(c)).rProcessor_
@@ -364,18 +373,32 @@ public class ImageMaker {
       }
 
       public void changePixels(Object pix, int w, int h) {
-         byte[] rPix = new byte[w * h];
-         byte[] gPix = new byte[w * h];
-         byte[] bPix = new byte[w * h];
-         for (int i = 0; i < w * h; i++) {
-            bPix[i] = ((byte[]) pix)[4 * i ];
-            gPix[i] = ((byte[]) pix)[4 * i + 1];
-            rPix[i] = ((byte[]) pix)[4 * i + 2];
-         }
+         if (pix != null) {
+            byte[] rPix = new byte[w * h];
+            byte[] gPix = new byte[w * h];
+            byte[] bPix = new byte[w * h];
+            if (pix instanceof byte[]) {
+               // MM RGB32 byte[] format: B, G, R, _ per pixel
+               byte[] bytes = (byte[]) pix;
+               for (int i = 0; i < w * h; i++) {
+                  bPix[i] = bytes[4 * i];
+                  gPix[i] = bytes[4 * i + 1];
+                  rPix[i] = bytes[4 * i + 2];
+               }
+            } else if (pix instanceof int[]) {
+               // int[] RGB32 format: each int = 0x00RRGGBB
+               int[] ints = (int[]) pix;
+               for (int i = 0; i < w * h; i++) {
+                  bPix[i] = (byte) (ints[i] & 0xff);
+                  gPix[i] = (byte) ((ints[i] >> 8) & 0xff);
+                  rPix[i] = (byte) ((ints[i] >> 16) & 0xff);
+               }
+            }
 
-         rProcessor_.changePixels(rPix, w, h);
-         gProcessor_.changePixels(gPix, w, h);
-         bProcessor_.changePixels(bPix, w, h);
+            rProcessor_.changePixels(rPix, w, h);
+            gProcessor_.changePixels(gPix, w, h);
+            bProcessor_.changePixels(bPix, w, h);
+         }
       }
 
       public void recompute() {
@@ -392,6 +415,9 @@ public class ImageMaker {
          rProcessor_.create8BitImage();
          gProcessor_.create8BitImage();
          bProcessor_.create8BitImage();
+         if (rProcessor_.rawHistogram == null) {
+            return; // No pixels yet — nothing to recompute
+         }
          rawHistogram = new int[rProcessor_.rawHistogram.length];
          for (int i = 0; i < rawHistogram.length; i++) {
             rawHistogram[i] += rProcessor_.rawHistogram[i];

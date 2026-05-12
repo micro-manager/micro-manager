@@ -368,12 +368,12 @@ public class StitchFrame extends JDialog {
       dispose();
 
       // Progress dialog
-      JDialog progressDialog = new JDialog((Window) null, "Exporting…",
+      JDialog progressDialog = new JDialog((Window) null, "Exporting...",
             Dialog.ModalityType.MODELESS);
       progressDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       JProgressBar bar = new JProgressBar(0, 100);
       bar.setStringPainted(true);
-      JLabel statusLabel = new JLabel("Preparing…");
+      JLabel statusLabel = new JLabel("Preparing...");
       progressDialog.getContentPane().setLayout(
             new MigLayout("insets 12, gap 8", "[grow]"));
       progressDialog.getContentPane().add(statusLabel, "wrap");
@@ -556,7 +556,7 @@ public class StitchFrame extends JDialog {
                probeTemplateMetadata(dataProvider_, alignZ);
 
          // Step 5 & 6: composite/stitch — iterates all time points, z slices, channels.
-         SwingUtilities.invokeLater(() -> statusLabel.setText("Computing…"));
+         SwingUtilities.invokeLater(() -> statusLabel.setText("Computing..."));
 
          // raw count from caller; effective count set after probe
          final int numCh = chNames.size();
@@ -686,7 +686,7 @@ public class StitchFrame extends JDialog {
             if (doAlign) {
                final int tIdx = t;
                SwingUtilities.invokeLater(() -> statusLabel.setText(
-                     "Aligning t=" + (tIdx + 1) + "…"));
+                     "Aligning t=" + (tIdx + 1) + "..."));
                HashMap<String, Object> tAlignAxes = new HashMap<>(alignAxes);
                if (numT > 1) {
                   tAlignAxes.put(Coords.TIME_POINT, t);
@@ -718,7 +718,7 @@ public class StitchFrame extends JDialog {
                      final int zIdx = z;
                      final String chName = effectiveChNames.get(c);
                      SwingUtilities.invokeLater(() -> statusLabel.setText(
-                           "Blending t=" + (tIdx + 1) + " z=" + (zIdx + 1) + " " + chName + "…"));
+                           "Blending t=" + (tIdx + 1) + " z=" + (zIdx + 1) + " " + chName + "..."));
                      final int imagesBefore = imagesWritten;
                      final java.util.function.IntConsumer blendProgress =
                            pct -> SwingUtilities.invokeLater(() -> {
@@ -784,7 +784,7 @@ public class StitchFrame extends JDialog {
                      final int zIdx = z;
                      SwingUtilities.invokeLater(() -> statusLabel.setText(
                            "Stitching t=" + (tIdx + 1) + " z=" + (zIdx + 1)
-                                 + " " + chName + "…"));
+                                 + " " + chName + "..."));
                      final int imagesBefore = imagesWritten;
                      Object[] result = stitchTiles(studio_,
                               adapter,
