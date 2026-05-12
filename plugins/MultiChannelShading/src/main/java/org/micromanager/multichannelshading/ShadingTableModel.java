@@ -42,6 +42,7 @@ public class ShadingTableModel extends AbstractTableModel {
          ""
    };
    private String channelGroup_;
+   private String pixelSizeCalibration_ = MultiChannelShadingMigForm.ANY_PIXELSIZE;
    private List<String> presetList_;
    private List<String> fileList_;
    private final ImageCollection imageCollection_;
@@ -127,41 +128,66 @@ public class ShadingTableModel extends AbstractTableModel {
       }
    }
 
+   private String storageKey() {
+      return channelGroup_ + "-" + pixelSizeCalibration_;
+   }
+
    public void setChannelGroup(String newGroup) {
       try {
-         // first save our settings
          if (channelGroup_ != null) {
-            String[] channels = presetList_.toArray(new String[0]);
-            String[] files = fileList_.toArray(new String[0]);
-            studio_.profile().getSettings(this.getClass()).putStringList(
-                  channelGroup_ + "-channels", channels);
-            studio_.profile().getSettings(this.getClass()).putStringList(
-                  channelGroup_ + "-files", files);
+            saveCurrentToProfile();
          }
          imageCollection_.clearFlatFields();
          channelGroup_ = newGroup;
-
-         // then restore mapping from preferences
-         fileList_.clear();
-         presetList_.clear();
-         // Strange workaround since we can not pass null as default
-         List<String> emptyList = new ArrayList<>(0);
-         List<String> channels = studio_.profile().getSettings(this.getClass())
-                     .getStringList(channelGroup_ + "-channels", emptyList);
-         List<String> files = studio_.profile().getSettings(this.getClass())
-                     .getStringList(channelGroup_ + "-files", emptyList);
-         if (channels != null && files != null) {
-            for (int i = 0; i < channels.size() && i < files.size(); i++) {
-               imageCollection_.addFlatField(channels.get(i), files.get(i));
-               presetList_.add(channels.get(i));
-               fileList_.add(files.get(i));
-            }
-         }
-
+         loadFromProfile();
       } catch (ShadingException ex) {
          studio_.logs().showError(ex);
       }
       fireTableDataChanged();
+   }
+
+   public void setPixelSizeCalibration(String calibration) {
+      try {
+         if (channelGroup_ != null) {
+            saveCurrentToProfile();
+         }
+         imageCollection_.clearFlatFields();
+         pixelSizeCalibration_ = calibration;
+         loadFromProfile();
+      } catch (ShadingException ex) {
+         studio_.logs().showError(ex);
+      }
+      fireTableDataChanged();
+   }
+
+   public String getPixelSizeCalibration() {
+      return pixelSizeCalibration_;
+   }
+
+   void saveCurrentToProfile() {
+      String[] channels = presetList_.toArray(new String[0]);
+      String[] files = fileList_.toArray(new String[0]);
+      studio_.profile().getSettings(this.getClass()).putStringList(
+            storageKey() + "-channels", channels);
+      studio_.profile().getSettings(this.getClass()).putStringList(
+            storageKey() + "-files", files);
+   }
+
+   private void loadFromProfile() throws ShadingException {
+      fileList_.clear();
+      presetList_.clear();
+      List<String> emptyList = new ArrayList<>(0);
+      List<String> channels = studio_.profile().getSettings(this.getClass())
+            .getStringList(storageKey() + "-channels", emptyList);
+      List<String> files = studio_.profile().getSettings(this.getClass())
+            .getStringList(storageKey() + "-files", emptyList);
+      if (channels != null && files != null) {
+         for (int i = 0; i < channels.size() && i < files.size(); i++) {
+            imageCollection_.addFlatField(channels.get(i), files.get(i));
+            presetList_.add(channels.get(i));
+            fileList_.add(files.get(i));
+         }
+      }
    }
 
    /**
