@@ -68,6 +68,8 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private static final String KEY_REL_Z_MIN = "Relative Z min";
    private static final String KEY_REL_Z_MAX = "Relative Z max";
    private static final String KEY_DELTA_Z = "Delta Z";
+   private static final String KEY_DRYRUN = "Dry run";
+   private static final String[] SHOWVALUES = {"Yes", "No"};
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    
    private static final String AF_DEVICE_NAME = "TCA AF";
@@ -86,7 +88,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    public String channel_ = "";
    private double rel_z_min_ = -10.0;
    private double rel_z_max_ = 10.0;
-
+   private boolean dryrun_ = false;
    private boolean verbose_ = true; // displaying debug info or not
    private String channelGroup_;
    private double curDist_;
@@ -100,6 +102,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       super.createProperty(KEY_REL_Z_MIN, Double.toString(rel_z_min_));
       super.createProperty(KEY_REL_Z_MAX, Double.toString(rel_z_max_));
       super.createProperty(KEY_DELTA_Z, Double.toString(deltaz_));
+      super.createProperty(KEY_DRYRUN, SHOWVALUES[1], SHOWVALUES);
    }
 
 
@@ -110,6 +113,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          channel_ = getPropertyValue(KEY_CHANNEL);
          rel_z_min_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MIN));
          rel_z_max_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAX));
+         dryrun_ = getPropertyValue(KEY_DRYRUN).contentEquals("Yes");
 
       } catch (Exception e) {
 
@@ -186,16 +190,17 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
             curDist_ = core_.getPosition(core_.getFocusDevice());
             snapSingleImage();
             delayTime(50);
-            imageProcessors.add(ipCurrent_);
-
-            zSampledList.add(curDist_ - original_z);
+            if(i > 0){ // skip the first image as stage is too slow to update
+               imageProcessors.add(ipCurrent_);
+               zSampledList.add(curDist_ - original_z);
+            }
          }
          IJ.log("Created Z positions list, deltaZ = " + deltaz_);
 
          double z_ini = 0.0;
          double deltaz_samp = deltaz_;
          double[] zSampled = zSampledList.stream().mapToDouble(Double::doubleValue).toArray();
-
+         IJ.log("Starting focus score computation with Zsampled: " + Arrays.toString(zSampled));
          ComputeBestFocus460nm.Results results =
                ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled);
          double bestZ = original_z;
@@ -205,8 +210,16 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
             core_.setPosition(core_.getFocusDevice(), original_z);
 
          }else{
-            bestZ = results.z_best_focus;
-            core_.setPosition(core_.getFocusDevice(), results.z_best_focus);
+            bestZ = results.z_best_focus + original_z;
+            IJ.log("Best focus position found at Z = " + bestZ + " (relative Z = " + results.z_best_focus + ")");
+            
+            if(dryrun_) {
+               IJ.log("Dry run enabled, not moving to best focus position, staying at original position  " + original_z);
+               core_.setPosition(core_.getFocusDevice(), original_z);
+            } else {
+               IJ.log("Moving to best focus position...");
+               core_.setPosition(core_.getFocusDevice(), bestZ);
+            }
             // indx =1;
             snapSingleImage();
          }
@@ -233,22 +246,32 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
           
          XYSeries xySeries = new XYSeries("Focus Score from images");
          focusScoreMap.forEach(xySeries::add);
-          
+         // save focusScoreMap to CSV for debugging
+         
+         try {
+            String curr_datetime = new Date().toString().replace(" ", "_").replace(":", "-");
+            saveXYSeriesToCsv(xySeries, curr_datetime+"focus_scores.csv");
+         } catch (IOException e) {
+            IJ.log("Error while saving focus scores to CSV: " + e.getMessage());
+         }
+
+
          XYSeries xySeriesFitted = new XYSeries("Fitted Focus Score");
          // populate xySeriesFitted with data from results.smoothCurvesNorm[m]
          for (int i = 0; i < results.zFine.length; i++) {
             xySeriesFitted.add(results.zFine[i]+original_z, results.smoothCurvesNorm[i][m]);
          }
 
-         /*
+         
          
          try {
-            saveXYSeriesToCsv(xySeries, "focus_scores.csv");
-            saveXYSeriesToCsv(xySeriesFitted, "fitted_focus_scores.csv");
+            String curr_datetime = new Date().toString().replace(" ", "_").replace(":", "-");
+            saveXYSeriesToCsv(xySeries, curr_datetime+"focus_scores.csv");
+            saveXYSeriesToCsv(xySeriesFitted, curr_datetime+"fitted_focus_scores.csv");
          } catch (IOException e) {
             IJ.log("Error while saving focus scores to CSV: " + e.getMessage());
          }
-         */
+         
 
          XYSeries[] data = {xySeries, xySeriesFitted};
 
