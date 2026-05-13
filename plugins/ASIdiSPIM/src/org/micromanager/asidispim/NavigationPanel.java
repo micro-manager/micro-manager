@@ -140,7 +140,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       JPanel loadPanel = new JPanel(new MigLayout(
             "",
             "[center]",
-            "[]4[]4[]10[]4[]4[]"));
+              (ASIdiSPIM.SCOPE ? "[]" : "[]4[]4[]10[]4[]4[]")));  // in SCOPE this is single row
       
       loadPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
 
@@ -191,8 +191,20 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             loadPanel.add(new JLabel("Start Hunting"));
          }
       } else { // if ASIdiSPIM.doubleXYZ is true or ASIdiSPIM.SCOPE is true
-         headUpPosition_ = pu.makeFloatEntryField(panelName_, "never used", 0, 5);
-         headDownPosition_ = pu.makeFloatEntryField(panelName_, "never used", 0, 5);
+         if (ASIdiSPIM.SCOPE) {
+            headUpPosition_ = pu.makeFloatEntryField(panelName_, "HeadUpPosition", 1000, 5);
+            headDownPosition_ = pu.makeFloatEntryField(panelName_, "HeadDownPosition", 0, 5);
+            loadPanel.add(new JLabel("Loading sample height:"));
+            loadPanel.add(headUpPosition_);
+            loadPanel.add(headUpGo);
+            loadPanel.add(new JLabel("   "));
+            loadPanel.add(new JLabel("Imaging height:"));
+            loadPanel.add(headDownPosition_);
+            loadPanel.add(headDownGo);
+         } else {
+            headUpPosition_ = pu.makeFloatEntryField(panelName_, "never used", 0, 5);
+            headDownPosition_ = pu.makeFloatEntryField(panelName_, "never used", 0, 5);
+         }
       }
       
       final int positionWidth = 60;
@@ -503,12 +515,15 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.Y, deltaDField, "+", 1));
          navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Directions.Y), "wrap");
       }
-      
-      if (!ASIdiSPIM.doubleXYZ && !ASIdiSPIM.SCOPE) {
-         if (!ASIdiSPIM.oSPIM) {
-            navPanel.add(loadPanel, "cell 7 4, span 2 6, center, wrap");
-         } else {
+
+      // only add this panel if we have populated it earlier in the code
+      if (loadPanel.getComponentCount() > 1) {
+         if (ASIdiSPIM.SCOPE) {
+            navPanel.add(loadPanel, "span 10");
+         } else if (ASIdiSPIM.oSPIM) {
             navPanel.add(loadPanel, "cell 7 5, span 2 6, center, wrap");
+         } else {
+            navPanel.add(loadPanel, "cell 7 4, span 2 6, center, wrap"); // original
          }
       }
       

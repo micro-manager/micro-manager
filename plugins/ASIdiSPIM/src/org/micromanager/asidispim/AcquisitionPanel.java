@@ -4097,14 +4097,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      final MultiStagePosition nextPosition = positionList.getPosition(positionNum);
                      
                      // move to the next position
-                     if (raiseSPIMHead && positionNum == 0) {
-                    	 // move to the XY position first
+                     if (raiseSPIMHead) {
+                         // raise SPIM head before we move XY, then lower Z again
+                         ASIdiSPIM.getFrame().getNavigationPanel().raiseSPIMHead();
+                        core_.waitForDevice(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
+                    	 // move to the XY position next
                          StagePosition posXY = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE)); 
                          if (posXY != null) {
 	                         core_.setXYPosition(posXY.stageName, posXY.x, posXY.y);
 	                         core_.waitForDevice(devices_.getMMDevice(Devices.Keys.XYSTAGE));
                          }
-                     	 // lower SPIM head after we move into position
+                     	 // move Z only after we are in the correct XY
                          StagePosition posZ = nextPosition.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
                          if (posZ != null) {
 	                         core_.setPosition(posZ.stageName, posZ.x);
