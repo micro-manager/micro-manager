@@ -192,6 +192,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
             sb.timeFirst(true);
             sb.slicesFirst(true);
             break;
+         case AcqOrderMode.POS_CHANNEL_SLICE_TIME:
+            sb.timeFirst(true);
+            sb.slicesFirst(true);
+            break;
          default:
             break;
       }
@@ -702,6 +706,23 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
             || sequenceSettings_.useChannels()
             || sequenceSettings_.useSlices()) {
          StringBuilder order = new StringBuilder("\nOrder: ");
+
+         if(sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_CHANNEL_SLICE_TIME){
+            if(sequenceSettings_.usePositionList()){
+               order.append("Position, ");
+            }
+            if(sequenceSettings_.useChannels()){
+               order.append("Channel, ");
+            }
+            if(sequenceSettings_.useSlices()){
+               order.append("Slice, ");
+            }
+            if(sequenceSettings_.useFrames()){
+               order.append("Time");
+            }
+            return txt + order.toString();
+         }
+
          if (sequenceSettings_.useFrames() && sequenceSettings_.usePositionList()) {
             if (sequenceSettings_.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
                   || sequenceSettings_.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
