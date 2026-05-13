@@ -645,6 +645,7 @@ public final class StageControlFrame extends JFrame {
                return;
             }
             setRelativeStagePosition(dz * stepSize, idx);
+            zDriveActiveButtons_[idx].setSelected(true);
          });
          result.add(button, "alignx center, growx");
          if (i == 1) {
@@ -678,6 +679,7 @@ public final class StageControlFrame extends JFrame {
                   "Move stage to working position?", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.YES_OPTION) {
                setRelativeStagePosition(workPosition + -1 * core_.getPosition((String) zDriveSelect_[idx].getSelectedItem()) , idx);
+               zDriveActiveButtons_[idx].setSelected(true);
             }
          }catch(Exception ex){
             studio_.logs().showError(ex, "Error while moving to work position for stage: " + zDriveSelect_[idx].getSelectedItem());
