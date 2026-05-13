@@ -655,7 +655,6 @@ public final class StageControlFrame extends JFrame {
       home_button.addActionListener((ActionEvent e) -> {
          try{
             setRelativeStagePosition(-1 * core_.getPosition((String) zDriveSelect_[idx].getSelectedItem()) , idx);
-            zDriveActiveButtons_[idx].setSelected(true);
          }catch(Exception ex){
             studio_.logs().showError(ex, "Error while moving to home position for stage: " + zDriveSelect_[idx].getSelectedItem());
          }
