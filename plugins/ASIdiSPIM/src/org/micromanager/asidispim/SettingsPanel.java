@@ -306,7 +306,7 @@ public class SettingsPanel extends ListeningJPanel {
       
       final JPanel stageScanPanel = new JPanel(new MigLayout(
             "",
-            "[right]16[center]",
+            "[right]5[center]",
             "[]5[]"));
       stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage Scanning"));
       
@@ -351,7 +351,7 @@ public class SettingsPanel extends ListeningJPanel {
          
          final JCheckBox restoreOriginalPosition = pu.makeCheckBox("Return to original position after scan",
                Properties.Keys.PLUGIN_RETURN_TO_ORIGINAL_POSITION_AFTER_STAGESCAN, panelName_, false);
-         stageScanPanel.add(restoreOriginalPosition, "wrap");
+         stageScanPanel.add(restoreOriginalPosition, "span 2, wrap, alignx left");
       } else {
          stageScanPanel.add(new JLabel("Stage scanning not supported by your"), "left, wrap");
          stageScanPanel.add(new JLabel("Tiger firmware.  See http://dispim.org"), "left, wrap");
