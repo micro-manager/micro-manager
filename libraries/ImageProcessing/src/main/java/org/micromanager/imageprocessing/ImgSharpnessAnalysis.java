@@ -58,7 +58,7 @@ public class ImgSharpnessAnalysis {
       MedianEdges, Tenengrad, FFTBandpass;
 
       public static String[] getNames() {
-         return Arrays.stream(Method.class.getEnumConstants()).map(Enum::name)
+         return Arrays.stream(Method.class.getEnumConstants()).map(Method::name)
                .toArray(String[]::new);
       }
    }

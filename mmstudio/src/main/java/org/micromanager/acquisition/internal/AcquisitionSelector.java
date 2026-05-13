@@ -108,7 +108,7 @@ public final class AcquisitionSelector {
    /**
     * Simple renderer for showing strings with icons.
     */
-   private static class PluginRenderer extends JLabel implements ListCellRenderer {
+   private static class PluginRenderer extends JLabel implements ListCellRenderer<JLabel> {
       private final Studio studio_;
 
       public PluginRenderer(Studio studio) {
@@ -118,10 +118,10 @@ public final class AcquisitionSelector {
       }
 
       @Override
-      public Component getListCellRendererComponent(JList list,
-                                                    Object value, int index, boolean isSelected,
+      public Component getListCellRendererComponent(JList<? extends JLabel> list,
+                                                    JLabel value, int index, boolean isSelected,
                                                     boolean hasFocus) {
-         JLabel label = (JLabel) value;
+         JLabel label = value;
          setText(label.getText());
          setIcon(label.getIcon());
          setFont(label.getFont());

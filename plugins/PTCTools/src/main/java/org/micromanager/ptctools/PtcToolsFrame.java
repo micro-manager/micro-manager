@@ -54,14 +54,17 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class PtcToolsFrame extends JFrame {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
+   private static final String VERSION = "0.2";
    public static Boolean WINDOWOPEN = false;
 
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
+   private JTextField descriptionTF_;
    private JTextField minExpTF_;
    private JTextField maxExpTF_;
    private JSpinner nrFramesSp_;
    private JSpinner nrExpSp_;
+   private JSpinner spacingExpSp_;
 
 
    public PtcToolsFrame(Studio studio) {
@@ -84,6 +87,10 @@ public class PtcToolsFrame extends JFrame {
 
       setLayout(new MigLayout("flowx"));
 
+      add(new JLabel("Photon Transfer Curve Tools version: " + VERSION), "span 2, wrap");
+      add(new JLabel(PtcToolsTerms.DESCRIPTION), "");
+      descriptionTF_ = new JTextField(settings_.getString(PtcToolsTerms.DESCRIPTION, ""));
+      add(descriptionTF_, "w 200, wrap");
       add(new JLabel(PtcToolsTerms.MINIMUMEXPOSURE), "");
       minExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE,
             "0.0"));
@@ -95,13 +102,18 @@ public class PtcToolsFrame extends JFrame {
       add(new JLabel(PtcToolsTerms.NREXPOSURES), "");
       nrExpSp_ = new JSpinner();
       nrExpSp_.setModel(new SpinnerNumberModel(
-            settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30), 1, null, 1));
+            settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30), 2, null, 1));
       add(nrExpSp_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.NRFRAMES), "");
       nrFramesSp_ = new JSpinner();
       nrFramesSp_.setModel(new SpinnerNumberModel(
-            settings_.getInteger(PtcToolsTerms.NRFRAMES, 100), 1, null, 1));
+            settings_.getInteger(PtcToolsTerms.NRFRAMES, 50), 1, null, 1));
       add(nrFramesSp_, "w 60, wrap");
+      add(new JLabel(PtcToolsTerms.SPACINGEXPONENT), "");
+      spacingExpSp_ = new JSpinner();
+      spacingExpSp_.setModel(new SpinnerNumberModel(
+            settings_.getDouble(PtcToolsTerms.SPACINGEXPONENT, 0.5), 0.05, 2.0, 0.05));
+      add(spacingExpSp_, "w 60, wrap");
 
       JFrame ptf = this;
       JButton helpButton = new JButton("Help");
@@ -129,10 +141,12 @@ public class PtcToolsFrame extends JFrame {
    }
 
    private void storeSettings() {
+      settings_.putString(PtcToolsTerms.DESCRIPTION, descriptionTF_.getText());
       settings_.putString(PtcToolsTerms.MINIMUMEXPOSURE, minExpTF_.getText());
       settings_.putString(PtcToolsTerms.MAXIMUMEXPOSURE, maxExpTF_.getText());
       settings_.putInteger(PtcToolsTerms.NREXPOSURES, (int) nrExpSp_.getValue());
       settings_.putInteger(PtcToolsTerms.NRFRAMES, (int) nrFramesSp_.getValue());
+      settings_.putDouble(PtcToolsTerms.SPACINGEXPONENT, (double) spacingExpSp_.getValue());
       settings_.putInteger(PtcToolsTerms.WINDOWX, this.getX());
       settings_.putInteger(PtcToolsTerms.WINDOWY, this.getY());
    }

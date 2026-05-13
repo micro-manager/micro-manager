@@ -35,7 +35,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class ConfiguratorWrapper {
    private final ProcessorPlugin plugin_;
    private final ProcessorConfigurator configurator_;
-   private final String name_;
+   private String name_;
    private boolean isEnabled_;
    private boolean isEnabledInLive_;
 
@@ -58,6 +58,10 @@ public final class ConfiguratorWrapper {
 
    public String getName() {
       return name_;
+   }
+
+   public void setName(String name) {
+      name_ = name;
    }
 
    public boolean isEnabled() {
@@ -108,6 +112,9 @@ public final class ConfiguratorWrapper {
          } catch (IOException ex) {
             throw new RuntimeException("Failed to parse pipeline config pmap JSON", ex);
          }
+         String name = json.getString("name");
+         settings = settings.copyBuilder()
+               .putString("ProcessorName", name).build();
          ProcessorConfigurator configurator = plugin.createConfigurator(settings);
          ConfiguratorWrapper result = new ConfiguratorWrapper(plugin,
                configurator, json.getString("name"));

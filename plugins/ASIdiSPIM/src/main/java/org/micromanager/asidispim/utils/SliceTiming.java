@@ -77,21 +77,37 @@ public class SliceTiming {
    public boolean equals(Object obj) {
       if ((obj instanceof SliceTiming)) {
          SliceTiming s = (SliceTiming) obj;
-         return(scanDelay == s.scanDelay
+         return(Float.floatToIntBits(scanDelay) == Float.floatToIntBits(s.scanDelay)
                && scanNum == s.scanNum
-               && scanPeriod == s.scanPeriod
-               && laserDelay == s.laserDelay
-               && laserDuration == s.laserDuration
-               && cameraDelay == s.cameraDelay
-               && cameraDuration == s.cameraDuration
-               && cameraExposure == s.cameraExposure
-               && sliceDuration == s.sliceDuration
-               && valid == s.valid); 
+               && Float.floatToIntBits(scanPeriod) == Float.floatToIntBits(s.scanPeriod)
+               && Float.floatToIntBits(laserDelay) == Float.floatToIntBits(s.laserDelay)
+               && Float.floatToIntBits(laserDuration) == Float.floatToIntBits(s.laserDuration)
+               && Float.floatToIntBits(cameraDelay) == Float.floatToIntBits(s.cameraDelay)
+               && Float.floatToIntBits(cameraDuration) == Float.floatToIntBits(s.cameraDuration)
+               && Float.floatToIntBits(cameraExposure) == Float.floatToIntBits(s.cameraExposure)
+               && Float.floatToIntBits(sliceDuration) == Float.floatToIntBits(s.sliceDuration)
+               && valid == s.valid);
       } else {
          return false;
       }
-      
-      
+
+
+   }
+
+   @Override
+   public int hashCode() {
+      int result = 17;
+      result = 31 * result + Float.floatToIntBits(scanDelay);
+      result = 31 * result + scanNum;
+      result = 31 * result + Float.floatToIntBits(scanPeriod);
+      result = 31 * result + Float.floatToIntBits(laserDelay);
+      result = 31 * result + Float.floatToIntBits(laserDuration);
+      result = 31 * result + Float.floatToIntBits(cameraDelay);
+      result = 31 * result + Float.floatToIntBits(cameraDuration);
+      result = 31 * result + Float.floatToIntBits(cameraExposure);
+      result = 31 * result + Float.floatToIntBits(sliceDuration);
+      result = 31 * result + (valid ? 1 : 0);
+      return result;
    }
 
 }

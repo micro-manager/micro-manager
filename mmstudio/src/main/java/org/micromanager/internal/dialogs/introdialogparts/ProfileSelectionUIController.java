@@ -135,6 +135,7 @@ public final class ProfileSelectionUIController
       return ret;
    }
 
+   @SuppressWarnings("unchecked")
    private ProfileSelectionUIController(Application app, UserProfileAdmin admin) {
       app_ = app;
       admin_ = admin;

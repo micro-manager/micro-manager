@@ -85,9 +85,12 @@ import javax.swing.table.TableColumn;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.AcquisitionSettingsChangedEvent;
 import org.micromanager.acquisition.ChannelSpec;
+import org.micromanager.acquisition.ScopeDataUtils;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
@@ -119,6 +122,7 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertySelectionDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 import org.micromanager.internal.utils.WindowPositioning;
@@ -947,6 +951,77 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                mmStudio_.logs().showMessage(
                         "Settings not found or incompatible with current microscope");
             }
+            PropertyMap oldSystemState = summary.getInitialScopeData();
+            if (oldSystemState == null || oldSystemState.isEmpty()) {
+               try {
+                  oldSystemState = dv.getDataProvider().getAnyImage().getMetadata().getScopeData();
+               } catch (IOException ex) {
+                  mmStudio_.logs().logError(ex, "No image scope data found");
+               }
+            }
+            if (oldSystemState != null && !oldSystemState.isEmpty()) {
+               ScopeDataUtils utils = mmStudio_.acquisitions().scopeData();
+               ScopeDataUtils.ValidationResult validationResult =
+                        utils.validateScopeData(mmStudio_.core(), oldSystemState);
+               if (validationResult.hasAnyValid()) {
+                  PropertyMap propsToBeChanged = PropertySelectionDialog.showDialog(
+                           this,
+                           "Select properties to restore",
+                           mmStudio_,
+                           utils.filterChangedProperties(mmStudio_.core(),
+                                    oldSystemState));
+                  if (propsToBeChanged != null) {
+                     ScopeDataUtils.ApplyResult applyResult = utils.applyScopeData(
+                              propsToBeChanged);
+                     // Some devices require properties to be set in a specific order.
+                     // Retry with only the failed properties; each pass may unblock others.
+                     final int maxRetries = 3;
+                     for (int retry = 0; retry < maxRetries
+                              && !applyResult.isSuccess()
+                              && applyResult.isPartialSuccess(); retry++) {
+                        PropertyMap.Builder retryBuilder = PropertyMaps.builder();
+                        for (ScopeDataUtils.PropertyError err : applyResult.getErrors()) {
+                           retryBuilder.putString(err.getKey(), err.getValue());
+                        }
+                        ScopeDataUtils.ApplyResult retryResult =
+                                 utils.applyScopeData(retryBuilder.build());
+                        // Stop if no progress was made in this pass
+                        if (retryResult.getErrors().size() >= applyResult.getErrors().size()) {
+                           applyResult = retryResult;
+                           break;
+                        }
+                        applyResult = retryResult;
+                     }
+                     if (!applyResult.isSuccess()) {
+                        StringBuilder msg = new StringBuilder(
+                                 "Some settings could not be restored:\n");
+                        final int maxErrorsToShow = 10;
+                        int errorIndex = 0;
+                        for (ScopeDataUtils.PropertyError propertyError
+                                 : applyResult.getErrors()) {
+                           errorIndex++;
+                           if (errorIndex <= maxErrorsToShow) {
+                              msg.append(errorIndex)
+                                    .append(". ")
+                                    .append(propertyError.getErrorMessage())
+                                    .append("\n");
+                           }
+                        }
+                        if (errorIndex > maxErrorsToShow) {
+                           msg.append("... and ")
+                                 .append(errorIndex - maxErrorsToShow)
+                                 .append(" more error(s) not shown.\n");
+                        }
+                        mmStudio_.logs().showMessage(msg.toString());
+                     }
+                  }
+               } else {
+                  mmStudio_.logs().logMessage(
+                        "The system state stored with this dataset "
+                        + "is not compatible with the current microscope configuration. "
+                        + "Settings cannot be restored.");
+               }
+            }
          }
       });
       result.add(reUseButton_, BUTTON_SIZE);
@@ -1025,16 +1100,18 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          return false;
       }
       // check if we have a group with the same name as the channelgroup
-      boolean groupFound = false;
-      StrVector groups = mmStudio_.core().getAvailableConfigGroups();
-      for (String group : groups) {
-         if (sequenceSettings.channelGroup().equals(group)) {
-            groupFound = true;
-            break;
+      if (sequenceSettings.useChannels() && !sequenceSettings.channelGroup().isEmpty()) {
+         boolean groupFound = false;
+         StrVector groups = mmStudio_.core().getAvailableConfigGroups();
+         for (String group : groups) {
+            if (sequenceSettings.channelGroup().equals(group)) {
+               groupFound = true;
+               break;
+            }
          }
-      }
-      if (!groupFound) {
-         return false;
+         if (!groupFound) {
+            return false;
+         }
       }
       // check that we have all channels
       for (ChannelSpec channel : sequenceSettings.channels()) {
@@ -1544,17 +1621,20 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             zDriveCombo_.removeActionListener(al);
          }
          zDriveCombo_.removeAllItems();
+         zDriveCombo_.addItem("");
          for (int i = 0; i < zDrives.size(); i++) {
             zDriveCombo_.addItem(zDrives.get(i));
          }
-         zDriveCombo_.setSelectedItem(mmStudio_.core().getFocusDevice());
+         String focusDevice = mmStudio_.core().getFocusDevice();
+         boolean hasFocus = focusDevice != null && !focusDevice.isEmpty();
+         zDriveCombo_.setSelectedItem(hasFocus ? focusDevice : "");
          try {
             zDriveCombo_.setVisible(true);
             double pixelSize = mmStudio_.core().getPixelSizeUm();
             if (pixelSize != 0.0) {
                proposedZStepLabel_.setText(getOptimalZStep(true));
             }
-            if (!mmStudio_.core().getFocusDevice().isEmpty()) {
+            if (hasFocus) {
                zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
                         mmStudio_.core().getPosition()));
             }
@@ -1608,9 +1688,23 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onPropertyChangedEvent(PropertyChangedEvent pce) {
       if ("Core".equals(pce.getDevice()) && ("Focus".equals(pce.getProperty()))) {
+         String focusDevice = pce.getValue();
+         ActionListener[] actionListeners = zDriveCombo_.getActionListeners();
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.removeActionListener(al);
+         }
+         zDriveCombo_.setSelectedItem(focusDevice == null
+                  || focusDevice.isEmpty() ? "" : focusDevice);
+         for (ActionListener al : actionListeners) {
+            zDriveCombo_.addActionListener(al);
+         }
          try {
-            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
-                     mmStudio_.core().getPosition()));
+            if (focusDevice != null && !focusDevice.isEmpty()) {
+               zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(
+                        mmStudio_.core().getPosition()));
+            } else {
+               zDrivePositionLabel_.setText("");
+            }
          } catch (Exception e) {
             mmStudio_.logs().logError(e, "Failed to get Z drive position from core.");
          }
@@ -1708,13 +1802,17 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (newZDrive != null && !newZDrive.equals(mmStudio_.core().getFocusDevice())) {
          try {
             mmStudio_.core().setFocusDevice(newZDrive);
-            double position = mmStudio_.core().getPosition();
-            zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(position));
-            if (ABSOLUTE_Z.equals(zValCombo_.getSelectedItem())) {
-               // New Z drive: to avoid danger, set start and end to the current position
-               zStart_.setValue(position);
-               zEnd_.setValue(position);
-            } // if relative Z, it should be safe and logical to keep it where it is.
+            if (newZDrive.isEmpty()) {
+               zDrivePositionLabel_.setText("");
+            } else {
+               double position = mmStudio_.core().getPosition();
+               zDrivePositionLabel_.setText(NumberUtils.doubleToDisplayString(position));
+               if (ABSOLUTE_Z.equals(zValCombo_.getSelectedItem())) {
+                  // New Z drive: to avoid danger, set start and end to the current position
+                  zStart_.setValue(position);
+                  zEnd_.setValue(position);
+               } // if relative Z, it should be safe and logical to keep it where it is.
+            }
          } catch (Exception e) {
             mmStudio_.logs().logError(e, "Failed to set focus device");
          }
@@ -1831,7 +1929,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                + "Available memory (approximate estimate: " + availableMemoryMB
                + " MB) may not be sufficient. "
                + "Once memory is full, the acquisition may slow down or fail.</p>"
-               + "<p width='400'>See <a style=\"" + style
+               + "<p width='400'>Check \"Save Images\", or see <a style=\"" + style
                +
                "\" href=https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Memory_Settings> "
                + " the configuration guide</a> for ways to make more memory available.</p>"
@@ -2024,7 +2122,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.relativeZSlice(zRelativeAbsolute_ == 0);  // 0 == relative, 1 == absolute
          try {
             // the default Z stage that will be used in the MDA should be set at this point
-            ssb.zReference(mmStudio_.core().getPosition());
+            if (mmStudio_.core().getFocusDevice() != null
+                  && !mmStudio_.core().getFocusDevice().isEmpty()) {
+               ssb.zReference(mmStudio_.core().getPosition());
+            } else {
+               ssb.zReference(0.0);
+            }
          } catch (Exception ex) {
             mmStudio_.logs().logError(ex, "Failed to get Z Position from Core.");
             // continue, zReference will be set to 0

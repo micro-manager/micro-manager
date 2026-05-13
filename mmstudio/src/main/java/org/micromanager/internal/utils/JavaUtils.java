@@ -35,7 +35,7 @@ public final class JavaUtils {
     * @throws IllegalArgumentException  if arguments were incorrect
     * @throws InvocationTargetException can happen
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName)
+   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
          InvocationTargetException {
       return invokeRestrictedMethod(obj, theClass, methodName, (Object) null);
@@ -55,6 +55,7 @@ public final class JavaUtils {
     * @throws java.lang.IllegalAccessException     if we still failed to call this method
     * @throws java.lang.reflect.InvocationTargetException  if the method throws an exception
     */
+   @SuppressWarnings({"rawtypes", "unchecked"})
    public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName,
                                                Object... paramsAndTypes)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
@@ -83,6 +84,7 @@ public final class JavaUtils {
     * Invoked a method of a private or protected field.
     * Pass a null first argument for static methods.
     */
+   @SuppressWarnings("rawtypes")
    public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName,
                                                Object[] params, Class[] paramTypes)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
@@ -105,7 +107,7 @@ public final class JavaUtils {
     * Returns a value of a private or protected field. Method of last resort!
     * Pass a null first argument for static fields.
     */
-   public static Object getRestrictedFieldValue(Object obj, Class theClass, String fieldName)
+   public static Object getRestrictedFieldValue(Object obj, Class<?> theClass, String fieldName)
          throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
@@ -122,7 +124,7 @@ public final class JavaUtils {
     * last resort!
     * Pass a null first argument for static fields.
     */
-   public static void setRestrictedFieldValue(Object obj, Class theClass, String fieldName,
+   public static void setRestrictedFieldValue(Object obj, Class<?> theClass, String fieldName,
                                               Object value) throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);

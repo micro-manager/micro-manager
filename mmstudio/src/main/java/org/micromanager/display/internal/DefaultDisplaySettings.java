@@ -28,6 +28,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -37,6 +38,7 @@ import org.micromanager.UserProfile;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
+import org.micromanager.display.DisplayIntensityRanges;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MDUtils;
@@ -193,6 +195,23 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             channelSettings_.add(channelSetting);
          }
          return this;
+      }
+
+      @Override
+      public Builder intensityScaling(DisplayIntensityRanges ranges) {
+         int nChannels = ranges.getNumberOfChannels();
+         if (nChannels == 0) {
+            return this;
+         }
+         Builder ret = this;
+         ret = ret.channel(nChannels - 1);
+         for (int ch = 0; ch < nChannels; ++ch) {
+            ret = ret.channel(ch,
+                  channelSettings_.get(ch).copyBuilder()
+                        .intensityScaling(ranges.getChannelRanges(ch))
+                        .build());
+         }
+         return ret;
       }
 
       @Override
@@ -412,6 +431,38 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return ddsb;
    }
 
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) {
+         return true;
+      }
+      if (!(obj instanceof DefaultDisplaySettings)) {
+         return false;
+      }
+      DefaultDisplaySettings o = (DefaultDisplaySettings) obj;
+      return Double.compare(zoom_, o.zoom_) == 0
+            && Double.compare(fps_, o.fps_) == 0
+            && mode_ == o.mode_
+            && uniformChannelScaling_ == o.uniformChannelScaling_
+            && autostretch_ == o.autostretch_
+            && useROI_ == o.useROI_
+            && Double.compare(extremaQuantile_, o.extremaQuantile_) == 0
+            && histogramLogarithmic_ == o.histogramLogarithmic_
+            && ignoreZeros_ == o.ignoreZeros_
+            && channelSettings_.equals(o.channelSettings_);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = Double.hashCode(zoom_);
+      result = 31 * result + Double.hashCode(fps_);
+      result = 31 * result + (mode_ != null ? mode_.hashCode() : 0);
+      result = 31 * result + Boolean.hashCode(autostretch_);
+      result = 31 * result + Double.hashCode(extremaQuantile_);
+      result = 31 * result + channelSettings_.hashCode();
+      return result;
+   }
 
    /**
     * Store displaySettings in a propertyMap.
@@ -846,7 +897,16 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             return false;
          }
          // All arrays have same contents or are both null.
-         return (isVisible_ != alt.isVisible());
+         return Objects.equals(isVisible_, alt.isVisible());
+      }
+
+      @Override
+      public int hashCode() {
+         int result = java.util.Arrays.deepHashCode(contrastMins_);
+         result = 31 * result + java.util.Arrays.deepHashCode(contrastMaxes_);
+         result = 31 * result + java.util.Arrays.deepHashCode(gammas_);
+         result = 31 * result + Integer.hashCode(isVisible_ == null ? 2 : isVisible_ ? 1 : 0);
+         return result;
       }
 
       @Override

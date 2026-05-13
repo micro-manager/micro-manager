@@ -76,7 +76,7 @@ public class MMRegistry {
          String group = it.next();
          String[] values =
                mmPresetGroupsRegistry_.getMMPresetGroups().get(group).getPresets().toArray();
-         ArrayList<MMProperty> affectedmmprops =
+         ArrayList<MMProperty<?>> affectedmmprops =
                mmPresetGroupsRegistry_.getMMPresetGroups().get(group).getAffectedProperties();
 
          dev.registerProperty(

@@ -257,9 +257,11 @@ public final class PipelineFrame extends JFrame
             @Override
             public void actionPerformed(ActionEvent e) {
                String path = nameToPath.get(name);
+               PropertyMap settingsWithName = blankSettings.copyBuilder()
+                     .putString("ProcessorName", name).build();
                getTableModel().addConfigurator(
                      new ConfiguratorWrapper(plugins.get(path),
-                           plugins.get(path).createConfigurator(blankSettings),
+                           plugins.get(path).createConfigurator(settingsWithName),
                            name));
             }
          };
@@ -291,8 +293,9 @@ public final class PipelineFrame extends JFrame
     */
    public void addAndConfigureProcessor(ProcessorPlugin plugin) {
       // Create it with a blank set of settings.
-      ProcessorConfigurator configurator = plugin.createConfigurator(
-            PropertyMaps.builder().build());
+      PropertyMap settings = PropertyMaps.builder()
+            .putString("ProcessorName", plugin.getName()).build();
+      ProcessorConfigurator configurator = plugin.createConfigurator(settings);
       getTableModel().addConfigurator(new ConfiguratorWrapper(plugin,
             configurator, plugin.getName()));
       setVisible(true);
@@ -305,6 +308,7 @@ public final class PipelineFrame extends JFrame
     */
    public void addConfiguredProcessor(ProcessorConfigurator config,
                                       ProcessorPlugin plugin) {
+      // Note: config was already created externally; processor name may not be in its settings.
       getTableModel().addConfigurator(new ConfiguratorWrapper(plugin,
             config, plugin.getName()));
       setVisible(true);

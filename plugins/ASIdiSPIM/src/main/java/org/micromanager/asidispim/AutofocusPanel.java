@@ -122,13 +122,13 @@ public class AutofocusPanel extends ListeningJPanel{
       // scan either piezo or sheet; select which one
       optionsPanel.add(new JLabel("Mode:"));
       String[] scanOptions = getModeStrings();
-      final JComboBox scanModeCB = pu.makeDropDownBox(scanOptions,
+      final JComboBox<String> scanModeCB = pu.makeDropDownBox(scanOptions,
             Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE,
             scanOptions[0]);
       optionsPanel.add(scanModeCB, "wrap");
       
       optionsPanel.add(new JLabel("Scoring algorithm:"));
-      final JComboBox scoringAlgorithmCB = new JComboBox();
+      final JComboBox<String> scoringAlgorithmCB = new JComboBox<>();
       for (String scoringAlgorithm : Fitter.getAlgorithms()) {
          scoringAlgorithmCB.addItem(scoringAlgorithm);
       }
@@ -169,7 +169,7 @@ public class AutofocusPanel extends ListeningJPanel{
       optionsPanel.add(scoringAlgorithmCB, "wrap");
       
       optionsPanel.add(new JLabel("Fit using:"));
-      final JComboBox fitFunctionSelection = new JComboBox();
+      final JComboBox<String> fitFunctionSelection = new JComboBox<>();
       for (String fitFunction : Fitter.getFunctionTypes()) {
          fitFunctionSelection.addItem(fitFunction);
       }
@@ -217,7 +217,7 @@ public class AutofocusPanel extends ListeningJPanel{
       String channelGroup_  = props_.getPropValueString(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
       StrVector channels = gui.core().getAvailableConfigs(channelGroup_);
-      final JComboBox channelSelect = pu.makeDropDownBox(channels.toArray(), 
+      final JComboBox<String> channelSelect = pu.makeDropDownBox(channels.toArray(),
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL, "");
       // make sure to explicitly set it to something so pref gets written
       channelSelect.setSelectedIndex(channelSelect.getSelectedIndex());
@@ -280,7 +280,7 @@ public class AutofocusPanel extends ListeningJPanel{
       
        // correct movement using this channel                  
       // TODO: need to update combobox when the channel group changes       
-      final JComboBox channelSelectCM = pu.makeDropDownBox(channels.toArray(), 
+      final JComboBox<String> channelSelectCM = pu.makeDropDownBox(channels.toArray(),
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL, "");
       // make sure to explicitly set it to something so pref gets written   
       channelSelectCM.setSelectedIndex(channelSelectCM.getSelectedIndex()); 

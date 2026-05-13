@@ -151,7 +151,7 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
       add(lrRadio_);
       add(tbRadio_, "wrap");
 
-      final JComboBox splitSelector = new JComboBox(SPLIT_OPTIONS);
+      final JComboBox<String> splitSelector = new JComboBox<>(SPLIT_OPTIONS);
       splitSelector.setSelectedIndex(numSplits_ - 2);
       splitSelector.addActionListener(new ActionListener() {
          @Override

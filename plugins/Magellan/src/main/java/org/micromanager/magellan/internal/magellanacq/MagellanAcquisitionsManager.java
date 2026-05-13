@@ -54,7 +54,7 @@ public class MagellanAcquisitionsManager {
    private volatile XYTiledAcquisition currentAcq_;
    private volatile int currentAcqIndex_;
    private ExecutorService acqManageExecuterService_;
-   ArrayList<Future> acqFutures_;
+   ArrayList<Future<?>> acqFutures_;
    private ExploreAcquisition exploreAcq_;
    private final Studio studio_;
 
@@ -140,7 +140,7 @@ public class MagellanAcquisitionsManager {
          return;
       }
       //stop future acquisitions
-      for (Future f : acqFutures_) {
+      for (Future<?> f : acqFutures_) {
          f.cancel(true);
       }
       //mark them as aborted
@@ -244,7 +244,7 @@ public class MagellanAcquisitionsManager {
 
       //submit acquisitions
       acqManageExecuterService_.submit(() -> {
-         acqFutures_ = new ArrayList<Future>();
+         acqFutures_ = new ArrayList<>();
          for (int acqIndex = 0; acqIndex < acqSettingsList_.size(); acqIndex++) {
             final int index = acqIndex;
             MagellanGUIAcquisitionSettings acqSettings = acqSettingsList_.get(index);

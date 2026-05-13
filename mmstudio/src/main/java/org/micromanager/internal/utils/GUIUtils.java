@@ -520,7 +520,7 @@ public final class GUIUtils {
       enableOnTableEvent(table, button);
    }
 
-   @SuppressWarnings("unchecked")
+   @SuppressWarnings({"unchecked", "rawtypes"})
    public static void makeIntoCloneRowButton(final JTable table, JButton button) {
       button.addActionListener(e -> {
          int rowIndex = table.getSelectedRow();

@@ -362,6 +362,7 @@ public abstract class ConfigurablePanel extends JPanel {
     * @throws UnknownInternalPropertyException       Thrown if propertyName does not correspond
     *     to a known InternalProperty.
     */
+   @SuppressWarnings("unchecked")
    protected void setInternalPropertyValue(String propertyName, int newValue)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
       if (propertyName == null) {
@@ -394,6 +395,7 @@ public abstract class ConfigurablePanel extends JPanel {
     * @throws UnknownInternalPropertyException        Thrown if propertyName does not
     *     correspond to a known InternalProperty.
     */
+   @SuppressWarnings("unchecked")
    protected void setInternalPropertyValue(String propertyName, boolean newValue)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
       if (propertyName == null) {
@@ -426,6 +428,7 @@ public abstract class ConfigurablePanel extends JPanel {
     * @throws UnknownInternalPropertyException       Thrown if propertyName does not
     *     correspond to a known InternalProperty.
     */
+   @SuppressWarnings("unchecked")
    protected void setInternalPropertyValue(String propertyName, double newValue)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
       if (propertyName == null) {

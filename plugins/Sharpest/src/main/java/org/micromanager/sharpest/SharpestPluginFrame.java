@@ -21,6 +21,7 @@
 
 package org.micromanager.sharpest;
 
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.List;
@@ -63,6 +64,8 @@ public class SharpestPluginFrame extends JDialog {
       final SharpestPluginFrame cpFrame = this;
       
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       
       ourWindow_ = window;
       DataProvider ourProvider = ourWindow_.getDataProvider();

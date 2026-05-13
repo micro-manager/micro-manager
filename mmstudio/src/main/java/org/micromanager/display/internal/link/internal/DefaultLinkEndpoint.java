@@ -42,15 +42,16 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
          new EventBus(EventBusExceptionLogger.getInstance());
 
 
-   static LinkEndpoint create(LinkAnchor anchor) {
+   static LinkEndpoint create(LinkAnchor<?> anchor) {
       return new DefaultLinkEndpoint(anchor);
    }
 
-   private DefaultLinkEndpoint(LinkAnchor anchor) {
+   private DefaultLinkEndpoint(LinkAnchor<?> anchor) {
       anchor_ = anchor;
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public LinkAnchor<?> getAnchor() {
       return anchor_;
    }
@@ -66,11 +67,13 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public boolean receivePropagatedValue(Object value) {
       return ((LinkAnchor<Object>) anchor_).receivePropagatedValue(value);
    }
 
    @Override
+   @SuppressWarnings({"rawtypes", "unchecked"})
    public synchronized void propagateValue(Object value) {
       if (linkage_ == null) {
          return;
@@ -99,7 +102,7 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
       Preconditions.checkArgument(
             peer.getLinkageGroup().equals(getLinkageGroup()));
       Preconditions.checkState(linkageFactory_ != null);
-      linkageFactory_.linkToPeer((LinkEndpoint) peer, this);
+      linkageFactory_.linkToPeer(peer, this);
    }
 
    @Override
@@ -162,6 +165,7 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
    }
 
    @Subscribe
+   @SuppressWarnings({"rawtypes", "unchecked"})
    public synchronized void onEvent(LinkablePeerDidBecomeAvailableEvent e) {
       Preconditions.checkState(pool_ != null);
       if (e.getPeer() == this) {
@@ -173,6 +177,7 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
    }
 
    @Subscribe
+   @SuppressWarnings({"rawtypes", "unchecked"})
    public synchronized void onEvent(LinkablePeerWillBecomeUnavailableEvent e) {
       Preconditions.checkState(pool_ != null);
       if (e.getPeer() == this) {
@@ -199,12 +204,14 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
    //
 
    @Override
+   @SuppressWarnings({"rawtypes", "unchecked"})
    public synchronized void linkageDidAdmitEndpoint(Linkage linkage) {
       linkage_ = linkage;
       bus_.post(new DefaultAnchorDidMakeLinkEvent(anchor_));
    }
 
    @Override
+   @SuppressWarnings({"rawtypes", "unchecked"})
    public synchronized void linkageWillExpelEndpoint(Linkage linkage) {
       Preconditions.checkState(linkage_ == linkage);
       bus_.post(new DefaultAnchorWillBreakLinkEvent(anchor_));
@@ -228,6 +235,7 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
    }
 
    @Subscribe
+   @SuppressWarnings({"rawtypes", "unchecked"})
    public synchronized void onPropagated(LinkageValuePropagatedEvent e) {
       if (e.getSource() == this) {
          return;

@@ -301,7 +301,13 @@ public class TestAcqAdapter extends DataViewerListener implements
          }
 
          // These hooks make sure that continuousfocus is off when running a Z stack.
-         if (studio_.core().isContinuousFocusEnabled()) {
+         // Only add them when there will actually be Z motion (a Z stack or channels with
+         // Z offsets), otherwise continuous focus is unnecessarily disabled for every
+         // single-frame acquisition such as those used by the Explorer plugin.
+         boolean hasZOffsets = sequenceSettings.useChannels()
+                 && sequenceSettings.channels().stream().anyMatch(c -> c.zOffset() != 0);
+         if (studio_.core().isContinuousFocusEnabled()
+                 && (sequenceSettings.useSlices() || hasZOffsets)) {
             currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
                     AcquisitionAPI.BEFORE_HARDWARE_HOOK);
             currentAcquisition_.addHook(continuousFocusHookAfter(acquisitionSettings),

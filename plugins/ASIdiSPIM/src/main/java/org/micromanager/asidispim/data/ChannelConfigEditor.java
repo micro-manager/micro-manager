@@ -39,15 +39,15 @@ import mmcorej.StrVector;
  */
 @SuppressWarnings("serial")
 public class ChannelConfigEditor extends AbstractCellEditor implements TableCellEditor {
-   private final JComboBox channelGroup_;  // this is the combo box selecting 
+   private final JComboBox<String> channelGroup_;  // this is the combo box selecting 
             //the group, NOT the combo box selecting which preset of the group
-   private final JComboBox channelPreset_;  // this is the combo box used by the table 
+   private final JComboBox<String> channelPreset_;  // this is the combo box used by the table 
             // to select the appropriate preset
    private final CMMCore core_;
    
-   public ChannelConfigEditor(JComboBox cb, CMMCore core) {
+   public ChannelConfigEditor(JComboBox<String> cb, CMMCore core) {
       channelGroup_ = cb;
-      channelPreset_ = new JComboBox();
+      channelPreset_ = new JComboBox<String>();
       channelPreset_.addActionListener(new ConfigActionListener());
       core_ = core;
   }

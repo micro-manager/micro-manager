@@ -1033,7 +1033,7 @@ public enum PropertyKey {
    PIXEL_TYPE("PixelType", Image.class) {
       @Override
       public String getDescription() {
-         return "The pixel format of the image (GRAY8, GRAY16, or RGB32)";
+         return "The pixel format of the image (GRAY8, GRAY16, GRAY32, or RGB32)";
       }
 
       @Override
@@ -1597,6 +1597,34 @@ public enum PropertyKey {
       public JsonElement convertToGson(PropertyMap pmap) {
          return PropertyMapJSONSerializer
                .toGson(pmap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
+      }
+   },
+
+   INITIAL_SCOPE_DATA("InitialScopeData", SummaryMetadata.class) {
+      @Override
+      public String getDescription() {
+         return "Device properties at the start of the acquisition";
+      }
+
+      @Override
+      public void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         try {
+            dest.putPropertyMap(key(), PropertyMapJSONSerializer.fromGson(je));
+         } catch (Exception e) {
+            dest.putPropertyMap(key(), MM1JSONSerializer.fromGson(je));
+         }
+      }
+
+      @Override
+      public JsonElement convertToGson(PropertyMap pmap) {
+         if (!pmap.containsKey(key())) {
+            return null;
+         }
+         PropertyMap scopeData = pmap.getPropertyMap(key(), null);
+         if (scopeData == null || scopeData.isEmpty()) {
+            return null;
+         }
+         return PropertyMapJSONSerializer.toGson(scopeData);
       }
    },
 

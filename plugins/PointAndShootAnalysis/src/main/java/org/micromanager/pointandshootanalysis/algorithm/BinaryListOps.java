@@ -65,6 +65,7 @@ public class BinaryListOps {
       return output;
    }
    
+   @SafeVarargs
    public static <E> Set<E> combineSets(Set<E>... input) {
       Set<E> output = new HashSet<>();
       for (Set<E> mySet : input) {

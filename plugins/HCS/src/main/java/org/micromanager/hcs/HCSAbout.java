@@ -2,6 +2,7 @@ package org.micromanager.hcs;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Toolkit;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -21,6 +22,10 @@ public class HCSAbout extends JDialog {
     * @param parent The HCS plugin GUI.
     */
    public HCSAbout(SiteGenerator parent) {
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       super.setModal(true);
       super.setTitle("About HCS Site Generator " + HCSPlugin.VERSION_INFO);
       super.setBounds(200, 200, 462, 273);

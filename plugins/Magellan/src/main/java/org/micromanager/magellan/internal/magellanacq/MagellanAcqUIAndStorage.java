@@ -20,11 +20,14 @@
 
 package org.micromanager.magellan.internal.magellanacq;
 
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,6 +35,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngJDataSink;
@@ -42,6 +46,7 @@ import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.magellan.internal.explore.ChannelGroupSettings;
 import org.micromanager.magellan.internal.explore.ExploreAcquisition;
 import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
+import org.micromanager.magellan.internal.export.ExportModeController;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
 import org.micromanager.magellan.internal.gui.SurfaceGridPanel;
@@ -58,6 +63,7 @@ import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.remote.PycroManagerCompatibleUI;
+import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 
 /**
  * This class links data storage, viewer, and acquisition, acting as
@@ -89,6 +95,7 @@ public class MagellanAcqUIAndStorage
    protected ExploreControlsPanel exploreControlsPanel_;
    private Consumer<String> logger_;
    private ChannelGroupSettings exploreChannels_;
+   private ExportModeController exportModeController_;
 
    private MagellanOverlayer overlayer_;
    private SurfaceGridPanel surfaceGridControls_;
@@ -179,7 +186,7 @@ public class MagellanAcqUIAndStorage
    public Object putImage(final TaggedImage taggedImg) {
       try {
          HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
-         final Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
+         final Future<?> added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
                  AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
                  AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
 
@@ -253,9 +260,75 @@ public class MagellanAcqUIAndStorage
             exploreControlsPanel_ = new ExploreControlsPanel((ExploreAcquisition) acq_,
                     overlayer_, useZ_, exploreChannels_, acq_.getZAxes());
             display_.addControlPanel(exploreControlsPanel_);
+
+            exportModeController_ = new ExportModeController(display_, overlayer_, mouseListener_,
+                    new NDTiffProviderAdapter(storage_),
+                    () -> {
+                       HashMap<String, Object> baseAxes = new HashMap<>();
+                       if (acq_ instanceof ExploreAcquisition) {
+                          for (String zName : ((ExploreAcquisition) acq_).getZAxes().keySet()) {
+                             baseAxes.put(zName, display_.getAxisPosition(zName));
+                          }
+                       }
+                       return baseAxes;
+                    },
+                    () -> {
+                       List<String> channels = new java.util.ArrayList<>();
+                       for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+                          if (axes.containsKey(MagellanMD.CHANNEL_AXIS)) {
+                             String ch = (String) axes.get(MagellanMD.CHANNEL_AXIS);
+                             if (!channels.contains(ch)) {
+                                channels.add(ch);
+                             }
+                          }
+                       }
+                       return channels;
+                    });
+            exportModeController_.installControlsPanel();
+         } else if (loadedData_) {
+            exportModeController_ = new ExportModeController(display_, overlayer_, mouseListener_,
+                    new NDTiffProviderAdapter(storage_),
+                    () -> {
+                       // For loaded data, supply the current display position for every
+                       // non-row/col axis so the exporter reads the right Z/time/position.
+                       HashMap<String, Object> baseAxes = new HashMap<>();
+                       for (HashMap<String, Object> stored : storage_.getAxesSet()) {
+                          for (String axis : stored.keySet()) {
+                             if (axis.equals(NDTiffStorage.ROW_AXIS)
+                                     || axis.equals(NDTiffStorage.COL_AXIS)
+                                     || axis.equals(MagellanMD.CHANNEL_AXIS)) {
+                                continue;
+                             }
+                             baseAxes.put(axis, display_.getAxisPosition(axis));
+                          }
+                          break; // one entry is enough to learn which axes exist
+                       }
+                       return baseAxes;
+                    },
+                    () -> {
+                       List<String> channels = new java.util.ArrayList<>();
+                       for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+                          if (axes.containsKey(MagellanMD.CHANNEL_AXIS)) {
+                             String ch = (String) axes.get(MagellanMD.CHANNEL_AXIS);
+                             if (!channels.contains(ch)) {
+                                channels.add(ch);
+                             }
+                          }
+                       }
+                       return channels;
+                    });
+            exportModeController_.installControlsPanel();
          }
 
          display_.setCustomCanvasMouseListener(mouseListener_);
+
+         SwingUtilities.invokeLater(() -> {
+            Window w = SwingUtilities.getWindowAncestor(display_.getCanvasJPanel());
+            if (w != null) {
+               w.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                       getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            }
+         });
 
          display_.addSetImageHook(new Consumer<HashMap<String, Object>>() {
             @Override
@@ -450,6 +523,5 @@ public class MagellanAcqUIAndStorage
    public void surfaceInterpolationUpdated(SurfaceInterpolator s) {
       update();
    }
-
 
 }

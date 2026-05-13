@@ -51,7 +51,7 @@ echo "using 'xcrun notarytool log')"
 # Note that notarytool seems to exit normally even if notarization fails;
 # the stapling step below will fail in that case.
 xcrun notarytool submit "$dmg_name" --wait \
-   --timeout 10m \
+   --timeout 15m \
    --apple-id "$MM_NOTARIZE_APPLE_ID" \
    --password "$MM_NOTARIZE_PASSWORD" \
    --team-id "$MM_NOTARIZE_TEAM_ID"

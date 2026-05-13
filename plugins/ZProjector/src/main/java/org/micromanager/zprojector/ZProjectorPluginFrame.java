@@ -22,6 +22,7 @@
 package org.micromanager.zprojector;
 
 import ij.plugin.ZProjector;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -67,6 +68,10 @@ public class ZProjectorPluginFrame extends JDialog {
     * @param window The DataViewer that we are working on
     */
    public ZProjectorPluginFrame(Studio studio, DisplayWindow window) {
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       settings_ = studio_.profile().getSettings(ZProjectorPlugin.class);
       final ZProjectorPluginFrame cpFrame = this;

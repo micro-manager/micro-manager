@@ -59,7 +59,7 @@ public class DataExporter {
     * @param msLimit
     * @return
     */
-   public FitData fit(int index, Type type, Class fitFunction, Integer msLimit) {
+   public FitData fit(int index, Type type, Class<?> fitFunction, Integer msLimit) {
       PASData d = data_.get(index);
       if (d == null) {
          return null; // TODO: throw error?
@@ -270,7 +270,7 @@ public class DataExporter {
       List<XYSeries> xySeries = new ArrayList<>(2 * indices.size());
       List<Integer> succesfullFits = new ArrayList<>();
       for (int index : indices) {
-         Class fitClass = SingleExpRecoveryFunc.class;
+         Class<?> fitClass = SingleExpRecoveryFunc.class;
          Integer msLimit = null;
          if (type_ == Type.PARTICLE_AND_BLEACH) {
             fitClass = LinearFunc.class;

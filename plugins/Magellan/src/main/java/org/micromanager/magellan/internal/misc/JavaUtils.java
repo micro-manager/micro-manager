@@ -145,7 +145,7 @@ public class JavaUtils {
    }
    
    // Borrowed from http://forums.sun.com/thread.jspa?threadID=300557
-   private static final Class<?>[] parameters = new Class[]{URL.class};
+   private static final Class<?>[] parameters = new Class<?>[]{URL.class};
 
    public static void addURL(URL u) throws IOException {
 
@@ -167,7 +167,7 @@ public class JavaUtils {
    /**
     * Call a private method without arguments.
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName)
+   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
          InvocationTargetException {
       return invokeRestrictedMethod(obj, theClass, methodName, (Object) null);
@@ -178,17 +178,17 @@ public class JavaUtils {
     * invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object param1,
     * Class paramType1, Object param2, Class paramType2, ...)
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName,
+   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName,
                                                Object... paramsAndTypes)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
          InvocationTargetException {
       Object[] params;
-      Class[] paramTypes;
+      Class<?>[] paramTypes;
       int l;
       if (paramsAndTypes != null) {
          l = paramsAndTypes.length;
          params = new Object[l / 2];
-         paramTypes = new Class[l / 2];
+         paramTypes = new Class<?>[l / 2];
       } else {
          l = 0;
          params = null;
@@ -197,7 +197,7 @@ public class JavaUtils {
 
       for (int i = 0; i < l / 2; ++i) {
          params[i] = paramsAndTypes[i * 2];
-         paramTypes[i] = (Class) paramsAndTypes[i * 2 + 1];
+         paramTypes[i] = (Class<?>) paramsAndTypes[i * 2 + 1];
       }
       return invokeRestrictedMethod(obj, theClass, methodName, params, paramTypes);
    }
@@ -207,7 +207,7 @@ public class JavaUtils {
     * Pass a null first argument for static methods.
     */
    public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName,
-                                               Object[] params, Class[] paramTypes)
+                                               Object[] params, Class<?>[] paramTypes)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
          InvocationTargetException {
       Method method = theClass.getDeclaredMethod(methodName, paramTypes);
@@ -228,7 +228,7 @@ public class JavaUtils {
     * Returns a value of a private or protected field. Method of last resort!
     * Pass a null first argument for static fields.
     */
-   public static Object getRestrictedFieldValue(Object obj, Class theClass, String fieldName)
+   public static Object getRestrictedFieldValue(Object obj, Class<?> theClass, String fieldName)
          throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
@@ -245,7 +245,7 @@ public class JavaUtils {
     * last resort!
     * Pass a null first argument for static fields.
     */
-   public static void setRestrictedFieldValue(Object obj, Class theClass, String fieldName,
+   public static void setRestrictedFieldValue(Object obj, Class<?> theClass, String fieldName,
                                               Object value) throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);

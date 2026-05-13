@@ -77,7 +77,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private static final String[] SHOWVALUES = {"Yes", "No"};
    private static final String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private static final String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
-
+   private static final String KEEP_SHUTTER_OPEN = "KeepShutterOpen";
    private final ImgSharpnessAnalysis fcsAnalysis_ = new ImgSharpnessAnalysis();
    private final BrentFocusOptimizer brentFocusOptimizer_;
    private final ZStackFocusOptimizer zStackFocusOptimizer_;
@@ -90,7 +90,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private boolean displayGraph_ = false;
    private double cropFactor_ = 1;
    private String optimizer_ = OPTIMIZERS[0];
-
+   private boolean keepShutterOpen_ = false;
 
    /**
     * Constructor for the OughtaFocus class. This is the most versatible autofocus plugin.
@@ -124,6 +124,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
               ImgSharpnessAnalysis.Method.getNames()
       );
       super.createProperty(CHANNEL, "");
+      super.createProperty(KEEP_SHUTTER_OPEN, SHOWVALUES[1], SHOWVALUES);
    }
 
    @Override
@@ -160,6 +161,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
                  ImgSharpnessAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
          displayImages_ = getPropertyValue(SHOW_IMAGES).contentEquals("Yes");
          displayGraph_ = getPropertyValue(SHOW_GRAPH).contentEquals("Yes");
+         keepShutterOpen_ = getPropertyValue(KEEP_SHUTTER_OPEN).contentEquals("Yes");
          // Only the zStack optimizer can display a graph
          zStackFocusOptimizer_.setDisplayGraph(displayGraph_);
          focusOptimizer_.setDisplayImages(displayImages_);
@@ -192,10 +194,18 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       }
       final double oldExposure = core.getExposure();
       core.setExposure(exposure_);
-
+      boolean oldAutoShutter = core.getAutoShutter(); // remember old state of autoShutter
+      boolean oldShutter = core.getShutterOpen(); // remember old state of Shutter
+      if (keepShutterOpen_) {
+         core.setAutoShutter(false); // turn off Auto shutter
+         core.setShutterOpen(true);  // open shutter
+      }
       final double z = focusOptimizer_.runAutofocusAlgorithm();
       core.setPosition(zDrive_, z);
-
+      if (keepShutterOpen_) {  // revert shutter state
+         core.setAutoShutter(oldAutoShutter);
+         core.setShutterOpen(oldShutter);  
+      }
       if (cropFactor_ < 1.0) {
          studio_.app().setROI(oldROI);
          core.waitForDevice(core.getCameraDevice());

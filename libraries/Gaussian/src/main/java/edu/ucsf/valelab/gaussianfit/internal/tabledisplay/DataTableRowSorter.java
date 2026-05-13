@@ -51,16 +51,17 @@ public class DataTableRowSorter extends TableRowSorter<DataTableModel> {
       model_ = model;
    }
 
+   @SuppressWarnings("unchecked")
    @Override
    public Comparator<?> getComparator(final int column) {
-      Class columnClass = model_.getColumnClass(column);
+      Class<?> columnClass = model_.getColumnClass(column);
       if (columnClass == String.class) {
          return super.getComparator(column);
       }
 
       // Special Comparator that always keeps rows with empty
       // content (indicated by instances of NullClass on top
-      Comparator c = new Comparator() {
+      Comparator<Object> c = new Comparator<Object>() {
          @Override
          public int compare(Object t, Object t1) {
             boolean ascending = true;

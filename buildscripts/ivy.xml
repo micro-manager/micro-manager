@@ -46,13 +46,13 @@
       <dependency org="org.micro-manager.pyjavaz" name="PyJavaZ" rev="1.0.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.39.2">
+      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.39.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
       <dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-      <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.18.4">
+      <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.19.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
       <dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.46.19">
@@ -96,7 +96,11 @@
 
 
       <!-- ClearVolume dependencies -->
-      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3"/>
+      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3">
+         <!-- coremem 0.4.4 no longer available from maven.scijava.org
+         (0.4.5 wins anyway) -->
+         <exclude org="net.coremem" name="coremem"/>
+      </dependency>
       <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
       <!-- <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/> -->
       <dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>

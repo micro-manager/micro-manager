@@ -86,8 +86,9 @@ public final class AnimationController<P> {
       // TODO Need to also notify of animation start/stop
    }
 
+   @SuppressWarnings({"rawtypes", "unchecked"})
    private final EventListenerSupport<Listener> listeners_ =
-         new EventListenerSupport<>(Listener.class, Listener.class.getClassLoader());
+         new EventListenerSupport(Listener.class, Listener.class.getClassLoader());
 
    private final AnimationStateDelegate<P> sequencer_;
 
@@ -122,8 +123,8 @@ public final class AnimationController<P> {
 
    private PerformanceMonitor perfMon_;
 
-   public static <P> AnimationController create(AnimationStateDelegate<P> sequencer) {
-      return new AnimationController(sequencer);
+   public static <P> AnimationController<P> create(AnimationStateDelegate<P> sequencer) {
+      return new AnimationController<>(sequencer);
    }
 
    private AnimationController(AnimationStateDelegate<P> sequencer) {
@@ -135,6 +136,7 @@ public final class AnimationController<P> {
     *
     * @param listener Implementation of the Listener class to be added.
     */
+   @SuppressWarnings("rawtypes")
    public synchronized void addListener(Listener listener) {
       listeners_.addListener(listener, true);
    }
@@ -144,6 +146,7 @@ public final class AnimationController<P> {
     *
     * @param listener Listener to be removed.
     */
+   @SuppressWarnings("rawtypes")
    public synchronized void removeListener(Listener listener) {
       listeners_.removeListener(listener);
    }
@@ -321,6 +324,7 @@ public final class AnimationController<P> {
       // Always call listeners from scheduler thread
       scheduler_.schedule(new Runnable() {
          @Override
+         @SuppressWarnings("unchecked")
          public void run() {
             // Capture state while holding lock, then fire listeners without lock
             boolean shouldFireExpired;
@@ -345,6 +349,7 @@ public final class AnimationController<P> {
     *
     * @param newPosition The new position to be displayed.
     */
+   @SuppressWarnings("unchecked")
    public synchronized void newDataPosition(final Coords newPosition) {
       // Mode may have switched since scheduling a snap-back, so cancel it here
       if (snapBackFuture_ != null) {
@@ -586,6 +591,7 @@ public final class AnimationController<P> {
       }
       scheduler_.schedule(new Runnable() {
          @Override
+         @SuppressWarnings("unchecked")
          public void run() {
             if (perfMon_ != null) {
                perfMon_.sampleTimeInterval("Animation position for tick (run)");

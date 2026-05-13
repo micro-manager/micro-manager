@@ -190,9 +190,8 @@ public final class PipelineTableModel extends AbstractTableModel {
          case ENABLED_COLUMN:
          case ENABLED_LIVE_COLUMN:
          case CONFIGURE_COLUMN:
-            return true;
          case NAME_COLUMN:
-            return false;
+            return true;
          default:
             return false;
       }
@@ -221,6 +220,9 @@ public final class PipelineTableModel extends AbstractTableModel {
          fireTableDataChanged();
       } else if (column == ENABLED_LIVE_COLUMN) {
          pipelineConfigs_.get(row).setEnabledInLive((Boolean) value);
+         fireTableDataChanged();
+      } else if (column == NAME_COLUMN) {
+         pipelineConfigs_.get(row).setName((String) value);
          fireTableDataChanged();
       }
    }
