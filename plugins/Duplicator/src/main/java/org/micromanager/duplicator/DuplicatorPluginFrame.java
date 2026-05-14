@@ -292,7 +292,7 @@ public class DuplicatorPluginFrame extends JDialog {
             }
             for (String axis : minSpinners.keySet()) {
                if ((Integer) minSpinners.get(axis).getValue()
-                        >= (Integer) maxSpinners.get(axis).getValue()) {
+                        > (Integer) maxSpinners.get(axis).getValue()) {
                   studio_.logs().showError(
                         "For axis \"" + axis + "\", max must be more than min.", ourFrame);
                   return;
