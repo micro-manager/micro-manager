@@ -294,7 +294,7 @@ public class DuplicatorPluginFrame extends JDialog {
                if ((Integer) minSpinners.get(axis).getValue()
                         > (Integer) maxSpinners.get(axis).getValue()) {
                   studio_.logs().showError(
-                        "For axis \"" + axis + "\", max must be more than min.", ourFrame);
+                        "For axis \"" + axis + "\", max must be >= min.", ourFrame);
                   return;
                }
             }
