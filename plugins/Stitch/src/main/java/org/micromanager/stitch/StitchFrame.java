@@ -869,9 +869,7 @@ public class StitchFrame extends JDialog {
     * Stitch tiles for a single channel into a canvas without blending.
     *
     * <p>Iterates all axes sets from the adapter and copies each tile's pixels
-    * into the correct position on the canvas based on its row/column. If a
-    * correction is provided, each tile is transformed before placement and the
-    * canvas dimensions are adjusted accordingly.</p>
+    * into the correct position on the canvas based on its row/column.</p>
     *
     * @param channelName the channel to stitch, or null for RGB (no channel axis)
     * @param canvasW     output canvas width in pixels (caller must supply the corrected size)
