@@ -720,7 +720,10 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
     * actual pixel values matching ImageMaker's pixel-value space.
     */
    private static ComponentStats buildComponentStatsFromRawHistogram(int[] rawHist) {
-      // full histogram has out-of-range bins at index 0 and length-1
+      // fullHist has out-of-range bins at indices 0 and length-1 (ComponentStats convention).
+      // Zero pixel values (unacquired/black tiles) go into fullHist[1] (rawHist[0]).
+      // We zero that bin out so that getQuantile() ignores them when computing the
+      // autoscale dark point — otherwise black tiles drive the dark point to 0.
       long[] fullHist = new long[rawHist.length + 2];
       long pixelCount = 0;
       long pixelCountExcludingZeros = 0;
@@ -728,19 +731,23 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       long minimumExcludingZeros = -1;
       long maximum = 0;
       for (int v = 0; v < rawHist.length; v++) {
-         fullHist[v + 1] = rawHist[v];
-         pixelCount += rawHist[v];
-         if (rawHist[v] > 0) {
+         long count = rawHist[v];
+         pixelCount += count;
+         if (v == 0) {
+            // Zero-valued pixels: count them in pixelCount but omit from fullHist
+            // so quantile computation ignores them (same as "ignore zeros" mode).
+            continue;
+         }
+         fullHist[v + 1] = count;
+         if (count > 0) {
             maximum = v;
             if (minimum < 0) {
                minimum = v;
             }
-            if (v > 0 && minimumExcludingZeros < 0) {
+            if (minimumExcludingZeros < 0) {
                minimumExcludingZeros = v;
             }
-            if (v > 0) {
-               pixelCountExcludingZeros += rawHist[v];
-            }
+            pixelCountExcludingZeros += count;
          }
       }
       if (minimum < 0) {
@@ -749,9 +756,12 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       if (minimumExcludingZeros < 0) {
          minimumExcludingZeros = minimum;
       }
+      // Use pixelCountExcludingZeros so quantile fractions are relative to
+      // non-zero pixels only, matching ImageMaker's autoscale behaviour.
+      long effectiveCount = pixelCountExcludingZeros > 0 ? pixelCountExcludingZeros : pixelCount;
       return ComponentStats.builder()
             .histogram(fullHist, 0)
-            .pixelCount(pixelCount)
+            .pixelCount(effectiveCount)
             .pixelCountExcludingZeros(pixelCountExcludingZeros)
             .minimum(minimum)
             .minimumExcludingZeros(minimumExcludingZeros)
