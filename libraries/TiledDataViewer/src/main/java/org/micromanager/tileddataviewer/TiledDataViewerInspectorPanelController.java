@@ -423,23 +423,30 @@ public final class TiledDataViewerInspectorPanelController
             int roiW = roi[2];
             int roiH = roi[3];
 
-            // Canvas pixels → stage: use the live affine so that axis orientation
-            // (including any camera-X / stage-X inversion, e.g. affine (-0.3, 0, 0, 0.3))
-            // is preserved.  The scalar storedPixelSizeUm is only used as a fallback when
-            // no live affine is available.  Transform all 4 corners so that rotation/shear
-            // does not produce a wrong bounding box.
+            // Canvas pixels → stage must use the STORED pixel size, because the canvas was
+            // laid out using the dataset's pixel size (not the current objective).
+            // If the live affine is available we scale it to match the stored pixel size so that
+            // axis orientation (camera-X/stage-X inversion, rotation) is preserved while the
+            // scale matches the stored dataset.  Without the live affine we fall back to the
+            // stored scalar.
+            AffineTransform storedPixToStage = null;
+            if (pixToStage != null && livePixelSizeUm > 0.0) {
+               double scale = storedPixelSizeUm / livePixelSizeUm;
+               storedPixToStage = new AffineTransform(pixToStage);
+               storedPixToStage.scale(scale, scale);
+            }
             Point2D.Double stageTL = pixelToStage(roiX,        roiY,
                   refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
-                  pixToStage);
+                  storedPixToStage);
             Point2D.Double stageTR = pixelToStage(roiX + roiW, roiY,
                   refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
-                  pixToStage);
+                  storedPixToStage);
             Point2D.Double stageBL = pixelToStage(roiX,        roiY + roiH,
                   refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
-                  pixToStage);
+                  storedPixToStage);
             Point2D.Double stageBR = pixelToStage(roiX + roiW, roiY + roiH,
                   refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
-                  pixToStage);
+                  storedPixToStage);
 
             // ---- 5. Compute step vectors for the new acquisition grid ----
             int stepPxX = tileW - overlapX;
