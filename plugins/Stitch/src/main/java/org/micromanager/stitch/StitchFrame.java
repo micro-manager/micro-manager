@@ -511,9 +511,29 @@ public class StitchFrame extends JDialog {
       // Derive correction components (null correction = no-op)
       boolean doMirror = correction != null && correction[1] != 0;
       int rotationDeg = correction != null ? correction[0] : 0;
-      // Canvas dims may change if rotation is 90/270
-      int outCanvasW = (rotationDeg == 90 || rotationDeg == 270) ? canvasH : canvasW;
-      int outCanvasH = (rotationDeg == 90 || rotationDeg == 270) ? canvasW : canvasH;
+      // Compute output canvas from corrected tile geometry rather than naively swapping
+      // the raw adapter canvas dims.  The adapter canvas is in stage-coordinate space
+      // (X→width, Y→height); swapping it for 90/270° rotations is wrong when the grid
+      // is not square.  Instead derive the output size from corrected tile step * grid extent.
+      boolean swapCanvasDims = rotationDeg == 90 || rotationDeg == 270;
+      mmcorej.org.json.JSONObject rawMD = adapter.getSummaryMetadata();
+      int rawTileW = rawMD != null ? rawMD.optInt("Width", 0) : 0;
+      int rawTileH = rawMD != null ? rawMD.optInt("Height", 0) : 0;
+      int rawOverlapX = rawMD != null ? rawMD.optInt("GridPixelOverlapX", 0) : 0;
+      int rawOverlapY = rawMD != null ? rawMD.optInt("GridPixelOverlapY", 0) : 0;
+      int corrTileWDim = swapCanvasDims ? rawTileH : rawTileW;
+      int corrTileHDim = swapCanvasDims ? rawTileW : rawTileH;
+      int corrOverlapXDim = swapCanvasDims ? rawOverlapY : rawOverlapX;
+      int corrOverlapYDim = swapCanvasDims ? rawOverlapX : rawOverlapY;
+      int outCanvasW;
+      int outCanvasH;
+      if (corrTileWDim > 0 && corrTileHDim > 0 && (swapCanvasDims || doMirror)) {
+         outCanvasW = (corrTileWDim - corrOverlapXDim) * adapter.getMaxCol() + corrTileWDim;
+         outCanvasH = (corrTileHDim - corrOverlapYDim) * adapter.getMaxRow() + corrTileHDim;
+      } else {
+         outCanvasW = canvasW;
+         outCanvasH = canvasH;
+      }
 
       try {
          // Step 2: set SummaryMetadata — copy from source, then fix up stitched-specific fields
@@ -790,8 +810,8 @@ public class StitchFrame extends JDialog {
                               adapter,
                               tzAxes,
                               chName,
-                              canvasW,
-                              canvasH,
+                              outCanvasW,
+                              outCanvasH,
                            correction, tOrigins, is16bit, isRgb,
                            pct -> {
                               int base = doAlign ? 50 : 0;
@@ -854,6 +874,8 @@ public class StitchFrame extends JDialog {
     * canvas dimensions are adjusted accordingly.</p>
     *
     * @param channelName the channel to stitch, or null for RGB (no channel axis)
+    * @param canvasW     output canvas width in pixels (caller must supply the corrected size)
+    * @param canvasH     output canvas height in pixels (caller must supply the corrected size)
     * @param correction  int[]{rotation, mirror} from
     *                    {@link ImageTransformUtils#correctionFromAffine}, or null
     * @return Object[]{pixels, bytesPerPixel, numComponents, canvasWidth, canvasHeight}
@@ -877,11 +899,11 @@ public class StitchFrame extends JDialog {
       boolean doMirror = correction != null && correction[1] != 0;
       int rotationDeg = correction != null ? correction[0] : 0;
       boolean needsTransform = correction != null && (doMirror || rotationDeg != 0);
-      // Corrected tile dims: swap w/h for 90/270 rotations
+      // swapTileDims governs stepX/stepY axis swap for 90/270° rotations
       boolean swapTileDims = rotationDeg == 90 || rotationDeg == 270;
-      // Corrected canvas dims (determined once tile dims are known)
-      int corrCanvasW = swapTileDims ? canvasH : canvasW;
-      int corrCanvasH = swapTileDims ? canvasW : canvasH;
+      // Canvas dims are already corrected by the caller
+      int corrCanvasW = canvasW;
+      int corrCanvasH = canvasH;
 
       Object targetZ = baseAxes.get("z");
       Object targetT = baseAxes.get(Coords.TIME_POINT);

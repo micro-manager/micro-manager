@@ -112,6 +112,28 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       return stepY * maxRow + imageHeight_;
    }
 
+   /** Return the maximum column index in the tile grid (0-based). */
+   public int getMaxCol() {
+      int max = 0;
+      for (GridCell cell : positionGrid_.values()) {
+         if (cell.col > max) {
+            max = cell.col;
+         }
+      }
+      return max;
+   }
+
+   /** Return the maximum row index in the tile grid (0-based). */
+   public int getMaxRow() {
+      int max = 0;
+      for (GridCell cell : positionGrid_.values()) {
+         if (cell.row > max) {
+            max = cell.row;
+         }
+      }
+      return max;
+   }
+
    // -------------------------------------------------------------------------
    // Overrides: inject row/col into every axes map
    // -------------------------------------------------------------------------
@@ -292,7 +314,73 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       }
       // Accept if any position has explicit non-zero grid coords, OR if there is only
       // one position (single-tile dataset: (0,0) is correct, not the unset default).
-      return (anyNonZero || positions.size() == 1) ? shiftToZero(grid) : null;
+      if (!anyNonZero && positions.size() != 1) {
+         return null;
+      }
+      Map<Integer, GridCell> shifted = shiftToZero(grid);
+      // Validate that gridCol correlates with X and gridRow correlates with Y.
+      // If they are spatially transposed (e.g. gridCol tracks Y and gridRow tracks X,
+      // as happens when the acquisition snake axis labelling differs from spatial axes),
+      // fall back to XY-based grid building instead.
+      return gridConsistentWithXY(shifted, positions) ? shifted : null;
+   }
+
+   /**
+    * Returns true if the grid assignment is spatially consistent with the XY positions:
+    * gridCol should be more strongly correlated with X than with Y, and gridRow with Y
+    * than with X.  Uses the absolute Pearson correlation coefficient as the metric.
+    * Returns true when there are fewer than 2 positions (nothing to validate).
+    */
+   private static boolean gridConsistentWithXY(Map<Integer, GridCell> grid,
+                                                List<MultiStagePosition> positions) {
+      int n = positions.size();
+      if (n < 2) {
+         return true;
+      }
+      double[] rows = new double[n];
+      double[] cols = new double[n];
+      double[] xs   = new double[n];
+      double[] ys   = new double[n];
+      for (int i = 0; i < n; i++) {
+         GridCell cell = grid.get(i);
+         rows[i] = cell.row;
+         cols[i] = cell.col;
+         xs[i]   = positions.get(i).getX();
+         ys[i]   = positions.get(i).getY();
+      }
+      double corrColX = Math.abs(pearson(cols, xs));
+      double corrColY = Math.abs(pearson(cols, ys));
+      double corrRowX = Math.abs(pearson(rows, xs));
+      double corrRowY = Math.abs(pearson(rows, ys));
+      // Col should track X more than Y; row should track Y more than X.
+      return corrColX >= corrColY && corrRowY >= corrRowX;
+   }
+
+   /** Pearson correlation coefficient between two equal-length arrays. */
+   private static double pearson(double[] a, double[] b) {
+      int n = a.length;
+      double meanA = 0;
+      double meanB = 0;
+      for (int i = 0; i < n; i++) {
+         meanA += a[i];
+         meanB += b[i];
+      }
+      meanA /= n;
+      meanB /= n;
+      double num = 0;
+      double varA = 0;
+      double varB = 0;
+      for (int i = 0; i < n; i++) {
+         double da = a[i] - meanA;
+         double db = b[i] - meanB;
+         num  += da * db;
+         varA += da * da;
+         varB += db * db;
+      }
+      if (varA == 0 || varB == 0) {
+         return 0;
+      }
+      return num / Math.sqrt(varA * varB);
    }
 
    /**
