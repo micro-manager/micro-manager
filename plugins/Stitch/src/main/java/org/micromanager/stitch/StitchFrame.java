@@ -640,6 +640,16 @@ public class StitchFrame extends JDialog {
          }
          studio_.logs().logMessage("Stitch: is16bit=" + is16bit + " isRgb=" + isRgb);
 
+         // For RGB the whole assembled canvas is rotated (no per-tile transform), so the
+         // output dims are the naive swap of raw canvas dims — exactly what transformPixels
+         // returns — not the corrected-geometry formula used for grayscale.
+         if (isRgb && swapCanvasDims) {
+            outCanvasW = canvasH;
+            outCanvasH = canvasW;
+            ds.setSummaryMetadata(ds.getSummaryMetadata().copyBuilder()
+                  .imageWidth(outCanvasW).imageHeight(outCanvasH).build());
+         }
+
          // RGB images have no channel axis — override chNames to a single null entry
          // so the channel loop runs once and no channel filtering is applied.
          final List<String> effectiveChNames;
@@ -729,9 +739,13 @@ public class StitchFrame extends JDialog {
                }
 
                if (doBlend) {
+                  // RGB composite() has no per-tile transform — the whole assembled canvas is
+                  // rotated afterward, so the blender must use the raw (uncorrected) tile geometry.
+                  // Grayscale paths apply per-tile transforms and need the corrected geometry.
                   TileBlender blender = new TileBlender(adapter,
                         new mmcorej.org.json.JSONObject(),
-                        tzAxes, effectiveChNames, correctedBlendSummaryMD);
+                        tzAxes, effectiveChNames,
+                        isRgb ? blendSummaryMD : correctedBlendSummaryMD);
 
                   for (int c = 0; c < effectiveNumCh; c++) {
                      final int tIdx = t;

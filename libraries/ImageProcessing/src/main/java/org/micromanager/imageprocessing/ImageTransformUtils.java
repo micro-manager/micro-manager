@@ -5,9 +5,10 @@ import java.awt.geom.AffineTransform;
 /**
  * Utility methods for correcting camera orientation in tiled datasets.
  *
- * <p>The affine transform stored in per-image metadata encodes the relationship
- * between stage movement (µm) and camera pixels. This class provides methods to
- * derive the correction needed and apply it to pixel arrays.</p>
+ * <p>The {@code pixelSizeAffine} stored in per-image metadata maps
+ * <em>camera-pixel displacement → stage displacement (µm)</em>, consistent with
+ * how the rest of the codebase uses it (e.g. {@code XYNavigator} and
+ * {@code TileCreator} both call {@code affine.transform(pixelDelta, stageDelta)}).</p>
  */
 public class ImageTransformUtils {
 
@@ -17,11 +18,15 @@ public class ImageTransformUtils {
     * Derive the correction (mirror + rotation) needed to map camera-space pixels
     * back to stage-space orientation, from the pixelSizeAffine stored in image metadata.
     *
-    * <p>The affine maps stage displacement (µm) to camera-pixel displacement.
-    * A rotation of {@code rot} degrees in the affine means the camera's pixel axes are
-    * rotated {@code rot} degrees relative to stage space. To convert camera pixels back
-    * to stage orientation, apply the <em>same</em> rotation: correctionRotation = rot,
-    * correctionMirror = mirror.</p>
+    * <p><b>Affine convention:</b> {@code pixelSizeAffine} maps camera-pixel displacement
+    * → stage displacement (µm).  A rotation angle {@code rot} extracted from the affine
+    * means the camera's pixel axes are rotated {@code rot} degrees relative to stage
+    * space.  Applying that same rotation to the pixel data restores stage orientation:
+    * correctionRotation = rot, correctionMirror = mirror.</p>
+    *
+    * <p><b>Rotation direction:</b> {@link #transformPixels} applies rotations
+    * <em>clockwise</em> — a 90° argument rotates the image 90° CW in screen
+    * coordinates (origin top-left).</p>
     *
     * @param affine the AffineTransform from {@code Metadata.getPixelSizeAffine()},
     *               or null
