@@ -43,6 +43,8 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.events.PixelSizeAffineChangedEvent;
+import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AffineUtils;
@@ -127,9 +129,22 @@ public class ExplorerManager {
    private AffineTransform pixelSizeAffine_ = null;
    // Pre-computed inverse: stage-micron delta → camera-pixel delta.
    private AffineTransform pixelSizeAffineInverse_ = null;
+   // Session-start affine and its inverse, kept fixed so position calculations stay in
+   // the tile-grid coordinate system even after a pixel-size change.
+   private AffineTransform initialPixelSizeAffine_ = null;
+   private AffineTransform initialPixelSizeAffineInverse_ = null;
    private double overlapPercentage_ = 10.0;
    private volatile boolean acquisitionInterrupted_ = false;
    private final AtomicInteger pendingBatches_ = new AtomicInteger(0);
+   // True when pixel size or image dimensions differ from session initial values.
+   // Blocks new tile acquisition until settings return to initial values.
+   private volatile boolean settingsMismatch_ = false;
+   // Active mismatch alert; dismissed when settings return to initial values.
+   private org.micromanager.alerts.Alert mismatchAlert_ = null;
+   // Initial values recorded at session start (for mismatch detection).
+   private double initialPixelSizeUm_ = 1.0;
+   private int initialCameraWidth_ = 512;
+   private int initialCameraHeight_ = 512;
    private boolean isRGB_ = false;
 
    public ExplorerManager(Studio studio, ExplorerFrame frame) {
@@ -186,6 +201,10 @@ public class ExplorerManager {
          if (pixelSizeUm_ <= 0) {
             pixelSizeUm_ = 1.0;
          }
+         initialPixelSizeUm_ = pixelSizeUm_;
+         initialCameraWidth_ = cameraWidth_;
+         initialCameraHeight_ = cameraHeight_;
+         settingsMismatch_ = false;
 
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
@@ -196,6 +215,8 @@ public class ExplorerManager {
          stageTileWidthUm_ = cameraWidth_ * pixelSizeUm_;
          stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
          loadPixelSizeAffine();
+         initialPixelSizeAffine_ = pixelSizeAffine_;
+         initialPixelSizeAffineInverse_ = pixelSizeAffineInverse_;
 
          // Initial tile-grid estimate uses camera dimensions (corrected after first acq)
          dataSource_.setTileDimensions(cameraWidth_, cameraHeight_);
@@ -314,6 +335,16 @@ public class ExplorerManager {
          tileWidth_ = tw;
          tileHeight_ = th;
          dataSource_.setTileDimensions(tileWidth_, tileHeight_);
+
+         cameraWidth_ = tileWidth_;
+         cameraHeight_ = tileHeight_;
+         initialPixelSizeUm_ = pixelSizeUm_;
+         initialCameraWidth_ = cameraWidth_;
+         initialCameraHeight_ = cameraHeight_;
+         settingsMismatch_ = false;
+         loadPixelSizeAffine();
+         initialPixelSizeAffine_ = pixelSizeAffine_;
+         initialPixelSizeAffineInverse_ = pixelSizeAffineInverse_;
 
          // Stage step estimate for a loaded dataset (not used for new acquisitions)
          stageTileWidthUm_ = tileWidth_ * pixelSizeUm_;
@@ -621,6 +652,55 @@ public class ExplorerManager {
       onViewerClosed();
    }
 
+   @Subscribe
+   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
+      if (!exploring_) {
+         return;
+      }
+      double newSize = event.getNewPixelSizeUm();
+      if (newSize <= 0) {
+         newSize = 1.0;
+      }
+      pixelSizeUm_ = newSize;
+      stageTileWidthUm_  = cameraWidth_  * pixelSizeUm_;
+      stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
+      loadPixelSizeAffine();
+      updateStagePositionPixel();
+      updateSettingsMismatch();
+      redrawOverlay();
+   }
+
+   @Subscribe
+   public void onPixelSizeAffineChanged(PixelSizeAffineChangedEvent event) {
+      if (!exploring_) {
+         return;
+      }
+      loadPixelSizeAffine();
+      redrawOverlay();
+   }
+
+   private void updateSettingsMismatch() {
+      boolean mismatch = Math.abs(pixelSizeUm_ - initialPixelSizeUm_) > 0.001 * initialPixelSizeUm_
+            || cameraWidth_  != initialCameraWidth_
+            || cameraHeight_ != initialCameraHeight_;
+      if (mismatch != settingsMismatch_) {
+         settingsMismatch_ = mismatch;
+         if (dataSource_ != null) {
+            dataSource_.setSettingsMismatch(mismatch);
+         }
+         if (mismatch) {
+            mismatchAlert_ = studio_.alerts().postAlert("Explorer",
+                  ExplorerManager.class,
+                  "Acquisition blocked: pixel size or camera ROI has changed from session "
+                  + "start. Restore settings to re-enable tile acquisition.");
+         } else if (mismatchAlert_ != null && mismatchAlert_.isUsable()) {
+            mismatchAlert_.dismiss();
+            mismatchAlert_ = null;
+         }
+         redrawOverlay();
+      }
+   }
+
    public void onViewerClosed() {
       if (!exploring_ || viewerClosing_) {
          return;
@@ -890,6 +970,9 @@ public class ExplorerManager {
     */
    public void acquireMultipleTiles(List<Point> tiles) {
       if (!exploring_ || acquisitionExecutor_ == null || tiles.isEmpty()) {
+         return;
+      }
+      if (settingsMismatch_) {
          return;
       }
 
@@ -1201,19 +1284,44 @@ public class ExplorerManager {
 
    // ===================== Stage position overlay =====================
 
+   private void updateStagePositionPixel() {
+      if (dataSource_ == null) {
+         return;
+      }
+      try {
+         double stageX = studio_.core().getXPosition();
+         double stageY = studio_.core().getYPosition();
+         Point2D.Double pixel = stageToPixel(stageX, stageY);
+         dataSource_.setStagePositionPixel(pixel);
+      } catch (Exception e) {
+         // Stage not available
+      }
+   }
+
    private void startStagePositionPolling() {
       stagePollingExecutor_.scheduleWithFixedDelay(() -> {
          if (dataSource_ == null) {
             return;
          }
          try {
+            // Detect camera ROI changes (no dedicated MM event for this)
+            int newW = (int) studio_.core().getImageWidth();
+            int newH = (int) studio_.core().getImageHeight();
+            if (newW != cameraWidth_ || newH != cameraHeight_) {
+               cameraWidth_ = newW;
+               cameraHeight_ = newH;
+               stageTileWidthUm_  = cameraWidth_  * pixelSizeUm_;
+               stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
+               updateSettingsMismatch();
+            }
+
             double stageX = studio_.core().getXPosition();
             double stageY = studio_.core().getYPosition();
             Point2D.Double pixel = stageToPixel(stageX, stageY);
             dataSource_.setStagePositionPixel(pixel);
             redrawOverlay();
          } catch (Exception e) {
-            // Stage not available
+            // Stage or camera not available
          }
       }, 0, 500, TimeUnit.MILLISECONDS);
    }
@@ -1221,7 +1329,7 @@ public class ExplorerManager {
    private Point2D.Double stageToPixel(double stageX, double stageY) {
       int tw = dataSource_ != null ? dataSource_.getTileWidth() : -1;
       int th = dataSource_ != null ? dataSource_.getTileHeight() : -1;
-      if (tw <= 0 || th <= 0 || pixelSizeUm_ <= 0) {
+      if (tw <= 0 || th <= 0 || initialPixelSizeUm_ <= 0) {
          return null;
       }
       int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
@@ -1233,20 +1341,24 @@ public class ExplorerManager {
 
       double camPixelDeltaX;
       double camPixelDeltaY;
-      if (pixelSizeAffineInverse_ != null) {
-         // Apply inverse affine: stage-micron delta → camera-pixel delta.
+      if (initialPixelSizeAffineInverse_ != null) {
+         // Use the session-start affine so position is always in the tile-grid coordinate system.
          Point2D.Double stageOffset = new Point2D.Double(stageOffsetX, stageOffsetY);
          Point2D.Double camDelta = new Point2D.Double();
-         pixelSizeAffineInverse_.transform(stageOffset, camDelta);
+         initialPixelSizeAffineInverse_.transform(stageOffset, camDelta);
          camPixelDeltaX = camDelta.x;
          camPixelDeltaY = camDelta.y;
       } else {
-         camPixelDeltaX = stageOffsetX / pixelSizeUm_;
-         camPixelDeltaY = stageOffsetY / pixelSizeUm_;
+         // Use the session-start pixel size so position stays fixed in the tile-grid coordinate
+         // system regardless of subsequent pixel-size changes.
+         camPixelDeltaX = stageOffsetX / initialPixelSizeUm_;
+         camPixelDeltaY = stageOffsetY / initialPixelSizeUm_;
       }
       // Scale from camera-pixel space to canvas (pipeline-output) pixel space.
-      double pipelineScaleX = (tw > 0 && cameraWidth_  > 0) ? (double) tw / cameraWidth_  : 1.0;
-      double pipelineScaleY = (th > 0 && cameraHeight_ > 0) ? (double) th / cameraHeight_ : 1.0;
+      double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
+            ? (double) tw / initialCameraWidth_  : 1.0;
+      double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
+            ? (double) th / initialCameraHeight_ : 1.0;
       double pixelX = camPixelDeltaX * pipelineScaleX + effectiveTileWidth  / 2.0;
       double pixelY = camPixelDeltaY * pipelineScaleY + effectiveTileHeight / 2.0;
       return new Point2D.Double(pixelX, pixelY);
@@ -1284,6 +1396,18 @@ public class ExplorerManager {
       return overlapPercentage_;
    }
 
+   /**
+    * Ratio of current pixel size to the session-start pixel size.
+    * Used to scale the red FOV indicator on the canvas when the objective changes.
+    * Returns 1.0 when there is no change.
+    */
+   public double getPixelSizeRatio() {
+      if (initialPixelSizeUm_ <= 0) {
+         return 1.0;
+      }
+      return pixelSizeUm_ / initialPixelSizeUm_;
+   }
+
    public void redrawOverlay() {
       if (viewer_ != null) {
          viewer_.redrawOverlay();
@@ -1315,29 +1439,25 @@ public class ExplorerManager {
 
             double targetX;
             double targetY;
-            if (pixelSizeAffine_ != null) {
-               // Convert canvas-pixel delta to camera-pixel delta, then apply affine.
-               double pipelineScaleX = (tw > 0 && cameraWidth_  > 0)
-                     ? (double) cameraWidth_  / tw : 1.0;
-               double pipelineScaleY = (th > 0 && cameraHeight_ > 0)
-                     ? (double) cameraHeight_ / th : 1.0;
+            // Always invert using the session-start pixel size / affine so that clicks on
+            // the tile grid map to consistent physical stage positions regardless of the
+            // current objective.
+            if (initialPixelSizeAffine_ != null) {
+               // Convert canvas-pixel delta to camera-pixel delta using initial camera dims,
+               // then apply the session-start affine (forward: camera-pixel → stage-micron).
+               double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
+                     ? (double) initialCameraWidth_  / tw : 1.0;
+               double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
+                     ? (double) initialCameraHeight_ / th : 1.0;
                Point2D.Double camPixelDelta = new Point2D.Double(
                      offsetPixelX * pipelineScaleX, offsetPixelY * pipelineScaleY);
                Point2D.Double stageOffset = new Point2D.Double();
-               pixelSizeAffine_.transform(camPixelDelta, stageOffset);
+               initialPixelSizeAffine_.transform(camPixelDelta, stageOffset);
                targetX = initialStageX_ + stageOffset.x;
                targetY = initialStageY_ + stageOffset.y;
             } else {
-               double stageStepX = stageTileWidthUm_ > 0
-                     ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-                        : effectiveTileWidth;
-               double stageStepY = stageTileHeightUm_ > 0
-                     ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-                        : effectiveTileHeight;
-               double scaleX = stageStepX / effectiveTileWidth;
-               double scaleY = stageStepY / effectiveTileHeight;
-               targetX = initialStageX_ + offsetPixelX * pixelSizeUm_ * scaleX;
-               targetY = initialStageY_ + offsetPixelY * pixelSizeUm_ * scaleY;
+               targetX = initialStageX_ + offsetPixelX * initialPixelSizeUm_;
+               targetY = initialStageY_ + offsetPixelY * initialPixelSizeUm_;
             }
 
             studio_.core().setXYPosition(targetX, targetY);
