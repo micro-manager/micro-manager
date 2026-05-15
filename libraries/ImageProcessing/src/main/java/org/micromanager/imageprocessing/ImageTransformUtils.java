@@ -18,8 +18,10 @@ public class ImageTransformUtils {
     * back to stage-space orientation, from the pixelSizeAffine stored in image metadata.
     *
     * <p>The affine maps stage displacement (µm) to camera-pixel displacement.
-    * To convert camera pixels back to stage orientation we apply the inverse linear
-    * transform: correctionRotation = (360 - rot) % 360, correctionMirror = mirror.</p>
+    * A rotation of {@code rot} degrees in the affine means the camera's pixel axes are
+    * rotated {@code rot} degrees relative to stage space. To convert camera pixels back
+    * to stage orientation, apply the <em>same</em> rotation: correctionRotation = rot,
+    * correctionMirror = mirror.</p>
     *
     * @param affine the AffineTransform from {@code Metadata.getPixelSizeAffine()},
     *               or null
@@ -55,8 +57,8 @@ public class ImageTransformUtils {
       // Round to nearest 90°
       int rot = (int) (Math.round(rotDeg / 90.0) * 90) % 360;
 
-      // Correction is the inverse: rotation = (360 - rot) % 360
-      int correctionRot = (360 - rot) % 360;
+      // Correction applies the same rotation to map camera pixels back to stage orientation
+      int correctionRot = rot;
       int correctionMirror = mirror ? 1 : 0;
 
       return new int[]{correctionRot, correctionMirror};
