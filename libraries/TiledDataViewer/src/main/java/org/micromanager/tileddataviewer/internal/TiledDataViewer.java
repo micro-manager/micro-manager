@@ -406,6 +406,26 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       ds.setIgnoreOutliersPercentage(globalSettings.percentToIgnore);
    }
 
+   /**
+    * Returns the most recent raw pixel histograms per channel, as computed by
+    * ImageMaker during the last render. Keys are channel names; values are
+    * int[] arrays with one entry per pixel value (65536 entries for 16-bit).
+    */
+   public java.util.HashMap<String, int[]> getHistograms() {
+      return guiManager_.getHistograms();
+   }
+
+   /**
+    * Sets a callback that is invoked after every render completes (on the
+    * display calculation thread, before the EDT repaint). Use it to read
+    * updated histograms from getHistograms().
+    */
+   public void setPostRenderCallback(Runnable callback) {
+      postRenderCallback_ = callback;
+   }
+
+   private volatile Runnable postRenderCallback_ = null;
+
    @Override
    public JPanel getCanvasJPanel() {
       return getCanvas().getCanvas();
@@ -676,6 +696,11 @@ public class TiledDataViewer implements TiledDataViewerAPI {
          Image img = guiManager_.makeOrGetImage(view_);
          JSONObject tags = guiManager_.getLatestTags();
          currentMetadata_ = tags;
+
+         Runnable cb = postRenderCallback_;
+         if (cb != null) {
+            cb.run();
+         }
 
          HashMap<String, int[]> channelHistograms = guiManager_.getHistograms();
          edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img,

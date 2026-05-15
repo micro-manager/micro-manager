@@ -113,10 +113,18 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          java.util.Collections.synchronizedSet(new java.util.HashSet<>());
 
    // Last autostretch-computed contrast bounds per NDViewer channel name.
-   // Updated directly by onContrastUpdated (bypasses the fragile CAS path).
+   // Updated by onContrastUpdated with ImageMaker's actual rendered values.
    // int[]{min, max}
    private final java.util.concurrent.ConcurrentHashMap<String, int[]> lastStretchedContrast_ =
          new java.util.concurrent.ConcurrentHashMap<>();
+
+   // Set to true while onContrastUpdated() is executing its CAS, so that
+   // handleDisplaySettings() knows the incoming change is an internal ImageMaker
+   // update and should be accepted (not overridden) even when autostretch is off.
+   private volatile boolean inOnContrastUpdated_ = false;
+
+
+
 
    // Closed state
    private volatile boolean closed_ = false;
@@ -183,6 +191,10 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // Hook into NDViewer to detect image changes
       ndViewer2_.addSetImageHook(axes -> onNDViewerImageChanged(axes));
 
+      // After every render, post histogram stats derived from ImageMaker's own
+      // pixel histogram so the Inspector indicators always match the display.
+      ndViewer2_.setPostRenderCallback(this::postImageMakerStats);
+
       // Register with Studio so Inspector discovers us
       studio_.displays().addViewer(this);
 
@@ -208,15 +220,86 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          return requestedSettings;
       }
       try {
-         // Push MM settings into NDViewer's ImageMaker as render parameters
-         pushRenderSettings(requestedSettings);
+         DisplaySettings effectiveSettings = requestedSettings;
+         if (!requestedSettings.isAutostretchEnabled() && !lastStretchedContrast_.isEmpty()) {
+            // Autostretch is off. Any scaling change in requestedSettings may come
+            // from a spurious handleAutoscale() call (e.g. when the ignore-percentile
+            // spinner changes). We override with lastStretchedContrast_ — the values
+            // ImageMaker actually rendered — unless the request differs from those
+            // values, in which case it is a deliberate user handle-drag that we
+            // accept and remember.
+            effectiveSettings = enforceOrAcceptScaling(requestedSettings);
+         }
+         pushRenderSettings(effectiveSettings);
          ndViewer2_.update();
+         return effectiveSettings;
       } catch (NullPointerException e) {
          studio_.logs().logDebugMessage("NDViewer2: NPE in handleDisplaySettings "
                + "(likely async close race): " + e.getMessage());
       }
       return requestedSettings;
    }
+
+   /**
+    * When autostretch is off, ensures the stored scaling stays at the last
+    * ImageMaker-rendered values. If requestedSettings carries different scaling
+    * for a channel, it is treated as a deliberate user handle-drag: the new
+    * values are accepted and written into lastStretchedContrast_ so future
+    * calls keep those values.
+    *
+    * <p>Returns the DisplaySettings that should actually be stored and rendered.
+    */
+   private DisplaySettings enforceOrAcceptScaling(DisplaySettings requested) {
+      // If this change originated from our own onContrastUpdated() CAS, always accept.
+      if (inOnContrastUpdated_) {
+         return requested;
+      }
+
+      List<String> channelNames = axesBridge_.getChannelNames();
+      if (channelNames.isEmpty()) {
+         channelNames = new ArrayList<>();
+         channelNames.add(TiledDataViewer.NO_CHANNEL);
+      }
+      DisplaySettings.Builder builder = requested.copyBuilder();
+      boolean anyOverridden = false;
+      for (int i = 0; i < channelNames.size(); i++) {
+         if (i >= requested.getNumberOfChannels()) {
+            continue;
+         }
+         String name = channelNames.get(i);
+         int[] known = lastStretchedContrast_.get(name);
+         if (known == null) {
+            continue;
+         }
+         ChannelDisplaySettings reqCh = requested.getChannelSettings(i);
+         ComponentDisplaySettings reqComp = reqCh.getComponentSettings(0);
+         long reqMin = reqComp.getScalingMinimum();
+         long reqMax = reqComp.getScalingMaximum();
+         if (reqMin == known[0] && reqMax == known[1]) {
+            continue; // Already the correct ImageMaker values, nothing to do
+         }
+         // Since postImageMakerStats() and submitStatsRequest() are suppressed when
+         // autostretch is off, handleAutoscale() always recomputes from frozen stats
+         // and produces values matching known[]. So any change that differs from known[]
+         // must be a genuine handle drag. Allow it and remember the new range.
+         boolean minChanged = (reqMin != known[0]);
+         boolean maxChanged = (reqMax != known[1]);
+         if (minChanged != maxChanged) {
+            // Exactly one endpoint differs — genuine handle drag. Accept and remember.
+            lastStretchedContrast_.put(name, new int[]{(int) reqMin, (int) reqMax});
+         } else {
+            // Both differ — spurious rewrite. Restore known-good values.
+            ComponentDisplaySettings fixed = reqComp.copyBuilder()
+                  .scalingMinimum(known[0])
+                  .scalingMaximum(known[1])
+                  .build();
+            builder.channel(i, reqCh.copyBuilder().component(0, fixed).build());
+            anyOverridden = true;
+         }
+      }
+      return anyOverridden ? builder.build() : requested;
+   }
+
 
    /**
     * Build render settings from MM DisplaySettings and push them into NDViewer's ImageMaker.
@@ -502,32 +585,178 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
 
    /**
     * Called by ImageMaker when autostretch computes new contrast bounds.
-    * Updates MM DisplaySettings with the new min/max for the given channel.
+    *
+    * <p>Updates MM DisplaySettings with the new min/max (retry loop so the
+    * write always succeeds). Also posts an ImageStatsChangedEvent whose
+    * ComponentStats are built from ImageMaker's own raw pixel histogram, so
+    * the Inspector indicators read values in the same pixel-value space that
+    * ImageMaker uses — not the downsampled/bin-indexed MM stats pipeline.</p>
     */
    @Override
    public void onContrastUpdated(String channelName, int newMin, int newMax) {
-      // Always store the latest autostretch values, regardless of whether the
-      // CAS below succeeds. This is what buildExportDisplaySettingsJSON reads.
       lastStretchedContrast_.put(channelName, new int[]{newMin, newMax});
 
       int idx = axesBridge_.getChannelIndex(channelName);
-      // For single-channel data (NO_CHANNEL), use index 0
       if (idx < 0 && TiledDataViewer.NO_CHANNEL.equals(channelName)) {
          idx = 0;
       }
       if (idx < 0) {
          return;
       }
-      DisplaySettings current = getDisplaySettings();
-      if (idx >= current.getNumberOfChannels()) {
-         return;
+      // Signal that the CAS we are about to do is an internal ImageMaker update
+      // so handleDisplaySettings() does not override it.
+      inOnContrastUpdated_ = true;
+      try {
+         DisplaySettings current;
+         DisplaySettings updated;
+         do {
+            current = getDisplaySettings();
+            if (idx >= current.getNumberOfChannels()) {
+               return;
+            }
+            ChannelDisplaySettings ch = current.getChannelSettings(idx);
+            ComponentDisplaySettings comp = ch.getComponentSettings(0).copyBuilder()
+                  .scalingMinimum(newMin).scalingMaximum(newMax).build();
+            updated = current.copyBuilder()
+                  .channel(idx, ch.copyBuilder().component(0, comp).build()).build();
+         } while (!compareAndSetDisplaySettings(current, updated));
+      } finally {
+         inOnContrastUpdated_ = false;
       }
-      ChannelDisplaySettings ch = current.getChannelSettings(idx);
-      ComponentDisplaySettings comp = ch.getComponentSettings(0).copyBuilder()
-            .scalingMinimum(newMin).scalingMaximum(newMax).build();
-      DisplaySettings updated = current.copyBuilder()
-            .channel(idx, ch.copyBuilder().component(0, comp).build()).build();
-      compareAndSetDisplaySettings(current, updated);
+   }
+
+   /**
+    * Builds ComponentStats from ImageMaker's raw pixel histograms and posts
+    * an ImageStatsChangedEvent so the Inspector histogram panel reflects exactly
+    * what ImageMaker rendered.
+    *
+    * <p>Uses the images from the previous successful stats result (or
+    * getDisplayedImages()) for channel-routing in the request, since
+    * dataProvider_.getImage() may return null for tiled/Explorer datasets.</p>
+    */
+   private void postImageMakerStats() {
+      try {
+         // When autostretch is off, the histogram doesn't change the displayed
+         // contrast. Skip posting new stats to avoid feeding stale/updated histogram
+         // data into handleAutoscale() (called by IntensityInspectorPanelController
+         // whenever the ignore-percentile spinner changes, even with autostretch off).
+         if (!getDisplaySettings().isAutostretchEnabled()) {
+            return;
+         }
+         HashMap<String, int[]> rawHists = ndViewer2_.getHistograms();
+         if (rawHists == null || rawHists.isEmpty()) {
+            studio_.logs().logDebugMessage(
+                  "TiledDataViewerDataViewer.postImageMakerStats: no histograms available");
+            return;
+         }
+
+         // Obtain images for channel-routing. Prefer the previous request's images
+         // (already resolved), fall back to getDisplayedImages().
+         List<Image> routingImages = null;
+         ImagesAndStats prev = currentImagesAndStats_;
+         if (prev != null && prev.getRequest().getNumberOfImages() > 0) {
+            routingImages = prev.getRequest().getImages();
+         }
+         if (routingImages == null || routingImages.isEmpty()) {
+            routingImages = getDisplayedImages();
+         }
+         if (routingImages == null || routingImages.isEmpty()) {
+            studio_.logs().logDebugMessage(
+                  "TiledDataViewerDataViewer.postImageMakerStats: no routing images available");
+            return;
+         }
+
+         // Build per-image stats from the raw histograms, matched by channel index.
+         List<Image> validImages = new ArrayList<>();
+         List<ImageStats> validStats = new ArrayList<>();
+         for (int i = 0; i < routingImages.size(); i++) {
+            Image img = routingImages.get(i);
+            if (img == null) {
+               continue;
+            }
+            int channelIndex = img.getCoords().getChannel();
+            // Look up channel name from the index to find the right histogram.
+            List<String> allNames = axesBridge_.getChannelNames();
+            String channelName = (channelIndex < allNames.size())
+                  ? allNames.get(channelIndex) : TiledDataViewer.NO_CHANNEL;
+            if (allNames.isEmpty()) {
+               channelName = TiledDataViewer.NO_CHANNEL;
+            }
+            int[] rawHist = rawHists.get(channelName);
+            if (rawHist == null) {
+               studio_.logs().logDebugMessage(
+                     "TiledDataViewerDataViewer.postImageMakerStats: no histogram for channel "
+                           + channelName);
+               continue;
+            }
+            ComponentStats cs = buildComponentStatsFromRawHistogram(rawHist);
+            validImages.add(img);
+            validStats.add(ImageStats.create(i, cs));
+         }
+
+         if (validImages.isEmpty()) {
+            studio_.logs().logDebugMessage(
+                  "TiledDataViewerDataViewer.postImageMakerStats: no valid images after matching");
+            return;
+         }
+
+         Coords nominalPos = validImages.get(0).getCoords();
+         ImageStatsRequest req = ImageStatsRequest.create(
+               nominalPos, validImages, BoundsRectAndMask.unselected());
+         ImagesAndStats result = ImagesAndStats.create(
+               -1L, req, validStats.toArray(new ImageStats[0]));
+         currentImagesAndStats_ = result;
+         final ImagesAndStats finalResult = result;
+         SwingUtilities.invokeLater(
+               () -> postEvent(ImageStatsChangedEvent.create(finalResult)));
+      } catch (Exception e) {
+         studio_.logs().logError(e, "TiledDataViewerDataViewer.postImageMakerStats failed");
+      }
+   }
+
+   /**
+    * Builds a ComponentStats from a raw pixel histogram (one entry per pixel value).
+    * binWidthPowerOf2=0 means bin width=1, so getAutoscaleMinMaxForQuantile returns
+    * actual pixel values matching ImageMaker's pixel-value space.
+    */
+   private static ComponentStats buildComponentStatsFromRawHistogram(int[] rawHist) {
+      // full histogram has out-of-range bins at index 0 and length-1
+      long[] fullHist = new long[rawHist.length + 2];
+      long pixelCount = 0;
+      long pixelCountExcludingZeros = 0;
+      long minimum = -1;
+      long minimumExcludingZeros = -1;
+      long maximum = 0;
+      for (int v = 0; v < rawHist.length; v++) {
+         fullHist[v + 1] = rawHist[v];
+         pixelCount += rawHist[v];
+         if (rawHist[v] > 0) {
+            maximum = v;
+            if (minimum < 0) {
+               minimum = v;
+            }
+            if (v > 0 && minimumExcludingZeros < 0) {
+               minimumExcludingZeros = v;
+            }
+            if (v > 0) {
+               pixelCountExcludingZeros += rawHist[v];
+            }
+         }
+      }
+      if (minimum < 0) {
+         minimum = 0;
+      }
+      if (minimumExcludingZeros < 0) {
+         minimumExcludingZeros = minimum;
+      }
+      return ComponentStats.builder()
+            .histogram(fullHist, 0)
+            .pixelCount(pixelCount)
+            .pixelCountExcludingZeros(pixelCountExcludingZeros)
+            .minimum(minimum)
+            .minimumExcludingZeros(minimumExcludingZeros)
+            .maximum(maximum)
+            .build();
    }
 
    // ---- NDViewer image hook ----
@@ -561,6 +790,13 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
 
    private void submitStatsRequest(Coords position) {
       try {
+         // When autostretch is off, don't update stats — the Inspector histogram
+         // shows fixed contrast and handleAutoscale() should not recompute from
+         // a fresh histogram (which would change the displayed image when the
+         // ignore-percentile spinner is adjusted).
+         if (!getDisplaySettings().isAutostretchEnabled()) {
+            return;
+         }
          List<Image> images = getDownsampledImages(position);
          if (!images.isEmpty()) {
             ImageStatsRequest request = ImageStatsRequest.create(
