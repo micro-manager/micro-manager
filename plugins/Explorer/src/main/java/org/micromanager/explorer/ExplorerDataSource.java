@@ -54,6 +54,8 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    private boolean isRightDragging_ = false;
    private boolean isLeftDragging_ = false;
    private volatile boolean acquisitionInProgress_ = false;
+   // True when pixel size or camera ROI has changed from session start; blocks new acquisitions.
+   private volatile boolean settingsMismatch_ = false;
 
    // When true, tile selection and acquisition are disabled (opened dataset, not live explore).
    private volatile boolean readOnly_ = false;
@@ -135,6 +137,14 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setAcquisitionInProgress(boolean inProgress) {
       acquisitionInProgress_ = inProgress;
+   }
+
+   public void setSettingsMismatch(boolean mismatch) {
+      settingsMismatch_ = mismatch;
+      if (mismatch) {
+         selectionStart_ = null;
+         selectionEnd_ = null;
+      }
    }
 
    /**
@@ -364,7 +374,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    @Override
    public void mouseReleased(MouseEvent e) {
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
-         if (!readOnly_ && tileWidth_ > 0 && tileHeight_ > 0) {
+         if (!readOnly_ && !settingsMismatch_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
             if (tile != null) {
                selectionStart_ = tile;
@@ -612,19 +622,25 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          overlay.add(boundsRoi);
       }
 
-      // Red rectangle showing the current stage FOV position
+      // Red rectangle showing the current stage FOV position.
+      // Size scales with the current pixel size relative to the session pixel size,
+      // so the rectangle reflects the physical area the camera sees on the tile grid.
       Point2D.Double stagePixel = stagePositionPixel_;
       if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
          double overlapPct = manager_.getOverlapPercentage();
-         int overlapPx = (int) Math.round(tileWidth_ * overlapPct / 100.0);
-         double effW = tileWidth_ - overlapPx;
-         double effH = tileHeight_ - overlapPx;
-         double tilePixelX = stagePixel.x - effW / 2.0;
-         double tilePixelY = stagePixel.y - effH / 2.0;
+         int overlapPxX = (int) Math.round(tileWidth_  * overlapPct / 100.0);
+         int overlapPxY = (int) Math.round(tileHeight_ * overlapPct / 100.0);
+         double effW = tileWidth_  - overlapPxX;
+         double effH = tileHeight_ - overlapPxY;
+         double pixelSizeRatio = manager_.getPixelSizeRatio();
+         double fovW = effW * pixelSizeRatio;
+         double fovH = effH * pixelSizeRatio;
+         double tilePixelX = stagePixel.x - fovW / 2.0;
+         double tilePixelY = stagePixel.y - fovH / 2.0;
          int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
          int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
-         int dispW = (int) (effW * magnification);
-         int dispH = (int) (effH * magnification);
+         int dispW = (int) (fovW * magnification);
+         int dispH = (int) (fovH * magnification);
          Roi stageRoi = new Roi(dispX, dispY, dispW, dispH);
          stageRoi.setStrokeColor(Color.RED);
          stageRoi.setStrokeWidth(2);

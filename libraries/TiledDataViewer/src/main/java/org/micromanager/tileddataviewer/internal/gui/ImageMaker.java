@@ -464,10 +464,16 @@ public class ImageMaker {
       }
 
       private void processHistogram(int[] rawHistogram, GlobalRenderSettings gs) {
-         // Compute stats
+         // Compute stats, excluding zero-valued pixels (unacquired/black tiles).
+         // Zero pixels come from tiles not yet captured in the tiled viewer;
+         // including them in the autoscale min calculation drives the dark point to 0.
          int totalPixels = 0;
+         int totalNonZeroPixels = 0;
          for (int i = 0; i < rawHistogram.length; i++) {
             totalPixels += rawHistogram[i];
+            if (i > 0) {
+               totalNonZeroPixels += rawHistogram[i];
+            }
          }
 
          pixelMin_ = -1;
@@ -477,6 +483,10 @@ public class ImageMaker {
          for (int i = 0; i < numBins; i++) {
             for (int j = 0; j < binSize; j++) {
                int rawHistIndex = i * binSize + j;
+               // Skip bin 0 — those are unacquired (black) tile pixels.
+               if (rawHistIndex == 0) {
+                  continue;
+               }
                int rawHistVal = rawHistogram[rawHistIndex];
                if (rawHistVal > 0) {
                   pixelMax_ = rawHistIndex;
@@ -486,8 +496,15 @@ public class ImageMaker {
                }
             }
          }
-         maxAfterRejectingOutliers_ = totalPixels;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels,
+         if (pixelMin_ == -1) {
+            pixelMin_ = 0; // All pixels are zero — fall back gracefully
+         }
+         // Build a histogram with bin 0 zeroed out so HistogramUtils computes
+         // min/max percentiles over non-zero pixels only.
+         int[] nonZeroHist = rawHistogram.clone();
+         nonZeroHist[0] = 0;
+         HistogramUtils hu = new HistogramUtils(nonZeroHist,
+               totalNonZeroPixels > 0 ? totalNonZeroPixels : totalPixels,
                0.01 * gs.percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
@@ -553,10 +570,14 @@ public class ImageMaker {
       }
 
       private void processHistogram(int[] rawHistogram, GlobalRenderSettings gs) {
-         //Compute stats
+         // Compute stats, excluding zero-valued pixels (unacquired/black tiles).
          int totalPixels = 0;
+         int totalNonZeroPixels = 0;
          for (int i = 0; i < rawHistogram.length; i++) {
             totalPixels += rawHistogram[i];
+            if (i > 0) {
+               totalNonZeroPixels += rawHistogram[i];
+            }
          }
 
          pixelMin_ = -1;
@@ -566,6 +587,10 @@ public class ImageMaker {
          for (int i = 0; i < numBins; i++) {
             for (int j = 0; j < binSize; j++) {
                int rawHistIndex = i * binSize + j;
+               // Skip bin 0 — those are unacquired (black) tile pixels.
+               if (rawHistIndex == 0) {
+                  continue;
+               }
                int rawHistVal = rawHistogram[rawHistIndex];
                if (rawHistVal > 0) {
                   pixelMax_ = rawHistIndex;
@@ -575,8 +600,15 @@ public class ImageMaker {
                }
             }
          }
-         maxAfterRejectingOutliers_ = totalPixels;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels,
+         if (pixelMin_ == -1) {
+            pixelMin_ = 0; // All pixels are zero — fall back gracefully
+         }
+         // Build a histogram with bin 0 zeroed out so HistogramUtils computes
+         // min/max percentiles over non-zero pixels only.
+         int[] nonZeroHist = rawHistogram.clone();
+         nonZeroHist[0] = 0;
+         HistogramUtils hu = new HistogramUtils(nonZeroHist,
+               totalNonZeroPixels > 0 ? totalNonZeroPixels : totalPixels,
                0.01 * gs.percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();

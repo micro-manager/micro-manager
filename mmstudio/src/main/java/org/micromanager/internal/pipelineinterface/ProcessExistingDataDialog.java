@@ -45,6 +45,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -274,6 +275,7 @@ public final class ProcessExistingDataDialog extends JDialog {
       }
 
       Datastore source = null;
+      DisplaySettings sourceDisplaySettings = null;
       String input = (String) (input_.getSelectedItem());
       if (input.contentEquals(LOAD_FROM_DISK)) {
          try {
@@ -288,6 +290,7 @@ public final class ProcessExistingDataDialog extends JDialog {
             if (display.getName().contentEquals(input)) {
                if (display.getDataProvider() instanceof Datastore) {
                   source = (Datastore) display.getDataProvider();
+                  sourceDisplaySettings = display.getDisplaySettings();
                }
                break;
             }
@@ -305,7 +308,7 @@ public final class ProcessExistingDataDialog extends JDialog {
       if (showDisplay_.isSelected()) {
          destination.setName(source.getName() + "-Processed");
          studio_.displays().manage(destination);
-         studio_.displays().createDisplay(destination);
+         studio_.displays().createDisplay(destination, null, sourceDisplaySettings);
       }
 
       ProgressMonitor monitor = new ProgressMonitor(this,
