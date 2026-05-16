@@ -528,6 +528,7 @@ public class ExplorerManager {
       exploring_ = false;
       loadedData_ = false;
       acquisitionInterrupted_ = true;
+      dismissMismatchAlert();
       pendingBatches_.set(0);
       if (dataSource_ != null) {
          dataSource_.clearPendingTiles();
@@ -679,6 +680,15 @@ public class ExplorerManager {
       redrawOverlay();
    }
 
+   private void dismissMismatchAlert() {
+      if (mismatchAlert_ != null) {
+         if (mismatchAlert_.isUsable()) {
+            mismatchAlert_.dismiss();
+         }
+         mismatchAlert_ = null;
+      }
+   }
+
    private void updateSettingsMismatch() {
       boolean mismatch = Math.abs(pixelSizeUm_ - initialPixelSizeUm_) > 0.001 * initialPixelSizeUm_
             || cameraWidth_  != initialCameraWidth_
@@ -693,9 +703,8 @@ public class ExplorerManager {
                   ExplorerManager.class,
                   "Acquisition blocked: pixel size or camera ROI has changed from session "
                   + "start. Restore settings to re-enable tile acquisition.");
-         } else if (mismatchAlert_ != null && mismatchAlert_.isUsable()) {
-            mismatchAlert_.dismiss();
-            mismatchAlert_ = null;
+         } else {
+            dismissMismatchAlert();
          }
          redrawOverlay();
       }
@@ -1000,6 +1009,13 @@ public class ExplorerManager {
 
             for (Point tile : tiles) {
                if (acquisitionInterrupted_) {
+                  break;
+               }
+               if (settingsMismatch_) {
+                  studio_.logs().logMessage(
+                        "Explorer: aborting in-flight acquisition — settings changed "
+                              + "(pixel size or ROI mismatch)");
+                  acquisitionInterrupted_ = true;
                   break;
                }
                int row = tile.x;
@@ -1456,8 +1472,12 @@ public class ExplorerManager {
                targetX = initialStageX_ + stageOffset.x;
                targetY = initialStageY_ + stageOffset.y;
             } else {
-               targetX = initialStageX_ + offsetPixelX * initialPixelSizeUm_;
-               targetY = initialStageY_ + offsetPixelY * initialPixelSizeUm_;
+               double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
+                     ? (double) initialCameraWidth_  / tw : 1.0;
+               double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
+                     ? (double) initialCameraHeight_ / th : 1.0;
+               targetX = initialStageX_ + offsetPixelX * pipelineScaleX * initialPixelSizeUm_;
+               targetY = initialStageY_ + offsetPixelY * pipelineScaleY * initialPixelSizeUm_;
             }
 
             studio_.core().setXYPosition(targetX, targetY);

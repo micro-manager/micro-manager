@@ -699,7 +699,11 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
          Runnable cb = postRenderCallback_;
          if (cb != null) {
-            cb.run();
+            try {
+               cb.run();
+            } catch (Exception e) {
+               System.err.println("TiledDataViewer: postRenderCallback threw: " + e);
+            }
          }
 
          HashMap<String, int[]> channelHistograms = guiManager_.getHistograms();

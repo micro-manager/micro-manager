@@ -628,9 +628,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       Point2D.Double stagePixel = stagePositionPixel_;
       if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
          double overlapPct = manager_.getOverlapPercentage();
-         int overlapPx = (int) Math.round(tileWidth_ * overlapPct / 100.0);
-         double effW = tileWidth_ - overlapPx;
-         double effH = tileHeight_ - overlapPx;
+         int overlapPxX = (int) Math.round(tileWidth_  * overlapPct / 100.0);
+         int overlapPxY = (int) Math.round(tileHeight_ * overlapPct / 100.0);
+         double effW = tileWidth_  - overlapPxX;
+         double effH = tileHeight_ - overlapPxY;
          double pixelSizeRatio = manager_.getPixelSizeRatio();
          double fovW = effW * pixelSizeRatio;
          double fovH = effH * pixelSizeRatio;
