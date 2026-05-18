@@ -74,6 +74,9 @@ public class SBSPlate {
    public static final String SBS_96_WELL = "96-Well";
    public static final String SBS_384_WELL = "384-Well";
    public static final String SLIDE_HOLDER = "4 Slides";
+   public static final String CHAMBER_8_WELL = "Cellvis 8-Well Chamber";
+   public static final String COVERSLIP_18MM = "Coverslip 18x18mm";
+   public static final String COVERSLIP_22MM = "Coverslip 22x22mm";
    public static final String DEFAULT_XYSTAGE_NAME = "XYStage";
    public static final String LOAD_CUSTOM = "Load custom...";
    public static final String CUSTOM = "Custom";
@@ -230,6 +233,45 @@ public class SBSPlate {
          firstWellY_ = 50000.0;
          wellSizeX_ = 25600.0;
          wellSizeY_ = 75000.0;
+         circular_ = false;
+      } else if (id.equals(CHAMBER_8_WELL)) {
+         id_ = CHAMBER_8_WELL;
+         numColumns_ = 4;
+         numRows_ = 2;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellSpacingX_ = 11570.0;
+         wellSpacingY_ = 11200.0;
+         firstWellX_ = 46530.0;
+         firstWellY_ = 37140.0;
+         wellSizeX_ = 9300.0;
+         wellSizeY_ = 8700.0;
+         circular_ = false;
+      } else if (id.equals(COVERSLIP_18MM)) {
+         id_ = COVERSLIP_18MM;
+         numColumns_ = 1;
+         numRows_ = 1;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellSpacingX_ = 18000.0;
+         wellSpacingY_ = 18000.0;
+         firstWellX_ = 63880.0;
+         firstWellY_ = 42740.0;
+         wellSizeX_ = 18000.0;
+         wellSizeY_ = 18000.0;
+         circular_ = false;
+      } else if (id.equals(COVERSLIP_22MM)) {
+         id_ = COVERSLIP_22MM;
+         numColumns_ = 1;
+         numRows_ = 1;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellSpacingX_ = 22000.0;
+         wellSpacingY_ = 22000.0;
+         firstWellX_ = 63880.0;
+         firstWellY_ = 42740.0;
+         wellSizeX_ = 22000.0;
+         wellSizeY_ = 22000.0;
          circular_ = false;
       } else if (id.equals(LOAD_CUSTOM)) {
          wasLastModeCustom_ = true;
@@ -608,6 +650,16 @@ public class SBSPlate {
    public void setFirstWellY(double firstWellY) {
       id_ = CUSTOM;
       this.firstWellY_ = firstWellY;
+   }
+
+   void shiftFirstWell(double dx, double dy) {
+      firstWellX_ += dx;
+      firstWellY_ += dy;
+      try {
+         generateWells();
+      } catch (HCSException e) {
+         ReportingUtils.logError(e);
+      }
    }
 
    public boolean isWellCircular() {
