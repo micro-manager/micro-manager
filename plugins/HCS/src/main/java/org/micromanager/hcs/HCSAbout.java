@@ -37,6 +37,8 @@ public class HCSAbout extends JDialog {
       contentPanel.setLayout(new BorderLayout(0, 0));
       JTextPane txtpnHcsModuleCopyright = new JTextPane();
       txtpnHcsModuleCopyright.setEditable(false);
+      txtpnHcsModuleCopyright.setBackground(contentPanel.getBackground());
+      txtpnHcsModuleCopyright.setForeground(contentPanel.getForeground());
       txtpnHcsModuleCopyright.setText("HCS Site Generator\r\n\r\n"
             + "Derived from HCS plugin by 100X Imaging Inc.\r\n"
             + "THIS SOFTWARE IS PROVIDED IN THE HOPE THAT IT MAY BE USEFUL, "
