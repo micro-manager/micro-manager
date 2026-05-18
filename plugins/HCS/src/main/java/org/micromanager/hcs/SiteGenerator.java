@@ -100,6 +100,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private double xSpacing_ = 0.0;
    private double ySpacing_ = 0.0;
+
+   private WellZoomFrame wellZoomFrame_ = null;
    
    private final JToggleButton moveStage_;
    private final JToggleButton selectWells_;
@@ -237,6 +239,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             }
          }
          platePanel_.repaint();
+         notifyWellZoom();
       });
 
       final FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
@@ -407,6 +410,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       });
       sidebar.add(btnAbout, "growx, gaptop 14");
 
+      JButton btnWellZoom = new JButton("Well Zoom");
+      btnWellZoom.setToolTipText("Open magnified view of a single well");
+      btnWellZoom.addActionListener((ActionEvent e) -> openWellZoom());
+      sidebar.add(btnWellZoom, "growx");
+
       statusLabel_ = new JLabel();
       statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
       contentsPanel.add(statusLabel_, "dock south, gap 0");
@@ -428,6 +436,21 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
    }
    
+   private void openWellZoom() {
+      if (wellZoomFrame_ == null || !wellZoomFrame_.isDisplayable()) {
+         wellZoomFrame_ = new WellZoomFrame(plate_, this, studio_);
+         wellZoomFrame_.setSites(platePanel_.getWellPositions());
+      }
+      wellZoomFrame_.setVisible(true);
+      wellZoomFrame_.toFront();
+   }
+
+   private void notifyWellZoom() {
+      if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
+         wellZoomFrame_.setSites(platePanel_.getWellPositions());
+      }
+   }
+
    @Override
    public void dispose() {
       saveSettings();
@@ -900,6 +923,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          platePanel_.setSelectedWells(selectedWells);
       }
       platePanel_.repaint();
+      notifyWellZoom();
    }
 
    public void configurationChanged() {
@@ -944,6 +968,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       plateIDCombo_.setSelectedItem(SBSPlate.LOAD_CUSTOM);
       shouldIgnoreFormatEvent_ = false;
       platePanel_.repaint();
+      notifyWellZoom();
    }
    
    @Override
