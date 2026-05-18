@@ -199,6 +199,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       sidebar.add(selectWells_, "split 2, alignx center, flowx");
       sidebar.add(moveStage_);
 
+      final JLabel ctrlClickHint = new JLabel("Ctrl-click to Move");
+      ctrlClickHint.setFont(ctrlClickHint.getFont().deriveFont(java.awt.Font.ITALIC, 10f));
+      sidebar.add(ctrlClickHint, "alignx center");
+
       final JLabel plateFormatLabel = new JLabel();
       plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
       plateFormatLabel.setText("<html><b>Plate Format:</b></html>");
@@ -436,6 +440,12 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
    }
    
+   @Override
+   public void selectMoveTool() {
+      moveStage_.setSelected(true);
+      platePanel_.setTool(PlatePanel.Tool.MOVE);
+   }
+
    private void openWellZoom() {
       if (wellZoomFrame_ == null || !wellZoomFrame_.isDisplayable()) {
          wellZoomFrame_ = new WellZoomFrame(plate_, this, studio_);
@@ -845,7 +855,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    @Override
-   public void updateStagePositions(double x, double y, double z, String wellLabel, 
+   public void updateStagePositions(double x, double y, double z, String wellLabel,
            String siteLabel) {
       xyStagePos_.x = x;
       xyStagePos_.y = y;
@@ -853,6 +863,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       stageWell_ = wellLabel;
 
       displayStatus();
+      if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
+         wellZoomFrame_.updateStagePosition(x, y, wellLabel);
+      }
    }
 
    @Override

@@ -24,6 +24,8 @@ public interface ParentPlateGUI {
 
    void displayError(String errTxt);
 
+   void selectMoveTool();
+
    Point2D.Double getOffset();
 
    Point2D.Double applyOffset(Point2D.Double pt);

@@ -1,21 +1,25 @@
 package org.micromanager.hcs;
 
-import com.google.common.eventbus.Subscribe;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import mmcorej.DeviceType;
 import org.micromanager.Studio;
-import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.utils.WindowPositioning;
 
 /**
@@ -32,7 +36,7 @@ public class WellZoomFrame extends JFrame {
     * Creates the Well Zoom window.
     *
     * @param plate    The plate model (mutated in-place on format changes).
-    * @param plateGui Callback interface shared with PlatePanel.
+    * @param plateGui Callback interface — used only to read the calibration offset.
     * @param studio   Micro-Manager Studio handle.
     */
    public WellZoomFrame(SBSPlate plate, ParentPlateGUI plateGui, Studio studio) {
@@ -48,11 +52,10 @@ public class WellZoomFrame extends JFrame {
       panel_ = new WellZoomPanel(plate, plateGui, studio);
       add(panel_);
 
-      studio.events().registerForEvents(panel_);
       addWindowListener(new java.awt.event.WindowAdapter() {
          @Override
          public void windowClosing(java.awt.event.WindowEvent e) {
-            studio.events().unregisterForEvents(panel_);
+            panel_.executor_.shutdown();
          }
       });
    }
@@ -66,6 +69,17 @@ public class WellZoomFrame extends JFrame {
     */
    public void setSites(WellPositionList[] wells) {
       panel_.setSites(wells);
+   }
+
+   /**
+    * Called by SiteGenerator.updateStagePositions() on every stage update.
+    *
+    * @param x         Stage X in device coordinates.
+    * @param y         Stage Y in device coordinates.
+    * @param wellLabel Well the stage is currently in, or "" when outside all wells.
+    */
+   public void updateStagePosition(double x, double y, String wellLabel) {
+      panel_.updateStagePosition(x, y, wellLabel);
    }
 
    // -------------------------------------------------------------------------
@@ -82,36 +96,100 @@ public class WellZoomFrame extends JFrame {
       private final Studio studio_;
 
       private WellPositionList[] allWells_ = new WellPositionList[0];
-      // last well seen; null only before first contact
+      // Last well the stage was seen inside; null until first well entry.
       private WellPositionList currentWell_ = null;
-      // whether stage is currently inside currentWell_
-      private boolean stageInWell_ = false;
-      private Point2D.Double stagePos_ = new Point2D.Double(0, 0);
+      // Well label from the last updateStagePosition call; "" means outside.
+      private String currentWellLabel_ = "";
+      // Stage position in device coords, from the last updateStagePosition call.
+      private Point2D.Double stageDevPos_ = new Point2D.Double(0, 0);
       private double cameraFovX_ = 0.0;
       private double cameraFovY_ = 0.0;
+
+      // Coordinate transform parameters cached from the last paintComponent call,
+      // used by the mouse handler to convert click position to plate coords.
+      private double lastXFactor_ = 1.0;
+      private double lastYFactor_ = 1.0;
+      private int lastCx_ = 0;
+      private int lastCy_ = 0;
+      private double lastWellCx_ = 0.0;
+      private double lastWellCy_ = 0.0;
+
+      final ExecutorService executor_ = Executors.newSingleThreadExecutor();
 
       WellZoomPanel(SBSPlate plate, ParentPlateGUI plateGui, Studio studio) {
          plate_ = plate;
          plateGui_ = plateGui;
          studio_ = studio;
          updateCameraFov();
-         // Initial stage position
-         try {
-            stagePos_ = studio_.getCMMCore().getXYStagePosition();
-         } catch (Exception ignore) {
-            // leave at (0,0)
-         }
+
+         addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+               if (e.isControlDown()) {
+                  onCtrlClick(e.getX(), e.getY());
+               }
+            }
+         });
+
+         // Show a hint cursor so the user knows Ctrl-click is available.
+         addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+               if ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) != 0) {
+                  setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+               } else {
+                  setCursor(Cursor.getDefaultCursor());
+               }
+            }
+         });
       }
 
-      // -- called by WellZoomFrame --
+      private void onCtrlClick(int pixX, int pixY) {
+         if (currentWell_ == null) {
+            return;
+         }
+         // Convert pixel → well-relative plate coords using the last paint transform.
+         double relX = (pixX - lastCx_) / lastXFactor_;
+         double relY = (pixY - lastCy_) / lastYFactor_;
+
+         // Reject clicks outside the well boundary.
+         if (!plate_.isPointWithinWell(relX, relY)) {
+            return;
+         }
+
+         // Plate coords = well centre + relative offset.
+         final double plateX = lastWellCx_ + relX;
+         final double plateY = lastWellCy_ + relY;
+
+         executor_.submit(() -> {
+            try {
+               final Point2D.Double target = plateGui_.applyOffset(
+                     new Point2D.Double(plateX, plateY));
+               studio_.getCMMCore().setXYPosition(target.x, target.y);
+               studio_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
+               if (plateGui_.useThreePtAF()
+                     && plateGui_.getThreePointZPos(target.x, target.y) != null) {
+                  boolean cfOn = studio_.getCMMCore().isContinuousFocusEnabled();
+                  if (cfOn) {
+                     studio_.getCMMCore().enableContinuousFocus(false);
+                  }
+                  studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
+                        plateGui_.getThreePointZPos(target.x, target.y));
+                  if (cfOn) {
+                     studio_.getCMMCore().enableContinuousFocus(true);
+                  }
+               }
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "HCS WellZoom: stage move failed");
+            }
+         });
+      }
 
       void setSites(WellPositionList[] wells) {
          allWells_ = wells;
          if (currentWell_ != null) {
-            // Try to keep the same well displayed after a site/format update.
             String label = currentWell_.getLabel();
             currentWell_ = null;
-            stageInWell_ = false;
             for (WellPositionList w : wells) {
                if (w.getLabel().equals(label)) {
                   currentWell_ = w;
@@ -122,43 +200,20 @@ public class WellZoomFrame extends JFrame {
          SwingUtilities.invokeLater(this::repaint);
       }
 
-      // -- stage position event --
+      void updateStagePosition(double x, double y, String wellLabel) {
+         stageDevPos_ = new Point2D.Double(x, y);
+         currentWellLabel_ = wellLabel == null ? "" : wellLabel;
 
-      @Subscribe
-      public void xyStagePositionChanged(XYStagePositionChangedEvent ev) {
-         if (!plateGui_.isCalibratedXY()) {
-            return;
-         }
-         stagePos_ = new Point2D.Double(ev.getXPos(), ev.getYPos());
-
-         // Find which well the stage is currently in.
-         Point2D.Double offset = plateGui_.getOffset();
-         double plateX = stagePos_.x - offset.x;
-         double plateY = stagePos_.y - offset.y;
-
-         if (!plate_.isPointWithin(plateX, plateY)) {
-            // Stage is off the plate entirely — keep last well visible but
-            // mark as outside so the stage pointer is hidden.
-            stageInWell_ = false;
-         } else {
-            String label = plate_.getWellLabel(plateX, plateY);
-            // Switch displayed well when the label changes.
-            if (currentWell_ == null || !currentWell_.getLabel().equals(label)) {
-               WellPositionList found = null;
-               for (WellPositionList w : allWells_) {
-                  if (w.getLabel().equals(label)) {
-                     found = w;
-                     break;
-                  }
-               }
-               if (found != null) {
-                  currentWell_ = found;
+         // Switch the displayed well when the stage enters a new one.
+         if (!currentWellLabel_.isEmpty()
+               && (currentWell_ == null
+                    || !currentWell_.getLabel().equals(currentWellLabel_))) {
+            for (WellPositionList w : allWells_) {
+               if (w.getLabel().equals(currentWellLabel_)) {
+                  currentWell_ = w;
+                  break;
                }
             }
-            // Stage is in the grid area; check it's actually inside the well
-            // boundary (not in the spacing gap between wells).
-            stageInWell_ = currentWell_ != null
-                  && plate_.getWellLabel(plateX, plateY).equals(currentWell_.getLabel());
          }
          SwingUtilities.invokeLater(this::repaint);
       }
@@ -175,7 +230,6 @@ public class WellZoomFrame extends JFrame {
          int h = getHeight();
 
          if (currentWell_ == null) {
-            // No well seen yet — stage has never entered a well.
             String msg = "Move stage into a well";
             g2.setColor(studio_.app().skin().getEnabledTextColor());
             FontMetrics fm = g2.getFontMetrics();
@@ -199,27 +253,31 @@ public class WellZoomFrame extends JFrame {
 
          double xFactor = drawW / wellSizeX;
          double yFactor = drawH / wellSizeY;
-         // Lock aspect ratio (match smallest scale).
          if (xFactor < yFactor) {
             yFactor = xFactor;
          } else {
             xFactor = yFactor;
          }
 
-         // Panel centre — well centre maps here.
-         int cx = w / 2;
-         int cy = h / 2;
+         final int cx = w / 2;
+         final int cy = h / 2;
 
-         // Well centre in plate (µm) coords — needed to convert stage pos.
          double wellCx;
          double wellCy;
          try {
             wellCx = plate_.getWellXUm(currentWell_.getLabel());
             wellCy = plate_.getWellYUm(currentWell_.getLabel());
          } catch (HCSException e) {
-            // Shouldn't happen; well label came from the plate itself.
             return;
          }
+
+         // Cache transform for use by the mouse handler.
+         lastXFactor_ = xFactor;
+         lastYFactor_ = yFactor;
+         lastCx_ = cx;
+         lastCy_ = cy;
+         lastWellCx_ = wellCx;
+         lastWellCy_ = wellCy;
 
          // ---- draw well outline ----
          int wellPxW = (int) (wellSizeX * xFactor);
@@ -227,8 +285,7 @@ public class WellZoomFrame extends JFrame {
          int wellLeft = cx - wellPxW / 2;
          int wellTop  = cy - wellPxH / 2;
 
-         Color outlineColor = studio_.app().skin().getEnabledTextColor();
-         g2.setColor(outlineColor);
+         g2.setColor(studio_.app().skin().getEnabledTextColor());
          g2.setStroke(new BasicStroke(1.5f));
          if (plate_.isWellCircular()) {
             g2.drawOval(wellLeft, wellTop, wellPxW, wellPxH);
@@ -237,18 +294,13 @@ public class WellZoomFrame extends JFrame {
          }
 
          // ---- compute site pixel positions ----
-         // Sites in WellPositionList and well centre from getWellXUm/YUm are
-         // both in plate coordinates (µm from plate origin, no offset applied).
-         // Stage position is in device coordinates: stagePlate = stage - offset.
-         final Point2D.Double offset = plateGui_.getOffset();
-
+         // Sites and well centre are both in plate coords (µm from plate origin).
          int n = currentWell_.getSitePositions().getNumberOfPositions();
          int[] sxPx = new int[n];
          int[] syPx = new int[n];
          for (int i = 0; i < n; i++) {
             double sx = currentWell_.getSitePositions().getPosition(i).getX();
             double sy = currentWell_.getSitePositions().getPosition(i).getY();
-            // sx, sy and wellCx, wellCy are all in plate coords — subtract directly.
             sxPx[i] = (int) ((sx - wellCx) * xFactor + cx + 0.5);
             syPx[i] = (int) ((sy - wellCy) * yFactor + cy + 0.5);
          }
@@ -264,7 +316,6 @@ public class WellZoomFrame extends JFrame {
                double y2 = syPx[i + 1];
                g2.draw(new Line2D.Double(x1, y1, x2, y2));
 
-               // Small arrowhead at the midpoint pointing toward x2,y2.
                double dx = x2 - x1;
                double dy = y2 - y1;
                double len = Math.sqrt(dx * dx + dy * dy);
@@ -274,10 +325,8 @@ public class WellZoomFrame extends JFrame {
                   double mx = (x1 + x2) / 2.0;
                   double my = (y1 + y2) / 2.0;
                   double arrowSize = 5.0;
-                  // tip of arrowhead (slightly ahead of midpoint)
                   double tx = mx + ux * arrowSize;
                   double ty = my + uy * arrowSize;
-                  // two base corners (perpendicular, behind midpoint)
                   double bx = mx - ux * arrowSize;
                   double by = my - uy * arrowSize;
                   int[] arrowX = {
@@ -305,33 +354,35 @@ public class WellZoomFrame extends JFrame {
             g2.drawRect(sxPx[i] - indW / 2, syPx[i] - indH / 2, indW, indH);
          }
 
-         // ---- draw stage pointer ----
-         if (plateGui_.isCalibratedXY()) {
-            if (stageInWell_) {
-               double stagePlateX = stagePos_.x - offset.x;
-               double stagePlateY = stagePos_.y - offset.y;
-               double stageRelX = stagePlateX - wellCx;
-               double stageRelY = stagePlateY - wellCy;
-               int spxX = (int) (stageRelX * xFactor + cx + 0.5);
-               int spxY = (int) (stageRelY * yFactor + cy + 0.5);
-               int spW = Math.max(MIN_INDICATOR_PX, (int) (cameraFovX_ * xFactor + 0.5));
-               int spH = Math.max(MIN_INDICATOR_PX, (int) (cameraFovY_ * yFactor + 0.5));
-               g2.setColor(Color.RED);
-               g2.setStroke(new BasicStroke(1.5f));
-               g2.fillRect(spxX - spW / 2, spxY - spH / 2, spW, spH);
-            } else {
-               // Stage is outside this well — show a small notice in the corner.
-               g2.setColor(Color.ORANGE);
-               g2.setFont(new Font("Helvetica", Font.PLAIN, 11));
-               g2.drawString("(stage outside well)", MARGIN + 4, h - MARGIN / 2);
-            }
+         // ---- draw stage pointer and well label ----
+         // currentWellLabel_ is set authoritatively by SiteGenerator (which
+         // gets it from PlatePanel after offset correction). Empty = outside.
+         boolean stageInWell = !currentWellLabel_.isEmpty()
+               && currentWellLabel_.equals(currentWell_.getLabel());
+
+         if (stageInWell) {
+            // Convert device → plate coords using the calibration offset.
+            Point2D.Double offset = plateGui_.getOffset();
+            double stagePlateX = stageDevPos_.x - offset.x;
+            double stagePlateY = stageDevPos_.y - offset.y;
+            double stageRelX = stagePlateX - wellCx;
+            double stageRelY = stagePlateY - wellCy;
+            int spxX = (int) (stageRelX * xFactor + cx + 0.5);
+            int spxY = (int) (stageRelY * yFactor + cy + 0.5);
+            int spW = Math.max(MIN_INDICATOR_PX, (int) (cameraFovX_ * xFactor + 0.5));
+            int spH = Math.max(MIN_INDICATOR_PX, (int) (cameraFovY_ * yFactor + 0.5));
+            g2.setColor(Color.RED);
+            g2.setStroke(new BasicStroke(1.5f));
+            g2.fillRect(spxX - spW / 2, spxY - spH / 2, spW, spH);
+         } else {
+            g2.setColor(Color.ORANGE);
+            g2.setFont(new Font("Helvetica", Font.PLAIN, 11));
+            g2.drawString("(stage outside well)", MARGIN + 4, h - MARGIN / 2);
          }
 
-         // ---- draw well label ----
          g2.setColor(studio_.app().skin().getEnabledTextColor());
          g2.setFont(new Font("Helvetica", Font.BOLD, 14));
-         String displayLabel = stageInWell_ ? currentWell_.getLabel() : "--";
-         g2.drawString(displayLabel, MARGIN + 4, MARGIN + 16);
+         g2.drawString(stageInWell ? currentWell_.getLabel() : "--", MARGIN + 4, MARGIN + 16);
       }
 
       private void updateCameraFov() {

@@ -267,8 +267,17 @@ public class PlatePanel extends JPanel {
    protected void onMouseClicked(MouseEvent e) throws HCSException {
       final Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
+      if (e.isControlDown()) {
+         // Ctrl-click always moves the stage, switching to Move mode if needed.
+         plateGui_.selectMoveTool();
+         mode_ = Tool.MOVE;
+      }
       if (mode_ == Tool.MOVE) {
          if (studio_ == null) {
+            return;
+         }
+         if (!e.isControlDown()) {
+            // Plain click in Move mode no longer triggers a move.
             return;
          }
          if (!plate_.isPointWithin(pt.x, pt.y)) {
