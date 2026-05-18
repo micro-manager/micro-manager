@@ -471,6 +471,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       if (wellZoomFrame_ == null || !wellZoomFrame_.isDisplayable()) {
          wellZoomFrame_ = new WellZoomFrame(plate_, this, studio_);
          wellZoomFrame_.setSites(platePanel_.getWellPositions());
+         wellZoomFrame_.updateStagePosition(
+               xyStagePos_.x, xyStagePos_.y, stageWell_);
       }
       wellZoomFrame_.setVisible(true);
       wellZoomFrame_.toFront();

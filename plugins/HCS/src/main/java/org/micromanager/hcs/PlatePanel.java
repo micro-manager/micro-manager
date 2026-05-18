@@ -301,10 +301,13 @@ public class PlatePanel extends JPanel {
                      if (continuousFocusOn) {
                         studio_.getCMMCore().enableContinuousFocus(false);
                      }
-                     studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
-                             plateGui_.getThreePointZPos(pt2.x, pt2.y));
-                     if (continuousFocusOn) {
-                        studio_.getCMMCore().enableContinuousFocus(true);
+                     try {
+                        studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
+                                plateGui_.getThreePointZPos(pt2.x, pt2.y));
+                     } finally {
+                        if (continuousFocusOn) {
+                           studio_.getCMMCore().enableContinuousFocus(true);
+                        }
                      }
                   }
                   xyStagePos_ = studio_.getCMMCore().getXYStagePosition();
@@ -374,7 +377,7 @@ public class PlatePanel extends JPanel {
    }
 
    protected void onMouseReleased(MouseEvent e) {
-      if (mode_ == Tool.MOVE) {
+      if (mode_ == Tool.MOVE || e.isControlDown()) {
          // Don't make any changes to the selection.
          return;
       }

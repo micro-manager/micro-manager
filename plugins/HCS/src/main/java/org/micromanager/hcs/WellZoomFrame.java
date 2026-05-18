@@ -177,10 +177,13 @@ public class WellZoomFrame extends JFrame {
                   if (cfOn) {
                      studio_.getCMMCore().enableContinuousFocus(false);
                   }
-                  studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
-                        plateGui_.getThreePointZPos(target.x, target.y));
-                  if (cfOn) {
-                     studio_.getCMMCore().enableContinuousFocus(true);
+                  try {
+                     studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
+                           plateGui_.getThreePointZPos(target.x, target.y));
+                  } finally {
+                     if (cfOn) {
+                        studio_.getCMMCore().enableContinuousFocus(true);
+                     }
                   }
                }
             } catch (Exception ex) {
