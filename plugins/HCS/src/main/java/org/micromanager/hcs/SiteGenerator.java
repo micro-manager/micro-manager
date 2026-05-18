@@ -91,6 +91,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private static final String SITE_OFFSET     = "site_offset"; // in um
    private static final String SPACING_MODE    = "spacing_mode";
    private static final String LIST_OVERWRITE  = "list_overwrite";
+   private static final String WELL_ZOOM_OPEN  = "well_zoom_open";
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
@@ -455,6 +456,16 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       wellZoomFrame_.toFront();
    }
 
+   /**
+    * Called at startup to reopen the Well Zoom window if it was open last session.
+    */
+   public void restoreWellZoom() {
+      if (studio_.profile().getSettings(SiteGenerator.class)
+            .getBoolean(WELL_ZOOM_OPEN, false)) {
+         openWellZoom();
+      }
+   }
+
    private void notifyWellZoom() {
       if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
          wellZoomFrame_.setSites(platePanel_.getWellPositions());
@@ -484,6 +495,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
       settings.putDoubleList(SITE_OFFSET, Arrays.asList(offset));
       settings.putBoolean(LIST_OVERWRITE, overWriteMMList_.isSelected());
+      settings.putBoolean(WELL_ZOOM_OPEN,
+            wellZoomFrame_ != null && wellZoomFrame_.isVisible());
    }
 
    protected final void loadSettings() {
