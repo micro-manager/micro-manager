@@ -252,7 +252,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             return;
          }
          plate_.initialize((String) plateIDCombo_.getSelectedItem());
-         setA1Button_.setEnabled(usesA1Center((String) plateIDCombo_.getSelectedItem()));
+         setA1Button_.setEnabled(
+               usesA1Center((String) plateIDCombo_.getSelectedItem()) && isCalibratedXY_);
          updateXySpacing();
          PositionList sites = generateSitesInWell();
          try {
@@ -957,6 +958,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    private void setA1AtCurrentStagePosition() {
+      if (!isCalibratedXY_) {
+         studio_.logs().showMessage("Calibrate XY first");
+         return;
+      }
       try {
          double devX = studio_.getCMMCore().getXPosition();
          double devY = studio_.getCMMCore().getYPosition();
@@ -989,6 +994,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       isCalibratedXY_ = true;
       regenerate();
       moveStage_.setEnabled(true);
+      setA1Button_.setEnabled(usesA1Center((String) plateIDCombo_.getSelectedItem()));
    }
    
    private void regenerate() {

@@ -41,7 +41,7 @@ public class WellZoomFrame extends JFrame {
     */
    public WellZoomFrame(SBSPlate plate, ParentPlateGUI plateGui, Studio studio) {
       super("Well Zoom");
-      setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+      setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       setSize(420, 420);
       java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
       if (iconUrl != null) {
@@ -54,7 +54,7 @@ public class WellZoomFrame extends JFrame {
 
       addWindowListener(new java.awt.event.WindowAdapter() {
          @Override
-         public void windowClosing(java.awt.event.WindowEvent e) {
+         public void windowClosed(java.awt.event.WindowEvent e) {
             panel_.executor_.shutdown();
          }
       });
@@ -146,6 +146,10 @@ public class WellZoomFrame extends JFrame {
 
       private void onCtrlClick(int pixX, int pixY) {
          if (currentWell_ == null) {
+            return;
+         }
+         if (!plateGui_.isCalibratedXY()) {
+            studio_.logs().showMessage("Calibrate XY first");
             return;
          }
          // Convert pixel → well-relative plate coords using the last paint transform.

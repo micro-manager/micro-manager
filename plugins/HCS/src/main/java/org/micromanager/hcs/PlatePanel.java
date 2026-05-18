@@ -280,6 +280,10 @@ public class PlatePanel extends JPanel {
             // Plain click in Move mode no longer triggers a move.
             return;
          }
+         if (!plateGui_.isCalibratedXY()) {
+            studio_.logs().showMessage("Calibrate XY first");
+            return;
+         }
          if (!plate_.isPointWithin(pt.x, pt.y)) {
             return;
          }
