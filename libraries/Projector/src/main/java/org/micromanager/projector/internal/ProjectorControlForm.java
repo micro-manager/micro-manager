@@ -398,15 +398,7 @@ public class ProjectorControlForm extends JFrame {
       calibrator_ = new Calibrator(studio_, dev_, settings_);
       final String originalChannel = projectorControlExecution_.prepareChannel(
               settings_.getString(Terms.PTCHANNEL, ""));
-      String originalShutterT = studio_.core().getShutterDevice();
-      if (!desiredShutter.isEmpty()) {
-         try {
-            studio_.core().setShutterDevice(desiredShutter);
-         } catch (Exception ex) {
-            originalShutterT = "";
-         }
-      }
-      final String originalShutter = originalShutterT;
+      final boolean shutterWasOpen = projectorControlExecution_.prepareShutter(desiredShutter);
       Future<Boolean> runCalibration = calibrator_.runCalibration();
       Thread t = new Thread() {
          @Override
@@ -420,13 +412,7 @@ public class ProjectorControlForm extends JFrame {
             if (success) {
                mapping_ = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
             }
-            if (!originalShutter.isEmpty()) {
-               try {
-                  studio_.core().setShutterDevice(originalShutter);
-               } catch (Exception ex) {
-                  studio_.logs().logError("Failed to reset shutter in Projector calibration");
-               }
-            }
+            projectorControlExecution_.returnShutter(desiredShutter, shutterWasOpen);
             if (originalChannel != null && !originalChannel.isEmpty()) {
                projectorControlExecution_.returnChannel(originalChannel);
             }
