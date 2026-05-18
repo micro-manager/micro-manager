@@ -104,6 +104,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private WellZoomFrame wellZoomFrame_ = null;
    private boolean wellZoomWasOpen_ = false;
+   private JButton setA1Button_ = null;
    
    private final JToggleButton moveStage_;
    private final JToggleButton selectWells_;
@@ -224,6 +225,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_384_WELL);
       plateIDCombo_.addItem(SBSPlate.SLIDE_HOLDER);
+      plateIDCombo_.addItem(SBSPlate.CHAMBER_8_WELL);
+      plateIDCombo_.addItem(SBSPlate.COVERSLIP_18MM);
+      plateIDCombo_.addItem(SBSPlate.COVERSLIP_22MM);
       plateIDCombo_.addItem(SBSPlate.LOAD_CUSTOM);
 
       JButton customButton = new JButton("Create Custom");
@@ -233,6 +237,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          csf.setVisible(true);
       });
 
+      setA1Button_ = new JButton("Set A1 Center");
+      setA1Button_.setToolTipText(
+            "Shift the plate layout so A1 is centered at the current stage position "
+            + "(session only).");
+      setA1Button_.setEnabled(false);
+      setA1Button_.addActionListener((final ActionEvent e) -> setA1AtCurrentStagePosition());
+      sidebar.add(setA1Button_, "growx");
+
       plateIDCombo_.addActionListener((final ActionEvent e) -> {
          if (shouldIgnoreFormatEvent_) {
             // Ignore this event, as it occurred due to software setting
@@ -240,6 +252,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             return;
          }
          plate_.initialize((String) plateIDCombo_.getSelectedItem());
+         setA1Button_.setEnabled(usesA1Center((String) plateIDCombo_.getSelectedItem()));
          updateXySpacing();
          PositionList sites = generateSitesInWell();
          try {
@@ -935,6 +948,35 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          return;
       }
       new CalibrationFrame(studio_, plate_, this);
+   }
+
+   private static boolean usesA1Center(String formatId) {
+      return SBSPlate.CHAMBER_8_WELL.equals(formatId)
+            || SBSPlate.COVERSLIP_18MM.equals(formatId)
+            || SBSPlate.COVERSLIP_22MM.equals(formatId);
+   }
+
+   private void setA1AtCurrentStagePosition() {
+      try {
+         double devX = studio_.getCMMCore().getXPosition();
+         double devY = studio_.getCMMCore().getYPosition();
+         Point2D.Double offset = getOffset();
+         double plateX = devX - offset.getX();
+         double plateY = devY - offset.getY();
+         plate_.shiftFirstWell(plateX - plate_.getFirstWellX(),
+                               plateY - plate_.getFirstWellY());
+         updateXySpacing();
+         PositionList sites = generateSitesInWell();
+         try {
+            platePanel_.refreshImagingSites(sites);
+         } catch (HCSException e) {
+            displayError(e.getMessage());
+         }
+         platePanel_.repaint();
+         notifyWellZoom();
+      } catch (Exception ex) {
+         studio_.logs().showError(ex, "Could not read stage position");
+      }
    }
 
    /**
