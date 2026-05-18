@@ -103,6 +103,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private double ySpacing_ = 0.0;
 
    private WellZoomFrame wellZoomFrame_ = null;
+   private boolean wellZoomWasOpen_ = false;
    
    private final JToggleButton moveStage_;
    private final JToggleButton selectWells_;
@@ -142,8 +143,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent e) {
+            wellZoomWasOpen_ = wellZoomFrame_ != null && wellZoomFrame_.isVisible();
             saveSettings();
+            if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
+               wellZoomFrame_.dispose();
+            }
          }
+
       });
 
       JPanel contentsPanel = new JPanel(
@@ -473,8 +479,20 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    @Override
+   public void setVisible(boolean visible) {
+      super.setVisible(visible);
+      if (visible && wellZoomWasOpen_) {
+         openWellZoom();
+         wellZoomWasOpen_ = false;
+      }
+   }
+
+   @Override
    public void dispose() {
       saveSettings();
+      if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
+         wellZoomFrame_.dispose();
+      }
       super.dispose();
    }
 
