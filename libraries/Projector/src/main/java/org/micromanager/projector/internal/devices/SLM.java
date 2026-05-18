@@ -113,8 +113,12 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   // Sets how long the SLM will be illuminated when we display an
-   // image.
+   /**
+    * Sets the SLM illumination duration. Converts from microseconds to the milliseconds expected
+    * by the Core SLM API.
+    *
+    * @param intervalUs exposure time in microseconds
+    */
    @Override
    public void setExposure(long intervalUs) {
       try {
@@ -124,19 +128,27 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   // Reads the exposure time in microseconds.
+   /**
+    * Returns the SLM illumination duration in microseconds. Converts from the milliseconds
+    * returned by the Core SLM API.
+    *
+    * @return exposure time in microseconds
+    */
    @Override
    public long getExposure() {
       try {
-         return (long) (mmc_.getSLMExposure(slm_));
+         return (long) (mmc_.getSLMExposure(slm_) * 1000);
       } catch (Exception ex) {
          app_.logs().showError(ex);
       }
       return 0;
    }
 
-   // Sets how long the SLM will be off between image
-   // NB: not currently implemented
+   /**
+    * Not currently implemented for SLM devices.
+    *
+    * @param intervalUs interval in microseconds (ignored)
+    */
    @Override
    public void setRoiInterval(long intervalUs) {
       return;
