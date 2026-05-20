@@ -1,0 +1,221 @@
+{
+  "description": "waitTimeMs == 1000, boundary: (< 1000 t) is false, no checkZRef",
+  "mockCore": {
+    "cameraDevice": "Camera",
+    "shutterDevice": "Shutter",
+    "focusDevice": "Z",
+    "xyStageDevice": "XY",
+    "autoFocusDevice": null,
+    "autoShutter": true,
+    "exposure": 10.0,
+    "positions": {
+      "Z": 0.0
+    },
+    "xyPositions": {
+      "XY": [
+        0.0,
+        0.0
+      ]
+    },
+    "properties": null,
+    "numberOfCameraChannels": 1,
+    "cameraChannelNames": [
+      "Default"
+    ],
+    "continuousFocusEnabled": null,
+    "shutterOpen": false,
+    "imageWidth": 512,
+    "imageHeight": 512,
+    "bitDepth": 16,
+    "bytesPerPixel": 2,
+    "pixelSizeUm": 1.0,
+    "pixelSizeAffine": null,
+    "numberOfComponents": 1,
+    "stageSequenceable": null,
+    "stageSequenceMaxLength": null,
+    "continuousFocusDrives": null,
+    "propertySequencing": null
+  },
+  "initialState": {
+    "defaultZDrive": "Z",
+    "defaultXYStage": "XY",
+    "referenceZ": 0.0,
+    "initAutoShutter": true,
+    "initExposure": 10.0,
+    "initShutterState": false,
+    "initContinuousFocus": false,
+    "positionList": null,
+    "autofocusDevice": null
+  },
+  "settings": {
+    "cameraTimeout": 5000
+  },
+  "events": [
+    {
+      "frameIndex": 0,
+      "sliceIndex": 0,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 10.0,
+      "slice": null,
+      "waitTimeMs": 1000.0,
+      "autofocus": false,
+      "newPosition": false,
+      "closeShutter": true,
+      "relativeZ": false,
+      "task": "snap",
+      "nextFrameIndex": null,
+      "channelName": null,
+      "burstLength": 0,
+      "camera": null,
+      "channelProperties": null,
+      "channelExposure": null,
+      "channelZOffset": null,
+      "channelUseZStack": null,
+      "channelUseChannel": null,
+      "channelSkipFrames": null,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null,
+      "runnableCount": null,
+      "runnableActions": null
+    }
+  ],
+  "expectedCalls": [
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Camera"
+      ]
+    },
+    {
+      "method": "setExposure",
+      "args": [
+        10.0
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Camera"
+      ]
+    },
+    {
+      "method": "getAutoShutter",
+      "args": []
+    },
+    {
+      "method": "getSystemStateCache",
+      "args": []
+    },
+    {
+      "method": "getAutoShutter",
+      "args": []
+    },
+    {
+      "method": "setAutoShutter",
+      "args": [
+        false
+      ]
+    },
+    {
+      "method": "getShutterDevice",
+      "args": []
+    },
+    {
+      "method": "getShutterDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Shutter"
+      ]
+    },
+    {
+      "method": "setShutterOpen",
+      "args": [
+        true
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Shutter"
+      ]
+    },
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Camera"
+      ]
+    },
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "snapImage",
+      "args": []
+    },
+    {
+      "method": "getShutterDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Shutter"
+      ]
+    },
+    {
+      "method": "setShutterOpen",
+      "args": [
+        false
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Shutter"
+      ]
+    },
+    {
+      "method": "setAutoShutter",
+      "args": [
+        true
+      ]
+    },
+    {
+      "method": "getNumberOfCameraChannels",
+      "args": []
+    },
+    {
+      "method": "getNumberOfCameraChannels",
+      "args": []
+    },
+    {
+      "method": "getCameraChannelName",
+      "args": [
+        0
+      ]
+    },
+    {
+      "method": "getTaggedImage",
+      "args": [
+        0
+      ]
+    }
+  ]
+}
