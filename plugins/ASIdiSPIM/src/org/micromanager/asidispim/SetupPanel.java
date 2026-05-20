@@ -214,7 +214,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       
 
-      if(ASIdiSPIM.SCOPE) {
+      if(ASIdiSPIM.SCOPE) {  // should this be on static sheet too?
          offsetField_.addPropertyChangeListener("value", new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -680,15 +680,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             PanelUtils.componentsSetEnabled(manualSheetWidthComponents, !autoSheetWidth_.isSelected());
          }
       });
-      
-      if(ASIdiSPIM.SCOPE) {
-         if (!autoSheetWidth_.isSelected()) {
-            autoSheetWidth_.doClick();
-         }
-         sheetWidthSlope_.setText("0");
-      }
 
-      if(!ASIdiSPIM.SCOPE) {
+      final boolean staticSheet = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE);
+
+      // formerly forced the sheet width to 0 for static sheet / SCOPE, but better to do that in ControllerUtils
+
+      if(!staticSheet) {
          sheetPanelNormal_.add(new JLabel("Sheet offset:"));
          sheetPanelNormal_.add(new JLabel(""), "span 3");   // TODO update this label with current value and/or allow user to directly enter value
          tmp_but = new JButton("Center");
@@ -728,7 +726,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          });
          sheetPanelNormal_.add(sheetOffsetSlider_, "span 4, growx, center");
          galvoOffsetField_ = null;
-      } else {  // SCOPE only
+      } else if (ASIdiSPIM.SCOPE) {  // SCOPE only
          sheetOffsetSlider_ = null;
          sheetPanelNormal_.add(new JLabel("Galvo offset * 1000:"), "span 3, center");
          galvoOffsetField_ = pu.makeFloatEntryField(panelName_, 
@@ -740,6 +738,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          });
          sheetPanelNormal_.add(galvoOffsetField_, "span 6, left, wrap");
+      } else {
+         sheetOffsetSlider_ = null;
+         galvoOffsetField_ = null;
       }
       
 
@@ -924,7 +925,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             offsetField_.setValue((Double) newOffset);
             ReportingUtils.logMessage("updated offset for side " + side_ + "; new value is " + newOffset +
                   " (with channel offset of " + channelOffset + ")");
-            if(ASIdiSPIM.SCOPE) {
+            if(ASIdiSPIM.SCOPE) {  // what exactly does this do?
                setImagingCenter(newOffset);
             }
          }
@@ -1067,7 +1068,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     * (slider setting for "normal" mode, ROI and slope for light sheet mode
     */
    private void updateSheetOffset() {
-      if (!ASIdiSPIM.SCOPE) {
+      final boolean staticSheet = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE);
+      if (!staticSheet) {
          CameraModes.Keys key = getSPIMCameraMode();
          float offset = controller_.getSheetOffset(key, side_);
          props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device

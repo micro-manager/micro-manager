@@ -1730,7 +1730,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return;
       }
       updatingTiming_ = true;
-      if (ASIdiSPIM.SCOPE) {
+      if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE)) {
          sliceTiming_ = getTimingSingleObjective(showWarnings);
       } else {
          sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
@@ -2796,6 +2797,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET
             && core_.getPixelSizeUm() < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
          MyDialogUtils.showError("Need to configure pixel size in Micro-Manager to use light sheet mode.", hideErrors);
+         return AcquisitionStatus.FATAL_ERROR;
+      }
+
+      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET
+         && prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE)) {
+         MyDialogUtils.showError("Cannot use static light sheet together with camera light sheet mode.", hideErrors);
          return AcquisitionStatus.FATAL_ERROR;
       }
       

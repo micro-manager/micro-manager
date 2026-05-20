@@ -73,6 +73,7 @@ public class SettingsPanel extends ListeningJPanel {
    
    private final JFormattedTextField rawPath_;
    private final JSpinner liveScanMs_;
+   private final JCheckBox staticSheetCB_;
    private final JComboBox pathGroup_;
    private final JComboBox presetA_;
    private final JComboBox presetB_;
@@ -204,6 +205,17 @@ public class SettingsPanel extends ListeningJPanel {
       props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SA_PERIOD_X, (Integer) liveScanMs_.getValue(), true);
       scannerPanel.add(liveScanMs_, "wrap");
+
+      staticSheetCB_ = pu.makeCheckBox("Static sheet generator (requires plugin restart)",
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, panelName_, ASIdiSPIM.SCOPE);
+      staticSheetCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            boolean staticSheet = staticSheetCB_.isSelected();
+            liveScanMs_.setEnabled(!staticSheet);
+         }
+      });
+      scannerPanel.add(staticSheetCB_, "span 2");
       
       // end scanner panel
       
@@ -307,7 +319,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel stageScanPanel = new JPanel(new MigLayout(
             "",
             "[right]5[center]",
-            "[]5[]"));
+            "[]4[]"));
       stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage Scanning"));
       
       // TODO create method to determine this instead of separate code here and in AcquisitionPanel
