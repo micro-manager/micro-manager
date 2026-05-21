@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import mmcorej.Configuration;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -163,8 +164,13 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          core_.setAutoShutter(false);
 
          //########System setup##########
-         if (!channel_.equals(NOCHANNEL)) {
-            core_.setConfig(channelGroup_, channel_);
+         Configuration oldState = null;
+         if (!channel_.isEmpty()) {
+            // we are saving whole config in case we want to restore multiple things
+            // for example, AF might want to change exposure and channel
+            String chanGroup = core_.getChannelGroup();
+            oldState = core_.getConfigGroupState(chanGroup);
+            core_.setConfig(chanGroup, channel_);
          }
          core_.waitForSystem();
          if (core_.getShutterDevice().trim().length() > 0) {
@@ -224,6 +230,12 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
             snapSingleImage();
          }
          // indx =0;  
+         if (oldState != null) {
+            // restoring whole config
+            // it will not show in debug log as "switching channel to ___"
+            // because we are restoring whole config, not just channel
+            core_.setSystemState(oldState);
+         }
          core_.setShutterOpen(shutterOpen);
          core_.setAutoShutter(autoShutter);
          IJ.log("Focus scores computed, plotting results...");
