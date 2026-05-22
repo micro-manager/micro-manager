@@ -45,6 +45,11 @@ import static org.micromanager.data.internal.PropertyKey.USER_NAME;
 import static org.micromanager.data.internal.PropertyKey.WIDTH;
 import static org.micromanager.data.internal.PropertyKey.Z_STEP_UM;
 
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
