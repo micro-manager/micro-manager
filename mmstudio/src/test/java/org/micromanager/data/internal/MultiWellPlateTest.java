@@ -4,11 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.MultiWellPlate;
-import org.micromanager.data.MultiWellPlateWell;
 
 /**
- * Tests for MultiWellPlate.
- * Tests round-trip serialization/deserialization of MultiWellPlate.
+ * Tests round-trip serialization/deserialization of MultiWellPlate via PropertyMap.
  */
 public class MultiWellPlateTest {
 
@@ -20,65 +18,43 @@ public class MultiWellPlateTest {
       String plateExternalIdentifier = "plateExternalIdentifier";
       int plateRows = 8;
       int plateColumns = 12;
-      MultiWellPlate.WellNamingConvention plateRowNamingConvention = MultiWellPlate.WellNamingConvention.LETTER;
-      MultiWellPlate.WellNamingConvention plateColumnNamingConvention = MultiWellPlate.WellNamingConvention.NUMBER;
-      double plateWellOriginX = 0.0;
-      double plateWellOriginY = 0.0;
+      MultiWellPlate.WellNamingConvention plateRowNamingConvention =
+            MultiWellPlate.WellNamingConvention.LETTER;
+      MultiWellPlate.WellNamingConvention plateColumnNamingConvention =
+            MultiWellPlate.WellNamingConvention.NUMBER;
+      double plateWellOriginX = 8.0;
+      double plateWellOriginY = -28.0;
       String plateStatus = "plateStatus";
 
-      MultiWellPlate.Builder builder = new DefaultMultiWellPlate.Builder();
-      builder.plateID(plateID);
-      builder.plateName(plateName);
-      builder.plateDescription(plateDescription);
-      builder.plateExternalIdentifier(plateExternalIdentifier);
-      builder.plateRows(plateRows);
-      builder.plateColumns(plateColumns);
-      builder.plateRowNamingConvention(plateRowNamingConvention);
-      builder.plateColumnNamingConvention(plateColumnNamingConvention);
-      builder.plateWellOriginX(plateWellOriginX);
-      builder.plateWellOriginY(plateWellOriginY);
-      builder.plateStatus(plateStatus);
-      MultiWellPlate plate = builder.build();
+      MultiWellPlate plate = new DefaultMultiWellPlate.Builder()
+            .plateID(plateID)
+            .plateName(plateName)
+            .plateDescription(plateDescription)
+            .plateExternalIdentifier(plateExternalIdentifier)
+            .plateRows(plateRows)
+            .plateColumns(plateColumns)
+            .plateRowNamingConvention(plateRowNamingConvention)
+            .plateColumnNamingConvention(plateColumnNamingConvention)
+            .plateWellOriginX(plateWellOriginX)
+            .plateWellOriginY(plateWellOriginY)
+            .plateStatus(plateStatus)
+            .build();
 
       PropertyMap plateAsMap = plate.toPropertyMap();
-      MultiWellPlate plateFromMap = new DefaultMultiWellPlate.FromPropertyMapBuilder().build(plateAsMap);
+      MultiWellPlate plateFromMap = new DefaultMultiWellPlate.FromPropertyMapBuilder()
+            .build(plateAsMap);
 
       Assert.assertEquals(plateID, plateFromMap.getPlateID());
       Assert.assertEquals(plateName, plateFromMap.getPlateName());
       Assert.assertEquals(plateDescription, plateFromMap.getPlateDescription());
       Assert.assertEquals(plateExternalIdentifier, plateFromMap.getPlateExternalIdentifier());
-      Assert.assertEquals(plateRows, plateFromMap.getPlateRows(), 0.01);
-      Assert.assertEquals(plateColumns, plateFromMap.getPlateColumns(), 0.01);
+      Assert.assertEquals(plateRows, (int) plateFromMap.getPlateRows());
+      Assert.assertEquals(plateColumns, (int) plateFromMap.getPlateColumns());
       Assert.assertEquals(plateRowNamingConvention, plateFromMap.getPlateRowNamingConvention());
-      Assert.assertEquals(plateColumnNamingConvention, plateFromMap.getPlateColumnNamingConvention());
-      Assert.assertEquals(plateWellOriginX, plateFromMap.getPlateWellOriginX(), 0.0);
-      Assert.assertEquals(plateWellOriginY, plateFromMap.getPlateWellOriginY(), 0.0);
+      Assert.assertEquals(plateColumnNamingConvention,
+            plateFromMap.getPlateColumnNamingConvention());
+      Assert.assertEquals(plateWellOriginX, plateFromMap.getPlateWellOriginX(), 0.0001);
+      Assert.assertEquals(plateWellOriginY, plateFromMap.getPlateWellOriginY(), 0.0001);
       Assert.assertEquals(plateStatus, plateFromMap.getPlateStatus());
-   }
-
-
-   /**
-    * Tests for MultiWellPlateWell.
-    * Tests round-trip serialization/deserialization of MultiWellPlateWell.
-    */
-   @Test
-   public void testWell() {
-      String wellID = "wellID";
-      int row = 3;
-      int column = 4;
-
-      MultiWellPlateWell.Builder builder = new DefaultMultiWellPlateWell.Builder();
-      builder.wellID(wellID);
-      builder.row(row);
-      builder.column(column);
-      MultiWellPlateWell well = builder.build();
-
-      PropertyMap wellAsMap = well.toPropertyMap();
-      MultiWellPlateWell wellFromMap = new DefaultMultiWellPlateWell
-              .FromPropertyMapBuilder().build(wellAsMap);
-
-      Assert.assertEquals(wellID, wellFromMap.getWellID());
-      Assert.assertEquals(row, wellFromMap.getRow(), 0.01);
-      Assert.assertEquals(column, wellFromMap.getColumn(), 0.01);
    }
 }

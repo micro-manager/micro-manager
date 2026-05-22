@@ -1,8 +1,8 @@
 package org.micromanager.data.internal;
 
-import org.micromanager.data.MultiWellPlate;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.data.MultiWellPlate;
 
 /**
  * Metadata describing a multi-well plate.
@@ -30,6 +30,11 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
          if (map == null) {
             return null;
          }
+         // Backward compatibility: old files used "plateName" before the key was renamed
+         // to "WellPlateName" for consistency with the other WELL_PLATE_* keys.
+         String plateName = map.containsString(PropertyKey.WELL_PLATE_NAME.key())
+               ? map.getString(PropertyKey.WELL_PLATE_NAME.key(), "")
+               : map.getString("plateName", "");
          return new DefaultMultiWellPlate(
                  MultiWellPlate.WellNamingConvention.valueOf((map.getString(
                          PropertyKey.WELL_PLATE_COLUMN_NAMING_CONVENTION.key(),
@@ -38,7 +43,7 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
                  map.getString(PropertyKey.WELL_PLATE_DESCRIPTION.key(), ""),
                  map.getString(PropertyKey.WELL_PLATE_EXTERNAL_IDENTIFIER.key(), ""),
                  map.getString(PropertyKey.WELL_PLATE_ID.key(), ""),
-                 map.getString(PropertyKey.WELL_PLATE_NAME.key(), ""),
+                 plateName,
                  MultiWellPlate.WellNamingConvention.valueOf(map.getString(
                           PropertyKey.WELL_PLATE_ROW_NAMING_CONVENTION.key(),
                           MultiWellPlate.WellNamingConvention.LETTER.name())),
@@ -171,23 +176,6 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
       plateWellOriginX_ = plateWellOriginX;
       plateWellOriginY_ = plateWellOriginY;
    }
-
-   @Override
-   public MultiWellPlate copyDeep(MultiWellPlate origin) {
-      return new DefaultMultiWellPlate(
-              origin.getPlateColumnNamingConvention(),
-              origin.getPlateColumns(),
-              origin.getPlateDescription(),
-              origin.getPlateExternalIdentifier(),
-              origin.getPlateID(),
-              origin.getPlateName(),
-              origin.getPlateRowNamingConvention(),
-              origin.getPlateRows(),
-              origin.getPlateStatus(),
-              origin.getPlateWellOriginX(),
-              origin.getPlateWellOriginY());
-   }
-
 
    /**
     * Returns the ColumnNamingConvention property of Plate, either LETTER or NUMBER.
@@ -327,14 +315,16 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
    public PropertyMap toPropertyMap() {
       return PropertyMaps.builder()
               .putString(PropertyKey.WELL_PLATE_COLUMN_NAMING_CONVENTION.key(),
-                      plateColumnNamingConvention_.name())
+                      plateColumnNamingConvention_ != null
+                            ? plateColumnNamingConvention_.name() : "")
               .putInteger(PropertyKey.WELL_PLATE_COLUMNS.key(), plateColumns_)
               .putString(PropertyKey.WELL_PLATE_DESCRIPTION.key(), plateDescription_)
               .putString(PropertyKey.WELL_PLATE_EXTERNAL_IDENTIFIER.key(), plateExternalIdentifier_)
               .putString(PropertyKey.WELL_PLATE_ID.key(), plateID_)
               .putString(PropertyKey.WELL_PLATE_NAME.key(), plateName_)
               .putString(PropertyKey.WELL_PLATE_ROW_NAMING_CONVENTION.key(),
-                      plateRowNamingConvention_.name())
+                      plateRowNamingConvention_ != null
+                            ? plateRowNamingConvention_.name() : "")
               .putInteger(PropertyKey.WELL_PLATE_ROWS.key(), plateRows_)
               .putString(PropertyKey.WELL_PLATE_STATUS.key(), plateStatus_)
               .putDouble(PropertyKey.WELL_PLATE_WELL_ORIGIN_X.key(), plateWellOriginX_)

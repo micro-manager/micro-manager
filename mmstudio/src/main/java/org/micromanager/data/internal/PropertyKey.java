@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Set;
 import org.micromanager.Album;
 import org.micromanager.MultiStagePosition;
-import org.micromanager.data.MultiWellPlate;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -35,7 +34,7 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-import org.micromanager.data.MultiWellPlateWell;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
@@ -1115,8 +1114,8 @@ public enum PropertyKey {
 
    POSITION_LIST__ID("ID", PositionList.class),
    POSITION_LIST__VERSION("VERSION", PositionList.class),
+   // Legacy keys read from old .pos files for backward compatibility; not written by current code.
    POSITION_LIST__IS_PLATE("IsPlate", PositionList.class),
-   POSITION_LIST__PLATE_ID("PlateID", PositionList.class),
    POSITION_LIST__PLATE_NAME("PlateName", PositionList.class),
 
    POSITION_NAME("PositionName", "Position", Metadata.class) {
@@ -1691,13 +1690,10 @@ public enum PropertyKey {
    WELL_PLATE_DESCRIPTION("WellPlateDescription", MultiWellPlate.class),
    WELL_PLATE_EXTERNAL_IDENTIFIER("WellPlateExternalIdentifier", MultiWellPlate.class),
    WELL_PLATE_ID("WellPlateID", MultiWellPlate.class),
-   WELL_PLATE_NAME("plateName", MultiWellPlate.class),
+   WELL_PLATE_NAME("WellPlateName", MultiWellPlate.class),
    WELL_PLATE_ROW_NAMING_CONVENTION("WellPlateRowNamingConvention", MultiWellPlate.class),
    WELL_PLATE_ROWS("WellPlateRows", MultiWellPlate.class),
    WELL_PLATE_STATUS("WellPlateStatus", MultiWellPlate.class),
-   WELL_PLATE_WELL_COLUMN("WellPlateWellColumn", MultiWellPlateWell.class),
-   WELL_PLATE_WELL_ID("WellPlateWellId", MultiWellPlateWell.class),
-   WELL_PLATE_WELL_ROW("WellPlateWellRow", MultiWellPlateWell.class),
    WELL_PLATE_WELL_ORIGIN_X("WellPlateWellOriginX", MultiWellPlate.class),
    WELL_PLATE_WELL_ORIGIN_Y("WellPlateWellOriginY", MultiWellPlate.class),
 

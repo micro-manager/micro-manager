@@ -20,7 +20,6 @@
 
 package org.micromanager.data.internal;
 
-import org.micromanager.data.MultiWellPlate;
 import static org.micromanager.data.internal.PropertyKey.AXIS_ORDER;
 import static org.micromanager.data.internal.PropertyKey.CHANNEL_GROUP;
 import static org.micromanager.data.internal.PropertyKey.CHANNEL_NAMES;
@@ -46,11 +45,6 @@ import static org.micromanager.data.internal.PropertyKey.USER_NAME;
 import static org.micromanager.data.internal.PropertyKey.WIDTH;
 import static org.micromanager.data.internal.PropertyKey.Z_STEP_UM;
 
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
@@ -58,6 +52,7 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -272,7 +267,9 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
       @Override
       public Builder multiWellPlate(MultiWellPlate plate) {
-         b_.putPropertyMap(MULTI_WELL_PLATE.key(), plate.toPropertyMap());
+         if (plate != null) {
+            b_.putPropertyMap(MULTI_WELL_PLATE.key(), plate.toPropertyMap());
+         }
          return this;
       }
 
@@ -469,6 +466,9 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    public MultiWellPlate getMultiWellPlate() {
+      if (!pmap_.containsPropertyMap(MULTI_WELL_PLATE.key())) {
+         return null;
+      }
       MultiWellPlate.FromPropertyMapBuilder builder = new DefaultMultiWellPlate
               .FromPropertyMapBuilder();
       return builder.build(pmap_.getPropertyMap(MULTI_WELL_PLATE.key(),

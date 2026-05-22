@@ -58,14 +58,6 @@ public interface MultiWellPlate {
    }
 
    /**
-    * Returns a deep copy of the MultiWellPlate.
-    *
-    * @param origin the MultiWellPlate to copy
-    * @return a deep copy of the MultiWellPlate
-    */
-   MultiWellPlate copyDeep(MultiWellPlate origin);
-
-   /**
     * Get the number of Columns of the Plate.
     *
     * @return the number of Columns of the Plate
