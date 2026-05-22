@@ -4,8 +4,19 @@ package org.micromanager.data;
 import org.micromanager.PropertyMap;
 
 /**
- * Metadata describing a multi-well plate
- * Modelled after the OME plate model.
+ * Metadata describing a multi-well plate, modelled after the OME Plate element.
+ *
+ * <p>There are three distinct identity fields:
+ * <ul>
+ *   <li>{@link #getPlateID()} — a machine-generated unique key (e.g. UUID) used internally
+ *       by OME-XML to link Wells and WellSamples to this Plate. It is auto-generated and
+ *       should not be entered or interpreted by users.</li>
+ *   <li>{@link #getPlateName()} — a human-readable label chosen by the user for this
+ *       specific plate run (e.g. "Batch-42-A").</li>
+ *   <li>{@link #getPlateExternalIdentifier()} — a barcode, LIMS ID, or other reference
+ *       that ties this plate to an external tracking system. This is the primary
+ *       traceability field and is entered by the user.</li>
+ * </ul>
  */
 public interface MultiWellPlate {
    enum WellNamingConvention {
@@ -69,34 +80,42 @@ public interface MultiWellPlate {
    String getPlateDescription();
 
    /**
-    * Returns an optional ExternalIdentifier of the Plate. The ExternalIdentifier
-    * attribute may contain a reference to an external database.
+    * Returns the external identifier (e.g. barcode or LIMS ID) for this plate.
     *
-    * @return an optional ExternalIdentifier of the Plate
+    * <p>This field is intended for traceability: it ties the plate to an entry in an
+    * external system such as a Laboratory Information Management System (LIMS) or a
+    * physical barcode label on the plate. Unlike {@link #getPlateID()}, which is
+    * auto-generated, this value is entered by the user and may be left blank if no
+    * external tracking is used.
+    *
+    * @return the external identifier string, or null/empty if not set
     */
    String getPlateExternalIdentifier();
 
    /**
-    * Returns an ID of the plate.  This can be any String that uniquely identifies the plate.
+    * Returns the system-level unique identifier for this plate instance.
     *
-    * @return an ID of the plate
+    * <p>This ID is intended for machine use: it must be unique within the OME-XML document
+    * so that Wells and WellSamples can reference this Plate unambiguously. It is
+    * auto-generated (e.g. a UUID) when plate metadata is created and should not be
+    * entered or interpreted by users. For a human-readable label use
+    * {@link #getPlateName()}; for a barcode or LIMS reference use
+    * {@link #getPlateExternalIdentifier()}.
+    *
+    * @return the auto-generated unique identifier for this plate
     */
    String getPlateID();
 
    /**
-    * Returns a human-readable name of the plate.
-    * The Name identifies the plate to the user.
-    *             It is used much like the ID, and so must be
-    *             unique within the document.
-    *             If a plate name is not available when one is needed
-    *             it will be constructed by OME/OMERO in the following order:
-    *             1. If name is available use it.
-    *             2. If not use "Start time - End time"
-    *             (NOTE: Not a subtraction! A string representation
-    *             of the two times separated by a dash.)
-    *             3. If these times are not available use the Plate ID.
+    * Returns a human-readable name for this plate run.
     *
-    * @return a human-readable name of the plate
+    * <p>The Name identifies the plate to the user (e.g. "Batch-42-A"). It is
+    * distinct from {@link #getPlateID()}, which is a machine-generated key,
+    * and from {@link #getPlateExternalIdentifier()}, which is a barcode or LIMS
+    * reference. If a plate name is not available, OME/OMERO will fall back to
+    * "Start time - End time", or finally to the plate ID.
+    *
+    * @return a human-readable name of the plate, or null/empty if not set
     */
    String getPlateName();
 

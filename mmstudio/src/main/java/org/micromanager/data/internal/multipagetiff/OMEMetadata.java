@@ -103,6 +103,16 @@ public final class OMEMetadata {
       if (plate.getPlateName() != null && !plate.getPlateName().isEmpty()) {
          metadata_.setPlateName(plate.getPlateName(), plateIdx);
       }
+      if (plate.getPlateDescription() != null && !plate.getPlateDescription().isEmpty()) {
+         metadata_.setPlateDescription(plate.getPlateDescription(), plateIdx);
+      }
+      if (plate.getPlateExternalIdentifier() != null
+            && !plate.getPlateExternalIdentifier().isEmpty()) {
+         metadata_.setPlateExternalIdentifier(plate.getPlateExternalIdentifier(), plateIdx);
+      }
+      if (plate.getPlateStatus() != null && !plate.getPlateStatus().isEmpty()) {
+         metadata_.setPlateStatus(plate.getPlateStatus(), plateIdx);
+      }
       if (plate.getPlateRows() != null) {
          metadata_.setPlateRows(new PositiveInteger(plate.getPlateRows()), plateIdx);
       }

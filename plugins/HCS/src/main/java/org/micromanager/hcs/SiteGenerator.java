@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -31,10 +32,10 @@ import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MultiStagePosition;
-import org.micromanager.data.MultiWellPlate;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
+import org.micromanager.data.MultiWellPlate;
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
@@ -84,16 +85,20 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    PositionList threePtList_;
    AFPlane focusPlane_;
    private final JLabel threePlaneDrive_;
-   private static final  String PLATE_FORMAT_ID = "plate_format_id";
-   private static final String SITE_SPACING_X  = "site_spacing"; //keep string for bac
-   private static final String SITE_SPACING_Y  = "site_spacing_y";
-   private static final String SITE_OVERLAP    = "site_overlap"; //in um
-   private static final String SITE_ROWS       = "site_rows";
-   private static final String SITE_COLS       = "site_cols";
-   private static final String SITE_OFFSET     = "site_offset"; // in um
-   private static final String SPACING_MODE    = "spacing_mode";
-   private static final String LIST_OVERWRITE  = "list_overwrite";
-   private static final String WELL_ZOOM_OPEN  = "well_zoom_open";
+   private static final String PLATE_FORMAT_ID   = "plate_format_id";
+   private static final String SITE_SPACING_X    = "site_spacing"; //keep string for bac
+   private static final String SITE_SPACING_Y    = "site_spacing_y";
+   private static final String SITE_OVERLAP      = "site_overlap"; //in um
+   private static final String SITE_ROWS         = "site_rows";
+   private static final String SITE_COLS         = "site_cols";
+   private static final String SITE_OFFSET       = "site_offset"; // in um
+   private static final String SPACING_MODE      = "spacing_mode";
+   private static final String LIST_OVERWRITE    = "list_overwrite";
+   private static final String WELL_ZOOM_OPEN    = "well_zoom_open";
+   private static final String PLATE_NAME        = "plate_name";
+   private static final String PLATE_DESCRIPTION = "plate_description";
+   private static final String PLATE_EXTERNAL_ID = "plate_external_id";
+   private static final String PLATE_STATUS      = "plate_status";
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
@@ -112,6 +117,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private final JToggleButton selectWells_;
    private final JRadioButton overWriteMMList_;
    private final JRadioButton appendToMMList_;
+
+   // User-entered plate metadata; persisted in UserProfile across sessions.
+   // plateID is intentionally excluded — it is auto-generated (UUID) when the
+   // position list is built, not entered by the user.
+   private String plateName_        = "";
+   private String plateDescription_ = "";
+   private String plateExternalId_  = "";
+   private String plateStatus_      = "";
 
    /**
     * Immutable point class for thread-safe cursor position tracking.
@@ -246,6 +259,25 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       setA1Button_.setEnabled(false);
       setA1Button_.addActionListener((final ActionEvent e) -> setA1AtCurrentStagePosition());
       sidebar.add(setA1Button_, "growx");
+
+      final JButton plateInfoButton = new JButton("Plate Info...");
+      plateInfoButton.setToolTipText(
+            "Set the plate name, description, external identifier (barcode/LIMS ID), "
+            + "and status — embedded in the OME metadata of acquired images.");
+      plateInfoButton.addActionListener((ActionEvent e) -> {
+         PlateInfoDialog dlg = new PlateInfoDialog(
+               SiteGenerator.this,
+               plateName_, plateDescription_, plateExternalId_, plateStatus_);
+         dlg.setVisible(true);
+         if (dlg.wasConfirmed()) {
+            plateName_        = dlg.getPlateName();
+            plateDescription_ = dlg.getPlateDescription();
+            plateExternalId_  = dlg.getPlateExternalIdentifier();
+            plateStatus_      = dlg.getPlateStatus();
+            saveSettings();
+         }
+      });
+      sidebar.add(plateInfoButton, "growx");
 
       plateIDCombo_.addActionListener((final ActionEvent e) -> {
          if (shouldIgnoreFormatEvent_) {
@@ -533,6 +565,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       settings.putBoolean(LIST_OVERWRITE, overWriteMMList_.isSelected());
       settings.putBoolean(WELL_ZOOM_OPEN,
             wellZoomFrame_ != null && wellZoomFrame_.isVisible());
+      settings.putString(PLATE_NAME,        plateName_);
+      settings.putString(PLATE_DESCRIPTION, plateDescription_);
+      settings.putString(PLATE_EXTERNAL_ID, plateExternalId_);
+      settings.putString(PLATE_STATUS,      plateStatus_);
    }
 
    protected final void loadSettings() {
@@ -553,6 +589,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       moveStage_.setEnabled(isCalibratedXY_);
       overWriteMMList_.setSelected(settings.getBoolean(LIST_OVERWRITE, true));
       appendToMMList_.setSelected(!settings.getBoolean(LIST_OVERWRITE, true));
+      plateName_        = settings.getString(PLATE_NAME,        "");
+      plateDescription_ = settings.getString(PLATE_DESCRIPTION, "");
+      plateExternalId_  = settings.getString(PLATE_EXTERNAL_ID, "");
+      plateStatus_      = settings.getString(PLATE_STATUS,      "");
    }
 
    private void setPositionList(String betweenWellOrder, boolean replaceList) {
@@ -583,16 +623,18 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       } else {
          platePl = studio_.positions().getPositionList();
       }
-      // add Plate Metadata to PositionList.  This could be optional.  We can later provide a UI
-      // for some of these fields.
       MultiWellPlate.Builder mwpb = new DefaultMultiWellPlate.Builder();
       mwpb.plateColumns(plate_.getNumColumns());
       mwpb.plateRows(plate_.getNumRows());
-      mwpb.plateID(plate_.getID());
-      mwpb.plateName("PlateName"); // TODO: get from user
-      mwpb.plateDescription("PlateDescription"); // TODO: get from user
-      mwpb.plateExternalIdentifier("ExternalIdentifier"); // TODO: get from user
-      mwpb.plateStatus("PlateStatus"); // TODO: get from user
+      // plateID is a machine-readable unique key within the OME-XML document, used to
+      // link Wells and WellSamples back to this Plate. It is auto-generated as a UUID
+      // and is not intended for user entry. For a human-readable label use plateName;
+      // for a barcode or LIMS reference use plateExternalIdentifier.
+      mwpb.plateID(UUID.randomUUID().toString());
+      mwpb.plateName(plateName_);
+      mwpb.plateDescription(plateDescription_);
+      mwpb.plateExternalIdentifier(plateExternalId_);
+      mwpb.plateStatus(plateStatus_);
       mwpb.plateRowNamingConvention(MultiWellPlate.WellNamingConvention.LETTER);
       mwpb.plateColumnNamingConvention(MultiWellPlate.WellNamingConvention.NUMBER);
       mwpb.plateWellOriginX(0.0);
