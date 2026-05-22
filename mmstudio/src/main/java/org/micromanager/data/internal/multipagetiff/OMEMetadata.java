@@ -113,10 +113,10 @@ public final class OMEMetadata {
       if (plate.getPlateStatus() != null && !plate.getPlateStatus().isEmpty()) {
          metadata_.setPlateStatus(plate.getPlateStatus(), plateIdx);
       }
-      if (plate.getPlateRows() != null) {
+      if (plate.getPlateRows() != null && plate.getPlateRows() > 0) {
          metadata_.setPlateRows(new PositiveInteger(plate.getPlateRows()), plateIdx);
       }
-      if (plate.getPlateColumns() != null) {
+      if (plate.getPlateColumns() != null && plate.getPlateColumns() > 0) {
          metadata_.setPlateColumns(new PositiveInteger(plate.getPlateColumns()), plateIdx);
       }
       NamingConvention rowConvention = plate.getPlateRowNamingConvention()
@@ -136,16 +136,43 @@ public final class OMEMetadata {
                   plateIdx);
       }
 
-      // Map each unique (gridRow, gridCol) pair to a well index, and track
-      // how many samples (sites) each well has accumulated.
+      // Group positions into OME Wells. When HCS metadata is present each
+      // MultiStagePosition carries a "Well" property (e.g. "A1") that names the
+      // physical well; gridRow/gridCol on the MSP store the *site* index within
+      // the well (not the well address). Use the "Well" property when available
+      // to determine well identity; fall back to gridRow/gridCol otherwise.
       Map<String, Integer> wellKeyToWellIdx = new HashMap<String, Integer>();
       Map<String, Integer> wellKeySampleCount = new HashMap<String, Integer>();
 
       for (int positionIdx = 0; positionIdx < positions.size(); positionIdx++) {
          MultiStagePosition pos = positions.get(positionIdx);
-         int row = pos.getGridRow();
-         int col = pos.getGridColumn();
-         String wellKey = row + "," + col;
+         String wellProp = pos.getProperty("Well");
+         int row;
+         int col;
+         String wellKey;
+         if (wellProp != null && !wellProp.isEmpty()) {
+            // Well property is present (e.g. "A1"): parse row/col from it.
+            // Letters prefix the row (A=0, B=1, …); trailing digits give the
+            // 1-based column number. Both are converted to 0-based OME indices.
+            int splitIdx = 0;
+            while (splitIdx < wellProp.length()
+                  && Character.isLetter(wellProp.charAt(splitIdx))) {
+               splitIdx++;
+            }
+            final String rowPart = wellProp.substring(0, splitIdx).toUpperCase();
+            final String colPart = wellProp.substring(splitIdx);
+            row = 0;
+            for (int ci = 0; ci < rowPart.length(); ci++) {
+               row = row * 26 + (rowPart.charAt(ci) - 'A' + 1);
+            }
+            row -= 1; // convert to 0-based
+            col = colPart.isEmpty() ? 0 : Integer.parseInt(colPart) - 1;
+            wellKey = wellProp;
+         } else {
+            row = pos.getGridRow();
+            col = pos.getGridColumn();
+            wellKey = row + "," + col;
+         }
 
          if (!wellKeyToWellIdx.containsKey(wellKey)) {
             int wellIdx = wellKeyToWellIdx.size();
@@ -164,11 +191,19 @@ public final class OMEMetadata {
          metadata_.setWellSampleID(
                MetadataTools.createLSID("WellSample", plateIdx, wellIdx, sampleIdx),
                plateIdx, wellIdx, sampleIdx);
-         metadata_.setWellSampleIndex(new NonNegativeInteger(positionIdx), plateIdx, wellIdx,
+         metadata_.setWellSampleIndex(new NonNegativeInteger(sampleIdx), plateIdx, wellIdx,
                   sampleIdx);
-         metadata_.setWellSamplePositionX(new Length(pos.getX(), UNITS.MICROM), plateIdx, wellIdx,
+         // Use well-relative site offsets when available (set by HCS plugin);
+         // fall back to absolute stage coordinates for non-HCS acquisitions.
+         String offsetXStr = pos.getProperty("WellSiteOffsetXUm");
+         String offsetYStr = pos.getProperty("WellSiteOffsetYUm");
+         double sampleX = (offsetXStr != null && !offsetXStr.isEmpty())
+               ? Double.parseDouble(offsetXStr) : pos.getX();
+         double sampleY = (offsetYStr != null && !offsetYStr.isEmpty())
+               ? Double.parseDouble(offsetYStr) : pos.getY();
+         metadata_.setWellSamplePositionX(new Length(sampleX, UNITS.MICROM), plateIdx, wellIdx,
                   sampleIdx);
-         metadata_.setWellSamplePositionY(new Length(pos.getY(), UNITS.MICROM), plateIdx, wellIdx,
+         metadata_.setWellSamplePositionY(new Length(sampleY, UNITS.MICROM), plateIdx, wellIdx,
                   sampleIdx);
          metadata_.setWellSampleImageRef(
                MetadataTools.createLSID("Image", positionIdx), plateIdx, wellIdx, sampleIdx);

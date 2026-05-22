@@ -294,6 +294,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
     */
    public void replaceWithPropertyMap(PropertyMap map) throws IOException {
       positions_.clear();
+      plate_ = null;
       if (map.containsPropertyMap(PropertyKey.MULTI_WELL_PLATE.key())) {
          MultiWellPlate.FromPropertyMapBuilder fpmb =
                  new DefaultMultiWellPlate.FromPropertyMapBuilder();

@@ -82,6 +82,8 @@ public class SBSPlate {
    public static final String CUSTOM = "Custom";
    private static final String METADATA_SITE_PREFIX = "Site";
    private static final String WELL_KEY = "Well";
+   private static final String WELL_SITE_OFFSET_X_KEY = "WellSiteOffsetXUm";
+   private static final String WELL_SITE_OFFSET_Y_KEY = "WellSiteOffsetYUm";
 
    public static final FileDialogs.FileType PLATE_FILE = new FileDialogs.FileType(
          "PLATE_FILE", "High-Content Screening plate definition files",
@@ -427,6 +429,12 @@ public class SBSPlate {
                   absMps.setDefaultXYStage(xyStageName);
                   // TODO: make sure we get the right XY stage not just the first one
                   StagePosition sp = mps.get(0);
+                  // Store site offset relative to well centre so OME WellSample
+                  // PositionX/Y can be written in well-local coordinates.
+                  absMps.setProperty(WELL_SITE_OFFSET_X_KEY,
+                        Double.toString(sp.x));
+                  absMps.setProperty(WELL_SITE_OFFSET_Y_KEY,
+                        Double.toString(sp.y));
                   StagePosition absSp = StagePosition.create2D(xyStageName,
                         wellX + sp.x, wellY + sp.y);
                   absMps.add(absSp);

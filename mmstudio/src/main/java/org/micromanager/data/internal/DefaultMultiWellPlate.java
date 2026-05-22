@@ -313,23 +313,29 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
 
    @Override
    public PropertyMap toPropertyMap() {
-      return PropertyMaps.builder()
-              .putString(PropertyKey.WELL_PLATE_COLUMN_NAMING_CONVENTION.key(),
-                      plateColumnNamingConvention_ != null
-                            ? plateColumnNamingConvention_.name() : "")
+      PropertyMap.Builder b = PropertyMaps.builder()
               .putInteger(PropertyKey.WELL_PLATE_COLUMNS.key(), plateColumns_)
               .putString(PropertyKey.WELL_PLATE_DESCRIPTION.key(), plateDescription_)
               .putString(PropertyKey.WELL_PLATE_EXTERNAL_IDENTIFIER.key(), plateExternalIdentifier_)
               .putString(PropertyKey.WELL_PLATE_ID.key(), plateID_)
               .putString(PropertyKey.WELL_PLATE_NAME.key(), plateName_)
-              .putString(PropertyKey.WELL_PLATE_ROW_NAMING_CONVENTION.key(),
-                      plateRowNamingConvention_ != null
-                            ? plateRowNamingConvention_.name() : "")
               .putInteger(PropertyKey.WELL_PLATE_ROWS.key(), plateRows_)
-              .putString(PropertyKey.WELL_PLATE_STATUS.key(), plateStatus_)
-              .putDouble(PropertyKey.WELL_PLATE_WELL_ORIGIN_X.key(), plateWellOriginX_)
-              .putDouble(PropertyKey.WELL_PLATE_WELL_ORIGIN_Y.key(), plateWellOriginY_)
-              .build();
+              .putString(PropertyKey.WELL_PLATE_STATUS.key(), plateStatus_);
+      if (plateColumnNamingConvention_ != null) {
+         b.putString(PropertyKey.WELL_PLATE_COLUMN_NAMING_CONVENTION.key(),
+                 plateColumnNamingConvention_.name());
+      }
+      if (plateRowNamingConvention_ != null) {
+         b.putString(PropertyKey.WELL_PLATE_ROW_NAMING_CONVENTION.key(),
+                 plateRowNamingConvention_.name());
+      }
+      if (plateWellOriginX_ != null) {
+         b.putDouble(PropertyKey.WELL_PLATE_WELL_ORIGIN_X.key(), plateWellOriginX_);
+      }
+      if (plateWellOriginY_ != null) {
+         b.putDouble(PropertyKey.WELL_PLATE_WELL_ORIGIN_Y.key(), plateWellOriginY_);
+      }
+      return b.build();
    }
 
 }

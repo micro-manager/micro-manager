@@ -876,6 +876,38 @@ public enum PropertyKey {
       }
    },
 
+   /** X offset of this site relative to the well centre, in microns (set by HCS plugin). */
+   MULTI_STAGE_POSITION__WELL_SITE_OFFSET_X("WellSiteOffsetXUm", MultiStagePosition.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putDouble(key(), je.getAsDouble());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getDouble(key(), 0.0));
+         }
+         return null;
+      }
+   },
+
+   /** Y offset of this site relative to the well centre, in microns (set by HCS plugin). */
+   MULTI_STAGE_POSITION__WELL_SITE_OFFSET_Y("WellSiteOffsetYUm", MultiStagePosition.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putDouble(key(), je.getAsDouble());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getDouble(key(), 0.0));
+         }
+         return null;
+      }
+   },
+
    /**
     * It is unclear what is meant with this key.
     * Positions in the positionlist are multi stage positions.  These have Label,
