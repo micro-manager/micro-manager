@@ -38,8 +38,8 @@ import java.util.NoSuchElementException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.data.MultiWellPlate;
-import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.data.internal.DefaultMultiWellPlate;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 
 /**
@@ -47,7 +47,7 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
  * Used for multi site acquisition support.
  * Consists of a list of MultiStagePositions and an Optional instance of MultiWellPlate.
  *
- * TODO: Change into an interface and make a default implementation
+ * <p>TODO: Change into an interface and make a default implementation
  */
 public class PositionList implements Iterable<MultiStagePosition> {
    private static final int VERSION = 2;
