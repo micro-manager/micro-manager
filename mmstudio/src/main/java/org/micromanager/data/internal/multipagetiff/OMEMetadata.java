@@ -28,7 +28,9 @@ package org.micromanager.data.internal.multipagetiff;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import loci.common.DateTools;
 import loci.common.services.DependencyException;
@@ -50,6 +52,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.internal.utils.NumberUtils;
@@ -75,7 +78,8 @@ public final class OMEMetadata {
       mptStorage_ = mpt;
       tiffDataIndexMap_ = new TreeMap<String, Integer>();
       metadata_ = MetadataTools.createOMEXMLMetadata();
-      if (mptStorage_.getSummaryMetadata() != null && mptStorage_.getSummaryMetadata().getStagePositionList() != null) {
+      if (mptStorage_.getSummaryMetadata() != null && mptStorage_.getSummaryMetadata()
+               .getStagePositionList() != null) {
          addPlateMetadata(mptStorage_.getSummaryMetadata().getStagePositionList());
       }
    }
@@ -84,26 +88,80 @@ public final class OMEMetadata {
       if (positions.isEmpty()) {
          return;
       }
-      int plateID = 789;
-      metadata_.setPlateID("Plate-" + plateID, plateID);
-      metadata_.setPlateName("Plate-" + plateID, plateID);
-      metadata_.setPlateRows(new PositiveInteger(1), plateID);
-      metadata_.setPlateColumns(new PositiveInteger(1), plateID);
-      metadata_.setPlateRowNamingConvention(NamingConvention.LETTER, plateID);
-      metadata_.setPlateColumnNamingConvention(NamingConvention.NUMBER, plateID);
-      metadata_.setPlateWellOriginX(new Length(0, UNITS.MICROM), plateID);
-      metadata_.setPlateWellOriginY(new Length(0, UNITS.MICROM), plateID);
-      for (int i = 0; i < positions.size(); i++) {
+      SummaryMetadata summaryMD = mptStorage_.getSummaryMetadata();
+      if (summaryMD == null) {
+         return;
+      }
+      MultiWellPlate plate = summaryMD.getMultiWellPlate();
+      if (plate == null) {
+         return;
+      }
 
-         /*
-         metadata_.setWellID(positions.get(i).getWell(), plateID, i);
-         metadata_.setWellRow(positions.get(i).., position);
-         metadata_.setWellColumn(new PositiveInteger(1), position);
-         metadata_.setWellSampleIndex(new PositiveInteger(1), position);
-         metadata_.setWellSampleID("Sample1", position);
-         metadata_.setWellSamplePositionX(new Length(0, UNITS.MICROM), position);
-         metadata_.setWellSamplePositionY(new Length(0, UNITS.MICROM), position);
-          */
+      final int plateIdx = 0;
+      String plateID = MetadataTools.createLSID("Plate", plateIdx);
+      metadata_.setPlateID(plateID, plateIdx);
+      if (plate.getPlateName() != null && !plate.getPlateName().isEmpty()) {
+         metadata_.setPlateName(plate.getPlateName(), plateIdx);
+      }
+      if (plate.getPlateRows() != null) {
+         metadata_.setPlateRows(new PositiveInteger(plate.getPlateRows()), plateIdx);
+      }
+      if (plate.getPlateColumns() != null) {
+         metadata_.setPlateColumns(new PositiveInteger(plate.getPlateColumns()), plateIdx);
+      }
+      NamingConvention rowConvention = plate.getPlateRowNamingConvention()
+            == MultiWellPlate.WellNamingConvention.NUMBER
+            ? NamingConvention.NUMBER : NamingConvention.LETTER;
+      NamingConvention colConvention = plate.getPlateColumnNamingConvention()
+            == MultiWellPlate.WellNamingConvention.LETTER
+            ? NamingConvention.LETTER : NamingConvention.NUMBER;
+      metadata_.setPlateRowNamingConvention(rowConvention, plateIdx);
+      metadata_.setPlateColumnNamingConvention(colConvention, plateIdx);
+      if (plate.getPlateWellOriginX() != null) {
+         metadata_.setPlateWellOriginX(new Length(plate.getPlateWellOriginX(), UNITS.MICROM),
+                  plateIdx);
+      }
+      if (plate.getPlateWellOriginY() != null) {
+         metadata_.setPlateWellOriginY(new Length(plate.getPlateWellOriginY(), UNITS.MICROM),
+                  plateIdx);
+      }
+
+      // Map each unique (gridRow, gridCol) pair to a well index, and track
+      // how many samples (sites) each well has accumulated.
+      Map<String, Integer> wellKeyToWellIdx = new HashMap<String, Integer>();
+      Map<String, Integer> wellKeySampleCount = new HashMap<String, Integer>();
+
+      for (int positionIdx = 0; positionIdx < positions.size(); positionIdx++) {
+         MultiStagePosition pos = positions.get(positionIdx);
+         int row = pos.getGridRow();
+         int col = pos.getGridColumn();
+         String wellKey = row + "," + col;
+
+         if (!wellKeyToWellIdx.containsKey(wellKey)) {
+            int wellIdx = wellKeyToWellIdx.size();
+            wellKeyToWellIdx.put(wellKey, wellIdx);
+            wellKeySampleCount.put(wellKey, 0);
+            metadata_.setWellID(MetadataTools.createLSID("Well", plateIdx, wellIdx), plateIdx,
+                     wellIdx);
+            metadata_.setWellRow(new NonNegativeInteger(row), plateIdx, wellIdx);
+            metadata_.setWellColumn(new NonNegativeInteger(col), plateIdx, wellIdx);
+         }
+
+         int wellIdx = wellKeyToWellIdx.get(wellKey);
+         int sampleIdx = wellKeySampleCount.get(wellKey);
+         wellKeySampleCount.put(wellKey, sampleIdx + 1);
+
+         metadata_.setWellSampleID(
+               MetadataTools.createLSID("WellSample", plateIdx, wellIdx, sampleIdx),
+               plateIdx, wellIdx, sampleIdx);
+         metadata_.setWellSampleIndex(new NonNegativeInteger(positionIdx), plateIdx, wellIdx,
+                  sampleIdx);
+         metadata_.setWellSamplePositionX(new Length(pos.getX(), UNITS.MICROM), plateIdx, wellIdx,
+                  sampleIdx);
+         metadata_.setWellSamplePositionY(new Length(pos.getY(), UNITS.MICROM), plateIdx, wellIdx,
+                  sampleIdx);
+         metadata_.setWellSampleImageRef(
+               MetadataTools.createLSID("Image", positionIdx), plateIdx, wellIdx, sampleIdx);
       }
    }
 
@@ -417,7 +475,6 @@ public final class OMEMetadata {
       if (!positionName.isEmpty()) {
          metadata_.setStageLabelName(positionName, position);
       }
-      //metadata_.setWellID();
 
       indices.planeIndex_++;
       indices.tiffDataIndex_++;

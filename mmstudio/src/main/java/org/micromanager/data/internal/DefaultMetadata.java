@@ -28,6 +28,7 @@ import static org.micromanager.data.internal.PropertyKey.EXPOSURE_MS;
 import static org.micromanager.data.internal.PropertyKey.FILE_NAME;
 import static org.micromanager.data.internal.PropertyKey.IMAGE_NUMBER;
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN;
+import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__GRID_ROW;
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__PROPERTY_WELL;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_ASPECT;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_AFFINE;
@@ -108,7 +109,7 @@ public final class DefaultMetadata implements Metadata {
 
       @Override
       public Metadata.Builder gridRow(Integer gridRow) {
-         b_.putInteger(MULTI_STAGE_POSITION__GRID_COLUMN.key(), gridRow);
+         b_.putInteger(MULTI_STAGE_POSITION__GRID_ROW.key(), gridRow);
          return this;
       }
 
@@ -360,8 +361,8 @@ public final class DefaultMetadata implements Metadata {
 
    @Override
    public Integer getGridRow() {
-      return pmap_.containsKey(MULTI_STAGE_POSITION__GRID_COLUMN.key())
-              ? pmap_.getInteger(MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0) : null;
+      return pmap_.containsKey(MULTI_STAGE_POSITION__GRID_ROW.key())
+              ? pmap_.getInteger(MULTI_STAGE_POSITION__GRID_ROW.key(), 0) : null;
    }
 
    @Override
