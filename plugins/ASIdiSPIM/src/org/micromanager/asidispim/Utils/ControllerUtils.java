@@ -885,9 +885,11 @@ public class ControllerUtils {
          MyDialogUtils.showError("Scanner will exceed allowed range in negative direction.");
          return false;
       }
+
+      // with SCOPE use galvoDevice axis Y to be the one that moves during acquisition, and axis X the static offset
       
       if (offsetOnly) {
-         if (!ASIdiSPIM.SCOPE) {
+         if (!ASIdiSPIM.SCOPE) {  // TODO should this be with SCOPE or static sheet in general?
             props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
                   sliceCenter, skipScannerWarnings);
          }
@@ -924,7 +926,7 @@ public class ControllerUtils {
          }
          props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_Y_DEG,
                sliceAmplitude, skipScannerWarnings);
-         if (!ASIdiSPIM.SCOPE) {  // for single-objective we don't want to touch the galvo offset
+         if (!ASIdiSPIM.SCOPE) {  // for single-objective we don't want to touch the galvo axis offset
             props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
                   sliceCenter, skipScannerWarnings);
          }
@@ -1522,6 +1524,14 @@ public class ControllerUtils {
             sheetWidth *= 1.1f;  // 10% extra width just to be sure
          }
       }
+
+      // force sheetWidth to be 0 for static sheet case
+      final boolean staticSheet = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE);
+      if (staticSheet) {
+         sheetWidth = 0.0f;
+      }
+
       return sheetWidth;
    }
    
