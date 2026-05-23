@@ -913,7 +913,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                   oldDisplaySettings.getChannelSettings(channelIndex_);
             ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
             for (int c = 0; c < nComponents; c++) {
-               long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_), sharedMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_),
+                     sharedMin + 1);
                builder.component(c,
                      channelSettings.getComponentSettings(c).copyBuilder()
                            .scalingRange(sharedMin, scaledMax).build());
@@ -1028,7 +1029,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                }
             }
             for (int i = 0; i < nComponents; ++i) {
-               long scaledMax = Math.max(Math.round(whiteRatios_[i] * whiteMainMax_), commonMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[i] * whiteMainMax_),
+                     commonMin + 1);
                builder.component(i,
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(commonMin, scaledMax).build());
