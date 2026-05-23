@@ -1483,14 +1483,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       double bestError = Double.MAX_VALUE;
       for (int k = minK; k <= maxK; k++) {
          int[] illuminant = colorTemperatureToRgb(k);
-         double minIlluminant = Math.min(illuminant[0], Math.min(illuminant[1], illuminant[2]));
-         if (minIlluminant <= 0) {
+         double maxIlluminant = Math.max(illuminant[0], Math.max(illuminant[1], illuminant[2]));
+         if (maxIlluminant <= 0) {
             continue;
          }
          double[] correctionRatios = new double[] {
-               minIlluminant / illuminant[0],
-               minIlluminant / illuminant[1],
-               minIlluminant / illuminant[2]
+               (double) illuminant[0] / maxIlluminant,
+               (double) illuminant[1] / maxIlluminant,
+               (double) illuminant[2] / maxIlluminant
          };
          double error = 0;
          for (int c = 0; c < 3; c++) {
@@ -1550,17 +1550,16 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    @MustCallOnEDT
    private void applyColorTemperatureWhiteBalance(int kelvin) {
       int[] illuminant = colorTemperatureToRgb(kelvin);
-      // Correction is the inverse: channels with less illuminant light get boosted.
-      // Normalize so the smallest correction = 1.0 (i.e. the brightest illuminant
-      // channel drives the others relative to it).
-      double minIlluminant = Math.min(illuminant[0], Math.min(illuminant[1], illuminant[2]));
-      if (minIlluminant <= 0) {
+      // Ratios proportional to illuminant: dominant channel stays at 1.0,
+      // weaker channels get smaller ratios (smaller scaledMax → appear brighter).
+      double maxIlluminant = Math.max(illuminant[0], Math.max(illuminant[1], illuminant[2]));
+      if (maxIlluminant <= 0) {
          return;
       }
       whiteRatios_ = new double[] {
-            minIlluminant / illuminant[0],
-            minIlluminant / illuminant[1],
-            minIlluminant / illuminant[2]
+            (double) illuminant[0] / maxIlluminant,
+            (double) illuminant[1] / maxIlluminant,
+            (double) illuminant[2] / maxIlluminant
       };
       rgbAutostretchEnabled_ = false;
       applyCurrentWhiteRatios();
