@@ -900,11 +900,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          final long sharedMin = range[1];
          whiteMainMin_ = sharedMin;
          int nComponents = stats_.getNumberOfComponents();
-         // Recompute ratios from actual per-component image maxima so that white
-         // mode reflects true color balance rather than stale default values.
-         whiteRatios_ = new double[nComponents];
-         for (int c = 0; c < nComponents; c++) {
-            whiteRatios_[c] = whiteMainMax_ > 0 ? (double) range[2 + c] / whiteMainMax_ : 1.0;
+         if (whiteRatios_ == null) {
+            // No white balance set: derive ratios from image content.
+            whiteRatios_ = new double[nComponents];
+            for (int c = 0; c < nComponents; c++) {
+               whiteRatios_[c] = whiteMainMax_ > 0 ? (double) range[2 + c] / whiteMainMax_ : 1.0;
+            }
          }
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
@@ -912,7 +913,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                   oldDisplaySettings.getChannelSettings(channelIndex_);
             ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
             for (int c = 0; c < nComponents; c++) {
-               long scaledMax = Math.max(range[2 + c], sharedMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_), sharedMin + 1);
                builder.component(c,
                      channelSettings.getComponentSettings(c).copyBuilder()
                            .scalingRange(sharedMin, scaledMax).build());
@@ -1019,14 +1020,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             whiteMainMax_ = range[0];
             long commonMin = range[1];
             whiteMainMin_ = commonMin;
-            // Recompute ratios from actual per-component image maxima so that white
-            // mode reflects true color balance rather than stale default values.
-            whiteRatios_ = new double[nComponents];
-            for (int i = 0; i < nComponents; ++i) {
-               whiteRatios_[i] = whiteMainMax_ > 0 ? (double) range[2 + i] / whiteMainMax_ : 1.0;
+            if (whiteRatios_ == null) {
+               // No white balance set: derive ratios from image content.
+               whiteRatios_ = new double[nComponents];
+               for (int i = 0; i < nComponents; ++i) {
+                  whiteRatios_[i] = whiteMainMax_ > 0 ? (double) range[2 + i] / whiteMainMax_ : 1.0;
+               }
             }
             for (int i = 0; i < nComponents; ++i) {
-               long scaledMax = Math.max(range[2 + i], commonMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[i] * whiteMainMax_), commonMin + 1);
                builder.component(i,
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(commonMin, scaledMax).build());
