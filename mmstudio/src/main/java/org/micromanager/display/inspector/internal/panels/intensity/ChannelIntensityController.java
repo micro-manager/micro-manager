@@ -1558,6 +1558,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             minIlluminant / illuminant[1],
             minIlluminant / illuminant[2]
       };
+      rgbAutostretchEnabled_ = false;
       applyCurrentWhiteRatios();
    }
 
@@ -1583,6 +1584,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             (double) pixelValues[1] / maxVal,
             (double) pixelValues[2] / maxVal
       };
+      rgbAutostretchEnabled_ = false;
       applyCurrentWhiteRatios();
    }
 
@@ -1604,6 +1606,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             (double) means[1] / maxMean,
             (double) means[2] / maxMean
       };
+      rgbAutostretchEnabled_ = false;
       applyCurrentWhiteRatios();
    }
 
@@ -1627,7 +1630,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                   .copyBuilder().scalingRange(currentMin, scaledMax).build());
          }
          newDisplaySettings = oldDisplaySettings.copyBuilder()
-               .channel(channelIndex_, builder.build()).build();
+               .channel(channelIndex_, builder.build())
+               .autostretch(false)
+               .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       statsOrRangeChanged();
    }
