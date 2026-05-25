@@ -55,10 +55,15 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
+import org.micromanager.display.overlay.Overlay;
+import org.micromanager.display.overlay.OverlayListener;
+import org.micromanager.display.overlay.OverlaySupport;
 
 /**
  * Orthogonal viewer: shows XY, XZ and YZ slices of a Z-stack dataset.
@@ -70,7 +75,7 @@ import org.micromanager.display.internal.imagestats.StatsComputeQueue;
  * Mouse-wheel zoom scales all three panels together, centred on the crosshair.</p>
  */
 public class OrthogonalViewerFrame extends AbstractDataViewer
-      implements ImageStatsPublisher, StatsComputeQueue.Listener {
+      implements ImageStatsPublisher, StatsComputeQueue.Listener, OverlaySupport {
 
    private static final Color DARK_GREY = new Color(50, 50, 50);
 
@@ -150,6 +155,12 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    // DataViewerListener support
    private final TreeMap<Integer, DataViewerListener> listeners_ =
          new TreeMap<Integer, DataViewerListener>();
+
+   // Overlay support
+   private final java.util.concurrent.CopyOnWriteArrayList<Overlay> overlays_ =
+         new java.util.concurrent.CopyOnWriteArrayList<Overlay>();
+   private final java.util.HashMap<Overlay, OverlayListener> overlayListeners_ =
+         new java.util.HashMap<Overlay, OverlayListener>();
 
    public OrthogonalViewerFrame(Studio studio, DisplayWindow sourceDisplay) {
       super(sourceDisplay.getDisplaySettings());
@@ -293,6 +304,59 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       synchronized (listeners_) {
          listeners_.values().remove(listener);
       }
+   }
+
+   // ---- OverlaySupport ----
+
+   @Override
+   public void addOverlay(Overlay overlay) {
+      if (overlay == null) {
+         return;
+      }
+      overlays_.add(overlay);
+      OverlayListener listener = new OverlayListener() {
+         @Override
+         public void overlayTitleChanged(Overlay o) {
+         }
+
+         @Override
+         public void overlayConfigurationChanged(Overlay o) {
+            xyPanel_.repaint();
+         }
+
+         @Override
+         public void overlayVisibleChanged(Overlay o) {
+            xyPanel_.repaint();
+         }
+      };
+      synchronized (overlayListeners_) {
+         overlayListeners_.put(overlay, listener);
+      }
+      overlay.addOverlayListener(listener);
+      postEvent(DisplayWindowDidAddOverlayEvent.create(null, overlay));
+      xyPanel_.repaint();
+   }
+
+   @Override
+   public void removeOverlay(Overlay overlay) {
+      if (overlay == null) {
+         return;
+      }
+      overlays_.remove(overlay);
+      OverlayListener listener;
+      synchronized (overlayListeners_) {
+         listener = overlayListeners_.remove(overlay);
+      }
+      if (listener != null) {
+         overlay.removeOverlayListener(listener);
+      }
+      postEvent(DisplayWindowDidRemoveOverlayEvent.create(null, overlay));
+      xyPanel_.repaint();
+   }
+
+   @Override
+   public java.util.List<Overlay> getOverlays() {
+      return java.util.Collections.unmodifiableList(new java.util.ArrayList<Overlay>(overlays_));
    }
 
    // ---- ImageStatsPublisher ----
@@ -535,6 +599,12 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
             xyPanel_.setCrosshairFractions(
                   (w > 1) ? (double) cx / (w - 1) : 0.5,
                   (h > 1) ? (double) cy / (h - 1) : 0.5);
+            // Update overlay context so overlays paint with the correct image/settings.
+            // Pass all channel images so composite-mode overlays (e.g. Text channel names)
+            // see every channel, and use the first image as primaryImage.
+            Image primaryXY = (result.xyImages != null && !result.xyImages.isEmpty())
+                  ? result.xyImages.get(0) : null;
+            xyPanel_.setOverlayContext(overlays_, result.xyImages, primaryXY, settings);
 
             if (hasZ && result.xz != null) {
                xzPanel_.setImage(result.xz);

@@ -6,11 +6,17 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import javax.swing.JPanel;
+import org.micromanager.data.Image;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.overlay.Overlay;
 
 /**
  * A panel that renders one orthogonal slice (XY, XZ, or YZ) with crosshair overlay.
@@ -46,6 +52,12 @@ public class OrthogonalSlicePanel extends JPanel {
 
    private ClickListener clickListener_;
 
+   // Overlay support — only set on the XY panel
+   private List<Overlay> overlays_;
+   private List<Image> overlayImages_;
+   private Image primaryImage_;
+   private DisplaySettings displaySettings_;
+
    public OrthogonalSlicePanel() {
       setBackground(BACKGROUND);
       setPreferredSize(new Dimension(256, 256));
@@ -79,6 +91,14 @@ public class OrthogonalSlicePanel extends JPanel {
 
    public void setClickListener(ClickListener listener) {
       clickListener_ = listener;
+   }
+
+   public void setOverlayContext(List<Overlay> overlays, List<Image> images,
+                                 Image primaryImage, DisplaySettings settings) {
+      overlays_ = overlays;
+      overlayImages_ = images;
+      primaryImage_ = primaryImage;
+      displaySettings_ = settings;
    }
 
    public void setImage(BufferedImage image) {
@@ -133,6 +153,35 @@ public class OrthogonalSlicePanel extends JPanel {
 
       g2.drawLine(lineX, 0, lineX, getHeight());
       g2.drawLine(0, lineY, getWidth(), lineY);
+
+      // Paint MM Inspector overlays (XY panel only — requires image coordinates)
+      if (overlays_ != null && primaryImage_ != null && displaySettings_ != null) {
+         int iw = currentImage_.getWidth();
+         int ih = currentImage_.getHeight();
+         // imageViewPort: which region of the image (in image px) is visible on screen
+         // Since we letterbox, the entire image is always visible.
+         Rectangle2D.Float imageViewPort = new Rectangle2D.Float(0, 0, iw, ih);
+         Rectangle screenRect = new Rectangle(offsetX, offsetY, drawW, drawH);
+         List<Image> images = (overlayImages_ != null && !overlayImages_.isEmpty())
+               ? overlayImages_ : java.util.Collections.singletonList(primaryImage_);
+         Graphics2D og = (Graphics2D) g2.create();
+         // Clip to the image area so overlays don't bleed into the grey border
+         og.setClip(offsetX, offsetY, drawW, drawH);
+         // Scale from image coords to screen coords
+         og.translate(offsetX, offsetY);
+         og.scale((double) drawW / iw, (double) drawH / ih);
+         for (Overlay overlay : overlays_) {
+            if (overlay.isVisible()) {
+               try {
+                  overlay.paintOverlay(og, screenRect, displaySettings_,
+                        images, primaryImage_, imageViewPort);
+               } catch (Exception ex) {
+                  // ignore overlay paint errors
+               }
+            }
+         }
+         og.dispose();
+      }
    }
 
    /**
