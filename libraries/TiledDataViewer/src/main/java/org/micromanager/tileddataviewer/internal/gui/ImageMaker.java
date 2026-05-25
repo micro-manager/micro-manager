@@ -359,6 +359,26 @@ public class ImageMaker {
       return hists;
    }
 
+   /**
+    * Returns per-component (R, G, B) raw histograms for RGB channels.
+    * Only channels backed by {@link NDVImageProcessorRGB} appear in the result.
+    * The value is a 3-element array: [R histogram, G histogram, B histogram].
+    * Returns an empty map for all-grayscale datasets.
+    */
+   public HashMap<String, int[][]> getComponentHistograms() {
+      HashMap<String, int[][]> result = new HashMap<>();
+      for (Map.Entry<String, NDVImageProcessor> entry : channelProcessors_.entrySet()) {
+         if (entry.getValue() instanceof NDVImageProcessorRGB) {
+            NDVImageProcessorRGB rgb = (NDVImageProcessorRGB) entry.getValue();
+            int[][] hists = rgb.getComponentHistograms();
+            if (hists != null) {
+               result.put(entry.getKey(), hists);
+            }
+         }
+      }
+      return result;
+   }
+
    private class NDVImageProcessorRGB extends NDVImageProcessor {
 
       private NDVImageProcessor rProcessor_;
@@ -401,17 +421,27 @@ public class ImageMaker {
          }
       }
 
+      /** Returns [R, G, B] raw histograms, or null if no pixels yet. */
+      public int[][] getComponentHistograms() {
+         if (rProcessor_.rawHistogram == null) {
+            return null;
+         }
+         return new int[][]{rProcessor_.rawHistogram, gProcessor_.rawHistogram,
+               bProcessor_.rawHistogram};
+      }
+
       public void recompute() {
          ChannelRenderSettings rs = getChannelSettings(channelName_);
          final GlobalRenderSettings gs = globalRenderSettings_;
          contrastMin_ = rs.contrastMin;
          contrastMax_ = rs.contrastMax;
-         rProcessor_.contrastMin_ = contrastMin_;
-         rProcessor_.contrastMax_ = contrastMax_;
-         gProcessor_.contrastMin_ = contrastMin_;
-         gProcessor_.contrastMax_ = contrastMax_;
-         bProcessor_.contrastMin_ = contrastMin_;
-         bProcessor_.contrastMax_ = contrastMax_;
+         // Apply per-component scaling from white-balance settings when available.
+         rProcessor_.contrastMin_ = rs.componentMin != null ? rs.componentMin[0] : contrastMin_;
+         rProcessor_.contrastMax_ = rs.componentMax != null ? rs.componentMax[0] : contrastMax_;
+         gProcessor_.contrastMin_ = rs.componentMin != null ? rs.componentMin[1] : contrastMin_;
+         gProcessor_.contrastMax_ = rs.componentMax != null ? rs.componentMax[1] : contrastMax_;
+         bProcessor_.contrastMin_ = rs.componentMin != null ? rs.componentMin[2] : contrastMin_;
+         bProcessor_.contrastMax_ = rs.componentMax != null ? rs.componentMax[2] : contrastMax_;
          rProcessor_.create8BitImage();
          gProcessor_.create8BitImage();
          bProcessor_.create8BitImage();

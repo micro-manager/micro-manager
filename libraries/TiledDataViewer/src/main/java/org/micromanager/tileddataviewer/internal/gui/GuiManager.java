@@ -158,6 +158,10 @@ public class GuiManager {
       return imageMaker_.getHistograms();
    }
 
+   public HashMap<String, int[][]> getComponentHistograms() {
+      return imageMaker_.getComponentHistograms();
+   }
+
    public void expandDisplayedRangeToInclude(java.util.List<HashMap<String,
             Object>> newIamgeEvents, java.util.List<String> activeChannels) {
       if (displayWindow_ != null) {

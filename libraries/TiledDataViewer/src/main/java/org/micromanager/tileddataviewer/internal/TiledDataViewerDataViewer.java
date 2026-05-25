@@ -290,11 +290,22 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          if (known == null) {
             continue;
          }
-         ComponentDisplaySettings reqComp =
-               requested.getChannelSettings(i).getComponentSettings(0);
+         ChannelDisplaySettings reqCh = requested.getChannelSettings(i);
+         ComponentDisplaySettings reqComp = reqCh.getComponentSettings(0);
          long reqMin = reqComp.getScalingMinimum();
          long reqMax = reqComp.getScalingMaximum();
-         if (reqMin == known[0] && reqMax == known[1]) {
+         // For RGB channels, also accept changes in components 1 or 2 (white balance).
+         boolean anyComponentChanged = reqMin != known[0] || reqMax != known[1];
+         if (!anyComponentChanged && reqCh.getNumberOfComponents() > 1) {
+            for (int c = 1; c < 3; c++) {
+               ComponentDisplaySettings cds = reqCh.getComponentSettings(c);
+               if (cds.getScalingMinimum() != known[0] || cds.getScalingMaximum() != known[1]) {
+                  anyComponentChanged = true;
+                  break;
+               }
+            }
+         }
+         if (!anyComponentChanged) {
             continue; // No change — nothing to remember
          }
          // Deliberate user change: remember the new range as the ground truth so
@@ -336,6 +347,21 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             boolean grayscale = mode == DisplaySettings.ColorMode.GRAYSCALE;
             color = grayscale ? Color.white : ch.getColor();
             active = ch.isVisible();
+
+            // For RGB images, pass per-component scaling so that white-balance
+            // adjustments stored in components 0/1/2 reach the renderer.
+            if (ch.getNumberOfComponents() > 1) {
+               int[] compMin = new int[3];
+               int[] compMax = new int[3];
+               for (int c = 0; c < 3; c++) {
+                  ComponentDisplaySettings cds = ch.getComponentSettings(c);
+                  compMin[c] = (int) cds.getScalingMinimum();
+                  compMax[c] = (int) cds.getScalingMaximum();
+               }
+               channelSettings.put(name,
+                     new ChannelRenderSettings(min, max, gamma, color, active, compMin, compMax));
+               continue;
+            }
          }
          channelSettings.put(name, new ChannelRenderSettings(min, max, gamma, color, active));
       }
@@ -638,6 +664,9 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          if (rawHists == null || rawHists.isEmpty()) {
             return;
          }
+         // Per-component (R/G/B) histograms for RGB channels — used to build
+         // 3-component ImageStats so the Inspector shows the RGBW controls.
+         HashMap<String, int[][]> componentHists = ndViewer2_.getComponentHistograms();
 
          // Change detection: skip if every channel's histogram is identical to the
          // last post. This covers the common hot path of panning while a single tile
@@ -709,10 +738,25 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                      new byte[1], 1, 1, 1, 1, coords,
                      studio_.data().metadataBuilder().build());
             }
-            long[] buf = fullHistBuffers_.computeIfAbsent(
-                  channelName, k -> new long[rawHist.length + 2]);
-            ComponentStats cs = buildComponentStatsFromRawHistogram(rawHist, buf);
-            validStats.add(ImageStats.create(validImages.size(), cs));
+            int[][] compHists = componentHists.get(channelName);
+            if (compHists != null) {
+               // RGB channel: build one ComponentStats per colour component (R, G, B)
+               // so the Inspector detects numComponents=3 and shows the RGBW controls.
+               ComponentStats[] compStats = new ComponentStats[3];
+               for (int c = 0; c < 3; c++) {
+                  final int fc = c;
+                  long[] buf = fullHistBuffers_.computeIfAbsent(
+                        channelName + "_" + c, k -> new long[compHists[fc].length + 2]);
+                  compStats[c] = buildComponentStatsFromRawHistogram(compHists[c], buf);
+               }
+               validStats.add(ImageStats.create(validImages.size(),
+                     compStats[0], compStats[1], compStats[2]));
+            } else {
+               long[] buf = fullHistBuffers_.computeIfAbsent(
+                     channelName, k -> new long[rawHist.length + 2]);
+               ComponentStats cs = buildComponentStatsFromRawHistogram(rawHist, buf);
+               validStats.add(ImageStats.create(validImages.size(), cs));
+            }
             validImages.add(routingImg);
          }
 
