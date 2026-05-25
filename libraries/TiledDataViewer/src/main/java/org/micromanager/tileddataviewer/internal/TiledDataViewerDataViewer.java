@@ -296,7 +296,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          long reqMax = reqComp.getScalingMaximum();
          // For RGB channels, also accept changes in components 1 or 2 (white balance).
          boolean anyComponentChanged = reqMin != known[0] || reqMax != known[1];
-         if (!anyComponentChanged && reqCh.getNumberOfComponents() > 1) {
+         if (!anyComponentChanged && reqCh.getNumberOfComponents() >= 3) {
             for (int c = 1; c < 3; c++) {
                ComponentDisplaySettings cds = reqCh.getComponentSettings(c);
                if (cds.getScalingMinimum() != known[0] || cds.getScalingMaximum() != known[1]) {
@@ -350,7 +350,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
 
             // For RGB images, pass per-component scaling so that white-balance
             // adjustments stored in components 0/1/2 reach the renderer.
-            if (ch.getNumberOfComponents() > 1) {
+            if (ch.getNumberOfComponents() >= 3) {
                int[] compMin = new int[3];
                int[] compMax = new int[3];
                for (int c = 0; c < 3; c++) {
