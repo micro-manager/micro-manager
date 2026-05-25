@@ -416,6 +416,15 @@ public class TiledDataViewer implements TiledDataViewerAPI {
    }
 
    /**
+    * Returns per-component (R, G, B) raw pixel histograms for RGB channels.
+    * Only channels rendered by NDVImageProcessorRGB appear in the result.
+    * The value array has three entries: [R histogram, G histogram, B histogram].
+    */
+   public java.util.HashMap<String, int[][]> getComponentHistograms() {
+      return guiManager_.getComponentHistograms();
+   }
+
+   /**
     * Sets a callback that is invoked after every render completes (on the
     * display calculation thread, before the EDT repaint). Use it to read
     * updated histograms from getHistograms().
