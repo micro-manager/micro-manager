@@ -92,6 +92,8 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    private int imageHeight_ = 1;
    private int numZSlices_ = 1;
    private boolean hasZ_ = false;
+   private int numTimePoints_ = 1;
+   private int numPositions_ = 1;
 
    // Base scale computed once at construction so the layout fits the screen
    private double pixelScale_ = 1.0;
@@ -128,7 +130,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    private JPanel xzWrapper_;
    private JPanel yzWrapper_;
 
-   // Number of channels (probed at construction, updated on new images)
+   // Number of channels/timepoints/positions (probed at construction, updated on new images)
    private int numChannels_ = 1;
 
    // Controls
@@ -142,6 +144,12 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    private JScrollBar cScrollBar_;
    private JLabel cPositionLabel_;
    private JPanel cControlRow_;
+   private JScrollBar tScrollBar_;
+   private JLabel tPositionLabel_;
+   private JPanel tControlRow_;
+   private JScrollBar pScrollBar_;
+   private JLabel pPositionLabel_;
+   private JPanel pControlRow_;
 
    private boolean updatingControls_ = false;
 
@@ -252,8 +260,23 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          return position;
       }
       if (position != null) {
-         currentTime_ = position.getTimePoint();
-         currentPosition_ = position.getStagePosition();
+         final int newT = position.getTimePoint();
+         final int newP = position.getStagePosition();
+         if (newT != currentTime_ || newP != currentPosition_) {
+            currentTime_ = newT;
+            currentPosition_ = newP;
+            SwingUtilities.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  syncScrollBarPosition(tScrollBar_, tPositionLabel_,
+                        newT, numTimePoints_);
+                  syncScrollBarPosition(pScrollBar_, pPositionLabel_,
+                        newP, numPositions_);
+                  scheduleRefresh();
+               }
+            });
+            return position;
+         }
          // currentChannel_ is owned by the C scroll bar; do not override it here.
       }
       SwingUtilities.invokeLater(new Runnable() {
@@ -263,6 +286,20 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          }
       });
       return position;
+   }
+
+   private void syncScrollBarPosition(JScrollBar bar, JLabel label, int value, int total) {
+      if (bar == null || label == null) {
+         return;
+      }
+      int clamped = Math.max(0, Math.min(value, total - 1));
+      updatingControls_ = true;
+      try {
+         bar.setValue(clamped);
+         label.setText(positionText(clamped, total));
+      } finally {
+         updatingControls_ = false;
+      }
    }
 
    // ---- DataViewer interface ----
@@ -399,13 +436,18 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    public void onNewImage(DataProviderHasNewImageEvent event) {
       final int newZ = Math.max(1, dataProvider_.getNextIndex(Coords.Z_SLICE));
       final int newC = Math.max(1, dataProvider_.getNextIndex(Coords.CHANNEL));
-      if (newZ != numZSlices_ || newC != numChannels_) {
+      final int newT = Math.max(1, dataProvider_.getNextIndex(Coords.TIME_POINT));
+      final int newP = Math.max(1, dataProvider_.getNextIndex(Coords.STAGE_POSITION));
+      if (newZ != numZSlices_ || newC != numChannels_
+            || newT != numTimePoints_ || newP != numPositions_) {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                numZSlices_ = newZ;
                hasZ_ = numZSlices_ > 1;
                numChannels_ = newC;
+               numTimePoints_ = newT;
+               numPositions_ = newP;
                updateSliderRanges();
                applyPanelSizes();
                if (grid_ != null) {
@@ -891,6 +933,14 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       if (numChannels_ < 1) {
          numChannels_ = 1;
       }
+      numTimePoints_ = dataProvider_.getNextIndex(Coords.TIME_POINT);
+      if (numTimePoints_ < 1) {
+         numTimePoints_ = 1;
+      }
+      numPositions_ = dataProvider_.getNextIndex(Coords.STAGE_POSITION);
+      if (numPositions_ < 1) {
+         numPositions_ = 1;
+      }
 
       double zStepUm = 1.0;
       double pixelSizeUm = 1.0;
@@ -1043,7 +1093,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       int cMax = Math.max(1, numChannels_);
       int initCh = Math.max(0, Math.min(currentChannel_, cMax - 1));
       cScrollBar_ = new JScrollBar(JScrollBar.HORIZONTAL, initCh, 1, 0, cMax);
-      cPositionLabel_ = new JLabel(channelPositionText(initCh, numChannels_));
+      cPositionLabel_ = new JLabel(positionText(initCh, numChannels_));
       cPositionLabel_.setForeground(Color.LIGHT_GRAY);
       cPositionLabel_.setFont(cPositionLabel_.getFont().deriveFont(10.0f));
 
@@ -1055,13 +1105,45 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       panel.add(cControlRow_, "span 3, growx, wrap");
       cControlRow_.setVisible(numChannels_ > 1);
 
+      // T row
+      int tMax = Math.max(1, numTimePoints_);
+      int initT = Math.max(0, Math.min(currentTime_, tMax - 1));
+      tScrollBar_ = new JScrollBar(JScrollBar.HORIZONTAL, initT, 1, 0, tMax);
+      tPositionLabel_ = new JLabel(positionText(initT, numTimePoints_));
+      tPositionLabel_.setForeground(Color.LIGHT_GRAY);
+      tPositionLabel_.setFont(tPositionLabel_.getFont().deriveFont(10.0f));
+
+      tControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][grow][]"));
+      tControlRow_.setBackground(DARK_GREY);
+      tControlRow_.add(makeLabel("T:"));
+      tControlRow_.add(tScrollBar_, "growx");
+      tControlRow_.add(tPositionLabel_);
+      panel.add(tControlRow_, "span 3, growx, wrap");
+      tControlRow_.setVisible(numTimePoints_ > 1);
+
+      // P row
+      int pMax = Math.max(1, numPositions_);
+      int initP = Math.max(0, Math.min(currentPosition_, pMax - 1));
+      pScrollBar_ = new JScrollBar(JScrollBar.HORIZONTAL, initP, 1, 0, pMax);
+      pPositionLabel_ = new JLabel(positionText(initP, numPositions_));
+      pPositionLabel_.setForeground(Color.LIGHT_GRAY);
+      pPositionLabel_.setFont(pPositionLabel_.getFont().deriveFont(10.0f));
+
+      pControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][grow][]"));
+      pControlRow_.setBackground(DARK_GREY);
+      pControlRow_.add(makeLabel("P:"));
+      pControlRow_.add(pScrollBar_, "growx");
+      pControlRow_.add(pPositionLabel_);
+      panel.add(pControlRow_, "span 3, growx, wrap");
+      pControlRow_.setVisible(numPositions_ > 1);
+
       wireListeners();
       return panel;
    }
 
-   private static String channelPositionText(int ch, int total) {
+   private static String positionText(int index, int total) {
       int digits = Integer.toString(total).length();
-      return String.format("%" + digits + "d/%" + digits + "d", ch + 1, total);
+      return String.format("%" + digits + "d/%" + digits + "d", index + 1, total);
    }
 
    private void wireListeners() {
@@ -1140,7 +1222,29 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
             if (!updatingControls_) {
                int ch = cScrollBar_.getValue();
                currentChannel_ = ch;
-               cPositionLabel_.setText(channelPositionText(ch, numChannels_));
+               cPositionLabel_.setText(positionText(ch, numChannels_));
+               scheduleRefresh();
+            }
+         }
+      });
+      tScrollBar_.addAdjustmentListener(new AdjustmentListener() {
+         @Override
+         public void adjustmentValueChanged(AdjustmentEvent e) {
+            if (!updatingControls_) {
+               int t = tScrollBar_.getValue();
+               currentTime_ = t;
+               tPositionLabel_.setText(positionText(t, numTimePoints_));
+               scheduleRefresh();
+            }
+         }
+      });
+      pScrollBar_.addAdjustmentListener(new AdjustmentListener() {
+         @Override
+         public void adjustmentValueChanged(AdjustmentEvent e) {
+            if (!updatingControls_) {
+               int p = pScrollBar_.getValue();
+               currentPosition_ = p;
+               pPositionLabel_.setText(positionText(p, numPositions_));
                scheduleRefresh();
             }
          }
@@ -1174,8 +1278,20 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       int cMax = Math.max(1, numChannels_);
       cScrollBar_.setMaximum(cMax);
       currentChannel_ = Math.min(currentChannel_, cMax - 1);
-      cPositionLabel_.setText(channelPositionText(currentChannel_, numChannels_));
+      cPositionLabel_.setText(positionText(currentChannel_, numChannels_));
       cControlRow_.setVisible(numChannels_ > 1);
+
+      int tMax = Math.max(1, numTimePoints_);
+      tScrollBar_.setMaximum(tMax);
+      currentTime_ = Math.min(currentTime_, tMax - 1);
+      tPositionLabel_.setText(positionText(currentTime_, numTimePoints_));
+      tControlRow_.setVisible(numTimePoints_ > 1);
+
+      int pMax = Math.max(1, numPositions_);
+      pScrollBar_.setMaximum(pMax);
+      currentPosition_ = Math.min(currentPosition_, pMax - 1);
+      pPositionLabel_.setText(positionText(currentPosition_, numPositions_));
+      pControlRow_.setVisible(numPositions_ > 1);
    }
 
    // ---- Panel click listeners ----
