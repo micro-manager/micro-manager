@@ -188,16 +188,61 @@ public final class OrthogonalLutRenderer {
    }
 
    /**
-    * Convert a raw pixel array (byte[], short[], int[], or float[]) to an int[] of values
-    * suitable for LUT scaling.
+    * Render a flat float pixel array to a BufferedImage, applying a linear LUT
+    * with actual float min/max values (not bin indices).
     *
-    * <p>For float[] (GRAY32), values are reinterpreted as their raw IEEE 754 bit pattern
-    * so that the existing long min/max LUT arithmetic works without overflow. The display
-    * settings min/max for float images are expected to be stored as Float.floatToIntBits()
-    * values by the MM display framework.</p>
+    * @param floatPixels  flat array of actual float pixel values
+    * @param width        image width
+    * @param height       image height
+    * @param fMin         black point (actual float pixel value)
+    * @param fMax         white point (actual float pixel value)
+    * @param gamma        gamma exponent
+    * @param channelColor color tint
+    * @return ARGB BufferedImage
+    */
+   public static BufferedImage renderFloat(float[] floatPixels, int width, int height,
+                                           double fMin, double fMax, double gamma,
+                                           Color channelColor) {
+      BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      int[] outPixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+
+      float r = channelColor.getRed() / 255f;
+      float g = channelColor.getGreen() / 255f;
+      float b = channelColor.getBlue() / 255f;
+
+      double range = fMax - fMin;
+      if (range <= 0.0) {
+         range = 1.0;
+      }
+
+      for (int i = 0; i < floatPixels.length; i++) {
+         double normalized = (floatPixels[i] - fMin) / range;
+         if (normalized < 0.0) {
+            normalized = 0.0;
+         } else if (normalized > 1.0) {
+            normalized = 1.0;
+         }
+         if (gamma != 1.0) {
+            normalized = Math.pow(normalized, gamma);
+         }
+         int level = (int) (normalized * 255.0 + 0.5);
+         outPixels[i] = (0xFF << 24)
+               | ((int) (level * r) << 16)
+               | ((int) (level * g) << 8)
+               | (int) (level * b);
+      }
+      return img;
+   }
+
+   /**
+    * Convert a raw pixel array (byte[], short[], or int[]) to an int[] of values
+    * suitable for LUT scaling. Float arrays are not supported here; use
+    * {@link #renderFloat} instead for GRAY32 images.
     */
    public static int[] toIntArray(Object raw, int expectedSize) {
       if (raw instanceof float[]) {
+         // Float images should be rendered via renderFloat(), not this path.
+         // As a fallback, clamp to [0, 65535] by treating each float as-is.
          float[] arr = (float[]) raw;
          int[] result = new int[arr.length];
          for (int i = 0; i < arr.length; i++) {

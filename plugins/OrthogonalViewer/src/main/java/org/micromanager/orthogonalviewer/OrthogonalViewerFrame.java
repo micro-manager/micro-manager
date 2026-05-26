@@ -695,6 +695,8 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
             // Route overlay context to the largest panel so corner-anchored overlays
             // have the most room and are clearly visible.
+            // Note: overlays receive the XY images regardless of which panel is chosen;
+            // overlay plugins should be robust to coordinate space differences.
             Image primaryXY = (result.xyImages != null && !result.xyImages.isEmpty())
                   ? result.xyImages.get(0) : null;
             double zPhys = numZ * aspectRatioZtoXY_;
@@ -777,6 +779,95 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    /**
+    * Determine whether the first image in the given list has float (GRAY32) pixels.
+    */
+   private static boolean isFloatStack(List<Image> zStack) {
+      for (Image img : zStack) {
+         if (img != null) {
+            return img.getRawPixels() instanceof float[];
+         }
+      }
+      return false;
+   }
+
+   /**
+    * Return [fMin, fMax] for rendering a single-channel float image.
+    *
+    * <p>For autostretch: use the quantile double values from stats (accurate for float).
+    * For manual: convert stored bin indices to actual pixel values using stats bin geometry.
+    * Fallback when no stats: return [0, 1] so the image is at least visible.</p>
+    *
+    * @param settings current display settings
+    * @param stats    current stats snapshot (may be null)
+    * @param channel  channel index to look up
+    * @return double[]{fMin, fMax}
+    */
+   private double[] floatScalingMinMax(DisplaySettings settings,
+                                       ImagesAndStats stats, int channel) {
+      ComponentDisplaySettings comp =
+            settings.getChannelSettings(channel).getComponentSettings(0);
+
+      // Find this channel's ComponentStats
+      org.micromanager.display.internal.imagestats.ComponentStats cStats = null;
+      if (stats != null) {
+         for (int i = 0; i < stats.getResult().size(); i++) {
+            int statsCh = 0;
+            if (i < stats.getRequest().getNumberOfImages()) {
+               Coords c = stats.getRequest().getImage(i).getCoords();
+               if (c.hasAxis(Coords.CHANNEL)) {
+                  statsCh = c.getChannel();
+               }
+            }
+            if (statsCh == channel) {
+               cStats = stats.getResult().get(i).getComponentStats(0);
+               break;
+            }
+         }
+      }
+
+      if (settings.isAutostretchEnabled() && cStats != null) {
+         double q = settings.getAutoscaleIgnoredQuantile();
+         double fMin;
+         double fMax;
+         if (settings.isAutoscaleIgnoringZeros()) {
+            // getAutoscale*IgnoringZeros return bin indices; convert to actual values
+            fMin = 0.0;
+            fMax = cStats.getHistogramRangeMinDouble()
+                  + cStats.getAutoscaleMaxForQuantileIgnoringZeros(q) * cStats.getBinWidthDouble();
+         } else {
+            // getQuantile returns actual float pixel values for float images
+            fMin = cStats.getQuantile(q);
+            fMax = cStats.getQuantile(1.0 - q);
+         }
+         if (fMax <= fMin) {
+            fMax = fMin + Math.max(cStats.getBinWidthDouble(), 1.0);
+         }
+         return new double[]{fMin, fMax};
+      }
+
+      if (cStats != null) {
+         // Convert stored bin indices to actual float values
+         int binCount = cStats.getHistogramBinCount();
+         double binWidth = cStats.getBinWidthDouble();
+         double rangeMin = cStats.getHistogramRangeMinDouble();
+         long storedMin = comp.getScalingMinimum();
+         long storedMax = comp.getScalingMaximum();
+         long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
+               : Math.min(binCount, storedMax);
+         long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
+         double fMin = rangeMin + clampedMin * binWidth;
+         double fMax = rangeMin + clampedMax * binWidth;
+         if (fMax <= fMin) {
+            fMax = fMin + Math.max(binWidth, 1.0);
+         }
+         return new double[]{fMin, fMax};
+      }
+
+      // No stats: fall back to [0, 1] so image is at least visible
+      return new double[]{0.0, 1.0};
+   }
+
+   /**
     * Build a DisplaySettings with per-channel min/max overridden from autostretch stats.
     * Returns the original settings unchanged if autostretch is off or stats are null.
     */
@@ -810,91 +901,140 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       final boolean composite = colorMode == DisplaySettings.ColorMode.COMPOSITE;
       final boolean multiChannel = numChannels > 1;
 
-      // Fetch z-stack for every channel
-      java.util.List<List<Image>> allChannelStacks = new java.util.ArrayList<List<Image>>();
-      for (int c = 0; c < numChannels; c++) {
-         try {
-            allChannelStacks.add(fetchZStack(c, t, p));
-         } catch (IOException ex) {
-            allChannelStacks.add(Collections.<Image>emptyList());
-         }
-      }
-
-      // Collect XY images at crosshair-Z for all channels (for Inspector stats)
-      result.xyImages = new java.util.ArrayList<Image>();
-      for (int c = 0; c < numChannels; c++) {
-         Image img = getZImage(allChannelStacks.get(c), cz);
-         if (img != null) {
-            result.xyImages.add(img);
-         }
-      }
-
       int zPhysH = Math.max(1, (int) Math.round(numZ * aspectRatioZtoXY_));
 
       if (!multiChannel) {
-         // Single channel path
-         List<Image> zStack = allChannelStacks.get(0);
+         // Single channel path — fetch only channel 0
+         List<Image> zStack;
+         try {
+            zStack = fetchZStack(0, t, p);
+         } catch (IOException ex) {
+            zStack = Collections.<Image>emptyList();
+         }
+         // Collect XY image for Inspector stats
+         Image xyImg = getZImage(zStack, cz);
+         result.xyImages = new java.util.ArrayList<Image>();
+         if (xyImg != null) {
+            result.xyImages.add(xyImg);
+         }
          if (zStack.isEmpty()) {
             return result;
          }
          ChannelDisplaySettings cs = settings.getChannelSettings(ch);
          ComponentDisplaySettings comp = cs.getComponentSettings(0);
-         long[] stretch = autostretchMinMax(settings, stats, ch);
-         long min = (stretch != null) ? stretch[0] : comp.getScalingMinimum();
-         long max = (stretch != null) ? stretch[1] : comp.getScalingMaximum();
          double gamma = comp.getScalingGamma();
          Color color = grayscale ? Color.WHITE : cs.getColor();
 
-         Image xyAtZ = getZImage(zStack, cz);
-         if (xyAtZ != null) {
-            int[] pixels = OrthogonalLutRenderer.toIntArray(xyAtZ.getRawPixels(), w * h);
-            result.xy = OrthogonalLutRenderer.render(pixels, w, h, min, max, gamma, color);
+         boolean isFloat = isFloatStack(zStack);
+         if (isFloat) {
+            double[] fScale = floatScalingMinMax(settings, stats, ch);
+            float[] xyF = (xyImg != null) ? (float[]) xyImg.getRawPixels() : new float[w * h];
+            result.xy = OrthogonalLutRenderer.renderFloat(xyF, w, h, fScale[0], fScale[1],
+                  gamma, color);
+            if (hasZ && numZ >= 2) {
+               result.xz = scaleImage(OrthogonalLutRenderer.renderFloat(
+                     OrthogonalSliceExtractor.extractXZFloat(zStack, cy, w, numZ),
+                     w, numZ, fScale[0], fScale[1], gamma, color), w, zPhysH);
+               result.yz = scaleImage(OrthogonalLutRenderer.renderFloat(
+                     OrthogonalSliceExtractor.extractYZFloat(zStack, cx, h, numZ),
+                     numZ, h, fScale[0], fScale[1], gamma, color), zPhysH, h);
+            }
          } else {
-            result.xy = OrthogonalLutRenderer.render(new int[w * h], w, h, 0, 1, 1.0, Color.WHITE);
-         }
-
-         if (hasZ && numZ >= 2) {
-            int[] xzPixels = OrthogonalSliceExtractor.extractXZ(zStack, cy, w);
-            result.xz = scaleImage(
-                  OrthogonalLutRenderer.render(xzPixels, w, numZ, min, max, gamma, color),
-                  w, zPhysH);
-
-            int[] yzPixels = OrthogonalSliceExtractor.extractYZ(zStack, cx, h);
-            result.yz = scaleImage(
-                  OrthogonalLutRenderer.render(yzPixels, numZ, h, min, max, gamma, color),
-                  zPhysH, h);
+            long[] stretch = autostretchMinMax(settings, stats, ch);
+            long min = (stretch != null) ? stretch[0] : comp.getScalingMinimum();
+            long max = (stretch != null) ? stretch[1] : comp.getScalingMaximum();
+            if (xyImg != null) {
+               int[] pixels = OrthogonalLutRenderer.toIntArray(xyImg.getRawPixels(), w * h);
+               result.xy = OrthogonalLutRenderer.render(pixels, w, h, min, max, gamma, color);
+            } else {
+               result.xy = OrthogonalLutRenderer.render(new int[w * h], w, h,
+                     0, 1, 1.0, Color.WHITE);
+            }
+            if (hasZ && numZ >= 2) {
+               int[] xzPixels = OrthogonalSliceExtractor.extractXZ(zStack, cy, w, numZ);
+               result.xz = scaleImage(
+                     OrthogonalLutRenderer.render(xzPixels, w, numZ, min, max, gamma, color),
+                     w, zPhysH);
+               int[] yzPixels = OrthogonalSliceExtractor.extractYZ(zStack, cx, h, numZ);
+               result.yz = scaleImage(
+                     OrthogonalLutRenderer.render(yzPixels, numZ, h, min, max, gamma, color),
+                     zPhysH, h);
+            }
          }
       } else if (!composite) {
          // Grayscale or Color mode with multi-channel: show only the selected channel
-         List<Image> zStack = allChannelStacks.get(ch);
+         List<Image> zStack;
+         try {
+            zStack = fetchZStack(ch, t, p);
+         } catch (IOException ex) {
+            zStack = Collections.<Image>emptyList();
+         }
+         // Collect XY image for Inspector stats (reused below for rendering)
+         Image xyImg = getZImage(zStack, cz);
+         result.xyImages = new java.util.ArrayList<Image>();
+         if (xyImg != null) {
+            result.xyImages.add(xyImg);
+         }
          ChannelDisplaySettings cs = settings.getChannelSettings(ch);
          ComponentDisplaySettings comp = cs.getComponentSettings(0);
-         long[] stretch = autostretchMinMax(settings, stats, ch);
-         long min = (stretch != null) ? stretch[0] : comp.getScalingMinimum();
-         long max = (stretch != null) ? stretch[1] : comp.getScalingMaximum();
          double gamma = comp.getScalingGamma();
          Color color = grayscale ? Color.WHITE : cs.getColor();
 
-         Image xyAtZ = getZImage(zStack, cz);
-         if (xyAtZ != null) {
-            int[] pixels = OrthogonalLutRenderer.toIntArray(xyAtZ.getRawPixels(), w * h);
-            result.xy = OrthogonalLutRenderer.render(pixels, w, h, min, max, gamma, color);
+         boolean isFloat = isFloatStack(zStack);
+         if (isFloat) {
+            double[] fScale = floatScalingMinMax(settings, stats, ch);
+            float[] xyF = (xyImg != null) ? (float[]) xyImg.getRawPixels() : new float[w * h];
+            result.xy = OrthogonalLutRenderer.renderFloat(xyF, w, h, fScale[0], fScale[1],
+                  gamma, color);
+            if (hasZ && numZ >= 2) {
+               result.xz = scaleImage(OrthogonalLutRenderer.renderFloat(
+                     OrthogonalSliceExtractor.extractXZFloat(zStack, cy, w, numZ),
+                     w, numZ, fScale[0], fScale[1], gamma, color), w, zPhysH);
+               result.yz = scaleImage(OrthogonalLutRenderer.renderFloat(
+                     OrthogonalSliceExtractor.extractYZFloat(zStack, cx, h, numZ),
+                     numZ, h, fScale[0], fScale[1], gamma, color), zPhysH, h);
+            }
          } else {
-            result.xy = OrthogonalLutRenderer.render(new int[w * h], w, h, 0, 1, 1.0, Color.WHITE);
-         }
-
-         if (hasZ && numZ >= 2) {
-            int[] xzPixels = OrthogonalSliceExtractor.extractXZ(zStack, cy, w);
-            result.xz = scaleImage(
-                  OrthogonalLutRenderer.render(xzPixels, w, numZ, min, max, gamma, color),
-                  w, zPhysH);
-            int[] yzPixels = OrthogonalSliceExtractor.extractYZ(zStack, cx, h);
-            result.yz = scaleImage(
-                  OrthogonalLutRenderer.render(yzPixels, numZ, h, min, max, gamma, color),
-                  zPhysH, h);
+            long[] stretch = autostretchMinMax(settings, stats, ch);
+            long min = (stretch != null) ? stretch[0] : comp.getScalingMinimum();
+            long max = (stretch != null) ? stretch[1] : comp.getScalingMaximum();
+            if (xyImg != null) {
+               int[] pixels = OrthogonalLutRenderer.toIntArray(xyImg.getRawPixels(), w * h);
+               result.xy = OrthogonalLutRenderer.render(pixels, w, h, min, max, gamma, color);
+            } else {
+               result.xy = OrthogonalLutRenderer.render(new int[w * h], w, h,
+                     0, 1, 1.0, Color.WHITE);
+            }
+            if (hasZ && numZ >= 2) {
+               int[] xzPixels = OrthogonalSliceExtractor.extractXZ(zStack, cy, w, numZ);
+               result.xz = scaleImage(
+                     OrthogonalLutRenderer.render(xzPixels, w, numZ, min, max, gamma, color),
+                     w, zPhysH);
+               int[] yzPixels = OrthogonalSliceExtractor.extractYZ(zStack, cx, h, numZ);
+               result.yz = scaleImage(
+                     OrthogonalLutRenderer.render(yzPixels, numZ, h, min, max, gamma, color),
+                     zPhysH, h);
+            }
          }
       } else {
-         // Multi-channel composite path
+         // Multi-channel composite path — fetch all channels
+         java.util.List<List<Image>> allChannelStacks = new java.util.ArrayList<List<Image>>();
+         for (int c = 0; c < numChannels; c++) {
+            try {
+               allChannelStacks.add(fetchZStack(c, t, p));
+            } catch (IOException ex) {
+               allChannelStacks.add(Collections.<Image>emptyList());
+            }
+         }
+         // Collect XY images for Inspector stats
+         result.xyImages = new java.util.ArrayList<Image>();
+         for (int c = 0; c < numChannels; c++) {
+            Image img = getZImage(allChannelStacks.get(c), cz);
+            if (img != null) {
+               result.xyImages.add(img);
+            }
+         }
+
          java.util.List<int[]> xyChPixels = new java.util.ArrayList<int[]>();
          java.util.List<int[]> xzChPixels = new java.util.ArrayList<int[]>();
          java.util.List<int[]> yzChPixels = new java.util.ArrayList<int[]>();
@@ -913,8 +1053,8 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
                   : null);
 
             if (hasZ && numZ >= 2) {
-               xzChPixels.add(OrthogonalSliceExtractor.extractXZ(zStack, cy, w));
-               yzChPixels.add(OrthogonalSliceExtractor.extractYZ(zStack, cx, h));
+               xzChPixels.add(OrthogonalSliceExtractor.extractXZ(zStack, cy, w, numZ));
+               yzChPixels.add(OrthogonalSliceExtractor.extractYZ(zStack, cx, h, numZ));
             } else {
                xzChPixels.add(null);
                yzChPixels.add(null);
