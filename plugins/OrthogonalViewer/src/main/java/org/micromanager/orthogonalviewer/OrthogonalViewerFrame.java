@@ -58,6 +58,8 @@ import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ComponentStats;
+import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
@@ -439,9 +441,71 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          @Override
          public void run() {
             postEvent(ImageStatsPublisher.ImageStatsChangedEvent.create(result));
+            applyAutostretchIfEnabled(result);
          }
       });
       return 0L;
+   }
+
+   /**
+    * When autostretch is enabled, update the display settings min/max from the new stats
+    * and re-render. This mirrors what DisplayUIController does via applyAutostretch().
+    */
+   private void applyAutostretchIfEnabled(ImagesAndStats imagesAndStats) {
+      DisplaySettings settings = getDisplaySettings();
+      if (!settings.isAutostretchEnabled() || imagesAndStats == null) {
+         return;
+      }
+      double q = settings.getAutoscaleIgnoredQuantile();
+      boolean ignoreZeros = settings.isAutoscaleIgnoringZeros();
+
+      DisplaySettings.Builder sb = settings.copyBuilder();
+      boolean changed = false;
+
+      java.util.List<ImageStats> statsList = imagesAndStats.getResult();
+      for (int i = 0; i < statsList.size(); i++) {
+         ImageStats imgStats = statsList.get(i);
+         int ch = i;
+         // Map stat index to channel index via the request images
+         if (i < imagesAndStats.getRequest().getNumberOfImages()) {
+            org.micromanager.data.Coords c =
+                  imagesAndStats.getRequest().getImage(i).getCoords();
+            if (c.hasAxis(org.micromanager.data.Coords.CHANNEL)) {
+               ch = c.getChannel();
+            }
+         }
+
+         ChannelDisplaySettings chanSettings = settings.getChannelSettings(ch);
+         int nComponents = imgStats.getNumberOfComponents();
+         ChannelDisplaySettings.Builder cb = chanSettings.copyBuilder();
+         for (int comp = 0; comp < nComponents; comp++) {
+            ComponentStats cStats = imgStats.getComponentStats(comp);
+            long min;
+            long max;
+            if (ignoreZeros) {
+               min = 0L;
+               max = cStats.getAutoscaleMaxForQuantileIgnoringZeros(q);
+            } else {
+               long[] minMax = new long[2];
+               cStats.getAutoscaleMinMaxForQuantile(q, minMax);
+               min = minMax[0];
+               max = minMax[1];
+            }
+            if (max <= min) {
+               max = min + 1;
+            }
+            ComponentDisplaySettings compSettings =
+                  chanSettings.getComponentSettings(comp).copyBuilder()
+                        .scalingMinimum(min).scalingMaximum(max).build();
+            cb = cb.component(comp, compSettings);
+            changed = true;
+         }
+         sb = sb.channel(ch, cb.build());
+      }
+
+      if (changed) {
+         setDisplaySettings(sb.build());
+      }
    }
 
    // ---- New image events ----
