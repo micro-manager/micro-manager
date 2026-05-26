@@ -338,17 +338,21 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
             .getString(EXPORT_LOCATION, base);
       File basePath = new File(base);
 
-      // Collect axis coords to export using AxisPanel.configureExporter()
-      final ArrayList<Coords> coords = new ArrayList<Coords>();
+      // Collect (z, t, p) tuples to export using AxisPanel.configureExporter().
+      // We use int[] rather than Coords to avoid the DefaultCoords gotcha where
+      // index(axis, 0) silently drops the axis, corrupting hasAxis() checks.
+      final int baseZ = viewer_.getCrosshairZ();
+      final int baseT = viewer_.getCurrentTime();
+      final int baseP = viewer_.getCurrentPosition();
+      final ArrayList<int[]> frames = new ArrayList<int[]>();
       if (mode.equals(FORMAT_SYSTEM_CLIPBOARD)) {
-         coords.add(currentDisplayCoords());
+         frames.add(new int[]{baseZ, baseT, baseP});
       } else if (!axisPanels_.isEmpty()) {
          CoordCollector collector = new CoordCollector(viewer_.getDataProvider());
          axisPanels_.get(0).configureExporter(collector);
-         Coords seed = currentDisplayCoords();
-         collector.collectCoords(seed, coords);
+         collector.collectFrames(baseZ, baseT, baseP, frames);
       } else {
-         coords.add(currentDisplayCoords());
+         frames.add(new int[]{baseZ, baseT, baseP});
       }
 
       // Show file/directory chooser and get output path info
@@ -409,14 +413,14 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
       // Run the actual rendering + writing in a background thread
       final String finalDir = directory;
       final String finalPrefix = filePrefix;
-      final ArrayList<Coords> finalCoords = coords;
+      final ArrayList<int[]> finalFrames = frames;
 
       Thread exportThread = new Thread(new Runnable() {
          @Override
          public void run() {
             try {
                doExport(finalMode, finalDir, finalPrefix, quality,
-                     finalCoords, finalFfmpegPath, useLabel);
+                     finalFrames, finalFfmpegPath, useLabel);
             } catch (IOException ex) {
                final String msg = ex.getMessage();
                SwingUtilities.invokeLater(new Runnable() {
@@ -436,20 +440,19 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
    // ---- Rendering and writing ----
 
    private void doExport(String mode, String directory, String prefix, int quality,
-                         ArrayList<Coords> coords, String ffmpegPath,
+                         ArrayList<int[]> ztp, String ffmpegPath,
                          boolean useLabel) throws IOException {
-      // Render one composite BufferedImage per coord
+      // Render one composite BufferedImage per (z, t, p) tuple
       List<BufferedImage> frames = new ArrayList<BufferedImage>();
       List<String> labels = new ArrayList<String>();
-      for (Coords c : coords) {
-         int z = c.hasAxis(Coords.Z_SLICE) ? c.getZ() : viewer_.getCrosshairZ();
-         int t = c.hasAxis(Coords.TIME_POINT) ? c.getTimePoint() : viewer_.getCurrentTime();
-         int p = c.hasAxis(Coords.STAGE_POSITION)
-               ? c.getStagePosition() : viewer_.getCurrentPosition();
+      for (int[] coord : ztp) {
+         int z = coord[0];
+         int t = coord[1];
+         int p = coord[2];
          BufferedImage frame = viewer_.renderCompositeForExport(z, t, p);
          if (frame != null) {
             frames.add(frame);
-            labels.add(useLabel ? coordLabel(c) : String.format("_%010d", frames.size()));
+            labels.add(useLabel ? ztpLabel(z, t, p) : String.format("_%010d", frames.size()));
          }
       }
 
@@ -548,30 +551,36 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
       return stack;
    }
 
-   private String coordLabel(Coords c) {
+   private String ztpLabel(int z, int t, int p) {
       StringBuilder sb = new StringBuilder();
-      if (c.hasAxis(Coords.Z_SLICE) && viewer_.getNumZSlices() > 1) {
-         sb.append("_Z").append(String.format("%06d", c.getZ() + 1));
+      if (viewer_.getNumZSlices() > 1) {
+         sb.append("_Z").append(String.format("%06d", z + 1));
       }
-      if (c.hasAxis(Coords.TIME_POINT) && viewer_.getNumTimePoints() > 1) {
-         sb.append("_T").append(String.format("%06d", c.getTimePoint() + 1));
+      if (viewer_.getNumTimePoints() > 1) {
+         sb.append("_T").append(String.format("%06d", t + 1));
       }
-      if (c.hasAxis(Coords.STAGE_POSITION) && viewer_.getNumPositions() > 1) {
-         sb.append("_P").append(String.format("%06d", c.getStagePosition() + 1));
+      if (viewer_.getNumPositions() > 1) {
+         sb.append("_P").append(String.format("%06d", p + 1));
       }
       return sb.length() > 0 ? sb.toString() : String.format("_%010d", 1);
    }
 
    private void writeJpeg(BufferedImage img, File file, float quality) throws IOException {
       ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
-      ImageWriteParam param = writer.getDefaultWriteParam();
-      param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-      param.setCompressionQuality(quality);
-      ImageOutputStream stream = ImageIO.createImageOutputStream(file);
-      writer.setOutput(stream);
-      writer.write(null, new javax.imageio.IIOImage(img, null, null), param);
-      stream.close();
-      writer.dispose();
+      try {
+         ImageWriteParam param = writer.getDefaultWriteParam();
+         param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+         param.setCompressionQuality(quality);
+         ImageOutputStream stream = ImageIO.createImageOutputStream(file);
+         try {
+            writer.setOutput(stream);
+            writer.write(null, new javax.imageio.IIOImage(img, null, null), param);
+         } finally {
+            stream.close();
+         }
+      } finally {
+         writer.dispose();
+      }
    }
 
    private void runFfmpeg(String ffmpegPath, File tmpDir, File outFile, int quality)
@@ -599,15 +608,20 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
       pb.redirectErrorStream(true);
       Process proc = pb.start();
       StringBuilder out = new StringBuilder();
+      BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
       try {
-         BufferedReader br = new BufferedReader(
-               new InputStreamReader(proc.getInputStream()));
          String line;
          while ((line = br.readLine()) != null) {
             out.append(line).append("\n");
          }
       } catch (IOException ex) {
          // ignore read errors from the stream
+      } finally {
+         try {
+            br.close();
+         } catch (IOException ex) {
+            // ignore close error
+         }
       }
       int code;
       try {
@@ -650,21 +664,15 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
       }
    }
 
-   /** Returns a Coords object representing the viewer's current display position. */
-   private Coords currentDisplayCoords() {
-      return studio_.data().coordsBuilder()
-            .z(viewer_.getCrosshairZ())
-            .timePoint(viewer_.getCurrentTime())
-            .stagePosition(viewer_.getCurrentPosition())
-            .build();
-   }
-
    // ---- CoordCollector — minimal ImageExporter that records loop() calls ----
 
    /**
     * Minimal {@link ImageExporter} stub that records the axis loops configured by
-    * {@link ExportMovieDlg.AxisPanel#configureExporter} and can enumerate the resulting
-    * {@link Coords} sequence.
+    * {@link ExportMovieDlg.AxisPanel#configureExporter} and enumerates (z, t, p) tuples.
+    *
+    * <p>We avoid building {@link Coords} objects for the export sequence because
+    * {@code DefaultCoords.Builder.index(axis, 0)} silently drops the axis, which would
+    * break any downstream {@code hasAxis()} check when the first frame is at index 0.</p>
     */
    private static class CoordCollector implements ImageExporter {
       private final org.micromanager.data.DataProvider provider_;
@@ -702,25 +710,60 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
          return this;
       }
 
-      /** Enumerate all Coords that the configured loops cover, seeded from {@code base}. */
-      public void collectCoords(Coords base, ArrayList<Coords> result) {
+      /**
+       * Enumerate all (z, t, p) tuples that the configured loops cover.
+       *
+       * @param baseZ fallback z when no Z loop is configured
+       * @param baseT fallback t when no T loop is configured
+       * @param baseP fallback p when no P loop is configured
+       * @param result destination list; each entry is int[]{z, t, p}
+       */
+      public void collectFrames(int baseZ, int baseT, int baseP, ArrayList<int[]> result) {
          if (outerLoop_ == null) {
-            result.add(base);
+            result.add(new int[]{baseZ, baseT, baseP});
          } else {
-            collectLoop(outerLoop_, base, result);
+            collectLoop(outerLoop_, baseZ, baseT, baseP, result);
          }
       }
 
-      private void collectLoop(Loop loop, Coords base, ArrayList<Coords> result) {
+      private void collectLoop(Loop loop, int z, int t, int p, ArrayList<int[]> result) {
          for (int i = loop.from; i <= loop.to; i++) {
-            Coords next = base.copyBuilder().index(loop.axis, i).build();
+            int nz = Coords.Z_SLICE.equals(loop.axis) ? i : z;
+            int nt = Coords.TIME_POINT.equals(loop.axis) ? i : t;
+            int np = Coords.STAGE_POSITION.equals(loop.axis) ? i : p;
             if (loop.next == null) {
-               if (provider_.hasImage(next)) {
-                  result.add(next);
+               // Check whether the image exists. DefaultCoords drops index-0 axes so
+               // we cannot use copyBuilder().index(axis, 0) for the check — use the
+               // typed builder setters which handle 0 correctly.
+               Coords check = buildCheckCoords(nz, nt, np);
+               if (check == null || provider_.hasImage(check)) {
+                  result.add(new int[]{nz, nt, np});
                }
             } else {
-               collectLoop(loop.next, next, result);
+               collectLoop(loop.next, nz, nt, np, result);
             }
+         }
+      }
+
+      private Coords buildCheckCoords(int z, int t, int p) {
+         try {
+            org.micromanager.data.Image any = provider_.getAnyImage();
+            if (any == null) {
+               return null;
+            }
+            Coords.Builder b = any.getCoords().copyBuilder();
+            if (provider_.getAxes().contains(Coords.Z_SLICE)) {
+               b = b.z(z);
+            }
+            if (provider_.getAxes().contains(Coords.TIME_POINT)) {
+               b = b.timePoint(t);
+            }
+            if (provider_.getAxes().contains(Coords.STAGE_POSITION)) {
+               b = b.stagePosition(p);
+            }
+            return b.build();
+         } catch (java.io.IOException ex) {
+            return null;
          }
       }
 

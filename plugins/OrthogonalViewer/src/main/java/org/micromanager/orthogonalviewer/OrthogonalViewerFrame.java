@@ -1949,8 +1949,12 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
     * @return tiled ARGB BufferedImage, or null if rendering produced no data
     */
    public BufferedImage renderCompositeForExport(int z, int t, int p) {
+      // Snapshot all EDT-owned fields at the start so the export thread sees a
+      // consistent view even if the user adjusts controls concurrently.
       DisplaySettings settings = getDisplaySettings();
       int ch = currentChannel_;
+      int cx = crosshairX_;
+      int cy = crosshairY_;
       int w = imageWidth_;
       int h = imageHeight_;
       int numZ = numZSlices_;
@@ -1967,7 +1971,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       // Pass null for stats: autostretch values are now baked into settings above,
       // and autostretch=false is set so renderAllSlices won't look for stats.
       RenderResult result = renderAllSlices(settings, null,
-            crosshairX_, crosshairY_, z, ch, t, p, w, h, numZ, hasZ, numCh);
+            cx, cy, z, ch, t, p, w, h, numZ, hasZ, numCh);
       if (result == null || result.xy == null) {
          return null;
       }
@@ -2014,22 +2018,25 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          java.util.List<Overlay> overlayList =
                new java.util.ArrayList<Overlay>(overlays_);
          java.awt.Graphics2D og = (java.awt.Graphics2D) g2.create();
-         og.setClip(0, 0, xyW, xyH);
-         og.scale((double) xyW / w, (double) xyH / h);
-         java.awt.Rectangle screenRect = new java.awt.Rectangle(0, 0, w, h);
-         java.awt.geom.Rectangle2D.Float imageViewPort =
-               new java.awt.geom.Rectangle2D.Float(0, 0, w, h);
-         for (Overlay overlay : overlayList) {
-            if (overlay.isVisible()) {
-               try {
-                  overlay.paintOverlay(og, screenRect, settings,
-                        overlayImgs, primaryImg, imageViewPort);
-               } catch (Exception ex) {
-                  // ignore overlay paint errors
+         try {
+            og.setClip(0, 0, xyW, xyH);
+            og.scale((double) xyW / w, (double) xyH / h);
+            java.awt.Rectangle screenRect = new java.awt.Rectangle(0, 0, w, h);
+            java.awt.geom.Rectangle2D.Float imageViewPort =
+                  new java.awt.geom.Rectangle2D.Float(0, 0, w, h);
+            for (Overlay overlay : overlayList) {
+               if (overlay.isVisible()) {
+                  try {
+                     overlay.paintOverlay(og, screenRect, settings,
+                           overlayImgs, primaryImg, imageViewPort);
+                  } catch (Exception ex) {
+                     // ignore overlay paint errors
+                  }
                }
             }
+         } finally {
+            og.dispose();
          }
-         og.dispose();
       }
 
       g2.dispose();
