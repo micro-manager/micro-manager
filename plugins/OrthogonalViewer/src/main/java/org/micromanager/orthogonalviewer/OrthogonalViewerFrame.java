@@ -31,14 +31,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
 import javax.swing.JViewport;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -138,12 +133,8 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    private int numChannels_ = 1;
 
    // Controls
-   private JSlider xSlider_;
-   private JSlider ySlider_;
-   private JSlider zSlider_;
-   private JSpinner xSpinner_;
-   private JSpinner ySpinner_;
-   private JSpinner zSpinner_;
+   private JScrollBar zScrollBar_;
+   private JLabel zPositionLabel_;
    private JPanel zControlRow_;
    private JScrollBar cScrollBar_;
    private JLabel cPositionLabel_;
@@ -487,20 +478,8 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       crosshairY_ = Math.max(0, Math.min(y, imageHeight_ - 1));
       crosshairZ_ = Math.max(0, Math.min(z, numZSlices_ - 1));
 
-      updatingControls_ = true;
-      try {
-         xSlider_.setValue(crosshairX_);
-         ySlider_.setValue(crosshairY_);
-         if (hasZ_) {
-            zSlider_.setValue(crosshairZ_);
-         }
-         ((SpinnerNumberModel) xSpinner_.getModel()).setValue(crosshairX_);
-         ((SpinnerNumberModel) ySpinner_.getModel()).setValue(crosshairY_);
-         if (hasZ_) {
-            ((SpinnerNumberModel) zSpinner_.getModel()).setValue(crosshairZ_);
-         }
-      } finally {
-         updatingControls_ = false;
+      if (hasZ_) {
+         syncScrollBarPosition(zScrollBar_, zPositionLabel_, crosshairZ_, numZSlices_);
       }
 
       scheduleRefresh();
@@ -1307,37 +1286,23 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    private JPanel buildControlsPanel() {
-      JPanel panel = new JPanel(new MigLayout("fillx, insets 2 4 2 4, gap 2 2", "[][][grow]"));
+      JPanel panel = new JPanel(new MigLayout("fillx, insets 2 4 2 4, gap 2 2", "[][grow][]"));
       panel.setBackground(DARK_GREY);
       panel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
 
-      // X row
-      xSpinner_ = new JSpinner(new SpinnerNumberModel(crosshairX_, 0, imageWidth_ - 1, 1));
-      xSlider_ = new JSlider(0, imageWidth_ - 1, crosshairX_);
-      styleSlider(xSlider_);
-      panel.add(makeLabel("X:"));
-      panel.add(xSpinner_);
-      panel.add(xSlider_, "growx, wrap");
+      // Z row — styled like C/T/P scroll bars
+      int zMax = Math.max(1, numZSlices_);
+      int initZ = Math.max(0, Math.min(crosshairZ_, zMax - 1));
+      zScrollBar_ = new JScrollBar(JScrollBar.HORIZONTAL, initZ, 1, 0, zMax);
+      zPositionLabel_ = new JLabel(positionText(initZ, numZSlices_));
+      zPositionLabel_.setForeground(Color.LIGHT_GRAY);
+      zPositionLabel_.setFont(zPositionLabel_.getFont().deriveFont(10.0f));
 
-      // Y row
-      ySpinner_ = new JSpinner(new SpinnerNumberModel(crosshairY_, 0, imageHeight_ - 1, 1));
-      ySlider_ = new JSlider(0, imageHeight_ - 1, crosshairY_);
-      styleSlider(ySlider_);
-      panel.add(makeLabel("Y:"));
-      panel.add(ySpinner_);
-      panel.add(ySlider_, "growx, wrap");
-
-      // Z row
-      int zMax = Math.max(0, numZSlices_ - 1);
-      zSpinner_ = new JSpinner(new SpinnerNumberModel(crosshairZ_, 0, zMax, 1));
-      zSlider_ = new JSlider(0, zMax, crosshairZ_);
-      styleSlider(zSlider_);
-
-      zControlRow_ = new JPanel(new MigLayout("fillx, insets 0", "[][][grow]"));
+      zControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][grow][]"));
       zControlRow_.setBackground(DARK_GREY);
       zControlRow_.add(makeLabel("Z:"));
-      zControlRow_.add(zSpinner_);
-      zControlRow_.add(zSlider_, "growx");
+      zControlRow_.add(zScrollBar_, "growx");
+      zControlRow_.add(zPositionLabel_);
       panel.add(zControlRow_, "span 3, growx, wrap");
       zControlRow_.setVisible(hasZ_);
 
@@ -1399,72 +1364,13 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    private void wireListeners() {
-      xSlider_.addChangeListener(new ChangeListener() {
+      zScrollBar_.addAdjustmentListener(new AdjustmentListener() {
          @Override
-         public void stateChanged(ChangeEvent e) {
+         public void adjustmentValueChanged(AdjustmentEvent e) {
             if (!updatingControls_) {
-               updatingControls_ = true;
-               ((SpinnerNumberModel) xSpinner_.getModel()).setValue(xSlider_.getValue());
-               updatingControls_ = false;
-               setCrosshairAndRefresh(xSlider_.getValue(), crosshairY_, crosshairZ_);
-            }
-         }
-      });
-      ySlider_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            if (!updatingControls_) {
-               updatingControls_ = true;
-               ((SpinnerNumberModel) ySpinner_.getModel()).setValue(ySlider_.getValue());
-               updatingControls_ = false;
-               setCrosshairAndRefresh(crosshairX_, ySlider_.getValue(), crosshairZ_);
-            }
-         }
-      });
-      zSlider_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            if (!updatingControls_) {
-               updatingControls_ = true;
-               ((SpinnerNumberModel) zSpinner_.getModel()).setValue(zSlider_.getValue());
-               updatingControls_ = false;
-               setCrosshairAndRefresh(crosshairX_, crosshairY_, zSlider_.getValue());
-            }
-         }
-      });
-      xSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            if (!updatingControls_) {
-               int val = ((Number) xSpinner_.getValue()).intValue();
-               updatingControls_ = true;
-               xSlider_.setValue(val);
-               updatingControls_ = false;
-               setCrosshairAndRefresh(val, crosshairY_, crosshairZ_);
-            }
-         }
-      });
-      ySpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            if (!updatingControls_) {
-               int val = ((Number) ySpinner_.getValue()).intValue();
-               updatingControls_ = true;
-               ySlider_.setValue(val);
-               updatingControls_ = false;
-               setCrosshairAndRefresh(crosshairX_, val, crosshairZ_);
-            }
-         }
-      });
-      zSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            if (!updatingControls_) {
-               int val = ((Number) zSpinner_.getValue()).intValue();
-               updatingControls_ = true;
-               zSlider_.setValue(val);
-               updatingControls_ = false;
-               setCrosshairAndRefresh(crosshairX_, crosshairY_, val);
+               int z = zScrollBar_.getValue();
+               zPositionLabel_.setText(positionText(z, numZSlices_));
+               setCrosshairAndRefresh(crosshairX_, crosshairY_, z);
             }
          }
       });
@@ -1503,11 +1409,6 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       });
    }
 
-   private void styleSlider(JSlider slider) {
-      slider.setBackground(DARK_GREY);
-      slider.setForeground(Color.LIGHT_GRAY);
-   }
-
    private JLabel makeLabel(String text) {
       JLabel lbl = new JLabel(text);
       lbl.setForeground(Color.LIGHT_GRAY);
@@ -1515,13 +1416,13 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    private void updateSliderRanges() {
-      if (zSlider_ == null) {
+      if (zScrollBar_ == null) {
          return;
       }
-      int zMax = Math.max(0, numZSlices_ - 1);
-      zSlider_.setMaximum(zMax);
-      ((SpinnerNumberModel) zSpinner_.getModel()).setMaximum(zMax);
-      crosshairZ_ = Math.min(crosshairZ_, zMax);
+      int zMax = Math.max(1, numZSlices_);
+      zScrollBar_.setMaximum(zMax);
+      crosshairZ_ = Math.min(crosshairZ_, zMax - 1);
+      zPositionLabel_.setText(positionText(crosshairZ_, numZSlices_));
       zControlRow_.setVisible(hasZ_);
 
       if (cScrollBar_ == null) {
