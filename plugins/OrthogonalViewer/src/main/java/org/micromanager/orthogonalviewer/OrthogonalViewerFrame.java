@@ -112,7 +112,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    private int currentTime_ = 0;
    private int currentPosition_ = 0;
 
-   private boolean closed_ = false;
+   private volatile boolean closed_ = false;
 
    // Image grid panel and scroll pane (needed for revalidate and scroll-on-zoom)
    private JPanel grid_;
@@ -274,6 +274,19 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
    @Override
    public List<Image> getDisplayedImages() throws IOException {
+      DisplaySettings settings = getDisplaySettings();
+      boolean composite = settings.getColorMode() == DisplaySettings.ColorMode.COMPOSITE;
+      if (composite && numChannels_ > 1) {
+         List<Image> result = new java.util.ArrayList<Image>();
+         for (int c = 0; c < numChannels_; c++) {
+            List<Image> stack = fetchZStack(c, currentTime_, currentPosition_);
+            Image img = getZImage(stack, crosshairZ_);
+            if (img != null) {
+               result.add(img);
+            }
+         }
+         return result;
+      }
       return fetchXYImages(currentChannel_, currentTime_, currentPosition_, crosshairZ_);
    }
 
@@ -374,7 +387,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            postEvent(ImageStatsChangedEvent.create(result));
+            postEvent(ImageStatsPublisher.ImageStatsChangedEvent.create(result));
          }
       });
       return 0L;
@@ -384,18 +397,15 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
    @Subscribe
    public void onNewImage(DataProviderHasNewImageEvent event) {
-      int newZ = dataProvider_.getNextIndex(Coords.Z_SLICE);
-      int newC = dataProvider_.getNextIndex(Coords.CHANNEL);
-      if (newC < 1) {
-         newC = 1;
-      }
+      final int newZ = Math.max(1, dataProvider_.getNextIndex(Coords.Z_SLICE));
+      final int newC = Math.max(1, dataProvider_.getNextIndex(Coords.CHANNEL));
       if (newZ != numZSlices_ || newC != numChannels_) {
-         numZSlices_ = newZ;
-         hasZ_ = numZSlices_ > 1;
-         numChannels_ = newC;
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+               numZSlices_ = newZ;
+               hasZ_ = numZSlices_ > 1;
+               numChannels_ = newC;
                updateSliderRanges();
                applyPanelSizes();
                if (grid_ != null) {
@@ -535,6 +545,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       MouseWheelListener wheelListener = new MouseWheelListener() {
          @Override
          public void mouseWheelMoved(MouseWheelEvent e) {
+            e.consume();
             if (e.getWheelRotation() < 0) {
                applyZoom(zoomFactor_ * ZOOM_STEP);
             } else {
@@ -805,7 +816,12 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       }
       Coords fixedCoords = b.build();
 
-      List<Image> images = dataProvider_.getImagesIgnoringAxes(fixedCoords, Coords.Z_SLICE);
+      List<Image> raw = dataProvider_.getImagesIgnoringAxes(fixedCoords, Coords.Z_SLICE);
+      // Wrap in a mutable ArrayList so we can sort regardless of what the storage returns.
+      // Also guards against null return from some storage implementations.
+      java.util.List<Image> images = (raw != null)
+            ? new java.util.ArrayList<Image>(raw)
+            : new java.util.ArrayList<Image>();
 
       // If the dataset has a channel axis, filter to only the requested channel
       // (necessary for channel 0 since we could not encode it in the Coords builder)
@@ -830,8 +846,24 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
    private List<Image> fetchXYImages(int channel, int time, int position, int z)
          throws IOException {
+      Coords.CoordsBuilder b = studio_.data().coordsBuilder().z(z);
+      List<String> axes = dataProvider_.getAxes();
+      if (axes.contains(Coords.CHANNEL) && channel > 0) {
+         b = b.channel(channel);
+      }
+      if (axes.contains(Coords.TIME_POINT) && time > 0) {
+         b = b.time(time);
+      }
+      if (axes.contains(Coords.STAGE_POSITION) && position > 0) {
+         b = b.stagePosition(position);
+      }
+      Image img = dataProvider_.getImage(b.build());
+      if (img != null && (channel == 0 || img.getCoords().getChannel() == channel)) {
+         return Collections.singletonList(img);
+      }
+      // Fallback: scan the z-stack (handles channel-0 axis bug)
       List<Image> all = fetchZStack(channel, time, position);
-      Image img = getZImage(all, z);
+      img = getZImage(all, z);
       if (img == null) {
          return Collections.<Image>emptyList();
       }
@@ -843,9 +875,6 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          if (img.getCoords().getZ() == z) {
             return img;
          }
-      }
-      if (z < zStack.size()) {
-         return zStack.get(z);
       }
       return null;
    }
@@ -881,17 +910,13 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          // leave defaults
       }
 
-      // Z-step from summary metadata
-      try {
-         org.micromanager.data.SummaryMetadata sm = dataProvider_.getSummaryMetadata();
-         if (sm != null) {
-            Double zs = sm.getZStepUm();
-            if (zs != null && zs > 0.0) {
-               zStepUm = zs;
-            }
+      // Z-step from summary metadata (getSummaryMetadata does not throw checked exceptions)
+      org.micromanager.data.SummaryMetadata sm = dataProvider_.getSummaryMetadata();
+      if (sm != null) {
+         Double zs = sm.getZStepUm();
+         if (zs != null && zs > 0.0) {
+            zStepUm = zs;
          }
-      } catch (Exception ex) {
-         // leave default zStepUm = 1.0
       }
 
       // Physical aspect ratio: how many XY pixels tall is one Z-step?
@@ -1134,12 +1159,18 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    private void updateSliderRanges() {
+      if (zSlider_ == null) {
+         return;
+      }
       int zMax = Math.max(0, numZSlices_ - 1);
       zSlider_.setMaximum(zMax);
       ((SpinnerNumberModel) zSpinner_.getModel()).setMaximum(zMax);
       crosshairZ_ = Math.min(crosshairZ_, zMax);
       zControlRow_.setVisible(hasZ_);
 
+      if (cScrollBar_ == null) {
+         return;
+      }
       int cMax = Math.max(1, numChannels_);
       cScrollBar_.setMaximum(cMax);
       currentChannel_ = Math.min(currentChannel_, cMax - 1);
