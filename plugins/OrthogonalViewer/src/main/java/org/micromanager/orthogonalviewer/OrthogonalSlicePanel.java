@@ -158,18 +158,18 @@ public class OrthogonalSlicePanel extends JPanel {
       if (overlays_ != null && primaryImage_ != null && displaySettings_ != null) {
          int iw = currentImage_.getWidth();
          int ih = currentImage_.getHeight();
-         // imageViewPort: which region of the image (in image px) is visible on screen
-         // Since we letterbox, the entire image is always visible.
-         Rectangle2D.Float imageViewPort = new Rectangle2D.Float(0, 0, iw, ih);
-         Rectangle screenRect = new Rectangle(offsetX, offsetY, drawW, drawH);
          List<Image> images = (overlayImages_ != null && !overlayImages_.isEmpty())
                ? overlayImages_ : java.util.Collections.singletonList(primaryImage_);
          Graphics2D og = (Graphics2D) g2.create();
          // Clip to the image area so overlays don't bleed into the grey border
          og.setClip(offsetX, offsetY, drawW, drawH);
-         // Scale from image coords to screen coords
+         // Transform so overlays work in image-pixel coordinates.
+         // screenRect must match the graphics context coordinate space (image pixels),
+         // and imageViewPort is the visible portion of the image (the whole image here).
          og.translate(offsetX, offsetY);
          og.scale((double) drawW / iw, (double) drawH / ih);
+         Rectangle screenRect = new Rectangle(0, 0, iw, ih);
+         Rectangle2D.Float imageViewPort = new Rectangle2D.Float(0, 0, iw, ih);
          for (Overlay overlay : overlays_) {
             if (overlay.isVisible()) {
                try {

@@ -82,6 +82,8 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    private static final double ZOOM_STEP = 1.25;
    private static final double ZOOM_MIN = 0.05;
    private static final double ZOOM_MAX = 32.0;
+   private static final int PANEL_GAP = 6;
+   private static final int LABEL_H = 16;
 
    private final Studio studio_;
    private final DataProvider dataProvider_;
@@ -516,23 +518,22 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       int zPx = Math.max(4, (int) Math.round(nz * aspectRatioZtoXY_ * s));
       int xyW = Math.max(16, (int) Math.round(imageWidth_ * s));
       int xyH = Math.max(16, (int) Math.round(imageHeight_ * s));
-      int lblH = 16;
-      int gap = 2;
 
       // With a null-layout grid we set absolute bounds directly — no layout manager interference.
       if (xyWrapper_ != null) {
-         xyWrapper_.setBounds(gap, gap, xyW, xyH + lblH);
+         xyWrapper_.setBounds(PANEL_GAP, PANEL_GAP, xyW, xyH + LABEL_H);
       }
       if (yzWrapper_ != null) {
-         yzWrapper_.setBounds(gap + xyW + gap, gap, zPx, xyH + lblH);
+         yzWrapper_.setBounds(PANEL_GAP + xyW + PANEL_GAP, PANEL_GAP, zPx, xyH + LABEL_H);
       }
       if (xzWrapper_ != null) {
-         xzWrapper_.setBounds(gap, gap + xyH + lblH + gap, xyW, zPx + lblH);
+         xzWrapper_.setBounds(PANEL_GAP, PANEL_GAP + xyH + LABEL_H + PANEL_GAP,
+               xyW, zPx + LABEL_H);
       }
 
       // The grid panel's preferred size drives the scroll pane content size.
-      int totalW = gap + xyW + gap + zPx + gap;
-      int totalH = gap + xyH + lblH + gap + zPx + lblH + gap;
+      int totalW = PANEL_GAP + xyW + PANEL_GAP + zPx + PANEL_GAP;
+      int totalH = PANEL_GAP + xyH + LABEL_H + PANEL_GAP + zPx + LABEL_H + PANEL_GAP;
       if (grid_ != null) {
          grid_.setPreferredSize(new Dimension(totalW, totalH));
       }
@@ -559,11 +560,9 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          @Override
          public void run() {
             double s = pixelScale_ * zoomFactor_;
-            int lblH = 16;
-            int gap = 2;
-            // XY panel content starts at (gap, gap + lblH) inside the grid
-            int crossPx = gap + (int) Math.round(crosshairX_ * s);
-            int crossPy = gap + lblH + (int) Math.round(crosshairY_ * s);
+            // XY panel content starts at (PANEL_GAP, PANEL_GAP + LABEL_H) inside the grid
+            int crossPx = PANEL_GAP + (int) Math.round(crosshairX_ * s);
+            int crossPy = PANEL_GAP + LABEL_H + (int) Math.round(crosshairY_ * s);
 
             JViewport vp = scrollPane_.getViewport();
             int vpW = vp.getWidth();
