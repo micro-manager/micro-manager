@@ -441,71 +441,14 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          @Override
          public void run() {
             postEvent(ImageStatsPublisher.ImageStatsChangedEvent.create(result));
-            applyAutostretchIfEnabled(result);
+            // When autostretch is on, a new Z plane means new stats → re-render
+            // so the image is displayed with the updated stretch immediately.
+            if (getDisplaySettings().isAutostretchEnabled()) {
+               scheduleRefresh();
+            }
          }
       });
       return 0L;
-   }
-
-   /**
-    * When autostretch is enabled, update the display settings min/max from the new stats
-    * and re-render. This mirrors what DisplayUIController does via applyAutostretch().
-    */
-   private void applyAutostretchIfEnabled(ImagesAndStats imagesAndStats) {
-      DisplaySettings settings = getDisplaySettings();
-      if (!settings.isAutostretchEnabled() || imagesAndStats == null) {
-         return;
-      }
-      double q = settings.getAutoscaleIgnoredQuantile();
-      boolean ignoreZeros = settings.isAutoscaleIgnoringZeros();
-
-      DisplaySettings.Builder sb = settings.copyBuilder();
-      boolean changed = false;
-
-      java.util.List<ImageStats> statsList = imagesAndStats.getResult();
-      for (int i = 0; i < statsList.size(); i++) {
-         ImageStats imgStats = statsList.get(i);
-         int ch = i;
-         // Map stat index to channel index via the request images
-         if (i < imagesAndStats.getRequest().getNumberOfImages()) {
-            org.micromanager.data.Coords c =
-                  imagesAndStats.getRequest().getImage(i).getCoords();
-            if (c.hasAxis(org.micromanager.data.Coords.CHANNEL)) {
-               ch = c.getChannel();
-            }
-         }
-
-         ChannelDisplaySettings chanSettings = settings.getChannelSettings(ch);
-         int nComponents = imgStats.getNumberOfComponents();
-         ChannelDisplaySettings.Builder cb = chanSettings.copyBuilder();
-         for (int comp = 0; comp < nComponents; comp++) {
-            ComponentStats cStats = imgStats.getComponentStats(comp);
-            long min;
-            long max;
-            if (ignoreZeros) {
-               min = 0L;
-               max = cStats.getAutoscaleMaxForQuantileIgnoringZeros(q);
-            } else {
-               long[] minMax = new long[2];
-               cStats.getAutoscaleMinMaxForQuantile(q, minMax);
-               min = minMax[0];
-               max = minMax[1];
-            }
-            if (max <= min) {
-               max = min + 1;
-            }
-            ComponentDisplaySettings compSettings =
-                  chanSettings.getComponentSettings(comp).copyBuilder()
-                        .scalingMinimum(min).scalingMaximum(max).build();
-            cb = cb.component(comp, compSettings);
-            changed = true;
-         }
-         sb = sb.channel(ch, cb.build());
-      }
-
-      if (changed) {
-         setDisplaySettings(sb.build());
-      }
    }
 
    // ---- New image events ----
@@ -689,6 +632,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       refreshDirty_.set(false);
 
       final DisplaySettings settings = getDisplaySettings();
+      final ImagesAndStats statsSnapshot = currentImagesAndStats_;
       final int cx = crosshairX_;
       final int cy = crosshairY_;
       final int cz = crosshairZ_;
@@ -704,7 +648,8 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       SwingWorker<RenderResult, Void> worker = new SwingWorker<RenderResult, Void>() {
          @Override
          protected RenderResult doInBackground() {
-            return renderAllSlices(settings, cx, cy, cz, ch, t, p, w, h, numZ, hasZ, numCh);
+            return renderAllSlices(settings, statsSnapshot,
+                  cx, cy, cz, ch, t, p, w, h, numZ, hasZ, numCh);
          }
 
          @Override
@@ -792,7 +737,69 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       List<Image> xyImages;
    }
 
-   private RenderResult renderAllSlices(DisplaySettings settings,
+   /**
+    * If autostretch is enabled and stats are available for the given channel, return the
+    * [min, max] derived from the stats quantile. Otherwise return null (use DisplaySettings).
+    */
+   private long[] autostretchMinMax(DisplaySettings settings, ImagesAndStats stats, int channel) {
+      if (!settings.isAutostretchEnabled() || stats == null) {
+         return null;
+      }
+      double q = settings.getAutoscaleIgnoredQuantile();
+      boolean ignoreZeros = settings.isAutoscaleIgnoringZeros();
+      // Find the stats entry for this channel
+      for (int i = 0; i < stats.getResult().size(); i++) {
+         int statsCh = 0;
+         if (i < stats.getRequest().getNumberOfImages()) {
+            Coords c = stats.getRequest().getImage(i).getCoords();
+            if (c.hasAxis(Coords.CHANNEL)) {
+               statsCh = c.getChannel();
+            }
+         }
+         if (statsCh != channel) {
+            continue;
+         }
+         ComponentStats cStats = stats.getResult().get(i).getComponentStats(0);
+         long min;
+         long max;
+         if (ignoreZeros) {
+            min = 0L;
+            max = cStats.getAutoscaleMaxForQuantileIgnoringZeros(q);
+         } else {
+            long[] minMax = new long[2];
+            cStats.getAutoscaleMinMaxForQuantile(q, minMax);
+            min = minMax[0];
+            max = minMax[1];
+         }
+         return new long[]{min, Math.max(max, min + 1)};
+      }
+      return null;
+   }
+
+   /**
+    * Build a DisplaySettings with per-channel min/max overridden from autostretch stats.
+    * Returns the original settings unchanged if autostretch is off or stats are null.
+    */
+   private DisplaySettings buildAutostretchSettings(DisplaySettings settings,
+                                                    ImagesAndStats stats, int numChannels) {
+      if (!settings.isAutostretchEnabled() || stats == null) {
+         return settings;
+      }
+      DisplaySettings.Builder sb = settings.copyBuilder();
+      for (int c = 0; c < numChannels; c++) {
+         long[] stretch = autostretchMinMax(settings, stats, c);
+         if (stretch == null) {
+            continue;
+         }
+         ChannelDisplaySettings cs = settings.getChannelSettings(c);
+         ComponentDisplaySettings comp = cs.getComponentSettings(0).copyBuilder()
+               .scalingMinimum(stretch[0]).scalingMaximum(stretch[1]).build();
+         sb = sb.channel(c, cs.copyBuilder().component(0, comp).build());
+      }
+      return sb.build();
+   }
+
+   private RenderResult renderAllSlices(DisplaySettings settings, ImagesAndStats stats,
                                         int cx, int cy, int cz,
                                         int ch, int t, int p,
                                         int w, int h, int numZ, boolean hasZ, int numChannels) {
@@ -832,8 +839,9 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          }
          ChannelDisplaySettings cs = settings.getChannelSettings(ch);
          ComponentDisplaySettings comp = cs.getComponentSettings(0);
-         long min = comp.getScalingMinimum();
-         long max = comp.getScalingMaximum();
+         long[] stretch = autostretchMinMax(settings, stats, ch);
+         long min = (stretch != null) ? stretch[0] : comp.getScalingMinimum();
+         long max = (stretch != null) ? stretch[1] : comp.getScalingMaximum();
          double gamma = comp.getScalingGamma();
          Color color = grayscale ? Color.WHITE : cs.getColor();
 
@@ -861,8 +869,9 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          List<Image> zStack = allChannelStacks.get(ch);
          ChannelDisplaySettings cs = settings.getChannelSettings(ch);
          ComponentDisplaySettings comp = cs.getComponentSettings(0);
-         long min = comp.getScalingMinimum();
-         long max = comp.getScalingMaximum();
+         long[] stretch = autostretchMinMax(settings, stats, ch);
+         long min = (stretch != null) ? stretch[0] : comp.getScalingMinimum();
+         long max = (stretch != null) ? stretch[1] : comp.getScalingMaximum();
          double gamma = comp.getScalingGamma();
          Color color = grayscale ? Color.WHITE : cs.getColor();
 
@@ -912,14 +921,15 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
             }
          }
 
-         result.xy = OrthogonalLutRenderer.renderComposite(xyChPixels, w, h, settings);
+         DisplaySettings renderSettings = buildAutostretchSettings(settings, stats, numChannels);
+         result.xy = OrthogonalLutRenderer.renderComposite(xyChPixels, w, h, renderSettings);
 
          if (hasZ && numZ >= 2) {
             result.xz = scaleImage(
-                  OrthogonalLutRenderer.renderComposite(xzChPixels, w, numZ, settings),
+                  OrthogonalLutRenderer.renderComposite(xzChPixels, w, numZ, renderSettings),
                   w, zPhysH);
             result.yz = scaleImage(
-                  OrthogonalLutRenderer.renderComposite(yzChPixels, numZ, h, settings),
+                  OrthogonalLutRenderer.renderComposite(yzChPixels, numZ, h, renderSettings),
                   zPhysH, h);
          }
       }
