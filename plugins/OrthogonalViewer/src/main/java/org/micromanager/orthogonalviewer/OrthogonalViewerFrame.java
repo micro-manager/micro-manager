@@ -374,12 +374,12 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
          @Override
          public void overlayConfigurationChanged(Overlay o) {
-            xyPanel_.repaint();
+            repaintOverlayPanel();
          }
 
          @Override
          public void overlayVisibleChanged(Overlay o) {
-            xyPanel_.repaint();
+            repaintOverlayPanel();
          }
       };
       synchronized (overlayListeners_) {
@@ -387,7 +387,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       }
       overlay.addOverlayListener(listener);
       postEvent(DisplayWindowDidAddOverlayEvent.create(null, overlay));
-      xyPanel_.repaint();
+      repaintOverlayPanel();
    }
 
    @Override
@@ -404,7 +404,18 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          overlay.removeOverlayListener(listener);
       }
       postEvent(DisplayWindowDidRemoveOverlayEvent.create(null, overlay));
-      xyPanel_.repaint();
+      repaintOverlayPanel();
+   }
+
+   /** Repaint whichever panel currently holds the overlay context. */
+   private void repaintOverlayPanel() {
+      if (xzPanel_.hasOverlayContext()) {
+         xzPanel_.repaint();
+      } else if (yzPanel_.hasOverlayContext()) {
+         yzPanel_.repaint();
+      } else {
+         xyPanel_.repaint();
+      }
    }
 
    @Override
@@ -660,12 +671,6 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
             xyPanel_.setCrosshairFractions(
                   (w > 1) ? (double) cx / (w - 1) : 0.5,
                   (h > 1) ? (double) cy / (h - 1) : 0.5);
-            // Update overlay context so overlays paint with the correct image/settings.
-            // Pass all channel images so composite-mode overlays (e.g. Text channel names)
-            // see every channel, and use the first image as primaryImage.
-            Image primaryXY = (result.xyImages != null && !result.xyImages.isEmpty())
-                  ? result.xyImages.get(0) : null;
-            xyPanel_.setOverlayContext(overlays_, result.xyImages, primaryXY, settings);
 
             if (hasZ && result.xz != null) {
                xzPanel_.setImage(result.xz);
@@ -678,6 +683,32 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
                      (numZ > 1) ? (double) cz / (numZ - 1) : 0.5,
                      (h > 1) ? (double) cy / (h - 1) : 0.5);
             }
+
+            // Route overlay context to the largest panel so corner-anchored overlays
+            // have the most room and are clearly visible.
+            Image primaryXY = (result.xyImages != null && !result.xyImages.isEmpty())
+                  ? result.xyImages.get(0) : null;
+            double zPhys = numZ * aspectRatioZtoXY_;
+            long xyArea = (long) w * h;
+            long xzArea = (long) w * Math.max(1, Math.round(zPhys));
+            long yzArea = Math.max(1, Math.round(zPhys)) * h;
+            OrthogonalSlicePanel overlayPanel;
+            if (hasZ && xzArea >= xyArea && xzArea >= yzArea) {
+               overlayPanel = xzPanel_;
+            } else if (hasZ && yzArea >= xyArea) {
+               overlayPanel = yzPanel_;
+            } else {
+               overlayPanel = xyPanel_;
+            }
+            xyPanel_.setOverlayContext(
+                  overlayPanel == xyPanel_ ? overlays_ : null,
+                  result.xyImages, primaryXY, settings);
+            xzPanel_.setOverlayContext(
+                  overlayPanel == xzPanel_ ? overlays_ : null,
+                  result.xyImages, primaryXY, settings);
+            yzPanel_.setOverlayContext(
+                  overlayPanel == yzPanel_ ? overlays_ : null,
+                  result.xyImages, primaryXY, settings);
 
             if (result.xyImages != null && !result.xyImages.isEmpty()) {
                Coords nominalPos = result.xyImages.get(0).getCoords();

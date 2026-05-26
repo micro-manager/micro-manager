@@ -101,6 +101,10 @@ public class OrthogonalSlicePanel extends JPanel {
       displaySettings_ = settings;
    }
 
+   public boolean hasOverlayContext() {
+      return overlays_ != null;
+   }
+
    public void setImage(BufferedImage image) {
       currentImage_ = image;
       repaint();
