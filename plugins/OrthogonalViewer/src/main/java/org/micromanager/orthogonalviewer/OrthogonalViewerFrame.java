@@ -1789,6 +1789,128 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
    private static final int GAP_PX = 4;
 
+   /**
+    * Build a DisplaySettings with autostretch baked in from fresh per-frame pixel data.
+    *
+    * <p>Fetches the XY image for each channel at the given (z, t, p) position, computes the
+    * quantile min/max directly from pixel values, and returns a copy of {@code settings} with
+    * {@code autostretch=false} and per-channel scaling min/max set. This avoids using the
+    * stale {@code currentImagesAndStats_} which only reflects the last frame displayed on screen.
+    *
+    * <p>For float images the scaling values stored in ComponentDisplaySettings are integer bin
+    * indices; this method stores them as raw integer pixel counts instead, mirroring the integer
+    * path. Float autostretch in export is therefore approximate but correct in direction.
+    *
+    * @param settings base settings (autostretch=true on entry)
+    * @param z        z-slice index
+    * @param t        time-point index
+    * @param p        stage-position index
+    * @param ch       currently selected channel (used when not composite)
+    * @param numCh    total number of channels
+    * @param w        image width
+    * @param h        image height
+    * @return new DisplaySettings with autostretch=false and min/max baked in per channel
+    */
+   private DisplaySettings buildExportAutostretchSettings(
+         DisplaySettings settings, int z, int t, int p,
+         int ch, int numCh, int w, int h) {
+      double q = settings.getAutoscaleIgnoredQuantile();
+      boolean ignoreZeros = settings.isAutoscaleIgnoringZeros();
+
+      DisplaySettings.ColorMode colorMode = settings.getColorMode();
+      boolean composite = colorMode == DisplaySettings.ColorMode.COMPOSITE;
+
+      // Determine which channels to compute. In composite mode compute all; otherwise just ch.
+      int firstCh = composite ? 0 : ch;
+      int lastCh = composite ? numCh - 1 : ch;
+
+      DisplaySettings.Builder sb = settings.copyBuilder().autostretch(false);
+
+      for (int c = firstCh; c <= lastCh; c++) {
+         int[] pixels = null;
+         try {
+            List<Image> zStack = fetchZStack(c, t, p);
+            Image img = getZImage(zStack, z);
+            if (img == null && !zStack.isEmpty()) {
+               img = zStack.get(0);
+            }
+            if (img != null) {
+               pixels = OrthogonalLutRenderer.toIntArray(img.getRawPixels(), w * h);
+            }
+         } catch (IOException ex) {
+            // leave pixels null — will keep current settings for this channel
+         }
+         if (pixels == null) {
+            continue;
+         }
+
+         long[] minMax = computeQuantileMinMax(pixels, q, ignoreZeros);
+         if (minMax == null) {
+            continue;
+         }
+
+         ChannelDisplaySettings cs = settings.getChannelSettings(c);
+         ComponentDisplaySettings comp = cs.getComponentSettings(0).copyBuilder()
+               .scalingMinimum(minMax[0]).scalingMaximum(minMax[1]).build();
+         sb = sb.channel(c, cs.copyBuilder().component(0, comp).build());
+      }
+
+      return sb.build();
+   }
+
+   /**
+    * Compute quantile-based [min, max] from a flat int pixel array.
+    *
+    * <p>Uses a partial sort (Arrays.sort on a copy) to find the quantile values.
+    * The quantile {@code q} is the fraction of pixels to ignore at each tail.
+    * If {@code ignoreZeros} is true, zeros are stripped before computing quantiles
+    * (matching the Inspector autostretch behaviour for "ignore zeros" mode).
+    *
+    * @param pixels      raw pixel values (unsigned — may need masking for 8/16-bit)
+    * @param q           fraction to ignore at each tail [0, 0.5)
+    * @param ignoreZeros if true, exclude zero-valued pixels from the computation
+    * @return long[]{min, max} with max > min, or null if not enough data
+    */
+   private static long[] computeQuantileMinMax(int[] pixels, double q, boolean ignoreZeros) {
+      if (pixels == null || pixels.length == 0) {
+         return null;
+      }
+
+      // Copy and optionally strip zeros; treat values as unsigned.
+      int count = 0;
+      for (int pixel : pixels) {
+         long v = pixel & 0xFFFFFFFFL;
+         if (!ignoreZeros || v != 0L) {
+            count++;
+         }
+      }
+      if (count == 0) {
+         return null;
+      }
+
+      long[] vals = new long[count];
+      int idx = 0;
+      for (int pixel : pixels) {
+         long v = pixel & 0xFFFFFFFFL;
+         if (!ignoreZeros || v != 0L) {
+            vals[idx++] = v;
+         }
+      }
+      java.util.Arrays.sort(vals);
+
+      int loIdx = (int) Math.floor(q * count);
+      int hiIdx = (int) Math.ceil((1.0 - q) * count) - 1;
+      loIdx = Math.max(0, Math.min(loIdx, count - 1));
+      hiIdx = Math.max(loIdx, Math.min(hiIdx, count - 1));
+
+      long min = ignoreZeros ? 0L : vals[loIdx];
+      long max = vals[hiIdx];
+      if (max <= min) {
+         max = min + 1;
+      }
+      return new long[]{min, max};
+   }
+
    /** The number of Z slices in the current dataset. */
    public int getNumZSlices() {
       return numZSlices_;
@@ -1823,7 +1945,6 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
     */
    public BufferedImage renderCompositeForExport(int z, int t, int p) {
       DisplaySettings settings = getDisplaySettings();
-      ImagesAndStats stats = currentImagesAndStats_;
       int ch = currentChannel_;
       int w = imageWidth_;
       int h = imageHeight_;
@@ -1831,7 +1952,16 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       boolean hasZ = hasZ_;
       int numCh = numChannels_;
 
-      RenderResult result = renderAllSlices(settings, stats,
+      // When autostretch is on, compute fresh per-channel min/max from the XY
+      // pixels at this position rather than using the stale currentImagesAndStats_
+      // (which only covers whatever frame was last displayed on screen).
+      if (settings.isAutostretchEnabled()) {
+         settings = buildExportAutostretchSettings(settings, z, t, p, ch, numCh, w, h);
+      }
+
+      // Pass null for stats: autostretch values are now baked into settings above,
+      // and autostretch=false is set so renderAllSlices won't look for stats.
+      RenderResult result = renderAllSlices(settings, null,
             crosshairX_, crosshairY_, z, ch, t, p, w, h, numZ, hasZ, numCh);
       if (result == null || result.xy == null) {
          return null;
