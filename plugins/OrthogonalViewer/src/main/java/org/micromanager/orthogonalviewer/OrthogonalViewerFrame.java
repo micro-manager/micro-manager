@@ -1428,10 +1428,10 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       JButton gearBtn = new JButton(
             IconLoader.getIcon("/org/micromanager/icons/gear.png"));
       gearBtn.setToolTipText("Image tools");
-      gearBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+      gearBtn.addActionListener(new ActionListener() {
          @Override
-         public void mousePressed(java.awt.event.MouseEvent e) {
-            gearMenu.show(gearBtn, e.getX(), e.getY());
+         public void actionPerformed(ActionEvent e) {
+            gearMenu.show(gearBtn, 0, gearBtn.getHeight());
          }
       });
       return gearBtn;
@@ -1804,30 +1804,24 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    private static final int GAP_PX = 4;
 
    /**
-    * Build a DisplaySettings with autostretch baked in from fresh per-frame pixel data.
-    *
-    * <p>Fetches the XY image for each channel at the given (z, t, p) position, computes the
-    * quantile min/max directly from pixel values, and returns a copy of {@code settings} with
-    * {@code autostretch=false} and per-channel scaling min/max set. This avoids using the
-    * stale {@code currentImagesAndStats_} which only reflects the last frame displayed on screen.
-    *
-    * <p>For float images the scaling values stored in ComponentDisplaySettings are integer bin
-    * indices; this method stores them as raw integer pixel counts instead, mirroring the integer
-    * path. Float autostretch in export is therefore approximate but correct in direction.
+    * Build a DisplaySettings with fresh per-frame autostretch values baked in for integer
+    * channels. Float (GRAY32) channels are skipped because converting their stored bin-index
+    * scaling values to actual intensities requires {@code ComponentStats} histogram geometry,
+    * which is not available per-frame during export. For those channels autostretch is left
+    * enabled so that {@code renderAllSlices} uses the {@code statsSnapshot} passed by the
+    * caller as a best-effort fallback.
     *
     * @param settings base settings (autostretch=true on entry)
     * @param z        z-slice index
     * @param t        time-point index
     * @param p        stage-position index
-    * @param ch       currently selected channel (used when not composite)
+    * @param ch       currently selected channel (used when not in composite mode)
     * @param numCh    total number of channels
-    * @param w        image width
-    * @param h        image height
-    * @return DisplaySettings with autostretch=false and fresh per-channel min/max baked
-    *         in for integer channels. Float channels are unchanged (autostretch stays on
-    *         so the caller should supply a stats snapshot for the float rendering path).
-    *         If ALL channels are float, the returned settings still have autostretch=false
-    *         and the caller falls back to using the stats snapshot for float rendering.
+    * @param w        image width (unused; kept for signature consistency)
+    * @param h        image height (unused; kept for signature consistency)
+    * @return DisplaySettings with fresh quantile min/max baked per integer channel;
+    *         autostretch is disabled globally except when any channel is float, in which
+    *         case it stays enabled so the caller's stats snapshot is used for those channels
     */
    private DisplaySettings buildExportAutostretchSettings(
          DisplaySettings settings, int z, int t, int p,
@@ -1838,15 +1832,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       DisplaySettings.ColorMode colorMode = settings.getColorMode();
       boolean composite = colorMode == DisplaySettings.ColorMode.COMPOSITE;
 
-      // Determine which channels to compute. In composite mode compute all; otherwise just ch.
       int firstCh = composite ? 0 : ch;
       int lastCh = composite ? numCh - 1 : ch;
 
-      // Start with autostretch disabled — integer channels will have fresh values baked in.
-      // Float channels cannot have fresh values baked (floatScalingMinMax needs ComponentStats
-      // for bin-geometry conversion which is not available here); they are left unchanged and
-      // renderAllSlices will use the statsSnapshot passed by the caller as a best-effort.
-      DisplaySettings.Builder sb = settings.copyBuilder().autostretch(false);
+      DisplaySettings.Builder sb = settings.copyBuilder();
+      boolean anyFloat = false;
 
       for (int c = firstCh; c <= lastCh; c++) {
          Image img = null;
@@ -1865,7 +1855,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
          Object raw = img.getRawPixels();
          if (raw instanceof float[]) {
-            continue; // float path handled via statsSnapshot in the caller
+            // Cannot compute fresh float autostretch without ComponentStats bin geometry.
+            // Leave this channel's settings unchanged; renderAllSlices will use the
+            // statsSnapshot (passed by the caller) for the autostretch path.
+            anyFloat = true;
+            continue;
          }
          ChannelDisplaySettings cs = settings.getChannelSettings(c);
          int[] pixels = OrthogonalLutRenderer.toIntArray(raw, img.getWidth() * img.getHeight());
@@ -1878,28 +1872,48 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          sb = sb.channel(c, cs.copyBuilder().component(0, comp).build());
       }
 
+      // Disable autostretch for integer channels (values are now baked above).
+      // Keep it enabled if any channel is float so renderAllSlices takes the
+      // autostretch path for those channels using the caller's stats snapshot.
+      if (!anyFloat) {
+         sb = sb.autostretch(false);
+      }
+
       return sb.build();
    }
 
    /**
     * Compute quantile-based [min, max] from a flat int pixel array.
     *
-    * <p>Uses a partial sort (Arrays.sort on a copy) to find the quantile values.
+    * <p>Values are treated as unsigned. For byte (0–255) and short (0–65535) ranges
+    * a histogram-based O(n) algorithm is used. Wider values fall back to sorting.
     * The quantile {@code q} is the fraction of pixels to ignore at each tail.
-    * If {@code ignoreZeros} is true, zeros are stripped before computing quantiles
-    * (matching the Inspector autostretch behaviour for "ignore zeros" mode).
+    * If {@code ignoreZeros} is true, zeros are excluded before computing quantiles.
     *
-    * @param pixels      raw pixel values (unsigned — may need masking for 8/16-bit)
+    * @param pixels      raw pixel values (unsigned — values &gt; 65535 trigger sort fallback)
     * @param q           fraction to ignore at each tail [0, 0.5)
     * @param ignoreZeros if true, exclude zero-valued pixels from the computation
-    * @return long[]{min, max} with max > min, or null if not enough data
+    * @return long[]{min, max} with max &gt; min, or null if not enough data
     */
    private static long[] computeQuantileMinMax(int[] pixels, double q, boolean ignoreZeros) {
       if (pixels == null || pixels.length == 0) {
          return null;
       }
 
-      // Copy and optionally strip zeros; treat values as unsigned.
+      // Determine value range to decide whether histogram approach is feasible.
+      long maxVal = 0L;
+      for (int pixel : pixels) {
+         long v = pixel & 0xFFFFFFFFL;
+         if (v > maxVal) {
+            maxVal = v;
+         }
+      }
+
+      if (maxVal <= 65535L) {
+         return computeQuantileMinMaxHistogram(pixels, q, ignoreZeros, (int) maxVal);
+      }
+
+      // Fallback for unusual wide values (e.g. raw 32-bit int data): sort-based O(n log n).
       int count = 0;
       for (int pixel : pixels) {
          long v = pixel & 0xFFFFFFFFL;
@@ -1910,7 +1924,6 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       if (count == 0) {
          return null;
       }
-
       long[] vals = new long[count];
       int idx = 0;
       for (int pixel : pixels) {
@@ -1928,6 +1941,52 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
       long min = ignoreZeros ? 0L : vals[loIdx];
       long max = vals[hiIdx];
+      if (max <= min) {
+         max = min + 1;
+      }
+      return new long[]{min, max};
+   }
+
+   /**
+    * Histogram-based O(n) quantile computation for pixel values in [0, maxVal].
+    */
+   private static long[] computeQuantileMinMaxHistogram(int[] pixels, double q,
+                                                        boolean ignoreZeros, int maxVal) {
+      int[] hist = new int[maxVal + 1];
+      int count = 0;
+      for (int pixel : pixels) {
+         int v = (int) (pixel & 0xFFFFFFFFL);
+         if (!ignoreZeros || v != 0) {
+            hist[v]++;
+            count++;
+         }
+      }
+      if (count == 0) {
+         return null;
+      }
+
+      int loTarget = (int) Math.floor(q * count);
+      int hiTarget = (int) Math.ceil((1.0 - q) * count) - 1;
+      loTarget = Math.max(0, Math.min(loTarget, count - 1));
+      hiTarget = Math.max(loTarget, Math.min(hiTarget, count - 1));
+
+      long min = 0;
+      long max = maxVal;
+      int cumulative = 0;
+      boolean minFound = false;
+      for (int v = ignoreZeros ? 1 : 0; v <= maxVal; v++) {
+         int prev = cumulative;
+         cumulative += hist[v];
+         if (!minFound && cumulative > loTarget) {
+            min = ignoreZeros ? 0L : v;
+            minFound = true;
+         }
+         if (prev <= hiTarget && cumulative > hiTarget) {
+            max = v;
+            break;
+         }
+      }
+
       if (max <= min) {
          max = min + 1;
       }
@@ -1985,15 +2044,17 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       ImagesAndStats statsSnapshot = currentImagesAndStats_;
 
       if (settings.isAutostretchEnabled()) {
-         // Bake fresh per-frame quantile min/max into settings for integer channels and
-         // disable autostretch. Float channels cannot have fresh values baked (the
-         // rendering path needs ComponentStats for bin-geometry conversion); they fall
-         // back to statsSnapshot, which is stale but better than [0,1].
+         // Bake fresh per-frame quantile min/max into settings for integer channels.
+         // Float channels cannot be baked (need ComponentStats for bin-index→float
+         // conversion); for those, autostretch is kept enabled in the returned settings
+         // so renderAllSlices uses statsSnapshot (stale, but better than [0,1]).
          settings = buildExportAutostretchSettings(settings, z, t, p, ch, numCh, w, h);
-         // After baking, autostretch is false in settings. Integer channels no longer
-         // need the snapshot; float channels still need it for floatScalingMinMax.
-         // We pass the snapshot regardless — for integer channels it is ignored since
-         // autostretch is now false and the baked values are used directly.
+         // If all channels were integer, autostretch is now false — the snapshot is no
+         // longer needed (baked values are used directly). Clear it to avoid renderAllSlices
+         // re-applying autostretch from stale stats on top of the baked values.
+         if (!settings.isAutostretchEnabled()) {
+            statsSnapshot = null;
+         }
       }
 
       RenderResult result = renderAllSlices(settings, statsSnapshot,
