@@ -68,16 +68,23 @@ public final class OrthogonalSliceExtractor {
    }
 
    /**
-    * Read a single pixel's intensity from an Image, returning an unsigned int.
+    * Read a single pixel's intensity from an Image, returning a value suitable for LUT scaling.
     *
-    * <p>Handles 8-bit (byte[]), 16-bit (short[]), and 32-bit RGB (int[]) images.
-    * For RGB images returns the first component (red channel) as the intensity.</p>
+    * <p>Handles 8-bit (byte[]), 16-bit (short[]), 32-bit RGB (int[]), and 32-bit float (float[])
+    * images. For RGB images returns the red component as intensity. For float images the raw
+    * IEEE 754 bit pattern is returned (consistent with {@code OrthogonalLutRenderer.toIntArray}).
+    * </p>
     */
    public static int getPixelValue(Image img, int x, int y) {
       int w = img.getWidth();
       int offset = y * w + x;
       Object pixels = img.getRawPixels();
-      if (pixels instanceof short[]) {
+      if (pixels instanceof float[]) {
+         float[] arr = (float[]) pixels;
+         if (offset < arr.length) {
+            return Float.floatToRawIntBits(arr[offset]);
+         }
+      } else if (pixels instanceof short[]) {
          short[] arr = (short[]) pixels;
          if (offset < arr.length) {
             return arr[offset] & 0xFFFF;

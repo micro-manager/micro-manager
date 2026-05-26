@@ -155,8 +155,9 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
    private boolean updatingControls_ = false;
 
-   // Only one SwingWorker refresh at a time
+   // Only one SwingWorker refresh runs at a time; dirty means another is needed after it.
    private final AtomicBoolean refreshPending_ = new AtomicBoolean(false);
+   private final AtomicBoolean refreshDirty_ = new AtomicBoolean(false);
 
    // Inspector stats
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
@@ -606,8 +607,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          return;
       }
       if (!refreshPending_.compareAndSet(false, true)) {
+         // A worker is already running; mark dirty so it re-schedules when done.
+         refreshDirty_.set(true);
          return;
       }
+      refreshDirty_.set(false);
 
       final DisplaySettings settings = getDisplaySettings();
       final int cx = crosshairX_;
@@ -632,6 +636,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          protected void done() {
             refreshPending_.set(false);
             if (closed_) {
+               return;
+            }
+            // If state changed while this worker was running, render again immediately.
+            if (refreshDirty_.getAndSet(false)) {
+               scheduleRefresh();
                return;
             }
             RenderResult result;
@@ -840,22 +849,12 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    // ---- Data access helpers ----
 
    private List<Image> fetchZStack(int channel, int time, int position) throws IOException {
-      Coords.CoordsBuilder b = studio_.data().coordsBuilder();
-      List<String> axes = dataProvider_.getAxes();
-      // Always pin channel axis when the dataset has one, even for channel 0.
-      // Ignoring channel=0 causes getImagesIgnoringAxes to return images from ALL channels.
-      // We use getImagesIgnoringAxes with Z ignored but all other axes fixed.
-      boolean hasChannel = axes.contains(Coords.CHANNEL);
-      if (hasChannel && channel > 0) {
-         b = b.channel(channel);
-      }
-      if (axes.contains(Coords.TIME_POINT) && time > 0) {
-         b = b.time(time);
-      }
-      if (axes.contains(Coords.STAGE_POSITION) && position > 0) {
-         b = b.stagePosition(position);
-      }
-      Coords fixedCoords = b.build();
+      // Build fixed coords for all axes except Z.
+      // We cannot use coordsBuilder().channel(0) etc. because DefaultCoords drops index-0 axes,
+      // which would cause getImagesIgnoringAxes to match images from all channel/T/P values.
+      // Instead we get a representative image (which has all axes encoded), override the axes
+      // we care about, then strip Z so it is treated as the wildcard axis.
+      Coords fixedCoords = buildFixedCoords(channel, time, position);
 
       List<Image> raw = dataProvider_.getImagesIgnoringAxes(fixedCoords, Coords.Z_SLICE);
       // Wrap in a mutable ArrayList so we can sort regardless of what the storage returns.
@@ -863,18 +862,6 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       java.util.List<Image> images = (raw != null)
             ? new java.util.ArrayList<Image>(raw)
             : new java.util.ArrayList<Image>();
-
-      // If the dataset has a channel axis, filter to only the requested channel
-      // (necessary for channel 0 since we could not encode it in the Coords builder)
-      if (hasChannel) {
-         java.util.List<Image> filtered = new java.util.ArrayList<Image>();
-         for (Image img : images) {
-            if (img.getCoords().getChannel() == channel) {
-               filtered.add(img);
-            }
-         }
-         images = filtered;
-      }
 
       Collections.sort(images, new Comparator<Image>() {
          @Override
@@ -885,24 +872,45 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       return images;
    }
 
-   private List<Image> fetchXYImages(int channel, int time, int position, int z)
-         throws IOException {
-      Coords.CoordsBuilder b = studio_.data().coordsBuilder().z(z);
+   /**
+    * Build a Coords with channel/time/position pinned to the requested values and Z omitted,
+    * so it can be passed to {@code getImagesIgnoringAxes(coords, Z_SLICE)}.
+    *
+    * <p>Starting from a representative image's coords preserves any zero-valued axes
+    * (which DefaultCoords.Builder drops when set explicitly to 0).</p>
+    */
+   private Coords buildFixedCoords(int channel, int time, int position) throws IOException {
       List<String> axes = dataProvider_.getAxes();
-      if (axes.contains(Coords.CHANNEL) && channel > 0) {
+      // Start from an existing image's coords so zero-valued axes are retained.
+      Image anyImage = dataProvider_.getAnyImage();
+      Coords.Builder b;
+      if (anyImage != null) {
+         b = anyImage.getCoords().copyBuilder();
+      } else {
+         b = studio_.data().coordsBuilder();
+      }
+      if (axes.contains(Coords.CHANNEL)) {
          b = b.channel(channel);
       }
-      if (axes.contains(Coords.TIME_POINT) && time > 0) {
-         b = b.time(time);
+      if (axes.contains(Coords.TIME_POINT)) {
+         b = b.timePoint(time);
       }
-      if (axes.contains(Coords.STAGE_POSITION) && position > 0) {
+      if (axes.contains(Coords.STAGE_POSITION)) {
          b = b.stagePosition(position);
       }
-      Image img = dataProvider_.getImage(b.build());
-      if (img != null && (channel == 0 || img.getCoords().getChannel() == channel)) {
+      // Strip Z so it is treated as the wildcard by getImagesIgnoringAxes.
+      return b.build().copyRemovingAxes(Coords.Z_SLICE);
+   }
+
+   private List<Image> fetchXYImages(int channel, int time, int position, int z)
+         throws IOException {
+      // Use the same axis-pinning strategy as fetchZStack, then add Z back.
+      Coords coords = buildFixedCoords(channel, time, position).copyBuilder().z(z).build();
+      Image img = dataProvider_.getImage(coords);
+      if (img != null) {
          return Collections.singletonList(img);
       }
-      // Fallback: scan the z-stack (handles channel-0 axis bug)
+      // Fallback: scan the z-stack (covers sparse datasets where exact coord lookup fails)
       List<Image> all = fetchZStack(channel, time, position);
       img = getZImage(all, z);
       if (img == null) {

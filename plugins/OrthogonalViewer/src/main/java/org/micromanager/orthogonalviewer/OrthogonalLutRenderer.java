@@ -188,10 +188,23 @@ public final class OrthogonalLutRenderer {
    }
 
    /**
-    * Convert a raw pixel array (byte[], short[], or int[]) to an int[] of unsigned values.
+    * Convert a raw pixel array (byte[], short[], int[], or float[]) to an int[] of values
+    * suitable for LUT scaling.
+    *
+    * <p>For float[] (GRAY32), values are reinterpreted as their raw IEEE 754 bit pattern
+    * so that the existing long min/max LUT arithmetic works without overflow. The display
+    * settings min/max for float images are expected to be stored as Float.floatToIntBits()
+    * values by the MM display framework.</p>
     */
    public static int[] toIntArray(Object raw, int expectedSize) {
-      if (raw instanceof int[]) {
+      if (raw instanceof float[]) {
+         float[] arr = (float[]) raw;
+         int[] result = new int[arr.length];
+         for (int i = 0; i < arr.length; i++) {
+            result[i] = Float.floatToRawIntBits(arr[i]);
+         }
+         return result;
+      } else if (raw instanceof int[]) {
          int[] arr = (int[]) raw;
          // RGB: extract red as intensity
          int[] result = new int[arr.length];
