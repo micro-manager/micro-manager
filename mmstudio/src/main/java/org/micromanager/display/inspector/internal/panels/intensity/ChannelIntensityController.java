@@ -656,6 +656,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
+   boolean hasStats() {
+      return stats_ != null;
+   }
+
    @MustCallOnEDT
    void setStats(ImageStats stats) {
       stats_ = stats;

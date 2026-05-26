@@ -2,6 +2,7 @@ package org.micromanager.orthogonalviewer;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
+import ij.ImagePlus;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -28,7 +29,9 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
@@ -72,7 +75,7 @@ import org.micromanager.display.overlay.OverlaySupport;
  * Mouse-wheel zoom scales all three panels together, centred on the crosshair.</p>
  */
 public class OrthogonalViewerFrame extends AbstractDataViewer
-      implements ImageStatsPublisher, StatsComputeQueue.Listener, OverlaySupport {
+      implements DisplayWindow, ImageStatsPublisher, StatsComputeQueue.Listener, OverlaySupport {
 
    private static final Color DARK_GREY = new Color(50, 50, 50);
 
@@ -146,6 +149,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    private JLabel pPositionLabel_;
    private JPanel pControlRow_;
 
+   // Status line
+   private JLabel pixelInfoLabel_;
+   // Most-recently-rendered XY images; updated on the EDT by the SwingWorker done() callback.
+   private List<Image> lastXYImages_;
+
    private boolean updatingControls_ = false;
 
    // Only one SwingWorker refresh runs at a time; dirty means another is needed after it.
@@ -155,6 +163,10 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    // Inspector stats
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
    private volatile ImagesAndStats currentImagesAndStats_;
+   // Coords of the last position for which we triggered an autostretch re-render.
+   // Cleared when Z changes; set when the stats-triggered re-render fires.
+   // Prevents the render→stats→re-render infinite loop (one re-render per Z position).
+   private Coords lastAutostretchRerenderedCoords_;
 
    // DataViewerListener support
    private final TreeMap<Integer, DataViewerListener> listeners_ =
@@ -197,6 +209,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       yzPanel_ = new OrthogonalSlicePanel();
       setUpPanelListeners();
       setUpMouseWheelZoom();
+      setUpMouseInfoListeners();
 
       // Build window — creates xyWrapper_/xzWrapper_/yzWrapper_ fields
       frame_ = new JFrame("Orthogonal Views - " + sourceDisplay.getName());
@@ -210,7 +223,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       frame_.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
-            close();
+            doClose();
          }
 
          @Override
@@ -432,10 +445,23 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          @Override
          public void run() {
             postEvent(ImageStatsPublisher.ImageStatsChangedEvent.create(result));
-            // When autostretch is on, a new Z plane means new stats → re-render
-            // so the image is displayed with the updated stretch immediately.
+            // When autostretch is on, trigger a re-render for each Z position at most
+            // ONCE with its own stats (so the image reflects the correct autostretch for
+            // that plane). After the re-render, the same Coords will be submitted again;
+            // we detect this and skip the second re-render, breaking the loop.
+            // This also prevents an infinite loop when the Inspector fails to clear
+            // autostretch (e.g. NPE in handleAutoscale): autostretch=true stays set
+            // but no spurious re-renders occur since no new Coords arrive.
             if (getDisplaySettings().isAutostretchEnabled()) {
-               scheduleRefresh();
+               Coords statsCoords = (result.getRequest().getNumberOfImages() > 0)
+                     ? result.getRequest().getImage(0).getCoords() : null;
+               if (statsCoords != null
+                     && !statsCoords.equals(lastAutostretchRerenderedCoords_)) {
+                  lastAutostretchRerenderedCoords_ = statsCoords;
+                  scheduleRefresh();
+               }
+            } else {
+               lastAutostretchRerenderedCoords_ = null;
             }
          }
       });
@@ -597,6 +623,107 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       yzPanel_.addMouseWheelListener(wheelListener);
    }
 
+   /**
+    * Add mouse-motion listeners to all three panels so the pixel-info status line updates
+    * as the cursor moves over the XY, XZ, or YZ views.
+    *
+    * <p>Only XY pixel intensities are reported (using the images at the current z/t/p/c).
+    * When the cursor is over the XZ or YZ panels, the x or y coordinate is derived from
+    * the crosshair position (the axis that panel doesn't control).</p>
+    */
+   private void setUpMouseInfoListeners() {
+      java.awt.event.MouseAdapter clearInfo = new java.awt.event.MouseAdapter() {
+         @Override
+         public void mouseExited(java.awt.event.MouseEvent e) {
+            if (pixelInfoLabel_ != null) {
+               pixelInfoLabel_.setText(" ");
+            }
+         }
+      };
+
+      // XY panel: both x and y come from the mouse position.
+      xyPanel_.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+         @Override
+         public void mouseMoved(java.awt.event.MouseEvent e) {
+            double[] frac = xyPanel_.toImageFraction(e.getPoint());
+            if (frac == null) {
+               return;
+            }
+            int imgX = (int) Math.round(frac[0] * (imageWidth_ - 1));
+            int imgY = (int) Math.round(frac[1] * (imageHeight_ - 1));
+            updatePixelInfo(imgX, imgY);
+         }
+      });
+      xyPanel_.addMouseListener(clearInfo);
+
+      // XZ panel: x from mouse, y from crosshair.
+      xzPanel_.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+         @Override
+         public void mouseMoved(java.awt.event.MouseEvent e) {
+            double[] frac = xzPanel_.toImageFraction(e.getPoint());
+            if (frac == null) {
+               return;
+            }
+            int imgX = (int) Math.round(frac[0] * (imageWidth_ - 1));
+            updatePixelInfo(imgX, crosshairY_);
+         }
+      });
+      xzPanel_.addMouseListener(clearInfo);
+
+      // YZ panel: y from mouse, x from crosshair.
+      yzPanel_.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+         @Override
+         public void mouseMoved(java.awt.event.MouseEvent e) {
+            double[] frac = yzPanel_.toImageFraction(e.getPoint());
+            if (frac == null) {
+               return;
+            }
+            int imgY = (int) Math.round(frac[1] * (imageHeight_ - 1));
+            updatePixelInfo(crosshairX_, imgY);
+         }
+      });
+      yzPanel_.addMouseListener(clearInfo);
+   }
+
+   /**
+    * Update the pixel-info status label for the given XY image coordinate.
+    * Reads intensity from the most-recently-rendered XY images (one per channel).
+    * Called on the EDT from mouse-motion listeners.
+    */
+   private void updatePixelInfo(int x, int y) {
+      if (pixelInfoLabel_ == null) {
+         return;
+      }
+      List<Image> images = lastXYImages_;
+      if (images == null || images.isEmpty()) {
+         pixelInfoLabel_.setText(" ");
+         return;
+      }
+
+      String intensityStr;
+      if (images.size() == 1) {
+         intensityStr = images.get(0).getIntensityStringAt(x, y);
+      } else {
+         StringBuilder sb = new StringBuilder("[");
+         for (int i = 0; i < images.size(); i++) {
+            if (i > 0) {
+               sb.append(", ");
+            }
+            sb.append(images.get(i).getIntensityStringAt(x, y));
+         }
+         sb.append("]");
+         intensityStr = sb.toString();
+      }
+
+      String text = String.format("%d, %d = %s", x, y, intensityStr);
+      pixelInfoLabel_.setText(text);
+      // Expand minimum width so it doesn't shrink when values change
+      if (pixelInfoLabel_.getSize().width > pixelInfoLabel_.getMinimumSize().width) {
+         pixelInfoLabel_.setMinimumSize(
+               new Dimension(pixelInfoLabel_.getSize().width, 10));
+      }
+   }
+
    // ---- Refresh logic ----
 
    private void scheduleRefresh() {
@@ -699,6 +826,8 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
             yzPanel_.setOverlayContext(
                   overlayPanel == yzPanel_ ? overlays_ : null,
                   result.xyImages, primaryXY, settings);
+
+            lastXYImages_ = result.xyImages;
 
             if (result.xyImages != null && !result.xyImages.isEmpty()) {
                Coords nominalPos = result.xyImages.get(0).getCoords();
@@ -1270,8 +1399,39 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          }
       });
 
+      JPopupMenu gearMenu = new JPopupMenu();
+
+      JMenuItem inspectorItem = new JMenuItem("Image Inspector...");
+      inspectorItem.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio_.displays().createInspectorForDataViewer(OrthogonalViewerFrame.this);
+         }
+      });
+      gearMenu.add(inspectorItem);
+
+      JMenuItem exportItem = new JMenuItem("Export Images as Displayed...");
+      exportItem.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new OrthogonalExportDlg(OrthogonalViewerFrame.this, studio_).setVisible(true);
+         }
+      });
+      gearMenu.add(exportItem);
+
+      JButton gearBtn = new JButton(
+            IconLoader.getIcon("/org/micromanager/icons/gear.png"));
+      gearBtn.setToolTipText("Image tools");
+      gearBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+         @Override
+         public void mousePressed(java.awt.event.MouseEvent e) {
+            gearMenu.show(gearBtn, e.getX(), e.getY());
+         }
+      });
+
       toolbar.add(zoomInBtn);
       toolbar.add(zoomOutBtn);
+      toolbar.add(gearBtn);
       return toolbar;
    }
 
@@ -1290,6 +1450,13 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       panel.setBackground(DARK_GREY);
       panel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
 
+      // Pixel info status line (matches standard viewer style)
+      pixelInfoLabel_ = new JLabel(" ");
+      pixelInfoLabel_.setForeground(Color.LIGHT_GRAY);
+      pixelInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
+      pixelInfoLabel_.setMinimumSize(new Dimension(0, 10));
+      panel.add(pixelInfoLabel_, "span 3, growx, wrap");
+
       // Z row — styled like C/T/P scroll bars
       int zMax = Math.max(1, numZSlices_);
       int initZ = Math.max(0, Math.min(crosshairZ_, zMax - 1));
@@ -1298,11 +1465,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       zPositionLabel_.setForeground(Color.LIGHT_GRAY);
       zPositionLabel_.setFont(zPositionLabel_.getFont().deriveFont(10.0f));
 
-      zControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][grow][]"));
+      zControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][][grow]"));
       zControlRow_.setBackground(DARK_GREY);
       zControlRow_.add(makeLabel("Z:"));
-      zControlRow_.add(zScrollBar_, "growx");
       zControlRow_.add(zPositionLabel_);
+      zControlRow_.add(zScrollBar_, "growx");
       panel.add(zControlRow_, "span 3, growx, wrap");
       zControlRow_.setVisible(hasZ_);
 
@@ -1314,11 +1481,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       cPositionLabel_.setForeground(Color.LIGHT_GRAY);
       cPositionLabel_.setFont(cPositionLabel_.getFont().deriveFont(10.0f));
 
-      cControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][grow][]"));
+      cControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][][grow]"));
       cControlRow_.setBackground(DARK_GREY);
       cControlRow_.add(makeLabel("C:"));
-      cControlRow_.add(cScrollBar_, "growx");
       cControlRow_.add(cPositionLabel_);
+      cControlRow_.add(cScrollBar_, "growx");
       panel.add(cControlRow_, "span 3, growx, wrap");
       cControlRow_.setVisible(numChannels_ > 1);
 
@@ -1330,11 +1497,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       tPositionLabel_.setForeground(Color.LIGHT_GRAY);
       tPositionLabel_.setFont(tPositionLabel_.getFont().deriveFont(10.0f));
 
-      tControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][grow][]"));
+      tControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][][grow]"));
       tControlRow_.setBackground(DARK_GREY);
       tControlRow_.add(makeLabel("T:"));
-      tControlRow_.add(tScrollBar_, "growx");
       tControlRow_.add(tPositionLabel_);
+      tControlRow_.add(tScrollBar_, "growx");
       panel.add(tControlRow_, "span 3, growx, wrap");
       tControlRow_.setVisible(numTimePoints_ > 1);
 
@@ -1346,11 +1513,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       pPositionLabel_.setForeground(Color.LIGHT_GRAY);
       pPositionLabel_.setFont(pPositionLabel_.getFont().deriveFont(10.0f));
 
-      pControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][grow][]"));
+      pControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][][grow]"));
       pControlRow_.setBackground(DARK_GREY);
       pControlRow_.add(makeLabel("P:"));
-      pControlRow_.add(pScrollBar_, "growx");
       pControlRow_.add(pPositionLabel_);
+      pControlRow_.add(pScrollBar_, "growx");
       panel.add(pControlRow_, "span 3, growx, wrap");
       pControlRow_.setVisible(numPositions_ > 1);
 
@@ -1478,9 +1645,279 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       });
    }
 
+   // ---- DisplayWindow implementation ----
+
+   @Override
+   public java.awt.Window getWindow() {
+      if (closed_) {
+         throw new IllegalStateException("Display has closed");
+      }
+      return frame_;
+   }
+
+   @Override
+   public java.awt.Window getAsWindow() {
+      return closed_ ? null : frame_;
+   }
+
+   @Override
+   public void toFront() {
+      if (!closed_) {
+         frame_.toFront();
+      }
+   }
+
+   @Override
+   public void show() {
+      if (!closed_) {
+         frame_.setVisible(true);
+      }
+   }
+
+   @Override
+   public boolean requestToClose() {
+      if (closed_) {
+         return true;
+      }
+      close();
+      return true;
+   }
+
+   @Override
+   public void close() {
+      doClose();
+   }
+
+   @Override
+   public void displayStatusString(String status) {
+      // no-op — we have no dedicated status bar beyond the pixel info label
+   }
+
+   @Override
+   public double getZoom() {
+      return pixelScale_ * zoomFactor_;
+   }
+
+   @Override
+   public double getMagnification() {
+      return getZoom();
+   }
+
+   @Override
+   public void setZoom(double ratio) {
+      if (!closed_ && pixelScale_ > 0) {
+         applyZoom(ratio / pixelScale_);
+      }
+   }
+
+   @Override
+   public void setMagnification(double ratio) {
+      setZoom(ratio);
+   }
+
+   @Override
+   public void adjustZoom(double factor) {
+      if (!closed_) {
+         applyZoom(zoomFactor_ * factor);
+      }
+   }
+
+   @Override
+   public void autostretch() {
+      if (!closed_) {
+         setDisplaySettings(getDisplaySettings().copyBuilder()
+               .autostretch(true).build());
+      }
+   }
+
+   @Override
+   public ImagePlus getImagePlus() {
+      return null;
+   }
+
+   @Override
+   public void setFullScreen(boolean enable) {
+      // not supported
+   }
+
+   @Override
+   public boolean isFullScreen() {
+      return false;
+   }
+
+   @Override
+   public void toggleFullScreen() {
+      // not supported
+   }
+
+   @Override
+   public DisplayWindow duplicate() {
+      return null;
+   }
+
+   @Override
+   public void setCustomTitle(String title) {
+      if (!closed_ && title != null) {
+         frame_.setTitle(title);
+      }
+   }
+
+   @Override
+   public void setDisplaySettingsProfileKey(String key) {
+      // not supported
+   }
+
+   @Override
+   public void setWindowPositionKey(String key) {
+      // not supported
+   }
+
+   // ---- Export support ----
+
+   private static final int GAP_PX = 4;
+
+   /** The number of Z slices in the current dataset. */
+   public int getNumZSlices() {
+      return numZSlices_;
+   }
+
+   /** The number of time points in the current dataset. */
+   public int getNumTimePoints() {
+      return numTimePoints_;
+   }
+
+   /** The number of stage positions in the current dataset. */
+   public int getNumPositions() {
+      return numPositions_;
+   }
+
+   /** Whether the dataset has a Z axis with more than one slice. */
+   public boolean hasZ() {
+      return hasZ_;
+   }
+
+   /**
+    * Render a single composite export frame at the given (z, t, p) position.
+    *
+    * <p>Tiles XY (top-left), YZ (top-right), XZ (bottom-left) into one BufferedImage,
+    * then paints overlays over the appropriate region. Uses the current crosshair
+    * x/y position and the current channel. Runs on the calling thread (not EDT).</p>
+    *
+    * @param z z-slice index
+    * @param t time-point index
+    * @param p stage-position index
+    * @return tiled ARGB BufferedImage, or null if rendering produced no data
+    */
+   public BufferedImage renderCompositeForExport(int z, int t, int p) {
+      DisplaySettings settings = getDisplaySettings();
+      ImagesAndStats stats = currentImagesAndStats_;
+      int ch = currentChannel_;
+      int w = imageWidth_;
+      int h = imageHeight_;
+      int numZ = numZSlices_;
+      boolean hasZ = hasZ_;
+      int numCh = numChannels_;
+
+      RenderResult result = renderAllSlices(settings, stats,
+            crosshairX_, crosshairY_, z, ch, t, p, w, h, numZ, hasZ, numCh);
+      if (result == null || result.xy == null) {
+         return null;
+      }
+
+      // Tile layout: XY top-left, YZ top-right, XZ bottom-left
+      // XZ and YZ are only present when hasZ.
+      int zPhysH = Math.max(1, (int) Math.round(numZ * aspectRatioZtoXY_));
+      BufferedImage xz = result.xz;
+      BufferedImage yz = result.yz;
+
+      int xyW = result.xy.getWidth();
+      int xyH = result.xy.getHeight();
+      int yzW = (yz != null) ? yz.getWidth() : 0;
+      int xzH = (xz != null) ? xz.getHeight() : 0;
+
+      int totalW = xyW + (yz != null ? GAP_PX + yzW : 0);
+      int totalH = xyH + (xz != null ? GAP_PX + xzH : 0);
+      totalW = Math.max(totalW, 1);
+      totalH = Math.max(totalH, 1);
+
+      BufferedImage composite = new BufferedImage(totalW, totalH, BufferedImage.TYPE_INT_ARGB);
+      java.awt.Graphics2D g2 = composite.createGraphics();
+      g2.setColor(DARK_GREY);
+      g2.fillRect(0, 0, totalW, totalH);
+
+      // XY panel — top-left
+      g2.drawImage(result.xy, 0, 0, null);
+
+      // YZ panel — top-right (only if hasZ)
+      if (yz != null) {
+         g2.drawImage(yz, xyW + GAP_PX, 0, null);
+      }
+
+      // XZ panel — bottom-left (only if hasZ)
+      if (xz != null) {
+         g2.drawImage(xz, 0, xyH + GAP_PX, null);
+      }
+
+      // Paint overlays over the XY region (overlays work in XY image coordinates)
+      List<Image> overlayImgs = result.xyImages;
+      Image primaryImg = (overlayImgs != null && !overlayImgs.isEmpty())
+            ? overlayImgs.get(0) : null;
+      if (!overlays_.isEmpty() && primaryImg != null) {
+         java.util.List<Overlay> overlayList =
+               new java.util.ArrayList<Overlay>(overlays_);
+         java.awt.Graphics2D og = (java.awt.Graphics2D) g2.create();
+         og.setClip(0, 0, xyW, xyH);
+         og.scale((double) xyW / w, (double) xyH / h);
+         java.awt.Rectangle screenRect = new java.awt.Rectangle(0, 0, w, h);
+         java.awt.geom.Rectangle2D.Float imageViewPort =
+               new java.awt.geom.Rectangle2D.Float(0, 0, w, h);
+         for (Overlay overlay : overlayList) {
+            if (overlay.isVisible()) {
+               try {
+                  overlay.paintOverlay(og, screenRect, settings,
+                        overlayImgs, primaryImg, imageViewPort);
+               } catch (Exception ex) {
+                  // ignore overlay paint errors
+               }
+            }
+         }
+         og.dispose();
+      }
+
+      g2.dispose();
+      return composite;
+   }
+
+   /** Current crosshair Z slice index (0-based). */
+   public int getCrosshairZ() {
+      return crosshairZ_;
+   }
+
+   /** Current time-point index (0-based). */
+   public int getCurrentTime() {
+      return currentTime_;
+   }
+
+   /** Current stage-position index (0-based). */
+   public int getCurrentPosition() {
+      return currentPosition_;
+   }
+
+   public BufferedImage getXYImage() {
+      return xyPanel_.getCurrentImage();
+   }
+
+   public BufferedImage getXZImage() {
+      return xzPanel_.getCurrentImage();
+   }
+
+   public BufferedImage getYZImage() {
+      return yzPanel_.getCurrentImage();
+   }
+
    // ---- Close / lifecycle ----
 
-   private void close() {
+   private void doClose() {
       if (closed_) {
          return;
       }

@@ -426,12 +426,19 @@ public class IntensityInspectorPanelController
          // so the image doesn't snap back to the prior manual range.
          // Also clear rgbAutostretchEnabled here — we can't detect the transition via
          // DisplaySettings.isAutostretchEnabled() because we keep that false for RGB.
+         // Use try/finally so displaySettingsUpdateSuspended_ is always cleared even
+         // if a channel controller has null stats and handleAutoscale() throws NPE.
          displaySettingsUpdateSuspended_ = true;
-         for (ChannelIntensityController ch : channelControllers_) {
-            ch.handleAutoscale();
-            ch.setRgbAutostretchEnabled(false);
+         try {
+            for (ChannelIntensityController ch : channelControllers_) {
+               if (ch.hasStats()) {
+                  ch.handleAutoscale();
+               }
+               ch.setRgbAutostretchEnabled(false);
+            }
+         } finally {
+            displaySettingsUpdateSuspended_ = false;
          }
-         displaySettingsUpdateSuspended_ = false;
       }
       DisplaySettings oldSettings;
       DisplaySettings newSettings;
