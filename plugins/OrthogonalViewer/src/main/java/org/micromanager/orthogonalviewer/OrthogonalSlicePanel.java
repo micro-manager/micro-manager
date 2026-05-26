@@ -93,6 +93,30 @@ public class OrthogonalSlicePanel extends JPanel {
       clickListener_ = listener;
    }
 
+   /**
+    * Convert a panel-relative mouse point to image fractions [fracA, fracB] in [0,1].
+    * Returns null if the point is outside the image drawing area or no image is set.
+    */
+   public double[] toImageFraction(java.awt.Point p) {
+      int[] area = computeImageArea();
+      if (area == null) {
+         return null;
+      }
+      int offsetX = area[0];
+      int offsetY = area[1];
+      int drawW = area[2];
+      int drawH = area[3];
+      if (drawW <= 0 || drawH <= 0) {
+         return null;
+      }
+      double fracA = (p.x - offsetX) / (double) drawW;
+      double fracB = (p.y - offsetY) / (double) drawH;
+      if (fracA < 0.0 || fracA >= 1.0 || fracB < 0.0 || fracB >= 1.0) {
+         return null;
+      }
+      return new double[]{fracA, fracB};
+   }
+
    public void setOverlayContext(List<Overlay> overlays, List<Image> images,
                                  Image primaryImage, DisplaySettings settings) {
       overlays_ = overlays;
@@ -103,6 +127,10 @@ public class OrthogonalSlicePanel extends JPanel {
 
    public boolean hasOverlayContext() {
       return overlays_ != null;
+   }
+
+   public BufferedImage getCurrentImage() {
+      return currentImage_;
    }
 
    public void setImage(BufferedImage image) {
