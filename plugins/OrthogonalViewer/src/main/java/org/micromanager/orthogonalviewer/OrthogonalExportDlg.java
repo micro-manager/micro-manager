@@ -104,7 +104,7 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
       axisPanels_ = new ArrayList<ExportMovieDlg.AxisPanel>();
 
       // Centre over the viewer window (matches original behaviour)
-      Window vw = viewer.getAsWindow();
+      Window vw = viewerWindow();
       final int centerX = (vw != null) ? vw.getX() + vw.getWidth() / 2 : 400;
       final int centerY = (vw != null) ? vw.getY() + vw.getHeight() / 2 : 300;
 
@@ -423,7 +423,7 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
                   @Override
                   public void run() {
                      studio_.logs().showError(ex,
-                           "Export failed: " + msg, viewer_.getAsWindow());
+                           "Export failed: " + msg, viewerWindow());
                   }
                });
             }
@@ -636,9 +636,18 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            studio_.logs().showMessage(msg, viewer_.getAsWindow());
+            studio_.logs().showMessage(msg, viewerWindow());
          }
       });
+   }
+
+   /** Returns the viewer's Window, or null if the viewer has already closed. */
+   private Window viewerWindow() {
+      try {
+         return viewer_.getWindow();
+      } catch (IllegalStateException ex) {
+         return null;
+      }
    }
 
    /** Returns a Coords object representing the viewer's current display position. */

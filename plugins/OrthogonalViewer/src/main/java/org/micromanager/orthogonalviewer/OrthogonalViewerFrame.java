@@ -1669,6 +1669,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    @Override
+   @SuppressWarnings("deprecation")
    public java.awt.Window getAsWindow() {
       return closed_ ? null : frame_;
    }
@@ -1712,6 +1713,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    @Override
+   @SuppressWarnings("deprecation")
    public double getMagnification() {
       return getZoom();
    }
@@ -1724,6 +1726,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    @Override
+   @SuppressWarnings("deprecation")
    public void setMagnification(double ratio) {
       setZoom(ratio);
    }
@@ -1744,6 +1747,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    @Override
+   @SuppressWarnings("deprecation")
    public ImagePlus getImagePlus() {
       return null;
    }
@@ -1759,8 +1763,9 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    @Override
+   @SuppressWarnings("deprecation")
    public void toggleFullScreen() {
-      // not supported
+      // not supported — use setFullScreen(boolean)
    }
 
    @Override
