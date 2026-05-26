@@ -1699,7 +1699,16 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
    @Override
    public void close() {
-      doClose();
+      if (SwingUtilities.isEventDispatchThread()) {
+         doClose();
+      } else {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               doClose();
+            }
+         });
+      }
    }
 
    @Override
@@ -1770,7 +1779,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
    @Override
    public DisplayWindow duplicate() {
-      return null;
+      throw new UnsupportedOperationException("OrthogonalViewer does not support duplication");
    }
 
    @Override
@@ -1814,7 +1823,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
     * @param numCh    total number of channels
     * @param w        image width
     * @param h        image height
-    * @return new DisplaySettings with autostretch=false and min/max baked in per channel
+    * @return DisplaySettings with autostretch=false and fresh per-channel min/max baked
+    *         in for integer channels. Float channels are unchanged (autostretch stays on
+    *         so the caller should supply a stats snapshot for the float rendering path).
+    *         If ALL channels are float, the returned settings still have autostretch=false
+    *         and the caller falls back to using the stats snapshot for float rendering.
     */
    private DisplaySettings buildExportAutostretchSettings(
          DisplaySettings settings, int z, int t, int p,
@@ -1829,32 +1842,37 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       int firstCh = composite ? 0 : ch;
       int lastCh = composite ? numCh - 1 : ch;
 
+      // Start with autostretch disabled — integer channels will have fresh values baked in.
+      // Float channels cannot have fresh values baked (floatScalingMinMax needs ComponentStats
+      // for bin-geometry conversion which is not available here); they are left unchanged and
+      // renderAllSlices will use the statsSnapshot passed by the caller as a best-effort.
       DisplaySettings.Builder sb = settings.copyBuilder().autostretch(false);
 
       for (int c = firstCh; c <= lastCh; c++) {
-         int[] pixels = null;
+         Image img = null;
          try {
             List<Image> zStack = fetchZStack(c, t, p);
-            Image img = getZImage(zStack, z);
+            img = getZImage(zStack, z);
             if (img == null && !zStack.isEmpty()) {
                img = zStack.get(0);
             }
-            if (img != null) {
-               pixels = OrthogonalLutRenderer.toIntArray(img.getRawPixels(), w * h);
-            }
          } catch (IOException ex) {
-            // leave pixels null — will keep current settings for this channel
+            // leave img null — keep current settings for this channel
          }
-         if (pixels == null) {
+         if (img == null) {
             continue;
          }
 
+         Object raw = img.getRawPixels();
+         if (raw instanceof float[]) {
+            continue; // float path handled via statsSnapshot in the caller
+         }
+         ChannelDisplaySettings cs = settings.getChannelSettings(c);
+         int[] pixels = OrthogonalLutRenderer.toIntArray(raw, img.getWidth() * img.getHeight());
          long[] minMax = computeQuantileMinMax(pixels, q, ignoreZeros);
          if (minMax == null) {
             continue;
          }
-
-         ChannelDisplaySettings cs = settings.getChannelSettings(c);
          ComponentDisplaySettings comp = cs.getComponentSettings(0).copyBuilder()
                .scalingMinimum(minMax[0]).scalingMaximum(minMax[1]).build();
          sb = sb.channel(c, cs.copyBuilder().component(0, comp).build());
@@ -1961,16 +1979,24 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       boolean hasZ = hasZ_;
       int numCh = numChannels_;
 
-      // When autostretch is on, compute fresh per-channel min/max from the XY
-      // pixels at this position rather than using the stale currentImagesAndStats_
-      // (which only covers whatever frame was last displayed on screen).
+      // Snapshot stats; used both for the float rendering path (which needs histogram
+      // geometry to convert bin-index display values to actual float intensities) and
+      // as a best-effort fallback when fresh pixel data cannot be fetched.
+      ImagesAndStats statsSnapshot = currentImagesAndStats_;
+
       if (settings.isAutostretchEnabled()) {
+         // Bake fresh per-frame quantile min/max into settings for integer channels and
+         // disable autostretch. Float channels cannot have fresh values baked (the
+         // rendering path needs ComponentStats for bin-geometry conversion); they fall
+         // back to statsSnapshot, which is stale but better than [0,1].
          settings = buildExportAutostretchSettings(settings, z, t, p, ch, numCh, w, h);
+         // After baking, autostretch is false in settings. Integer channels no longer
+         // need the snapshot; float channels still need it for floatScalingMinMax.
+         // We pass the snapshot regardless — for integer channels it is ignored since
+         // autostretch is now false and the baked values are used directly.
       }
 
-      // Pass null for stats: autostretch values are now baked into settings above,
-      // and autostretch=false is set so renderAllSlices won't look for stats.
-      RenderResult result = renderAllSlices(settings, null,
+      RenderResult result = renderAllSlices(settings, statsSnapshot,
             cx, cy, z, ch, t, p, w, h, numZ, hasZ, numCh);
       if (result == null || result.xy == null) {
          return null;
@@ -1978,7 +2004,6 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
 
       // Tile layout: XY top-left, YZ top-right, XZ bottom-left
       // XZ and YZ are only present when hasZ.
-      int zPhysH = Math.max(1, (int) Math.round(numZ * aspectRatioZtoXY_));
       BufferedImage xz = result.xz;
       BufferedImage yz = result.yz;
 

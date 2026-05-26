@@ -48,8 +48,10 @@ import org.micromanager.internal.utils.FileDialogs;
  *
  * <p>Mirrors the layout and preferences of the standard MM Export As Displayed dialog.
  * Exports a composite tiled image (XY/YZ/XZ panels with overlays) for each step
- * along a selected axis (Z, T, C, or P). Reuses {@link ExportMovieDlg.AxisPanel}
- * for axis/range selection and shares the same profile preferences keys so the
+ * along a selected axis (Z, T, or P). The channel axis is not offered because the
+ * orthogonal viewer handles channels internally in its composite/grayscale modes.
+ * Reuses {@link ExportMovieDlg.AxisPanel} for axis/range selection and shares the
+ * same profile preferences keys so the
  * user's last-used format, prefix, and quality are remembered.</p>
  */
 public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
@@ -442,7 +444,81 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
    private void doExport(String mode, String directory, String prefix, int quality,
                          ArrayList<int[]> ztp, String ffmpegPath,
                          boolean useLabel) throws IOException {
-      // Render one composite BufferedImage per (z, t, p) tuple
+
+      // Formats that need all frames up front (need full stack for IJ/GIF/AVI/clipboard).
+      boolean needsAllFrames = mode.equals(FORMAT_SYSTEM_CLIPBOARD)
+            || mode.equals(FORMAT_IMAGEJ)
+            || mode.equals(FORMAT_GIF)
+            || mode.equals(FORMAT_AVI);
+
+      if (needsAllFrames) {
+         doExportBuffered(mode, directory, prefix, quality, ztp, useLabel);
+         return;
+      }
+
+      // Streaming path: render and write one frame at a time (PNG, JPEG, Movie).
+      // This avoids accumulating all rendered frames in heap simultaneously.
+      File tmpDir = null;
+      if (mode.equals(FORMAT_MOVIE)) {
+         String tmpPath = System.getProperty("java.io.tmpdir")
+               + File.separator + "mm_ortho_" + System.currentTimeMillis();
+         tmpDir = new File(tmpPath);
+         if (!tmpDir.mkdirs()) {
+            throw new IOException("Could not create temp directory: " + tmpPath);
+         }
+      }
+
+      int written = 0;
+      try {
+         for (int i = 0; i < ztp.size(); i++) {
+            int z = ztp.get(i)[0];
+            int t = ztp.get(i)[1];
+            int p = ztp.get(i)[2];
+            BufferedImage frame = viewer_.renderCompositeForExport(z, t, p);
+            if (frame == null) {
+               continue;
+            }
+            written++;
+            String label = ztp.size() > 1
+                  ? (useLabel ? ztpLabel(z, t, p) : String.format("_%010d", written)) : "";
+            if (mode.equals(FORMAT_PNG)) {
+               ImageIO.write(frame, "png", new File(directory, prefix + label + ".png"));
+            } else if (mode.equals(FORMAT_JPEG)) {
+               writeJpeg(frame, new File(directory, prefix + label + ".jpg"), quality / 100f);
+            } else if (mode.equals(FORMAT_MOVIE)) {
+               ImageIO.write(frame, "png",
+                     new File(tmpDir, String.format("frame_%06d.png", written)));
+            }
+         }
+      } finally {
+         if (mode.equals(FORMAT_MOVIE) && tmpDir != null) {
+            if (written > 0) {
+               File outFile = new File(directory, prefix + ".mp4");
+               try {
+                  runFfmpeg(ffmpegPath, tmpDir, outFile, quality);
+                  showInfo("Movie saved to:\n" + outFile.getAbsolutePath());
+               } finally {
+                  deleteTempDir(tmpDir);
+               }
+            } else {
+               deleteTempDir(tmpDir);
+            }
+         }
+      }
+
+      if (written == 0) {
+         showInfo("No images could be rendered for export.");
+         return;
+      }
+      if (mode.equals(FORMAT_PNG)) {
+         showInfo(written + " PNG file(s) saved to:\n" + directory);
+      } else if (mode.equals(FORMAT_JPEG)) {
+         showInfo(written + " JPEG file(s) saved to:\n" + directory);
+      }
+   }
+
+   private void doExportBuffered(String mode, String directory, String prefix, int quality,
+                                 ArrayList<int[]> ztp, boolean useLabel) throws IOException {
       List<BufferedImage> frames = new ArrayList<BufferedImage>();
       List<String> labels = new ArrayList<String>();
       for (int[] coord : ztp) {
@@ -486,26 +562,6 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
          return;
       }
 
-      if (mode.equals(FORMAT_PNG)) {
-         for (int i = 0; i < frames.size(); i++) {
-            String label = frames.size() > 1 ? labels.get(i) : "";
-            ImageIO.write(frames.get(i), "png",
-                  new File(directory, prefix + label + ".png"));
-         }
-         showInfo(frames.size() + " PNG file(s) saved to:\n" + directory);
-         return;
-      }
-
-      if (mode.equals(FORMAT_JPEG)) {
-         float q = quality / 100f;
-         for (int i = 0; i < frames.size(); i++) {
-            String label = frames.size() > 1 ? labels.get(i) : "";
-            writeJpeg(frames.get(i), new File(directory, prefix + label + ".jpg"), q);
-         }
-         showInfo(frames.size() + " JPEG file(s) saved to:\n" + directory);
-         return;
-      }
-
       if (mode.equals(FORMAT_GIF)) {
          File outFile = new File(directory, prefix + ".gif");
          GifWriter.save(new ImagePlus(prefix, buildStack(frames)), outFile.getAbsolutePath());
@@ -519,27 +575,6 @@ public class OrthogonalExportDlg extends JDialog implements AxisPanelParent {
          new AVI_Writer().writeImage(imp, outFile.getAbsolutePath(),
                AVI_Writer.JPEG_COMPRESSION, quality);
          showInfo("Saved to:\n" + outFile.getAbsolutePath());
-         return;
-      }
-
-      if (mode.equals(FORMAT_MOVIE)) {
-         String tmpPath = System.getProperty("java.io.tmpdir")
-               + File.separator + "mm_ortho_" + System.currentTimeMillis();
-         File tmpDir = new File(tmpPath);
-         if (!tmpDir.mkdirs()) {
-            throw new IOException("Could not create temp directory: " + tmpPath);
-         }
-         try {
-            for (int i = 0; i < frames.size(); i++) {
-               ImageIO.write(frames.get(i), "png",
-                     new File(tmpDir, String.format("frame_%06d.png", i + 1)));
-            }
-            File outFile = new File(directory, prefix + ".mp4");
-            runFfmpeg(ffmpegPath, tmpDir, outFile, quality);
-            showInfo("Movie saved to:\n" + outFile.getAbsolutePath());
-         } finally {
-            deleteTempDir(tmpDir);
-         }
       }
    }
 
