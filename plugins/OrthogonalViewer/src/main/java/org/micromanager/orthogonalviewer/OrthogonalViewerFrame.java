@@ -1344,7 +1344,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
       JPanel contentPanel = new JPanel(new MigLayout("fill, insets 0, gap 0"));
       contentPanel.setBackground(DARK_GREY);
 
-      // Toolbar at the top (like the standard MM viewer)
+      // Zoom buttons at top (gear moved to bottom-right)
       JPanel toolbar = buildToolbar();
       contentPanel.add(toolbar, "growx, wrap");
 
@@ -1399,6 +1399,12 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          }
       });
 
+      toolbar.add(zoomInBtn);
+      toolbar.add(zoomOutBtn);
+      return toolbar;
+   }
+
+   private JButton buildGearButton() {
       JPopupMenu gearMenu = new JPopupMenu();
 
       JMenuItem inspectorItem = new JMenuItem("Image Inspector...");
@@ -1428,11 +1434,7 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
             gearMenu.show(gearBtn, e.getX(), e.getY());
          }
       });
-
-      toolbar.add(zoomInBtn);
-      toolbar.add(zoomOutBtn);
-      toolbar.add(gearBtn);
-      return toolbar;
+      return gearBtn;
    }
 
    private JPanel makeLabeledPanel(String label, OrthogonalSlicePanel panel) {
@@ -1446,83 +1448,94 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
    }
 
    private JPanel buildControlsPanel() {
-      JPanel panel = new JPanel(new MigLayout("fillx, insets 2 4 2 4, gap 2 2", "[][grow][]"));
+      // Each slider row is a sub-panel with identical column constraints, so when they all
+      // fill the parent width the position labels and sliders align across rows.
+      // Column spec: [axis label pref] [position text 80lp fixed, right-aligned]
+      //              [slider grow] [8lp right padding]
+      // "80lp" is wide enough for "9999/9999" at the small font size.
+      final String rowCols = "[pref][80lp, right][grow][8lp]";
+      final String rowLayout = "fillx, insets 0, gap 2 0";
+
+      JPanel panel = new JPanel(new MigLayout("fillx, insets 2 4 2 4, gap 2 2"));
       panel.setBackground(DARK_GREY);
       panel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
 
-      // Pixel info status line (matches standard viewer style)
+      // Pixel info status line
       pixelInfoLabel_ = new JLabel(" ");
       pixelInfoLabel_.setForeground(Color.LIGHT_GRAY);
       pixelInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
       pixelInfoLabel_.setMinimumSize(new Dimension(0, 10));
-      panel.add(pixelInfoLabel_, "span 3, growx, wrap");
+      panel.add(pixelInfoLabel_, "growx, wrap");
 
-      // Z row — styled like C/T/P scroll bars
+      // Z row
       int zMax = Math.max(1, numZSlices_);
       int initZ = Math.max(0, Math.min(crosshairZ_, zMax - 1));
       zScrollBar_ = new JScrollBar(JScrollBar.HORIZONTAL, initZ, 1, 0, zMax);
-      zPositionLabel_ = new JLabel(positionText(initZ, numZSlices_));
-      zPositionLabel_.setForeground(Color.LIGHT_GRAY);
-      zPositionLabel_.setFont(zPositionLabel_.getFont().deriveFont(10.0f));
-
-      zControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][][grow]"));
+      zPositionLabel_ = makePositionLabel(positionText(initZ, numZSlices_));
+      zControlRow_ = new JPanel(new MigLayout(rowLayout, rowCols));
       zControlRow_.setBackground(DARK_GREY);
       zControlRow_.add(makeLabel("Z:"));
       zControlRow_.add(zPositionLabel_);
       zControlRow_.add(zScrollBar_, "growx");
-      panel.add(zControlRow_, "span 3, growx, wrap");
+      zControlRow_.add(new JLabel()); // right-padding column
+      panel.add(zControlRow_, "growx, wrap");
       zControlRow_.setVisible(hasZ_);
 
-      // C row — styled like the standard MM viewer scroll bars
+      // C row
       int cMax = Math.max(1, numChannels_);
       int initCh = Math.max(0, Math.min(currentChannel_, cMax - 1));
       cScrollBar_ = new JScrollBar(JScrollBar.HORIZONTAL, initCh, 1, 0, cMax);
-      cPositionLabel_ = new JLabel(positionText(initCh, numChannels_));
-      cPositionLabel_.setForeground(Color.LIGHT_GRAY);
-      cPositionLabel_.setFont(cPositionLabel_.getFont().deriveFont(10.0f));
-
-      cControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][][grow]"));
+      cPositionLabel_ = makePositionLabel(positionText(initCh, numChannels_));
+      cControlRow_ = new JPanel(new MigLayout(rowLayout, rowCols));
       cControlRow_.setBackground(DARK_GREY);
       cControlRow_.add(makeLabel("C:"));
       cControlRow_.add(cPositionLabel_);
       cControlRow_.add(cScrollBar_, "growx");
-      panel.add(cControlRow_, "span 3, growx, wrap");
+      cControlRow_.add(new JLabel());
+      panel.add(cControlRow_, "growx, wrap");
       cControlRow_.setVisible(numChannels_ > 1);
 
       // T row
       int tMax = Math.max(1, numTimePoints_);
       int initT = Math.max(0, Math.min(currentTime_, tMax - 1));
       tScrollBar_ = new JScrollBar(JScrollBar.HORIZONTAL, initT, 1, 0, tMax);
-      tPositionLabel_ = new JLabel(positionText(initT, numTimePoints_));
-      tPositionLabel_.setForeground(Color.LIGHT_GRAY);
-      tPositionLabel_.setFont(tPositionLabel_.getFont().deriveFont(10.0f));
-
-      tControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][][grow]"));
+      tPositionLabel_ = makePositionLabel(positionText(initT, numTimePoints_));
+      tControlRow_ = new JPanel(new MigLayout(rowLayout, rowCols));
       tControlRow_.setBackground(DARK_GREY);
       tControlRow_.add(makeLabel("T:"));
       tControlRow_.add(tPositionLabel_);
       tControlRow_.add(tScrollBar_, "growx");
-      panel.add(tControlRow_, "span 3, growx, wrap");
+      tControlRow_.add(new JLabel());
+      panel.add(tControlRow_, "growx, wrap");
       tControlRow_.setVisible(numTimePoints_ > 1);
 
       // P row
       int pMax = Math.max(1, numPositions_);
       int initP = Math.max(0, Math.min(currentPosition_, pMax - 1));
       pScrollBar_ = new JScrollBar(JScrollBar.HORIZONTAL, initP, 1, 0, pMax);
-      pPositionLabel_ = new JLabel(positionText(initP, numPositions_));
-      pPositionLabel_.setForeground(Color.LIGHT_GRAY);
-      pPositionLabel_.setFont(pPositionLabel_.getFont().deriveFont(10.0f));
-
-      pControlRow_ = new JPanel(new MigLayout("fillx, insets 0, gap 2 0", "[][][grow]"));
+      pPositionLabel_ = makePositionLabel(positionText(initP, numPositions_));
+      pControlRow_ = new JPanel(new MigLayout(rowLayout, rowCols));
       pControlRow_.setBackground(DARK_GREY);
       pControlRow_.add(makeLabel("P:"));
       pControlRow_.add(pPositionLabel_);
       pControlRow_.add(pScrollBar_, "growx");
-      panel.add(pControlRow_, "span 3, growx, wrap");
+      pControlRow_.add(new JLabel());
+      panel.add(pControlRow_, "growx, wrap");
       pControlRow_.setVisible(numPositions_ > 1);
+
+      // Gear button — always visible, pinned to bottom-right
+      JButton gearBtn = buildGearButton();
+      panel.add(gearBtn, "right");
 
       wireListeners();
       return panel;
+   }
+
+   private JLabel makePositionLabel(String text) {
+      JLabel lbl = new JLabel(text);
+      lbl.setForeground(Color.LIGHT_GRAY);
+      lbl.setFont(lbl.getFont().deriveFont(10.0f));
+      return lbl;
    }
 
    private static String positionText(int index, int total) {
