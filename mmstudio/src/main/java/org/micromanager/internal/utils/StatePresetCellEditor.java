@@ -7,6 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Objects;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
@@ -31,37 +32,42 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
    StateItem item_;
    SliderPanel slider_ = new SliderPanel();
 
+   // True only after the user picks an item from the open dropdown.
+   // getCellEditorValue() returns the original value when false, making any
+   // external stopCellEditing() call (e.g. Tab) a no-op commit.
+   private boolean selectionMade_ = false;
+
    public StatePresetCellEditor() {
       super();
 
-      // Commit only when the user picks a *different* value from the dropdown.
-      // ActionListener fires spuriously on focus loss, so we use PopupMenuListener
-      // instead: snapshot the selection when the popup opens, then compare on close.
       combo_.addPopupMenuListener(new PopupMenuListener() {
-         private Object itemOnOpen_ = null;
-
          @Override
          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-            itemOnOpen_ = combo_.getSelectedItem();
+            combo_.putClientProperty("popupOpen", Boolean.TRUE);
          }
 
          @Override
          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-            // popupMenuCanceled fires first on Escape (on most L&Fs), so by the
-            // time we arrive here itemOnOpen_ has been nulled and we do nothing.
-            if (itemOnOpen_ != null && !itemOnOpen_.equals(combo_.getSelectedItem())) {
-               itemOnOpen_ = null;
-               fireEditingStopped();
-            } else {
-               itemOnOpen_ = null;
-               fireEditingCanceled();
-            }
+            combo_.putClientProperty("popupOpen", null);
          }
 
          @Override
          public void popupMenuCanceled(PopupMenuEvent e) {
-            itemOnOpen_ = null;
+            // Popup was dismissed without a selection (Escape or click outside).
+            // Clear the flag and cancel the cell edit in one step so the user
+            // does not need a second Escape/click to dismiss the editor too.
+            combo_.putClientProperty("popupOpen", null);
             fireEditingCanceled();
+         }
+      });
+
+      combo_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (Boolean.TRUE.equals(combo_.getClientProperty("popupOpen"))) {
+               selectionMade_ = true;
+               fireEditingStopped();
+            }
          }
       });
 
@@ -151,11 +157,19 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
    }
 
    private void setComboBox(String[] allowed) {
+      selectionMade_ = false;
+      combo_.putClientProperty("popupOpen", null);
       combo_.removeAllItems();
       for (int i = 0; i < allowed.length; i++) {
          combo_.addItem(allowed[i]);
       }
+      // setSelectedItem silently fails when item_.config is not in the list
+      // (e.g. "" when no preset matches). Fall back to no selection (-1) so
+      // the combo shows blank rather than defaulting to item 0.
       combo_.setSelectedItem(item_.config);
+      if (!Objects.equals(item_.config, combo_.getSelectedItem())) {
+         combo_.setSelectedIndex(-1);
+      }
    }
 
    // This method is called when editing is completed.
@@ -168,10 +182,10 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
          } else if (item_.singlePropAllowed != null && item_.singlePropAllowed.length == 0) {
             return text_.getText();
          } else {
-            return combo_.getSelectedItem();
+            return selectionMade_ ? combo_.getSelectedItem() : item_.config;
          }
       } else {
-         return combo_.getSelectedItem();
+         return selectionMade_ ? combo_.getSelectedItem() : item_.config;
       }
    }
 }

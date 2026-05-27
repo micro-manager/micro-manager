@@ -25,6 +25,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -33,6 +34,7 @@ import java.awt.event.WindowEvent;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Objects;
 import javax.swing.AbstractCellEditor;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -493,6 +495,10 @@ public final class AutofocusPropertyEditor extends JDialog {
       SliderPanel slider_ = new SliderPanel();
       int editingCol_;
       PropertyItem item_;
+      // True only after the user picks an item from the open dropdown.
+      // getCellEditorValue() returns the original value when false, making any
+      // external stopCellEditing() call (e.g. Tab) a no-op commit.
+      private boolean selectionMade_ = false;
 
       /**
        * Component that edits the cell's value.
@@ -501,34 +507,37 @@ public final class AutofocusPropertyEditor extends JDialog {
          super();
          check_.addActionListener(e -> fireEditingStopped());
 
-         // Commit only when the user picks a *different* value from the dropdown.
-         // ActionListener fires spuriously on focus loss, so we use PopupMenuListener
-         // instead: snapshot the selection when the popup opens, then compare on close.
+         // Commit when the user picks a value from the dropdown while it is open.
+         // A bare ActionListener fires spuriously on focus loss; gating it on the
+         // popup-open flag suppresses those false fires while still catching every
+         // genuine selection (including selecting the first item when an empty
+         // entry was previously chosen — a case where PopupMenuListener comparison
+         // logic breaks on the Windows L&F).
          combo_.addPopupMenuListener(new PopupMenuListener() {
-            private Object itemOnOpen_ = null;
-
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-               itemOnOpen_ = combo_.getSelectedItem();
+               combo_.putClientProperty("popupOpen", Boolean.TRUE);
             }
 
             @Override
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-               // popupMenuCanceled fires first on Escape (on most L&Fs), so by the
-               // time we arrive here itemOnOpen_ has been nulled and we do nothing.
-               if (itemOnOpen_ != null && !itemOnOpen_.equals(combo_.getSelectedItem())) {
-                  itemOnOpen_ = null;
-                  fireEditingStopped();
-               } else {
-                  itemOnOpen_ = null;
-                  fireEditingCanceled();
-               }
+               combo_.putClientProperty("popupOpen", null);
             }
 
             @Override
             public void popupMenuCanceled(PopupMenuEvent e) {
-               itemOnOpen_ = null;
+               combo_.putClientProperty("popupOpen", null);
                fireEditingCanceled();
+            }
+         });
+
+         combo_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               if (Boolean.TRUE.equals(combo_.getClientProperty("popupOpen"))) {
+                  selectionMade_ = true;
+                  fireEditingStopped();
+               }
             }
          });
 
@@ -577,11 +586,16 @@ public final class AutofocusPropertyEditor extends JDialog {
                }
             }
 
+            selectionMade_ = false;
+            combo_.putClientProperty("popupOpen", null);
             combo_.removeAllItems();
             for (String allowed : item_.allowed) {
                combo_.addItem(allowed);
             }
             combo_.setSelectedItem(item_.value);
+            if (!Objects.equals(item_.value, combo_.getSelectedItem())) {
+               combo_.setSelectedIndex(-1);
+            }
             return combo_;
          } else if (colIndex == 2) {
             return check_;
@@ -601,7 +615,7 @@ public final class AutofocusPropertyEditor extends JDialog {
                   return text_.getText();
                }
             } else {
-               return combo_.getSelectedItem();
+               return selectionMade_ ? combo_.getSelectedItem() : item_.value;
             }
          } else {
             if (editingCol_ == 2) {
