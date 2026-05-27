@@ -176,7 +176,9 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
    // It must return the new value to be stored in the cell.
    @Override
    public Object getCellEditorValue() {
-      if (item_.allowed.length == 1) {
+      if (item_.allowed.length == 0) {
+         return text_.getText();
+      } else if (item_.allowed.length == 1) {
          if (item_.singleProp && item_.hasLimits) {
             return slider_.getText();
          } else if (item_.singlePropAllowed != null && item_.singlePropAllowed.length == 0) {
