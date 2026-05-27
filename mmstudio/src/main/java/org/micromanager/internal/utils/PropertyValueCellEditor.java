@@ -42,27 +42,33 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
 
       disableExcluded_ = disableExcluded;
 
-      // End editing only when the user deliberately picks from the dropdown.
-      // Using PopupMenuListener avoids the spurious ActionEvent that JComboBox
-      // fires on focus loss (which would commit the current value unexpectedly).
+      // Commit only when the user picks a *different* value from the dropdown.
+      // ActionListener fires spuriously on focus loss, so we use PopupMenuListener
+      // instead: snapshot the selection when the popup opens, then compare on close.
       combo_.addPopupMenuListener(new PopupMenuListener() {
-         private boolean canceled_ = false;
+         private Object itemOnOpen_ = null;
 
          @Override
          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-            canceled_ = false;
+            itemOnOpen_ = combo_.getSelectedItem();
          }
 
          @Override
          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-            if (!canceled_) {
+            // popupMenuCanceled fires first on Escape (on most L&Fs), so by the
+            // time we arrive here itemOnOpen_ has been nulled and we do nothing.
+            if (itemOnOpen_ != null && !itemOnOpen_.equals(combo_.getSelectedItem())) {
+               itemOnOpen_ = null;
                fireEditingStopped();
+            } else {
+               itemOnOpen_ = null;
+               fireEditingCanceled();
             }
          }
 
          @Override
          public void popupMenuCanceled(PopupMenuEvent e) {
-            canceled_ = true;
+            itemOnOpen_ = null;
             fireEditingCanceled();
          }
       });
