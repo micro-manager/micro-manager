@@ -272,9 +272,8 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
       @Override
       public Builder multiWellPlate(MultiWellPlate plate) {
-         if (plate != null) {
-            b_.putPropertyMap(MULTI_WELL_PLATE.key(), plate.toPropertyMap());
-         }
+         b_.putPropertyMap(MULTI_WELL_PLATE.key(),
+               plate != null ? plate.toPropertyMap() : null);
          return this;
       }
 

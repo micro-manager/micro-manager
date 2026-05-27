@@ -98,7 +98,8 @@ public final class OMEMetadata {
       }
 
       final int plateIdx = 0;
-      String plateID = MetadataTools.createLSID("Plate", plateIdx);
+      String plateID = (plate.getPlateID() != null && !plate.getPlateID().isEmpty())
+            ? plate.getPlateID() : MetadataTools.createLSID("Plate", plateIdx);
       metadata_.setPlateID(plateID, plateIdx);
       if (plate.getPlateName() != null && !plate.getPlateName().isEmpty()) {
          metadata_.setPlateName(plate.getPlateName(), plateIdx);
@@ -154,20 +155,30 @@ public final class OMEMetadata {
             // Well property is present (e.g. "A1"): parse row/col from it.
             // Letters prefix the row (A=0, B=1, …); trailing digits give the
             // 1-based column number. Both are converted to 0-based OME indices.
-            int splitIdx = 0;
-            while (splitIdx < wellProp.length()
-                  && Character.isLetter(wellProp.charAt(splitIdx))) {
-               splitIdx++;
+            int parsedRow = pos.getGridRow();
+            int parsedCol = pos.getGridColumn();
+            boolean parsed = false;
+            try {
+               int splitIdx = 0;
+               while (splitIdx < wellProp.length()
+                     && Character.isLetter(wellProp.charAt(splitIdx))) {
+                  splitIdx++;
+               }
+               final String rowPart = wellProp.substring(0, splitIdx).toUpperCase();
+               final String colPart = wellProp.substring(splitIdx);
+               int r = 0;
+               for (int ci = 0; ci < rowPart.length(); ci++) {
+                  r = r * 26 + (rowPart.charAt(ci) - 'A' + 1);
+               }
+               parsedRow = r - 1; // convert to 0-based
+               parsedCol = colPart.isEmpty() ? 0 : Integer.parseInt(colPart) - 1;
+               parsed = true;
+            } catch (NumberFormatException e) {
+               // malformed Well label — fall back to gridRow/gridCol
             }
-            final String rowPart = wellProp.substring(0, splitIdx).toUpperCase();
-            final String colPart = wellProp.substring(splitIdx);
-            row = 0;
-            for (int ci = 0; ci < rowPart.length(); ci++) {
-               row = row * 26 + (rowPart.charAt(ci) - 'A' + 1);
-            }
-            row -= 1; // convert to 0-based
-            col = colPart.isEmpty() ? 0 : Integer.parseInt(colPart) - 1;
-            wellKey = wellProp;
+            row = parsedRow;
+            col = parsedCol;
+            wellKey = parsed ? wellProp : row + "," + col;
          } else {
             row = pos.getGridRow();
             col = pos.getGridColumn();

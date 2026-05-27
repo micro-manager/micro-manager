@@ -70,14 +70,14 @@ public class PositionList implements Iterable<MultiStagePosition> {
    }
 
    /**
-    * This looks like a static copy constructor.
+    * Static copy constructor.
     *
-    * @param aPl input Positionlist
+    * @param aPl input PositionList; if null an empty PositionList is returned
     * @return new instance of a PositionList with identical positions to the input
     */
    public static PositionList newInstance(PositionList aPl) {
       if (aPl == null) {
-         return null;
+         return new PositionList();
       }
       PositionList pl = new PositionList(aPl.getPlate());
       for (MultiStagePosition multiStagePosition : aPl.positions_) {
