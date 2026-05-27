@@ -1,6 +1,8 @@
 package org.micromanager.internal.utils;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
@@ -8,6 +10,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.ParseException;
+import java.util.Objects;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
@@ -32,6 +35,11 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
 
    public boolean disableExcluded_;
 
+   // True only after the user picks an item from the open dropdown.
+   // getCellEditorValue() returns the original value when false, making any
+   // external stopCellEditing() call (e.g. Tab) a no-op commit.
+   private boolean selectionMade_ = false;
+
 
    public PropertyValueCellEditor() {
       this(false);
@@ -42,34 +50,31 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
 
       disableExcluded_ = disableExcluded;
 
-      // Commit only when the user picks a *different* value from the dropdown.
-      // ActionListener fires spuriously on focus loss, so we use PopupMenuListener
-      // instead: snapshot the selection when the popup opens, then compare on close.
       combo_.addPopupMenuListener(new PopupMenuListener() {
-         private Object itemOnOpen_ = null;
-
          @Override
          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-            itemOnOpen_ = combo_.getSelectedItem();
+            combo_.putClientProperty("popupOpen", Boolean.TRUE);
          }
 
          @Override
          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-            // popupMenuCanceled fires first on Escape (on most L&Fs), so by the
-            // time we arrive here itemOnOpen_ has been nulled and we do nothing.
-            if (itemOnOpen_ != null && !itemOnOpen_.equals(combo_.getSelectedItem())) {
-               itemOnOpen_ = null;
-               fireEditingStopped();
-            } else {
-               itemOnOpen_ = null;
-               fireEditingCanceled();
-            }
+            combo_.putClientProperty("popupOpen", null);
          }
 
          @Override
          public void popupMenuCanceled(PopupMenuEvent e) {
-            itemOnOpen_ = null;
+            combo_.putClientProperty("popupOpen", null);
             fireEditingCanceled();
+         }
+      });
+
+      combo_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (Boolean.TRUE.equals(combo_.getClientProperty("popupOpen"))) {
+               selectionMade_ = true;
+               fireEditingStopped();
+            }
          }
       });
 
@@ -128,11 +133,16 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
                return text_;
             }
          } else {
+            selectionMade_ = false;
+            combo_.putClientProperty("popupOpen", null);
             combo_.removeAllItems();
             for (int i = 0; i < item_.allowed.length; i++) {
                combo_.addItem(item_.allowed[i]);
             }
             combo_.setSelectedItem(item_.value);
+            if (!Objects.equals(item_.value, combo_.getSelectedItem())) {
+               combo_.setSelectedIndex(-1);
+            }
             return combo_;
          }
       } else {
@@ -152,7 +162,7 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
             return text_.getText();
          }
       } else {
-         return combo_.getSelectedItem();
+         return selectionMade_ ? combo_.getSelectedItem() : item_.value;
       }
    }
 }
