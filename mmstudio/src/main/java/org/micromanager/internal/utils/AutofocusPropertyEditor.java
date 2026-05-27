@@ -45,6 +45,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.border.BevelBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -499,6 +501,31 @@ public final class AutofocusPropertyEditor extends JDialog {
          super();
          check_.addActionListener(e -> fireEditingStopped());
 
+         // End editing only when the user deliberately picks from the dropdown.
+         // Using PopupMenuListener avoids the spurious ActionEvent that JComboBox
+         // fires on focus loss (which would commit the current value unexpectedly).
+         combo_.addPopupMenuListener(new PopupMenuListener() {
+            private boolean canceled_ = false;
+
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+               canceled_ = false;
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+               if (!canceled_) {
+                  fireEditingStopped();
+               }
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+               canceled_ = true;
+               fireEditingCanceled();
+            }
+         });
+
          slider_.addEditActionListener(e -> fireEditingStopped());
 
          slider_.addSliderMouseListener(new MouseAdapter() {
@@ -544,19 +571,11 @@ public final class AutofocusPropertyEditor extends JDialog {
                }
             }
 
-            ActionListener[] l = combo_.getActionListeners();
-            for (ActionListener l1 : l) {
-               combo_.removeActionListener(l1);
-            }
             combo_.removeAllItems();
             for (String allowed : item_.allowed) {
                combo_.addItem(allowed);
             }
             combo_.setSelectedItem(item_.value);
-
-            // end editing on selection change
-            combo_.addActionListener(e -> fireEditingStopped());
-
             return combo_;
          } else if (colIndex == 2) {
             return check_;

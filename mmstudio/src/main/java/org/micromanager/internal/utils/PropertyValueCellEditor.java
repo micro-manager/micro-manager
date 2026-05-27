@@ -1,7 +1,6 @@
 package org.micromanager.internal.utils;
 
 import java.awt.Component;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
@@ -13,6 +12,8 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 
 /**
@@ -41,8 +42,31 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
 
       disableExcluded_ = disableExcluded;
 
-      // end editing on selection change
-      combo_.addActionListener(e -> fireEditingStopped());
+      // End editing only when the user deliberately picks from the dropdown.
+      // Using PopupMenuListener avoids the spurious ActionEvent that JComboBox
+      // fires on focus loss (which would commit the current value unexpectedly).
+      combo_.addPopupMenuListener(new PopupMenuListener() {
+         private boolean canceled_ = false;
+
+         @Override
+         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            canceled_ = false;
+         }
+
+         @Override
+         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            if (!canceled_) {
+               fireEditingStopped();
+            }
+         }
+
+         @Override
+         public void popupMenuCanceled(PopupMenuEvent e) {
+            canceled_ = true;
+            fireEditingCanceled();
+         }
+      });
+
       slider_.addEditActionListener(e -> fireEditingStopped());
 
       slider_.addSliderMouseListener(new MouseAdapter() {
@@ -98,19 +122,11 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
                return text_;
             }
          } else {
-            ActionListener[] l = combo_.getActionListeners();
-            for (ActionListener actionListener : l) {
-               combo_.removeActionListener(actionListener);
-            }
             combo_.removeAllItems();
             for (int i = 0; i < item_.allowed.length; i++) {
                combo_.addItem(item_.allowed[i]);
             }
             combo_.setSelectedItem(item_.value);
-
-            // end editing on selection change
-            combo_.addActionListener(e -> fireEditingStopped());
-
             return combo_;
          }
       } else {
