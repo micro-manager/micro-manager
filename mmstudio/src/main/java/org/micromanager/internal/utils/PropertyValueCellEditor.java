@@ -1,7 +1,6 @@
 package org.micromanager.internal.utils;
 
 import java.awt.Component;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
@@ -13,6 +12,8 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 
 /**
@@ -41,8 +42,37 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
 
       disableExcluded_ = disableExcluded;
 
-      // end editing on selection change
-      combo_.addActionListener(e -> fireEditingStopped());
+      // Commit only when the user picks a *different* value from the dropdown.
+      // ActionListener fires spuriously on focus loss, so we use PopupMenuListener
+      // instead: snapshot the selection when the popup opens, then compare on close.
+      combo_.addPopupMenuListener(new PopupMenuListener() {
+         private Object itemOnOpen_ = null;
+
+         @Override
+         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            itemOnOpen_ = combo_.getSelectedItem();
+         }
+
+         @Override
+         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            // popupMenuCanceled fires first on Escape (on most L&Fs), so by the
+            // time we arrive here itemOnOpen_ has been nulled and we do nothing.
+            if (itemOnOpen_ != null && !itemOnOpen_.equals(combo_.getSelectedItem())) {
+               itemOnOpen_ = null;
+               fireEditingStopped();
+            } else {
+               itemOnOpen_ = null;
+               fireEditingCanceled();
+            }
+         }
+
+         @Override
+         public void popupMenuCanceled(PopupMenuEvent e) {
+            itemOnOpen_ = null;
+            fireEditingCanceled();
+         }
+      });
+
       slider_.addEditActionListener(e -> fireEditingStopped());
 
       slider_.addSliderMouseListener(new MouseAdapter() {
@@ -98,19 +128,11 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
                return text_;
             }
          } else {
-            ActionListener[] l = combo_.getActionListeners();
-            for (ActionListener actionListener : l) {
-               combo_.removeActionListener(actionListener);
-            }
             combo_.removeAllItems();
             for (int i = 0; i < item_.allowed.length; i++) {
                combo_.addItem(item_.allowed[i]);
             }
             combo_.setSelectedItem(item_.value);
-
-            // end editing on selection change
-            combo_.addActionListener(e -> fireEditingStopped());
-
             return combo_;
          }
       } else {

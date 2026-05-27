@@ -11,6 +11,8 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 import org.micromanager.internal.ConfigGroupPad.StateTableData;
 
@@ -31,6 +33,38 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
 
    public StatePresetCellEditor() {
       super();
+
+      // Commit only when the user picks a *different* value from the dropdown.
+      // ActionListener fires spuriously on focus loss, so we use PopupMenuListener
+      // instead: snapshot the selection when the popup opens, then compare on close.
+      combo_.addPopupMenuListener(new PopupMenuListener() {
+         private Object itemOnOpen_ = null;
+
+         @Override
+         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            itemOnOpen_ = combo_.getSelectedItem();
+         }
+
+         @Override
+         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            // popupMenuCanceled fires first on Escape (on most L&Fs), so by the
+            // time we arrive here itemOnOpen_ has been nulled and we do nothing.
+            if (itemOnOpen_ != null && !itemOnOpen_.equals(combo_.getSelectedItem())) {
+               itemOnOpen_ = null;
+               fireEditingStopped();
+            } else {
+               itemOnOpen_ = null;
+               fireEditingCanceled();
+            }
+         }
+
+         @Override
+         public void popupMenuCanceled(PopupMenuEvent e) {
+            itemOnOpen_ = null;
+            fireEditingCanceled();
+         }
+      });
+
       slider_.addEditActionListener(new ActionListener() {
 
          @Override
@@ -117,34 +151,11 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
    }
 
    private void setComboBox(String[] allowed) {
-      // remove old listeners
-      ActionListener[] l = combo_.getActionListeners();
-      for (int i = 0; i < l.length; i++) {
-         combo_.removeActionListener(l[i]);
-      }
       combo_.removeAllItems();
-      for (int i = 0; i < allowed.length; i++) {
-         combo_.addItem(allowed[i]);
-      }
-
-      // remove old items
-      combo_.removeAllItems();
-
-      // add new items
       for (int i = 0; i < allowed.length; i++) {
          combo_.addItem(allowed[i]);
       }
       combo_.setSelectedItem(item_.config);
-
-      // end editing on selection change
-      combo_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            fireEditingStopped();
-         }
-      });
-
    }
 
    // This method is called when editing is completed.
