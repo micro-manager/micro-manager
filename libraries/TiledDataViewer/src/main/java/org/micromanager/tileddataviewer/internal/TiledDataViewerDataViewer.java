@@ -3,6 +3,7 @@ package org.micromanager.tileddataviewer.internal;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -37,8 +38,10 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DefaultDisplayDidShowImageEvent;
+import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
@@ -77,6 +80,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    private final Studio studio_;
    private final TiledDataViewer ndViewer2_;
    private final TiledDataViewerDataProvider dataProvider_;
+   private final boolean rgb_;
    private final AxesBridge axesBridge_;
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
 
@@ -188,6 +192,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       studio_ = studio;
       dataProvider_ = dataProvider;
       axesBridge_ = dataProvider.getAxesBridge();
+      rgb_ = rgb;
 
       // Create NDViewer (the canvas/scrollbar viewer)
       ndViewer2_ = new TiledDataViewer(dataSource, acqInterface,
@@ -206,6 +211,36 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // After every render, post histogram stats derived from ImageMaker's own
       // pixel histogram so the Inspector indicators always match the display.
       ndViewer2_.setPostRenderCallback(this::postImageMakerStats);
+
+      // Install a persistent mouse adapter to post pixel-info and mouse events
+      // so the Inspector's white-balance picked-point feature works.
+      // Using setPersistentMouseAdapter ensures it survives setCustomCanvasMouseListener calls.
+      ndViewer2_.setPersistentMouseAdapter(new java.awt.event.MouseAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            postDisplayMouseEvent(e);
+         }
+
+         @Override
+         public void mouseReleased(MouseEvent e) {
+            postDisplayMouseEvent(e);
+         }
+
+         @Override
+         public void mouseExited(MouseEvent e) {
+            postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
+         }
+
+         @Override
+         public void mouseMoved(MouseEvent e) {
+            postCanvasPixelInfo(e.getX(), e.getY());
+         }
+
+         @Override
+         public void mouseDragged(MouseEvent e) {
+            postCanvasPixelInfo(e.getX(), e.getY());
+         }
+      });
 
       // Register with Studio so Inspector discovers us
       studio_.displays().addViewer(this);
@@ -1358,6 +1393,69 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       }
       closed_ = true;
       shutdownMM2Resources();
+   }
+
+   /**
+    * Reads the rendered display pixel at the given canvas coordinates and posts
+    * a DataViewerMousePixelInfoChangedEvent carrying the R, G, B component values.
+    *
+    * <p>Uses the display-rendered RGB values (0–255 per component) rather than
+    * raw storage values.  This is sufficient for white-balance ratio computation,
+    * which only needs the relative R:G:B proportions, not absolute pixel values.</p>
+    */
+   private void postCanvasPixelInfo(int canvasX, int canvasY) {
+      if (!rgb_) {
+         return;
+      }
+      try {
+         int[] rgb = ndViewer2_.getRenderedPixelRGB(canvasX, canvasY);
+         if (rgb == null) {
+            postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
+            return;
+         }
+         // Convert canvas coordinates to full-res image coordinates so the XY
+         // readout in the Inspector reflects actual image pixel positions.
+         double mag = ndViewer2_.getMagnification();
+         if (mag <= 0) {
+            postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
+            return;
+         }
+         Point2D.Double offset = ndViewer2_.getViewOffset();
+         int imgX = (int) Math.floor(offset.x + canvasX / mag);
+         int imgY = (int) Math.floor(offset.y + canvasY / mag);
+         Coords coords = Coordinates.builder().channel(0).build();
+         long[] componentValues = new long[]{rgb[0], rgb[1], rgb[2]};
+         postEvent(DataViewerMousePixelInfoChangedEvent.create(
+               imgX, imgY,
+               new String[]{Coords.CHANNEL},
+               java.util.Collections.singletonList(coords),
+               java.util.Collections.singletonList(componentValues)));
+      } catch (Exception e) {
+         postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
+      }
+   }
+
+   /**
+    * Posts a DisplayMouseEvent so the Inspector's picked-point white-balance
+    * feature can detect clicks on the canvas.
+    */
+   private void postDisplayMouseEvent(MouseEvent e) {
+      if (!rgb_) {
+         return;
+      }
+      try {
+         double mag = ndViewer2_.getMagnification();
+         if (mag <= 0) {
+            return;
+         }
+         Point2D.Double offset = ndViewer2_.getViewOffset();
+         int imgX = (int) Math.floor(offset.x + e.getX() / mag);
+         int imgY = (int) Math.floor(offset.y + e.getY() / mag);
+         Rectangle loc = new Rectangle(imgX, imgY, 1, 1);
+         postEvent(new DisplayMouseEvent(e, loc, 0));
+      } catch (Exception ex) {
+         // Non-critical
+      }
    }
 
    private void shutdownMM2Resources() {

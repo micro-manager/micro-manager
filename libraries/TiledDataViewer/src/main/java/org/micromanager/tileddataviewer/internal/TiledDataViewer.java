@@ -512,6 +512,19 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       }
    }
 
+   public void setPersistentMouseAdapter(java.awt.event.MouseAdapter adapter) {
+      guiManager_.setPersistentMouseAdapter(adapter);
+   }
+
+   /**
+    * Returns the RGB values of the rendered display pixel at the given canvas coordinates.
+    * Returns null if no frame has been rendered or coordinates are out of bounds.
+    * Values are in the range 0–255 (display-mapped, post contrast/gamma).
+    */
+   public int[] getRenderedPixelRGB(int canvasX, int canvasY) {
+      return guiManager_.getRenderedPixelRGB(canvasX, canvasY);
+   }
+
    @Override
    public void setCustomCanvasMouseListener(TiledDataViewerCanvasMouseListenerInterface m) {
       guiManager_.setCustomCanvasMouseListener(m);
