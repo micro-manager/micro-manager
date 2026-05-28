@@ -23,6 +23,7 @@ package org.micromanager.multichannelshading;
 
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -62,6 +63,11 @@ public class ImageCollection {
          ImagePlus ip = opener.openImage(file);
          if (ip == null) {
             throw new ShadingException("Failed to open file: " + file);
+         }
+         if (ip.getType() != ImagePlus.GRAY8 && ip.getType() != ImagePlus.GRAY16
+               && ip.getType() != ImagePlus.GRAY32 && ip.getType() != ImagePlus.COLOR_RGB) {
+            throw new ShadingException(
+                  "Background images must be 8-bit, 16-bit, 32-bit grayscale, or RGB");
          }
          ImagePlusInfo bg = new ImagePlusInfo(ip);
          background_.put(baseImage_, bg);
@@ -116,65 +122,71 @@ public class ImageCollection {
          throw new ShadingException("Failed to open flatfield file: " + file);
       }
       if (ip.getType() != ImagePlus.GRAY8 && ip.getType() != ImagePlus.GRAY16
-            && ip.getType() != ImagePlus.GRAY32) {
+            && ip.getType() != ImagePlus.GRAY32 && ip.getType() != ImagePlus.COLOR_RGB) {
          throw new ShadingException(
-               "This plugin only works with gray scale flatfield images of 1 or 2 byte size");
+               "Flatfield images must be 8-bit, 16-bit, 32-bit grayscale, or RGB");
       }
       ImagePlusInfo bg = getBackground();
       ImagePlusInfo flatField;
       try {
-         ImageProcessor dp;
          if (bg != null) {
             if (bg.getWidth() != ip.getWidth() || bg.getHeight() != ip.getHeight()) {
                gui_.getAlertManager().postAlert("Flatfield Error", this.getClass(),
                      preset + " flatfield image size differs from background image size.");
                throw new ShadingException("Faltfield image and background image differ in size");
             }
-            dp = ImageUtils.subtractImageProcessors(
-                  ip.getProcessor(), bg.getProcessor());
-         } else {
-            dp = ip.getProcessor();
          }
-         long total = 0;
-         int width = dp.getWidth();
-         int height = dp.getHeight();
+
+         int width = ip.getWidth();
+         int height = ip.getHeight();
          int nrPixels = width * height;
-         if (ip.getType() == ImagePlus.GRAY8 || ip.getType() == ImagePlus.GRAY16) {
-            for (int i = 0; i < nrPixels; i++) {
-               total += dp.get(i);
-            }
-         } else {
-            for (int i = 0; i < nrPixels; i++) {
-               total += dp.getf(i);
-            }
-         }
-         float mean = total / nrPixels;
-         float[] fPixels = new float[nrPixels];
-         if (dp instanceof FloatProcessor) {
-            for (int i = 0; i < nrPixels; i++) {
-               fPixels[i] = mean / dp.getf(i);
-            }
-         } else {
-            for (int i = 0; i < nrPixels; i++) {
 
-               int pValue = dp.get(i);
-               if (dp instanceof ShortProcessor) {
-                  pValue &= pValue & 0x0000ffff;
-               } else if (dp instanceof ByteProcessor) {
-                  pValue &= pValue & 0x000000ff;
+         if (ip.getType() == ImagePlus.COLOR_RGB) {
+            flatField = new ImagePlusInfo(ip.getProcessor());
+            flatField.setRgbFlatFieldProcessors(
+                  normalizeRgbFlatField(ip.getProcessor(), bg));
+         } else {
+            ImageProcessor dp;
+            if (bg != null) {
+               dp = ImageUtils.subtractImageProcessors(
+                     ip.getProcessor(), bg.getProcessor());
+            } else {
+               dp = ip.getProcessor();
+            }
+            long total = 0;
+            if (ip.getType() == ImagePlus.GRAY8 || ip.getType() == ImagePlus.GRAY16) {
+               for (int i = 0; i < nrPixels; i++) {
+                  total += dp.get(i);
                }
-               fPixels[i] = mean / (float) pValue;
+            } else {
+               for (int i = 0; i < nrPixels; i++) {
+                  total += dp.getf(i);
+               }
             }
+            float mean = (float) total / nrPixels;
+            float[] fPixels = new float[nrPixels];
+            if (dp instanceof FloatProcessor) {
+               for (int i = 0; i < nrPixels; i++) {
+                  fPixels[i] = mean / dp.getf(i);
+               }
+            } else {
+               for (int i = 0; i < nrPixels; i++) {
+                  int pValue = dp.get(i);
+                  if (dp instanceof ShortProcessor) {
+                     pValue &= 0x0000ffff;
+                  } else if (dp instanceof ByteProcessor) {
+                     pValue &= 0x000000ff;
+                  }
+                  fPixels[i] = mean / (float) pValue;
+               }
+            }
+            FloatProcessor fp = new FloatProcessor(width, height, fPixels);
+            flatField = new ImagePlusInfo(fp);
          }
 
-         FloatProcessor fp = new FloatProcessor(width, height, fPixels);
-
-         flatField = new ImagePlusInfo(fp);
-
-         HashMap<String, ImagePlusInfo> newFlatField =
-               new HashMap<String, ImagePlusInfo>();
+         HashMap<String, ImagePlusInfo> newFlatField = new HashMap<String, ImagePlusInfo>();
          newFlatField.put(baseImage_, flatField);
-         newFlatField.put(makeKey(1, fp.getRoi()), flatField);
+         newFlatField.put(makeKey(1, new Rectangle(0, 0, width, height)), flatField);
          flatFields_.put(preset, newFlatField);
       } catch (ShadingException ex) {
          gui_.logs().logError("Shading plugin, addFlatField in ImageCollection: "
@@ -220,6 +232,86 @@ public class ImageCollection {
       return derivedIp;
    }
 
+   /**
+    * Computes per-channel normalization factors for an RGB flatfield image.
+    * If a background is present (RGB or grayscale), it is subtracted per channel first.
+    * Returns three FloatProcessors: index 0=R, 1=G, 2=B, each containing mean/pixel factors.
+    */
+   private FloatProcessor[] normalizeRgbFlatField(ImageProcessor flatProc,
+                                                   ImagePlusInfo bg) throws ShadingException {
+      int width = flatProc.getWidth();
+      int height = flatProc.getHeight();
+      int nrPixels = width * height;
+
+      // ColorProcessor pixels are int[] in ARGB order: bits 23-16=R, 15-8=G, 7-0=B
+      int[] ffPixels = (int[]) flatProc.getPixels();
+      int[] bgArgb = null;
+      ImageProcessor bgProc = null;
+      if (bg != null) {
+         bgProc = bg.getProcessor();
+         if (bgProc instanceof ColorProcessor) {
+            bgArgb = (int[]) bgProc.getPixels();
+         }
+      }
+
+      // First pass: compute per-channel totals (background-subtracted)
+      long[] totals = new long[3];
+      for (int i = 0; i < nrPixels; i++) {
+         int pixel = ffPixels[i];
+         int r = (pixel >> 16) & 0xff;
+         int g = (pixel >> 8) & 0xff;
+         int b = pixel & 0xff;
+         if (bgArgb != null) {
+            int bgPixel = bgArgb[i];
+            r = Math.max(0, r - ((bgPixel >> 16) & 0xff));
+            g = Math.max(0, g - ((bgPixel >> 8) & 0xff));
+            b = Math.max(0, b - (bgPixel & 0xff));
+         } else if (bgProc != null) {
+            // Grayscale background: same offset subtracted from all channels
+            int bgVal = bgProc.get(i) & 0xff;
+            r = Math.max(0, r - bgVal);
+            g = Math.max(0, g - bgVal);
+            b = Math.max(0, b - bgVal);
+         }
+         totals[0] += r;
+         totals[1] += g;
+         totals[2] += b;
+      }
+
+      // Second pass: compute per-channel normalization factors (mean / pixel)
+      float meanR = (float) totals[0] / nrPixels;
+      float meanG = (float) totals[1] / nrPixels;
+      float meanB = (float) totals[2] / nrPixels;
+      float[] factorsR = new float[nrPixels];
+      float[] factorsG = new float[nrPixels];
+      float[] factorsB = new float[nrPixels];
+      for (int i = 0; i < nrPixels; i++) {
+         int pixel = ffPixels[i];
+         int r = (pixel >> 16) & 0xff;
+         int g = (pixel >> 8) & 0xff;
+         int b = pixel & 0xff;
+         if (bgArgb != null) {
+            int bgPixel = bgArgb[i];
+            r = Math.max(0, r - ((bgPixel >> 16) & 0xff));
+            g = Math.max(0, g - ((bgPixel >> 8) & 0xff));
+            b = Math.max(0, b - (bgPixel & 0xff));
+         } else if (bgProc != null) {
+            int bgVal = bgProc.get(i) & 0xff;
+            r = Math.max(0, r - bgVal);
+            g = Math.max(0, g - bgVal);
+            b = Math.max(0, b - bgVal);
+         }
+         factorsR[i] = (r > 0 && meanR > 0) ? meanR / r : 1.0f;
+         factorsG[i] = (g > 0 && meanG > 0) ? meanG / g : 1.0f;
+         factorsB[i] = (b > 0 && meanB > 0) ? meanB / b : 1.0f;
+      }
+      return new FloatProcessor[] {
+            new FloatProcessor(width, height, factorsR),
+            new FloatProcessor(width, height, factorsG),
+            new FloatProcessor(width, height, factorsB)
+      };
+   }
+
    private String makeKey(int binning, Rectangle roi) {
       if (binning == 1 && (roi == null || roi.width == 0)) {
          return baseImage_;
@@ -250,25 +342,40 @@ public class ImageCollection {
          throw new ShadingException("This is not an unbinned image.  "
                + "Can not derive binned images from this one");
       }
-      ImageProcessor resultProcessor;
-      if (binning != 1) {
-         resultProcessor = ipi.getProcessor().bin(binning);
-      } else {
-         resultProcessor = ipi.getProcessor().duplicate();
-      }
-      // HACK/Fix: The Andor Zyla often returns an ROI with roi.x ==-1 pr roi.y == -1
+      // HACK/Fix: The Andor Zyla often returns an ROI with roi.x ==-1 or roi.y == -1
       // That creates problems because the image after setRoi will be one pixel
-      // to small (i.e., the image should always have the correct height and width
-      // This can be removed once ROIs can be trusted to have all number >= 0
+      // too small.  This can be removed once ROIs can be trusted to have all numbers >= 0.
       if (roi.x < 0) {
          roi.x = 0;
       }
       if (roi.y < 0) {
          roi.y = 0;
       }
+      ImageProcessor resultProcessor;
+      if (binning != 1) {
+         resultProcessor = ipi.getProcessor().bin(binning);
+      } else {
+         resultProcessor = ipi.getProcessor().duplicate();
+      }
       resultProcessor.setRoi(roi);
       ImagePlusInfo newIp = new ImagePlusInfo(new ImagePlus("", resultProcessor.crop()),
             binning, roi);
+
+      if (ipi.isRgbFlatField()) {
+         FloatProcessor[] srcProcessors = ipi.getRgbFlatFieldProcessors();
+         FloatProcessor[] derivedProcessors = new FloatProcessor[3];
+         for (int c = 0; c < 3; c++) {
+            ImageProcessor p;
+            if (binning != 1) {
+               p = srcProcessors[c].bin(binning);
+            } else {
+               p = srcProcessors[c].duplicate();
+            }
+            p.setRoi(roi);
+            derivedProcessors[c] = (FloatProcessor) p.crop();
+         }
+         newIp.setRgbFlatFieldProcessors(derivedProcessors);
+      }
 
       return newIp;
    }

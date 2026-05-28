@@ -33,6 +33,7 @@ import clearcl.backend.ClearCLBackends;
 import clearcl.enums.BuildStatus;
 import clearcl.exceptions.OpenCLException;
 import coremem.enums.NativeTypeEnum;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Rectangle;
 import java.io.IOException;
@@ -248,10 +249,11 @@ public class ShadingProcessor implements Processor {
       final int width = image.getWidth();
       final int height = image.getHeight();
 
-      // For now, this plugin only works with 8 or 16 bit grayscale images
-      if (image.getNumComponents() > 1 || image.getBytesPerPixel() > 2) {
+      boolean isRgb = image.getNumComponents() == 3 && image.getBytesPerPixel() == 4;
+      if (!isRgb && (image.getNumComponents() > 1 || image.getBytesPerPixel() > 2)) {
          if (!alertSet_.contains(Not8or16BitClass.class)) {
-            String msg = "Cannot flatfield correct images other than 8 or 16 bit grayscale";
+            String msg = "Cannot flatfield correct this image type "
+                  + "(unsupported bit depth or component count)";
             studio_.alerts().postAlert(MultiChannelShading.MENUNAME, Not8or16BitClass.class, msg);
             alertSet_.add(Not8or16BitClass.class);
          }
@@ -296,7 +298,7 @@ public class ShadingProcessor implements Processor {
       ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
             image, binning, rect, imageCollection);
 
-      if (useOpenCL_) {
+      if (useOpenCL_ && !isRgb) {
          try {
             ClearCLBuffer clImg;
             ClearCLBuffer clBackground;
@@ -359,6 +361,11 @@ public class ShadingProcessor implements Processor {
             }
             useOpenCL_ = false;
          }
+      }
+
+      if (isRgb) {
+         processRgbImage(image, background, flatFieldImage, context, width, height, metadata);
+         return;
       }
 
       PropertyMap userData = metadata.getUserData();
@@ -448,6 +455,115 @@ public class ShadingProcessor implements Processor {
       }
    }
 
+
+   /**
+    * Processes an RGB image (bytesPerPixel=4, numComponents=3).
+    * In-memory layout per pixel: [B, G, R, 0] (BGRA, index 0=B, 1=G, 2=R, 3=padding).
+    * Background and flatfield images are expected to be RGB as well.
+    */
+   private void processRgbImage(Image image, ImagePlusInfo background,
+                                 ImagePlusInfo flatFieldImage, ProcessorContext context,
+                                 int width, int height, Metadata metadata) {
+      int nrPixels = width * height;
+      byte[] inPixels = (byte[]) image.getRawPixels();
+      byte[] outPixels = new byte[inPixels.length];
+
+      PropertyMap userData = metadata.getUserData();
+
+      // Extract background pixels. ColorProcessor int[] = ARGB: bits 23-16=R, 15-8=G, 7-0=B.
+      // Grayscale backgrounds are also supported: the same offset is subtracted from all channels.
+      int[] bgArgb = null;
+      ImageProcessor bgProc = null;
+      if (background != null) {
+         bgProc = background.getProcessor();
+         if (bgProc instanceof ij.process.ColorProcessor) {
+            bgArgb = (int[]) bgProc.getPixels();
+         }
+         if (userData != null) {
+            userData = userData.copyBuilder().putBoolean("Background-corrected", true).build();
+         }
+      }
+
+      if (flatFieldImage != null && !flatFieldImage.isRgbFlatField()) {
+         if (!alertSet_.contains(NotFlatFieldedClass.class)) {
+            studio_.alerts().postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class,
+                  "Flatfield image is not RGB — cannot apply to RGB image.");
+            alertSet_.add(NotFlatFieldedClass.class);
+         }
+      }
+
+      if (flatFieldImage != null && flatFieldImage.isRgbFlatField()) {
+         if (userData != null) {
+            userData = userData.copyBuilder().putBoolean("Flatfield-corrected", true).build();
+            metadata = metadata.copyBuilderWithNewUUID().userData(userData).build();
+         }
+         FloatProcessor[] ffProcs = flatFieldImage.getRgbFlatFieldProcessors();
+         float[] ffR = (float[]) ffProcs[0].getPixels();
+         float[] ffG = (float[]) ffProcs[1].getPixels();
+         float[] ffB = (float[]) ffProcs[2].getPixels();
+         for (int i = 0; i < nrPixels; i++) {
+            int byteOffset = i * 4;
+            int b = inPixels[byteOffset] & 0xff;
+            int g = inPixels[byteOffset + 1] & 0xff;
+            int r = inPixels[byteOffset + 2] & 0xff;
+            if (bgArgb != null) {
+               int bg = bgArgb[i];
+               b = Math.max(0, b - (bg & 0xff));
+               g = Math.max(0, g - ((bg >> 8) & 0xff));
+               r = Math.max(0, r - ((bg >> 16) & 0xff));
+            } else if (bgProc != null) {
+               int bgVal = bgProc.get(i) & 0xff;
+               b = Math.max(0, b - bgVal);
+               g = Math.max(0, g - bgVal);
+               r = Math.max(0, r - bgVal);
+            }
+            outPixels[byteOffset]     = (byte) Math.min(255, (int) (b * ffB[i] + 0.5f));
+            outPixels[byteOffset + 1] = (byte) Math.min(255, (int) (g * ffG[i] + 0.5f));
+            outPixels[byteOffset + 2] = (byte) Math.min(255, (int) (r * ffR[i] + 0.5f));
+            // outPixels[byteOffset + 3] remains 0 (padding)
+         }
+      } else {
+         if (flatFieldImage == null) {
+            if (!alertSet_.contains(NotFlatFieldedClass.class)) {
+               studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
+                     NotFlatFieldedClass.class, "No flatfield found...");
+               alertSet_.add(NotFlatFieldedClass.class);
+            }
+         }
+         if (background == null) {
+            if (!alertSet_.contains(NoBackgroundForThisBinModeClass.class)) {
+               studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
+                     NoBackgroundForThisBinModeClass.class, "No background available...");
+               alertSet_.add(NoBackgroundForThisBinModeClass.class);
+            }
+            context.outputImage(image);
+            return;
+         }
+         for (int i = 0; i < nrPixels; i++) {
+            int byteOffset = i * 4;
+            int b = inPixels[byteOffset] & 0xff;
+            int g = inPixels[byteOffset + 1] & 0xff;
+            int r = inPixels[byteOffset + 2] & 0xff;
+            if (bgArgb != null) {
+               int bg = bgArgb[i];
+               outPixels[byteOffset]     = (byte) Math.max(0, b - (bg & 0xff));
+               outPixels[byteOffset + 1] = (byte) Math.max(0, g - ((bg >> 8) & 0xff));
+               outPixels[byteOffset + 2] = (byte) Math.max(0, r - ((bg >> 16) & 0xff));
+            } else {
+               int bgVal = bgProc.get(i) & 0xff;
+               outPixels[byteOffset]     = (byte) Math.max(0, b - bgVal);
+               outPixels[byteOffset + 1] = (byte) Math.max(0, g - bgVal);
+               outPixels[byteOffset + 2] = (byte) Math.max(0, r - bgVal);
+            }
+         }
+         if (userData != null) {
+            metadata = metadata.copyBuilderWithNewUUID().userData(userData).build();
+         }
+      }
+
+      context.outputImage(studio_.data().createImage(outPixels, width, height,
+            4, 3, image.getCoords(), metadata));
+   }
 
    /**
     * Given the metadata of the image currently being processed, find a match
