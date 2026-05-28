@@ -212,14 +212,19 @@ public class ImageCollection {
    }
 
    public ImagePlusInfo getFlatField(String preset) {
-      return flatFields_.get(preset).get(baseImage_);
+      HashMap<String, ImagePlusInfo> map = flatFields_.get(preset);
+      return map != null ? map.get(baseImage_) : null;
    }
 
    public ImagePlusInfo getFlatField(String preset, int binning, Rectangle roi)
          throws ShadingException {
+      HashMap<String, ImagePlusInfo> map = flatFields_.get(preset);
+      if (map == null) {
+         return null;
+      }
       String key = makeKey(binning, roi);
-      if (flatFields_.get(preset).containsKey(key)) {
-         return flatFields_.get(preset).get(key);
+      if (map.containsKey(key)) {
+         return map.get(key);
       }
       // key not found, so derive the image from the original
       ImagePlusInfo ff = getFlatField(preset);
@@ -228,8 +233,7 @@ public class ImageCollection {
       }
       ImagePlusInfo derivedIp = makeDerivedImage(ff, binning, roi);
       // add derived image into our cache
-      HashMap<String, ImagePlusInfo> tmp = flatFields_.get(preset);
-      tmp.put(makeKey(binning, roi), derivedIp);
+      map.put(makeKey(binning, roi), derivedIp);
       return derivedIp;
    }
 
