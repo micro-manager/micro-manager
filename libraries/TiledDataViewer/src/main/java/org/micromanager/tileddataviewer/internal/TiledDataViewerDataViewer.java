@@ -54,7 +54,6 @@ import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
 import org.micromanager.display.overlay.OverlaySupport;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
-import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
 import org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
@@ -81,6 +80,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    private final Studio studio_;
    private final TiledDataViewer ndViewer2_;
    private final TiledDataViewerDataProvider dataProvider_;
+   private final boolean rgb_;
    private final AxesBridge axesBridge_;
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
 
@@ -192,6 +192,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       studio_ = studio;
       dataProvider_ = dataProvider;
       axesBridge_ = dataProvider.getAxesBridge();
+      rgb_ = rgb;
 
       // Create NDViewer (the canvas/scrollbar viewer)
       ndViewer2_ = new TiledDataViewer(dataSource, acqInterface,
@@ -1403,17 +1404,29 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
     * which only needs the relative R:G:B proportions, not absolute pixel values.</p>
     */
    private void postCanvasPixelInfo(int canvasX, int canvasY) {
+      if (!rgb_) {
+         return;
+      }
       try {
          int[] rgb = ndViewer2_.getRenderedPixelRGB(canvasX, canvasY);
          if (rgb == null) {
             postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
             return;
          }
-         // Build a single-coords event with channel=0; the Inspector routes to channel 0.
+         // Convert canvas coordinates to full-res image coordinates so the XY
+         // readout in the Inspector reflects actual image pixel positions.
+         double mag = ndViewer2_.getMagnification();
+         if (mag <= 0) {
+            postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
+            return;
+         }
+         Point2D.Double offset = ndViewer2_.getViewOffset();
+         int imgX = (int) Math.floor(offset.x + canvasX / mag);
+         int imgY = (int) Math.floor(offset.y + canvasY / mag);
          Coords coords = Coordinates.builder().channel(0).build();
          long[] componentValues = new long[]{rgb[0], rgb[1], rgb[2]};
          postEvent(DataViewerMousePixelInfoChangedEvent.create(
-               canvasX, canvasY,
+               imgX, imgY,
                new String[]{Coords.CHANNEL},
                java.util.Collections.singletonList(coords),
                java.util.Collections.singletonList(componentValues)));
@@ -1427,6 +1440,9 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
     * feature can detect clicks on the canvas.
     */
    private void postDisplayMouseEvent(MouseEvent e) {
+      if (!rgb_) {
+         return;
+      }
       try {
          double mag = ndViewer2_.getMagnification();
          if (mag <= 0) {
