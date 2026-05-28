@@ -167,7 +167,8 @@ public class ImageCollection {
             float[] fPixels = new float[nrPixels];
             if (dp instanceof FloatProcessor) {
                for (int i = 0; i < nrPixels; i++) {
-                  fPixels[i] = mean / dp.getf(i);
+                  float pValue = dp.getf(i);
+                  fPixels[i] = (pValue > 0 && mean > 0) ? mean / pValue : 1.0f;
                }
             } else {
                for (int i = 0; i < nrPixels; i++) {
@@ -177,7 +178,7 @@ public class ImageCollection {
                   } else if (dp instanceof ByteProcessor) {
                      pValue &= 0x000000ff;
                   }
-                  fPixels[i] = mean / (float) pValue;
+                  fPixels[i] = (pValue > 0 && mean > 0) ? mean / (float) pValue : 1.0f;
                }
             }
             FloatProcessor fp = new FloatProcessor(width, height, fPixels);
@@ -268,7 +269,7 @@ public class ImageCollection {
             b = Math.max(0, b - (bgPixel & 0xff));
          } else if (bgProc != null) {
             // Grayscale background: same offset subtracted from all channels
-            int bgVal = bgProc.get(i) & 0xff;
+            int bgVal = Math.min(255, bgProc.get(i));
             r = Math.max(0, r - bgVal);
             g = Math.max(0, g - bgVal);
             b = Math.max(0, b - bgVal);
@@ -296,7 +297,7 @@ public class ImageCollection {
             g = Math.max(0, g - ((bgPixel >> 8) & 0xff));
             b = Math.max(0, b - (bgPixel & 0xff));
          } else if (bgProc != null) {
-            int bgVal = bgProc.get(i) & 0xff;
+            int bgVal = Math.min(255, bgProc.get(i));
             r = Math.max(0, r - bgVal);
             g = Math.max(0, g - bgVal);
             b = Math.max(0, b - bgVal);

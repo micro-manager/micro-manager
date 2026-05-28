@@ -459,7 +459,8 @@ public class ShadingProcessor implements Processor {
    /**
     * Processes an RGB image (bytesPerPixel=4, numComponents=3).
     * In-memory layout per pixel: [B, G, R, 0] (BGRA, index 0=B, 1=G, 2=R, 3=padding).
-    * Background and flatfield images are expected to be RGB as well.
+    * The flatfield image must be RGB. The background may be RGB or grayscale;
+    * a grayscale background subtracts the same offset from all three channels.
     */
    private void processRgbImage(Image image, ImagePlusInfo background,
                                  ImagePlusInfo flatFieldImage, ProcessorContext context,
@@ -512,7 +513,7 @@ public class ShadingProcessor implements Processor {
                g = Math.max(0, g - ((bg >> 8) & 0xff));
                r = Math.max(0, r - ((bg >> 16) & 0xff));
             } else if (bgProc != null) {
-               int bgVal = bgProc.get(i) & 0xff;
+               int bgVal = Math.min(255, bgProc.get(i));
                b = Math.max(0, b - bgVal);
                g = Math.max(0, g - bgVal);
                r = Math.max(0, r - bgVal);
@@ -520,7 +521,7 @@ public class ShadingProcessor implements Processor {
             outPixels[byteOffset]     = (byte) Math.min(255, (int) (b * ffB[i] + 0.5f));
             outPixels[byteOffset + 1] = (byte) Math.min(255, (int) (g * ffG[i] + 0.5f));
             outPixels[byteOffset + 2] = (byte) Math.min(255, (int) (r * ffR[i] + 0.5f));
-            // outPixels[byteOffset + 3] remains 0 (padding)
+            outPixels[byteOffset + 3] = inPixels[byteOffset + 3];
          }
       } else {
          if (flatFieldImage == null) {
@@ -550,11 +551,12 @@ public class ShadingProcessor implements Processor {
                outPixels[byteOffset + 1] = (byte) Math.max(0, g - ((bg >> 8) & 0xff));
                outPixels[byteOffset + 2] = (byte) Math.max(0, r - ((bg >> 16) & 0xff));
             } else {
-               int bgVal = bgProc.get(i) & 0xff;
+               int bgVal = Math.min(255, bgProc.get(i));
                outPixels[byteOffset]     = (byte) Math.max(0, b - bgVal);
                outPixels[byteOffset + 1] = (byte) Math.max(0, g - bgVal);
                outPixels[byteOffset + 2] = (byte) Math.max(0, r - bgVal);
             }
+            outPixels[byteOffset + 3] = inPixels[byteOffset + 3];
          }
          if (userData != null) {
             metadata = metadata.copyBuilderWithNewUUID().userData(userData).build();
