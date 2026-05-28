@@ -298,7 +298,10 @@ public class ShadingProcessor implements Processor {
       ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
             image, binning, rect, imageCollection);
 
-      if (useOpenCL_ && !isRgb) {
+      boolean bgIsRgb = background != null
+            && background.getProcessor() instanceof ij.process.ColorProcessor;
+      boolean ffIsRgb = flatFieldImage != null && flatFieldImage.isRgbFlatField();
+      if (useOpenCL_ && !isRgb && !bgIsRgb && !ffIsRgb) {
          try {
             ClearCLBuffer clImg;
             ClearCLBuffer clBackground;
@@ -508,8 +511,8 @@ public class ShadingProcessor implements Processor {
       if (flatFieldImage != null && flatFieldImage.isRgbFlatField()) {
          if (userData != null) {
             userData = userData.copyBuilder().putBoolean("Flatfield-corrected", true).build();
-            metadata = metadata.copyBuilderWithNewUUID().userData(userData).build();
          }
+         metadata = metadata.copyBuilderWithNewUUID().userData(userData).build();
          FloatProcessor[] ffProcs = flatFieldImage.getRgbFlatFieldProcessors();
          float[] ffR = (float[]) ffProcs[0].getPixels();
          float[] ffG = (float[]) ffProcs[1].getPixels();

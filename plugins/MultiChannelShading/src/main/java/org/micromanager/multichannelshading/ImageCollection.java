@@ -146,6 +146,12 @@ public class ImageCollection {
             flatField.setRgbFlatFieldProcessors(
                   normalizeRgbFlatField(ip.getProcessor(), bg));
          } else {
+            if (bg != null && bg.getProcessor() instanceof ColorProcessor) {
+               gui_.getAlertManager().postAlert("Flatfield Error", this.getClass(),
+                     preset + ": cannot subtract an RGB background from a grayscale flatfield.");
+               throw new ShadingException(
+                     "Cannot subtract an RGB background from a grayscale flatfield");
+            }
             ImageProcessor dp;
             if (bg != null) {
                dp = ImageUtils.subtractImageProcessors(
@@ -252,10 +258,17 @@ public class ImageCollection {
       int[] ffPixels = (int[]) flatProc.getPixels();
       int[] bgArgb = null;
       ImageProcessor bgProc = null;
+      // Scale factor to convert grayscale background values to 8-bit range [0,255]:
+      // GRAY8 → 1.0, GRAY16 → 1/256, GRAY32 → 1/256 (assuming 16-bit-equivalent float range).
+      float bgScale = 1.0f;
       if (bg != null) {
          bgProc = bg.getProcessor();
          if (bgProc instanceof ColorProcessor) {
             bgArgb = (int[]) bgProc.getPixels();
+         } else if (bgProc instanceof ShortProcessor) {
+            bgScale = 1.0f / 256.0f;
+         } else if (bgProc instanceof FloatProcessor) {
+            bgScale = 1.0f / 256.0f;
          }
       }
 
@@ -272,8 +285,8 @@ public class ImageCollection {
             g = Math.max(0, g - ((bgPixel >> 8) & 0xff));
             b = Math.max(0, b - (bgPixel & 0xff));
          } else if (bgProc != null) {
-            // Grayscale background: same offset subtracted from all channels
-            int bgVal = Math.min(255, bgProc.get(i));
+            // Grayscale background: scale to 8-bit range then subtract from all channels
+            int bgVal = Math.min(255, (int) (bgProc.getf(i) * bgScale));
             r = Math.max(0, r - bgVal);
             g = Math.max(0, g - bgVal);
             b = Math.max(0, b - bgVal);
@@ -301,7 +314,7 @@ public class ImageCollection {
             g = Math.max(0, g - ((bgPixel >> 8) & 0xff));
             b = Math.max(0, b - (bgPixel & 0xff));
          } else if (bgProc != null) {
-            int bgVal = Math.min(255, bgProc.get(i));
+            int bgVal = Math.min(255, (int) (bgProc.getf(i) * bgScale));
             r = Math.max(0, r - bgVal);
             g = Math.max(0, g - bgVal);
             b = Math.max(0, b - bgVal);
