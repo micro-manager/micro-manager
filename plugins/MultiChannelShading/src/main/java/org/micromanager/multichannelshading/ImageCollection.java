@@ -133,7 +133,7 @@ public class ImageCollection {
             if (bg.getWidth() != ip.getWidth() || bg.getHeight() != ip.getHeight()) {
                gui_.getAlertManager().postAlert("Flatfield Error", this.getClass(),
                      preset + " flatfield image size differs from background image size.");
-               throw new ShadingException("Faltfield image and background image differ in size");
+               throw new ShadingException("Flatfield image and background image differ in size");
             }
          }
 

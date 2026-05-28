@@ -412,6 +412,16 @@ public class ShadingProcessor implements Processor {
          return;
       }
 
+      if (flatFieldImage.isRgbFlatField()) {
+         if (!alertSet_.contains(NotFlatFieldedClass.class)) {
+            studio_.alerts().postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class,
+                  "Flatfield image is RGB — cannot apply to grayscale image.");
+            alertSet_.add(NotFlatFieldedClass.class);
+         }
+         context.outputImage(image);
+         return;
+      }
+
       if (userData != null) {
          userData = userData.copyBuilder().putBoolean("Flatfield-corrected", true).build();
          metadata = metadata.copyBuilderWithNewUUID().userData(userData).build();
@@ -486,6 +496,8 @@ public class ShadingProcessor implements Processor {
       }
 
       if (flatFieldImage != null && !flatFieldImage.isRgbFlatField()) {
+         // Grayscale flatfield cannot be applied to an RGB image; alert and fall through
+         // to the background-only path below (flatFieldImage.isRgbFlatField() stays false).
          if (!alertSet_.contains(NotFlatFieldedClass.class)) {
             studio_.alerts().postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class,
                   "Flatfield image is not RGB — cannot apply to RGB image.");
