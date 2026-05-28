@@ -154,6 +154,14 @@ public class GuiManager {
       return imageMaker_.getLatestTags();
    }
 
+   public int[] getRenderedPixelRGB(int canvasX, int canvasY) {
+      ViewerCanvas vc = getCanvas();
+      if (vc == null) {
+         return null;
+      }
+      return vc.getRenderedPixelRGB(canvasX, canvasY);
+   }
+
    public HashMap<String, int[]> getHistograms() {
       return imageMaker_.getHistograms();
    }
@@ -172,6 +180,12 @@ public class GuiManager {
    public void setWindowActivatedCallback(Runnable callback) {
       if (displayWindow_ != null) {
          displayWindow_.setWindowActivatedCallback(callback);
+      }
+   }
+
+   public void setPersistentMouseAdapter(java.awt.event.MouseAdapter adapter) {
+      if (displayWindow_ != null) {
+         displayWindow_.setPersistentMouseAdapter(adapter);
       }
    }
 

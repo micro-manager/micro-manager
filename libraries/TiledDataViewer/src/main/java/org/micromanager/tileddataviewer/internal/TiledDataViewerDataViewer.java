@@ -3,6 +3,7 @@ package org.micromanager.tileddataviewer.internal;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -37,8 +38,10 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DefaultDisplayDidShowImageEvent;
+import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
@@ -51,6 +54,7 @@ import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
 import org.micromanager.display.overlay.OverlaySupport;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
+import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
 import org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
@@ -206,6 +210,36 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // After every render, post histogram stats derived from ImageMaker's own
       // pixel histogram so the Inspector indicators always match the display.
       ndViewer2_.setPostRenderCallback(this::postImageMakerStats);
+
+      // Install a persistent mouse adapter to post pixel-info and mouse events
+      // so the Inspector's white-balance picked-point feature works.
+      // Using setPersistentMouseAdapter ensures it survives setCustomCanvasMouseListener calls.
+      ndViewer2_.setPersistentMouseAdapter(new java.awt.event.MouseAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            postDisplayMouseEvent(e);
+         }
+
+         @Override
+         public void mouseReleased(MouseEvent e) {
+            postDisplayMouseEvent(e);
+         }
+
+         @Override
+         public void mouseExited(MouseEvent e) {
+            postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
+         }
+
+         @Override
+         public void mouseMoved(MouseEvent e) {
+            postCanvasPixelInfo(e.getX(), e.getY());
+         }
+
+         @Override
+         public void mouseDragged(MouseEvent e) {
+            postCanvasPixelInfo(e.getX(), e.getY());
+         }
+      });
 
       // Register with Studio so Inspector discovers us
       studio_.displays().addViewer(this);
@@ -1358,6 +1392,54 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       }
       closed_ = true;
       shutdownMM2Resources();
+   }
+
+   /**
+    * Reads the rendered display pixel at the given canvas coordinates and posts
+    * a DataViewerMousePixelInfoChangedEvent carrying the R, G, B component values.
+    *
+    * <p>Uses the display-rendered RGB values (0–255 per component) rather than
+    * raw storage values.  This is sufficient for white-balance ratio computation,
+    * which only needs the relative R:G:B proportions, not absolute pixel values.</p>
+    */
+   private void postCanvasPixelInfo(int canvasX, int canvasY) {
+      try {
+         int[] rgb = ndViewer2_.getRenderedPixelRGB(canvasX, canvasY);
+         if (rgb == null) {
+            postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
+            return;
+         }
+         // Build a single-coords event with channel=0; the Inspector routes to channel 0.
+         Coords coords = Coordinates.builder().channel(0).build();
+         long[] componentValues = new long[]{rgb[0], rgb[1], rgb[2]};
+         postEvent(DataViewerMousePixelInfoChangedEvent.create(
+               canvasX, canvasY,
+               new String[]{Coords.CHANNEL},
+               java.util.Collections.singletonList(coords),
+               java.util.Collections.singletonList(componentValues)));
+      } catch (Exception e) {
+         postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
+      }
+   }
+
+   /**
+    * Posts a DisplayMouseEvent so the Inspector's picked-point white-balance
+    * feature can detect clicks on the canvas.
+    */
+   private void postDisplayMouseEvent(MouseEvent e) {
+      try {
+         double mag = ndViewer2_.getMagnification();
+         if (mag <= 0) {
+            return;
+         }
+         Point2D.Double offset = ndViewer2_.getViewOffset();
+         int imgX = (int) Math.floor(offset.x + e.getX() / mag);
+         int imgY = (int) Math.floor(offset.y + e.getY() / mag);
+         Rectangle loc = new Rectangle(imgX, imgY, 1, 1);
+         postEvent(new DisplayMouseEvent(e, loc, 0));
+      } catch (Exception ex) {
+         // Non-critical
+      }
    }
 
    private void shutdownMM2Resources() {

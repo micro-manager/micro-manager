@@ -1557,20 +1557,28 @@ public class ExplorerManager {
    private void initDisplaySettings(JSONObject summaryMetadata) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+         DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
+         int displayChannelIndex = 0;
          if (settings.useChannels() && settings.channels().size() > 0) {
-            DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
-            int displayChannelIndex = 0;
             for (int i = 0; i < settings.channels().size(); i++) {
                if (settings.channels().get(i).useChannel()) {
                   String channelGroup = settings.channelGroup();
                   String channelName = settings.channels().get(i).config();
                   Color channelColor = settings.channels().get(i).color();
-                  dsBuilder.channel(displayChannelIndex,
+                  org.micromanager.display.ChannelDisplaySettings remembered =
+                        RememberedDisplaySettings.loadChannel(
+                              studio_, channelGroup, channelName, null);
+                  org.micromanager.display.ChannelDisplaySettings.Builder chBuilder =
                         studio_.displays().channelDisplaySettingsBuilder()
                               .groupName(channelGroup)
                               .name(channelName)
-                              .color(channelColor)
-                              .build());
+                              .color(channelColor);
+                  if (remembered != null) {
+                     for (int c = 0; c < remembered.getNumberOfComponents(); c++) {
+                        chBuilder.component(c, remembered.getComponentSettings(c));
+                     }
+                  }
+                  dsBuilder.channel(displayChannelIndex, chBuilder.build());
                   displayChannelIndex++;
                }
             }
@@ -1579,9 +1587,21 @@ public class ExplorerManager {
             } else if (displayChannelIndex > 1) {
                dsBuilder.colorModeComposite();
             }
-            if (displayChannelIndex > 0 && mm2Viewer_ != null) {
-               mm2Viewer_.setDisplaySettings(dsBuilder.build());
+         } else {
+            // Single-channel (including RGB) — load remembered settings for "Default"
+            String channelGroup = settings.channelGroup();
+            String channelName = "Default";
+            org.micromanager.display.ChannelDisplaySettings remembered =
+                  RememberedDisplaySettings.loadChannel(
+                        studio_, channelGroup, channelName, null);
+            if (remembered != null) {
+               dsBuilder.channel(0, remembered);
+               displayChannelIndex = 1;
             }
+            dsBuilder.colorModeGrayscale();
+         }
+         if (mm2Viewer_ != null) {
+            mm2Viewer_.setDisplaySettings(dsBuilder.build());
          }
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: failed to init display settings");
