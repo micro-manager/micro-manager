@@ -819,15 +819,25 @@ public class StitchFrame extends JDialog {
                         + aligner.getLastAlignmentStats());
                   // Apply the same coordinate shift used for t=0 so all origins are
                   // non-negative and fit within the already-sized canvas.
-                  if (alignOriginShiftX != 0 || alignOriginShiftY != 0) {
-                     final float sx = alignOriginShiftX;
-                     final float sy = alignOriginShiftY;
-                     Map<Point, Point2D.Float> shifted = new java.util.HashMap<>();
-                     for (Map.Entry<Point, Point2D.Float> e : origins.entrySet()) {
-                        shifted.put(e.getKey(),
-                              new Point2D.Float(e.getValue().x + sx, e.getValue().y + sy));
+                  final float sx = alignOriginShiftX;
+                  final float sy = alignOriginShiftY;
+                  Map<Point, Point2D.Float> shifted = new java.util.HashMap<>();
+                  boolean anyOutOfBounds = false;
+                  for (Map.Entry<Point, Point2D.Float> e : origins.entrySet()) {
+                     float ox = e.getValue().x + sx;
+                     float oy = e.getValue().y + sy;
+                     shifted.put(e.getKey(), new Point2D.Float(ox, oy));
+                     if (ox < 0 || oy < 0 || ox + rawTileW > outCanvasW
+                           || oy + rawTileH > outCanvasH) {
+                        anyOutOfBounds = true;
                      }
-                     origins = shifted;
+                  }
+                  origins = shifted;
+                  if (anyOutOfBounds) {
+                     studio_.logs().logMessage(
+                           "Stitch: t=" + (t + 1) + " alignment extends beyond canvas bounds "
+                           + outCanvasW + "x" + outCanvasH
+                           + " — edge tiles will be clipped.");
                   }
                }
             }
@@ -1160,7 +1170,10 @@ public class StitchFrame extends JDialog {
                      pixelData = pixels;
                   }
                } else {
-                  // Non-blend: read the source tile directly and apply correction.
+                  // Non-blend: read the source tile at its aligned position.
+                  // We use a single-tile composite to extract the tileW×tileH region
+                  // at (roiX, roiY) from the source grid, respecting alignment just like
+                  // the blend path. This avoids a separate unaligned code path.
                   HashMap<String, Object> tileAxes = new HashMap<>(tzAxes);
                   tileAxes.put("row", row);
                   tileAxes.put("column", col);
@@ -1192,35 +1205,63 @@ public class StitchFrame extends JDialog {
                   pixelData = rawPix;
                }
 
-               // Build tags with axes embedded under "Axes" key as NDTiffStorage expects.
-               mmcorej.org.json.JSONObject tags = new mmcorej.org.json.JSONObject();
-               tags.put("Width", imgW);
-               tags.put("Height", imgH);
-               tags.put("BytesPerPixel", isRgb ? 4 : (is16bit ? 2 : 1));
-               if (isRgb) {
-                  tags.put("NumComponents", 3);
-               }
-               mmcorej.org.json.JSONObject axesJson = new mmcorej.org.json.JSONObject();
-               axesJson.put("row", row);
-               axesJson.put("column", col);
-               axesJson.put("z", z);
-               axesJson.put("time", t);
-               if (!isRgb && chName != null) {
-                  axesJson.put("channel", chName);
-               }
-               tags.put("Axes", axesJson);
-               // Extract axes as HashMap for the separate axes parameter.
-               HashMap<String, Object> axes = new HashMap<>();
-               java.util.Iterator<String> keys = axesJson.keys();
-               while (keys.hasNext()) {
-                  String key = keys.next();
-                  axes.put(key, axesJson.get(key));
-               }
+               // Build tags and write tile to NDTiff.
+               HashMap<String, Object> axes = buildNdtiffAxes(row, col, z, t,
+                     isRgb ? null : chName);
+               mmcorej.org.json.JSONObject tags = buildNdtiffTags(
+                     imgW, imgH, isRgb, is16bit, roiX, roiY, axes);
                ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
                      isRgb, is16bit ? 16 : 8, imgH, imgW).get();
             }
          }
       }
+   }
+
+   /**
+    * Builds the axes HashMap for one NDTiff image.
+    * NDTiffStorage requires axes to be embedded in the tags under "Axes" AND passed
+    * separately as a HashMap — this helper builds the HashMap; use buildNdtiffTags
+    * to embed it in the tags object.
+    */
+   private static HashMap<String, Object> buildNdtiffAxes(
+         int row, int col, int z, int t, String chName)
+         throws mmcorej.org.json.JSONException {
+      HashMap<String, Object> axes = new HashMap<>();
+      axes.put("row", row);
+      axes.put("column", col);
+      axes.put("z", z);
+      axes.put("time", t);
+      if (chName != null) {
+         axes.put("channel", chName);
+      }
+      return axes;
+   }
+
+   /**
+    * Builds the per-image tags JSONObject for NDTiff, embedding axes under "Axes".
+    * Also stores the aligned pixel origin so TiledDataViewer can position tiles correctly.
+    */
+   private static mmcorej.org.json.JSONObject buildNdtiffTags(
+         int imgW, int imgH, boolean isRgb, boolean is16bit,
+         int roiX, int roiY, HashMap<String, Object> axes)
+         throws mmcorej.org.json.JSONException {
+      mmcorej.org.json.JSONObject tags = new mmcorej.org.json.JSONObject();
+      tags.put("Width", imgW);
+      tags.put("Height", imgH);
+      tags.put("BytesPerPixel", isRgb ? 4 : (is16bit ? 2 : 1));
+      if (isRgb) {
+         tags.put("NumComponents", 3);
+      }
+      // Canvas-space pixel origin from alignment (or nominal grid if no alignment).
+      tags.put("XPositionPix", roiX);
+      tags.put("YPositionPix", roiY);
+      // Embed axes under "Axes" key — required by NDTiffStorage.putImageMultiRes.
+      mmcorej.org.json.JSONObject axesJson = new mmcorej.org.json.JSONObject();
+      for (Map.Entry<String, Object> e : axes.entrySet()) {
+         axesJson.put(e.getKey(), e.getValue());
+      }
+      tags.put("Axes", axesJson);
+      return tags;
    }
 
    /**
@@ -1327,13 +1368,16 @@ public class StitchFrame extends JDialog {
          viewer.setDisplaySettings(displaySettings);
       }
 
-      // Notify the provider of all written images so the viewer populates
-      // its scrollbars and histogram. Strip row/col — same as getImageKeys().
+      // Notify the provider once per unique display-axes plane (strip row/col first so
+      // we don't trigger redundant histogram computations for each tile position).
+      Set<HashMap<String, Object>> notified = new java.util.HashSet<>();
       for (HashMap<String, Object> axes : allAxes) {
          HashMap<String, Object> displayAxes = new HashMap<>(axes);
          displayAxes.remove(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS);
          displayAxes.remove(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS);
-         provider.newImageArrived(displayAxes);
+         if (notified.add(displayAxes)) {
+            provider.newImageArrived(displayAxes);
+         }
       }
    }
 
@@ -1407,7 +1451,8 @@ public class StitchFrame extends JDialog {
          // still carry a channel axis (e.g. "Default") that must not cause tiles to be dropped.
          if (channelName != null) {
             Object axisChannel = axes.get("channel");
-            if (!channelValuesMatch(channelName, axisChannel)) {
+            if (!org.micromanager.exporttiles.ChannelUtils.channelValuesMatch(
+                  channelName, axisChannel)) {
                processed++;
                continue;
             }
@@ -1679,28 +1724,6 @@ public class StitchFrame extends JDialog {
       return names != null ? names : new ArrayList<>();
    }
 
-   /**
-    * Returns true when a channel name from the caller matches a channel value from an axes map.
-    *
-    * <p>Handles the case where unnamed channels are stored as {@code Integer} indices
-    * but the caller passes the index as a {@code String} (e.g. {@code "0"}).</p>
-    */
-   private static boolean channelValuesMatch(String callerName, Object storedValue) {
-      if (storedValue == null) {
-         return false;
-      }
-      if (callerName.equals(storedValue)) {
-         return true;
-      }
-      if (storedValue instanceof Integer) {
-         try {
-            return Integer.parseInt(callerName) == (Integer) storedValue;
-         } catch (NumberFormatException e) {
-            return false;
-         }
-      }
-      return false;
-   }
 
    // -------------------------------------------------------------------------
    // TiledDataViewerDataSource implementation for the NDTiff export path
@@ -1716,6 +1739,7 @@ public class StitchFrame extends JDialog {
 
       private final org.micromanager.ndtiffstorage.NDTiffStorage storage_;
       private final boolean rgb_;
+      private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
 
       StitchNdtiffDataSource(
             org.micromanager.ndtiffstorage.NDTiffStorage storage, boolean rgb) {
@@ -1763,6 +1787,10 @@ public class StitchFrame extends JDialog {
 
       @Override
       public Set<HashMap<String, Object>> getImageKeys() {
+         Set<HashMap<String, Object>> cached = imageKeysCache_;
+         if (cached != null) {
+            return cached;
+         }
          // Strip row/col — the viewer treats each unique non-spatial axes combo
          // as a single logical plane; NDTiffStorage handles tiled compositing internally.
          Set<HashMap<String, Object>> result = new java.util.HashSet<>();
@@ -1772,6 +1800,7 @@ public class StitchFrame extends JDialog {
             copy.remove(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS);
             result.add(copy);
          }
+         imageKeysCache_ = result;
          return result;
       }
 
