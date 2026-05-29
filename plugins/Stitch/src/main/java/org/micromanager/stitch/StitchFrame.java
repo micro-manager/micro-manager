@@ -309,8 +309,11 @@ public class StitchFrame extends JDialog {
          return;
       }
       if (saveToStack || saveToNdtiff) {
+         // Strip any trailing _N suffix so getUniqueSaveDirectory always starts from
+         // the base name and produces _1, _2, ... rather than _6_7, _6_8, ...
+         String baseName = namePrefix.replaceAll("_\\d+$", "");
          namePrefix = studio_.data().getUniqueSaveDirectory(
-               new File(outputDir, namePrefix).getAbsolutePath());
+               new File(outputDir, baseName).getAbsolutePath());
          // Strip the parent dir back out — we only want the (possibly suffixed) leaf name
          namePrefix = new File(namePrefix).getName();
       }
