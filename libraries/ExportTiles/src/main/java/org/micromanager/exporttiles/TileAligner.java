@@ -435,11 +435,18 @@ public class TileAligner {
       }
 
       // Crop to a square to avoid zero-padding artifacts from highly non-square strips.
+      // For a vertical overlap strip (narrow and tall, stripW < stripH): crop from the
+      // top rather than the centre — the top rows are closest to the tile edge where
+      // contrast from the overlap region is highest.
+      // For a horizontal overlap strip (wide and short, stripH < stripW): crop from the
+      // left for the same reason.
+      // Cap at MAX_DIM to keep FHT manageable.
       final int MAX_DIM = 512;
       int squareSide = Math.min(Math.min(stripW, stripH), MAX_DIM);
       if (squareSide != stripW || squareSide != stripH) {
-         int offX = (stripW - squareSide) / 2;
-         int offY = (stripH - squareSide) / 2;
+         // Use top-left crop (offset 0) for the short dimension to sample the overlap edge.
+         int offX = 0;
+         int offY = 0;
          float[] c1 = new float[squareSide * squareSide];
          float[] c2 = new float[squareSide * squareSide];
          for (int y = 0; y < squareSide; y++) {
@@ -550,11 +557,12 @@ public class TileAligner {
       // Sub-pixel refinement via parabolic interpolation along each axis.
       // For axis X: fit parabola through (px-1, v_left), (px, v_peak), (px+1, v_right).
       // Peak of parabola at: offset = 0.5 * (v_left - v_right) / (v_left - 2*v_peak + v_right)
-      // Clamp neighbours to valid map range (wrap if needed).
-      int pxL = ((px - 1) + n) % n;
-      int pxR = (px + 1) % n;
-      int pyU = ((py - 1) + n) % n;
-      int pyD = (py + 1) % n;
+      // Clamp neighbours rather than wrap — wrapping reads zero-padded FHT border cells
+      // which produces an asymmetric parabola and biases the sub-pixel estimate.
+      int pxL = Math.max(0, px - 1);
+      int pxR = Math.min(n - 1, px + 1);
+      int pyU = Math.max(0, py - 1);
+      int pyD = Math.min(n - 1, py + 1);
       float vL = corrMap[py * n + pxL];
       float vR = corrMap[py * n + pxR];
       float vU = corrMap[pyU * n + px];
@@ -935,7 +943,7 @@ public class TileAligner {
          }
          if (chName != null) {
             Object storedCh = stored.get("channel");
-            if (!channelValuesMatch(chName, storedCh)) {
+            if (!ChannelUtils.channelValuesMatch(chName, storedCh)) {
                continue;
             }
          }
@@ -945,30 +953,6 @@ public class TileAligner {
          return axes;
       }
       return null;
-   }
-
-   /**
-    * Returns true when a channel name from the caller matches a channel value from storage.
-    *
-    * <p>Handles the case where unnamed channels are stored as {@code Integer} indices
-    * but the caller passes the index as a {@code String} (e.g. {@code "0"}).</p>
-    */
-   private static boolean channelValuesMatch(String callerName, Object storedValue) {
-      if (storedValue == null) {
-         return false;
-      }
-      if (callerName.equals(storedValue)) {
-         return true;
-      }
-      // Unnamed channel: storedValue may be an Integer index; callerName may be its string form.
-      if (storedValue instanceof Integer) {
-         try {
-            return Integer.parseInt(callerName) == (Integer) storedValue;
-         } catch (NumberFormatException e) {
-            return false;
-         }
-      }
-      return false;
    }
 
 }
