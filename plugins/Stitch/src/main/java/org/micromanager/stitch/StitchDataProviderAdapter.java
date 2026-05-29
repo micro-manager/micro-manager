@@ -88,6 +88,21 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
    // Public helpers for callers
    // -------------------------------------------------------------------------
 
+   /** Return the computed horizontal tile overlap in pixels (0 if undetermined). */
+   public int getOverlapX() {
+      return overlapX_;
+   }
+
+   /** Return the computed vertical tile overlap in pixels (0 if undetermined). */
+   public int getOverlapY() {
+      return overlapY_;
+   }
+
+   /** Return the number of tiles in the grid. */
+   public int getNumTiles() {
+      return positionGrid_.size();
+   }
+
    /** Return the full stitched canvas width in pixels. */
    public int getCanvasWidth() {
       int maxCol = 0;
@@ -604,15 +619,32 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       return new int[]{0, 0};
    }
 
-   /** Get pixel size in µm from the first image's metadata, or 0 if unavailable. */
+   /** Get pixel size in µm from the first image's metadata, or 0 if unavailable.
+    *  Falls back to the affine transform diagonal if getPixelSizeUm() is missing. */
    private static double getPixelSizeUm(DataProvider source) {
       for (Coords coords : source.getUnorderedImageCoords()) {
          try {
             Image img = source.getImage(coords);
-            if (img != null) {
-               Double px = img.getMetadata().getPixelSizeUm();
-               if (px != null && px > 0) {
-                  return px;
+            if (img == null) {
+               continue;
+            }
+            Double px = img.getMetadata().getPixelSizeUm();
+            if (px != null && px > 0) {
+               return px;
+            }
+            // Fallback: derive pixel size from the affine transform.
+            // The affine columns represent the X and Y basis vectors in µm/pixel.
+            // For a rotation+scale affine: column lengths equal the pixel size.
+            // For anisotropic pixels, average the two column lengths.
+            java.awt.geom.AffineTransform af = img.getMetadata().getPixelSizeAffine();
+            if (af != null) {
+               double colX = Math.sqrt(af.getScaleX() * af.getScaleX()
+                     + af.getShearY() * af.getShearY());
+               double colY = Math.sqrt(af.getShearX() * af.getShearX()
+                     + af.getScaleY() * af.getScaleY());
+               double scale = (colX + colY) / 2.0;
+               if (scale > 0) {
+                  return scale;
                }
             }
          } catch (IOException e) {

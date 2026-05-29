@@ -66,6 +66,7 @@ public class StitchFrame extends JDialog {
 
    private static final String SAVE_RAM = "RAM (temporary)";
    private static final String SAVE_STACK = "Image Stack File";
+   private static final String SAVE_NDTIFF = "NDTiff (TiledDataViewer)";
 
    // Profile keys
    private static final String PREF_BLEND = "blend";
@@ -191,7 +192,7 @@ public class StitchFrame extends JDialog {
 
       // Save format
       add(new JLabel("Save as:"));
-      saveFormatCombo_ = new JComboBox<>(new String[]{SAVE_RAM, SAVE_STACK});
+      saveFormatCombo_ = new JComboBox<>(new String[]{SAVE_RAM, SAVE_STACK, SAVE_NDTIFF});
       saveFormatCombo_.setSelectedItem(settings_.getString(PREF_SAVE_FORMAT, SAVE_RAM));
       saveFormatCombo_.addActionListener((ActionEvent e) -> updatePathControls());
       add(saveFormatCombo_, "wrap");
@@ -246,7 +247,8 @@ public class StitchFrame extends JDialog {
    // -------------------------------------------------------------------------
 
    private void updatePathControls() {
-      boolean needsPath = SAVE_STACK.equals(saveFormatCombo_.getSelectedItem());
+      boolean needsPath = SAVE_STACK.equals(saveFormatCombo_.getSelectedItem())
+            || SAVE_NDTIFF.equals(saveFormatCombo_.getSelectedItem());
       outputDirField_.setEnabled(needsPath);
       browseButton_.setEnabled(needsPath);
       namePrefixField_.setEnabled(needsPath);
@@ -295,17 +297,18 @@ public class StitchFrame extends JDialog {
 
    private void onExport() {
       boolean saveToStack = SAVE_STACK.equals(saveFormatCombo_.getSelectedItem());
+      boolean saveToNdtiff = SAVE_NDTIFF.equals(saveFormatCombo_.getSelectedItem());
       String outputDir = outputDirField_.getText().trim();
       String namePrefix = namePrefixField_.getText().trim();
-      if (saveToStack && outputDir.isEmpty()) {
+      if ((saveToStack || saveToNdtiff) && outputDir.isEmpty()) {
          studio_.logs().showError("Please select a directory root.", this);
          return;
       }
-      if (saveToStack && namePrefix.isEmpty()) {
+      if ((saveToStack || saveToNdtiff) && namePrefix.isEmpty()) {
          studio_.logs().showError("Please enter a name prefix.", this);
          return;
       }
-      if (saveToStack) {
+      if (saveToStack || saveToNdtiff) {
          namePrefix = studio_.data().getUniqueSaveDirectory(
                new File(outputDir, namePrefix).getAbsolutePath());
          // Strip the parent dir back out — we only want the (possibly suffixed) leaf name
@@ -348,7 +351,7 @@ public class StitchFrame extends JDialog {
          }
       }
       // Combine dir + prefix into the full save path
-      final String outputPath = saveToStack
+      final String outputPath = (saveToStack || saveToNdtiff)
             ? outputDir + File.separator + namePrefix
             : "";
 
@@ -390,6 +393,7 @@ public class StitchFrame extends JDialog {
       final boolean doAlign = align;
       final boolean doCorrectOrientation = correctOrientation;
       final boolean toStack = saveToStack;
+      final boolean toNdtiff = saveToNdtiff;
       final String destPath = outputPath;
       final int exportAlignZ = alignZ;
       final int finalMaxDisplacement = maxDisplacementPx;
@@ -460,7 +464,7 @@ public class StitchFrame extends JDialog {
 
             buildDatastore(adapter, baseAxes, alignAxes, chNames,
                   canvasW, canvasH, doBlend, doAlign, finalCorrection, finalMaxDisplacement,
-                  toStack, destPath, datasetName, exportAlignZ,
+                  toStack, toNdtiff, destPath, datasetName, exportAlignZ,
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Stitch export failed");
@@ -494,19 +498,24 @@ public class StitchFrame extends JDialog {
                                boolean doBlend, boolean doAlign,
                                int[] correction,
                                int maxDisplacementPx,
-                               boolean toStack, String destPath,
+                               boolean toStack, boolean toNdtiff, String destPath,
                                String datasetName, int alignZ,
                                DisplaySettings sourceDisplaySettings,
                                JProgressBar bar, JLabel statusLabel,
                                JDialog progressDialog) throws Exception {
 
-      // Step 1: create the output Datastore
+      // Step 1: create the output Datastore (not used for NDTiff path).
+      // ndtiffStorage is initialized later once canvas size and pixel type are known;
+      // both are declared here so the catch block can close them on error.
       final Datastore ds;
       if (toStack) {
          ds = studio_.data().createMultipageTIFFDatastore(destPath, true, false);
+      } else if (toNdtiff) {
+         ds = null;
       } else {
          ds = studio_.data().createRAMDatastore();
       }
+      org.micromanager.ndtiffstorage.NDTiffStorage ndtiffStorage = null;
 
       // Derive correction components (null correction = no-op)
       boolean doMirror = correction != null && correction[1] != 0;
@@ -536,46 +545,8 @@ public class StitchFrame extends JDialog {
       }
 
       try {
-         // Step 2: set SummaryMetadata — copy from source, then fix up stitched-specific fields
-         SummaryMetadata srcSummary = dataProvider_.getSummaryMetadata();
-         SummaryMetadata.Builder smBuilder;
-         if (srcSummary != null) {
-            smBuilder = srcSummary.copyBuilder();
-         } else {
-            smBuilder = studio_.data().summaryMetadataBuilder();
-         }
-         smBuilder = smBuilder
-               .imageWidth(outCanvasW)
-               .imageHeight(outCanvasH)
-               // Stitched output is a single position — clear the multi-position list
-               .stagePositions(new MultiStagePosition[0]);
-
-         // Fix intendedDimensions: keep channel/z/time from source, force position=1
-         if (srcSummary != null) {
-            Coords srcDims = srcSummary.getIntendedDimensions();
-            if (srcDims != null) {
-               Coords.Builder dimBuilder = srcDims.copyBuilder();
-               // Remove position axis — stitched result has a single (merged) position
-               dimBuilder.removeAxis(Coords.STAGE_POSITION);
-               smBuilder = smBuilder.intendedDimensions(dimBuilder.build());
-            }
-         }
-
-         final SummaryMetadata outputSummary = smBuilder.build();
-         ds.setSummaryMetadata(outputSummary);
-
-         // Step 3: wait for SummaryMetadata to be accepted (up to 10s)
-         long deadline = System.currentTimeMillis() + 10000;
-         while (ds.getSummaryMetadata() == null
-               && System.currentTimeMillis() < deadline) {
-            Thread.sleep(100);
-         }
-
-         // Step 4: build a template Metadata from the first tile (position 0, selected z)
-         final Metadata.Builder templateMetaBuilder =
-               probeTemplateMetadata(dataProvider_, alignZ);
-
-         // Step 5 & 6: composite/stitch — iterates all time points, z slices, channels.
+         // Step 2: detect pixel type, determine effectiveChNames, run alignment (if enabled)
+         // — all before writing SummaryMetadata so the canvas size is final.
          SwingUtilities.invokeLater(() -> statusLabel.setText("Computing..."));
 
          // raw count from caller; effective count set after probe
@@ -646,8 +617,6 @@ public class StitchFrame extends JDialog {
          if (isRgb && swapCanvasDims) {
             outCanvasW = canvasH;
             outCanvasH = canvasW;
-            ds.setSummaryMetadata(ds.getSummaryMetadata().copyBuilder()
-                  .imageWidth(outCanvasW).imageHeight(outCanvasH).build());
          }
 
          // RGB images have no channel axis — override chNames to a single null entry
@@ -662,6 +631,122 @@ public class StitchFrame extends JDialog {
             effectiveNumCh = numCh;
          }
          final int totalImages = numT * numZ * effectiveNumCh;
+
+         // If aligning, run t=0 alignment now so the canvas size is known before
+         // SummaryMetadata is written (the datastore does not allow rewriting it).
+         float alignOriginShiftX = 0;
+         float alignOriginShiftY = 0;
+         Map<Point, Point2D.Float> t0Origins = null;
+         if (doAlign) {
+            SwingUtilities.invokeLater(() -> statusLabel.setText("Aligning..."));
+            TileAligner t0Aligner = new TileAligner(adapter, alignAxes, effectiveChNames,
+                  adapter.getSummaryMetadata());
+            if (doMirror || rotationDeg != 0) {
+               t0Aligner.setTileTransform(doMirror, rotationDeg);
+            }
+            t0Origins = t0Aligner.computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
+            if (t0Origins == null) {
+               String msg = "Alignment skipped: overlap is 0 px (overlapX="
+                     + adapter.getOverlapX() + " overlapY=" + adapter.getOverlapY() + ")";
+               studio_.logs().logMessage("Stitch: " + msg);
+               SwingUtilities.invokeLater(() -> statusLabel.setText(msg));
+            } else {
+               String stats = t0Aligner.getLastAlignmentStats();
+               studio_.logs().logMessage("Stitch alignment t=0: " + stats);
+            }
+            // Adjust canvas size and origins for alignment shifts.
+            // tOrigins are always in pre-rotation tile space, so use raw tile dims here.
+            // For grayscale with rotation, outCanvasW/H will be swapped afterward by
+            // the corrected-geometry formula; for RGB the whole canvas is rotated post-composite.
+            if (t0Origins != null && rawTileW > 0 && rawTileH > 0) {
+               float minX = Float.MAX_VALUE;
+               float minY = Float.MAX_VALUE;
+               float maxX = -Float.MAX_VALUE;
+               float maxY = -Float.MAX_VALUE;
+               for (Point2D.Float o : t0Origins.values()) {
+                  minX = Math.min(minX, o.x);
+                  minY = Math.min(minY, o.y);
+                  maxX = Math.max(maxX, o.x + rawTileW);
+                  maxY = Math.max(maxY, o.y + rawTileH);
+               }
+               final float shiftX = minX < 0 ? -minX : 0;
+               final float shiftY = minY < 0 ? -minY : 0;
+               if (shiftX != 0 || shiftY != 0) {
+                  Map<Point, Point2D.Float> shifted = new java.util.HashMap<>();
+                  for (Map.Entry<Point, Point2D.Float> e : t0Origins.entrySet()) {
+                     shifted.put(e.getKey(),
+                           new Point2D.Float(e.getValue().x + shiftX, e.getValue().y + shiftY));
+                  }
+                  t0Origins = shifted;
+                  maxX += shiftX;
+                  maxY += shiftY;
+               }
+               // Record shift so t>0 origins can be adjusted by the same amount.
+               alignOriginShiftX = shiftX;
+               alignOriginShiftY = shiftY;
+               // For rotation, the output canvas dims swap; for RGB the whole canvas rotates
+               // after composite so pre-rotation size drives the output dims.
+               int preRotW = (int) Math.ceil(maxX);
+               int preRotH = (int) Math.ceil(maxY);
+               int newCanvasW = swapCanvasDims ? preRotH : preRotW;
+               int newCanvasH = swapCanvasDims ? preRotW : preRotH;
+               if (newCanvasW != outCanvasW || newCanvasH != outCanvasH) {
+                  studio_.logs().logMessage("Stitch: canvas resized by alignment from "
+                        + outCanvasW + "x" + outCanvasH
+                        + " to " + newCanvasW + "x" + newCanvasH);
+                  outCanvasW = newCanvasW;
+                  outCanvasH = newCanvasH;
+               }
+            }
+         }
+
+         // Write SummaryMetadata now that outCanvasW/H is final (alignment may have grown it).
+         SummaryMetadata srcSummary = dataProvider_.getSummaryMetadata();
+         SummaryMetadata.Builder smBuilder;
+         if (srcSummary != null) {
+            smBuilder = srcSummary.copyBuilder();
+         } else {
+            smBuilder = studio_.data().summaryMetadataBuilder();
+         }
+         smBuilder = smBuilder
+               .imageWidth(outCanvasW)
+               .imageHeight(outCanvasH)
+               .stagePositions(new MultiStagePosition[0]);
+         if (srcSummary != null) {
+            Coords srcDims = srcSummary.getIntendedDimensions();
+            if (srcDims != null) {
+               Coords.Builder dimBuilder = srcDims.copyBuilder();
+               dimBuilder.removeAxis(Coords.STAGE_POSITION);
+               smBuilder = smBuilder.intendedDimensions(dimBuilder.build());
+            }
+         }
+
+         // For NDTiff output, create NDTiff storage and skip Datastore entirely.
+         // Tiles are written individually (not assembled into one canvas), so
+         // summary metadata uses the individual tile dimensions + overlap.
+         int ndtiffTileW = swapCanvasDims ? rawTileH : rawTileW;
+         int ndtiffTileH = swapCanvasDims ? rawTileW : rawTileH;
+         int ndtiffOverlapX = swapCanvasDims ? rawOverlapY : rawOverlapX;
+         int ndtiffOverlapY = swapCanvasDims ? rawOverlapX : rawOverlapY;
+         if (toNdtiff) {
+            ndtiffStorage = buildNdtiffSummaryMetadata(
+                  destPath, datasetName, smBuilder.build(),
+                  ndtiffTileW, ndtiffTileH, ndtiffOverlapX, ndtiffOverlapY,
+                  isRgb, is16bit, chNames);
+         } else {
+            ndtiffStorage = null;
+            ds.setSummaryMetadata(smBuilder.build());
+            // Wait for SummaryMetadata to be accepted (up to 10s).
+            long deadline = System.currentTimeMillis() + 10000;
+            while (ds.getSummaryMetadata() == null
+                  && System.currentTimeMillis() < deadline) {
+               Thread.sleep(100);
+            }
+         }
+
+         // Build a template Metadata from the first tile (position 0, selected z).
+         final Metadata.Builder templateMetaBuilder =
+               probeTemplateMetadata(dataProvider_, alignZ);
 
          // Read tile dims for per-tile transform (blend path only)
          mmcorej.org.json.JSONObject blendSummaryMD = adapter.getSummaryMetadata();
@@ -711,24 +796,79 @@ public class StitchFrame extends JDialog {
          int imagesWritten = 0;
          for (int t = 0; t < numT; t++) {
             // Compute aligned origins once per time point at the selected z slice.
-            // Origins are shared across all z and channels within this time point.
-            Map<Point, Point2D.Float> origins = null;
-            if (doAlign) {
+            // t=0 was already computed before SummaryMetadata was written; reuse it.
+            Map<Point, Point2D.Float> origins;
+            if (!doAlign) {
+               origins = null;
+            } else if (t == 0) {
+               origins = t0Origins;  // already computed and canvas-adjusted above
+            } else {
                final int tIdx = t;
                SwingUtilities.invokeLater(() -> statusLabel.setText(
                      "Aligning t=" + (tIdx + 1) + "..."));
                HashMap<String, Object> tAlignAxes = new HashMap<>(alignAxes);
-               if (numT > 1) {
-                  tAlignAxes.put(Coords.TIME_POINT, t);
-               }
+               tAlignAxes.put(Coords.TIME_POINT, t);
                TileAligner aligner = new TileAligner(adapter, tAlignAxes, effectiveChNames,
                      adapter.getSummaryMetadata());
                if (doMirror || rotationDeg != 0) {
                   aligner.setTileTransform(doMirror, rotationDeg);
                }
                origins = aligner.computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
+               if (origins != null) {
+                  studio_.logs().logMessage("Stitch alignment t=" + (t + 1) + ": "
+                        + aligner.getLastAlignmentStats());
+                  // Apply the same coordinate shift used for t=0 so all origins are
+                  // non-negative and fit within the already-sized canvas.
+                  if (alignOriginShiftX != 0 || alignOriginShiftY != 0) {
+                     final float sx = alignOriginShiftX;
+                     final float sy = alignOriginShiftY;
+                     Map<Point, Point2D.Float> shifted = new java.util.HashMap<>();
+                     for (Map.Entry<Point, Point2D.Float> e : origins.entrySet()) {
+                        shifted.put(e.getKey(),
+                              new Point2D.Float(e.getValue().x + sx, e.getValue().y + sy));
+                     }
+                     origins = shifted;
+                  }
+               }
             }
             final Map<Point, Point2D.Float> tOrigins = origins;
+
+            // Log tile placement for every tile (t=0 only to avoid log flood for time-lapse).
+            if (t == 0) {
+               int nomStepX = rawTileW > 0 ? rawTileW - rawOverlapX : 0;
+               int nomStepY = rawTileH > 0 ? rawTileH - rawOverlapY : 0;
+               // Collect actual tiles from the origins map (aligned) or from the adapter
+               // grid (nominal). Only log tiles that actually exist.
+               List<Point> sortedTiles;
+               if (tOrigins != null) {
+                  sortedTiles = new ArrayList<>(tOrigins.keySet());
+                  sortedTiles.sort((a, b) -> a.y != b.y ? a.y - b.y : a.x - b.x);
+                  for (Point tile : sortedTiles) {
+                     Point2D.Float o = tOrigins.get(tile);
+                     int nomX = tile.x * nomStepX;
+                     int nomY = tile.y * nomStepY;
+                     studio_.logs().logMessage(String.format(
+                           "Stitch: tile (%d,%d) origin=(%.1f,%.1f)"
+                                 + " nominal=(%d,%d) delta=(%.1f,%.1f)",
+                           tile.x, tile.y, o.x, o.y,
+                           nomX, nomY, o.x - nomX, o.y - nomY));
+                  }
+               } else {
+                  sortedTiles = new ArrayList<>();
+                  for (int row = 0; row <= adapter.getMaxRow(); row++) {
+                     for (int col = 0; col <= adapter.getMaxCol(); col++) {
+                        sortedTiles.add(new Point(col, row));
+                     }
+                  }
+                  for (Point tile : sortedTiles) {
+                     int nomX = tile.x * nomStepX;
+                     int nomY = tile.y * nomStepY;
+                     studio_.logs().logMessage(String.format(
+                           "Stitch: tile (%d,%d) origin=(%d, %d) [nominal, no alignment]",
+                           tile.x, tile.y, nomX, nomY));
+                  }
+               }
+            }
 
             for (int z = 0; z < numZ; z++) {
                // baseAxes for this t/z
@@ -738,7 +878,17 @@ public class StitchFrame extends JDialog {
                   tzAxes.put(Coords.TIME_POINT, t);
                }
 
-               if (doBlend) {
+               if (toNdtiff) {
+                  // NDTiff path: write each source tile individually (cropped, aligned,
+                  // optionally blended) so TiledDataViewer displays them natively tiled.
+                  writeTiledNdtiff(adapter, ndtiffStorage, tzAxes, effectiveChNames,
+                        tOrigins, correction, is16bit, isRgb, z, t,
+                        ndtiffTileW, ndtiffTileH, ndtiffOverlapX, ndtiffOverlapY,
+                        doBlend, isRgb ? blendSummaryMD : correctedBlendSummaryMD,
+                        tileTransform16, tileTransform8);
+                  imagesWritten += effectiveNumCh * (adapter.getMaxRow() + 1)
+                        * (adapter.getMaxCol() + 1);
+               } else if (doBlend) {
                   // RGB composite() has no per-tile transform — the whole assembled canvas is
                   // rotated afterward, so the blender must use the raw (uncorrected) tile geometry.
                   // Grayscale paths apply per-tile transforms and need the corrected geometry.
@@ -768,18 +918,21 @@ public class StitchFrame extends JDialog {
                      int imgW = outCanvasW;
                      int imgH = outCanvasH;
                      if (isRgb) {
-                        // Composite at the raw (pre-correction) canvas size so that the
-                        // tile geometry in TileBlender is consistent with the uncorrected
-                        // tile layout.  Orientation correction is then applied to the
-                        // assembled canvas; transformPixels returns the corrected dims.
+                        // For RGB, composite at the pre-rotation canvas size (the alignment-
+                        // adjusted nominal canvas), then rotate the whole assembled canvas.
+                        // For no-rotation case outCanvasW/H == pre-rotation size.
+                        // For 90/270° rotation, outCanvasW/H was swapped from canvasW/H above,
+                        // so the pre-rotation size is outCanvasH × outCanvasW.
+                        int preRotW = swapCanvasDims ? outCanvasH : outCanvasW;
+                        int preRotH = swapCanvasDims ? outCanvasW : outCanvasH;
                         java.awt.image.BufferedImage bimg = blender.composite(
-                              0, 0, canvasW, canvasH, 0, tOrigins, blendProgress);
-                        int[] argb = new int[canvasW * canvasH];
-                        bimg.getRGB(0, 0, canvasW, canvasH, argb, 0, canvasW);
+                              0, 0, preRotW, preRotH, 0, tOrigins, blendProgress);
+                        int[] argb = new int[preRotW * preRotH];
+                        bimg.getRGB(0, 0, preRotW, preRotH, argb, 0, preRotW);
                         byte[] pixels = argbToBgra(argb);
                         if (correction != null && (doMirror || rotationDeg != 0)) {
                            Object[] transformed = ImageTransformUtils.transformPixels(
-                                 pixels, canvasW, canvasH, 4, doMirror, rotationDeg);
+                                 pixels, preRotW, preRotH, 4, doMirror, rotationDeg);
                            pixels = (byte[]) transformed[0];
                            imgW   = (Integer) transformed[1];
                            imgH   = (Integer) transformed[2];
@@ -806,7 +959,8 @@ public class StitchFrame extends JDialog {
                      Metadata meta = templateMetaBuilder.generateUUID().build();
                      Image mmImg = studio_.data().createImage(pixelData, imgW, imgH,
                            bytesPerPixel, numComponents, coords, meta);
-                     ds.putImage(mmImg);
+                     putStitchedImage(mmImg, ds, ndtiffStorage,
+                           chName, z, t, isRgb, is16bit);
                      imagesWritten++;
                   }
 
@@ -845,7 +999,8 @@ public class StitchFrame extends JDialog {
                      Metadata meta = templateMetaBuilder.generateUUID().build();
                      Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
                            bytesPerPixel, numComponents, coords, meta);
-                     ds.putImage(mmImg);
+                     putStitchedImage(mmImg, ds, ndtiffStorage,
+                           chName, z, t, isRgb, is16bit);
                      imagesWritten++;
                   }
                }
@@ -854,28 +1009,331 @@ public class StitchFrame extends JDialog {
 
          SwingUtilities.invokeLater(() -> bar.setValue(100));
 
-         // Step 6: freeze
-         ds.freeze();
-         ds.setName(datasetName);
-
-         // Step 7: display
-         SwingUtilities.invokeLater(() -> {
-            progressDialog.dispose();
-            try {
-               studio_.displays().manage(ds);
-               studio_.displays().createDisplay(ds, null, sourceDisplaySettings);
-            } catch (Exception e) {
-               studio_.logs().logError(e, "Could not display exported dataset");
-            }
-         });
+         if (toNdtiff) {
+            // Pre-build downsampled pyramid levels then finalize.
+            ndtiffStorage.increaseMaxResolutionLevel(4);
+            ndtiffStorage.finishedWriting();
+            final org.micromanager.ndtiffstorage.NDTiffStorage finalStorage = ndtiffStorage;
+            final String ndtiffPath = destPath;
+            final DisplaySettings dispSettings = sourceDisplaySettings;
+            final boolean finalIsRgb = isRgb;
+            SwingUtilities.invokeLater(() -> {
+               progressDialog.dispose();
+               try {
+                  openInTiledDataViewer(finalStorage, ndtiffPath, datasetName,
+                        dispSettings, finalIsRgb);
+               } catch (Exception e) {
+                  studio_.logs().logError(e, "Could not open NDTiff in TiledDataViewer");
+               }
+            });
+         } else {
+            // Step 6: freeze and display via standard MM display.
+            ds.freeze();
+            ds.setName(datasetName);
+            SwingUtilities.invokeLater(() -> {
+               progressDialog.dispose();
+               try {
+                  studio_.displays().manage(ds);
+                  studio_.displays().createDisplay(ds, null, sourceDisplaySettings);
+               } catch (Exception e) {
+                  studio_.logs().logError(e, "Could not display exported dataset");
+               }
+            });
+         }
 
       } catch (Exception ex) {
-         try {
-            ds.close();
-         } catch (Exception ignore) {
-            // ignore close errors
+         if (ndtiffStorage != null) {
+            try {
+               ndtiffStorage.close();
+            } catch (Exception ignore) {
+               // ignore
+            }
+         }
+         if (ds != null) {
+            try {
+               ds.close();
+            } catch (Exception ignore) {
+               // ignore close errors
+            }
          }
          throw ex;
+      }
+   }
+
+   // -------------------------------------------------------------------------
+   // NDTiff output helpers
+   // -------------------------------------------------------------------------
+
+   /**
+    * Writes each tile individually to NDTiff storage so TiledDataViewer can display
+    * them natively as a tiled dataset with optional blending and alignment corrections.
+    *
+    * <p>For each (row, col) in the tile grid, this method composites (if blending) or
+    * copies (if not blending) only the pixels for that tile's region from the source
+    * data, applies orientation correction, and writes the result to NDTiff storage.</p>
+    */
+   private void writeTiledNdtiff(
+         StitchDataProviderAdapter adapter,
+         org.micromanager.ndtiffstorage.NDTiffStorage ndtiffStorage,
+         HashMap<String, Object> tzAxes,
+         List<String> effectiveChNames,
+         Map<Point, Point2D.Float> tOrigins,
+         int[] correction,
+         boolean is16bit, boolean isRgb,
+         int z, int t,
+         int tileW, int tileH,
+         int overlapX, int overlapY,
+         boolean doBlend,
+         mmcorej.org.json.JSONObject blendMD,
+         UnaryOperator<short[]> tileTransform16,
+         UnaryOperator<byte[]> tileTransform8)
+         throws Exception {
+
+      int maxRow = adapter.getMaxRow();
+      int maxCol = adapter.getMaxCol();
+      boolean doMirror = correction != null && correction[1] != 0;
+      int rotationDeg = correction != null ? correction[0] : 0;
+      boolean swapTile = rotationDeg == 90 || rotationDeg == 270;
+      int outTileW = swapTile ? tileH : tileW;
+      int outTileH = swapTile ? tileW : tileH;
+
+      TileBlender blender = doBlend
+            ? new TileBlender(adapter, new mmcorej.org.json.JSONObject(),
+                  tzAxes, effectiveChNames, blendMD)
+            : null;
+
+      int stepX = tileW - overlapX;
+      int stepY = tileH - overlapY;
+
+      for (int row = 0; row <= maxRow; row++) {
+         for (int col = 0; col <= maxCol; col++) {
+            // Origin of this tile in full-resolution source pixel space.
+            int roiX;
+            int roiY;
+            if (tOrigins != null) {
+               Point2D.Float o = tOrigins.get(new Point(col, row));
+               if (o == null) {
+                  continue;
+               }
+               roiX = Math.round(o.x);
+               roiY = Math.round(o.y);
+            } else {
+               roiX = col * stepX;
+               roiY = row * stepY;
+            }
+
+            for (int c = 0; c < effectiveChNames.size(); c++) {
+               final String chName = effectiveChNames.get(c);
+               Object pixelData;
+               int imgW;
+               int imgH;
+
+               if (doBlend) {
+                  if (isRgb) {
+                     java.awt.image.BufferedImage bimg =
+                           blender.composite(roiX, roiY, tileW, tileH, 0, tOrigins, pct -> {});
+                     int[] argb = new int[tileW * tileH];
+                     bimg.getRGB(0, 0, tileW, tileH, argb, 0, tileW);
+                     byte[] pixels = argbToBgra(argb);
+                     if (correction != null && (doMirror || rotationDeg != 0)) {
+                        Object[] xf = ImageTransformUtils.transformPixels(
+                              pixels, tileW, tileH, 4, doMirror, rotationDeg);
+                        pixels = (byte[]) xf[0];
+                        imgW = (Integer) xf[1];
+                        imgH = (Integer) xf[2];
+                     } else {
+                        imgW = tileW;
+                        imgH = tileH;
+                     }
+                     pixelData = pixels;
+                  } else if (is16bit) {
+                     short[] pixels = blender.composite16(roiX, roiY, tileW, tileH, 0,
+                           chName, tOrigins, tileTransform16, pct -> {});
+                     imgW = outTileW;
+                     imgH = outTileH;
+                     pixelData = pixels;
+                  } else {
+                     byte[] pixels = blender.composite8(roiX, roiY, tileW, tileH, 0,
+                           chName, tOrigins, tileTransform8, pct -> {});
+                     imgW = outTileW;
+                     imgH = outTileH;
+                     pixelData = pixels;
+                  }
+               } else {
+                  // Non-blend: read the source tile directly and apply correction.
+                  HashMap<String, Object> tileAxes = new HashMap<>(tzAxes);
+                  tileAxes.put("row", row);
+                  tileAxes.put("column", col);
+                  if (!isRgb && chName != null) {
+                     tileAxes.put("channel", chName);
+                  }
+                  mmcorej.TaggedImage tagged = adapter.getImage(tileAxes, 0);
+                  if (tagged == null || tagged.pix == null) {
+                     continue;
+                  }
+                  Object rawPix = tagged.pix;
+                  if (correction != null && (doMirror || rotationDeg != 0)) {
+                     Object[] xf;
+                     if (is16bit) {
+                        xf = ImageTransformUtils.transformPixels(
+                              (short[]) rawPix, tileW, tileH, doMirror, rotationDeg);
+                     } else {
+                        int bpp = isRgb ? 4 : 1;
+                        xf = ImageTransformUtils.transformPixels(
+                              (byte[]) rawPix, tileW, tileH, bpp, doMirror, rotationDeg);
+                     }
+                     rawPix = xf[0];
+                     imgW = (Integer) xf[1];
+                     imgH = (Integer) xf[2];
+                  } else {
+                     imgW = tileW;
+                     imgH = tileH;
+                  }
+                  pixelData = rawPix;
+               }
+
+               // Build tags with axes embedded under "Axes" key as NDTiffStorage expects.
+               mmcorej.org.json.JSONObject tags = new mmcorej.org.json.JSONObject();
+               tags.put("Width", imgW);
+               tags.put("Height", imgH);
+               tags.put("BytesPerPixel", isRgb ? 4 : (is16bit ? 2 : 1));
+               if (isRgb) {
+                  tags.put("NumComponents", 3);
+               }
+               mmcorej.org.json.JSONObject axesJson = new mmcorej.org.json.JSONObject();
+               axesJson.put("row", row);
+               axesJson.put("column", col);
+               axesJson.put("z", z);
+               axesJson.put("time", t);
+               if (!isRgb && chName != null) {
+                  axesJson.put("channel", chName);
+               }
+               tags.put("Axes", axesJson);
+               // Extract axes as HashMap for the separate axes parameter.
+               HashMap<String, Object> axes = new HashMap<>();
+               java.util.Iterator<String> keys = axesJson.keys();
+               while (keys.hasNext()) {
+                  String key = keys.next();
+                  axes.put(key, axesJson.get(key));
+               }
+               ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
+                     isRgb, is16bit ? 16 : 8, imgH, imgW).get();
+            }
+         }
+      }
+   }
+
+   /**
+    * Creates an NDTiff storage for the stitched output and writes its summary metadata.
+    */
+   private org.micromanager.ndtiffstorage.NDTiffStorage buildNdtiffSummaryMetadata(
+         String path, String name,
+         SummaryMetadata summaryMeta,
+         int tileW, int tileH,
+         int overlapX, int overlapY,
+         boolean isRgb, boolean is16bit,
+         List<String> chNames)
+         throws mmcorej.org.json.JSONException {
+      mmcorej.org.json.JSONObject json = new mmcorej.org.json.JSONObject();
+      json.put("Width", tileW);
+      json.put("Height", tileH);
+      json.put("GridPixelOverlapX", overlapX);
+      json.put("GridPixelOverlapY", overlapY);
+      // Probe pixel size from the source dataset's first image metadata.
+      double pixelSizeUm = probePixelSizeUm(dataProvider_);
+      if (pixelSizeUm > 0) {
+         json.put("PixelSize_um", pixelSizeUm);
+      }
+      json.put("BitDepth", is16bit ? 16 : 8);
+      json.put("PixelType", isRgb ? "RGB32" : (is16bit ? "GRAY16" : "GRAY8"));
+      if (!chNames.isEmpty() && !isRgb) {
+         mmcorej.org.json.JSONArray arr = new mmcorej.org.json.JSONArray();
+         for (String ch : chNames) {
+            arr.put(ch);
+         }
+         json.put("ChNames", arr);
+         json.put("Channels", chNames.size());
+      }
+      return new org.micromanager.ndtiffstorage.NDTiffStorage(
+            path, name, json, overlapX, overlapY, true, null, 30, null, isRgb);
+   }
+
+   /**
+    * Writes one stitched image to either the MM Datastore or NDTiff storage.
+    * For NDTiff, the image is stored with row=0, col=0 and channel/z/time axes.
+    */
+   private void putStitchedImage(
+         Image mmImg,
+         Datastore ds,
+         org.micromanager.ndtiffstorage.NDTiffStorage ndtiffStorage,
+         String chName, int z, int t,
+         boolean isRgb, boolean is16bit)
+         throws Exception {
+      if (ndtiffStorage != null) {
+         HashMap<String, Object> axes = new HashMap<>();
+         axes.put("row", 0);
+         axes.put("column", 0);
+         axes.put("z", z);
+         axes.put("time", t);
+         if (!isRgb && chName != null) {
+            axes.put("channel", chName);
+         }
+         mmcorej.org.json.JSONObject tags = new mmcorej.org.json.JSONObject();
+         tags.put("Width", mmImg.getWidth());
+         tags.put("Height", mmImg.getHeight());
+         tags.put("BytesPerPixel", mmImg.getBytesPerPixel());
+         if (isRgb) {
+            tags.put("NumComponents", 3);
+         }
+         ndtiffStorage.putImage(mmImg.getRawPixels(), tags, axes,
+               isRgb, is16bit ? 16 : 8, mmImg.getHeight(), mmImg.getWidth()).get();
+      } else {
+         ds.putImage(mmImg);
+      }
+   }
+
+   /**
+    * Opens a finished NDTiff storage in a TiledDataViewer window.
+    * Must be called on the EDT.
+    */
+   private void openInTiledDataViewer(
+         org.micromanager.ndtiffstorage.NDTiffStorage storage,
+         String path, String name,
+         DisplaySettings displaySettings,
+         boolean isRgb) {
+
+      Set<HashMap<String, Object>> allAxes = storage.getAxesSet();
+      mmcorej.org.json.JSONObject summaryJson = storage.getSummaryMetadata();
+
+      org.micromanager.tileddataprovider.NDTiffProviderAdapter adapter =
+            new org.micromanager.tileddataprovider.NDTiffProviderAdapter(storage);
+      org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI provider =
+            org.micromanager.tileddataviewer.TiledDataViewerFactory.createDataProvider(
+                  studio_.data(), adapter, name);
+
+      // Data source delegates display requests directly to the NDTiff storage.
+      org.micromanager.tileddataviewer.TiledDataViewerDataSource dataSource =
+            new StitchNdtiffDataSource(storage, isRgb);
+
+      double pixelSizeUm = summaryJson != null ? summaryJson.optDouble("PixelSize_um", 0) : 0;
+
+      org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI viewer =
+            org.micromanager.tileddataviewer.TiledDataViewerFactory.createDataViewer(
+                  studio_, dataSource, null, provider,
+                  summaryJson != null ? summaryJson : new mmcorej.org.json.JSONObject(),
+                  pixelSizeUm, isRgb);
+
+      if (displaySettings != null) {
+         viewer.setDisplaySettings(displaySettings);
+      }
+
+      // Notify the provider of all written images so the viewer populates
+      // its scrollbars and histogram. Strip row/col — same as getImageKeys().
+      for (HashMap<String, Object> axes : allAxes) {
+         HashMap<String, Object> displayAxes = new HashMap<>(axes);
+         displayAxes.remove(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS);
+         displayAxes.remove(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS);
+         provider.newImageArrived(displayAxes);
       }
    }
 
@@ -1072,9 +1530,8 @@ public class StitchFrame extends JDialog {
             }
          }
 
-         studio.logs().logDebugMessage("Stitch: copied tile row=" + row + " col=" + col
-               + " destX=" + destX + " destY=" + destY
-               + " copyW=" + copyW + " copyH=" + copyH);
+         studio.logs().logDebugMessage("Stitch: tile row=" + row + " col=" + col
+               + " destX=" + destX + " destY=" + destY);
          processed++;
          final int pct = total > 0 ? processed * 100 / total : 100;
          if (progress != null) {
@@ -1170,6 +1627,28 @@ public class StitchFrame extends JDialog {
     *
     * @return the first non-null AffineTransform found, or null if none exists
     */
+   private static double probePixelSizeUm(DataProvider dataProvider) {
+      try {
+         for (Coords coords : dataProvider.getUnorderedImageCoords()) {
+            Image img = dataProvider.getImage(coords);
+            if (img == null) {
+               continue;
+            }
+            Metadata meta = img.getMetadata();
+            if (meta == null) {
+               continue;
+            }
+            Double px = meta.getPixelSizeUm();
+            if (px != null && px > 0) {
+               return px;
+            }
+         }
+      } catch (Exception e) {
+         // ignore
+      }
+      return 0.0;
+   }
+
    private static AffineTransform probeAffineTransform(DataProvider dataProvider) {
       try {
          for (Coords coords : dataProvider.getUnorderedImageCoords()) {
@@ -1221,5 +1700,105 @@ public class StitchFrame extends JDialog {
          }
       }
       return false;
+   }
+
+   // -------------------------------------------------------------------------
+   // TiledDataViewerDataSource implementation for the NDTiff export path
+   // -------------------------------------------------------------------------
+
+   /**
+    * TiledDataViewerDataSource that delegates to a finished NDTiffStorage.
+    * The stitched result is stored as individual tiles; NDTiffStorage handles
+    * compositing them into display images internally.
+    */
+   private static class StitchNdtiffDataSource
+         implements org.micromanager.tileddataviewer.TiledDataViewerDataSource {
+
+      private final org.micromanager.ndtiffstorage.NDTiffStorage storage_;
+      private final boolean rgb_;
+
+      StitchNdtiffDataSource(
+            org.micromanager.ndtiffstorage.NDTiffStorage storage, boolean rgb) {
+         storage_ = storage;
+         rgb_ = rgb;
+      }
+
+      @Override
+      public boolean isFinished() {
+         return storage_.isFinished();
+      }
+
+      @Override
+      public int[] getBounds() {
+         return storage_.getImageBounds();
+      }
+
+      @Override
+      public mmcorej.TaggedImage getImageForDisplay(
+            HashMap<String, Object> axes,
+            int resolutionindex,
+            double xOffset, double yOffset,
+            int imageWidth, int imageHeight) {
+         // The viewer passes display axes with row/col stripped (e.g. {z=0, time=0}
+         // or even {} for single-plane data). NDTiffStorage.getDisplayImage needs
+         // the non-spatial axes present to find the right image plane; it handles
+         // row/col compositing internally. Merge incoming axes with the first stored
+         // entry's non-spatial axes to supply any missing z/time/channel values.
+         HashMap<String, Object> fullAxes = new HashMap<>(axes);
+         Set<HashMap<String, Object>> stored = storage_.getAxesSet();
+         if (!stored.isEmpty()) {
+            HashMap<String, Object> sample = stored.iterator().next();
+            for (Map.Entry<String, Object> e : sample.entrySet()) {
+               String key = e.getKey();
+               if (!key.equals(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS)
+                     && !key.equals(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS)
+                     && !fullAxes.containsKey(key)) {
+                  fullAxes.put(key, e.getValue());
+               }
+            }
+         }
+         return storage_.getDisplayImage(fullAxes, resolutionindex,
+               (int) xOffset, (int) yOffset, imageWidth, imageHeight);
+      }
+
+      @Override
+      public Set<HashMap<String, Object>> getImageKeys() {
+         // Strip row/col — the viewer treats each unique non-spatial axes combo
+         // as a single logical plane; NDTiffStorage handles tiled compositing internally.
+         Set<HashMap<String, Object>> result = new java.util.HashSet<>();
+         for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+            HashMap<String, Object> copy = new HashMap<>(axes);
+            copy.remove(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS);
+            copy.remove(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS);
+            result.add(copy);
+         }
+         return result;
+      }
+
+      @Override
+      public int getMaxResolutionIndex() {
+         return storage_.getNumResLevels() - 1;
+      }
+
+      @Override
+      public void increaseMaxResolutionLevel(int newMaxResolutionLevel) {
+         storage_.increaseMaxResolutionLevel(newMaxResolutionLevel);
+      }
+
+      @Override
+      public String getDiskLocation() {
+         return storage_.getDiskLocation();
+      }
+
+      @Override
+      public void close() {
+         storage_.close();
+      }
+
+      @Override
+      public int getImageBitDepth(HashMap<String, Object> axesPositions) {
+         mmcorej.org.json.JSONObject meta = storage_.getSummaryMetadata();
+         return meta != null ? meta.optInt("BitDepth", 16) : 16;
+      }
    }
 }
