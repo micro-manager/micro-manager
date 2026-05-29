@@ -63,6 +63,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    // Cache for getImageKeys() — invalidated by ExplorerManager after putImageMultiRes.
    private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
 
+   // Compositor for datasets with per-tile XPositionPix/YPositionPix tags.
+   private volatile org.micromanager.tileddataviewer.internal.PositionedTileCompositor
+         compositor_ = null;
+
    // Current stage position in full-resolution pixel coordinates (center of FOV).
    private volatile Point2D.Double stagePositionPixel_ = null;
 
@@ -86,6 +90,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setStorage(MultiresNDTiffAPI storage) {
       storage_ = storage;
+      compositor_ = new org.micromanager.tileddataviewer.internal.PositionedTileCompositor(storage);
    }
 
    public void invalidateImageKeysCache() {
@@ -244,6 +249,9 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public int[] getBounds() {
+      if (compositor_ != null && compositor_.hasPositionTags()) {
+         return compositor_.computeBounds();
+      }
       return null; // Unbounded explore mode
    }
 
@@ -253,6 +261,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
                                          int imageWidth, int imageHeight) {
       if (storage_ == null) {
          return null;
+      }
+      if (compositor_ != null && compositor_.hasPositionTags()) {
+         return compositor_.composite(axes, resolutionIndex,
+               (int) xOffset, (int) yOffset, imageWidth, imageHeight);
       }
       return storage_.getDisplayImage(axes, resolutionIndex,
               (int) xOffset, (int) yOffset, imageWidth, imageHeight);

@@ -1298,8 +1298,10 @@ public class StitchFrame extends JDialog {
       mmcorej.org.json.JSONObject json = new mmcorej.org.json.JSONObject();
       json.put("Width", tileW);
       json.put("Height", tileH);
-      json.put("GridPixelOverlapX", overlapX);
-      json.put("GridPixelOverlapY", overlapY);
+      // Overlap in summary is 0: PositionedTileCompositor uses XPositionPix/YPositionPix
+      // tags for tile placement, so the uniform-grid overlap value is not used for display.
+      json.put("GridPixelOverlapX", 0);
+      json.put("GridPixelOverlapY", 0);
       // Probe pixel size from the source dataset's first image metadata.
       double pixelSizeUm = probePixelSizeUm(dataProvider_);
       if (pixelSizeUm > 0) {
@@ -1316,7 +1318,7 @@ public class StitchFrame extends JDialog {
          json.put("Channels", chNames.size());
       }
       return new org.micromanager.ndtiffstorage.NDTiffStorage(
-            path, name, json, overlapX, overlapY, true, null, 30, null, isRgb);
+            path, name, json, 0, 0, true, null, 30, null, isRgb);
    }
 
    /**
@@ -1729,9 +1731,8 @@ public class StitchFrame extends JDialog {
    // -------------------------------------------------------------------------
 
    /**
-    * TiledDataViewerDataSource that delegates to a finished NDTiffStorage.
-    * The stitched result is stored as individual tiles; NDTiffStorage handles
-    * compositing them into display images internally.
+    * TiledDataViewerDataSource that uses per-tile XPositionPix/YPositionPix tags to
+    * position tiles on the canvas, bypassing NDTiffStorage's uniform-grid assumption.
     */
    private static class StitchNdtiffDataSource
          implements org.micromanager.tileddataviewer.TiledDataViewerDataSource {
@@ -1739,11 +1740,14 @@ public class StitchFrame extends JDialog {
       private final org.micromanager.ndtiffstorage.NDTiffStorage storage_;
       private final boolean rgb_;
       private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
+      private final org.micromanager.tileddataviewer.internal.PositionedTileCompositor compositor_;
 
       StitchNdtiffDataSource(
             org.micromanager.ndtiffstorage.NDTiffStorage storage, boolean rgb) {
          storage_ = storage;
          rgb_ = rgb;
+         compositor_ =
+               new org.micromanager.tileddataviewer.internal.PositionedTileCompositor(storage);
       }
 
       @Override
@@ -1753,7 +1757,9 @@ public class StitchFrame extends JDialog {
 
       @Override
       public int[] getBounds() {
-         return storage_.getImageBounds();
+         return compositor_.hasPositionTags()
+               ? compositor_.computeBounds()
+               : storage_.getImageBounds();
       }
 
       @Override
@@ -1762,11 +1768,27 @@ public class StitchFrame extends JDialog {
             int resolutionindex,
             double xOffset, double yOffset,
             int imageWidth, int imageHeight) {
-         // The viewer passes display axes with row/col stripped (e.g. {z=0, time=0}
-         // or even {} for single-plane data). NDTiffStorage.getDisplayImage needs
-         // the non-spatial axes present to find the right image plane; it handles
-         // row/col compositing internally. Merge incoming axes with the first stored
-         // entry's non-spatial axes to supply any missing z/time/channel values.
+         if (compositor_.hasPositionTags()) {
+            // Use per-tile XPositionPix/YPositionPix for exact canvas placement.
+            // Fill any missing non-spatial axes from the first stored entry so that
+            // single-plane datasets (no z/channel scrollbar) still work.
+            HashMap<String, Object> fullAxes = new HashMap<>(axes);
+            Set<HashMap<String, Object>> stored = storage_.getAxesSet();
+            if (!stored.isEmpty()) {
+               HashMap<String, Object> sample = stored.iterator().next();
+               for (Map.Entry<String, Object> e : sample.entrySet()) {
+                  String key = e.getKey();
+                  if (!key.equals(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS)
+                        && !key.equals(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS)
+                        && !fullAxes.containsKey(key)) {
+                     fullAxes.put(key, e.getValue());
+                  }
+               }
+            }
+            return compositor_.composite(fullAxes, resolutionindex,
+                  (int) xOffset, (int) yOffset, imageWidth, imageHeight);
+         }
+         // Fallback: uniform-grid compositing via NDTiffStorage (datasets without position tags).
          HashMap<String, Object> fullAxes = new HashMap<>(axes);
          Set<HashMap<String, Object>> stored = storage_.getAxesSet();
          if (!stored.isEmpty()) {
