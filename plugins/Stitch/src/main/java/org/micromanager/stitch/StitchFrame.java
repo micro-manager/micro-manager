@@ -1112,6 +1112,10 @@ public class StitchFrame extends JDialog {
                   tzAxes, effectiveChNames, blendMD)
             : null;
 
+      // Read pixel size from the storage summary so the scale bar overlay can display it.
+      mmcorej.org.json.JSONObject storageMD = ndtiffStorage.getSummaryMetadata();
+      double pixelSizeUm = storageMD != null ? storageMD.optDouble("PixelSize_um", 0) : 0;
+
       int stepX = tileW - overlapX;
       int stepY = tileH - overlapY;
 
@@ -1209,7 +1213,7 @@ public class StitchFrame extends JDialog {
                HashMap<String, Object> axes = buildNdtiffAxes(row, col, z, t,
                      isRgb ? null : chName);
                mmcorej.org.json.JSONObject tags = buildNdtiffTags(
-                     imgW, imgH, isRgb, is16bit, roiX, roiY, axes);
+                     imgW, imgH, isRgb, is16bit, roiX, roiY, pixelSizeUm, axes);
                ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
                      isRgb, is16bit ? 16 : 8, imgH, imgW).get();
             }
@@ -1243,14 +1247,21 @@ public class StitchFrame extends JDialog {
     */
    private static mmcorej.org.json.JSONObject buildNdtiffTags(
          int imgW, int imgH, boolean isRgb, boolean is16bit,
-         int roiX, int roiY, HashMap<String, Object> axes)
+         int roiX, int roiY, double pixelSizeUm, HashMap<String, Object> axes)
          throws mmcorej.org.json.JSONException {
       mmcorej.org.json.JSONObject tags = new mmcorej.org.json.JSONObject();
       tags.put("Width", imgW);
       tags.put("Height", imgH);
       tags.put("BytesPerPixel", isRgb ? 4 : (is16bit ? 2 : 1));
+      // PixelType is required by DefaultImage (used by the overlay renderer to fetch
+      // a representative image). Without it, getAnyImage() throws and overlays are skipped.
+      tags.put("PixelType", isRgb ? "RGB32" : (is16bit ? "GRAY16" : "GRAY8"));
       if (isRgb) {
          tags.put("NumComponents", 3);
+      }
+      // Pixel size — required by the scale bar overlay renderer.
+      if (pixelSizeUm > 0) {
+         tags.put("PixelSizeUm", pixelSizeUm);
       }
       // Canvas-space pixel origin from alignment (or nominal grid if no alignment).
       tags.put("XPositionPix", roiX);
@@ -1363,6 +1374,9 @@ public class StitchFrame extends JDialog {
                   studio_, dataSource, null, provider,
                   summaryJson != null ? summaryJson : new mmcorej.org.json.JSONObject(),
                   pixelSizeUm, isRgb);
+
+      // Set the window title bar text.
+      viewer.getNDViewer().setWindowTitle(name);
 
       if (displaySettings != null) {
          viewer.setDisplaySettings(displaySettings);
