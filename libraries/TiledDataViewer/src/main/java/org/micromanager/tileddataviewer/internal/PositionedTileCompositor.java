@@ -105,10 +105,6 @@ public class PositionedTileCompositor {
       int vpX1 = vpX0 + width * dsScale;
       int vpY1 = vpY0 + height * dsScale;
 
-      // Downsampled tile dimensions (rounded up).
-      int dsTileW = (fullResTileW_ + dsScale - 1) / dsScale;
-      int dsTileH = (fullResTileH_ + dsScale - 1) / dsScale;
-
       Object pixels = null;
       boolean rgb = false;
       boolean is16bit = false;
@@ -177,15 +173,19 @@ public class PositionedTileCompositor {
             continue;
          }
 
-         // At full resolution (resIndex==0) the stored pixel buffer includes the overlap border:
-         // buffer is (tileW + overlapX) × (tileH + overlapY), and content starts at
-         // (overlapX/2, overlapY/2). At lower res levels the buffer is just dsTileW × dsTileH.
+         // NDTiffStorage stores every resolution level with the same tile buffer dimensions:
+         // tileWidth_ × tileHeight_ (the content size, without overlap). Each downsampled
+         // pixel represents dsScale × dsScale full-res pixels — the buffer doesn't shrink.
+         // At full resolution (resIndex==0) the buffer includes an overlap border of
+         // (storedOverlapX_/2) pixels on each side; content starts at that offset.
          // Since Stitch writes with overlap=0, storedOverlapX_/Y_ are 0 for our datasets.
          int tileContentOffsetX = (resolutionIndex == 0) ? storedOverlapX_ / 2 : 0;
          int tileContentOffsetY = (resolutionIndex == 0) ? storedOverlapY_ / 2 : 0;
+         // Row stride of the stored pixel buffer at full res includes the overlap border.
+         // At lower res levels the stride is just fullResTileW_ (no overlap border).
          int storedBufW = (resolutionIndex == 0)
                ? (fullResTileW_ + storedOverlapX_)
-               : dsTileW;
+               : fullResTileW_;
 
          int bpp = rgb ? 4 : 1;
          for (int row = 0; row < copyH; row++) {
