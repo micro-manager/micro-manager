@@ -309,13 +309,18 @@ public class StitchFrame extends JDialog {
          return;
       }
       if (saveToStack || saveToNdtiff) {
-         // Strip any trailing _N suffix so getUniqueSaveDirectory always starts from
-         // the base name and produces _1, _2, ... rather than _6_7, _6_8, ...
-         String baseName = namePrefix.replaceAll("_\\d+$", "");
-         namePrefix = studio_.data().getUniqueSaveDirectory(
-               new File(outputDir, baseName).getAbsolutePath());
+         String targetPath = new File(outputDir, namePrefix).getAbsolutePath();
+         String uniquePath = studio_.data().getUniqueSaveDirectory(targetPath);
+         if (!uniquePath.equals(targetPath)) {
+            // A collision was detected. Strip any trailing _N suffix that getUniqueSaveDirectory
+            // may have found already appended to namePrefix (e.g. from a prior export), then
+            // let getUniqueSaveDirectory pick a fresh suffix from the base name.
+            String baseName = namePrefix.replaceAll("_\\d+$", "");
+            uniquePath = studio_.data().getUniqueSaveDirectory(
+                  new File(outputDir, baseName).getAbsolutePath());
+         }
          // Strip the parent dir back out — we only want the (possibly suffixed) leaf name
-         namePrefix = new File(namePrefix).getName();
+         namePrefix = new File(uniquePath).getName();
       }
 
       // Refuse to stitch a live (still-acquiring) dataset — write-mode readers cannot be
@@ -733,7 +738,7 @@ public class StitchFrame extends JDialog {
          int ndtiffOverlapY = swapCanvasDims ? rawOverlapX : rawOverlapY;
          if (toNdtiff) {
             ndtiffStorage = buildNdtiffSummaryMetadata(
-                  destPath, datasetName, smBuilder.build(),
+                  destPath, datasetName,
                   ndtiffTileW, ndtiffTileH, ndtiffOverlapX, ndtiffOverlapY,
                   isRgb, is16bit, chNames);
          } else {
@@ -894,13 +899,12 @@ public class StitchFrame extends JDialog {
                if (toNdtiff) {
                   // NDTiff path: write each source tile individually (cropped, aligned,
                   // optionally blended) so TiledDataViewer displays them natively tiled.
-                  writeTiledNdtiff(adapter, ndtiffStorage, tzAxes, effectiveChNames,
+                  imagesWritten += writeTiledNdtiff(adapter, ndtiffStorage, tzAxes,
+                        effectiveChNames,
                         tOrigins, correction, is16bit, isRgb, z, t,
                         ndtiffTileW, ndtiffTileH, ndtiffOverlapX, ndtiffOverlapY,
                         doBlend, isRgb ? blendSummaryMD : correctedBlendSummaryMD,
                         tileTransform16, tileTransform8);
-                  imagesWritten += effectiveNumCh * (adapter.getMaxRow() + 1)
-                        * (adapter.getMaxCol() + 1);
                } else if (doBlend) {
                   // RGB composite() has no per-tile transform — the whole assembled canvas is
                   // rotated afterward, so the blender must use the raw (uncorrected) tile geometry.
@@ -972,8 +976,7 @@ public class StitchFrame extends JDialog {
                      Metadata meta = templateMetaBuilder.generateUUID().build();
                      Image mmImg = studio_.data().createImage(pixelData, imgW, imgH,
                            bytesPerPixel, numComponents, coords, meta);
-                     putStitchedImage(mmImg, ds, ndtiffStorage,
-                           chName, z, t, isRgb, is16bit);
+                     putStitchedImage(mmImg, ds);
                      imagesWritten++;
                   }
 
@@ -1012,8 +1015,7 @@ public class StitchFrame extends JDialog {
                      Metadata meta = templateMetaBuilder.generateUUID().build();
                      Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
                            bytesPerPixel, numComponents, coords, meta);
-                     putStitchedImage(mmImg, ds, ndtiffStorage,
-                           chName, z, t, isRgb, is16bit);
+                     putStitchedImage(mmImg, ds);
                      imagesWritten++;
                   }
                }
@@ -1084,8 +1086,10 @@ public class StitchFrame extends JDialog {
     * <p>For each (row, col) in the tile grid, this method composites (if blending) or
     * copies (if not blending) only the pixels for that tile's region from the source
     * data, applies orientation correction, and writes the result to NDTiff storage.</p>
+    *
+    * @return the number of tile-channel images actually written (skipped tiles not counted)
     */
-   private void writeTiledNdtiff(
+   private int writeTiledNdtiff(
          StitchDataProviderAdapter adapter,
          org.micromanager.ndtiffstorage.NDTiffStorage ndtiffStorage,
          HashMap<String, Object> tzAxes,
@@ -1121,6 +1125,7 @@ public class StitchFrame extends JDialog {
 
       int stepX = tileW - overlapX;
       int stepY = tileH - overlapY;
+      int written = 0;
 
       for (int row = 0; row <= maxRow; row++) {
          for (int col = 0; col <= maxCol; col++) {
@@ -1219,9 +1224,11 @@ public class StitchFrame extends JDialog {
                      imgW, imgH, isRgb, is16bit, roiX, roiY, pixelSizeUm, axes);
                ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
                      isRgb, is16bit ? 16 : 8, imgH, imgW).get();
+               written++;
             }
          }
       }
+      return written;
    }
 
    /**
@@ -1283,7 +1290,6 @@ public class StitchFrame extends JDialog {
     */
    private org.micromanager.ndtiffstorage.NDTiffStorage buildNdtiffSummaryMetadata(
          String path, String name,
-         SummaryMetadata summaryMeta,
          int tileW, int tileH,
          int overlapX, int overlapY,
          boolean isRgb, boolean is16bit,
@@ -1314,37 +1320,13 @@ public class StitchFrame extends JDialog {
    }
 
    /**
-    * Writes one stitched image to either the MM Datastore or NDTiff storage.
-    * For NDTiff, the image is stored with row=0, col=0 and channel/z/time axes.
+    * Writes one stitched image to the MM Datastore.
+    * Only used by the RAM/TIFF export paths; the NDTiff path writes tiles directly
+    * via writeTiledNdtiff and never calls this method.
     */
-   private void putStitchedImage(
-         Image mmImg,
-         Datastore ds,
-         org.micromanager.ndtiffstorage.NDTiffStorage ndtiffStorage,
-         String chName, int z, int t,
-         boolean isRgb, boolean is16bit)
+   private static void putStitchedImage(Image mmImg, Datastore ds)
          throws Exception {
-      if (ndtiffStorage != null) {
-         HashMap<String, Object> axes = new HashMap<>();
-         axes.put("row", 0);
-         axes.put("column", 0);
-         axes.put("z", z);
-         axes.put("time", t);
-         if (!isRgb && chName != null) {
-            axes.put("channel", chName);
-         }
-         mmcorej.org.json.JSONObject tags = new mmcorej.org.json.JSONObject();
-         tags.put("Width", mmImg.getWidth());
-         tags.put("Height", mmImg.getHeight());
-         tags.put("BytesPerPixel", mmImg.getBytesPerPixel());
-         if (isRgb) {
-            tags.put("NumComponents", 3);
-         }
-         ndtiffStorage.putImage(mmImg.getRawPixels(), tags, axes,
-               isRgb, is16bit ? 16 : 8, mmImg.getHeight(), mmImg.getWidth()).get();
-      } else {
-         ds.putImage(mmImg);
-      }
+      ds.putImage(mmImg);
    }
 
    /**
@@ -1838,7 +1820,9 @@ public class StitchFrame extends JDialog {
 
       @Override
       public void close() {
-         storage_.close();
+         // Do not close storage here: TiledDataViewer may still issue read requests
+         // after calling dataSource.close() (async close sequence). The storage will
+         // be released when the JVM GC collects it, or closed explicitly elsewhere.
       }
 
       @Override

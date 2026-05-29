@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntConsumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
@@ -399,7 +400,7 @@ public class TileAligner {
    }
 
    /** Cache of Hann window arrays keyed by length. */
-   private static final Map<Integer, double[]> HANN_CACHE = new HashMap<>();
+   private static final Map<Integer, double[]> HANN_CACHE = new ConcurrentHashMap<>();
 
    private static double[] hannWindow(int n) {
       return HANN_CACHE.computeIfAbsent(n, len -> {
@@ -852,14 +853,33 @@ public class TileAligner {
             }
          }
          if (anyReset) {
-            // Re-solve excluding translations that involve outlier tiles.
+            // Re-solve with outlier tiles removed from the set and their translations
+            // excluded. Removing outliers from `tiles` ensures the anchor (smallest
+            // remaining tile) is never itself an outlier, so the anchor constraint
+            // pins a well-behaved tile at nominal position.
+            Set<Point> nonOutlierTiles = new HashSet<>(tiles);
+            nonOutlierTiles.removeAll(outliers);
             List<TranslationResult> filtered = new ArrayList<>();
             for (TranslationResult tr : translations) {
                if (!outliers.contains(tr.from) && !outliers.contains(tr.to)) {
                   filtered.add(tr);
                }
             }
-            origins = propagateOrigins(tiles, filtered, dsStepX, dsStepY, scale, -1);
+            Map<Point, Point2D.Float> resolvedOrigins =
+                  propagateOrigins(nonOutlierTiles, filtered, dsStepX, dsStepY, scale, -1);
+            // Carry results into the final map; outlier tiles keep their nominal position.
+            for (Point t : tiles) {
+               if (outliers.contains(t)) {
+                  float nomX = t.x * dsStepX * scale;
+                  float nomY = t.y * dsStepY * scale;
+                  origins.put(t, new Point2D.Float(nomX, nomY));
+               } else {
+                  Point2D.Float resolved = resolvedOrigins.get(t);
+                  if (resolved != null) {
+                     origins.put(t, resolved);
+                  }
+               }
+            }
          }
       }
 
