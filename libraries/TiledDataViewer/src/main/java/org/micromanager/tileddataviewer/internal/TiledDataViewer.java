@@ -386,11 +386,51 @@ public class TiledDataViewer implements TiledDataViewerAPI {
    public void setRenderSettings(java.util.Map<String, ChannelRenderSettings> channelSettings,
                                   GlobalRenderSettings globalSettings,
                                   ContrastUpdateCallback callback) {
-      guiManager_.setRenderSettings(channelSettings, globalSettings, callback);
+      // In grayscale (non-composite) mode only the currently selected channel renders.
+      // Override active flags so only the channel at the current scrollbar position is on.
+      // If the scrollbar position doesn't match any known channel name (e.g. it's the
+      // integer default 0 before the user touched the slider), fall back to the first
+      // channel so the viewer is not blank.
+      java.util.Map<String, ChannelRenderSettings> effectiveSettings = channelSettings;
+      if (!globalSettings.composite && channelSettings.size() > 1) {
+         Object currentChValue = displayModel_.getAxisPosition(CHANNEL_AXIS);
+         String selectedChannel = null;
+         if (currentChValue != null) {
+            for (String name : channelSettings.keySet()) {
+               if (name.equals(currentChValue)) {
+                  selectedChannel = name;
+                  break;
+               }
+            }
+         }
+         if (selectedChannel == null) {
+            // Pick the first channel name in iteration order.
+            java.util.Iterator<String> it = channelSettings.keySet().iterator();
+            if (it.hasNext()) {
+               selectedChannel = it.next();
+            }
+         }
+         if (selectedChannel != null) {
+            effectiveSettings = new java.util.HashMap<>(channelSettings);
+            for (java.util.Map.Entry<String, ChannelRenderSettings> e
+                  : channelSettings.entrySet()) {
+               String name = e.getKey();
+               ChannelRenderSettings rs = e.getValue();
+               boolean isSelected = name.equals(selectedChannel);
+               if (isSelected != rs.active) {
+                  effectiveSettings.put(name,
+                        new ChannelRenderSettings(rs.contrastMin, rs.contrastMax, rs.gamma,
+                              rs.color, isSelected));
+               }
+            }
+         }
+      }
+      guiManager_.setRenderSettings(effectiveSettings, globalSettings, callback);
 
       // Keep internal DisplaySettings in sync so getDisplaySettingsJSON() is always current.
       DisplaySettings ds = displayModel_.getDisplaySettings();
-      for (java.util.Map.Entry<String, ChannelRenderSettings> entry : channelSettings.entrySet()) {
+      for (java.util.Map.Entry<String, ChannelRenderSettings> entry
+            : effectiveSettings.entrySet()) {
          String name = entry.getKey();
          ChannelRenderSettings rs = entry.getValue();
          ds.setColor(name, rs.color);

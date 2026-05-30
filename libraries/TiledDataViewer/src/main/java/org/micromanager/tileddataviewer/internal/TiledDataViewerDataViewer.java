@@ -407,24 +407,6 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       double percentile = ds.getAutoscaleIgnoredPercentile();
       boolean ignoreOutliers = percentile > 0;
 
-      // In grayscale (non-composite) mode only the currently selected channel is shown.
-      // Override active from MM DisplaySettings: only the channel matching the current
-      // scrollbar position should be active; all others are hidden.
-      if (!composite && channelNames.size() > 1) {
-         Object currentChValue = ndViewer2_.getAxisPosition(TiledDataViewer.CHANNEL_AXIS);
-         if (currentChValue != null) {
-            for (String name : channelNames) {
-               ChannelRenderSettings rs = channelSettings.get(name);
-               if (rs != null) {
-                  boolean isSelected = name.equals(currentChValue);
-                  channelSettings.put(name,
-                        new ChannelRenderSettings(rs.contrastMin, rs.contrastMax, rs.gamma,
-                              rs.color, isSelected));
-               }
-            }
-         }
-      }
-
       GlobalRenderSettings globalSettings = new GlobalRenderSettings(
             autostretch, ignoreOutliers, percentile, composite, logHist);
 
@@ -920,6 +902,14 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // Convert axes to Coords and update display position
       Coords newPosition = axesBridge_.ndViewerToCoords(axes);
       setDisplayPosition(newPosition);
+
+      // In grayscale mode the channel scrollbar selects which channel renders.
+      // Re-push render settings so TiledDataViewer.setRenderSettings re-applies the
+      // single-channel-active filter for the newly selected channel.
+      if (getDisplaySettings().getColorMode() != DisplaySettings.ColorMode.COMPOSITE) {
+         pushRenderSettings(getDisplaySettings());
+         ndViewer2_.update();
+      }
 
       // Skip redundant stats when accumulate mode has a pending new-image
       // request for the current channel (newImageArrived already submitted one)
