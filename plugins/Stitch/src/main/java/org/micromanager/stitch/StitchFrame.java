@@ -898,11 +898,15 @@ public class StitchFrame extends JDialog {
                   // NDTiff path: composite the full canvas into a uniform output tile grid.
                   // tOrigins=null → nominal tile positions; non-null → alignment-corrected.
                   // doBlend controls feathering at overlap seams (not tile placement).
+                  // For grayscale, tileTransform16/8 applies the per-tile orientation
+                  // correction; correctedBlendSummaryMD reflects swapped tile dims.
+                  // For RGB, composite() handles the full canvas (no per-tile transform).
                   imagesWritten += writeCanvasTiledNdtiff(adapter, ndtiffStorage, tzAxes,
                         effectiveChNames,
                         tOrigins, doBlend, is16bit, isRgb, z, t,
                         outCanvasW, outCanvasH, NDTIFF_OUTPUT_TILE_SIZE,
-                        isRgb ? blendSummaryMD : correctedBlendSummaryMD);
+                        isRgb ? blendSummaryMD : correctedBlendSummaryMD,
+                        tileTransform16, tileTransform8);
                } else if (doBlend) {
                   // RGB composite() has no per-tile transform — the whole assembled canvas is
                   // rotated afterward, so the blender must use the raw (uncorrected) tile geometry.
@@ -1112,7 +1116,9 @@ public class StitchFrame extends JDialog {
          int z, int t,
          int canvasW, int canvasH,
          int outTileSize,
-         mmcorej.org.json.JSONObject sourceMD)
+         mmcorej.org.json.JSONObject sourceMD,
+         UnaryOperator<short[]> tileTransform16,
+         UnaryOperator<byte[]> tileTransform8)
          throws Exception {
 
       // TileBlender is used for canvas assembly regardless of feathering. It requires:
@@ -1207,7 +1213,7 @@ public class StitchFrame extends JDialog {
                   }
                } else if (is16bit) {
                   short[] composited = compositor.composite16(roiX, roiY, roiW, roiH, 0,
-                        chName, tileOrigins, (UnaryOperator<short[]>) null, pct -> {});
+                        chName, tileOrigins, tileTransform16, pct -> {});
                   if (roiW < outTileSize || roiH < outTileSize) {
                      short[] padded = new short[outTileSize * outTileSize];
                      for (int row = 0; row < roiH; row++) {
@@ -1220,7 +1226,7 @@ public class StitchFrame extends JDialog {
                   }
                } else {
                   byte[] composited = compositor.composite8(roiX, roiY, roiW, roiH, 0,
-                        chName, tileOrigins, (UnaryOperator<byte[]>) null, pct -> {});
+                        chName, tileOrigins, tileTransform8, pct -> {});
                   if (roiW < outTileSize || roiH < outTileSize) {
                      byte[] padded = new byte[outTileSize * outTileSize];
                      for (int row = 0; row < roiH; row++) {
@@ -1356,14 +1362,29 @@ public class StitchFrame extends JDialog {
          boolean isRgb,
          int canvasW, int canvasH) {
 
-      Set<HashMap<String, Object>> allAxes = storage.getAxesSet();
+      final Set<HashMap<String, Object>> allAxes = storage.getAxesSet();
       mmcorej.org.json.JSONObject summaryJson = storage.getSummaryMetadata();
+
+      // Build SummaryMetadata with channel names from the NDTiff summary so the provider
+      // registers all channels before the viewer is created (avoids NODATA histograms).
+      SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder();
+      if (summaryJson != null && summaryJson.has("ChNames")) {
+         try {
+            mmcorej.org.json.JSONArray chArr = summaryJson.getJSONArray("ChNames");
+            String[] chNames = new String[chArr.length()];
+            for (int i = 0; i < chArr.length(); i++) {
+               chNames[i] = chArr.getString(i);
+            }
+            smb.channelNames(chNames);
+         } catch (mmcorej.org.json.JSONException ignore) { /* use no-channel metadata */ }
+      }
+      SummaryMetadata summaryMetadata = smb.build();
 
       org.micromanager.tileddataprovider.NDTiffProviderAdapter adapter =
             new org.micromanager.tileddataprovider.NDTiffProviderAdapter(storage);
       org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI provider =
             org.micromanager.tileddataviewer.TiledDataViewerFactory.createDataProvider(
-                  studio_.data(), adapter, name);
+                  studio_.data(), adapter, name, summaryMetadata);
 
       // Data source delegates display requests directly to the NDTiff storage.
       org.micromanager.tileddataviewer.TiledDataViewerDataSource dataSource =
@@ -1380,19 +1401,31 @@ public class StitchFrame extends JDialog {
       // Set the window title bar text.
       viewer.getNDViewer().setWindowTitle(name);
 
+      // Initialize the viewer for a loaded (already-written) dataset.
+      // This reads getImageKeys() from the data source, registers all channels in the
+      // display model (addChannel, scrollbars, contrast panels), and sets up scrollbar
+      // extents — replacing the manual newImageArrived loop.
+      // Must be called before setDisplaySettings so channels exist when pushRenderSettings
+      // calls setActive.
+      viewer.getNDViewer().initializeViewerToLoaded(
+            summaryJson != null ? summaryJson : new mmcorej.org.json.JSONObject());
+
+      // Apply source display settings after channels have been registered.
       if (displaySettings != null) {
          viewer.setDisplaySettings(displaySettings);
       }
 
-      // Notify the provider once per unique display-axes plane (strip row/col first so
-      // we don't trigger redundant histogram computations for each tile position).
+      // Trigger histogram computation for each unique display plane.
       Set<HashMap<String, Object>> notified = new java.util.HashSet<>();
       for (HashMap<String, Object> axes : allAxes) {
          HashMap<String, Object> displayAxes = new HashMap<>(axes);
          displayAxes.remove(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS);
          displayAxes.remove(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS);
          if (notified.add(displayAxes)) {
-            provider.newImageArrived(displayAxes);
+            HashMap<String, Object> axesWithTile = new HashMap<>(displayAxes);
+            axesWithTile.put(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS, 0);
+            axesWithTile.put(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS, 0);
+            provider.newImageArrived(axesWithTile);
          }
       }
    }

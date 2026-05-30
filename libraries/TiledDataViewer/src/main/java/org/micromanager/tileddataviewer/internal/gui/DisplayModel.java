@@ -308,35 +308,40 @@ public class DisplayModel {
          if (!stringAxes_.get(axis).contains(axesPositions.get(axis))) {
             stringAxes_.get(axis).add((String) axesPositions.get(axis));
             if (axis.equals(TiledDataViewer.CHANNEL_AXIS)) {
-               try {
-                  SwingUtilities.invokeAndWait(new Runnable() {
-                     @Override
-                     public void run() {
-                        // make sure GUI and display settings are in sync
-                        display_.readHistogramControlsStateFromGUI();
-                        String channelName = (String) axesPositions
-                                 .get(TiledDataViewer.CHANNEL_AXIS);
+               Runnable channelSetup = new Runnable() {
+                  @Override
+                  public void run() {
+                     // make sure GUI and display settings are in sync
+                     display_.readHistogramControlsStateFromGUI();
+                     String channelName = (String) axesPositions
+                              .get(TiledDataViewer.CHANNEL_AXIS);
 
-                        if (!channelName.equals(TiledDataViewer.NO_CHANNEL)
-                                 && displaySettings_.containsChannel(TiledDataViewer.NO_CHANNEL)) {
-                           // remove the dummy channel
-                           displaySettings_.removeChannel(TiledDataViewer.NO_CHANNEL);
-                        }
-
-                        int bitDepth = display_.getDataSource().getImageBitDepth(axesPositions);
-                        //Add contrast controls and display settings
-                        if (!displaySettings_.containsChannel(channelName)) {
-                           displaySettings_.addChannel(channelName, bitDepth);
-                        }
-                        if (!displaySettings_.isCompositeMode()) {
-                           // set only this new channel active
-                           for (String cName : stringAxes_.get(TiledDataViewer.CHANNEL_AXIS)) {
-                              displaySettings_.setActive(channelName, cName.equals(channelName));
-                           }
-                        }
-                        display_.getGUIManager().addContrastControlsIfNeeded(channelName);
+                     if (!channelName.equals(TiledDataViewer.NO_CHANNEL)
+                              && displaySettings_.containsChannel(TiledDataViewer.NO_CHANNEL)) {
+                        // remove the dummy channel
+                        displaySettings_.removeChannel(TiledDataViewer.NO_CHANNEL);
                      }
-                  });
+
+                     int bitDepth = display_.getDataSource().getImageBitDepth(axesPositions);
+                     //Add contrast controls and display settings
+                     if (!displaySettings_.containsChannel(channelName)) {
+                        displaySettings_.addChannel(channelName, bitDepth);
+                     }
+                     if (!displaySettings_.isCompositeMode()) {
+                        // set only this new channel active
+                        for (String cName : stringAxes_.get(TiledDataViewer.CHANNEL_AXIS)) {
+                           displaySettings_.setActive(channelName, cName.equals(channelName));
+                        }
+                     }
+                     display_.getGUIManager().addContrastControlsIfNeeded(channelName);
+                  }
+               };
+               try {
+                  if (SwingUtilities.isEventDispatchThread()) {
+                     channelSetup.run();
+                  } else {
+                     SwingUtilities.invokeAndWait(channelSetup);
+                  }
                } catch (Exception e) {
                   throw new RuntimeException(e);
                }

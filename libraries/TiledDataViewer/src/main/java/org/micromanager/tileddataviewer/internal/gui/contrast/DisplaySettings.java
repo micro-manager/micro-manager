@@ -182,6 +182,9 @@ public class DisplaySettings {
    public void setActive(String channelName, boolean selected) {
       synchronized (this) {
          try {
+            if (!json_.has(channelName)) {
+               addChannel(channelName, 16);
+            }
             json_.getJSONObject(channelName).put("Active", selected);
          } catch (Exception ex) {
             System.err.println("Couldnt set display setting");
