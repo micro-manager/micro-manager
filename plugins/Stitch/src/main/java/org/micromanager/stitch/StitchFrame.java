@@ -1283,6 +1283,9 @@ public class StitchFrame extends JDialog {
       tags.put("Width", imgW);
       tags.put("Height", imgH);
       tags.put("BytesPerPixel", isRgb ? 4 : (is16bit ? 2 : 1));
+      // BitDepth is required by ImageStatsProcessor — without it, ComponentStats.bitDepth(null)
+      // throws NPE inside the stats compute queue and histograms show NO DATA.
+      tags.put("BitDepth", isRgb ? 8 : (is16bit ? 16 : 8));
       // PixelType is required by DefaultImage (used by the overlay renderer to fetch
       // a representative image). Without it, getAnyImage() throws and overlays are skipped.
       tags.put("PixelType", isRgb ? "RGB32" : (is16bit ? "GRAY16" : "GRAY8"));
@@ -1407,26 +1410,45 @@ public class StitchFrame extends JDialog {
       // extents — replacing the manual newImageArrived loop.
       // Must be called before setDisplaySettings so channels exist when pushRenderSettings
       // calls setActive.
-      viewer.getNDViewer().initializeViewerToLoaded(
-            summaryJson != null ? summaryJson : new mmcorej.org.json.JSONObject());
+      // Pass empty JSON so DisplaySettings uses its default constructor (preferences-based).
+      // The NDTiff summary JSON does not have the "All channel settings" structure that
+      // DisplaySettings expects, and passing it causes JSONExceptions for every setting read.
+      viewer.getNDViewer().initializeViewerToLoaded(new mmcorej.org.json.JSONObject());
 
       // Apply source display settings after channels have been registered.
       if (displaySettings != null) {
          viewer.setDisplaySettings(displaySettings);
       }
 
-      // Trigger histogram computation for each unique display plane.
-      Set<HashMap<String, Object>> notified = new java.util.HashSet<>();
+      // Seed histogram computation: pick one representative tile per channel, register
+      // each with the provider (creates Inspector panels), then submit them all to the
+      // viewer via newTileArrived to trigger ImageStatsRequest computation.
+      java.util.List<org.micromanager.data.Image> seedImages = new java.util.ArrayList<>();
+      java.util.List<HashMap<String, Object>> seedAxesList = new java.util.ArrayList<>();
+      java.util.Set<Object> seenChannels = new java.util.LinkedHashSet<>();
       for (HashMap<String, Object> axes : allAxes) {
-         HashMap<String, Object> displayAxes = new HashMap<>(axes);
-         displayAxes.remove(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS);
-         displayAxes.remove(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS);
-         if (notified.add(displayAxes)) {
-            HashMap<String, Object> axesWithTile = new HashMap<>(displayAxes);
-            axesWithTile.put(org.micromanager.ndtiffstorage.NDTiffStorage.ROW_AXIS, 0);
-            axesWithTile.put(org.micromanager.ndtiffstorage.NDTiffStorage.COL_AXIS, 0);
-            provider.newImageArrived(axesWithTile);
+         Object ch = axes.get("channel");
+         if (!seenChannels.add(ch == null ? "" : ch)) {
+            continue; // already seeded this channel
          }
+         HashMap<String, Object> channelAxes = new HashMap<>();
+         if (ch != null) {
+            channelAxes.put("channel", ch);
+         }
+         try {
+            org.micromanager.data.Image img = provider.getDownsampledImageByAxes(axes);
+            if (img != null) {
+               provider.newImageArrived(img, channelAxes);
+               seedImages.add(img);
+               seedAxesList.add(channelAxes);
+            }
+         } catch (Exception e) {
+            studio_.logs().logMessage(
+                  "Stitch: exception fetching seed image: " + e.getMessage());
+         }
+      }
+      if (!seedImages.isEmpty()) {
+         viewer.newTileArrived(seedImages, seedAxesList);
       }
    }
 
