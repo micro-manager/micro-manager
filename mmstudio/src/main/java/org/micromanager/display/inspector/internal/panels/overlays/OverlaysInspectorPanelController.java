@@ -250,7 +250,9 @@ public final class OverlaysInspectorPanelController
 
    @Override
    public void attachDataViewer(DataViewer viewer) {
-      Preconditions.checkState(viewer_ == null);
+      if (viewer_ != null) {
+         detachDataViewer();
+      }
       Preconditions.checkArgument(viewer instanceof DisplayWindow
             || viewer instanceof OverlaySupport);
       viewer_ = viewer;
