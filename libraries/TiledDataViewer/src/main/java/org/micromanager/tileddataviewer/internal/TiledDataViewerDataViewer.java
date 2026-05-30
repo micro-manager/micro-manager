@@ -407,6 +407,24 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       double percentile = ds.getAutoscaleIgnoredPercentile();
       boolean ignoreOutliers = percentile > 0;
 
+      // In grayscale (non-composite) mode only the currently selected channel is shown.
+      // Override active from MM DisplaySettings: only the channel matching the current
+      // scrollbar position should be active; all others are hidden.
+      if (!composite && channelNames.size() > 1) {
+         Object currentChValue = ndViewer2_.getAxisPosition(TiledDataViewer.CHANNEL_AXIS);
+         if (currentChValue != null) {
+            for (String name : channelNames) {
+               ChannelRenderSettings rs = channelSettings.get(name);
+               if (rs != null) {
+                  boolean isSelected = name.equals(currentChValue);
+                  channelSettings.put(name,
+                        new ChannelRenderSettings(rs.contrastMin, rs.contrastMax, rs.gamma,
+                              rs.color, isSelected));
+               }
+            }
+         }
+      }
+
       GlobalRenderSettings globalSettings = new GlobalRenderSettings(
             autostretch, ignoreOutliers, percentile, composite, logHist);
 
