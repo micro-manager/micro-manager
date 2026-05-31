@@ -300,6 +300,7 @@ public class StitchFrame extends JDialog {
       boolean saveToNdtiff = SAVE_NDTIFF.equals(saveFormatCombo_.getSelectedItem());
       String outputDir = outputDirField_.getText().trim();
       String namePrefix = namePrefixField_.getText().trim();
+      final String originalPrefix = namePrefix; // saved before uniquification for preferences
       if ((saveToStack || saveToNdtiff) && outputDir.isEmpty()) {
          studio_.logs().showError("Please select a directory root.", this);
          return;
@@ -311,15 +312,11 @@ public class StitchFrame extends JDialog {
       if (saveToStack || saveToNdtiff) {
          String targetPath = new File(outputDir, namePrefix).getAbsolutePath();
          String uniquePath = studio_.data().getUniqueSaveDirectory(targetPath);
-         if (!uniquePath.equals(targetPath)) {
-            // A collision was detected. Strip any trailing _N suffix that getUniqueSaveDirectory
-            // may have found already appended to namePrefix (e.g. from a prior export), then
-            // let getUniqueSaveDirectory pick a fresh suffix from the base name.
-            String baseName = namePrefix.replaceAll("_\\d+$", "");
-            uniquePath = studio_.data().getUniqueSaveDirectory(
-                  new File(outputDir, baseName).getAbsolutePath());
+         if (uniquePath == null) {
+            studio_.logs().showError("Could not find a unique output directory name.", this);
+            return;
          }
-         // Strip the parent dir back out — we only want the (possibly suffixed) leaf name
+         // Strip the parent dir back out — we only want the (possibly suffixed) leaf name.
          namePrefix = new File(uniquePath).getName();
       }
 
@@ -376,7 +373,7 @@ public class StitchFrame extends JDialog {
       settings_.putBoolean(PREF_BLEND, blend);
       settings_.putString(PREF_SAVE_FORMAT, (String) saveFormatCombo_.getSelectedItem());
       settings_.putString(PREF_OUTPUT_DIR, outputDir);
-      settings_.putString(PREF_NAME_PREFIX, namePrefix.replaceAll("_\\d+$", ""));
+      settings_.putString(PREF_NAME_PREFIX, originalPrefix);
       settings_.putString(PREF_MAX_DISPLACEMENT, maxDisplacementField_.getText().trim());
 
       dispose();

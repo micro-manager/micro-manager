@@ -692,11 +692,6 @@ public class TiledDataViewer implements TiledDataViewerAPI {
                   acq_.abort(); //it may already be aborted but call this again to be sure
                   acq_.waitForCompletion();
                }
-               if (dataSource_ != null) {
-                  dataSource_.close();
-                  dataSource_ = null;
-               }
-
             } catch (Exception e) {
                //not ,uch to do at this point
                e.printStackTrace();
@@ -704,11 +699,20 @@ public class TiledDataViewer implements TiledDataViewerAPI {
                //Now all resources should be released, so evertthing can be shut down
 
                //make everything else close
-
                guiManager_.shutdown();
 
                displayCalculationExecutor_.shutdownNow();
                overlayCalculationExecutor_.shutdownNow();
+
+               // Close the data source after render threads have stopped to avoid
+               // racing with in-flight read requests issued by the display executor.
+               if (dataSource_ != null) {
+                  try {
+                     dataSource_.close();
+                  } catch (Exception ignore) {
+                     // in-flight reads may fail during async teardown
+                  }
+               }
 
                setImageHooks_ = null;
                dataSource_ = null;
