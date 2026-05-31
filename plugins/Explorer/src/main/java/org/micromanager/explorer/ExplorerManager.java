@@ -32,6 +32,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acquisition.SequenceSettings;
@@ -46,6 +47,7 @@ import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.imageprocessing.ImageTransformUtils;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ColorPalettes;
@@ -147,6 +149,14 @@ public class ExplorerManager {
    private int initialCameraHeight_ = 512;
    private boolean isRGB_ = false;
 
+   // Camera orientation / Image Flipper correction
+   private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
+   private boolean sessionCorrectionMirror_ = false; // horizontal mirror
+   private boolean flipperInPipeline_ = false;    // Flipper already corrected images
+   // Raw (pre-correction) affines so Flipper override can restart from them
+   private AffineTransform rawPixelSizeAffine_ = null;
+   private AffineTransform rawInitialPixelSizeAffine_ = null;
+
    public ExplorerManager(Studio studio, ExplorerFrame frame) {
       studio_ = studio;
       frame_ = frame;
@@ -217,6 +227,32 @@ public class ExplorerManager {
          loadPixelSizeAffine();
          initialPixelSizeAffine_ = pixelSizeAffine_;
          initialPixelSizeAffineInverse_ = pixelSizeAffineInverse_;
+
+         // Keep uncorrected copies so the Flipper-detection path can restart cleanly.
+         rawPixelSizeAffine_        = pixelSizeAffine_;
+         rawInitialPixelSizeAffine_ = pixelSizeAffine_;
+         sessionCorrectionRotation_ = 0;
+         sessionCorrectionMirror_   = false;
+         flipperInPipeline_         = false;
+
+         // Issue 1: detect camera mirror from the raw affine (det < 0 → mirror encoded).
+         // Rotation ≠ 0 is only logged; use the Image Flipper plugin for rotation correction.
+         if (pixelSizeAffine_ != null) {
+            int[] corr = ImageTransformUtils.correctionFromAffine(pixelSizeAffine_);
+            if (corr != null && (corr[0] != 0 || corr[1] != 0)) {
+               if (corr[0] != 0) {
+                  studio_.logs().logMessage("Explorer: camera rotation detected (="
+                        + corr[0] + "°); use the Image Flipper plugin for rotation correction");
+               } else {
+                  sessionCorrectionMirror_ = (corr[1] != 0);
+                  if (sessionCorrectionMirror_) {
+                     applyOrientationCorrectionToAffines(0, true);
+                     studio_.logs().logMessage("Explorer: camera mirror detected;"
+                           + " mirror correction applied to canvas affine");
+                  }
+               }
+            }
+         }
 
          // Initial tile-grid estimate uses camera dimensions (corrected after first acq)
          dataSource_.setTileDimensions(cameraWidth_, cameraHeight_);
@@ -530,6 +566,11 @@ public class ExplorerManager {
       acquisitionInterrupted_ = true;
       dismissMismatchAlert();
       pendingBatches_.set(0);
+      sessionCorrectionRotation_ = 0;
+      sessionCorrectionMirror_   = false;
+      flipperInPipeline_         = false;
+      rawPixelSizeAffine_        = null;
+      rawInitialPixelSizeAffine_ = null;
       if (dataSource_ != null) {
          dataSource_.clearPendingTiles();
       }
@@ -937,6 +978,57 @@ public class ExplorerManager {
    }
 
    /**
+    * Returns the inverse of the "mirror-X then rotate CW by rotation degrees" correction
+    * transform.  Composing this into the canvas affine (A_corrected = A_raw * corrInv)
+    * keeps canvas-pixel-delta → stage-micron-delta correct after tile images have been
+    * corrected by the same mirror+rotation.
+    */
+   private AffineTransform buildCorrectionAffineInverse(int rotation, boolean mirror) {
+      AffineTransform inv = new AffineTransform();
+      if (rotation == 90) {
+         inv.quadrantRotate(1); // CCW 90° = inverse of CW 90°
+      } else if (rotation == 180) {
+         inv.quadrantRotate(2);
+      } else if (rotation == 270) {
+         inv.quadrantRotate(3);
+      }
+      if (mirror) {
+         inv.preConcatenate(AffineTransform.getScaleInstance(-1.0, 1.0));
+      }
+      return inv;
+   }
+
+   /**
+    * Composes the orientation correction into both the current and session-start
+    * canvas affines and recomputes their inverses.
+    */
+   private void applyOrientationCorrectionToAffines(int rotation, boolean mirror) {
+      AffineTransform corrInv = buildCorrectionAffineInverse(rotation, mirror);
+      if (pixelSizeAffine_ != null) {
+         AffineTransform c = new AffineTransform(pixelSizeAffine_);
+         c.concatenate(corrInv);
+         pixelSizeAffine_ = c;
+         try {
+            pixelSizeAffineInverse_ = c.createInverse();
+         } catch (NoninvertibleTransformException e) {
+            pixelSizeAffine_ = null;
+            pixelSizeAffineInverse_ = null;
+         }
+      }
+      if (initialPixelSizeAffine_ != null) {
+         AffineTransform c = new AffineTransform(initialPixelSizeAffine_);
+         c.concatenate(corrInv);
+         initialPixelSizeAffine_ = c;
+         try {
+            initialPixelSizeAffineInverse_ = c.createInverse();
+         } catch (NoninvertibleTransformException e) {
+            initialPixelSizeAffine_ = null;
+            initialPixelSizeAffineInverse_ = null;
+         }
+      }
+   }
+
+   /**
     * Loads and validates the pixel-size affine transform from the core.
     * Sets pixelSizeAffine_ / pixelSizeAffineInverse_ on success, leaves both null
     * (scalar fallback) on any failure or if the affine does not match pixelSizeUm_.
@@ -970,6 +1062,22 @@ public class ExplorerManager {
       } catch (Exception e) {
          studio_.logs().logMessage("Explorer: could not load pixel-size affine ("
                + e.getMessage() + "); using scalar coordinate conversion");
+      }
+      // Re-apply session correction so that stage-movement affine stays consistent
+      // after an objective / pixel-size change.
+      if (pixelSizeAffine_ != null
+            && (sessionCorrectionMirror_ || sessionCorrectionRotation_ != 0)) {
+         AffineTransform corrInv = buildCorrectionAffineInverse(
+               sessionCorrectionRotation_, sessionCorrectionMirror_);
+         AffineTransform c = new AffineTransform(pixelSizeAffine_);
+         c.concatenate(corrInv);
+         pixelSizeAffine_ = c;
+         try {
+            pixelSizeAffineInverse_ = c.createInverse();
+         } catch (NoninvertibleTransformException e) {
+            pixelSizeAffine_ = null;
+            pixelSizeAffineInverse_ = null;
+         }
       }
    }
 
@@ -1119,6 +1227,52 @@ public class ExplorerManager {
                } catch (Exception e) {
                   studio_.logs().logError(e, "Explorer: failed to update overlap metadata");
                }
+
+               // Issue 2: detect Image Flipper in the pipeline from first-image metadata.
+               // If detected, override canvas affines with the Flipper's correction so that
+               // stageToPixel() and moveStageToPixelPosition() map to the correct canvas
+               // coordinates (the Flipper has already corrected the pixel data).
+               if (!flipperInPipeline_) {
+                  PropertyMap userData = firstImage.getMetadata().getUserData();
+                  if (userData != null
+                        && userData.containsInteger("ImageFlipper-Rotation")
+                        && userData.containsString("ImageFlipper-Mirror")) {
+                     final int flipRot = userData.getInteger("ImageFlipper-Rotation", 0);
+                     final boolean flipMirror = "On".equals(
+                           userData.getString("ImageFlipper-Mirror", "Off"));
+                     flipperInPipeline_ = true;
+                     // Restart from the raw (pre-camera-correction) affines so the
+                     // Flipper's correction does not compound with the camera correction.
+                     pixelSizeAffine_ = rawPixelSizeAffine_ != null
+                           ? new AffineTransform(rawPixelSizeAffine_) : null;
+                     pixelSizeAffineInverse_ = null;
+                     initialPixelSizeAffine_ = rawInitialPixelSizeAffine_ != null
+                           ? new AffineTransform(rawInitialPixelSizeAffine_) : null;
+                     initialPixelSizeAffineInverse_ = null;
+                     if (pixelSizeAffine_ != null) {
+                        try {
+                           pixelSizeAffineInverse_ = pixelSizeAffine_.createInverse();
+                        } catch (NoninvertibleTransformException ignored) {
+                           pixelSizeAffine_ = null;
+                        }
+                     }
+                     if (initialPixelSizeAffine_ != null) {
+                        try {
+                           initialPixelSizeAffineInverse_ = initialPixelSizeAffine_.createInverse();
+                        } catch (NoninvertibleTransformException ignored) {
+                           initialPixelSizeAffine_ = null;
+                        }
+                     }
+                     sessionCorrectionRotation_ = flipRot;
+                     sessionCorrectionMirror_   = flipMirror;
+                     if (flipRot != 0 || flipMirror) {
+                        applyOrientationCorrectionToAffines(flipRot, flipMirror);
+                     }
+                     studio_.logs().logMessage("Explorer: Image Flipper detected (rot="
+                           + flipRot + ", mirror=" + flipMirror
+                           + "); canvas affine adjusted");
+                  }
+               }
             }
          }
 
@@ -1136,6 +1290,23 @@ public class ExplorerManager {
             Image img = testStore.getImage(c);
             if (img == null) {
                continue;
+            }
+            // Issue 1: apply pixel correction when the Flipper is not in the pipeline.
+            // The Flipper (Issue 2) has already corrected images when flipperInPipeline_ is true.
+            if (!flipperInPipeline_
+                  && (sessionCorrectionMirror_ || sessionCorrectionRotation_ != 0)) {
+               try {
+                  Object[] result = ImageTransformUtils.transformPixels(
+                        img.getRawPixels(), img.getWidth(), img.getHeight(),
+                        img.getBytesPerPixel(), sessionCorrectionMirror_,
+                        sessionCorrectionRotation_);
+                  img = studio_.data().createImage(
+                        result[0], (Integer) result[1], (Integer) result[2],
+                        img.getBytesPerPixel(), img.getNumComponents(),
+                        img.getCoords(), img.getMetadata());
+               } catch (Exception e) {
+                  studio_.logs().logError(e, "Explorer: pixel orientation correction failed");
+               }
             }
             int channelIndex = c.getChannel();
             String channelName = summaryMeta.getSafeChannelName(channelIndex);
