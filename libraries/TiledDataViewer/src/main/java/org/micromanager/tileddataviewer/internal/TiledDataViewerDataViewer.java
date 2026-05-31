@@ -63,7 +63,7 @@ import org.micromanager.tileddataviewer.internal.gui.GlobalRenderSettings;
 import org.micromanager.tileddataviewer.overlay.Roi;
 
 /**
- * NDViewer2 data viewer: combines NDViewer's pyramidal canvas with MM's
+ * TiledDataViewer data viewer: combines NDViewer's pyramidal canvas with MM's
  * Inspector panel system.
  *
  * <p>Extends AbstractDataViewer so the MM Inspector can discover and attach to
@@ -88,7 +88,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    // Using a size-1 queue so in-flight fetches are superseded by the latest position.
    private final ExecutorService statsExecutor_ =
          Executors.newSingleThreadExecutor(
-               (Runnable r) -> new Thread(r, "NDViewer2 stats fetch thread"));
+               (Runnable r) -> new Thread(r, "TiledDataViewer stats fetch thread"));
 
    private final TreeMap<Integer, DataViewerListener> listeners_ =
          new TreeMap<>();
@@ -172,10 +172,10 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          };
 
    /**
-    * Create an NDViewer2DataViewer.
+    * Create a TiledDataViewerDataViewer.
     *
     * @param studio          the MM Studio instance
-    * @param dataSource      NDViewer data source (typically NDTiffAndViewerAdapter)
+    * @param dataSource      TiledDataViewer data source (typically NDTiffAndViewerAdapter)
     * @param acqInterface    acquisition control interface (may be null)
     * @param dataProvider    the MM DataProvider wrapping NDTiff storage
     * @param summaryMetadata NDTiff summary metadata JSON
@@ -282,7 +282,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          ndViewer2_.update();
          return effectiveSettings;
       } catch (NullPointerException e) {
-         studio_.logs().logDebugMessage("NDViewer2: NPE in handleDisplaySettings "
+         studio_.logs().logDebugMessage("TiledDataViewer: NPE in handleDisplaySettings "
                + "(likely async close race): " + e.getMessage());
       }
       return requestedSettings;
@@ -1169,7 +1169,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       ndViewer2_.setWindowTitle(title);
    }
 
-   // ---- OverlaySupport / NDViewer2DataViewerAPI overlay methods ----
+   // ---- OverlaySupport / TiledDataViewerDataViewerAPI overlay methods ----
 
    /**
     * Create the internal bridge overlayer plugin that renders MM overlays onto the NDViewer canvas.
@@ -1267,7 +1267,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                         anyPainted = true;
                      } catch (Exception ex) {
                         studio_.logs().logError(ex,
-                              "NDViewer2 bridge: error painting " + overlay.getTitle());
+                              "TiledDataViewer bridge: error painting " + overlay.getTitle());
                      }
                   }
                }
@@ -1302,7 +1302,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       if (overlay == null) {
          return;
       }
-      studio_.logs().logMessage("NDViewer2: addOverlay called: " + overlay.getTitle());
+      studio_.logs().logMessage("TiledDataViewer: addOverlay called: " + overlay.getTitle());
       mmOverlays_.add(overlay);
       // Listen for repaint requests from the overlay so the canvas redraws
       // immediately when settings or visibility change.

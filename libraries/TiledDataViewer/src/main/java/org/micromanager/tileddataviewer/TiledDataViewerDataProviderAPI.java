@@ -7,7 +7,7 @@ import org.micromanager.data.Image;
 import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 
 /**
- * Public interface for the NDViewer2 data provider.
+ * Public interface for the TiledDataViewer data provider.
  *
  * <p>Use {@link TiledDataViewerFactory#createDataProvider} to obtain an instance.</p>
  */

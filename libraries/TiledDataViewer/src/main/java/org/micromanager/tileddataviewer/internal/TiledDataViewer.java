@@ -380,7 +380,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    /**
     * Update render settings used by ImageMaker for the next render.
-    * Called by NDViewer2DataViewer before triggering update().
+    * Called by TiledDataViewerDataViewer before triggering update().
     * Also syncs the internal DisplaySettings so getDisplaySettingsJSON() is always current.
     */
    public void setRenderSettings(java.util.Map<String, ChannelRenderSettings> channelSettings,

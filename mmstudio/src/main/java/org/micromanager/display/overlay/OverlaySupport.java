@@ -7,7 +7,7 @@ import java.util.List;
  * implementing the full {@link org.micromanager.display.DisplayWindow}.
  *
  * <p>Implement this interface to allow the Overlays Inspector panel to attach
- * to a custom viewer (e.g. NDViewer2DataViewer).
+ * to a custom viewer (e.g. TiledDataViewerDataViewer).
  */
 public interface OverlaySupport {
 
