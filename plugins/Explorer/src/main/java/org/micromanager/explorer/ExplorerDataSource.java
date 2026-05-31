@@ -107,12 +107,13 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          if (ti == null || ti.tags == null) {
             continue;
          }
-         int x = ti.tags.optInt("XPositionPix", Integer.MIN_VALUE);
-         int y = ti.tags.optInt("YPositionPix", Integer.MIN_VALUE);
-         if (x == Integer.MIN_VALUE || y == Integer.MIN_VALUE) {
+         if (!ti.tags.has("XPositionPix") || !ti.tags.has("YPositionPix")) {
+            // This tile has no position tag — dataset does not use per-tile positioning.
             tilePositions_ = new java.util.LinkedHashMap<>();
             return;
          }
+         int x = ti.tags.optInt("XPositionPix", 0);
+         int y = ti.tags.optInt("YPositionPix", 0);
          if (fullResTileW_ == 0) {
             fullResTileW_ = ti.tags.optInt("Width", 0);
             fullResTileH_ = ti.tags.optInt("Height", 0);

@@ -1376,7 +1376,7 @@ public class StitchFrame extends JDialog {
          json.put("Channels", chNames.size());
       }
       return new org.micromanager.ndtiffstorage.NDTiffStorage(
-            path, name, json, 0, 0, true, null, 30, null, isRgb);
+            path, name, json, 0, 0, true, null, 30, null, true);
    }
 
    /**
