@@ -908,12 +908,23 @@ public class StitchFrame extends JDialog {
                   // For grayscale, tileTransform16/8 applies the per-tile orientation
                   // correction; correctedBlendSummaryMD reflects swapped tile dims.
                   // For RGB, composite() handles the full canvas (no per-tile transform).
+                  final int tIdx = t;
+                  final int zIdx = z;
+                  SwingUtilities.invokeLater(() -> statusLabel.setText(
+                        "Writing t=" + (tIdx + 1) + " z=" + (zIdx + 1) + "..."));
+                  final int imagesBefore = imagesWritten;
+                  final java.util.function.IntConsumer ndtiffProgress = pct ->
+                        SwingUtilities.invokeLater(() -> {
+                           int base = doAlign ? 50 : 0;
+                           int half = doAlign ? 2 : 1;
+                           bar.setValue(base + (imagesBefore * 100 + pct) / (totalImages * half));
+                        });
                   imagesWritten += writeCanvasTiledNdtiff(adapter, ndtiffStorage, tzAxes,
                         effectiveChNames,
                         tOrigins, doBlend, is16bit, isRgb, z, t,
                         outCanvasW, outCanvasH, NDTIFF_OUTPUT_TILE_SIZE,
                         isRgb ? blendSummaryMD : correctedBlendSummaryMD,
-                        tileTransform16, tileTransform8, numZ, numT);
+                        tileTransform16, tileTransform8, numZ, numT, ndtiffProgress);
                } else if (doBlend) {
                   // RGB composite() has no per-tile transform — the whole assembled canvas is
                   // rotated afterward, so the blender must use the raw (uncorrected) tile geometry.
@@ -1035,8 +1046,14 @@ public class StitchFrame extends JDialog {
 
          if (toNdtiff) {
             // Pre-build downsampled pyramid levels then finalize.
+            SwingUtilities.invokeLater(() -> {
+               bar.setValue(98);
+               statusLabel.setText("Building pyramid levels...");
+            });
             ndtiffStorage.increaseMaxResolutionLevel(4);
+            SwingUtilities.invokeLater(() -> statusLabel.setText("Finalizing..."));
             ndtiffStorage.finishedWriting();
+            SwingUtilities.invokeLater(() -> bar.setValue(100));
             final org.micromanager.ndtiffstorage.NDTiffStorage finalStorage = ndtiffStorage;
             final String ndtiffPath = destPath;
             final DisplaySettings dispSettings = sourceDisplaySettings;
@@ -1126,7 +1143,8 @@ public class StitchFrame extends JDialog {
          mmcorej.org.json.JSONObject sourceMD,
          UnaryOperator<short[]> tileTransform16,
          UnaryOperator<byte[]> tileTransform8,
-         int numZ, int numT)
+         int numZ, int numT,
+         java.util.function.IntConsumer tileProgress)
          throws Exception {
 
       // TileBlender is used for canvas assembly regardless of feathering. It requires:
@@ -1189,6 +1207,8 @@ public class StitchFrame extends JDialog {
       int numCols = (int) Math.ceil((double) canvasW / outTileSize);
       int numRows = (int) Math.ceil((double) canvasH / outTileSize);
       int written = 0;
+      int totalTilesThisCall = numRows * numCols * effectiveChNames.size();
+      int tilesWritten = 0;
 
       for (int canvasRow = 0; canvasRow < numRows; canvasRow++) {
          for (int canvasCol = 0; canvasCol < numCols; canvasCol++) {
@@ -1254,6 +1274,10 @@ public class StitchFrame extends JDialog {
                ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
                      isRgb, is16bit ? 16 : 8, outTileSize, outTileSize).get();
                written++;
+               tilesWritten++;
+               if (tileProgress != null && totalTilesThisCall > 0) {
+                  tileProgress.accept(tilesWritten * 100 / totalTilesThisCall);
+               }
             }
          }
       }
