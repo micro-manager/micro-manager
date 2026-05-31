@@ -10,25 +10,17 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 
 /**
  * Detects whether an NDTiff dataset carries per-tile position tags
- * ({@code TileAffineTransform} or legacy {@code XPositionPix}/{@code YPositionPix})
- * and provides position-aware bounds computation.
+ * ({@code XPositionPix}/{@code YPositionPix}) and provides position-aware bounds computation.
  *
- * <p>When position tags are present, {@link NDTiffStorage#getDisplayImage} handles
- * correct tile placement at all pyramid resolution levels internally.  This class's
- * only remaining responsibilities are:
- * <ul>
- *   <li>{@link #hasPositionTags()} — tell callers whether per-tile positioning is active</li>
- *   <li>{@link #computeBounds()} — return the true pixel-position-based canvas bounds</li>
- *   <li>{@link #getImageForDisplay} — thin delegation to storage (positioning handled there)</li>
- * </ul>
+ * <p>When position tags are present, tile origins are read from each image's metadata tags and
+ * used to compute the canvas bounds in {@link #computeBounds()}.  Actual pixel compositing is
+ * delegated to {@link MultiresNDTiffAPI#getDisplayImage}, which handles grid-based tile
+ * placement internally.</p>
  *
  * <p>Thread-safety: {@link #buildPositions()} is synchronized; once built the map is
  * effectively immutable.</p>
  */
 public class PositionedTileCompositor {
-
-   private static final String COL_AXIS = "column";
-   private static final String ROW_AXIS = "row";
 
    private final MultiresNDTiffAPI storage_;
 
@@ -42,8 +34,7 @@ public class PositionedTileCompositor {
    }
 
    /**
-    * Returns true if stored tiles carry position tags that NDTiffStorage will use
-    * for non-uniform placement.
+    * Returns true if stored tiles carry {@code XPositionPix}/{@code YPositionPix} tags.
     */
    public boolean hasPositionTags() {
       buildPositions();
@@ -73,16 +64,13 @@ public class PositionedTileCompositor {
    }
 
    /**
-    * Delegates to {@link MultiresNDTiffAPI#getDisplayImage}, which handles per-tile
-    * positioning internally when {@code TileAffineTransform} tags are present.
+    * Delegates to {@link MultiresNDTiffAPI#getDisplayImage}.
     * The {@code nonSpatialAxes} must not contain row or column.
     */
    public TaggedImage getImageForDisplay(HashMap<String, Object> nonSpatialAxes,
                                          int resolutionIndex,
                                          int xOffset, int yOffset,
                                          int width, int height) {
-      // NDTiffStorage.getDisplayImage now reads TileAffineTransform tags and uses them
-      // for correct positioning at all pyramid levels when present.
       return storage_.getDisplayImage(nonSpatialAxes, resolutionIndex,
             xOffset, yOffset, width, height);
    }
@@ -100,25 +88,11 @@ public class PositionedTileCompositor {
          if (ti == null || ti.tags == null) {
             continue;
          }
-         // Check for TileAffineTransform first, then fall back to XPositionPix/YPositionPix.
-         int x;
-         int y;
-         mmcorej.org.json.JSONArray affineArr =
-               ti.tags.optJSONArray("TileAffineTransform");
-         if (affineArr != null && affineArr.length() == 12) {
-            x = (int) Math.round(affineArr.optDouble(3, Double.NaN));
-            y = (int) Math.round(affineArr.optDouble(7, Double.NaN));
-            if (Double.isNaN(affineArr.optDouble(3, Double.NaN))) {
-               tilePositions_ = new LinkedHashMap<>();
-               return;
-            }
-         } else {
-            x = ti.tags.optInt("XPositionPix", Integer.MIN_VALUE);
-            y = ti.tags.optInt("YPositionPix", Integer.MIN_VALUE);
-            if (x == Integer.MIN_VALUE || y == Integer.MIN_VALUE) {
-               tilePositions_ = new LinkedHashMap<>();
-               return;
-            }
+         int x = ti.tags.optInt("XPositionPix", Integer.MIN_VALUE);
+         int y = ti.tags.optInt("YPositionPix", Integer.MIN_VALUE);
+         if (x == Integer.MIN_VALUE || y == Integer.MIN_VALUE) {
+            tilePositions_ = new LinkedHashMap<>();
+            return;
          }
          if (fullResTileW_ == 0) {
             fullResTileW_ = ti.tags.optInt("Width", 0);

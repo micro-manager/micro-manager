@@ -138,7 +138,8 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    // Key: NDViewer channel name. Value: long[] of length rawHist.length + 2.
    private final HashMap<String, long[]> fullHistBuffers_ = new HashMap<>();
 
-
+   // Last channel axis value seen by onNDViewerImageChanged, used to detect channel scrolls.
+   private Object prevChannelAxisValue_ = null;
 
 
 
@@ -900,13 +901,18 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       }
       viewerInitialized_ = true;
       // Convert axes to Coords and update display position
+      Object newChannel = axes.get(TiledDataViewer.CHANNEL_AXIS);
+      boolean channelChanged = newChannel != null && !newChannel.equals(prevChannelAxisValue_);
+      prevChannelAxisValue_ = newChannel;
       Coords newPosition = axesBridge_.ndViewerToCoords(axes);
       setDisplayPosition(newPosition);
 
       // In grayscale mode the channel scrollbar selects which channel renders.
       // Re-push render settings so TiledDataViewer.setRenderSettings re-applies the
       // single-channel-active filter for the newly selected channel.
-      if (getDisplaySettings().getColorMode() != DisplaySettings.ColorMode.COMPOSITE) {
+      // Only fire when the channel axis actually changed — Z/time scrolls don't need this.
+      if (getDisplaySettings().getColorMode() != DisplaySettings.ColorMode.COMPOSITE
+            && channelChanged) {
          pushRenderSettings(getDisplaySettings());
          ndViewer2_.update();
       }

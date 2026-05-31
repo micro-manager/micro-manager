@@ -437,7 +437,10 @@ public class TiledDataViewer implements TiledDataViewerAPI {
          ds.setContrastMin(name, rs.contrastMin);
          ds.setContrastMax(name, rs.contrastMax);
          ds.setGamma(name, rs.gamma);
-         ds.setActive(name, rs.active);
+         // Use the original active flag, not the grayscale-overridden one, so that
+         // getDisplaySettingsJSON() does not serialize non-selected channels as inactive.
+         ChannelRenderSettings original = channelSettings.get(name);
+         ds.setActive(name, original != null ? original.active : rs.active);
       }
       ds.setAutoscale(globalSettings.autostretch);
       ds.setCompositeMode(globalSettings.composite);

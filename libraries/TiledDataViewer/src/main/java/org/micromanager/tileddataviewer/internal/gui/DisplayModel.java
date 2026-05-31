@@ -328,9 +328,9 @@ public class DisplayModel {
                         displaySettings_.addChannel(channelName, bitDepth);
                      }
                      if (!displaySettings_.isCompositeMode()) {
-                        // set only this new channel active
+                        // set only this new channel active; deactivate all others
                         for (String cName : stringAxes_.get(TiledDataViewer.CHANNEL_AXIS)) {
-                           displaySettings_.setActive(channelName, cName.equals(channelName));
+                           displaySettings_.setActive(cName, cName.equals(channelName));
                         }
                      }
                      display_.getGUIManager().addContrastControlsIfNeeded(channelName);
