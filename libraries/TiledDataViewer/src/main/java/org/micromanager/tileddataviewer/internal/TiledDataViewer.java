@@ -16,13 +16,16 @@ package org.micromanager.tileddataviewer.internal;
 
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.event.MouseAdapter;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -383,7 +386,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
     * Called by TiledDataViewerDataViewer before triggering update().
     * Also syncs the internal DisplaySettings so getDisplaySettingsJSON() is always current.
     */
-   public void setRenderSettings(java.util.Map<String, ChannelRenderSettings> channelSettings,
+   public void setRenderSettings(Map<String, ChannelRenderSettings> channelSettings,
                                   GlobalRenderSettings globalSettings,
                                   ContrastUpdateCallback callback) {
       // In grayscale (non-composite) mode only the currently selected channel renders.
@@ -391,7 +394,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       // If the scrollbar position doesn't match any known channel name (e.g. it's the
       // integer default 0 before the user touched the slider), fall back to the first
       // channel so the viewer is not blank.
-      java.util.Map<String, ChannelRenderSettings> effectiveSettings = channelSettings;
+      Map<String, ChannelRenderSettings> effectiveSettings = channelSettings;
       if (!globalSettings.composite && channelSettings.size() > 1) {
          Object currentChValue = displayModel_.getAxisPosition(CHANNEL_AXIS);
          String selectedChannel = null;
@@ -405,14 +408,14 @@ public class TiledDataViewer implements TiledDataViewerAPI {
          }
          if (selectedChannel == null) {
             // Pick the first channel name in iteration order.
-            java.util.Iterator<String> it = channelSettings.keySet().iterator();
+            Iterator<String> it = channelSettings.keySet().iterator();
             if (it.hasNext()) {
                selectedChannel = it.next();
             }
          }
          if (selectedChannel != null) {
-            effectiveSettings = new java.util.HashMap<>(channelSettings);
-            for (java.util.Map.Entry<String, ChannelRenderSettings> e
+            effectiveSettings = new HashMap<>(channelSettings);
+            for (Map.Entry<String, ChannelRenderSettings> e
                   : channelSettings.entrySet()) {
                String name = e.getKey();
                ChannelRenderSettings rs = e.getValue();
@@ -429,7 +432,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
       // Keep internal DisplaySettings in sync so getDisplaySettingsJSON() is always current.
       DisplaySettings ds = displayModel_.getDisplaySettings();
-      for (java.util.Map.Entry<String, ChannelRenderSettings> entry
+      for (Map.Entry<String, ChannelRenderSettings> entry
             : effectiveSettings.entrySet()) {
          String name = entry.getKey();
          ChannelRenderSettings rs = entry.getValue();
@@ -454,7 +457,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
     * ImageMaker during the last render. Keys are channel names; values are
     * int[] arrays with one entry per pixel value (65536 entries for 16-bit).
     */
-   public java.util.HashMap<String, int[]> getHistograms() {
+   public HashMap<String, int[]> getHistograms() {
       return guiManager_.getHistograms();
    }
 
@@ -463,7 +466,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
     * Only channels rendered by NDVImageProcessorRGB appear in the result.
     * The value array has three entries: [R histogram, G histogram, B histogram].
     */
-   public java.util.HashMap<String, int[][]> getComponentHistograms() {
+   public HashMap<String, int[][]> getComponentHistograms() {
       return guiManager_.getComponentHistograms();
    }
 
@@ -555,7 +558,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       }
    }
 
-   public void setPersistentMouseAdapter(java.awt.event.MouseAdapter adapter) {
+   public void setPersistentMouseAdapter(MouseAdapter adapter) {
       guiManager_.setPersistentMouseAdapter(adapter);
    }
 

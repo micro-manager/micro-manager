@@ -18,6 +18,7 @@
 package org.micromanager.tileddataviewer.internal.gui.contrast;
 
 import java.awt.Color;
+import java.util.Iterator;
 import java.util.prefs.Preferences;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -50,7 +51,7 @@ public class DisplaySettings {
          json_ = new DisplaySettings(preferences_).toJSON();
          // Carry over any per-channel entries already present in json (e.g. color, contrast).
          if (json != null) {
-            java.util.Iterator<String> keys = json.keys();
+            Iterator<String> keys = json.keys();
             while (keys.hasNext()) {
                String k = keys.next();
                if (!k.equals(ALL_CHANNELS_SETTINGS_KEY)) {

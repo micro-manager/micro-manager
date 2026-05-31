@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -64,7 +66,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
 
    // Lazily built from XPositionPix/YPositionPix tags; empty map = no position tags present.
-   private volatile java.util.Map<HashMap<String, Object>, java.awt.Point> tilePositions_ = null;
+   private volatile Map<HashMap<String, Object>, Point> tilePositions_ = null;
    private int fullResTileW_ = 0;
    private int fullResTileH_ = 0;
 
@@ -101,7 +103,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       if (tilePositions_ != null) {
          return;
       }
-      java.util.Map<HashMap<String, Object>, java.awt.Point> map = new java.util.LinkedHashMap<>();
+      Map<HashMap<String, Object>, Point> map = new LinkedHashMap<>();
       for (HashMap<String, Object> axes : storage_.getAxesSet()) {
          mmcorej.TaggedImage ti = storage_.getImage(axes, 0);
          if (ti == null || ti.tags == null) {
@@ -109,7 +111,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          }
          if (!ti.tags.has("XPositionPix") || !ti.tags.has("YPositionPix")) {
             // This tile has no position tag — dataset does not use per-tile positioning.
-            tilePositions_ = new java.util.LinkedHashMap<>();
+            tilePositions_ = new LinkedHashMap<>();
             return;
          }
          int x = ti.tags.optInt("XPositionPix", 0);
@@ -118,7 +120,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
             fullResTileW_ = ti.tags.optInt("Width", 0);
             fullResTileH_ = ti.tags.optInt("Height", 0);
          }
-         map.put(axes, new java.awt.Point(x, y));
+         map.put(axes, new Point(x, y));
       }
       tilePositions_ = map;
    }
@@ -290,7 +292,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       int yMin = Integer.MAX_VALUE;
       int xMax = Integer.MIN_VALUE;
       int yMax = Integer.MIN_VALUE;
-      for (java.awt.Point p : tilePositions_.values()) {
+      for (Point p : tilePositions_.values()) {
          xMin = Math.min(xMin, p.x);
          yMin = Math.min(yMin, p.y);
          xMax = Math.max(xMax, p.x + fullResTileW_);

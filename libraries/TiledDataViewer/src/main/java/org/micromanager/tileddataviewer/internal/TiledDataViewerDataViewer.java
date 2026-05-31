@@ -1,19 +1,25 @@
 package org.micromanager.tileddataviewer.internal;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -113,14 +119,14 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    // Set of channel indices whose next stats result should be merged into the
    // accumulator. Replaces the old single boolean to correctly handle multiple
    // channels arriving in rapid succession without flag aliasing.
-   private final java.util.Set<Integer> accumulateNextChannels_ =
-         java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+   private final Set<Integer> accumulateNextChannels_ =
+         Collections.synchronizedSet(new HashSet<>());
 
    // Last autostretch-computed contrast bounds per NDViewer channel name.
    // Updated by onContrastUpdated with ImageMaker's actual rendered values.
    // int[]{min, max}
-   private final java.util.concurrent.ConcurrentHashMap<String, int[]> lastStretchedContrast_ =
-         new java.util.concurrent.ConcurrentHashMap<>();
+   private final ConcurrentHashMap<String, int[]> lastStretchedContrast_ =
+         new ConcurrentHashMap<>();
 
    // --- postImageMakerStats() throttling / change-detection state ---
 
@@ -163,7 +169,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    private final Roi mmOverlayRoi_ =
          new Roi(0, 0, 1, 1) {
             @Override
-            public void drawOverlay(java.awt.Graphics gr) {
+            public void drawOverlay(Graphics gr) {
                BufferedImage buf = mmOverlayBuf_;
                if (buf != null) {
                   gr.drawImage(buf, 0, 0, null);
@@ -216,7 +222,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // Install a persistent mouse adapter to post pixel-info and mouse events
       // so the Inspector's white-balance picked-point feature works.
       // Using setPersistentMouseAdapter ensures it survives setCustomCanvasMouseListener calls.
-      ndViewer2_.setPersistentMouseAdapter(new java.awt.event.MouseAdapter() {
+      ndViewer2_.setPersistentMouseAdapter(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
             postDisplayMouseEvent(e);
@@ -710,7 +716,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          boolean anyChanged = false;
          for (Map.Entry<String, int[]> entry : rawHists.entrySet()) {
             int[] prev = lastPostedHist_.get(entry.getKey());
-            if (!java.util.Arrays.equals(prev, entry.getValue())) {
+            if (!Arrays.equals(prev, entry.getValue())) {
                anyChanged = true;
                break;
             }
@@ -733,7 +739,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          List<String> allNames = axesBridge_.getChannelNames();
          // Single-channel datasets use NO_CHANNEL as the histogram key.
          List<String> orderedNames = allNames.isEmpty()
-               ? java.util.Collections.singletonList(TiledDataViewer.NO_CHANNEL)
+               ? Collections.singletonList(TiledDataViewer.NO_CHANNEL)
                : allNames;
 
          // Build a map from channel index → routing image from the previous result.
@@ -760,7 +766,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             if (routingImg == null) {
                // Synthesise a minimal image with the correct channel coord so the
                // Inspector can route this ImageStats to the right histogram panel.
-               Coords coords = org.micromanager.data.Coordinates.builder()
+               Coords coords = Coordinates.builder()
                      .channel(i).build();
                routingImg = dataProvider_.getImage(coords);
             }
@@ -768,7 +774,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                // Still null (tiled data with no image at this coord yet): build a
                // zero-pixel placeholder purely for its Coords — the Inspector only
                // uses the coord for panel routing, not for pixel data.
-               Coords coords = org.micromanager.data.Coordinates.builder()
+               Coords coords = Coordinates.builder()
                      .channel(i).build();
                routingImg = studio_.data().createImage(
                      new byte[1], 1, 1, 1, 1, coords,
@@ -838,7 +844,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // Zero pixel values (unacquired/black tiles) go into fullHist[1] (rawHist[0]).
       // We zero that bin out so that getQuantile() ignores them when computing the
       // autoscale dark point — otherwise black tiles drive the dark point to 0.
-      java.util.Arrays.fill(fullHist, 0L);
+      Arrays.fill(fullHist, 0L);
       long pixelCount = 0;
       long pixelCountExcludingZeros = 0;
       long minimum = -1;
@@ -1180,7 +1186,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          @Override
          public void drawOverlay(org.micromanager.tileddataviewer.overlay.Overlay defaultOverlay,
                                  Point2D.Double displayImageSize, double downsampleFactor,
-                                 java.awt.Graphics g, HashMap<String, Object> axes,
+                                 Graphics g, HashMap<String, Object> axes,
                                  double magnification, Point2D.Double viewOffset)
                   throws InterruptedException {
             // Chain to external plugin first (e.g. DeskewExploreDataSource tile grid).
@@ -1442,8 +1448,8 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          postEvent(DataViewerMousePixelInfoChangedEvent.create(
                imgX, imgY,
                new String[]{Coords.CHANNEL},
-               java.util.Collections.singletonList(coords),
-               java.util.Collections.singletonList(componentValues)));
+               Collections.singletonList(coords),
+               Collections.singletonList(componentValues)));
       } catch (Exception e) {
          postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
       }

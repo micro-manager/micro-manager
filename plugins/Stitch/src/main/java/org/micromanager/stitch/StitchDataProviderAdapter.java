@@ -1,5 +1,6 @@
 package org.micromanager.stitch;
 
+import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -509,7 +510,7 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       }
 
       // Collect XY positions per position index from per-image metadata
-      Map<Integer, double[]> xyByPos = new java.util.HashMap<>();
+      Map<Integer, double[]> xyByPos = new HashMap<>();
       for (Coords coords : source.getUnorderedImageCoords()) {
          int posIdx = coords.hasAxis(Coords.STAGE_POSITION)
                ? coords.getStagePosition() : 0;
@@ -636,7 +637,7 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
             // The affine columns represent the X and Y basis vectors in µm/pixel.
             // For a rotation+scale affine: column lengths equal the pixel size.
             // For anisotropic pixels, average the two column lengths.
-            java.awt.geom.AffineTransform af = img.getMetadata().getPixelSizeAffine();
+            AffineTransform af = img.getMetadata().getPixelSizeAffine();
             if (af != null) {
                double colX = Math.sqrt(af.getScaleX() * af.getScaleX()
                      + af.getShearY() * af.getShearY());
