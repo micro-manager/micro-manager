@@ -250,7 +250,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    @Override
    public int[] getBounds() {
       if (storage_ != null && compositor_ != null && compositor_.hasPositionTags()) {
-         // Return affine-position-based bounds for datasets written with TileAffineTransform.
+         // Return pixel-position-based bounds for datasets with XPositionPix/YPositionPix tags.
          return compositor_.computeBounds();
       }
       return null; // Unbounded explore mode for normal acquisitions
@@ -263,7 +263,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       if (storage_ == null) {
          return null;
       }
-      // NDTiffStorage.getDisplayImage handles per-tile positioning via TileAffineTransform tags.
+      // NDTiffStorage.getDisplayImage handles grid-based tile placement internally.
       return storage_.getDisplayImage(axes, resolutionIndex,
               (int) xOffset, (int) yOffset, imageWidth, imageHeight);
    }

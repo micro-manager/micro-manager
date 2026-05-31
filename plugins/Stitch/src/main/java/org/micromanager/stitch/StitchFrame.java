@@ -1841,7 +1841,7 @@ public class StitchFrame extends JDialog {
             int imageWidth, int imageHeight) {
          // Fill any missing non-spatial axes from the first stored entry so that
          // single-plane datasets (no z/channel scrollbar) still work.
-         // NDTiffStorage handles per-tile positioning internally via TileAffineTransform tags.
+         // NDTiffStorage handles grid-based tile placement internally.
          HashMap<String, Object> fullAxes = new HashMap<>(axes);
          Set<HashMap<String, Object>> stored = storage_.getAxesSet();
          if (!stored.isEmpty()) {
