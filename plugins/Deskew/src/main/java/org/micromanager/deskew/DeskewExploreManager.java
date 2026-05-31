@@ -228,7 +228,7 @@ public class DeskewExploreManager {
                  SAVING_QUEUE_SIZE, null, true);
          dataSource_.setStorage(storage_);
 
-         // Create NDViewer2 (NDViewer + MM Inspector)
+         // Create TiledDataViewer (NDViewer + MM Inspector)
          mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(),
                   new NDTiffProviderAdapter(storage_), acqName_);
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
@@ -392,7 +392,7 @@ public class DeskewExploreManager {
             }
          }
 
-         // Create NDViewer2 (NDViewer + MM Inspector)
+         // Create TiledDataViewer (NDViewer + MM Inspector)
          mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(),
                   new NDTiffProviderAdapter(storage_), acqName_);
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
@@ -585,7 +585,7 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Create an NDViewer2AcqInterface for the explore session.
+    * Create a TiledDataViewerAcqInterface for the explore session.
     */
    private TiledDataViewerAcqInterface createAcqInterface() {
       return new TiledDataViewerAcqInterface() {

@@ -46,7 +46,7 @@ public class ImageMaker {
    private TiledDataViewer display_;
    private boolean closed_ = false;
 
-   // Render settings supplied by NDViewer2DataViewer before each render
+   // Render settings supplied by TiledDataViewerDataViewer before each render
    private volatile Map<String, ChannelRenderSettings> channelRenderSettings_ = new HashMap<>();
    private volatile GlobalRenderSettings globalRenderSettings_ =
          new GlobalRenderSettings(true, false, 0.0, true, false);
@@ -65,7 +65,7 @@ public class ImageMaker {
 
    /**
     * Update rendering parameters from MM DisplaySettings.
-    * Called by NDViewer2 before each render.
+    * Called by TiledDataViewer before each render.
     */
    public void setRenderSettings(Map<String, ChannelRenderSettings> channelSettings,
                                   GlobalRenderSettings globalSettings,

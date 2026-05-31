@@ -26,7 +26,7 @@ import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
  * Wraps NDTiffStorage (MultiresNDTiffAPI) as an MM DataProvider.
  *
  * <p>This allows the MM Inspector and other DataProvider consumers to
- * interact with NDTiff datasets that are being displayed through NDViewer2.</p>
+ * interact with NDTiff datasets that are being displayed through TiledDataViewer.</p>
  */
 public final class TiledDataViewerDataProvider implements TiledDataViewerDataProviderAPI {
 
@@ -35,7 +35,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    private final AxesBridge axesBridge_;
    private static final SubscriberExceptionHandler EVENT_BUS_EXCEPTION_HANDLER =
          (Throwable ex, SubscriberExceptionContext ctx) ->
-               System.err.println("NDViewer2DataProvider EventBus subscriber threw: "
+               System.err.println("TiledDataViewerDataProvider EventBus subscriber threw: "
                      + ex + " [event=" + ctx.getEvent()
                      + ", subscriber=" + ctx.getSubscriber() + "]");
 
@@ -79,7 +79,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
 
    /**
     * Return the shared axes bridge used by this provider.
-    * Package-private: only NDViewer2DataViewer should need this.
+    * Package-private: only TiledDataViewerDataViewer should need this.
     *
     * @return the axes bridge
     */

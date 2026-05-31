@@ -1,19 +1,25 @@
 package org.micromanager.tileddataviewer.internal;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,7 +69,7 @@ import org.micromanager.tileddataviewer.internal.gui.GlobalRenderSettings;
 import org.micromanager.tileddataviewer.overlay.Roi;
 
 /**
- * NDViewer2 data viewer: combines NDViewer's pyramidal canvas with MM's
+ * TiledDataViewer data viewer: combines NDViewer's pyramidal canvas with MM's
  * Inspector panel system.
  *
  * <p>Extends AbstractDataViewer so the MM Inspector can discover and attach to
@@ -88,7 +94,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    // Using a size-1 queue so in-flight fetches are superseded by the latest position.
    private final ExecutorService statsExecutor_ =
          Executors.newSingleThreadExecutor(
-               (Runnable r) -> new Thread(r, "NDViewer2 stats fetch thread"));
+               (Runnable r) -> new Thread(r, "TiledDataViewer stats fetch thread"));
 
    private final TreeMap<Integer, DataViewerListener> listeners_ =
          new TreeMap<>();
@@ -113,14 +119,14 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    // Set of channel indices whose next stats result should be merged into the
    // accumulator. Replaces the old single boolean to correctly handle multiple
    // channels arriving in rapid succession without flag aliasing.
-   private final java.util.Set<Integer> accumulateNextChannels_ =
-         java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+   private final Set<Integer> accumulateNextChannels_ =
+         Collections.synchronizedSet(new HashSet<>());
 
    // Last autostretch-computed contrast bounds per NDViewer channel name.
    // Updated by onContrastUpdated with ImageMaker's actual rendered values.
    // int[]{min, max}
-   private final java.util.concurrent.ConcurrentHashMap<String, int[]> lastStretchedContrast_ =
-         new java.util.concurrent.ConcurrentHashMap<>();
+   private final ConcurrentHashMap<String, int[]> lastStretchedContrast_ =
+         new ConcurrentHashMap<>();
 
    // --- postImageMakerStats() throttling / change-detection state ---
 
@@ -138,7 +144,8 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    // Key: NDViewer channel name. Value: long[] of length rawHist.length + 2.
    private final HashMap<String, long[]> fullHistBuffers_ = new HashMap<>();
 
-
+   // Last channel axis value seen by onNDViewerImageChanged, used to detect channel scrolls.
+   private Object prevChannelAxisValue_ = null;
 
 
 
@@ -162,7 +169,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    private final Roi mmOverlayRoi_ =
          new Roi(0, 0, 1, 1) {
             @Override
-            public void drawOverlay(java.awt.Graphics gr) {
+            public void drawOverlay(Graphics gr) {
                BufferedImage buf = mmOverlayBuf_;
                if (buf != null) {
                   gr.drawImage(buf, 0, 0, null);
@@ -171,10 +178,10 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          };
 
    /**
-    * Create an NDViewer2DataViewer.
+    * Create a TiledDataViewerDataViewer.
     *
     * @param studio          the MM Studio instance
-    * @param dataSource      NDViewer data source (typically NDTiffAndViewerAdapter)
+    * @param dataSource      TiledDataViewer data source (typically NDTiffAndViewerAdapter)
     * @param acqInterface    acquisition control interface (may be null)
     * @param dataProvider    the MM DataProvider wrapping NDTiff storage
     * @param summaryMetadata NDTiff summary metadata JSON
@@ -215,7 +222,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // Install a persistent mouse adapter to post pixel-info and mouse events
       // so the Inspector's white-balance picked-point feature works.
       // Using setPersistentMouseAdapter ensures it survives setCustomCanvasMouseListener calls.
-      ndViewer2_.setPersistentMouseAdapter(new java.awt.event.MouseAdapter() {
+      ndViewer2_.setPersistentMouseAdapter(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
             postDisplayMouseEvent(e);
@@ -281,7 +288,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          ndViewer2_.update();
          return effectiveSettings;
       } catch (NullPointerException e) {
-         studio_.logs().logDebugMessage("NDViewer2: NPE in handleDisplaySettings "
+         studio_.logs().logDebugMessage("TiledDataViewer: NPE in handleDisplaySettings "
                + "(likely async close race): " + e.getMessage());
       }
       return requestedSettings;
@@ -709,7 +716,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          boolean anyChanged = false;
          for (Map.Entry<String, int[]> entry : rawHists.entrySet()) {
             int[] prev = lastPostedHist_.get(entry.getKey());
-            if (!java.util.Arrays.equals(prev, entry.getValue())) {
+            if (!Arrays.equals(prev, entry.getValue())) {
                anyChanged = true;
                break;
             }
@@ -732,7 +739,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          List<String> allNames = axesBridge_.getChannelNames();
          // Single-channel datasets use NO_CHANNEL as the histogram key.
          List<String> orderedNames = allNames.isEmpty()
-               ? java.util.Collections.singletonList(TiledDataViewer.NO_CHANNEL)
+               ? Collections.singletonList(TiledDataViewer.NO_CHANNEL)
                : allNames;
 
          // Build a map from channel index → routing image from the previous result.
@@ -759,7 +766,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             if (routingImg == null) {
                // Synthesise a minimal image with the correct channel coord so the
                // Inspector can route this ImageStats to the right histogram panel.
-               Coords coords = org.micromanager.data.Coordinates.builder()
+               Coords coords = Coordinates.builder()
                      .channel(i).build();
                routingImg = dataProvider_.getImage(coords);
             }
@@ -767,7 +774,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                // Still null (tiled data with no image at this coord yet): build a
                // zero-pixel placeholder purely for its Coords — the Inspector only
                // uses the coord for panel routing, not for pixel data.
-               Coords coords = org.micromanager.data.Coordinates.builder()
+               Coords coords = Coordinates.builder()
                      .channel(i).build();
                routingImg = studio_.data().createImage(
                      new byte[1], 1, 1, 1, 1, coords,
@@ -837,7 +844,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // Zero pixel values (unacquired/black tiles) go into fullHist[1] (rawHist[0]).
       // We zero that bin out so that getQuantile() ignores them when computing the
       // autoscale dark point — otherwise black tiles drive the dark point to 0.
-      java.util.Arrays.fill(fullHist, 0L);
+      Arrays.fill(fullHist, 0L);
       long pixelCount = 0;
       long pixelCountExcludingZeros = 0;
       long minimum = -1;
@@ -900,8 +907,21 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       }
       viewerInitialized_ = true;
       // Convert axes to Coords and update display position
+      Object newChannel = axes.get(TiledDataViewer.CHANNEL_AXIS);
+      boolean channelChanged = newChannel != null && !newChannel.equals(prevChannelAxisValue_);
+      prevChannelAxisValue_ = newChannel;
       Coords newPosition = axesBridge_.ndViewerToCoords(axes);
       setDisplayPosition(newPosition);
+
+      // In grayscale mode the channel scrollbar selects which channel renders.
+      // Re-push render settings so TiledDataViewer.setRenderSettings re-applies the
+      // single-channel-active filter for the newly selected channel.
+      // Only fire when the channel axis actually changed — Z/time scrolls don't need this.
+      if (getDisplaySettings().getColorMode() != DisplaySettings.ColorMode.COMPOSITE
+            && channelChanged) {
+         pushRenderSettings(getDisplaySettings());
+         ndViewer2_.update();
+      }
 
       // Skip redundant stats when accumulate mode has a pending new-image
       // request for the current channel (newImageArrived already submitted one)
@@ -1155,7 +1175,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       ndViewer2_.setWindowTitle(title);
    }
 
-   // ---- OverlaySupport / NDViewer2DataViewerAPI overlay methods ----
+   // ---- OverlaySupport / TiledDataViewerDataViewerAPI overlay methods ----
 
    /**
     * Create the internal bridge overlayer plugin that renders MM overlays onto the NDViewer canvas.
@@ -1166,7 +1186,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          @Override
          public void drawOverlay(org.micromanager.tileddataviewer.overlay.Overlay defaultOverlay,
                                  Point2D.Double displayImageSize, double downsampleFactor,
-                                 java.awt.Graphics g, HashMap<String, Object> axes,
+                                 Graphics g, HashMap<String, Object> axes,
                                  double magnification, Point2D.Double viewOffset)
                   throws InterruptedException {
             // Chain to external plugin first (e.g. DeskewExploreDataSource tile grid).
@@ -1253,7 +1273,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                         anyPainted = true;
                      } catch (Exception ex) {
                         studio_.logs().logError(ex,
-                              "NDViewer2 bridge: error painting " + overlay.getTitle());
+                              "TiledDataViewer bridge: error painting " + overlay.getTitle());
                      }
                   }
                }
@@ -1288,7 +1308,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       if (overlay == null) {
          return;
       }
-      studio_.logs().logMessage("NDViewer2: addOverlay called: " + overlay.getTitle());
+      studio_.logs().logMessage("TiledDataViewer: addOverlay called: " + overlay.getTitle());
       mmOverlays_.add(overlay);
       // Listen for repaint requests from the overlay so the canvas redraws
       // immediately when settings or visibility change.
@@ -1428,8 +1448,8 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          postEvent(DataViewerMousePixelInfoChangedEvent.create(
                imgX, imgY,
                new String[]{Coords.CHANNEL},
-               java.util.Collections.singletonList(coords),
-               java.util.Collections.singletonList(componentValues)));
+               Collections.singletonList(coords),
+               Collections.singletonList(componentValues)));
       } catch (Exception e) {
          postEvent(DataViewerMousePixelInfoChangedEvent.createUnavailable());
       }

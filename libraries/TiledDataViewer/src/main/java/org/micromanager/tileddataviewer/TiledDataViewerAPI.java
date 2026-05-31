@@ -11,7 +11,7 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.tileddataviewer.overlay.Overlay;
 
 /**
- * Interface for external methods of the NDViewer2 viewer.
+ * Interface for external methods of the TiledDataViewer viewer.
  * The only requirement is to call {@link #newImageArrived(HashMap)} newImageArrived}
  * method each time a new image is available.
  *

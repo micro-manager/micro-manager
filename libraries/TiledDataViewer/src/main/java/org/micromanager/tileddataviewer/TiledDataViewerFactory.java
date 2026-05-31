@@ -9,11 +9,11 @@ import org.micromanager.tileddataviewer.internal.TiledDataViewerDataProvider;
 import org.micromanager.tileddataviewer.internal.TiledDataViewerDataViewer;
 
 /**
- * Factory for creating NDViewer2 data providers and viewers.
+ * Factory for creating TiledDataViewer data providers and viewers.
  *
  * <p>External code should use this factory rather than constructing
- * {@code org.micromanager.ndviewer2.internal.NDViewer2DataProvider} or
- * {@code org.micromanager.ndviewer2.internal.NDViewer2DataViewer} directly,
+ * {@code org.micromanager.tileddataviewer.internal.TiledDataViewerDataProvider} or
+ * {@code org.micromanager.tileddataviewer.internal.TiledDataViewerDataViewer} directly,
  * so that the concrete implementations can change without breaking callers.</p>
  */
 public final class TiledDataViewerFactory {
@@ -23,13 +23,13 @@ public final class TiledDataViewerFactory {
    }
 
    /**
-    * Create a new NDViewer2 data provider wrapping the given storage.
+    * Create a new TiledDataViewer data provider wrapping the given storage.
     *
     * @param dataManager the MM DataManager for creating Image and SummaryMetadata objects
     * @param storage     the storage backend (use {@code new NDTiffStorageAdapter(multiresNDTiff)}
     *                    to convert MultiresNDTiffAPI)
     * @param name        display name for this data provider
-    * @return a new NDViewer2DataProviderAPI instance
+    * @return a new TiledDataViewerDataProviderAPI instance
     */
    public static TiledDataViewerDataProviderAPI createDataProvider(
             DataManager dataManager, TiledDataProviderAPI storage, String name) {
@@ -43,16 +43,16 @@ public final class TiledDataViewerFactory {
    }
 
    /**
-    * Create a new NDViewer2 data viewer.
+    * Create a new TiledDataViewer data viewer.
     *
     * @param studio          the MM Studio instance
-    * @param dataSource      NDViewer data source
+    * @param dataSource      TiledDataViewer data source
     * @param acqInterface    acquisition control interface (may be null)
     * @param dataProvider    the data provider created by {@link #createDataProvider}
     * @param summaryMetadata NDTiff summary metadata JSON
     * @param pixelSizeUm     pixel size in micrometers
     * @param rgb             whether images are RGB
-    * @return a new NDViewer2DataViewerAPI instance
+    * @return a new TiledDataViewerDataViewerAPI instance
     */
    public static TiledDataViewerDataViewerAPI createDataViewer(
          Studio studio,

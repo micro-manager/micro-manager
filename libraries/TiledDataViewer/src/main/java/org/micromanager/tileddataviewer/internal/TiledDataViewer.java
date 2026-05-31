@@ -16,13 +16,16 @@ package org.micromanager.tileddataviewer.internal;
 
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.event.MouseAdapter;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -380,24 +383,67 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    /**
     * Update render settings used by ImageMaker for the next render.
-    * Called by NDViewer2DataViewer before triggering update().
+    * Called by TiledDataViewerDataViewer before triggering update().
     * Also syncs the internal DisplaySettings so getDisplaySettingsJSON() is always current.
     */
-   public void setRenderSettings(java.util.Map<String, ChannelRenderSettings> channelSettings,
+   public void setRenderSettings(Map<String, ChannelRenderSettings> channelSettings,
                                   GlobalRenderSettings globalSettings,
                                   ContrastUpdateCallback callback) {
-      guiManager_.setRenderSettings(channelSettings, globalSettings, callback);
+      // In grayscale (non-composite) mode only the currently selected channel renders.
+      // Override active flags so only the channel at the current scrollbar position is on.
+      // If the scrollbar position doesn't match any known channel name (e.g. it's the
+      // integer default 0 before the user touched the slider), fall back to the first
+      // channel so the viewer is not blank.
+      Map<String, ChannelRenderSettings> effectiveSettings = channelSettings;
+      if (!globalSettings.composite && channelSettings.size() > 1) {
+         Object currentChValue = displayModel_.getAxisPosition(CHANNEL_AXIS);
+         String selectedChannel = null;
+         if (currentChValue != null) {
+            for (String name : channelSettings.keySet()) {
+               if (name.equals(currentChValue)) {
+                  selectedChannel = name;
+                  break;
+               }
+            }
+         }
+         if (selectedChannel == null) {
+            // Pick the first channel name in iteration order.
+            Iterator<String> it = channelSettings.keySet().iterator();
+            if (it.hasNext()) {
+               selectedChannel = it.next();
+            }
+         }
+         if (selectedChannel != null) {
+            effectiveSettings = new HashMap<>(channelSettings);
+            for (Map.Entry<String, ChannelRenderSettings> e
+                  : channelSettings.entrySet()) {
+               String name = e.getKey();
+               ChannelRenderSettings rs = e.getValue();
+               boolean isSelected = name.equals(selectedChannel);
+               if (isSelected != rs.active) {
+                  effectiveSettings.put(name,
+                        new ChannelRenderSettings(rs.contrastMin, rs.contrastMax, rs.gamma,
+                              rs.color, isSelected));
+               }
+            }
+         }
+      }
+      guiManager_.setRenderSettings(effectiveSettings, globalSettings, callback);
 
       // Keep internal DisplaySettings in sync so getDisplaySettingsJSON() is always current.
       DisplaySettings ds = displayModel_.getDisplaySettings();
-      for (java.util.Map.Entry<String, ChannelRenderSettings> entry : channelSettings.entrySet()) {
+      for (Map.Entry<String, ChannelRenderSettings> entry
+            : effectiveSettings.entrySet()) {
          String name = entry.getKey();
          ChannelRenderSettings rs = entry.getValue();
          ds.setColor(name, rs.color);
          ds.setContrastMin(name, rs.contrastMin);
          ds.setContrastMax(name, rs.contrastMax);
          ds.setGamma(name, rs.gamma);
-         ds.setActive(name, rs.active);
+         // Use the original active flag, not the grayscale-overridden one, so that
+         // getDisplaySettingsJSON() does not serialize non-selected channels as inactive.
+         ChannelRenderSettings original = channelSettings.get(name);
+         ds.setActive(name, original != null ? original.active : rs.active);
       }
       ds.setAutoscale(globalSettings.autostretch);
       ds.setCompositeMode(globalSettings.composite);
@@ -411,7 +457,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
     * ImageMaker during the last render. Keys are channel names; values are
     * int[] arrays with one entry per pixel value (65536 entries for 16-bit).
     */
-   public java.util.HashMap<String, int[]> getHistograms() {
+   public HashMap<String, int[]> getHistograms() {
       return guiManager_.getHistograms();
    }
 
@@ -420,7 +466,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
     * Only channels rendered by NDVImageProcessorRGB appear in the result.
     * The value array has three entries: [R histogram, G histogram, B histogram].
     */
-   public java.util.HashMap<String, int[][]> getComponentHistograms() {
+   public HashMap<String, int[][]> getComponentHistograms() {
       return guiManager_.getComponentHistograms();
    }
 
@@ -512,7 +558,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       }
    }
 
-   public void setPersistentMouseAdapter(java.awt.event.MouseAdapter adapter) {
+   public void setPersistentMouseAdapter(MouseAdapter adapter) {
       guiManager_.setPersistentMouseAdapter(adapter);
    }
 
@@ -648,10 +694,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
                   //Finish acquisition on different thread to not slow EDT
                   acq_.abort(); //it may already be aborted but call this again to be sure
                   acq_.waitForCompletion();
-                  dataSource_.close();
-                  dataSource_ = null;
                }
-
             } catch (Exception e) {
                //not ,uch to do at this point
                e.printStackTrace();
@@ -659,11 +702,20 @@ public class TiledDataViewer implements TiledDataViewerAPI {
                //Now all resources should be released, so evertthing can be shut down
 
                //make everything else close
-
                guiManager_.shutdown();
 
                displayCalculationExecutor_.shutdownNow();
                overlayCalculationExecutor_.shutdownNow();
+
+               // Close the data source after render threads have stopped to avoid
+               // racing with in-flight read requests issued by the display executor.
+               if (dataSource_ != null) {
+                  try {
+                     dataSource_.close();
+                  } catch (Exception ignore) {
+                     // in-flight reads may fail during async teardown
+                  }
+               }
 
                setImageHooks_ = null;
                dataSource_ = null;

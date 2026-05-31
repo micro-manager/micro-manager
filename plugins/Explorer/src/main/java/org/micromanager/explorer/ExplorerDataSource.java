@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -63,6 +65,11 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    // Cache for getImageKeys() — invalidated by ExplorerManager after putImageMultiRes.
    private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
 
+   // Lazily built from XPositionPix/YPositionPix tags; empty map = no position tags present.
+   private volatile Map<HashMap<String, Object>, Point> tilePositions_ = null;
+   private int fullResTileW_ = 0;
+   private int fullResTileH_ = 0;
+
    // Current stage position in full-resolution pixel coordinates (center of FOV).
    private volatile Point2D.Double stagePositionPixel_ = null;
 
@@ -86,6 +93,36 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setStorage(MultiresNDTiffAPI storage) {
       storage_ = storage;
+      // Reset the lazy position-tag cache so getBounds() re-probes the new storage.
+      tilePositions_ = null;
+      fullResTileW_ = 0;
+      fullResTileH_ = 0;
+   }
+
+   private synchronized void buildTilePositions() {
+      if (tilePositions_ != null) {
+         return;
+      }
+      Map<HashMap<String, Object>, Point> map = new LinkedHashMap<>();
+      for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+         mmcorej.TaggedImage ti = storage_.getImage(axes, 0);
+         if (ti == null || ti.tags == null) {
+            continue;
+         }
+         if (!ti.tags.has("XPositionPix") || !ti.tags.has("YPositionPix")) {
+            // This tile has no position tag — dataset does not use per-tile positioning.
+            tilePositions_ = new LinkedHashMap<>();
+            return;
+         }
+         int x = ti.tags.optInt("XPositionPix", 0);
+         int y = ti.tags.optInt("YPositionPix", 0);
+         if (fullResTileW_ == 0) {
+            fullResTileW_ = ti.tags.optInt("Width", 0);
+            fullResTileH_ = ti.tags.optInt("Height", 0);
+         }
+         map.put(axes, new Point(x, y));
+      }
+      tilePositions_ = map;
    }
 
    public void invalidateImageKeysCache() {
@@ -244,7 +281,24 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public int[] getBounds() {
-      return null; // Unbounded explore mode
+      if (storage_ == null) {
+         return null;
+      }
+      buildTilePositions();
+      if (tilePositions_.isEmpty()) {
+         return null; // No position tags → unbounded explore mode.
+      }
+      int xMin = Integer.MAX_VALUE;
+      int yMin = Integer.MAX_VALUE;
+      int xMax = Integer.MIN_VALUE;
+      int yMax = Integer.MIN_VALUE;
+      for (Point p : tilePositions_.values()) {
+         xMin = Math.min(xMin, p.x);
+         yMin = Math.min(yMin, p.y);
+         xMax = Math.max(xMax, p.x + fullResTileW_);
+         yMax = Math.max(yMax, p.y + fullResTileH_);
+      }
+      return new int[]{xMin, yMin, xMax, yMax};
    }
 
    @Override
@@ -254,6 +308,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       if (storage_ == null) {
          return null;
       }
+      // NDTiffStorage.getDisplayImage handles grid-based tile placement internally.
       return storage_.getDisplayImage(axes, resolutionIndex,
               (int) xOffset, (int) yOffset, imageWidth, imageHeight);
    }

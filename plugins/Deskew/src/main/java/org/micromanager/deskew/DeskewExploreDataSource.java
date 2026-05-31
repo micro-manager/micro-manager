@@ -264,7 +264,7 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
       return acquiredTiles_.contains(row + "," + col);
    }
 
-   // ===================== NDViewer2DataSource interface =====================
+   // ===================== TiledDataViewerDataSource interface =====================
 
    @Override
    public int[] getBounds() {
@@ -352,14 +352,14 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
       return 16;
    }
 
-   // ===================== NDViewer2AcqInterface interface =====================
+   // ===================== TiledDataViewerAcqInterface interface =====================
 
    @Override
    public boolean isFinished() {
       // Return false while exploring so NDViewer will call increaseMaxResolutionLevel()
       // if the user zooms out further than the pre-built pyramid covers.
       // setFinished(true) is called by the manager when the session stops.
-      // Note: the close dialog is controlled by the separate NDViewer2AcqInterface
+      // Note: the close dialog is controlled by the separate TiledDataViewerAcqInterface
       // (createAcqInterface()), which always returns isFinished()=true, so changing
       // this does not affect the "Finish Acquisition?" dialog.
       return finished_;
@@ -391,7 +391,7 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
       // Non-blocking for explore mode
    }
 
-   // ===================== NDViewer2CanvasMouseListenerInterface =====================
+   // ===================== TiledDataViewerCanvasMouseListenerInterface =====================
 
    @Override
    public void mousePressed(MouseEvent e) {
@@ -570,7 +570,7 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
       return new Point(row, col);
    }
 
-   // ===================== NDViewer2OverlayerPlugin interface =====================
+   // ===================== TiledDataViewerOverlayerPlugin interface =====================
 
    @Override
    public void drawOverlay(Overlay overlay, Point2D.Double displayImageSize,

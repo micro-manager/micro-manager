@@ -9,7 +9,7 @@ import org.micromanager.tileddataviewer.overlay.Overlay;
 import org.micromanager.tileddataviewer.overlay.Roi;
 
 /**
- * NDViewer2OverlayerPlugin that draws a yellow selection rectangle while the
+ * TiledDataViewerOverlayerPlugin that draws a yellow selection rectangle while the
  * user is dragging in export mode.
  */
 class ExportSelectionOverlay implements TiledDataViewerOverlayerPlugin {

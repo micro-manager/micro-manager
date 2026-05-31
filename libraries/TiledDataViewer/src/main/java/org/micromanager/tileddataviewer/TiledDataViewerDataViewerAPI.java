@@ -8,7 +8,7 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.overlay.Overlay;
 
 /**
- * Public interface for the NDViewer2 data viewer.
+ * Public interface for the TiledDataViewer data viewer.
  *
  * <p>Extends {@link DataViewer} (which already provides {@code setDisplaySettings}).
  * Use {@link TiledDataViewerFactory#createDataViewer} to obtain an instance.</p>
@@ -24,9 +24,9 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
    void setAccumulateStats(boolean enabled);
 
    /**
-    * Get the underlying NDViewer instance for direct NDViewer API access.
+    * Get the underlying TiledDataViewer instance for direct TiledDataViewer API access.
     *
-    * @return the NDViewer2API instance
+    * @return the TiledDataViewerAPI instance
     */
    TiledDataViewerAPI getNDViewer();
 
