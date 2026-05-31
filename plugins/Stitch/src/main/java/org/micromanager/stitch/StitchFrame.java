@@ -701,8 +701,11 @@ public class StitchFrame extends JDialog {
                int preRotH = (int) Math.ceil(maxY);
                int newCanvasW = swapCanvasDims ? preRotH : preRotW;
                int newCanvasH = swapCanvasDims ? preRotW : preRotH;
+               // Canvas can only grow from alignment — shrinking would clip real tiles.
+               newCanvasW = Math.max(outCanvasW, newCanvasW);
+               newCanvasH = Math.max(outCanvasH, newCanvasH);
                if (newCanvasW != outCanvasW || newCanvasH != outCanvasH) {
-                  studio_.logs().logMessage("Stitch: canvas resized by alignment from "
+                  studio_.logs().logMessage("Stitch: canvas grown by alignment from "
                         + outCanvasW + "x" + outCanvasH
                         + " to " + newCanvasW + "x" + newCanvasH);
                   outCanvasW = newCanvasW;
@@ -833,8 +836,12 @@ public class StitchFrame extends JDialog {
                      float ox = e.getValue().x + sx;
                      float oy = e.getValue().y + sy;
                      shifted.put(e.getKey(), new Point2D.Float(ox, oy));
-                     if (ox < 0 || oy < 0 || ox + rawTileW > outCanvasW
-                           || oy + rawTileH > outCanvasH) {
+                     // Origins are in pre-rotation tile space; compare against
+                     // pre-rotation canvas extents (swapped when output is rotated 90/270°).
+                     int preRotCanvasW = swapCanvasDims ? outCanvasH : outCanvasW;
+                     int preRotCanvasH = swapCanvasDims ? outCanvasW : outCanvasH;
+                     if (ox < 0 || oy < 0 || ox + rawTileW > preRotCanvasW
+                           || oy + rawTileH > preRotCanvasH) {
                         anyOutOfBounds = true;
                      }
                   }
@@ -906,7 +913,7 @@ public class StitchFrame extends JDialog {
                         tOrigins, doBlend, is16bit, isRgb, z, t,
                         outCanvasW, outCanvasH, NDTIFF_OUTPUT_TILE_SIZE,
                         isRgb ? blendSummaryMD : correctedBlendSummaryMD,
-                        tileTransform16, tileTransform8);
+                        tileTransform16, tileTransform8, numZ, numT);
                } else if (doBlend) {
                   // RGB composite() has no per-tile transform — the whole assembled canvas is
                   // rotated afterward, so the blender must use the raw (uncorrected) tile geometry.
@@ -978,7 +985,7 @@ public class StitchFrame extends JDialog {
                      Metadata meta = templateMetaBuilder.generateUUID().build();
                      Image mmImg = studio_.data().createImage(pixelData, imgW, imgH,
                            bytesPerPixel, numComponents, coords, meta);
-                     putStitchedImage(mmImg, ds);
+                     ds.putImage(mmImg);
                      imagesWritten++;
                   }
 
@@ -1017,7 +1024,7 @@ public class StitchFrame extends JDialog {
                      Metadata meta = templateMetaBuilder.generateUUID().build();
                      Image mmImg = studio_.data().createImage(canvas, stitchedW, stitchedH,
                            bytesPerPixel, numComponents, coords, meta);
-                     putStitchedImage(mmImg, ds);
+                     ds.putImage(mmImg);
                      imagesWritten++;
                   }
                }
@@ -1118,7 +1125,8 @@ public class StitchFrame extends JDialog {
          int outTileSize,
          mmcorej.org.json.JSONObject sourceMD,
          UnaryOperator<short[]> tileTransform16,
-         UnaryOperator<byte[]> tileTransform8)
+         UnaryOperator<byte[]> tileTransform8,
+         int numZ, int numT)
          throws Exception {
 
       // TileBlender is used for canvas assembly regardless of feathering. It requires:
@@ -1240,7 +1248,7 @@ public class StitchFrame extends JDialog {
                }
 
                HashMap<String, Object> axes = buildNdtiffAxes(canvasRow, canvasCol, z, t,
-                     isRgb ? null : chName);
+                     isRgb ? null : chName, numZ, numT);
                mmcorej.org.json.JSONObject tags = buildNdtiffTags(
                      outTileSize, outTileSize, isRgb, is16bit, pixelSizeUm, axes);
                ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
@@ -1257,15 +1265,21 @@ public class StitchFrame extends JDialog {
     * NDTiffStorage requires axes to be embedded in the tags under "Axes" AND passed
     * separately as a HashMap — this helper builds the HashMap; use buildNdtiffTags
     * to embed it in the tags object.
+    * Only z/time axes that actually have more than one value are included; omitting
+    * them for single-plane datasets prevents spurious scrollbars in TiledDataViewer.
     */
    private static HashMap<String, Object> buildNdtiffAxes(
-         int row, int col, int z, int t, String chName)
+         int row, int col, int z, int t, String chName, int numZ, int numT)
          throws mmcorej.org.json.JSONException {
       HashMap<String, Object> axes = new HashMap<>();
       axes.put("row", row);
       axes.put("column", col);
-      axes.put("z", z);
-      axes.put("time", t);
+      if (numZ > 1) {
+         axes.put("z", z);
+      }
+      if (numT > 1) {
+         axes.put("time", t);
+      }
       if (chName != null) {
          axes.put("channel", chName);
       }
@@ -1342,16 +1356,6 @@ public class StitchFrame extends JDialog {
       }
       return new org.micromanager.ndtiffstorage.NDTiffStorage(
             path, name, json, 0, 0, true, null, 30, null, isRgb);
-   }
-
-   /**
-    * Writes one stitched image to the MM Datastore.
-    * Only used by the RAM/TIFF export paths; the NDTiff path writes tiles directly
-    * via writeTiledNdtiff and never calls this method.
-    */
-   private static void putStitchedImage(Image mmImg, Datastore ds)
-         throws Exception {
-      ds.putImage(mmImg);
    }
 
    /**
@@ -1758,6 +1762,18 @@ public class StitchFrame extends JDialog {
             if (px != null && px > 0) {
                return px;
             }
+            // Fallback: derive pixel size from the affine transform diagonal.
+            java.awt.geom.AffineTransform af = meta.getPixelSizeAffine();
+            if (af != null) {
+               double colX = Math.sqrt(af.getScaleX() * af.getScaleX()
+                     + af.getShearY() * af.getShearY());
+               double colY = Math.sqrt(af.getShearX() * af.getShearX()
+                     + af.getScaleY() * af.getScaleY());
+               double scale = (colX + colY) / 2.0;
+               if (scale > 0) {
+                  return scale;
+               }
+            }
          }
       } catch (Exception e) {
          // ignore
@@ -1895,9 +1911,11 @@ public class StitchFrame extends JDialog {
 
       @Override
       public void close() {
-         // Do not close storage here: TiledDataViewer may still issue read requests
-         // after calling dataSource.close() (async close sequence). The storage will
-         // be released when the JVM GC collects it, or closed explicitly elsewhere.
+         try {
+            storage_.close();
+         } catch (Exception ignore) {
+            // In-flight reads may fail during async teardown; file handles are released regardless.
+         }
       }
 
       @Override
