@@ -63,9 +63,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    // Cache for getImageKeys() — invalidated by ExplorerManager after putImageMultiRes.
    private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
 
-   // Compositor for datasets with per-tile XPositionPix/YPositionPix tags.
-   private volatile org.micromanager.tileddataviewer.internal.PositionedTileCompositor
-         compositor_ = null;
+   // Lazily built from XPositionPix/YPositionPix tags; empty map = no position tags present.
+   private volatile java.util.Map<HashMap<String, Object>, java.awt.Point> tilePositions_ = null;
+   private int fullResTileW_ = 0;
+   private int fullResTileH_ = 0;
 
    // Current stage position in full-resolution pixel coordinates (center of FOV).
    private volatile Point2D.Double stagePositionPixel_ = null;
@@ -90,7 +91,35 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setStorage(MultiresNDTiffAPI storage) {
       storage_ = storage;
-      compositor_ = new org.micromanager.tileddataviewer.internal.PositionedTileCompositor(storage);
+      // Reset the lazy position-tag cache so getBounds() re-probes the new storage.
+      tilePositions_ = null;
+      fullResTileW_ = 0;
+      fullResTileH_ = 0;
+   }
+
+   private synchronized void buildTilePositions() {
+      if (tilePositions_ != null) {
+         return;
+      }
+      java.util.Map<HashMap<String, Object>, java.awt.Point> map = new java.util.LinkedHashMap<>();
+      for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+         mmcorej.TaggedImage ti = storage_.getImage(axes, 0);
+         if (ti == null || ti.tags == null) {
+            continue;
+         }
+         int x = ti.tags.optInt("XPositionPix", Integer.MIN_VALUE);
+         int y = ti.tags.optInt("YPositionPix", Integer.MIN_VALUE);
+         if (x == Integer.MIN_VALUE || y == Integer.MIN_VALUE) {
+            tilePositions_ = new java.util.LinkedHashMap<>();
+            return;
+         }
+         if (fullResTileW_ == 0) {
+            fullResTileW_ = ti.tags.optInt("Width", 0);
+            fullResTileH_ = ti.tags.optInt("Height", 0);
+         }
+         map.put(axes, new java.awt.Point(x, y));
+      }
+      tilePositions_ = map;
    }
 
    public void invalidateImageKeysCache() {
@@ -249,11 +278,24 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public int[] getBounds() {
-      if (storage_ != null && compositor_ != null && compositor_.hasPositionTags()) {
-         // Return pixel-position-based bounds for datasets with XPositionPix/YPositionPix tags.
-         return compositor_.computeBounds();
+      if (storage_ == null) {
+         return null;
       }
-      return null; // Unbounded explore mode for normal acquisitions
+      buildTilePositions();
+      if (tilePositions_.isEmpty()) {
+         return null; // No position tags → unbounded explore mode.
+      }
+      int xMin = Integer.MAX_VALUE;
+      int yMin = Integer.MAX_VALUE;
+      int xMax = Integer.MIN_VALUE;
+      int yMax = Integer.MIN_VALUE;
+      for (java.awt.Point p : tilePositions_.values()) {
+         xMin = Math.min(xMin, p.x);
+         yMin = Math.min(yMin, p.y);
+         xMax = Math.max(xMax, p.x + fullResTileW_);
+         yMax = Math.max(yMax, p.y + fullResTileH_);
+      }
+      return new int[]{xMin, yMin, xMax, yMax};
    }
 
    @Override
