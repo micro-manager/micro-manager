@@ -691,6 +691,8 @@ public class TiledDataViewer implements TiledDataViewerAPI {
                   //Finish acquisition on different thread to not slow EDT
                   acq_.abort(); //it may already be aborted but call this again to be sure
                   acq_.waitForCompletion();
+               }
+               if (dataSource_ != null) {
                   dataSource_.close();
                   dataSource_ = null;
                }
