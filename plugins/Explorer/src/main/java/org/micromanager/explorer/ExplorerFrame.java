@@ -136,12 +136,12 @@ public class ExplorerFrame extends JFrame {
       helpButton.addActionListener(e -> JOptionPane.showMessageDialog(
             this,
             "Navigation:\n"
-                  + "  Right-drag: pan view\n"
+                  + "  Left-drag: pan view\n"
                   + "  Scroll wheel: zoom in/out\n"
                   + "\n"
                   + "Tile selection (live explore):\n"
                   + "  Right-click: select tile\n"
-                  + "  Left-drag: expand selection\n"
+                  + "  Right-drag: expand selection\n"
                   + "  Left-click: acquire (or queue) selected tiles\n"
                   + "  Stop: stop all queued and running acquisitions\n"
                   + "  Ctrl+left-click: move stage to position\n"

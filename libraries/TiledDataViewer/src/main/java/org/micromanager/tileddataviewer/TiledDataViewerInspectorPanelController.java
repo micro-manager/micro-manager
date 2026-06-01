@@ -37,8 +37,16 @@ public final class TiledDataViewerInspectorPanelController
    private final JLabel statusLabel_;
    private final JButton exportButton_;
    private final JButton posListButton_;
+   private final JButton interruptButton_;
+   private final JButton helpButton_;
    private TiledDataViewerDataViewerAPI viewer_;
    private static boolean expanded_ = true;
+
+   // Live-explore acquisition controls for the attached viewer, or null if the data
+   // source does not support interrupting (e.g. a read-only opened dataset).
+   private TiledDataViewerExploreControls exploreControls_;
+   // Listener registered on exploreControls_ while attached; updates the Interrupt button.
+   private TiledDataViewerExploreControls.AcquisitionStateListener acqStateListener_;
 
    // Last confirmed export ROI in full-resolution pixels [x, y, w, h]; null when none.
    private int[] lastRoi_ = null;
@@ -48,6 +56,8 @@ public final class TiledDataViewerInspectorPanelController
       statusLabel_ = new JLabel(" ");
       exportButton_ = new JButton("Export...");
       posListButton_ = new JButton("Create Positions...");
+      interruptButton_ = new JButton("Interrupt");
+      helpButton_ = new JButton("Help");
       panel_ = buildPanel();
    }
 
@@ -59,12 +69,46 @@ public final class TiledDataViewerInspectorPanelController
       noZoom.addActionListener(e -> onNoZoom());
       exportButton_.addActionListener(e -> onExportClicked());
       posListButton_.addActionListener(e -> onPosListClicked());
+      interruptButton_.setToolTipText(
+            "Stop tile acquisition after the current tile finishes.");
+      interruptButton_.setEnabled(false);
+      interruptButton_.addActionListener(e -> {
+         if (exploreControls_ != null) {
+            exploreControls_.interruptAcquisition();
+         }
+      });
+      helpButton_.addActionListener(e -> showHelp());
       p.add(center);
       p.add(noZoom, "wrap");
       p.add(exportButton_);
       p.add(posListButton_, "wrap");
+      p.add(interruptButton_);
+      p.add(helpButton_, "wrap");
       p.add(statusLabel_, "span 2, wrap");
       return p;
+   }
+
+   private void showHelp() {
+      JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(panel_),
+            "Navigation:\n"
+                  + "  Left-drag: pan view\n"
+                  + "  Scroll wheel: zoom in/out\n"
+                  + "\n"
+                  + "Tile selection (live explore):\n"
+                  + "  Right-click: select tile\n"
+                  + "  Right-drag: expand selection\n"
+                  + "  Left-click: acquire (or queue) selected tiles\n"
+                  + "  Interrupt: stop all queued and running acquisitions\n"
+                  + "  Ctrl+left-click: move stage to position\n"
+                  + "\n"
+                  + "View controls:\n"
+                  + "  Center: pan to center of dataset (keep zoom)\n"
+                  + "  No Zoom: zoom to 1:1 and center on dataset\n"
+                  + "\n"
+                  + "Export:\n"
+                  + "  Click Export, drag to draw ROI, then confirm export\n"
+                  + "  Click anywhere to dismiss the ROI",
+            "Explorer Help", JOptionPane.PLAIN_MESSAGE);
    }
 
    /** Returns the center of the dataset in full-res pixel coordinates, or null if unknown. */
@@ -644,10 +688,29 @@ public final class TiledDataViewerInspectorPanelController
    public void attachDataViewer(DataViewer viewer) {
       viewer_ = (TiledDataViewerDataViewerAPI) viewer;
       lastRoi_ = null;
+
+      exploreControls_ = viewer_.getExploreControls();
+      if (exploreControls_ != null) {
+         interruptButton_.setVisible(true);
+         interruptButton_.setEnabled(exploreControls_.isAcquisitionInProgress());
+         acqStateListener_ = inProgress ->
+               SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(inProgress));
+         exploreControls_.addAcquisitionStateListener(acqStateListener_);
+      } else {
+         // Read-only viewer (e.g. opened dataset): no acquisition to interrupt.
+         interruptButton_.setVisible(false);
+         interruptButton_.setEnabled(false);
+      }
    }
 
    @Override
    public void detachDataViewer() {
+      if (exploreControls_ != null && acqStateListener_ != null) {
+         exploreControls_.removeAcquisitionStateListener(acqStateListener_);
+      }
+      exploreControls_ = null;
+      acqStateListener_ = null;
+      interruptButton_.setEnabled(false);
       viewer_ = null;
       lastRoi_ = null;
       setStatus(null);

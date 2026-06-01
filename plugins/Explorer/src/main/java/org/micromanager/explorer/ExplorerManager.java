@@ -282,8 +282,8 @@ public class ExplorerManager {
 
          viewer_ = mm2Viewer_.getNDViewer();
          dataSource_.setViewer(viewer_);
-         viewer_.setWindowTitle("Explorer - Right-click to select, "
-               + "Left-drag to extend, Left-click to acquire");
+         viewer_.setWindowTitle("Explorer - Right-click/drag to select, "
+               + "Left-drag to pan, Left-click to acquire");
 
          mm2Viewer_.setOverlayerPlugin(dataSource_);
          viewer_.setCustomCanvasMouseListener(dataSource_);

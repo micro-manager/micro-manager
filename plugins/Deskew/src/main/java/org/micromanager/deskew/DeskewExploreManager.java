@@ -272,8 +272,8 @@ public class DeskewExploreManager {
 
          viewer_ = mm2Viewer_.getNDViewer();
          dataSource_.setViewer(viewer_);
-         viewer_.setWindowTitle("Deskew Explore - Right-click to select, "
-               + "Left-drag to extend, Left-click to acquire");
+         viewer_.setWindowTitle("Deskew Explore - Right-click/drag to select, "
+               + "Left-drag to pan, Left-click to acquire");
 
          // Set up overlayer and mouse listener
          // Route through mm2Viewer_ so the bridge plugin chains this as externalOverlayerPlugin_
