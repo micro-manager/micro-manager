@@ -514,7 +514,9 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
             }
          }
       } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
-         // Left-drag pans the view.
+         // Left-drag pans the view. Note: panning intentionally does NOT clear any
+         // existing tile selection — a tentative single-tile selection set by a prior
+         // right-press is left in place so the user can pan and then keep selecting.
          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
             isLeftDragging_ = true;
          }

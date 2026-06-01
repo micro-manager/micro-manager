@@ -19,6 +19,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
+import org.micromanager.tileddataviewer.TiledDataViewerInspectorPanelController;
 
 /**
  * Simple dialog for the Explorer plugin.
@@ -135,17 +136,8 @@ public class ExplorerFrame extends JFrame {
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(e -> JOptionPane.showMessageDialog(
             this,
-            "Navigation:\n"
-                  + "  Left-drag: pan view\n"
-                  + "  Scroll wheel: zoom in/out\n"
-                  + "\n"
-                  + "Tile selection (live explore):\n"
-                  + "  Right-click: select tile\n"
-                  + "  Right-drag: expand selection\n"
-                  + "  Left-click: acquire (or queue) selected tiles\n"
-                  + "  Stop: stop all queued and running acquisitions\n"
-                  + "  Ctrl+left-click: move stage to position\n"
-                  + "\n"
+            TiledDataViewerInspectorPanelController.EXPLORE_HELP_TEXT
+                  + "\n\n"
                   + "Images pass through the active Data Processing Pipeline.\n"
                   + "Configure the pipeline in MM's Data Processing Pipeline window.",
             "Explorer Help", JOptionPane.PLAIN_MESSAGE));

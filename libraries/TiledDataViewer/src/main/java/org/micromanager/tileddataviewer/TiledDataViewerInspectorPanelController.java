@@ -30,6 +30,31 @@ import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 public final class TiledDataViewerInspectorPanelController
       extends AbstractInspectorPanelController {
 
+   /**
+    * Shared help text describing the Explorer / TiledDataViewer mouse and button controls.
+    * Used by this panel's Help button and by the Explorer/Deskew plugin frames so the
+    * documentation stays in one place.
+    */
+   public static final String EXPLORE_HELP_TEXT =
+         "Navigation:\n"
+               + "  Left-drag: pan view\n"
+               + "  Scroll wheel: zoom in/out\n"
+               + "\n"
+               + "Tile selection (live explore):\n"
+               + "  Right-click: select tile\n"
+               + "  Right-drag: expand selection\n"
+               + "  Left-click: acquire (or queue) selected tiles\n"
+               + "  Interrupt: stop all queued and running acquisitions\n"
+               + "  Ctrl+left-click: move stage to position\n"
+               + "\n"
+               + "View controls:\n"
+               + "  Center: pan to center of dataset (keep zoom)\n"
+               + "  No Zoom: zoom to 1:1 and center on dataset\n"
+               + "\n"
+               + "Export:\n"
+               + "  Click Export, drag to draw ROI, then confirm export\n"
+               + "  Click anywhere to dismiss the ROI";
+
    private static final DecimalFormat FMT_POS = new DecimalFormat("000");
 
    private final Studio studio_;
@@ -90,25 +115,7 @@ public final class TiledDataViewerInspectorPanelController
 
    private void showHelp() {
       JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(panel_),
-            "Navigation:\n"
-                  + "  Left-drag: pan view\n"
-                  + "  Scroll wheel: zoom in/out\n"
-                  + "\n"
-                  + "Tile selection (live explore):\n"
-                  + "  Right-click: select tile\n"
-                  + "  Right-drag: expand selection\n"
-                  + "  Left-click: acquire (or queue) selected tiles\n"
-                  + "  Interrupt: stop all queued and running acquisitions\n"
-                  + "  Ctrl+left-click: move stage to position\n"
-                  + "\n"
-                  + "View controls:\n"
-                  + "  Center: pan to center of dataset (keep zoom)\n"
-                  + "  No Zoom: zoom to 1:1 and center on dataset\n"
-                  + "\n"
-                  + "Export:\n"
-                  + "  Click Export, drag to draw ROI, then confirm export\n"
-                  + "  Click anywhere to dismiss the ROI",
-            "Explorer Help", JOptionPane.PLAIN_MESSAGE);
+            EXPLORE_HELP_TEXT, "Explorer Help", JOptionPane.PLAIN_MESSAGE);
    }
 
    /** Returns the center of the dataset in full-res pixel coordinates, or null if unknown. */
@@ -686,20 +693,26 @@ public final class TiledDataViewerInspectorPanelController
 
    @Override
    public void attachDataViewer(DataViewer viewer) {
+      // The Inspector reuses one controller instance and may re-attach without an
+      // intervening detach when the active viewer changes; detach first so we never
+      // leak a listener on the previous viewer's explore controls.
+      if (viewer_ != null) {
+         detachDataViewer();
+      }
       viewer_ = (TiledDataViewerDataViewerAPI) viewer;
       lastRoi_ = null;
 
       exploreControls_ = viewer_.getExploreControls();
+      final boolean inProgress =
+            exploreControls_ != null && exploreControls_.isAcquisitionInProgress();
+      // Interrupt is only meaningful for a live explore session; for a read-only
+      // viewer it stays present but disabled (matching the other panel buttons).
+      // Touch Swing on the EDT in case attach is ever called off-EDT.
+      SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(inProgress));
       if (exploreControls_ != null) {
-         interruptButton_.setVisible(true);
-         interruptButton_.setEnabled(exploreControls_.isAcquisitionInProgress());
-         acqStateListener_ = inProgress ->
-               SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(inProgress));
+         acqStateListener_ = changed ->
+               SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(changed));
          exploreControls_.addAcquisitionStateListener(acqStateListener_);
-      } else {
-         // Read-only viewer (e.g. opened dataset): no acquisition to interrupt.
-         interruptButton_.setVisible(false);
-         interruptButton_.setEnabled(false);
       }
    }
 
@@ -710,7 +723,7 @@ public final class TiledDataViewerInspectorPanelController
       }
       exploreControls_ = null;
       acqStateListener_ = null;
-      interruptButton_.setEnabled(false);
+      SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(false));
       viewer_ = null;
       lastRoi_ = null;
       setStatus(null);
