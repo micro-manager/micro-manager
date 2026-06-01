@@ -8,7 +8,7 @@ package org.micromanager.tileddataviewer;
  * this so the shared "Explorer Controls" Inspector panel can offer an Interrupt button
  * without the library depending on the plugins. Data sources that do not support
  * interrupting (e.g. a read-only viewer opened from a saved dataset) simply do not
- * implement it, and the panel hides the Interrupt button.</p>
+ * implement it, and the panel keeps the Interrupt button visible but disabled.</p>
  */
 public interface TiledDataViewerExploreControls {
 

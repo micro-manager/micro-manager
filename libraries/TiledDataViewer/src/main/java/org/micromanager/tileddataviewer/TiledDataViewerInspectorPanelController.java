@@ -44,7 +44,7 @@ public final class TiledDataViewerInspectorPanelController
                + "  Right-click: select tile\n"
                + "  Right-drag: expand selection\n"
                + "  Left-click: acquire (or queue) selected tiles\n"
-               + "  Interrupt: stop all queued and running acquisitions\n"
+               + "  Interrupt: cancel queued tiles; the current tile finishes first\n"
                + "  Ctrl+left-click: move stage to position\n"
                + "\n"
                + "View controls:\n"

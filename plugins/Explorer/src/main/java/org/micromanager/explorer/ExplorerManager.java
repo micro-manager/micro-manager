@@ -241,7 +241,7 @@ public class ExplorerManager {
             int[] corr = ImageTransformUtils.correctionFromAffine(pixelSizeAffine_);
             if (corr != null && (corr[0] != 0 || corr[1] != 0)) {
                if (corr[0] != 0) {
-                  studio_.logs().logMessage("Explorer: camera rotation detected (="
+                  studio_.logs().logMessage("Explorer: camera rotation detected ("
                         + corr[0] + "°); use the Image Flipper plugin for rotation correction");
                } else {
                   sessionCorrectionMirror_ = (corr[1] != 0);
