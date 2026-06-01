@@ -134,7 +134,7 @@ public final class TiledDataViewerInspectorPanelController
       if (viewer_ == null) {
          return;
       }
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double dataCenter = getDataCenter();
       if (dataCenter == null) {
          return;
@@ -149,7 +149,7 @@ public final class TiledDataViewerInspectorPanelController
       if (viewer_ == null) {
          return;
       }
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double displaySize = v.getDisplayImageSize();
       Point2D.Double dataCenter = getDataCenter();
       double centerX = dataCenter != null ? dataCenter.x
@@ -175,7 +175,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void startExportMode() {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       v.getCanvasJPanel().setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       setStatus("Draw a selection on the image");
 
@@ -211,7 +211,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void onRoiSelected(Point dragStart, Point dragEnd) {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double viewOffset = v.getViewOffset();
       double mag = v.getMagnification();
       int x1 = (int) (viewOffset.x + Math.min(dragStart.x, dragEnd.x) / mag);
@@ -248,7 +248,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void startPositionListMode() {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       v.getCanvasJPanel().setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       setStatus("Draw a selection for the position list");
 
@@ -290,7 +290,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void onPosListRoiSelected(Point dragStart, Point dragEnd) {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double viewOffset = v.getViewOffset();
       double mag = v.getMagnification();
       int x1 = (int) (viewOffset.x + Math.min(dragStart.x, dragEnd.x) / mag);

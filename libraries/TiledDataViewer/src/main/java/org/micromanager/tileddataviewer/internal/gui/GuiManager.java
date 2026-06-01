@@ -24,12 +24,12 @@ public class GuiManager {
 
    private TiledDataViewer display_;
 
-   public GuiManager(TiledDataViewer ndViewer2, boolean acquisition) {
-      displayWindow_ = new DisplayWindow(ndViewer2, !acquisition);
+   public GuiManager(TiledDataViewer tiledDataViewer, boolean acquisition) {
+      displayWindow_ = new DisplayWindow(tiledDataViewer, !acquisition);
 
-      overlayer_ = new BaseOverlayer(ndViewer2);
-      imageMaker_ = new ImageMaker(ndViewer2, ndViewer2.getDataSource());
-      display_ = ndViewer2;
+      overlayer_ = new BaseOverlayer(tiledDataViewer);
+      imageMaker_ = new ImageMaker(tiledDataViewer, tiledDataViewer.getDataSource());
+      display_ = tiledDataViewer;
 
    }
 

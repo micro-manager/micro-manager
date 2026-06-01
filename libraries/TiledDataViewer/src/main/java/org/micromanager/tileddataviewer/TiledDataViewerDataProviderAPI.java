@@ -18,7 +18,7 @@ public interface TiledDataViewerDataProviderAPI extends DataProvider {
     * Uses the provided Image directly and derives the channel from the axes map.
     *
     * @param image the image that arrived
-    * @param axes  the NDViewer axes of the image (e.g. {channel: "DAPI", ...})
+    * @param axes  the TiledDataViewer axes of the image (e.g. {channel: "DAPI", ...})
     */
    void newImageArrived(Image image, HashMap<String, Object> axes);
 
@@ -26,14 +26,15 @@ public interface TiledDataViewerDataProviderAPI extends DataProvider {
     * Notify this data provider that a new image has arrived at the given axes.
     * Re-reads the image from storage so that per-image metadata tags are included.
     *
-    * @param axes the NDViewer axes of the image (e.g. {row: 0, column: 0, channel: "DAPI", ...})
+    * @param axes the TiledDataViewer axes of the image (for instance:
+    *            {row: 0, column: 0, channel: "DAPI", ...})
     */
    void newImageArrived(HashMap<String, Object> axes);
 
    /**
-    * Fetch a downsampled (coarsest pyramid level) version of the image by NDViewer axes.
+    * Fetch a downsampled (coarsest pyramid level) version of the image by TiledDataViewer axes.
     *
-    * @param axes the NDViewer axes map
+    * @param axes the TiledDataViewer axes map
     * @return downsampled image, or null if not found
     * @throws IOException if conversion from TaggedImage fails
     */

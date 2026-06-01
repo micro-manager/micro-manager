@@ -10,7 +10,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.ArrayList;
@@ -1442,7 +1441,7 @@ public class StitchFrame extends JDialog {
                   pixelSizeUm, isRgb);
 
       // Set the window title bar text.
-      viewer.getNDViewer().setWindowTitle(name);
+      viewer.getTiledDataViewer().setWindowTitle(name);
 
       // Initialize the viewer for a loaded (already-written) dataset.
       // This reads getImageKeys() from the data source, registers all channels in the
@@ -1453,7 +1452,7 @@ public class StitchFrame extends JDialog {
       // Pass empty JSON so DisplaySettings uses its default constructor (preferences-based).
       // The NDTiff summary JSON does not have the "All channel settings" structure that
       // DisplaySettings expects, and passing it causes JSONExceptions for every setting read.
-      viewer.getNDViewer().initializeViewerToLoaded(new JSONObject());
+      viewer.getTiledDataViewer().initializeViewerToLoaded(new JSONObject());
 
       // Apply source display settings after channels have been registered.
       if (displaySettings != null) {

@@ -463,7 +463,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    /**
     * Returns per-component (R, G, B) raw pixel histograms for RGB channels.
-    * Only channels rendered by NDVImageProcessorRGB appear in the result.
+    * Only channels rendered by TiledDataViewerImageProcessorRGB appear in the result.
     * The value array has three entries: [R histogram, G histogram, B histogram].
     */
    public HashMap<String, int[][]> getComponentHistograms() {
@@ -727,14 +727,14 @@ public class TiledDataViewer implements TiledDataViewerAPI {
                closed_ = true;
             }
          }
-      }, "NDViewer closing thread").start();
+      }, "TiledDataViewer closing thread").start();
    }
 
    public JSONObject getSummaryMD() {
       try {
          return new JSONObject(summaryMetadata_.toString());
       } catch (JSONException ex) {
-         return null; //this shouldnt happen
+         return null; //this should not happen
       }
    }
 
