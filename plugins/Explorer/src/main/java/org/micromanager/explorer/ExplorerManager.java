@@ -280,7 +280,7 @@ public class ExplorerManager {
 
          initDisplaySettings(summaryMetadataJson);
 
-         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Explorer - Right-click/drag to select, "
                + "Left-drag to pan, Left-click to acquire");
@@ -427,7 +427,7 @@ public class ExplorerManager {
             studio_.logs().logError(e, "Failed to initialize DisplaySettings");
          }
 
-         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Explorer - " + acqName_);
 
@@ -841,7 +841,7 @@ public class ExplorerManager {
 
    private void closeViewerReferences() {
       if (mm2Viewer_ != null) {
-         mm2Viewer_.closeWithoutNDViewer();
+         mm2Viewer_.closeWithoutTiledDataViewer();
       }
       mm2Viewer_ = null;
       mm2DataProvider_ = null;

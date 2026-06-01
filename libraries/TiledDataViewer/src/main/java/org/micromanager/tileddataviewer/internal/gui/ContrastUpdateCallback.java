@@ -7,7 +7,7 @@ public interface ContrastUpdateCallback {
    /**
     * Called by ImageMaker after autostretch computes new contrast bounds.
     *
-    * @param channelName the NDViewer channel name
+    * @param channelName the TiledDataViewer channel name
     * @param newMin      the computed contrast minimum
     * @param newMax      the computed contrast maximum
     */

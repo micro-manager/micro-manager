@@ -28,7 +28,7 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
     *
     * @return the TiledDataViewerAPI instance
     */
-   TiledDataViewerAPI getNDViewer();
+   TiledDataViewerAPI getTiledDataViewer();
 
    /**
     * Close the viewer and release all resources.
@@ -36,15 +36,15 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
    void close();
 
    /**
-    * Shut down MM2-specific resources without touching NDViewer.
-    * Use this when NDViewer itself initiated the close (e.g. user clicked X)
-    * to avoid calling ndViewer_.close() a second time.
+    * Shut down MM2-specific resources without touching TiledDataViewer.
+    * Use this when TiledDataViewer itself initiated the close (e.g. user clicked X)
+    * to avoid calling tiledDataViewer_.close() a second time.
     */
-   void closeWithoutNDViewer();
+   void closeWithoutTiledDataViewer();
 
    /**
     * Add an MM Inspector overlay to this viewer.
-    * The overlay will be rendered on the NDViewer canvas on top of the image.
+    * The overlay will be rendered on the TiledDataViewer canvas on top of the image.
     *
     * @param overlay the overlay to add
     */
@@ -78,7 +78,7 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
    TiledDataViewerOverlayerPlugin getOverlayerPlugin();
 
    /**
-    * Return the NDViewer channel names as they are keyed in storage and in
+    * Return the TiledDataViewer channel names as they are keyed in storage and in
     * the display-settings JSON. Use these as the channel name list for ExportTiles
     * instead of the MM SummaryMetadata channel names, which may be null/empty.
     * Returns a list containing null if no channel axis exists.
@@ -89,9 +89,9 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
     * Build a display-settings JSON object suitable for passing to ExportTiles.
     * Reads directly from the current MM DisplaySettings so that autostretch
     * contrast values are always up to date.
-    * Format: { ndViewerChannelName: { "Min": x, "Max": y, "Color": rgb, ... } }
+    * Format: { TiledDataViewerChannelName: { "Min": x, "Max": y, "Color": rgb, ... } }
     *
-    * @return JSON keyed by NDViewer channel name, or null if not available
+    * @return JSON keyed by TiledDataViewer channel name, or null if not available
     */
    JSONObject buildExportDisplaySettingsJSON();
 
@@ -103,7 +103,7 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
     * <p>Images and axes lists must correspond 1-to-1.</p>
     *
     * @param images    list of images (one per channel)
-    * @param axesList  list of NDViewer axes maps (one per image, same order)
+    * @param axesList  list of TiledDataViewer axes maps (one per image, same order)
     */
    void newTileArrived(List<Image> images, List<HashMap<String, Object>> axesList);
 

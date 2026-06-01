@@ -270,7 +270,7 @@ public class DeskewExploreManager {
             }
          }
 
-         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Deskew Explore - Right-click/drag to select, "
                + "Left-drag to pan, Left-click to acquire");
@@ -481,7 +481,7 @@ public class DeskewExploreManager {
             studio_.logs().logError(e, "Failed to initialize DisplaySettings");
          }
 
-         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
@@ -845,7 +845,7 @@ public class DeskewExploreManager {
       // calling ndViewer_.close() again — a second close would queue EDT runnables
       // that NPE on NDViewer's partially-torn-down internal state.
       if (mm2Viewer_ != null) {
-         mm2Viewer_.closeWithoutNDViewer();
+         mm2Viewer_.closeWithoutTiledDataViewer();
       }
       // Null out viewer references so stopExplore() doesn't try to close them again.
       mm2Viewer_ = null;
