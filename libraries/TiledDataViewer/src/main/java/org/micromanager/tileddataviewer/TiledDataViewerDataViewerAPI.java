@@ -106,4 +106,13 @@ public interface TiledDataViewerDataViewerAPI extends DataViewer {
     * @param axesList  list of NDViewer axes maps (one per image, same order)
     */
    void newTileArrived(List<Image> images, List<HashMap<String, Object>> axesList);
+
+   /**
+    * Return the live-explore acquisition controls for this viewer, if the underlying
+    * data source supports them.
+    *
+    * @return the explore controls, or null if the data source does not support
+    *     interrupting an acquisition (e.g. a read-only viewer).
+    */
+   TiledDataViewerExploreControls getExploreControls();
 }

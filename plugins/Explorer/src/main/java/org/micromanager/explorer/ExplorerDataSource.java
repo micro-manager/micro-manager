@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
@@ -23,6 +24,7 @@ import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
+import org.micromanager.tileddataviewer.TiledDataViewerExploreControls;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
 import org.micromanager.tileddataviewer.overlay.Overlay;
 import org.micromanager.tileddataviewer.overlay.Roi;
@@ -39,11 +41,14 @@ import org.micromanager.tileddataviewer.overlay.TextRoi;
  * in ExplorerManager (camera FOV in microns, fixed for the session).
  */
 public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataViewerAcqInterface,
-         TiledDataViewerCanvasMouseListenerInterface, TiledDataViewerOverlayerPlugin {
+         TiledDataViewerCanvasMouseListenerInterface, TiledDataViewerOverlayerPlugin,
+         TiledDataViewerExploreControls {
 
    private static final double ZOOM_FACTOR = 1.4;
 
    private final ExplorerManager manager_;
+   private final CopyOnWriteArrayList<AcquisitionStateListener> acqStateListeners_ =
+         new CopyOnWriteArrayList<>();
    private volatile TiledDataViewerAPI viewer_;
    private volatile MultiresNDTiffAPI storage_;
    private volatile boolean finished_ = false;
@@ -174,6 +179,31 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setAcquisitionInProgress(boolean inProgress) {
       acquisitionInProgress_ = inProgress;
+      for (AcquisitionStateListener l : acqStateListeners_) {
+         l.acquisitionInProgressChanged(inProgress);
+      }
+   }
+
+   // ===================== TiledDataViewerExploreControls =====================
+
+   @Override
+   public void interruptAcquisition() {
+      manager_.interruptAcquisition();
+   }
+
+   @Override
+   public boolean isAcquisitionInProgress() {
+      return acquisitionInProgress_;
+   }
+
+   @Override
+   public void addAcquisitionStateListener(AcquisitionStateListener l) {
+      acqStateListeners_.add(l);
+   }
+
+   @Override
+   public void removeAcquisitionStateListener(AcquisitionStateListener l) {
+      acqStateListeners_.remove(l);
    }
 
    public void setSettingsMismatch(boolean mismatch) {
@@ -472,13 +502,15 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       int dx = dragStart_.x - current.x;
       int dy = dragStart_.y - current.y;
 
-      if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+      if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
+         // Right-drag creates and extends the selection — blocked in read-only mode.
+         // Right-press already set selectionStart_ to the tile under the cursor.
          if (!readOnly_ && selectionStart_ != null
                  && tileWidth_ > 0 && tileHeight_ > 0) {
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-               isLeftDragging_ = true;
+               isRightDragging_ = true;
             }
-            if (isLeftDragging_) {
+            if (isRightDragging_) {
                Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
                if (tile != null && !tile.equals(selectionEnd_)) {
                   selectionEnd_ = tile;
@@ -486,13 +518,14 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
                }
             }
          }
-      } else if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
+      } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+         // Left-drag pans the view. Note: panning intentionally does NOT clear any
+         // existing tile selection — a tentative single-tile selection set by a prior
+         // right-press is left in place so the user can pan and then keep selecting.
          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-            isRightDragging_ = true;
-            selectionStart_ = null;
-            selectionEnd_ = null;
+            isLeftDragging_ = true;
          }
-         if (isRightDragging_) {
+         if (isLeftDragging_) {
             manager_.pan(dx, dy);
             dragStart_ = current;
          }
@@ -575,7 +608,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          line1.setStrokeColor(Color.WHITE);
          overlay.add(line1);
 
-         TextRoi line2 = new TextRoi(centerX - 120, centerY - 10, "Left-drag: expand selection");
+         TextRoi line2 = new TextRoi(centerX - 120, centerY - 10, "Right-drag: expand selection");
          line2.setStrokeColor(Color.WHITE);
          overlay.add(line2);
 
@@ -584,7 +617,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          line3.setStrokeColor(Color.WHITE);
          overlay.add(line3);
 
-         TextRoi line4 = new TextRoi(centerX - 120, centerY + 30, "Right-drag: pan view");
+         TextRoi line4 = new TextRoi(centerX - 120, centerY + 30, "Left-drag: pan view");
          line4.setStrokeColor(Color.WHITE);
          overlay.add(line4);
 
@@ -659,8 +692,8 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          String instructions;
          if (selectionEnd_ == null) {
             instructions = acquisitionInProgress_
-                  ? "Left-drag to extend, left-click to queue"
-                  : "Left-drag to extend, left-click to acquire";
+                  ? "Right-drag to extend, left-click to queue"
+                  : "Right-drag to extend, left-click to acquire";
          } else {
             instructions = acquisitionInProgress_
                   ? "Left-click to queue " + tileCount + " tile(s)"

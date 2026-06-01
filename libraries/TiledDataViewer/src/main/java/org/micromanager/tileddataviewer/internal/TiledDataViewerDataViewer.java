@@ -62,6 +62,7 @@ import org.micromanager.display.overlay.OverlaySupport;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
 import org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerExploreControls;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
 import org.micromanager.tileddataviewer.internal.gui.ChannelRenderSettings;
 import org.micromanager.tileddataviewer.internal.gui.ContrastUpdateCallback;
@@ -1164,6 +1165,13 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    @Override
    public TiledDataViewer getNDViewer() {
       return ndViewer2_;
+   }
+
+   @Override
+   public TiledDataViewerExploreControls getExploreControls() {
+      TiledDataViewerDataSource ds = ndViewer2_.getDataSource();
+      return ds instanceof TiledDataViewerExploreControls
+            ? (TiledDataViewerExploreControls) ds : null;
    }
 
    /**
