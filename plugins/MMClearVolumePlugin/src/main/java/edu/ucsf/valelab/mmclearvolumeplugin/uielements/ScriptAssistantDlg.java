@@ -1,6 +1,7 @@
 package edu.ucsf.valelab.mmclearvolumeplugin.uielements;
 
 import com.jogamp.opengl.math.Quaternion;
+import com.jogamp.opengl.math.Vec3f;
 import edu.ucsf.valelab.mmclearvolumeplugin.CVViewer;
 import edu.ucsf.valelab.mmclearvolumeplugin.recorder.AnimationFrameRecorder;
 import java.awt.Color;
@@ -509,8 +510,10 @@ public final class ScriptAssistantDlg extends JDialog {
          // Work on a copy; toAngleAxis does not mutate but normalize does.
          Quaternion qCopy = new Quaternion(q);
          qCopy.normalize();
-         float[] axis = new float[3];
-         float angleRad = qCopy.toAngleAxis(axis);
+         // JOGL 2.5.0: toAngleAxis writes the axis into a Vec3f (was float[] in 2.3.2).
+         Vec3f axisVec = new Vec3f();
+         float angleRad = qCopy.toAngleAxis(axisVec);
+         float[] axis = axisVec.get(new float[3]);
          float angleDeg = (float) Math.toDegrees(angleRad);
          if (Math.abs(angleDeg) >= ROT_THRESHOLD_DEG) {
             float ax = axis[0];
@@ -644,8 +647,10 @@ public final class ScriptAssistantDlg extends JDialog {
       qDelta.mult(new Quaternion(q0).conjugate());
       qDelta.normalize();
 
-      float[] axis = new float[3];
-      float angleRad = qDelta.toAngleAxis(axis);
+      // JOGL 2.5.0: toAngleAxis writes the axis into a Vec3f (was float[] in 2.3.2).
+      Vec3f axisVec = new Vec3f();
+      float angleRad = qDelta.toAngleAxis(axisVec);
+      float[] axis = axisVec.get(new float[3]);
       float angleDeg = (float) Math.toDegrees(angleRad);
 
       if (Math.abs(angleDeg) < ROT_THRESHOLD_DEG) {
