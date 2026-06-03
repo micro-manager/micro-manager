@@ -98,18 +98,26 @@ public final class OMEMetadata {
       }
 
       final int plateIdx = 0;
-      String plateID = (plate.getPlateID() != null && !plate.getPlateID().isEmpty())
-            ? plate.getPlateID() : MetadataTools.createLSID("Plate", plateIdx);
-      metadata_.setPlateID(plateID, plateIdx);
+      // The OME PlateID attribute is a structural LSID and must match the
+      // "Plate:<n>" pattern; it is not a free-form identifier. (MM's
+      // MultiWellPlate.getPlateID() is documented as "any String that uniquely
+      // identifies the plate", e.g. a UUID, which violates that pattern.) Always
+      // emit a schema-valid LSID here and preserve MM's identifier as the
+      // free-form PlateExternalIdentifier instead.
+      metadata_.setPlateID(MetadataTools.createLSID("Plate", plateIdx), plateIdx);
       if (plate.getPlateName() != null && !plate.getPlateName().isEmpty()) {
          metadata_.setPlateName(plate.getPlateName(), plateIdx);
       }
       if (plate.getPlateDescription() != null && !plate.getPlateDescription().isEmpty()) {
          metadata_.setPlateDescription(plate.getPlateDescription(), plateIdx);
       }
+      // Prefer an explicitly supplied external identifier; otherwise fall back to
+      // MM's plate ID (typically a UUID) so it is not lost.
       if (plate.getPlateExternalIdentifier() != null
             && !plate.getPlateExternalIdentifier().isEmpty()) {
          metadata_.setPlateExternalIdentifier(plate.getPlateExternalIdentifier(), plateIdx);
+      } else if (plate.getPlateID() != null && !plate.getPlateID().isEmpty()) {
+         metadata_.setPlateExternalIdentifier(plate.getPlateID(), plateIdx);
       }
       if (plate.getPlateStatus() != null && !plate.getPlateStatus().isEmpty()) {
          metadata_.setPlateStatus(plate.getPlateStatus(), plateIdx);
@@ -129,11 +137,11 @@ public final class OMEMetadata {
       metadata_.setPlateRowNamingConvention(rowConvention, plateIdx);
       metadata_.setPlateColumnNamingConvention(colConvention, plateIdx);
       if (plate.getPlateWellOriginX() != null) {
-         metadata_.setPlateWellOriginX(new Length(plate.getPlateWellOriginX(), UNITS.MICROM),
+         metadata_.setPlateWellOriginX(new Length(plate.getPlateWellOriginX(), UNITS.MICROMETER),
                   plateIdx);
       }
       if (plate.getPlateWellOriginY() != null) {
-         metadata_.setPlateWellOriginY(new Length(plate.getPlateWellOriginY(), UNITS.MICROM),
+         metadata_.setPlateWellOriginY(new Length(plate.getPlateWellOriginY(), UNITS.MICROMETER),
                   plateIdx);
       }
 
@@ -212,9 +220,9 @@ public final class OMEMetadata {
                ? Double.parseDouble(offsetXStr) : pos.getX();
          double sampleY = (offsetYStr != null && !offsetYStr.isEmpty())
                ? Double.parseDouble(offsetYStr) : pos.getY();
-         metadata_.setWellSamplePositionX(new Length(sampleX, UNITS.MICROM), plateIdx, wellIdx,
+         metadata_.setWellSamplePositionX(new Length(sampleX, UNITS.MICROMETER), plateIdx, wellIdx,
                   sampleIdx);
-         metadata_.setWellSamplePositionY(new Length(sampleY, UNITS.MICROM), plateIdx, wellIdx,
+         metadata_.setWellSamplePositionY(new Length(sampleY, UNITS.MICROMETER), plateIdx, wellIdx,
                   sampleIdx);
          metadata_.setWellSampleImageRef(
                MetadataTools.createLSID("Image", positionIdx), plateIdx, wellIdx, sampleIdx);
@@ -292,9 +300,9 @@ public final class OMEMetadata {
          double pixelSize = repMetadata.getPixelSizeUm();
          if (pixelSize > 0) {
             metadata_.setPixelsPhysicalSizeX(
-                  new Length(pixelSize, UNITS.MICROM), seriesIndex);
+                  new Length(pixelSize, UNITS.MICROMETER), seriesIndex);
             metadata_.setPixelsPhysicalSizeY(
-                  new Length(pixelSize, UNITS.MICROM), seriesIndex);
+                  new Length(pixelSize, UNITS.MICROMETER), seriesIndex);
          }
       }
 
@@ -303,14 +311,14 @@ public final class OMEMetadata {
          double zStep = summaryMD.getZStepUm();
          if (zStep != 0) {
             metadata_.setPixelsPhysicalSizeZ(
-                  new Length(Math.abs(zStep), UNITS.MICROM), seriesIndex);
+                  new Length(Math.abs(zStep), UNITS.MICROMETER), seriesIndex);
          }
       }
 
       if (summaryMD.getWaitInterval() != null) {
          double interval = summaryMD.getWaitInterval();
          if (interval > 0) { //don't write it for burst mode because it won't be true
-            metadata_.setPixelsTimeIncrement(new Time(interval, UNITS.MS), seriesIndex);
+            metadata_.setPixelsTimeIncrement(new Time(interval, UNITS.MILLISECOND), seriesIndex);
          }
       }
 
@@ -495,13 +503,13 @@ public final class OMEMetadata {
       //Optional tags
       Double exposureMs = metadata.getExposureMs();
       if (exposureMs != null) {
-         metadata_.setPlaneExposureTime(new Time(exposureMs, UNITS.MS),
+         metadata_.setPlaneExposureTime(new Time(exposureMs, UNITS.MILLISECOND),
                position, indices.planeIndex_);
       }
       Double xPositionUm = metadata.getXPositionUm();
       if (xPositionUm != null) {
          final Length xPosition =
-               new Length(xPositionUm, UNITS.MICROM);
+               new Length(xPositionUm, UNITS.MICROMETER);
          metadata_.setPlanePositionX(xPosition, position, indices.planeIndex_);
          if (indices.planeIndex_
                == 0) { //should be set at start, but don't have position coordinates then
@@ -511,7 +519,7 @@ public final class OMEMetadata {
       Double yPositionUm = metadata.getYPositionUm();
       if (yPositionUm != null) {
          final Length yPosition =
-               new Length(yPositionUm, UNITS.MICROM);
+               new Length(yPositionUm, UNITS.MICROMETER);
          metadata_.setPlanePositionY(yPosition, position, indices.planeIndex_);
          if (indices.planeIndex_ == 0) {
             metadata_.setStageLabelY(yPosition, position);
@@ -519,12 +527,12 @@ public final class OMEMetadata {
       }
       Double zPositionUm = metadata.getZPositionUm();
       if (zPositionUm != null) {
-         metadata_.setPlanePositionZ(new Length(zPositionUm, UNITS.MICROM),
+         metadata_.setPlanePositionZ(new Length(zPositionUm, UNITS.MICROMETER),
                position, indices.planeIndex_);
       }
       double elapsedTimeMs = metadata.getElapsedTimeMs(-1.0);
       if (elapsedTimeMs >= 0.0) {
-         metadata_.setPlaneDeltaT(new Time(elapsedTimeMs, UNITS.MS),
+         metadata_.setPlaneDeltaT(new Time(elapsedTimeMs, UNITS.MILLISECOND),
                position, indices.planeIndex_);
       }
       String positionName = metadata.getPositionName("");
