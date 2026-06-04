@@ -298,7 +298,7 @@ public class ExplorerManager {
             }
             return 0L;
          });
-         viewer_.setReadZMetadataFunction(tags -> 0.0);
+         viewer_.setReadZMetadataFunction(tags -> tags.optDouble("ZPositionUm", 0.0));
          viewer_.setViewOffset(0, 0);
 
          startStagePositionPolling();
@@ -444,7 +444,7 @@ public class ExplorerManager {
             }
             return 0L;
          });
-         viewer_.setReadZMetadataFunction(tags -> 0.0);
+         viewer_.setReadZMetadataFunction(tags -> tags.optDouble("ZPositionUm", 0.0));
          viewer_.setViewOffset(0, 0);
 
          File viewStateFile = new File(dir, VIEW_STATE_FILE);
@@ -1171,9 +1171,10 @@ public class ExplorerManager {
    private void acquireSingleTileBlocking(int row, int col) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+         boolean useSlices = settings.useSlices() && settings.slices().size() > 0;
          SequenceSettings.Builder sb = settings.copyBuilder()
                  .useFrames(false)
-                 .useSlices(false)
+                 .useSlices(useSlices)
                  .usePositionList(false)
                  .save(false)
                  .shouldDisplayImages(false)
@@ -1182,7 +1183,8 @@ public class ExplorerManager {
          // Preserve channel settings from MDA
          if (settings.useChannels()) {
             sb.useChannels(true);
-         } else {
+         }
+         if (!settings.useChannels() && !useSlices) {
             // AcquisitionEventIterator requires at least one acquisition function;
             // when no channels/slices/positions are used, enable a single frame.
             sb.useFrames(true).numFrames(1).intervalMs(0);
@@ -1283,8 +1285,20 @@ public class ExplorerManager {
 
          List<Coords> allCoords = new ArrayList<>();
          testStore.getUnorderedImageCoords().forEach(allCoords::add);
-         // Sort by channel for consistent ordering
-         allCoords.sort((a, b) -> Integer.compare(a.getChannel(), b.getChannel()));
+         // Sort by channel, then z-slice, for consistent ordering
+         allCoords.sort((a, b) -> {
+            int cmp = Integer.compare(a.getChannel(), b.getChannel());
+            return cmp != 0 ? cmp : Integer.compare(a.getZSlice(), b.getZSlice());
+         });
+         // Only attach a "z" axis when this is a genuine z-stack (more than one plane);
+         // single-plane acquisitions keep their original axes and create no z slider.
+         boolean isZStack = false;
+         for (Coords c : allCoords) {
+            if (c.getZSlice() > 0) {
+               isZStack = true;
+               break;
+            }
+         }
 
          for (Coords c : allCoords) {
             Image img = testStore.getImage(c);
@@ -1310,7 +1324,9 @@ public class ExplorerManager {
             }
             int channelIndex = c.getChannel();
             String channelName = summaryMeta.getSafeChannelName(channelIndex);
-            HashMap<String, Object> axes = storeImage(img, row, col, channelName);
+            // Pass the z-slice index only for z-stacks (-1 means "no z axis").
+            int zIndex = isZStack ? c.getZSlice() : -1;
+            HashMap<String, Object> axes = storeImage(img, row, col, channelName, zIndex);
             if (axes != null) {
                storedAxes.add(axes);
                storedImages.add(img);
@@ -1383,9 +1399,12 @@ public class ExplorerManager {
 
    /**
     * Stores a single image at the specified tile position and channel.
+    *
+    * @param zIndex z-slice index for a z-stack, or -1 when there is no z axis
+    *               (single-plane acquisition).
     */
    private HashMap<String, Object> storeImage(Image image, int row, int col,
-                                               String channelName) {
+                                               String channelName, int zIndex) {
       if (storage_ == null) {
          studio_.logs().logError("Explorer: storage is null, cannot store image");
          return null;
@@ -1430,8 +1449,13 @@ public class ExplorerManager {
                studio_.logs().logError("Explorer: Y position not found");
             }
          }
+         // For a z-stack, prefer the plane's true Z from the image metadata, since the
+         // engine moves Z asynchronously and the stage may not be settled at store time.
+         Double planeZum = (zIndex >= 0 && image.getMetadata() != null)
+                 ? image.getMetadata().getZPositionUm() : null;
          try {
-            tags.put("ZPositionUm", studio_.core().getPosition());
+            tags.put("ZPositionUm",
+                  planeZum != null ? planeZum : studio_.core().getPosition());
          } catch (Exception ignore) {
             if (loggedMetadataWarnings_.add("ZPositionUm")) {
                studio_.logs().logError("Explorer: Z position not found");
@@ -1444,6 +1468,9 @@ public class ExplorerManager {
          AcqEngMetadata.setAxisPosition(tags, "row", row);
          AcqEngMetadata.setAxisPosition(tags, "column", col);
          AcqEngMetadata.setAxisPosition(tags, "channel", channelName);
+         if (zIndex >= 0) {
+            AcqEngMetadata.setAxisPosition(tags, "z", zIndex);
+         }
 
          HashMap<String, Object> axes = AcqEngMetadata.getAxes(tags);
 
