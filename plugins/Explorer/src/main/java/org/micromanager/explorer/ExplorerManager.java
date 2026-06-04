@@ -1292,13 +1292,9 @@ public class ExplorerManager {
          });
          // Only attach a "z" axis when this is a genuine z-stack (more than one plane);
          // single-plane acquisitions keep their original axes and create no z slider.
-         boolean isZStack = false;
-         for (Coords c : allCoords) {
-            if (c.getZSlice() > 0) {
-               isZStack = true;
-               break;
-            }
-         }
+         // Derived from the acquisition intent rather than the data, so the decision
+         // lives in one place alongside useSlices (line ~1174).
+         boolean isZStack = useSlices && settings.slices().size() > 1;
 
          for (Coords c : allCoords) {
             Image img = testStore.getImage(c);
