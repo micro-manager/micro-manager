@@ -146,20 +146,6 @@ public final class TileCreator {
          return null;
       }
 
-      double totalSizeXUm = nrImagesX * tileSizeXUm + overlapXUm;
-      double totalSizeYUm = nrImagesY * tileSizeYUm + overlapYUm;
-
-      // Since an evenly spaced grid will likely not perfectly fit the bounding box
-      // that was specified we use this offset so that our grid is still centered properly.
-      // This slightly widens the field that is scanned. Sometime this can result in setting
-      // a position that is outside of the stage's range of motion. This causes issues when
-      // it comes time to stitch.
-      // This approach could also result in damage if the user specified a region that is
-      // near something delicate and then this code expands that range. It may be good to
-      // try a different approach.
-      double offsetXUm = (totalSizeXUm - boundingXUm) / 2;
-      double offsetYUm = (totalSizeYUm - boundingYUm) / 2;
-
       // Compute per-tile step vectors in stage space.
       // With an affine transform, moving one tile to the right in camera-pixel space
       // corresponds to affine * (tileWidthPx, 0) in stage microns — not simply
@@ -188,9 +174,13 @@ public final class TileCreator {
          stepYdy = tileSizeYUm;
       }
 
-      // Origin of the grid in stage space: top-left corner adjusted for centering offset.
-      final double originX = minX - offsetXUm;
-      final double originY = minY - offsetYUm;
+      // Anchor the grid at the centre of the bounding box and place tiles
+      // symmetrically around it. Sign-agnostic: affine step vectors may contain
+      // reflections/rotation (negative components), but building outward from the
+      // centre keeps the grid centred on the user's region while still applying
+      // the rotation through the step vectors.
+      final double centerX = (minX + maxX) / 2.0;
+      final double centerY = (minY + maxY) / 2.0;
 
       PositionList posList = new PositionList();
       for (int y = 0; y < nrImagesY; y++) {
@@ -205,8 +195,10 @@ public final class TileCreator {
             // Add XY position
             // xyStage is not null; we've checked above.
             msp.setDefaultXYStage(xyStage);
-            double dx = originX + tmpX * stepXdx + y * stepYdx;
-            double dy = originY + tmpX * stepXdy + y * stepYdy;
+            double offX = tmpX - (nrImagesX - 1) / 2.0;
+            double offY = y - (nrImagesY - 1) / 2.0;
+            double dx = centerX + offX * stepXdx + offY * stepYdx;
+            double dy = centerY + offX * stepXdy + offY * stepYdy;
             StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
             msp.add(spXY);
 
