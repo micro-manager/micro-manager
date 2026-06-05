@@ -149,6 +149,18 @@ public class ExplorerManager {
    private int initialCameraHeight_ = 512;
    private boolean isRGB_ = false;
 
+   // Z-axis decision locked at session start. The MDA slice settings can be toggled
+   // mid-session, but the dataset's axes shape must stay consistent: TiledDataViewer
+   // treats "z axis absent" as different from "z axis present at index 0", so mixing
+   // tiles with and without a "z" axis makes earlier tiles disappear. We therefore
+   // decide once, at session start, whether every tile in this session carries a
+   // z axis, and reuse that decision for all tiles regardless of later MDA edits.
+   private boolean sessionUseSlices_ = false;
+   private boolean sessionIsZStack_ = false;
+   // Slice positions captured at session start, applied to every tile acquisition so the
+   // z-axis shape is independent of later MDA slice edits. Empty when not using slices.
+   private java.util.ArrayList<Double> sessionSlices_ = new java.util.ArrayList<>();
+
    // Camera orientation / Image Flipper correction
    private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
    private boolean sessionCorrectionMirror_ = false; // horizontal mirror
@@ -215,6 +227,16 @@ public class ExplorerManager {
          initialCameraWidth_ = cameraWidth_;
          initialCameraHeight_ = cameraHeight_;
          settingsMismatch_ = false;
+
+         // Lock the z-axis decision for the whole session (see field comment). Editing
+         // the MDA slice settings after this point will not change the dataset's axes
+         // shape, so previously acquired tiles never disappear.
+         SequenceSettings startSettings = studio_.acquisitions().getAcquisitionSettings();
+         sessionUseSlices_ = startSettings.useSlices() && startSettings.slices().size() > 0;
+         sessionIsZStack_ = sessionUseSlices_ && startSettings.slices().size() > 1;
+         sessionSlices_ = sessionUseSlices_
+                 ? new java.util.ArrayList<>(startSettings.slices())
+                 : new java.util.ArrayList<>();
 
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
@@ -1171,10 +1193,16 @@ public class ExplorerManager {
    private void acquireSingleTileBlocking(int row, int col) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
-         boolean useSlices = settings.useSlices() && settings.slices().size() > 0;
+         // Use the z-axis decision locked at session start, not the current MDA
+         // settings, so every tile in this session has the same axes shape.
+         boolean useSlices = sessionUseSlices_;
          SequenceSettings.Builder sb = settings.copyBuilder()
                  .useFrames(false)
                  .useSlices(useSlices)
+                 // Use the slice positions captured at session start, not the current MDA
+                 // settings, so the z planes stay consistent even if the user edits the
+                 // slice list mid-session (an empty list here would yield no z planes).
+                 .slices(new java.util.ArrayList<>(sessionSlices_))
                  .usePositionList(false)
                  .save(false)
                  .shouldDisplayImages(false)
@@ -1292,9 +1320,9 @@ public class ExplorerManager {
          });
          // Only attach a "z" axis when this is a genuine z-stack (more than one plane);
          // single-plane acquisitions keep their original axes and create no z slider.
-         // Derived from the acquisition intent rather than the data, so the decision
-         // lives in one place alongside useSlices (line ~1174).
-         boolean isZStack = useSlices && settings.slices().size() > 1;
+         // Locked at session start so the dataset's axes shape stays consistent even if
+         // the MDA slice settings are edited mid-session (see sessionIsZStack_).
+         boolean isZStack = sessionIsZStack_;
 
          for (Coords c : allCoords) {
             Image img = testStore.getImage(c);
