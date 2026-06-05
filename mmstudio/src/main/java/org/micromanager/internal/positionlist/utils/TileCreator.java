@@ -174,10 +174,10 @@ public final class TileCreator {
          stepYdy = tileSizeYUm;
       }
 
-      // Anchor the grid at the centre of the bounding box and place tiles
+      // Anchor the grid at the center of the bounding box and place tiles
       // symmetrically around it. Sign-agnostic: affine step vectors may contain
       // reflections/rotation (negative components), but building outward from the
-      // centre keeps the grid centred on the user's region while still applying
+      // center keeps the grid centered on the user's region while still applying
       // the rotation through the step vectors.
       final double centerX = (minX + maxX) / 2.0;
       final double centerY = (minY + maxY) / 2.0;
