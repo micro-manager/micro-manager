@@ -149,6 +149,18 @@ public class ExplorerManager {
    private int initialCameraHeight_ = 512;
    private boolean isRGB_ = false;
 
+   // Z-axis decision locked at session start. The MDA slice settings can be toggled
+   // mid-session, but the dataset's axes shape must stay consistent: TiledDataViewer
+   // treats "z axis absent" as different from "z axis present at index 0", so mixing
+   // tiles with and without a "z" axis makes earlier tiles disappear. We therefore
+   // decide once, at session start, whether every tile in this session carries a
+   // z axis, and reuse that decision for all tiles regardless of later MDA edits.
+   private boolean sessionUseSlices_ = false;
+   private boolean sessionIsZStack_ = false;
+   // Slice positions captured at session start, applied to every tile acquisition so the
+   // z-axis shape is independent of later MDA slice edits. Empty when not using slices.
+   private java.util.ArrayList<Double> sessionSlices_ = new java.util.ArrayList<>();
+
    // Camera orientation / Image Flipper correction
    private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
    private boolean sessionCorrectionMirror_ = false; // horizontal mirror
@@ -215,6 +227,16 @@ public class ExplorerManager {
          initialCameraWidth_ = cameraWidth_;
          initialCameraHeight_ = cameraHeight_;
          settingsMismatch_ = false;
+
+         // Lock the z-axis decision for the whole session (see field comment). Editing
+         // the MDA slice settings after this point will not change the dataset's axes
+         // shape, so previously acquired tiles never disappear.
+         SequenceSettings startSettings = studio_.acquisitions().getAcquisitionSettings();
+         sessionUseSlices_ = startSettings.useSlices() && startSettings.slices().size() > 0;
+         sessionIsZStack_ = sessionUseSlices_ && startSettings.slices().size() > 1;
+         sessionSlices_ = sessionUseSlices_
+                 ? new java.util.ArrayList<>(startSettings.slices())
+                 : new java.util.ArrayList<>();
 
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
@@ -298,7 +320,7 @@ public class ExplorerManager {
             }
             return 0L;
          });
-         viewer_.setReadZMetadataFunction(tags -> 0.0);
+         viewer_.setReadZMetadataFunction(tags -> tags.optDouble("ZPositionUm", 0.0));
          viewer_.setViewOffset(0, 0);
 
          startStagePositionPolling();
@@ -444,7 +466,7 @@ public class ExplorerManager {
             }
             return 0L;
          });
-         viewer_.setReadZMetadataFunction(tags -> 0.0);
+         viewer_.setReadZMetadataFunction(tags -> tags.optDouble("ZPositionUm", 0.0));
          viewer_.setViewOffset(0, 0);
 
          File viewStateFile = new File(dir, VIEW_STATE_FILE);
@@ -1171,9 +1193,16 @@ public class ExplorerManager {
    private void acquireSingleTileBlocking(int row, int col) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+         // Use the z-axis decision locked at session start, not the current MDA
+         // settings, so every tile in this session has the same axes shape.
+         boolean useSlices = sessionUseSlices_;
          SequenceSettings.Builder sb = settings.copyBuilder()
                  .useFrames(false)
-                 .useSlices(false)
+                 .useSlices(useSlices)
+                 // Use the slice positions captured at session start, not the current MDA
+                 // settings, so the z planes stay consistent even if the user edits the
+                 // slice list mid-session (an empty list here would yield no z planes).
+                 .slices(new java.util.ArrayList<>(sessionSlices_))
                  .usePositionList(false)
                  .save(false)
                  .shouldDisplayImages(false)
@@ -1182,7 +1211,8 @@ public class ExplorerManager {
          // Preserve channel settings from MDA
          if (settings.useChannels()) {
             sb.useChannels(true);
-         } else {
+         }
+         if (!settings.useChannels() && !useSlices) {
             // AcquisitionEventIterator requires at least one acquisition function;
             // when no channels/slices/positions are used, enable a single frame.
             sb.useFrames(true).numFrames(1).intervalMs(0);
@@ -1283,8 +1313,16 @@ public class ExplorerManager {
 
          List<Coords> allCoords = new ArrayList<>();
          testStore.getUnorderedImageCoords().forEach(allCoords::add);
-         // Sort by channel for consistent ordering
-         allCoords.sort((a, b) -> Integer.compare(a.getChannel(), b.getChannel()));
+         // Sort by channel, then z-slice, for consistent ordering
+         allCoords.sort((a, b) -> {
+            int cmp = Integer.compare(a.getChannel(), b.getChannel());
+            return cmp != 0 ? cmp : Integer.compare(a.getZSlice(), b.getZSlice());
+         });
+         // Only attach a "z" axis when this is a genuine z-stack (more than one plane);
+         // single-plane acquisitions keep their original axes and create no z slider.
+         // Locked at session start so the dataset's axes shape stays consistent even if
+         // the MDA slice settings are edited mid-session (see sessionIsZStack_).
+         boolean isZStack = sessionIsZStack_;
 
          for (Coords c : allCoords) {
             Image img = testStore.getImage(c);
@@ -1310,7 +1348,9 @@ public class ExplorerManager {
             }
             int channelIndex = c.getChannel();
             String channelName = summaryMeta.getSafeChannelName(channelIndex);
-            HashMap<String, Object> axes = storeImage(img, row, col, channelName);
+            // Pass the z-slice index only for z-stacks (-1 means "no z axis").
+            int zIndex = isZStack ? c.getZSlice() : -1;
+            HashMap<String, Object> axes = storeImage(img, row, col, channelName, zIndex);
             if (axes != null) {
                storedAxes.add(axes);
                storedImages.add(img);
@@ -1383,9 +1423,12 @@ public class ExplorerManager {
 
    /**
     * Stores a single image at the specified tile position and channel.
+    *
+    * @param zIndex z-slice index for a z-stack, or -1 when there is no z axis
+    *               (single-plane acquisition).
     */
    private HashMap<String, Object> storeImage(Image image, int row, int col,
-                                               String channelName) {
+                                               String channelName, int zIndex) {
       if (storage_ == null) {
          studio_.logs().logError("Explorer: storage is null, cannot store image");
          return null;
@@ -1430,8 +1473,13 @@ public class ExplorerManager {
                studio_.logs().logError("Explorer: Y position not found");
             }
          }
+         // For a z-stack, prefer the plane's true Z from the image metadata, since the
+         // engine moves Z asynchronously and the stage may not be settled at store time.
+         Double planeZum = (zIndex >= 0 && image.getMetadata() != null)
+                 ? image.getMetadata().getZPositionUm() : null;
          try {
-            tags.put("ZPositionUm", studio_.core().getPosition());
+            tags.put("ZPositionUm",
+                  planeZum != null ? planeZum : studio_.core().getPosition());
          } catch (Exception ignore) {
             if (loggedMetadataWarnings_.add("ZPositionUm")) {
                studio_.logs().logError("Explorer: Z position not found");
@@ -1444,6 +1492,9 @@ public class ExplorerManager {
          AcqEngMetadata.setAxisPosition(tags, "row", row);
          AcqEngMetadata.setAxisPosition(tags, "column", col);
          AcqEngMetadata.setAxisPosition(tags, "channel", channelName);
+         if (zIndex >= 0) {
+            AcqEngMetadata.setAxisPosition(tags, "z", zIndex);
+         }
 
          HashMap<String, Object> axes = AcqEngMetadata.getAxes(tags);
 
