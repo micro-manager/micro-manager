@@ -11,8 +11,6 @@ import org.junit.Test;
  */
 public class ImageTransformUtilsTest {
 
-   private static final double EPS = 1e-9;
-
    // ----------------------------------------------------------------------
    // correctionFromAffine
    // ----------------------------------------------------------------------

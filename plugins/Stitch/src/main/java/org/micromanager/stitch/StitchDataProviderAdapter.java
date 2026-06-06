@@ -325,14 +325,13 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       // --- Attempt 0: affine-driven placement (checkbox ON) ---
       // Supersedes the label/raw-sign attempts so placement is derived from the SAME
       // affine that drives the per-tile pixel transform, and can never diverge from it.
+      // The orientation matrix M already maps stage microns to canvas pixels, so no
+      // separate pixel size is needed here.
       if (orientation != null && imageWidth > 0 && imageHeight > 0) {
-         double pixelSizeUm = getPixelSizeUm(source);
-         if (pixelSizeUm > 0) {
-            Map<Integer, GridCell> grid0 = tryGridFromOrientation(
-                  source, imageWidth, imageHeight, pixelSizeUm, orientation);
-            if (grid0 != null) {
-               return grid0;
-            }
+         Map<Integer, GridCell> grid0 = tryGridFromOrientation(
+               source, imageWidth, imageHeight, orientation);
+         if (grid0 != null) {
+            return grid0;
          }
       }
 
@@ -533,7 +532,7 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
     * transform. Returns null if no stage positions can be found.
     */
    private static Map<Integer, GridCell> tryGridFromOrientation(
-         DataProvider source, int imageWidth, int imageHeight, double pixelSizeUm,
+         DataProvider source, int imageWidth, int imageHeight,
          OrientationModel orientation) {
       Map<Integer, double[]> xyByPos = collectStageXY(source);
       if (xyByPos.isEmpty()) {
@@ -634,17 +633,14 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       if (grid.size() < 2 || tileW <= 0 || tileH <= 0) {
          return new int[]{0, 0};
       }
-      double pixelSizeUm = getPixelSizeUm(source);
-      if (pixelSizeUm <= 0) {
-         return new int[]{0, 0};
-      }
 
       // Collect one stage XY per position index. When orientation is active, map each to
       // canvas-pixel space so the right/bottom neighbour steps are measured along canvas
       // axes (consistent with placement) rather than raw stage axes.
       Map<Integer, double[]> rawXy = collectStageXY(source);
       Map<Integer, double[]> xyByPos;
-      // When mapped through M, steps are already in pixels; raw steps are in microns.
+      // When mapped through M, steps are already in pixels; raw steps are in microns and
+      // need the pixel size to convert (so the legacy path requires a valid pixel size).
       final double xToPx;
       final double yToPx;
       if (orientation != null) {
@@ -656,6 +652,10 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          xToPx = 1.0;
          yToPx = 1.0;
       } else {
+         double pixelSizeUm = getPixelSizeUm(source);
+         if (pixelSizeUm <= 0) {
+            return new int[]{0, 0};
+         }
          xyByPos = rawXy;
          xToPx = 1.0 / pixelSizeUm;
          yToPx = 1.0 / pixelSizeUm;
