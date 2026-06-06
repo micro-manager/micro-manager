@@ -51,6 +51,36 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       }
    }
 
+   /**
+    * Affine-driven orientation model (the "Correct camera orientation" ON path).
+    *
+    * <p>{@code m} is the stage-delta -> canvas-pixel-delta matrix
+    * {@code M = O * A^-1} (row-major {m00, m01, m10, m11}) from
+    * {@code ImageTransformUtils.stageToCanvasMatrix}; {@code refX}/{@code refY} is a
+    * fixed reference stage point (deltas are taken relative to it). When present, tile
+    * placement AND overlap are computed by mapping stage positions through {@code M},
+    * guaranteeing consistency with the pixel transform applied to the tiles. When null,
+    * the adapter reproduces the legacy raw-sign placement (checkbox OFF) byte-for-byte.</p>
+    */
+   static final class OrientationModel {
+      final double[] m;
+      final double refX;
+      final double refY;
+
+      OrientationModel(double[] m, double refX, double refY) {
+         this.m = m;
+         this.refX = refX;
+         this.refY = refY;
+      }
+
+      /** Map a stage (X,Y) to a canvas-pixel (X,Y) relative to the reference point. */
+      double[] toCanvas(double stageX, double stageY) {
+         double dx = stageX - refX;
+         double dy = stageY - refY;
+         return new double[]{m[0] * dx + m[1] * dy, m[2] * dx + m[3] * dy};
+      }
+   }
+
    // position index → grid cell
    private final Map<Integer, GridCell> positionGrid_;
    // (row << 32 | col) → position index, for O(1) reverse lookup in stripRowCol()
@@ -59,20 +89,35 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
    private final int imageHeight_;
    private final int overlapX_;
    private final int overlapY_;
+   // Non-null when affine-driven orientation is active (checkbox ON).
+   private final OrientationModel orientation_;
 
    /**
-    * Construct the adapter.
+    * Construct the adapter with legacy (raw-sign) placement.
     *
     * @param source the MM DataProvider (must have XPositionUm/YPositionUm per-image
     *               metadata, or stage positions with grid coordinates in summary metadata)
     * @throws IllegalArgumentException if grid coordinates cannot be determined
     */
    public StitchDataProviderAdapter(DataProvider source) {
+      this(source, null);
+   }
+
+   /**
+    * Construct the adapter.
+    *
+    * @param source      the MM DataProvider
+    * @param orientation affine-driven orientation model for consistent placement, or null
+    *                    to use the legacy raw-sign placement (checkbox OFF)
+    * @throws IllegalArgumentException if grid coordinates cannot be determined
+    */
+   public StitchDataProviderAdapter(DataProvider source, OrientationModel orientation) {
       super(source);
+      orientation_ = orientation;
       int[] dims = probeImageDims(source);
       imageWidth_ = dims[0];
       imageHeight_ = dims[1];
-      positionGrid_ = buildPositionGrid(source, imageWidth_, imageHeight_);
+      positionGrid_ = buildPositionGrid(source, imageWidth_, imageHeight_, orientation_);
       // Build reverse lookup for O(1) stripRowCol()
       Map<Long, Integer> reverseMap = new HashMap<>();
       for (Map.Entry<Integer, GridCell> entry : positionGrid_.entrySet()) {
@@ -80,7 +125,8 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          reverseMap.put(((long) cell.row << 32) | (cell.col & 0xFFFFFFFFL), entry.getKey());
       }
       rowColToPosition_ = reverseMap;
-      int[] overlap = computeOverlap(source, positionGrid_, imageWidth_, imageHeight_);
+      int[] overlap = computeOverlap(source, positionGrid_, imageWidth_, imageHeight_,
+            orientation_);
       overlapX_ = overlap[0];
       overlapY_ = overlap[1];
    }
@@ -272,8 +318,23 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
     * </ol>
     */
    private static Map<Integer, GridCell> buildPositionGrid(DataProvider source,
-                                                            int imageWidth, int imageHeight) {
+                                                            int imageWidth, int imageHeight,
+                                                            OrientationModel orientation) {
       SummaryMetadata summary = source.getSummaryMetadata();
+
+      // --- Attempt 0: affine-driven placement (checkbox ON) ---
+      // Supersedes the label/raw-sign attempts so placement is derived from the SAME
+      // affine that drives the per-tile pixel transform, and can never diverge from it.
+      if (orientation != null && imageWidth > 0 && imageHeight > 0) {
+         double pixelSizeUm = getPixelSizeUm(source);
+         if (pixelSizeUm > 0) {
+            Map<Integer, GridCell> grid0 = tryGridFromOrientation(
+                  source, imageWidth, imageHeight, pixelSizeUm, orientation);
+            if (grid0 != null) {
+               return grid0;
+            }
+         }
+      }
 
       // --- Attempt 1: MultiStagePosition grid coordinates ---
       if (summary != null) {
@@ -466,6 +527,75 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
    }
 
    /**
+    * Build the grid by mapping each position's stage XY through the orientation matrix
+    * {@code M} into canvas-pixel space, then quantizing to the (pre-rotation) tile-step
+    * grid. This is the single authority that keeps placement consistent with the pixel
+    * transform. Returns null if no stage positions can be found.
+    */
+   private static Map<Integer, GridCell> tryGridFromOrientation(
+         DataProvider source, int imageWidth, int imageHeight, double pixelSizeUm,
+         OrientationModel orientation) {
+      Map<Integer, double[]> xyByPos = collectStageXY(source);
+      if (xyByPos.isEmpty()) {
+         return null;
+      }
+      // Pre-rotation tile step in canvas pixels. M is axis-aligned (M = O * A^-1), so a
+      // tile step of `imageWidth` camera pixels maps to ~`imageWidth` canvas pixels; the
+      // 90/270 dimension swap is handled downstream when converting to canvas coordinates.
+      double stepX = imageWidth;
+      double stepY = imageHeight;
+      Map<Integer, GridCell> grid = new HashMap<>();
+      for (Map.Entry<Integer, double[]> entry : xyByPos.entrySet()) {
+         double[] canvas = orientation.toCanvas(entry.getValue()[0], entry.getValue()[1]);
+         int col = (int) Math.round(canvas[0] / stepX);
+         int row = (int) Math.round(canvas[1] / stepY);
+         grid.put(entry.getKey(), new GridCell(row, col));
+      }
+      return shiftToZero(grid);
+   }
+
+   /**
+    * Collect one stage (X,Y) sample per position index, preferring per-image
+    * XPositionUm/YPositionUm and falling back to the summary stage position list.
+    */
+   private static Map<Integer, double[]> collectStageXY(DataProvider source) {
+      Map<Integer, double[]> xyByPos = new HashMap<>();
+      for (Coords coords : source.getUnorderedImageCoords()) {
+         int posIdx = coords.hasAxis(Coords.STAGE_POSITION)
+               ? coords.getStagePosition() : 0;
+         if (xyByPos.containsKey(posIdx)) {
+            continue;
+         }
+         try {
+            Image img = source.getImage(coords);
+            if (img == null) {
+               continue;
+            }
+            Double xUm = img.getMetadata().getXPositionUm();
+            Double yUm = img.getMetadata().getYPositionUm();
+            if (xUm != null && yUm != null) {
+               xyByPos.put(posIdx, new double[]{xUm, yUm});
+            }
+         } catch (IOException e) {
+            // skip this position
+         }
+      }
+      if (xyByPos.isEmpty()) {
+         SummaryMetadata summary = source.getSummaryMetadata();
+         if (summary != null) {
+            List<MultiStagePosition> positions = summary.getStagePositionList();
+            if (positions != null) {
+               for (int i = 0; i < positions.size(); i++) {
+                  MultiStagePosition msp = positions.get(i);
+                  xyByPos.put(i, new double[]{msp.getX(), msp.getY()});
+               }
+            }
+         }
+      }
+      return xyByPos;
+   }
+
+   /**
     * Shift all row/col values so the minimum row is 0 and minimum col is 0.
     */
    private static Map<Integer, GridCell> shiftToZero(Map<Integer, GridCell> grid) {
@@ -500,7 +630,7 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
     * size is unavailable or the grid has fewer than 2 tiles.</p>
     */
    private static int[] computeOverlap(DataProvider source, Map<Integer, GridCell> grid,
-                                        int tileW, int tileH) {
+                                        int tileW, int tileH, OrientationModel orientation) {
       if (grid.size() < 2 || tileW <= 0 || tileH <= 0) {
          return new int[]{0, 0};
       }
@@ -509,41 +639,26 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          return new int[]{0, 0};
       }
 
-      // Collect XY positions per position index from per-image metadata
-      Map<Integer, double[]> xyByPos = new HashMap<>();
-      for (Coords coords : source.getUnorderedImageCoords()) {
-         int posIdx = coords.hasAxis(Coords.STAGE_POSITION)
-               ? coords.getStagePosition() : 0;
-         if (xyByPos.containsKey(posIdx)) {
-            continue;
+      // Collect one stage XY per position index. When orientation is active, map each to
+      // canvas-pixel space so the right/bottom neighbour steps are measured along canvas
+      // axes (consistent with placement) rather than raw stage axes.
+      Map<Integer, double[]> rawXy = collectStageXY(source);
+      Map<Integer, double[]> xyByPos;
+      // When mapped through M, steps are already in pixels; raw steps are in microns.
+      final double xToPx;
+      final double yToPx;
+      if (orientation != null) {
+         xyByPos = new HashMap<>();
+         for (Map.Entry<Integer, double[]> e : rawXy.entrySet()) {
+            xyByPos.put(e.getKey(),
+                  orientation.toCanvas(e.getValue()[0], e.getValue()[1]));
          }
-         try {
-            Image img = source.getImage(coords);
-            if (img == null) {
-               continue;
-            }
-            Double xUm = img.getMetadata().getXPositionUm();
-            Double yUm = img.getMetadata().getYPositionUm();
-            if (xUm != null && yUm != null) {
-               xyByPos.put(posIdx, new double[]{xUm, yUm});
-            }
-         } catch (IOException e) {
-            // skip
-         }
-      }
-
-      // Fall back to summary stage position list if per-image metadata unavailable
-      if (xyByPos.isEmpty()) {
-         SummaryMetadata summary = source.getSummaryMetadata();
-         if (summary != null) {
-            List<MultiStagePosition> positions = summary.getStagePositionList();
-            if (positions != null) {
-               for (int i = 0; i < positions.size(); i++) {
-                  MultiStagePosition msp = positions.get(i);
-                  xyByPos.put(i, new double[]{msp.getX(), msp.getY()});
-               }
-            }
-         }
+         xToPx = 1.0;
+         yToPx = 1.0;
+      } else {
+         xyByPos = rawXy;
+         xToPx = 1.0 / pixelSizeUm;
+         yToPx = 1.0 / pixelSizeUm;
       }
 
       // Build a (row, col) → posIdx lookup for O(1) neighbour access
@@ -595,11 +710,11 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       int overlapX = 0;
       int overlapY = 0;
       if (minStepX < Double.MAX_VALUE) {
-         int stepXPx = (int) Math.round(minStepX / pixelSizeUm);
+         int stepXPx = (int) Math.round(minStepX * xToPx);
          overlapX = Math.max(0, tileW - stepXPx);
       }
       if (minStepY < Double.MAX_VALUE) {
-         int stepYPx = (int) Math.round(minStepY / pixelSizeUm);
+         int stepYPx = (int) Math.round(minStepY * yToPx);
          overlapY = Math.max(0, tileH - stepYPx);
       }
       return new int[]{overlapX, overlapY};
