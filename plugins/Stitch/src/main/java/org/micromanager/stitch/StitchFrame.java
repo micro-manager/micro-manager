@@ -164,6 +164,14 @@ public class StitchFrame extends JDialog {
       add(new JLabel(""));
       correctOrientationCheck_ = new JCheckBox("Correct camera orientation (affine)");
       correctOrientationCheck_.setSelected(settings_.getBoolean(PREF_CORRECT_ORIENTATION, false));
+      correctOrientationCheck_.setToolTipText("<html>Rotate/mirror tiles and place them so the "
+            + "stitched image matches the stage frame (lowest stage X,Y at top-left).<br>"
+            + "The correction is derived entirely from the pixel-size <b>affine transform</b>, "
+            + "which encodes the camera's orientation <i>and handedness</i> relative to the stage "
+            + "(including any mirror from imaging through the sample, e.g. from below).<br>"
+            + "If the result comes out <b>mirror-reversed</b>, the affine is missing a reflection "
+            + "term &mdash; recalibrate the pixel-size affine for your optical path rather than "
+            + "expecting this option to add a mirror.</html>");
       add(correctOrientationCheck_, "wrap");
 
       // Align
@@ -421,10 +429,39 @@ public class StitchFrame extends JDialog {
       final int finalMaxDisplacement = maxDisplacementPx;
 
       new Thread(() -> {
-         // Wrap the DataProvider with row/col grid knowledge.
+         // Resolve orientation BEFORE building the grid, so the same affine drives both
+         // the per-tile pixel transform AND tile placement (they can never diverge).
+         int[] correction = null;
+         StitchDataProviderAdapter.OrientationModel orientationModel = null;
+         if (doCorrectOrientation) {
+            ResolvedOrientation resolved = resolveOrientation(dataProvider_);
+            if (resolved == null) {
+               SwingUtilities.invokeLater(() ->
+                     studio_.logs().showMessage(
+                           "No pixel size affine transform found in image metadata. "
+                           + "Orientation correction will be skipped.", null));
+            } else {
+               correction = resolved.pixelOp;
+               orientationModel = resolved.model;
+               int rot = correction != null ? correction[0] : 0;
+               boolean mir = correction != null && correction[1] != 0;
+               // Breadcrumb: the correction is whatever the affine encodes. A mirrored
+               // result means the affine lacks a reflection term (recalibrate it), not a
+               // stitcher bug. The affine already captures handedness from the optical
+               // path, including imaging through the sample (e.g. from below).
+               studio_.logs().logMessage(String.format(
+                     "Stitch: orientation correction from pixel-size affine "
+                     + "(rotation=%d deg, mirror=%b). This trusts the affine's handedness; "
+                     + "if the stitch looks mirror-reversed, recalibrate the pixel-size "
+                     + "affine for your optical path.", rot, mir));
+            }
+         }
+
+         // Wrap the DataProvider with row/col grid knowledge. When orientationModel is
+         // non-null, placement is affine-driven; otherwise it is the legacy raw behavior.
          StitchDataProviderAdapter adapter;
          try {
-            adapter = new StitchDataProviderAdapter(dataProvider_);
+            adapter = new StitchDataProviderAdapter(dataProvider_, orientationModel);
          } catch (IllegalArgumentException ex) {
             final String msg = ex.getMessage();
             SwingUtilities.invokeLater(() -> {
@@ -437,18 +474,6 @@ public class StitchFrame extends JDialog {
          }
 
          try {
-            // Probe affine transform for orientation correction.
-            int[] correction = null;
-            if (doCorrectOrientation) {
-               AffineTransform affine = probeAffineTransform(dataProvider_);
-               correction = ImageTransformUtils.correctionFromAffine(affine);
-               if (correction == null) {
-                  SwingUtilities.invokeLater(() ->
-                        studio_.logs().showMessage(
-                              "No pixel size affine transform found in image metadata. "
-                              + "Orientation correction will be skipped.", null));
-               }
-            }
 
             SummaryMetadata summary = dataProvider_.getSummaryMetadata();
             final List<String> allChannelNames = getChannelNames(summary);
@@ -1814,6 +1839,119 @@ public class StitchFrame extends JDialog {
          // ignore
       }
       return 0.0;
+   }
+
+   /**
+    * Bundles the resolved orientation: the per-tile pixel operator (threaded through
+    * the pixel paths as the {@code correction} int[]) and the affine-driven placement
+    * model for the adapter. Either field may be null when not applicable.
+    */
+   private static final class ResolvedOrientation {
+      final int[] pixelOp;                                   // {rotation, mirror} or null
+      final StitchDataProviderAdapter.OrientationModel model; // placement model or null
+
+      ResolvedOrientation(int[] pixelOp,
+                          StitchDataProviderAdapter.OrientationModel model) {
+         this.pixelOp = pixelOp;
+         this.model = model;
+      }
+   }
+
+   /**
+    * Resolves the orientation correction for the "Correct camera orientation" path.
+    *
+    * <p>Derives a single orientation operator {@code O} from the pixelSizeAffine, folds
+    * in any Image Flipper transform already applied in-acquisition (so it is not applied
+    * twice), and builds the stage-to-canvas placement matrix {@code M}. The same affine is
+    * the sole authority for both pixel orientation and tile placement, so they cannot
+    * diverge.</p>
+    *
+    * @return resolved operators, or null if no usable affine is present
+    */
+   private ResolvedOrientation resolveOrientation(DataProvider dataProvider) {
+      AffineTransform affine = probeAffineTransform(dataProvider);
+      int[] o = ImageTransformUtils.correctionFromAffine(affine);
+      if (o == null) {
+         return null;
+      }
+
+      // placementOp drives M; pixelOp is what we actually apply to the stored pixels.
+      int[] placementOp = o;
+      int[] pixelOp = o;
+
+      // Fold in the Image Flipper: when the Flipper already transformed the pixels in
+      // acquisition (flipperOp), the per-tile correction must be reduced so it is not
+      // applied twice: pixelOp = O after flipperOp^-1. Placement still uses the full O,
+      // because the stored stage coordinates are raw (pre-flipper).
+      int[] flipperOp = probeImageFlipper(dataProvider);
+      if (flipperOp != null) {
+         int[] flipInv = ImageTransformUtils.invertCorrection(flipperOp[0], flipperOp[1]);
+         pixelOp = ImageTransformUtils.composeCorrection(
+               o[0], o[1], flipInv[0], flipInv[1]);
+      }
+
+      double[] m = ImageTransformUtils.stageToCanvasMatrix(
+            affine, placementOp[0], placementOp[1] != 0);
+      StitchDataProviderAdapter.OrientationModel model = null;
+      if (m != null) {
+         double[] ref = probeReferenceStageXY(dataProvider);
+         model = new StitchDataProviderAdapter.OrientationModel(m, ref[0], ref[1]);
+      }
+
+      // A pixelOp that collapses to identity means "no per-tile pixel transform".
+      int[] effectivePixelOp =
+            (pixelOp[0] == 0 && pixelOp[1] == 0) ? null : pixelOp;
+      return new ResolvedOrientation(effectivePixelOp, model);
+   }
+
+   /**
+    * Reads the Image Flipper operator from the first image's user data, or null if the
+    * Flipper was not in the pipeline (or its transform was the identity). The tag values
+    * are written by {@code FlipperProcessor} (mirror, then rotate clockwise).
+    */
+   private static int[] probeImageFlipper(DataProvider dataProvider) {
+      try {
+         for (Coords coords : dataProvider.getUnorderedImageCoords()) {
+            Image img = dataProvider.getImage(coords);
+            if (img == null || img.getMetadata() == null) {
+               continue;
+            }
+            org.micromanager.PropertyMap userData = img.getMetadata().getUserData();
+            if (userData == null) {
+               return null;
+            }
+            if (userData.containsInteger("ImageFlipper-Rotation")
+                  && userData.containsString("ImageFlipper-Mirror")) {
+               int rot = userData.getInteger("ImageFlipper-Rotation", 0);
+               String mir = userData.getString("ImageFlipper-Mirror", "Off");
+               return ImageTransformUtils.flipperFromUserData(rot, mir);
+            }
+            return null;
+         }
+      } catch (Exception e) {
+         // Ignore - treat as no Flipper.
+      }
+      return null;
+   }
+
+   /** Returns a reference stage (X,Y) for placement deltas, or {0,0} if unavailable. */
+   private static double[] probeReferenceStageXY(DataProvider dataProvider) {
+      try {
+         for (Coords coords : dataProvider.getUnorderedImageCoords()) {
+            Image img = dataProvider.getImage(coords);
+            if (img == null || img.getMetadata() == null) {
+               continue;
+            }
+            Double x = img.getMetadata().getXPositionUm();
+            Double y = img.getMetadata().getYPositionUm();
+            if (x != null && y != null) {
+               return new double[]{x, y};
+            }
+         }
+      } catch (Exception e) {
+         // Ignore - fall through to origin.
+      }
+      return new double[]{0.0, 0.0};
    }
 
    private static AffineTransform probeAffineTransform(DataProvider dataProvider) {
