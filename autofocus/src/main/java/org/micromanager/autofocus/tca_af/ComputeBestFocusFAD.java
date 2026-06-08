@@ -1,5 +1,8 @@
 package org.micromanager.autofocus.tca_af;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,7 +21,7 @@ import ij.process.ImageProcessor;
  * Computes the best focus z-position from a set of sampled images using
  * multiple focus metrics (Brenner, Vollath F4, Gradient Energy, Tenengrad).
  */
-public class ComputeBestFocusNADH {
+public class ComputeBestFocusFAD {
 
     // =========================================================================
     // Settings (mirrors MATLAB settings struct)
@@ -27,14 +30,14 @@ public class ComputeBestFocusNADH {
         public double zRangeUm = 20.0;
         public Integer skipFactor = null;
 
-        public double thresholdFraction = 0.15;
-        public double assumedMaxMinDistance_um = 32.0;
-        public double maxOnlyShiftRight_um = 17.5;
-        public double minOnlyShiftLeft_um = 18.5;
+        public double thresholdFraction = 0.24;
+        public double assumedMaxMinDistance_um = 27.0;
+        public double maxOnlyShiftRight_um = 5.8;
+        public double minOnlyShiftLeft_um = 17;
         public double maxOnlyEdgeThreshold_um = 10.0;
         public double minOnlyEdgeThreshold_um = 8.0;
         public double maxOnlyInflectionAlpha = 0.5;
-        public double minOnlyInflectionBeta = 0.51;
+        public double minOnlyInflectionBeta = 0.68;
 
         // 0 = min-with-inflection, 1 = original max-min, 2 = max-with-inflection
         public int bothWithInflectionMode = 0;
@@ -268,6 +271,10 @@ public class ComputeBestFocusNADH {
             for (int i = 0; i < zFine.length; i++) {
                 smoothCurvesNorm[i][m] = result.fitFunction.value(zFine[i]);
             }
+
+            // save smoothCurvesNorm in original scale for debugging as CSV file:
+            saveSmoothCurveToCSV(zFine, col(smoothCurvesNorm, m), metricNames[m] + "_smooth_curve.csv");
+
         }
 
         // --- Detect extrema ---
@@ -347,13 +354,46 @@ public class ComputeBestFocusNADH {
         for (int m = 0; m < nMetrics; m++) {
             if (extremaResults[m].representativeMax != null) repMaxZ[m] = extremaResults[m].representativeMax.z;
             if (extremaResults[m].representativeMin != null) repMinZ[m] = extremaResults[m].representativeMin.z;
-
-            System.out.println("Metric: " + metricNames[m] + ", Detection status: " + extremaResults[m].detectionStatus);
-            System.out.println("  Representative max Z at " + (extremaResults[m].representativeMax != null ? extremaResults[m].representativeMax.z : "null"));
         }
 
-        boolean[] maxConsensusMask = consensusMask1D(repMaxZ, s.outlierTolerance_um, s.minAgreementCount, s.useMedianForConsensusCenter);
-        boolean[] minConsensusMask = consensusMask1D(repMinZ, s.outlierTolerance_um, s.minAgreementCount, s.useMedianForConsensusCenter);
+        boolean[] maxConsensusMask = consensusMask1D(repMaxZ, s.outlierTolerance_um,
+                s.minAgreementCount, s.useMedianForConsensusCenter);
+        boolean[] minConsensusMask = consensusMask1D(repMinZ, s.outlierTolerance_um,
+                s.minAgreementCount, s.useMedianForConsensusCenter);
+
+        int maxConsensusCount = countTrue(maxConsensusMask);
+        int minConsensusCount = countTrue(minConsensusMask);
+
+        double avgMaxZ;
+        System.out.println("Max Z values: " + Arrays.toString(repMaxZ) + ", Max consensus mask: " + Arrays.toString(maxConsensusMask));
+        if (anyTrue(maxConsensusMask)) {
+            avgMaxZ = nanMean(maskValues(repMaxZ, maxConsensusMask));
+        } else {
+            avgMaxZ = nanMean(repMaxZ);
+        }
+
+        double avgMinZ;
+        if (anyTrue(minConsensusMask)) {
+            avgMinZ = nanMean(maskValues(repMinZ, minConsensusMask));
+        } else {
+            avgMinZ = nanMean(repMinZ);
+        }
+
+        Integer idxAvgMaxSampled = null;
+        Double zAvgMaxSampledClosest = null;
+        if (!Double.isNaN(avgMaxZ) && Double.isFinite(avgMaxZ)) {
+            int[] closest = findClosestIndexAndZ(zSampled, avgMaxZ);
+            idxAvgMaxSampled = closest[0];
+            zAvgMaxSampledClosest = zSampled[closest[0]];
+        }
+
+        Integer idxAvgMinSampled = null;
+        Double zAvgMinSampledClosest = null;
+        if (!Double.isNaN(avgMinZ) && Double.isFinite(avgMinZ)) {
+            int[] closest = findClosestIndexAndZ(zSampled, avgMinZ);
+            idxAvgMinSampled = closest[0];
+            zAvgMinSampledClosest = zSampled[closest[0]];
+        }
 
         // --- Second derivatives & inflections ---
         double[][] secondDerivativeCurves = new double[s.nFinePoints][nMetrics];
@@ -384,7 +424,7 @@ public class ComputeBestFocusNADH {
             if (repMax != null && repMin == null) {
                 double refZ = repMax.z;
 
-                Object[] sel = selectInflectionDirectional(
+                Object[] sel = selectInflectionFromZeroCrossingsDirectional(
                     zeroZ, refZ,
                     s.maxOnlyInflectionMinDist_um,
                     s.maxOnlyInflectionMaxDist_um,
@@ -406,7 +446,7 @@ public class ComputeBestFocusNADH {
             } else if (repMax == null && repMin != null) {
                 double refZ = repMin.z;
 
-                Object[] sel = selectInflectionDirectional(
+                Object[] sel = selectInflectionFromZeroCrossingsDirectional(
                     zeroZ, refZ,
                     s.minOnlyInflectionMinDist_um,
                     s.minOnlyInflectionMaxDist_um,
@@ -483,43 +523,7 @@ public class ComputeBestFocusNADH {
             inflectionSummary.status = "found_some";
         }
 
-        // --- Decision status per metric ---
-        for (int m = 0; m < nMetrics; m++) {
-            ExtremumInfo repMax = extremaResults[m].representativeMax;
-            ExtremumInfo repMin = extremaResults[m].representativeMin;
-            boolean hasMax = repMax != null, hasMin = repMin != null;
-            boolean hasInfl = hasFinite(inflectionSummary.perMetric[m].selectedInflectionZ);
-            double zInfl = hasInfl ? inflectionSummary.perMetric[m].selectedInflectionZ : Double.NaN;
-
-            if (hasMax && hasMin) {
-                if (repMax.z < repMin.z) {
-                    double dz = repMin.z - repMax.z;
-                    if (hasInfl) {
-                        if (dz < s.bothMaxMinDistanceThreshold_um) {
-                            extremaResults[m].decisionStatus = "both max-min";
-                        } else {
-                            switch (s.bothWithInflectionMode) {
-                                case 1: extremaResults[m].decisionStatus = "both max-min"; break;
-                                case 0: extremaResults[m].decisionStatus = "both max-min but min-with-inflection used"; break;
-                                case 2: extremaResults[m].decisionStatus = "both max-min but max-with-inflection used"; break;
-                            }
-                        }
-                    } else {
-                        extremaResults[m].decisionStatus = "both max-min";
-                    }
-                } else {
-                    extremaResults[m].decisionStatus = "invalid_order";
-                }
-            } else if (hasMax) {
-                extremaResults[m].decisionStatus = (hasInfl && zInfl > repMax.z)
-                        ? "max only with inflection point" : "max only";
-            } else if (hasMin) {
-                extremaResults[m].decisionStatus = (hasInfl && zInfl < repMin.z)
-                        ? "min only with inflection point" : "min only";
-            } else {
-                extremaResults[m].decisionStatus = "none";
-            }
-        }
+        
 
         // --- Best focus per metric ---
         BestPerMetric[] bestPerMetric = new BestPerMetric[nMetrics];
@@ -555,6 +559,7 @@ public class ComputeBestFocusNADH {
             ExtremumInfo repMin = extremaResults[m].representativeMin;
             boolean hasMax = repMax != null, hasMin = repMin != null;
 
+            System.out.println("Metric: " + metricNames[m] + ", Representative max Z: " + (hasMax ? repMax.z : "null") + ", Representative min Z: " + (hasMin ? repMin.z : "null"));
             boolean hasInfl = inflectionSummary.perMetric[m].selectedInflectionZ != null
                     && (inflectionSummary.perMetric[m].isConsensusKept || infConsensusCount < s.minAgreementCount);
             double zInfl = hasInfl ? inflectionSummary.perMetric[m].selectedInflectionZ : Double.NaN;
@@ -731,66 +736,69 @@ public class ComputeBestFocusNADH {
             System.out.println("Metric: " + metricNames[m] + ", Best focus (smooth Z): " + bestPerMetric[m].bestFocusZOnSmoothCurve);
             validBestMask[m] = Double.isFinite(allValidBestZ[m]);
         }
-        System.out.println("Best focus consensus count: " + countTrue(validBestMask));
-        System.out.println("All best Z values: " + Arrays.toString(allValidBestZ));
-        double spread = Double.NaN;
+
+        String[] validCaseTypes = maskStrings(allCaseTypes, validBestMask);
+        String majorityCase = "";
+        boolean[] majorityCaseMaskFull = new boolean[nMetrics];
+        int majorityCount = 0;
+
         if (anyTrue(validBestMask)) {
-            double[] vz = maskValues(allValidBestZ, validBestMask);
-            spread = max(vz) - min(vz);
-        }
+            majorityCase = majorityCategory(validCaseTypes, s.minAgreementCount);
+            for (String caseType : validCaseTypes) {
+                if (majorityCase.equals(caseType)) {
+                    majorityCount++;
+                }
+            }
 
-        boolean[] restrictedMask = new boolean[nMetrics];
-        for (int m = 0; m < nMetrics; m++)
-            restrictedMask[m] = Arrays.asList(s.restrictedDecisionMetricNames).contains(metricNames[m]);
-
-        boolean[] decisionEligible = validBestMask.clone();
-        boolean disagreementTriggered = false;
-
-        if (Double.isFinite(spread) && spread > s.metricDisagreementThreshold_um) {
-            disagreementTriggered = true;
-            for (int m = 0; m < nMetrics; m++)
-                decisionEligible[m] = validBestMask[m] && restrictedMask[m];
+            List<Integer> validIndices = new ArrayList<>();
             for (int m = 0; m < nMetrics; m++) {
-                if (validBestMask[m] && !restrictedMask[m]) {
-                    bestPerMetric[m].ignoredByFinalDisagreementRule = true;
-                    if ("used".equals(bestPerMetric[m].status))
-                        bestPerMetric[m].status = "ignored_in_final_decision";
+                if (validBestMask[m]) {
+                    validIndices.add(m);
+                }
+            }
+
+            if (majorityCount >= s.minAgreementCount) {
+                for (int i = 0; i < validIndices.size(); i++) {
+                    int metricIndex = validIndices.get(i);
+                    if (majorityCase.equals(validCaseTypes[i])) {
+                        majorityCaseMaskFull[metricIndex] = true;
+                    }
+                }
+            } else {
+                for (int m = 0; m < nMetrics; m++) {
+                    if (validBestMask[m]) {
+                        majorityCaseMaskFull[m] = true;
+                    }
                 }
             }
         }
 
-        // Majority case among eligible
-        String[] eligibleCases = maskStrings(allCaseTypes, decisionEligible);
-        String majorityCase = majorityCategory(eligibleCases, s.minAgreementCount);
-
-        boolean[] majorityCaseMask = new boolean[nMetrics];
-        if (majorityCase != null && !majorityCase.isEmpty()) {
-            for (int m = 0; m < nMetrics; m++)
-                if (decisionEligible[m] && majorityCase.equals(allCaseTypes[m]))
-                    majorityCaseMask[m] = true;
-        } else {
-            for (int m = 0; m < nMetrics; m++)
-                if (decisionEligible[m]) majorityCaseMask[m] = true;
+        double[] candidateBestZ = Arrays.copyOf(allValidBestZ, nMetrics);
+        for (int m = 0; m < nMetrics; m++) {
+            if (!majorityCaseMaskFull[m]) {
+                candidateBestZ[m] = Double.NaN;
+            }
         }
-
-        double[] candidateBestZ = new double[nMetrics];
-        Arrays.fill(candidateBestZ, Double.NaN);
-        for (int m = 0; m < nMetrics; m++)
-            if (majorityCaseMask[m]) candidateBestZ[m] = allValidBestZ[m];
 
         boolean[] bestConsensusMask = consensusMask1D(candidateBestZ, s.outlierTolerance_um,
                 s.minAgreementCount, s.useMedianForConsensusCenter);
 
         boolean[] finalBestMask;
-        if (anyTrue(bestConsensusMask)) finalBestMask = bestConsensusMask;
-        else if (anyTrue(majorityCaseMask)) finalBestMask = majorityCaseMask;
-        else finalBestMask = decisionEligible;
+        if (anyTrue(bestConsensusMask)) {
+            finalBestMask = bestConsensusMask;
+        } else if (anyTrue(majorityCaseMaskFull)) {
+            finalBestMask = majorityCaseMaskFull;
+        } else {
+            finalBestMask = validBestMask;
+        }
 
-        for (int m = 0; m < nMetrics; m++)
+        for (int m = 0; m < nMetrics; m++) {
             bestPerMetric[m].isConsensusKept = finalBestMask[m];
+        }
 
-        if (anyTrue(finalBestMask))
+        if (anyTrue(finalBestMask)) {
             zBestFocus = nanMeanMasked(allValidBestZ, finalBestMask);
+        }
 
         System.out.println("All best Z:");
         System.out.println(Arrays.toString(allValidBestZ));
@@ -815,6 +823,31 @@ public class ComputeBestFocusNADH {
         results.zIni = zIni;
         results.deltazSamp = deltazSamp;
         results.settings = s;
+
+        // print out all values in bestPerMetric
+        System.out.println("Best focus summary per metric:");
+        for (BestPerMetric bpm : bestPerMetric) {
+            System.out.println("Metric: " + bpm.metricName);
+            System.out.println("  Case type: " + bpm.caseType);
+            System.out.println("  Decision status: " + bpm.decisionStatus);
+            System.out.println("  Status: " + bpm.status);
+            System.out.println("  Message: " + bpm.message);
+            System.out.println("  Target value: " + bpm.targetValue);
+            System.out.println("  zMax: " + bpm.zMax);
+            System.out.println("  Fmax: " + bpm.Fmax);
+            System.out.println("  zMin: " + bpm.zMin);
+            System.out.println("  Fmin: " + bpm.Fmin);
+            System.out.println("  zInflection: " + bpm.zInflection);
+            System.out.println("  Best focus Z on smooth curve: " + bpm.bestFocusZOnSmoothCurve);
+            System.out.println("  Best focus value on smooth curve: " + bpm.bestFocusValueOnSmoothCurve);
+            System.out.println("  Best focus idx fine: " + bpm.bestFocusIdxFine);
+            System.out.println("  Best focus idx sampled: " + bpm.bestFocusIdxSampled);
+            System.out.println("  Best focus Z sampled closest: " + bpm.bestFocusZSampledClosest);
+        }
+
+
+
+
         return results;
     }
 
@@ -932,19 +965,17 @@ public class ComputeBestFocusNADH {
         double[][] Gx = new double[height][width];
         double[][] Gy = new double[height][width];
 
-        // Sobel operators scaled by 1/8 to match MATLAB's gradient-based energy
-        double[][] Kx = {
-            {1.0/8, 0.0, -1.0/8},
-            {2.0/8, 0.0, -2.0/8},
-            {1.0/8, 0.0, -1.0/8}
+        double[][] sobelX = {
+            {-1.0, 0.0, 1.0},
+            {-2.0, 0.0, 2.0},
+            {-1.0, 0.0, 1.0}
         };
-        double[][] Ky = {
-            {1.0/8, 2.0/8, 1.0/8},
+        double[][] sobelY = {
+            {-1.0, -2.0, -1.0},
             {0.0, 0.0, 0.0},
-            {-1.0/8, -2.0/8, -1.0/8}
+            {1.0, 2.0, 1.0}
         };
 
-        // Apply 2D convolution with 'same' mode (edge padding via edge repetition)
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 double gx = 0.0;
@@ -955,8 +986,8 @@ public class ComputeBestFocusNADH {
                         int yy = Math.min(Math.max(y + ky, 0), height - 1);
                         int xx = Math.min(Math.max(x + kx, 0), width - 1);
                         double value = I[yy][xx];
-                        gx += Kx[ky + 1][kx + 1] * value;
-                        gy += Ky[ky + 1][kx + 1] * value;
+                        gx += sobelX[ky + 1][kx + 1] * value;
+                        gy += sobelY[ky + 1][kx + 1] * value;
                     }
                 }
 
@@ -1170,38 +1201,44 @@ public class ComputeBestFocusNADH {
     // Inflection selection
     // =========================================================================
     // Returns [selectedZ (0 or 1 element), candidates]
-    private static Object[] selectInflectionDirectional(double[] zeroZ, double refZ, double minDist, double maxDist, String direction) {
-        List<Double> candidates = new ArrayList<>();
-        for (double z : zeroZ) {
-            double dist = Math.abs(z - refZ);
-            if (dist >= minDist && dist <= maxDist) {
-                if ("after".equals(direction) && z > refZ) {
-                    candidates.add(z);
-                } else if ("before".equals(direction) && z < refZ) {
-                    candidates.add(z);
-                }
-            }
-        }
-
+    private static Object[] selectInflectionFromZeroCrossingsDirectional(double[] zeroZ, double refZ, double minDist, double maxDist, String direction) {
         double selectedZ = Double.NaN;
         String status = "no_inflection";
         double[] candidateZ = new double[0];
 
-        if (!candidates.isEmpty()) {
-            // Select the closest one
-            double closest = candidates.get(0);
-            double minDistToRef = Math.abs(closest - refZ);
-            for (int i = 1; i < candidates.size(); i++) {
-                double dist = Math.abs(candidates.get(i) - refZ);
-                if (dist < minDistToRef) {
-                    minDistToRef = dist;
-                    closest = candidates.get(i);
-                }
-            }
-            selectedZ = closest;
-            status = "found";
-            candidateZ = candidates.stream().mapToDouble(Double::doubleValue).toArray();
+        // Handle edge cases
+        if (zeroZ == null || zeroZ.length == 0 || Double.isNaN(refZ)) {
+            return new Object[]{selectedZ, status, candidateZ};
         }
+
+        // Validate direction
+        if (!("after".equalsIgnoreCase(direction) || "before".equalsIgnoreCase(direction))) {
+            throw new IllegalArgumentException("direction must be 'after' or 'before'.");
+        }
+
+        List<Double> candidates = new ArrayList<>();
+        for (double z : zeroZ) {
+            boolean dirMask = ("after".equalsIgnoreCase(direction)) ? (z > refZ) : (z < refZ);
+            double dist = Math.abs(z - refZ);
+            boolean validMask = dirMask && dist >= minDist && dist <= maxDist;
+
+            if (validMask) {
+                candidates.add(z);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return new Object[]{selectedZ, status, candidateZ};
+        }
+
+        // Sort candidates
+        Collections.sort(candidates);
+
+        // Select median element (MATLAB: ceil(numel/2))
+        int medianIdx = (int) Math.ceil(candidates.size() / 2.0) - 1;
+        selectedZ = candidates.get(medianIdx);
+        status = "found";
+        candidateZ = candidates.stream().mapToDouble(Double::doubleValue).toArray();
 
         return new Object[]{selectedZ, status, candidateZ};
     }
@@ -1446,12 +1483,19 @@ public class ComputeBestFocusNADH {
     }
 
     private static Double nanMean(double[] a) {
+        if (a == null || a.length == 0) return null;
+        // if a is ful of NaNs return null, otherwise return mean of finite values
+        if (Arrays.stream(a).allMatch(v -> !Double.isFinite(v))) return Double.NaN;
+
         double s = 0; int c = 0;
         for (double v : a) if (Double.isFinite(v)) { s += v; c++; }
         return c == 0 ? null : s / c;
     }
 
     private static double nanMeanMasked(double[] a, boolean[] mask) {
+        System.out.println("nanMeanMasked input:");
+        System.out.println("a: " + Arrays.toString(a));
+        System.out.println("mask: " + Arrays.toString(mask));
         double s = 0; int c = 0;
         for (int i = 0; i < a.length; i++)
             if (mask[i] && Double.isFinite(a[i])) { s += a[i]; c++; }
@@ -1581,6 +1625,18 @@ public class ComputeBestFocusNADH {
         }
 
         return x;
+    }
+
+    //saveSmoothCurveToCSV(zFine, col(smoothCurvesNorm, m), metricNames[m] + "_smooth_curve.csv"); 
+    private static void saveSmoothCurveToCSV(double[] z, double[] curve, String filename) {
+        System.out.println("Saving smooth curve to " + filename);
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+            for (int i = 0; i < z.length; i++) {
+                writer.printf("%f,%f%n", z[i], curve[i]);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

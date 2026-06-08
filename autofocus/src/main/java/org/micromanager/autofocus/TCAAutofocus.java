@@ -44,7 +44,10 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+import org.micromanager.autofocus.tca_af.ComputeBestFocus300nm;
 import org.micromanager.autofocus.tca_af.ComputeBestFocus460nm;
+import org.micromanager.autofocus.tca_af.ComputeBestFocusFAD;
+import org.micromanager.autofocus.tca_af.ComputeBestFocusNADH;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 import org.scijava.plugin.Plugin;
@@ -58,12 +61,7 @@ import org.micromanager.imageprocessing.curvefit.PlotUtils;
 @Plugin(type = AutofocusPlugin.class)
 public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin  {
 
-   private static final String KEY_SIZE_FIRST = "Rough search step size";
-   private static final String KEY_NUM_FIRST = "Rough search step number";
-   private static final String KEY_SIZE_SECOND = "Fine search step size";
-   private static final String KEY_NUM_SECOND = "Fine search step number";
-   private static final String KEY_THRES    = "Threshold";
-   private static final String KEY_CROP_SIZE = "Crop ratio";
+   
    private static final String KEY_CHANNEL = "Channel";
    private static final String NOCHANNEL = "";
    private static final String KEY_REL_Z_MIN = "Relative Z min";
@@ -71,9 +69,12 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private static final String KEY_DELTA_Z = "Delta Z";
    private static final String KEY_DRYRUN = "Dry run";
    private static final String[] SHOWVALUES = {"Yes", "No"};
+
+   private static final String KEY_FOCUS_ANALYZER = "Focus Analyzer";
+   private static final String[] FOCUS_ANALYZER_STRINGS = {"460", "300", "NADH", "FAD"};
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    
-   private static final String AF_DEVICE_NAME = "TCA AF";
+   private static final String AF_DEVICE_NAME = "TCA AF 2.0";
 
    private Studio app_;
    private CMMCore core_;
@@ -93,6 +94,15 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private boolean verbose_ = true; // displaying debug info or not
    private String channelGroup_;
    private double curDist_;
+   private String focusAnalyzer_ = "460"; // default to 460nm analyzer
+
+   private static class FocusResults {
+      public String[] metricNames;
+      public double[][] metricValuesNorm;
+      public double[] zFine;
+      public double[][] smoothCurvesNorm;
+      public double z_best_focus;
+   }
 
    /**
     * Constructors creates needed properties.
@@ -104,6 +114,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       super.createProperty(KEY_REL_Z_MAX, Double.toString(rel_z_max_));
       super.createProperty(KEY_DELTA_Z, Double.toString(deltaz_));
       super.createProperty(KEY_DRYRUN, SHOWVALUES[1], SHOWVALUES);
+      super.createProperty(KEY_FOCUS_ANALYZER, FOCUS_ANALYZER_STRINGS[0], FOCUS_ANALYZER_STRINGS);
    }
 
 
@@ -115,6 +126,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          rel_z_min_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MIN));
          rel_z_max_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAX));
          dryrun_ = getPropertyValue(KEY_DRYRUN).contentEquals("Yes");
+         focusAnalyzer_ = getPropertyValue(KEY_FOCUS_ANALYZER);
 
       } catch (Exception e) {
 
@@ -122,6 +134,46 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          e.printStackTrace();
       }
 
+   }
+
+   private static FocusResults wrapResults(ComputeBestFocus460nm.Results source) {
+      FocusResults result = new FocusResults();
+      result.metricNames = source.metricNames;
+      result.metricValuesNorm = source.metricValuesNorm;
+      result.zFine = source.zFine;
+      result.smoothCurvesNorm = source.smoothCurvesNorm;
+      result.z_best_focus = source.z_best_focus;
+      return result;
+   }
+
+   private static FocusResults wrapResults(ComputeBestFocus300nm.Results source) {
+      FocusResults result = new FocusResults();
+      result.metricNames = source.metricNames;
+      result.metricValuesNorm = source.metricValuesNorm;
+      result.zFine = source.zFine;
+      result.smoothCurvesNorm = source.smoothCurvesNorm;
+      result.z_best_focus = source.z_best_focus;
+      return result;
+   }
+
+   private static FocusResults wrapResults(ComputeBestFocusNADH.Results source) {
+      FocusResults result = new FocusResults();
+      result.metricNames = source.metricNames;
+      result.metricValuesNorm = source.metricValuesNorm;
+      result.zFine = source.zFine;
+      result.smoothCurvesNorm = source.smoothCurvesNorm;
+      result.z_best_focus = source.zBestFocus;
+      return result;
+   }
+
+   private static FocusResults wrapResults(ComputeBestFocusFAD.Results source) {
+      FocusResults result = new FocusResults();
+      result.metricNames = source.metricNames;
+      result.metricValuesNorm = source.metricValuesNorm;
+      result.zFine = source.zFine;
+      result.smoothCurvesNorm = source.smoothCurvesNorm;
+      result.z_best_focus = source.zBestFocus;
+      return result;
    }
 
    /**
@@ -207,8 +259,41 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          double deltaz_samp = deltaz_;
          double[] zSampled = zSampledList.stream().mapToDouble(Double::doubleValue).toArray();
          IJ.log("Starting focus score computation with Zsampled: " + Arrays.toString(zSampled));
-         ComputeBestFocus460nm.Results results =
-               ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled);
+         
+         FocusResults results = null;
+         switch (focusAnalyzer_) {
+            case "460":
+               IJ.log("Using 460nm focus analyzer");
+               results = wrapResults(ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
+               break;
+            case "300":
+               z_ini = -61.0;
+               IJ.log("Using 300nm focus analyzer");
+               results = wrapResults(ComputeBestFocus300nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
+               break;
+            case "NADH":
+               z_ini = 5.0;
+               IJ.log("Using NADH focus analyzer");
+               results = wrapResults(ComputeBestFocusNADH.compute(imageProcessors, z_ini, deltaz_samp, zSampled));
+               break;
+            case "FAD":
+               z_ini = -10.0;
+               IJ.log("Using FAD focus analyzer");
+               results = wrapResults(ComputeBestFocusFAD.compute(imageProcessors, z_ini, deltaz_samp, zSampled));
+               break;
+            default:
+               IJ.log("Unknown focus analyzer selected, defaulting to 460nm");
+               results = wrapResults(ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
+               break;
+         }
+
+         if (results == null) {
+            throw new IllegalStateException("Focus results should never be null after analyzer selection.");
+         }
+
+         
+
+
          double bestZ = original_z;
 
          if(Double.isNaN(results.z_best_focus)){

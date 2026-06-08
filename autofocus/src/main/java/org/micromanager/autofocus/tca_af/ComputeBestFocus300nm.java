@@ -18,20 +18,20 @@ import ij.process.ImageProcessor;
  * Java translation of compute_best_focus_from_sampled_imagesfor_460nm_updated.m
  * Computes best focus from sampled images using various focus metrics.
  */
-public class ComputeBestFocus460nm {
+public class ComputeBestFocus300nm {
 
     // Settings class equivalent to MATLAB struct
     public static class Settings {
         public double z_range_um = 20;
         public double skipFactor = Double.NaN; // NaN means auto
-        public double thresholdFraction = 0.13;
-        public double assumedMaxMinDistance_um = 23;
-        public double maxOnlyShiftRight_um = 5.7;
-        public double minOnlyShiftLeft_um = 17;
+        public double thresholdFraction = 0.1;
+        public double assumedMaxMinDistance_um = 22;
+        public double maxOnlyShiftRight_um = 5;
+        public double minOnlyShiftLeft_um = 10;
         public double maxOnlyEdgeThreshold_um = 10;
         public double minOnlyEdgeThreshold_um = 8;
-        public double maxOnlyInflectionAlpha = 0.48;
-        public double minOnlyInflectionBeta = 0.68;
+        public double maxOnlyInflectionAlpha = 0.35;
+        public double minOnlyInflectionBeta = 0.58;
         public double maxOnlyInflectionMinDist_um = 12;
         public double maxOnlyInflectionMaxDist_um = 19;
         public double minOnlyInflectionMinDist_um = 5;
@@ -39,7 +39,7 @@ public class ComputeBestFocus460nm {
         public int nFinePoints = 5000;
         public double smoothingParam = 0.1;
         public int nDenseCrossingPoints = 50000;
-        public double minExtremumWidth_um = 8;
+        public double minExtremumWidth_um = 4.8;
         public double extremumPolyWindowHalf_um = 4;
         public int minExtremumFitPoints = 7;
         public double minExtremumRsq = 0.55;
@@ -347,6 +347,8 @@ public class ComputeBestFocus460nm {
             double[] maxLocs = extremaData[0];
             System.out.println("Metric: " + metricNames[m] + ", Detected max locations: " + Arrays.toString(maxLocs));
             double[] minLocs = extremaData[1];
+            System.out.println("Metric: " + metricNames[m] + ", Detected min locations: " + Arrays.toString(minLocs));
+
             double[] maxWidths = extremaData[2];
             double[] minWidths = extremaData[3];
 
