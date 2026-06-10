@@ -32,7 +32,7 @@ public class ImageMaker {
 
    private static final int NUM_DISPLAY_HIST_BINS = 256;
 
-   private final ConcurrentHashMap<String, NDVImageProcessor> channelProcessors_ =
+   private final ConcurrentHashMap<String, TiledDataViewerImageProcessor> channelProcessors_ =
             new ConcurrentHashMap<>();
 
    private int imageWidth_;
@@ -46,7 +46,7 @@ public class ImageMaker {
    private TiledDataViewer display_;
    private boolean closed_ = false;
 
-   // Render settings supplied by NDViewer2DataViewer before each render
+   // Render settings supplied by TiledDataViewerDataViewer before each render
    private volatile Map<String, ChannelRenderSettings> channelRenderSettings_ = new HashMap<>();
    private volatile GlobalRenderSettings globalRenderSettings_ =
          new GlobalRenderSettings(true, false, 0.0, true, false);
@@ -65,7 +65,7 @@ public class ImageMaker {
 
    /**
     * Update rendering parameters from MM DisplaySettings.
-    * Called by NDViewer2 before each render.
+    * Called by TiledDataViewer before each render.
     */
    public void setRenderSettings(Map<String, ChannelRenderSettings> channelSettings,
                                   GlobalRenderSettings globalSettings,
@@ -160,9 +160,10 @@ public class ImageMaker {
             for (String channel : channels) {
                //create channel processors as needed
                if (!channelProcessors_.containsKey(channel)) {
-                  channelProcessors_.put(channel, viewCoords.isRGB() ? new NDVImageProcessorRGB(
-                           imageWidth_, imageHeight_, channel) :
-                          new NDVImageProcessor(imageWidth_, imageHeight_, channel));
+                  channelProcessors_.put(channel, viewCoords.isRGB()
+                           ? new TiledDataViewerImageProcessorRGB(
+                                    imageWidth_, imageHeight_, channel)
+                           : new TiledDataViewerImageProcessor(imageWidth_, imageHeight_, channel));
                }
 
                if (!getChannelSettings(channel).active) {
@@ -219,28 +220,34 @@ public class ImageMaker {
                //recompute 8 bit image
                channelProcessors_.get(c).recompute();
                   {
-                     NDVImageProcessor proc = channelProcessors_.get(c);
-                     boolean noPixels = (proc instanceof NDVImageProcessorRGB)
-                           ? ((NDVImageProcessorRGB) proc).rProcessor_.reds == null
+                     TiledDataViewerImageProcessor proc = channelProcessors_.get(c);
+                     boolean noPixels = (proc instanceof TiledDataViewerImageProcessorRGB)
+                           ? ((TiledDataViewerImageProcessorRGB) proc).rProcessor_.reds == null
                            : proc.reds == null;
                      if (noPixels) {
                         continue; // No pixels yet
                      }
                   }
                if (firstActive) {
-                  if (channelProcessors_.get(c) instanceof NDVImageProcessorRGB) {
-                     byte[] bytesR = ((NDVImageProcessorRGB) channelProcessors_.get(c)).rProcessor_
+                  if (channelProcessors_.get(c) instanceof TiledDataViewerImageProcessorRGB) {
+                     byte[] bytesR = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                              .rProcessor_
                               .eightBitImage;
-                     byte[] bytesG = ((NDVImageProcessorRGB) channelProcessors_.get(c)).gProcessor_
+                     byte[] bytesG = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                              .gProcessor_
                               .eightBitImage;
-                     byte[] bytesB = ((NDVImageProcessorRGB) channelProcessors_.get(c)).bProcessor_
+                     byte[] bytesB = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                              .bProcessor_
                               .eightBitImage;
                      for (int p = 0; p < imageWidth_ * imageHeight_; p++) {
-                        redValue = ((NDVImageProcessorRGB) channelProcessors_.get(c)).rProcessor_
+                        redValue = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                                 .rProcessor_
                                  .reds[bytesR[p] & 0xff];
-                        greenValue = ((NDVImageProcessorRGB) channelProcessors_.get(c)).gProcessor_
+                        greenValue = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                                 .gProcessor_
                                  .greens[bytesG[p] & 0xff];
-                        blueValue = ((NDVImageProcessorRGB) channelProcessors_.get(c)).bProcessor_
+                        blueValue = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                                 .bProcessor_
                                  .blues[bytesB[p] & 0xff];
                         rgbPixels_[p] = redValue | greenValue | blueValue;
                      }
@@ -257,20 +264,23 @@ public class ImageMaker {
                } else {
                   //add subsequent channels onto the first one
                   int pixel;
-                  if (channelProcessors_.get(c) instanceof NDVImageProcessorRGB) {
-                     byte[] bytesR = ((NDVImageProcessorRGB) channelProcessors_.get(c)).rProcessor_
+                  if (channelProcessors_.get(c) instanceof TiledDataViewerImageProcessorRGB) {
+                     byte[] bytesR = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                              .rProcessor_
                               .eightBitImage;
-                     byte[] bytesG = ((NDVImageProcessorRGB) channelProcessors_.get(c)).gProcessor_
+                     byte[] bytesG = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                              .gProcessor_
                               .eightBitImage;
-                     byte[] bytesB = ((NDVImageProcessorRGB) channelProcessors_.get(c)).bProcessor_
+                     byte[] bytesB = ((TiledDataViewerImageProcessorRGB) channelProcessors_.get(c))
+                              .bProcessor_
                               .eightBitImage;
                      for (int p = 0; p < imageWidth_ * imageHeight_; p++) {
                         pixel = rgbPixels_[p];
-                        redValue = (pixel & 0x00ff0000) + ((NDVImageProcessorRGB) channelProcessors_
-                                 .get(c)).rProcessor_.reds[bytesR[p] & 0xff];
-                        greenValue = (pixel & 0x0000ff00) + ((NDVImageProcessorRGB)
+                        redValue = (pixel & 0x00ff0000) + ((TiledDataViewerImageProcessorRGB)
+                                 channelProcessors_.get(c)).rProcessor_.reds[bytesR[p] & 0xff];
+                        greenValue = (pixel & 0x0000ff00) + ((TiledDataViewerImageProcessorRGB)
                                  channelProcessors_.get(c)).gProcessor_.greens[bytesG[p] & 0xff];
-                        blueValue = (pixel & 0x000000ff) + ((NDVImageProcessorRGB)
+                        blueValue = (pixel & 0x000000ff) + ((TiledDataViewerImageProcessorRGB)
                                  channelProcessors_.get(c)).bProcessor_.blues[bytesB[p] & 0xff];
 
                         if (redValue > 16711680) {
@@ -359,17 +369,38 @@ public class ImageMaker {
       return hists;
    }
 
-   private class NDVImageProcessorRGB extends NDVImageProcessor {
+   /**
+    * Returns per-component (R, G, B) raw histograms for RGB channels.
+    * Only channels backed by {@link TiledDataViewerImageProcessorRGB} appear in the result.
+    * The value is a 3-element array: [R histogram, G histogram, B histogram].
+    * Returns an empty map for all-grayscale datasets.
+    */
+   public HashMap<String, int[][]> getComponentHistograms() {
+      HashMap<String, int[][]> result = new HashMap<>();
+      for (Map.Entry<String, TiledDataViewerImageProcessor> entry : channelProcessors_.entrySet()) {
+         if (entry.getValue() instanceof TiledDataViewerImageProcessorRGB) {
+            TiledDataViewerImageProcessorRGB rgb =
+                     (TiledDataViewerImageProcessorRGB) entry.getValue();
+            int[][] hists = rgb.getComponentHistograms();
+            if (hists != null) {
+               result.put(entry.getKey(), hists);
+            }
+         }
+      }
+      return result;
+   }
 
-      private NDVImageProcessor rProcessor_;
-      private NDVImageProcessor bProcessor_;
-      private NDVImageProcessor gProcessor_;
+   private class TiledDataViewerImageProcessorRGB extends TiledDataViewerImageProcessor {
 
-      public NDVImageProcessorRGB(int w, int h, String name) {
+      private TiledDataViewerImageProcessor rProcessor_;
+      private TiledDataViewerImageProcessor bProcessor_;
+      private TiledDataViewerImageProcessor gProcessor_;
+
+      public TiledDataViewerImageProcessorRGB(int w, int h, String name) {
          super(w, h, name);
-         rProcessor_ = new NDVImageProcessor(w, h, name);
-         gProcessor_ = new NDVImageProcessor(w, h, name);
-         bProcessor_ = new NDVImageProcessor(w, h, name);
+         rProcessor_ = new TiledDataViewerImageProcessor(w, h, name);
+         gProcessor_ = new TiledDataViewerImageProcessor(w, h, name);
+         bProcessor_ = new TiledDataViewerImageProcessor(w, h, name);
       }
 
       public void changePixels(Object pix, int w, int h) {
@@ -401,17 +432,27 @@ public class ImageMaker {
          }
       }
 
+      /** Returns [R, G, B] raw histograms, or null if no pixels yet. */
+      public int[][] getComponentHistograms() {
+         if (rProcessor_.rawHistogram == null) {
+            return null;
+         }
+         return new int[][]{rProcessor_.rawHistogram, gProcessor_.rawHistogram,
+               bProcessor_.rawHistogram};
+      }
+
       public void recompute() {
          ChannelRenderSettings rs = getChannelSettings(channelName_);
          final GlobalRenderSettings gs = globalRenderSettings_;
          contrastMin_ = rs.contrastMin;
          contrastMax_ = rs.contrastMax;
-         rProcessor_.contrastMin_ = contrastMin_;
-         rProcessor_.contrastMax_ = contrastMax_;
-         gProcessor_.contrastMin_ = contrastMin_;
-         gProcessor_.contrastMax_ = contrastMax_;
-         bProcessor_.contrastMin_ = contrastMin_;
-         bProcessor_.contrastMax_ = contrastMax_;
+         // Apply per-component scaling from white-balance settings when available.
+         rProcessor_.contrastMin_ = rs.componentMin != null ? rs.componentMin[0] : contrastMin_;
+         rProcessor_.contrastMax_ = rs.componentMax != null ? rs.componentMax[0] : contrastMax_;
+         gProcessor_.contrastMin_ = rs.componentMin != null ? rs.componentMin[1] : contrastMin_;
+         gProcessor_.contrastMax_ = rs.componentMax != null ? rs.componentMax[1] : contrastMax_;
+         bProcessor_.contrastMin_ = rs.componentMin != null ? rs.componentMin[2] : contrastMin_;
+         bProcessor_.contrastMax_ = rs.componentMax != null ? rs.componentMax[2] : contrastMax_;
          rProcessor_.create8BitImage();
          gProcessor_.create8BitImage();
          bProcessor_.create8BitImage();
@@ -464,10 +505,16 @@ public class ImageMaker {
       }
 
       private void processHistogram(int[] rawHistogram, GlobalRenderSettings gs) {
-         // Compute stats
+         // Compute stats, excluding zero-valued pixels (unacquired/black tiles).
+         // Zero pixels come from tiles not yet captured in the tiled viewer;
+         // including them in the autoscale min calculation drives the dark point to 0.
          int totalPixels = 0;
+         int totalNonZeroPixels = 0;
          for (int i = 0; i < rawHistogram.length; i++) {
             totalPixels += rawHistogram[i];
+            if (i > 0) {
+               totalNonZeroPixels += rawHistogram[i];
+            }
          }
 
          pixelMin_ = -1;
@@ -477,6 +524,10 @@ public class ImageMaker {
          for (int i = 0; i < numBins; i++) {
             for (int j = 0; j < binSize; j++) {
                int rawHistIndex = i * binSize + j;
+               // Skip bin 0 — those are unacquired (black) tile pixels.
+               if (rawHistIndex == 0) {
+                  continue;
+               }
                int rawHistVal = rawHistogram[rawHistIndex];
                if (rawHistVal > 0) {
                   pixelMax_ = rawHistIndex;
@@ -486,15 +537,22 @@ public class ImageMaker {
                }
             }
          }
-         maxAfterRejectingOutliers_ = totalPixels;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels,
+         if (pixelMin_ == -1) {
+            pixelMin_ = 0; // All pixels are zero — fall back gracefully
+         }
+         // Build a histogram with bin 0 zeroed out so HistogramUtils computes
+         // min/max percentiles over non-zero pixels only.
+         int[] nonZeroHist = rawHistogram.clone();
+         nonZeroHist[0] = 0;
+         HistogramUtils hu = new HistogramUtils(nonZeroHist,
+               totalNonZeroPixels > 0 ? totalNonZeroPixels : totalPixels,
                0.01 * gs.percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
       }
    }
 
-   private class NDVImageProcessor {
+   private class TiledDataViewerImageProcessor {
       LUT lut;
       int contrastMin_;
       int contrastMax_;
@@ -512,7 +570,7 @@ public class ImageMaker {
       int[] rawHistogram = null;
       final String channelName_;
 
-      public NDVImageProcessor(int w, int h, String name) {
+      public TiledDataViewerImageProcessor(int w, int h, String name) {
          width = w;
          height = h;
          channelName_ = name;
@@ -553,10 +611,14 @@ public class ImageMaker {
       }
 
       private void processHistogram(int[] rawHistogram, GlobalRenderSettings gs) {
-         //Compute stats
+         // Compute stats, excluding zero-valued pixels (unacquired/black tiles).
          int totalPixels = 0;
+         int totalNonZeroPixels = 0;
          for (int i = 0; i < rawHistogram.length; i++) {
             totalPixels += rawHistogram[i];
+            if (i > 0) {
+               totalNonZeroPixels += rawHistogram[i];
+            }
          }
 
          pixelMin_ = -1;
@@ -566,6 +628,10 @@ public class ImageMaker {
          for (int i = 0; i < numBins; i++) {
             for (int j = 0; j < binSize; j++) {
                int rawHistIndex = i * binSize + j;
+               // Skip bin 0 — those are unacquired (black) tile pixels.
+               if (rawHistIndex == 0) {
+                  continue;
+               }
                int rawHistVal = rawHistogram[rawHistIndex];
                if (rawHistVal > 0) {
                   pixelMax_ = rawHistIndex;
@@ -575,8 +641,15 @@ public class ImageMaker {
                }
             }
          }
-         maxAfterRejectingOutliers_ = totalPixels;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels,
+         if (pixelMin_ == -1) {
+            pixelMin_ = 0; // All pixels are zero — fall back gracefully
+         }
+         // Build a histogram with bin 0 zeroed out so HistogramUtils computes
+         // min/max percentiles over non-zero pixels only.
+         int[] nonZeroHist = rawHistogram.clone();
+         nonZeroHist[0] = 0;
+         HistogramUtils hu = new HistogramUtils(nonZeroHist,
+               totalNonZeroPixels > 0 ? totalNonZeroPixels : totalPixels,
                0.01 * gs.percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();

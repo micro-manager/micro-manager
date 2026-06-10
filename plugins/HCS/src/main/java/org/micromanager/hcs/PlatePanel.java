@@ -267,8 +267,21 @@ public class PlatePanel extends JPanel {
    protected void onMouseClicked(MouseEvent e) throws HCSException {
       final Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
+      if (e.isControlDown()) {
+         // Ctrl-click always moves the stage, switching to Move mode if needed.
+         plateGui_.selectMoveTool();
+         mode_ = Tool.MOVE;
+      }
       if (mode_ == Tool.MOVE) {
          if (studio_ == null) {
+            return;
+         }
+         if (!e.isControlDown()) {
+            // Plain click in Move mode no longer triggers a move.
+            return;
+         }
+         if (!plateGui_.isCalibratedXY()) {
+            studio_.logs().showMessage("Calibrate XY first");
             return;
          }
          if (!plate_.isPointWithin(pt.x, pt.y)) {
@@ -288,10 +301,13 @@ public class PlatePanel extends JPanel {
                      if (continuousFocusOn) {
                         studio_.getCMMCore().enableContinuousFocus(false);
                      }
-                     studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
-                             plateGui_.getThreePointZPos(pt2.x, pt2.y));
-                     if (continuousFocusOn) {
-                        studio_.getCMMCore().enableContinuousFocus(true);
+                     try {
+                        studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
+                                plateGui_.getThreePointZPos(pt2.x, pt2.y));
+                     } finally {
+                        if (continuousFocusOn) {
+                           studio_.getCMMCore().enableContinuousFocus(true);
+                        }
                      }
                   }
                   xyStagePos_ = studio_.getCMMCore().getXYStagePosition();
@@ -361,7 +377,7 @@ public class PlatePanel extends JPanel {
    }
 
    protected void onMouseReleased(MouseEvent e) {
-      if (mode_ == Tool.MOVE) {
+      if (mode_ == Tool.MOVE || e.isControlDown()) {
          // Don't make any changes to the selection.
          return;
       }

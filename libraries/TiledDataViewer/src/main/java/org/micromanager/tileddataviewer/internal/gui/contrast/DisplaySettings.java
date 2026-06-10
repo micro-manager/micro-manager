@@ -18,6 +18,7 @@
 package org.micromanager.tileddataviewer.internal.gui.contrast;
 
 import java.awt.Color;
+import java.util.Iterator;
 import java.util.prefs.Preferences;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -46,9 +47,22 @@ public class DisplaySettings {
    //for reading from disk
    public DisplaySettings(JSONObject json, Preferences preferences) {
       preferences_ = preferences;
-      if (json == null) {
-         System.err.println("Warning: Display settings missing");
+      if (json == null || !json.has(ALL_CHANNELS_SETTINGS_KEY)) {
          json_ = new DisplaySettings(preferences_).toJSON();
+         // Carry over any per-channel entries already present in json (e.g. color, contrast).
+         if (json != null) {
+            Iterator<String> keys = json.keys();
+            while (keys.hasNext()) {
+               String k = keys.next();
+               if (!k.equals(ALL_CHANNELS_SETTINGS_KEY)) {
+                  try {
+                     json_.put(k, json.get(k));
+                  } catch (JSONException ignore) {
+                     // Skip entries that fail to copy; defaults from preferences remain.
+                  }
+               }
+            }
+         }
       } else {
          json_ = json;
       }
@@ -182,6 +196,9 @@ public class DisplaySettings {
    public void setActive(String channelName, boolean selected) {
       synchronized (this) {
          try {
+            if (!json_.has(channelName)) {
+               addChannel(channelName, 16);
+            }
             json_.getJSONObject(channelName).put("Active", selected);
          } catch (Exception ex) {
             System.err.println("Couldnt set display setting");

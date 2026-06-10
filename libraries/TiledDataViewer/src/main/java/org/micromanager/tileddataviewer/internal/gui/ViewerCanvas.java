@@ -12,6 +12,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 import org.micromanager.tileddataviewer.internal.TiledDataViewer;
 import org.micromanager.tileddataviewer.overlay.Overlay;
@@ -24,6 +25,8 @@ public class ViewerCanvas {
    private double scale_;
    private TiledDataViewer display_;
    private JPanel canvas_;
+   // Cached BufferedImage version of the last rendered frame, for pixel lookups.
+   private volatile BufferedImage renderedBuffer_;
 
    public ViewerCanvas(TiledDataViewer display) {
       canvas_ = createCanvas();
@@ -72,6 +75,51 @@ public class ViewerCanvas {
    void updateDisplayImage(Image img, double scale) {
       currentImage_ = img;
       scale_ = scale;
+      // Invalidate the cached buffer whenever a new frame arrives.
+      // The BufferedImage copy is created lazily in getRenderedPixelRGB() only when needed.
+      renderedBuffer_ = null;
+   }
+
+   /**
+    * Returns the RGB values at the given canvas coordinates from the last rendered frame.
+    * Returns null if no frame has been rendered yet or coordinates are out of bounds.
+    * The array contains [R, G, B] values in the range 0–255.
+    * These are the display-mapped values (post contrast/gamma), which is sufficient
+    * for computing white-balance ratios since only relative R:G:B proportions matter.
+    */
+   public int[] getRenderedPixelRGB(int canvasX, int canvasY) {
+      Image img = currentImage_;
+      double scale = scale_;
+      if (img == null || scale <= 0) {
+         return null;
+      }
+      // Build or reuse the cached BufferedImage copy (created lazily on first pixel lookup).
+      BufferedImage buf = renderedBuffer_;
+      if (buf == null) {
+         if (img instanceof BufferedImage) {
+            buf = (BufferedImage) img;
+         } else {
+            int w = img.getWidth(null);
+            int h = img.getHeight(null);
+            if (w <= 0 || h <= 0) {
+               return null;
+            }
+            buf = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            java.awt.Graphics g = buf.getGraphics();
+            g.drawImage(img, 0, 0, null);
+            g.dispose();
+         }
+         renderedBuffer_ = buf;
+      }
+      // The AffineTransform in paint() scales the image UP by scale when drawing it.
+      // canvas pixel = renderedImagePixel * scale → renderedImagePixel = canvasPixel / scale
+      int px = (int) Math.floor(canvasX / scale);
+      int py = (int) Math.floor(canvasY / scale);
+      if (px < 0 || py < 0 || px >= buf.getWidth() || py >= buf.getHeight()) {
+         return null;
+      }
+      int rgb = buf.getRGB(px, py);
+      return new int[]{(rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF};
    }
 
    void updateOverlay(Overlay overlay) {

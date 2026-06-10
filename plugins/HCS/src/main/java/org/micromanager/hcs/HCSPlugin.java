@@ -95,6 +95,7 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
          studio_.profile().getSettings(this.getClass()).putBoolean(
                   HCS_FRAME_OPEN, frame_.isVisible());
          frame_.dispose();
+         frame_ = null;
       }
    }
 
@@ -106,14 +107,11 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    @Subscribe
    public void onStartupComplete(StartupCompleteEvent event) {
       if (studio_.profile().getSettings(this.getClass()).getBoolean(HCS_FRAME_OPEN, false)) {
-         // if the dialog was open when MM was shut down, restore it now.
-         if (!studio_.core().getXYStageDevice().isEmpty()
-                  && !studio_.core().getFocusDevice().isEmpty()) {
-            if (frame_ == null) {
-               frame_ = new SiteGenerator(studio_);
-            }
-            frame_.setVisible(true);
+         if (frame_ == null) {
+            frame_ = new SiteGenerator(studio_);
          }
+         frame_.setVisible(true);
+         frame_.restoreWellZoom();
       }
    }
 

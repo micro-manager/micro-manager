@@ -32,6 +32,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acquisition.SequenceSettings;
@@ -43,7 +44,10 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.events.PixelSizeAffineChangedEvent;
+import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.imageprocessing.ImageTransformUtils;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ColorPalettes;
@@ -127,10 +131,43 @@ public class ExplorerManager {
    private AffineTransform pixelSizeAffine_ = null;
    // Pre-computed inverse: stage-micron delta → camera-pixel delta.
    private AffineTransform pixelSizeAffineInverse_ = null;
+   // Session-start affine and its inverse, kept fixed so position calculations stay in
+   // the tile-grid coordinate system even after a pixel-size change.
+   private AffineTransform initialPixelSizeAffine_ = null;
+   private AffineTransform initialPixelSizeAffineInverse_ = null;
    private double overlapPercentage_ = 10.0;
    private volatile boolean acquisitionInterrupted_ = false;
    private final AtomicInteger pendingBatches_ = new AtomicInteger(0);
+   // True when pixel size or image dimensions differ from session initial values.
+   // Blocks new tile acquisition until settings return to initial values.
+   private volatile boolean settingsMismatch_ = false;
+   // Active mismatch alert; dismissed when settings return to initial values.
+   private org.micromanager.alerts.Alert mismatchAlert_ = null;
+   // Initial values recorded at session start (for mismatch detection).
+   private double initialPixelSizeUm_ = 1.0;
+   private int initialCameraWidth_ = 512;
+   private int initialCameraHeight_ = 512;
    private boolean isRGB_ = false;
+
+   // Z-axis decision locked at session start. The MDA slice settings can be toggled
+   // mid-session, but the dataset's axes shape must stay consistent: TiledDataViewer
+   // treats "z axis absent" as different from "z axis present at index 0", so mixing
+   // tiles with and without a "z" axis makes earlier tiles disappear. We therefore
+   // decide once, at session start, whether every tile in this session carries a
+   // z axis, and reuse that decision for all tiles regardless of later MDA edits.
+   private boolean sessionUseSlices_ = false;
+   private boolean sessionIsZStack_ = false;
+   // Slice positions captured at session start, applied to every tile acquisition so the
+   // z-axis shape is independent of later MDA slice edits. Empty when not using slices.
+   private java.util.ArrayList<Double> sessionSlices_ = new java.util.ArrayList<>();
+
+   // Camera orientation / Image Flipper correction
+   private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
+   private boolean sessionCorrectionMirror_ = false; // horizontal mirror
+   private boolean flipperInPipeline_ = false;    // Flipper already corrected images
+   // Raw (pre-correction) affines so Flipper override can restart from them
+   private AffineTransform rawPixelSizeAffine_ = null;
+   private AffineTransform rawInitialPixelSizeAffine_ = null;
 
    public ExplorerManager(Studio studio, ExplorerFrame frame) {
       studio_ = studio;
@@ -186,6 +223,20 @@ public class ExplorerManager {
          if (pixelSizeUm_ <= 0) {
             pixelSizeUm_ = 1.0;
          }
+         initialPixelSizeUm_ = pixelSizeUm_;
+         initialCameraWidth_ = cameraWidth_;
+         initialCameraHeight_ = cameraHeight_;
+         settingsMismatch_ = false;
+
+         // Lock the z-axis decision for the whole session (see field comment). Editing
+         // the MDA slice settings after this point will not change the dataset's axes
+         // shape, so previously acquired tiles never disappear.
+         SequenceSettings startSettings = studio_.acquisitions().getAcquisitionSettings();
+         sessionUseSlices_ = startSettings.useSlices() && startSettings.slices().size() > 0;
+         sessionIsZStack_ = sessionUseSlices_ && startSettings.slices().size() > 1;
+         sessionSlices_ = sessionUseSlices_
+                 ? new java.util.ArrayList<>(startSettings.slices())
+                 : new java.util.ArrayList<>();
 
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
@@ -196,6 +247,34 @@ public class ExplorerManager {
          stageTileWidthUm_ = cameraWidth_ * pixelSizeUm_;
          stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
          loadPixelSizeAffine();
+         initialPixelSizeAffine_ = pixelSizeAffine_;
+         initialPixelSizeAffineInverse_ = pixelSizeAffineInverse_;
+
+         // Keep uncorrected copies so the Flipper-detection path can restart cleanly.
+         rawPixelSizeAffine_        = pixelSizeAffine_;
+         rawInitialPixelSizeAffine_ = pixelSizeAffine_;
+         sessionCorrectionRotation_ = 0;
+         sessionCorrectionMirror_   = false;
+         flipperInPipeline_         = false;
+
+         // Issue 1: detect camera mirror from the raw affine (det < 0 → mirror encoded).
+         // Rotation ≠ 0 is only logged; use the Image Flipper plugin for rotation correction.
+         if (pixelSizeAffine_ != null) {
+            int[] corr = ImageTransformUtils.correctionFromAffine(pixelSizeAffine_);
+            if (corr != null && (corr[0] != 0 || corr[1] != 0)) {
+               if (corr[0] != 0) {
+                  studio_.logs().logMessage("Explorer: camera rotation detected ("
+                        + corr[0] + "°); use the Image Flipper plugin for rotation correction");
+               } else {
+                  sessionCorrectionMirror_ = (corr[1] != 0);
+                  if (sessionCorrectionMirror_) {
+                     applyOrientationCorrectionToAffines(0, true);
+                     studio_.logs().logMessage("Explorer: camera mirror detected;"
+                           + " mirror correction applied to canvas affine");
+                  }
+               }
+            }
+         }
 
          // Initial tile-grid estimate uses camera dimensions (corrected after first acq)
          dataSource_.setTileDimensions(cameraWidth_, cameraHeight_);
@@ -223,10 +302,10 @@ public class ExplorerManager {
 
          initDisplaySettings(summaryMetadataJson);
 
-         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
-         viewer_.setWindowTitle("Explorer - Right-click to select, "
-               + "Left-drag to extend, Left-click to acquire");
+         viewer_.setWindowTitle("Explorer - Right-click/drag to select, "
+               + "Left-drag to pan, Left-click to acquire");
 
          mm2Viewer_.setOverlayerPlugin(dataSource_);
          viewer_.setCustomCanvasMouseListener(dataSource_);
@@ -241,7 +320,7 @@ public class ExplorerManager {
             }
             return 0L;
          });
-         viewer_.setReadZMetadataFunction(tags -> 0.0);
+         viewer_.setReadZMetadataFunction(tags -> tags.optDouble("ZPositionUm", 0.0));
          viewer_.setViewOffset(0, 0);
 
          startStagePositionPolling();
@@ -315,6 +394,16 @@ public class ExplorerManager {
          tileHeight_ = th;
          dataSource_.setTileDimensions(tileWidth_, tileHeight_);
 
+         cameraWidth_ = tileWidth_;
+         cameraHeight_ = tileHeight_;
+         initialPixelSizeUm_ = pixelSizeUm_;
+         initialCameraWidth_ = cameraWidth_;
+         initialCameraHeight_ = cameraHeight_;
+         settingsMismatch_ = false;
+         loadPixelSizeAffine();
+         initialPixelSizeAffine_ = pixelSizeAffine_;
+         initialPixelSizeAffineInverse_ = pixelSizeAffineInverse_;
+
          // Stage step estimate for a loaded dataset (not used for new acquisitions)
          stageTileWidthUm_ = tileWidth_ * pixelSizeUm_;
          stageTileHeightUm_ = tileHeight_ * pixelSizeUm_;
@@ -360,7 +449,7 @@ public class ExplorerManager {
             studio_.logs().logError(e, "Failed to initialize DisplaySettings");
          }
 
-         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Explorer - " + acqName_);
 
@@ -377,7 +466,7 @@ public class ExplorerManager {
             }
             return 0L;
          });
-         viewer_.setReadZMetadataFunction(tags -> 0.0);
+         viewer_.setReadZMetadataFunction(tags -> tags.optDouble("ZPositionUm", 0.0));
          viewer_.setViewOffset(0, 0);
 
          File viewStateFile = new File(dir, VIEW_STATE_FILE);
@@ -497,7 +586,13 @@ public class ExplorerManager {
       exploring_ = false;
       loadedData_ = false;
       acquisitionInterrupted_ = true;
+      dismissMismatchAlert();
       pendingBatches_.set(0);
+      sessionCorrectionRotation_ = 0;
+      sessionCorrectionMirror_   = false;
+      flipperInPipeline_         = false;
+      rawPixelSizeAffine_        = null;
+      rawInitialPixelSizeAffine_ = null;
       if (dataSource_ != null) {
          dataSource_.clearPendingTiles();
       }
@@ -621,6 +716,63 @@ public class ExplorerManager {
       onViewerClosed();
    }
 
+   @Subscribe
+   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
+      if (!exploring_) {
+         return;
+      }
+      double newSize = event.getNewPixelSizeUm();
+      if (newSize <= 0) {
+         newSize = 1.0;
+      }
+      pixelSizeUm_ = newSize;
+      stageTileWidthUm_  = cameraWidth_  * pixelSizeUm_;
+      stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
+      loadPixelSizeAffine();
+      updateStagePositionPixel();
+      updateSettingsMismatch();
+      redrawOverlay();
+   }
+
+   @Subscribe
+   public void onPixelSizeAffineChanged(PixelSizeAffineChangedEvent event) {
+      if (!exploring_) {
+         return;
+      }
+      loadPixelSizeAffine();
+      redrawOverlay();
+   }
+
+   private void dismissMismatchAlert() {
+      if (mismatchAlert_ != null) {
+         if (mismatchAlert_.isUsable()) {
+            mismatchAlert_.dismiss();
+         }
+         mismatchAlert_ = null;
+      }
+   }
+
+   private void updateSettingsMismatch() {
+      boolean mismatch = Math.abs(pixelSizeUm_ - initialPixelSizeUm_) > 0.001 * initialPixelSizeUm_
+            || cameraWidth_  != initialCameraWidth_
+            || cameraHeight_ != initialCameraHeight_;
+      if (mismatch != settingsMismatch_) {
+         settingsMismatch_ = mismatch;
+         if (dataSource_ != null) {
+            dataSource_.setSettingsMismatch(mismatch);
+         }
+         if (mismatch) {
+            mismatchAlert_ = studio_.alerts().postAlert("Explorer",
+                  ExplorerManager.class,
+                  "Acquisition blocked: pixel size or camera ROI has changed from session "
+                  + "start. Restore settings to re-enable tile acquisition.");
+         } else {
+            dismissMismatchAlert();
+         }
+         redrawOverlay();
+      }
+   }
+
    public void onViewerClosed() {
       if (!exploring_ || viewerClosing_) {
          return;
@@ -711,7 +863,7 @@ public class ExplorerManager {
 
    private void closeViewerReferences() {
       if (mm2Viewer_ != null) {
-         mm2Viewer_.closeWithoutNDViewer();
+         mm2Viewer_.closeWithoutTiledDataViewer();
       }
       mm2Viewer_ = null;
       mm2DataProvider_ = null;
@@ -848,6 +1000,57 @@ public class ExplorerManager {
    }
 
    /**
+    * Returns the inverse of the "mirror-X then rotate CW by rotation degrees" correction
+    * transform.  Composing this into the canvas affine (A_corrected = A_raw * corrInv)
+    * keeps canvas-pixel-delta → stage-micron-delta correct after tile images have been
+    * corrected by the same mirror+rotation.
+    */
+   private AffineTransform buildCorrectionAffineInverse(int rotation, boolean mirror) {
+      AffineTransform inv = new AffineTransform();
+      if (rotation == 90) {
+         inv.quadrantRotate(1); // CCW 90° = inverse of CW 90°
+      } else if (rotation == 180) {
+         inv.quadrantRotate(2);
+      } else if (rotation == 270) {
+         inv.quadrantRotate(3);
+      }
+      if (mirror) {
+         inv.preConcatenate(AffineTransform.getScaleInstance(-1.0, 1.0));
+      }
+      return inv;
+   }
+
+   /**
+    * Composes the orientation correction into both the current and session-start
+    * canvas affines and recomputes their inverses.
+    */
+   private void applyOrientationCorrectionToAffines(int rotation, boolean mirror) {
+      AffineTransform corrInv = buildCorrectionAffineInverse(rotation, mirror);
+      if (pixelSizeAffine_ != null) {
+         AffineTransform c = new AffineTransform(pixelSizeAffine_);
+         c.concatenate(corrInv);
+         pixelSizeAffine_ = c;
+         try {
+            pixelSizeAffineInverse_ = c.createInverse();
+         } catch (NoninvertibleTransformException e) {
+            pixelSizeAffine_ = null;
+            pixelSizeAffineInverse_ = null;
+         }
+      }
+      if (initialPixelSizeAffine_ != null) {
+         AffineTransform c = new AffineTransform(initialPixelSizeAffine_);
+         c.concatenate(corrInv);
+         initialPixelSizeAffine_ = c;
+         try {
+            initialPixelSizeAffineInverse_ = c.createInverse();
+         } catch (NoninvertibleTransformException e) {
+            initialPixelSizeAffine_ = null;
+            initialPixelSizeAffineInverse_ = null;
+         }
+      }
+   }
+
+   /**
     * Loads and validates the pixel-size affine transform from the core.
     * Sets pixelSizeAffine_ / pixelSizeAffineInverse_ on success, leaves both null
     * (scalar fallback) on any failure or if the affine does not match pixelSizeUm_.
@@ -882,6 +1085,22 @@ public class ExplorerManager {
          studio_.logs().logMessage("Explorer: could not load pixel-size affine ("
                + e.getMessage() + "); using scalar coordinate conversion");
       }
+      // Re-apply session correction so that stage-movement affine stays consistent
+      // after an objective / pixel-size change.
+      if (pixelSizeAffine_ != null
+            && (sessionCorrectionMirror_ || sessionCorrectionRotation_ != 0)) {
+         AffineTransform corrInv = buildCorrectionAffineInverse(
+               sessionCorrectionRotation_, sessionCorrectionMirror_);
+         AffineTransform c = new AffineTransform(pixelSizeAffine_);
+         c.concatenate(corrInv);
+         pixelSizeAffine_ = c;
+         try {
+            pixelSizeAffineInverse_ = c.createInverse();
+         } catch (NoninvertibleTransformException e) {
+            pixelSizeAffine_ = null;
+            pixelSizeAffineInverse_ = null;
+         }
+      }
    }
 
    /**
@@ -890,6 +1109,9 @@ public class ExplorerManager {
     */
    public void acquireMultipleTiles(List<Point> tiles) {
       if (!exploring_ || acquisitionExecutor_ == null || tiles.isEmpty()) {
+         return;
+      }
+      if (settingsMismatch_) {
          return;
       }
 
@@ -917,6 +1139,13 @@ public class ExplorerManager {
 
             for (Point tile : tiles) {
                if (acquisitionInterrupted_) {
+                  break;
+               }
+               if (settingsMismatch_) {
+                  studio_.logs().logMessage(
+                        "Explorer: aborting in-flight acquisition — settings changed "
+                              + "(pixel size or ROI mismatch)");
+                  acquisitionInterrupted_ = true;
                   break;
                }
                int row = tile.x;
@@ -964,9 +1193,16 @@ public class ExplorerManager {
    private void acquireSingleTileBlocking(int row, int col) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+         // Use the z-axis decision locked at session start, not the current MDA
+         // settings, so every tile in this session has the same axes shape.
+         boolean useSlices = sessionUseSlices_;
          SequenceSettings.Builder sb = settings.copyBuilder()
                  .useFrames(false)
-                 .useSlices(false)
+                 .useSlices(useSlices)
+                 // Use the slice positions captured at session start, not the current MDA
+                 // settings, so the z planes stay consistent even if the user edits the
+                 // slice list mid-session (an empty list here would yield no z planes).
+                 .slices(new java.util.ArrayList<>(sessionSlices_))
                  .usePositionList(false)
                  .save(false)
                  .shouldDisplayImages(false)
@@ -975,7 +1211,8 @@ public class ExplorerManager {
          // Preserve channel settings from MDA
          if (settings.useChannels()) {
             sb.useChannels(true);
-         } else {
+         }
+         if (!settings.useChannels() && !useSlices) {
             // AcquisitionEventIterator requires at least one acquisition function;
             // when no channels/slices/positions are used, enable a single frame.
             sb.useFrames(true).numFrames(1).intervalMs(0);
@@ -1020,6 +1257,52 @@ public class ExplorerManager {
                } catch (Exception e) {
                   studio_.logs().logError(e, "Explorer: failed to update overlap metadata");
                }
+
+               // Issue 2: detect Image Flipper in the pipeline from first-image metadata.
+               // If detected, override canvas affines with the Flipper's correction so that
+               // stageToPixel() and moveStageToPixelPosition() map to the correct canvas
+               // coordinates (the Flipper has already corrected the pixel data).
+               if (!flipperInPipeline_) {
+                  PropertyMap userData = firstImage.getMetadata().getUserData();
+                  if (userData != null
+                        && userData.containsInteger("ImageFlipper-Rotation")
+                        && userData.containsString("ImageFlipper-Mirror")) {
+                     final int flipRot = userData.getInteger("ImageFlipper-Rotation", 0);
+                     final boolean flipMirror = "On".equals(
+                           userData.getString("ImageFlipper-Mirror", "Off"));
+                     flipperInPipeline_ = true;
+                     // Restart from the raw (pre-camera-correction) affines so the
+                     // Flipper's correction does not compound with the camera correction.
+                     pixelSizeAffine_ = rawPixelSizeAffine_ != null
+                           ? new AffineTransform(rawPixelSizeAffine_) : null;
+                     pixelSizeAffineInverse_ = null;
+                     initialPixelSizeAffine_ = rawInitialPixelSizeAffine_ != null
+                           ? new AffineTransform(rawInitialPixelSizeAffine_) : null;
+                     initialPixelSizeAffineInverse_ = null;
+                     if (pixelSizeAffine_ != null) {
+                        try {
+                           pixelSizeAffineInverse_ = pixelSizeAffine_.createInverse();
+                        } catch (NoninvertibleTransformException ignored) {
+                           pixelSizeAffine_ = null;
+                        }
+                     }
+                     if (initialPixelSizeAffine_ != null) {
+                        try {
+                           initialPixelSizeAffineInverse_ = initialPixelSizeAffine_.createInverse();
+                        } catch (NoninvertibleTransformException ignored) {
+                           initialPixelSizeAffine_ = null;
+                        }
+                     }
+                     sessionCorrectionRotation_ = flipRot;
+                     sessionCorrectionMirror_   = flipMirror;
+                     if (flipRot != 0 || flipMirror) {
+                        applyOrientationCorrectionToAffines(flipRot, flipMirror);
+                     }
+                     studio_.logs().logMessage("Explorer: Image Flipper detected (rot="
+                           + flipRot + ", mirror=" + flipMirror
+                           + "); canvas affine adjusted");
+                  }
+               }
             }
          }
 
@@ -1030,17 +1313,44 @@ public class ExplorerManager {
 
          List<Coords> allCoords = new ArrayList<>();
          testStore.getUnorderedImageCoords().forEach(allCoords::add);
-         // Sort by channel for consistent ordering
-         allCoords.sort((a, b) -> Integer.compare(a.getChannel(), b.getChannel()));
+         // Sort by channel, then z-slice, for consistent ordering
+         allCoords.sort((a, b) -> {
+            int cmp = Integer.compare(a.getChannel(), b.getChannel());
+            return cmp != 0 ? cmp : Integer.compare(a.getZSlice(), b.getZSlice());
+         });
+         // Only attach a "z" axis when this is a genuine z-stack (more than one plane);
+         // single-plane acquisitions keep their original axes and create no z slider.
+         // Locked at session start so the dataset's axes shape stays consistent even if
+         // the MDA slice settings are edited mid-session (see sessionIsZStack_).
+         boolean isZStack = sessionIsZStack_;
 
          for (Coords c : allCoords) {
             Image img = testStore.getImage(c);
             if (img == null) {
                continue;
             }
+            // Issue 1: apply pixel correction when the Flipper is not in the pipeline.
+            // The Flipper (Issue 2) has already corrected images when flipperInPipeline_ is true.
+            if (!flipperInPipeline_
+                  && (sessionCorrectionMirror_ || sessionCorrectionRotation_ != 0)) {
+               try {
+                  Object[] result = ImageTransformUtils.transformPixels(
+                        img.getRawPixels(), img.getWidth(), img.getHeight(),
+                        img.getBytesPerPixel(), sessionCorrectionMirror_,
+                        sessionCorrectionRotation_);
+                  img = studio_.data().createImage(
+                        result[0], (Integer) result[1], (Integer) result[2],
+                        img.getBytesPerPixel(), img.getNumComponents(),
+                        img.getCoords(), img.getMetadata());
+               } catch (Exception e) {
+                  studio_.logs().logError(e, "Explorer: pixel orientation correction failed");
+               }
+            }
             int channelIndex = c.getChannel();
             String channelName = summaryMeta.getSafeChannelName(channelIndex);
-            HashMap<String, Object> axes = storeImage(img, row, col, channelName);
+            // Pass the z-slice index only for z-stacks (-1 means "no z axis").
+            int zIndex = isZStack ? c.getZSlice() : -1;
+            HashMap<String, Object> axes = storeImage(img, row, col, channelName, zIndex);
             if (axes != null) {
                storedAxes.add(axes);
                storedImages.add(img);
@@ -1113,9 +1423,12 @@ public class ExplorerManager {
 
    /**
     * Stores a single image at the specified tile position and channel.
+    *
+    * @param zIndex z-slice index for a z-stack, or -1 when there is no z axis
+    *               (single-plane acquisition).
     */
    private HashMap<String, Object> storeImage(Image image, int row, int col,
-                                               String channelName) {
+                                               String channelName, int zIndex) {
       if (storage_ == null) {
          studio_.logs().logError("Explorer: storage is null, cannot store image");
          return null;
@@ -1160,8 +1473,13 @@ public class ExplorerManager {
                studio_.logs().logError("Explorer: Y position not found");
             }
          }
+         // For a z-stack, prefer the plane's true Z from the image metadata, since the
+         // engine moves Z asynchronously and the stage may not be settled at store time.
+         Double planeZum = (zIndex >= 0 && image.getMetadata() != null)
+                 ? image.getMetadata().getZPositionUm() : null;
          try {
-            tags.put("ZPositionUm", studio_.core().getPosition());
+            tags.put("ZPositionUm",
+                  planeZum != null ? planeZum : studio_.core().getPosition());
          } catch (Exception ignore) {
             if (loggedMetadataWarnings_.add("ZPositionUm")) {
                studio_.logs().logError("Explorer: Z position not found");
@@ -1174,6 +1492,9 @@ public class ExplorerManager {
          AcqEngMetadata.setAxisPosition(tags, "row", row);
          AcqEngMetadata.setAxisPosition(tags, "column", col);
          AcqEngMetadata.setAxisPosition(tags, "channel", channelName);
+         if (zIndex >= 0) {
+            AcqEngMetadata.setAxisPosition(tags, "z", zIndex);
+         }
 
          HashMap<String, Object> axes = AcqEngMetadata.getAxes(tags);
 
@@ -1201,19 +1522,44 @@ public class ExplorerManager {
 
    // ===================== Stage position overlay =====================
 
+   private void updateStagePositionPixel() {
+      if (dataSource_ == null) {
+         return;
+      }
+      try {
+         double stageX = studio_.core().getXPosition();
+         double stageY = studio_.core().getYPosition();
+         Point2D.Double pixel = stageToPixel(stageX, stageY);
+         dataSource_.setStagePositionPixel(pixel);
+      } catch (Exception e) {
+         // Stage not available
+      }
+   }
+
    private void startStagePositionPolling() {
       stagePollingExecutor_.scheduleWithFixedDelay(() -> {
          if (dataSource_ == null) {
             return;
          }
          try {
+            // Detect camera ROI changes (no dedicated MM event for this)
+            int newW = (int) studio_.core().getImageWidth();
+            int newH = (int) studio_.core().getImageHeight();
+            if (newW != cameraWidth_ || newH != cameraHeight_) {
+               cameraWidth_ = newW;
+               cameraHeight_ = newH;
+               stageTileWidthUm_  = cameraWidth_  * pixelSizeUm_;
+               stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
+               updateSettingsMismatch();
+            }
+
             double stageX = studio_.core().getXPosition();
             double stageY = studio_.core().getYPosition();
             Point2D.Double pixel = stageToPixel(stageX, stageY);
             dataSource_.setStagePositionPixel(pixel);
             redrawOverlay();
          } catch (Exception e) {
-            // Stage not available
+            // Stage or camera not available
          }
       }, 0, 500, TimeUnit.MILLISECONDS);
    }
@@ -1221,7 +1567,7 @@ public class ExplorerManager {
    private Point2D.Double stageToPixel(double stageX, double stageY) {
       int tw = dataSource_ != null ? dataSource_.getTileWidth() : -1;
       int th = dataSource_ != null ? dataSource_.getTileHeight() : -1;
-      if (tw <= 0 || th <= 0 || pixelSizeUm_ <= 0) {
+      if (tw <= 0 || th <= 0 || initialPixelSizeUm_ <= 0) {
          return null;
       }
       int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
@@ -1233,20 +1579,24 @@ public class ExplorerManager {
 
       double camPixelDeltaX;
       double camPixelDeltaY;
-      if (pixelSizeAffineInverse_ != null) {
-         // Apply inverse affine: stage-micron delta → camera-pixel delta.
+      if (initialPixelSizeAffineInverse_ != null) {
+         // Use the session-start affine so position is always in the tile-grid coordinate system.
          Point2D.Double stageOffset = new Point2D.Double(stageOffsetX, stageOffsetY);
          Point2D.Double camDelta = new Point2D.Double();
-         pixelSizeAffineInverse_.transform(stageOffset, camDelta);
+         initialPixelSizeAffineInverse_.transform(stageOffset, camDelta);
          camPixelDeltaX = camDelta.x;
          camPixelDeltaY = camDelta.y;
       } else {
-         camPixelDeltaX = stageOffsetX / pixelSizeUm_;
-         camPixelDeltaY = stageOffsetY / pixelSizeUm_;
+         // Use the session-start pixel size so position stays fixed in the tile-grid coordinate
+         // system regardless of subsequent pixel-size changes.
+         camPixelDeltaX = stageOffsetX / initialPixelSizeUm_;
+         camPixelDeltaY = stageOffsetY / initialPixelSizeUm_;
       }
       // Scale from camera-pixel space to canvas (pipeline-output) pixel space.
-      double pipelineScaleX = (tw > 0 && cameraWidth_  > 0) ? (double) tw / cameraWidth_  : 1.0;
-      double pipelineScaleY = (th > 0 && cameraHeight_ > 0) ? (double) th / cameraHeight_ : 1.0;
+      double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
+            ? (double) tw / initialCameraWidth_  : 1.0;
+      double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
+            ? (double) th / initialCameraHeight_ : 1.0;
       double pixelX = camPixelDeltaX * pipelineScaleX + effectiveTileWidth  / 2.0;
       double pixelY = camPixelDeltaY * pipelineScaleY + effectiveTileHeight / 2.0;
       return new Point2D.Double(pixelX, pixelY);
@@ -1284,6 +1634,18 @@ public class ExplorerManager {
       return overlapPercentage_;
    }
 
+   /**
+    * Ratio of current pixel size to the session-start pixel size.
+    * Used to scale the red FOV indicator on the canvas when the objective changes.
+    * Returns 1.0 when there is no change.
+    */
+   public double getPixelSizeRatio() {
+      if (initialPixelSizeUm_ <= 0) {
+         return 1.0;
+      }
+      return pixelSizeUm_ / initialPixelSizeUm_;
+   }
+
    public void redrawOverlay() {
       if (viewer_ != null) {
          viewer_.redrawOverlay();
@@ -1315,29 +1677,29 @@ public class ExplorerManager {
 
             double targetX;
             double targetY;
-            if (pixelSizeAffine_ != null) {
-               // Convert canvas-pixel delta to camera-pixel delta, then apply affine.
-               double pipelineScaleX = (tw > 0 && cameraWidth_  > 0)
-                     ? (double) cameraWidth_  / tw : 1.0;
-               double pipelineScaleY = (th > 0 && cameraHeight_ > 0)
-                     ? (double) cameraHeight_ / th : 1.0;
+            // Always invert using the session-start pixel size / affine so that clicks on
+            // the tile grid map to consistent physical stage positions regardless of the
+            // current objective.
+            if (initialPixelSizeAffine_ != null) {
+               // Convert canvas-pixel delta to camera-pixel delta using initial camera dims,
+               // then apply the session-start affine (forward: camera-pixel → stage-micron).
+               double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
+                     ? (double) initialCameraWidth_  / tw : 1.0;
+               double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
+                     ? (double) initialCameraHeight_ / th : 1.0;
                Point2D.Double camPixelDelta = new Point2D.Double(
                      offsetPixelX * pipelineScaleX, offsetPixelY * pipelineScaleY);
                Point2D.Double stageOffset = new Point2D.Double();
-               pixelSizeAffine_.transform(camPixelDelta, stageOffset);
+               initialPixelSizeAffine_.transform(camPixelDelta, stageOffset);
                targetX = initialStageX_ + stageOffset.x;
                targetY = initialStageY_ + stageOffset.y;
             } else {
-               double stageStepX = stageTileWidthUm_ > 0
-                     ? stageTileWidthUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-                        : effectiveTileWidth;
-               double stageStepY = stageTileHeightUm_ > 0
-                     ? stageTileHeightUm_ * (1.0 - overlapPercentage_ / 100.0) / pixelSizeUm_
-                        : effectiveTileHeight;
-               double scaleX = stageStepX / effectiveTileWidth;
-               double scaleY = stageStepY / effectiveTileHeight;
-               targetX = initialStageX_ + offsetPixelX * pixelSizeUm_ * scaleX;
-               targetY = initialStageY_ + offsetPixelY * pixelSizeUm_ * scaleY;
+               double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
+                     ? (double) initialCameraWidth_  / tw : 1.0;
+               double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
+                     ? (double) initialCameraHeight_ / th : 1.0;
+               targetX = initialStageX_ + offsetPixelX * pipelineScaleX * initialPixelSizeUm_;
+               targetY = initialStageY_ + offsetPixelY * pipelineScaleY * initialPixelSizeUm_;
             }
 
             studio_.core().setXYPosition(targetX, targetY);
@@ -1417,20 +1779,28 @@ public class ExplorerManager {
    private void initDisplaySettings(JSONObject summaryMetadata) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+         DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
+         int displayChannelIndex = 0;
          if (settings.useChannels() && settings.channels().size() > 0) {
-            DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
-            int displayChannelIndex = 0;
             for (int i = 0; i < settings.channels().size(); i++) {
                if (settings.channels().get(i).useChannel()) {
                   String channelGroup = settings.channelGroup();
                   String channelName = settings.channels().get(i).config();
                   Color channelColor = settings.channels().get(i).color();
-                  dsBuilder.channel(displayChannelIndex,
+                  org.micromanager.display.ChannelDisplaySettings remembered =
+                        RememberedDisplaySettings.loadChannel(
+                              studio_, channelGroup, channelName, null);
+                  org.micromanager.display.ChannelDisplaySettings.Builder chBuilder =
                         studio_.displays().channelDisplaySettingsBuilder()
                               .groupName(channelGroup)
                               .name(channelName)
-                              .color(channelColor)
-                              .build());
+                              .color(channelColor);
+                  if (remembered != null) {
+                     for (int c = 0; c < remembered.getNumberOfComponents(); c++) {
+                        chBuilder.component(c, remembered.getComponentSettings(c));
+                     }
+                  }
+                  dsBuilder.channel(displayChannelIndex, chBuilder.build());
                   displayChannelIndex++;
                }
             }
@@ -1439,9 +1809,21 @@ public class ExplorerManager {
             } else if (displayChannelIndex > 1) {
                dsBuilder.colorModeComposite();
             }
-            if (displayChannelIndex > 0 && mm2Viewer_ != null) {
-               mm2Viewer_.setDisplaySettings(dsBuilder.build());
+         } else {
+            // Single-channel (including RGB) — load remembered settings for "Default"
+            String channelGroup = settings.channelGroup();
+            String channelName = "Default";
+            org.micromanager.display.ChannelDisplaySettings remembered =
+                  RememberedDisplaySettings.loadChannel(
+                        studio_, channelGroup, channelName, null);
+            if (remembered != null) {
+               dsBuilder.channel(0, remembered);
+               displayChannelIndex = 1;
             }
+            dsBuilder.colorModeGrayscale();
+         }
+         if (mm2Viewer_ != null) {
+            mm2Viewer_.setDisplaySettings(dsBuilder.build());
          }
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: failed to init display settings");

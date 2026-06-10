@@ -656,6 +656,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
+   boolean hasStats() {
+      return stats_ != null;
+   }
+
    @MustCallOnEDT
    void setStats(ImageStats stats) {
       stats_ = stats;
@@ -900,11 +904,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          final long sharedMin = range[1];
          whiteMainMin_ = sharedMin;
          int nComponents = stats_.getNumberOfComponents();
-         // Recompute ratios from actual per-component image maxima so that white
-         // mode reflects true color balance rather than stale default values.
-         whiteRatios_ = new double[nComponents];
-         for (int c = 0; c < nComponents; c++) {
-            whiteRatios_[c] = whiteMainMax_ > 0 ? (double) range[2 + c] / whiteMainMax_ : 1.0;
+         if (whiteRatios_ == null) {
+            // No white balance set: derive ratios from image content.
+            whiteRatios_ = new double[nComponents];
+            for (int c = 0; c < nComponents; c++) {
+               whiteRatios_[c] = whiteMainMax_ > 0 ? (double) range[2 + c] / whiteMainMax_ : 1.0;
+            }
          }
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
@@ -912,7 +917,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                   oldDisplaySettings.getChannelSettings(channelIndex_);
             ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
             for (int c = 0; c < nComponents; c++) {
-               long scaledMax = Math.max(range[2 + c], sharedMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[c] * whiteMainMax_),
+                     sharedMin + 1);
                builder.component(c,
                      channelSettings.getComponentSettings(c).copyBuilder()
                            .scalingRange(sharedMin, scaledMax).build());
@@ -1019,14 +1025,16 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             whiteMainMax_ = range[0];
             long commonMin = range[1];
             whiteMainMin_ = commonMin;
-            // Recompute ratios from actual per-component image maxima so that white
-            // mode reflects true color balance rather than stale default values.
-            whiteRatios_ = new double[nComponents];
-            for (int i = 0; i < nComponents; ++i) {
-               whiteRatios_[i] = whiteMainMax_ > 0 ? (double) range[2 + i] / whiteMainMax_ : 1.0;
+            if (whiteRatios_ == null) {
+               // No white balance set: derive ratios from image content.
+               whiteRatios_ = new double[nComponents];
+               for (int i = 0; i < nComponents; ++i) {
+                  whiteRatios_[i] = whiteMainMax_ > 0 ? (double) range[2 + i] / whiteMainMax_ : 1.0;
+               }
             }
             for (int i = 0; i < nComponents; ++i) {
-               long scaledMax = Math.max(range[2 + i], commonMin + 1);
+               long scaledMax = Math.max(Math.round(whiteRatios_[i] * whiteMainMax_),
+                     commonMin + 1);
                builder.component(i,
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(commonMin, scaledMax).build());
@@ -1479,14 +1487,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       double bestError = Double.MAX_VALUE;
       for (int k = minK; k <= maxK; k++) {
          int[] illuminant = colorTemperatureToRgb(k);
-         double minIlluminant = Math.min(illuminant[0], Math.min(illuminant[1], illuminant[2]));
-         if (minIlluminant <= 0) {
+         double maxIlluminant = Math.max(illuminant[0], Math.max(illuminant[1], illuminant[2]));
+         if (maxIlluminant <= 0) {
             continue;
          }
          double[] correctionRatios = new double[] {
-               minIlluminant / illuminant[0],
-               minIlluminant / illuminant[1],
-               minIlluminant / illuminant[2]
+               (double) illuminant[0] / maxIlluminant,
+               (double) illuminant[1] / maxIlluminant,
+               (double) illuminant[2] / maxIlluminant
          };
          double error = 0;
          for (int c = 0; c < 3; c++) {
@@ -1546,18 +1554,18 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    @MustCallOnEDT
    private void applyColorTemperatureWhiteBalance(int kelvin) {
       int[] illuminant = colorTemperatureToRgb(kelvin);
-      // Correction is the inverse: channels with less illuminant light get boosted.
-      // Normalize so the smallest correction = 1.0 (i.e. the brightest illuminant
-      // channel drives the others relative to it).
-      double minIlluminant = Math.min(illuminant[0], Math.min(illuminant[1], illuminant[2]));
-      if (minIlluminant <= 0) {
+      // Ratios proportional to illuminant: dominant channel stays at 1.0,
+      // weaker channels get smaller ratios (smaller scaledMax → appear brighter).
+      double maxIlluminant = Math.max(illuminant[0], Math.max(illuminant[1], illuminant[2]));
+      if (maxIlluminant <= 0) {
          return;
       }
       whiteRatios_ = new double[] {
-            minIlluminant / illuminant[0],
-            minIlluminant / illuminant[1],
-            minIlluminant / illuminant[2]
+            (double) illuminant[0] / maxIlluminant,
+            (double) illuminant[1] / maxIlluminant,
+            (double) illuminant[2] / maxIlluminant
       };
+      rgbAutostretchEnabled_ = false;
       applyCurrentWhiteRatios();
    }
 
@@ -1583,6 +1591,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             (double) pixelValues[1] / maxVal,
             (double) pixelValues[2] / maxVal
       };
+      rgbAutostretchEnabled_ = false;
       applyCurrentWhiteRatios();
    }
 
@@ -1604,6 +1613,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             (double) means[1] / maxMean,
             (double) means[2] / maxMean
       };
+      rgbAutostretchEnabled_ = false;
       applyCurrentWhiteRatios();
    }
 
@@ -1627,7 +1637,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                   .copyBuilder().scalingRange(currentMin, scaledMax).build());
          }
          newDisplaySettings = oldDisplaySettings.copyBuilder()
-               .channel(channelIndex_, builder.build()).build();
+               .channel(channelIndex_, builder.build())
+               .autostretch(false)
+               .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       statsOrRangeChanged();
    }

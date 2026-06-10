@@ -10,9 +10,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
@@ -21,6 +24,7 @@ import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
+import org.micromanager.tileddataviewer.TiledDataViewerExploreControls;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
 import org.micromanager.tileddataviewer.overlay.Overlay;
 import org.micromanager.tileddataviewer.overlay.Roi;
@@ -37,11 +41,14 @@ import org.micromanager.tileddataviewer.overlay.TextRoi;
  * in ExplorerManager (camera FOV in microns, fixed for the session).
  */
 public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataViewerAcqInterface,
-         TiledDataViewerCanvasMouseListenerInterface, TiledDataViewerOverlayerPlugin {
+         TiledDataViewerCanvasMouseListenerInterface, TiledDataViewerOverlayerPlugin,
+         TiledDataViewerExploreControls {
 
    private static final double ZOOM_FACTOR = 1.4;
 
    private final ExplorerManager manager_;
+   private final CopyOnWriteArrayList<AcquisitionStateListener> acqStateListeners_ =
+         new CopyOnWriteArrayList<>();
    private volatile TiledDataViewerAPI viewer_;
    private volatile MultiresNDTiffAPI storage_;
    private volatile boolean finished_ = false;
@@ -54,12 +61,19 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    private boolean isRightDragging_ = false;
    private boolean isLeftDragging_ = false;
    private volatile boolean acquisitionInProgress_ = false;
+   // True when pixel size or camera ROI has changed from session start; blocks new acquisitions.
+   private volatile boolean settingsMismatch_ = false;
 
    // When true, tile selection and acquisition are disabled (opened dataset, not live explore).
    private volatile boolean readOnly_ = false;
 
    // Cache for getImageKeys() — invalidated by ExplorerManager after putImageMultiRes.
    private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
+
+   // Lazily built from XPositionPix/YPositionPix tags; empty map = no position tags present.
+   private volatile Map<HashMap<String, Object>, Point> tilePositions_ = null;
+   private int fullResTileW_ = 0;
+   private int fullResTileH_ = 0;
 
    // Current stage position in full-resolution pixel coordinates (center of FOV).
    private volatile Point2D.Double stagePositionPixel_ = null;
@@ -84,6 +98,36 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setStorage(MultiresNDTiffAPI storage) {
       storage_ = storage;
+      // Reset the lazy position-tag cache so getBounds() re-probes the new storage.
+      tilePositions_ = null;
+      fullResTileW_ = 0;
+      fullResTileH_ = 0;
+   }
+
+   private synchronized void buildTilePositions() {
+      if (tilePositions_ != null) {
+         return;
+      }
+      Map<HashMap<String, Object>, Point> map = new LinkedHashMap<>();
+      for (HashMap<String, Object> axes : storage_.getAxesSet()) {
+         mmcorej.TaggedImage ti = storage_.getImage(axes, 0);
+         if (ti == null || ti.tags == null) {
+            continue;
+         }
+         if (!ti.tags.has("XPositionPix") || !ti.tags.has("YPositionPix")) {
+            // This tile has no position tag — dataset does not use per-tile positioning.
+            tilePositions_ = new LinkedHashMap<>();
+            return;
+         }
+         int x = ti.tags.optInt("XPositionPix", 0);
+         int y = ti.tags.optInt("YPositionPix", 0);
+         if (fullResTileW_ == 0) {
+            fullResTileW_ = ti.tags.optInt("Width", 0);
+            fullResTileH_ = ti.tags.optInt("Height", 0);
+         }
+         map.put(axes, new Point(x, y));
+      }
+      tilePositions_ = map;
    }
 
    public void invalidateImageKeysCache() {
@@ -135,6 +179,39 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setAcquisitionInProgress(boolean inProgress) {
       acquisitionInProgress_ = inProgress;
+      for (AcquisitionStateListener l : acqStateListeners_) {
+         l.acquisitionInProgressChanged(inProgress);
+      }
+   }
+
+   // ===================== TiledDataViewerExploreControls =====================
+
+   @Override
+   public void interruptAcquisition() {
+      manager_.interruptAcquisition();
+   }
+
+   @Override
+   public boolean isAcquisitionInProgress() {
+      return acquisitionInProgress_;
+   }
+
+   @Override
+   public void addAcquisitionStateListener(AcquisitionStateListener l) {
+      acqStateListeners_.add(l);
+   }
+
+   @Override
+   public void removeAcquisitionStateListener(AcquisitionStateListener l) {
+      acqStateListeners_.remove(l);
+   }
+
+   public void setSettingsMismatch(boolean mismatch) {
+      settingsMismatch_ = mismatch;
+      if (mismatch) {
+         selectionStart_ = null;
+         selectionEnd_ = null;
+      }
    }
 
    /**
@@ -234,7 +311,24 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public int[] getBounds() {
-      return null; // Unbounded explore mode
+      if (storage_ == null) {
+         return null;
+      }
+      buildTilePositions();
+      if (tilePositions_.isEmpty()) {
+         return null; // No position tags → unbounded explore mode.
+      }
+      int xMin = Integer.MAX_VALUE;
+      int yMin = Integer.MAX_VALUE;
+      int xMax = Integer.MIN_VALUE;
+      int yMax = Integer.MIN_VALUE;
+      for (Point p : tilePositions_.values()) {
+         xMin = Math.min(xMin, p.x);
+         yMin = Math.min(yMin, p.y);
+         xMax = Math.max(xMax, p.x + fullResTileW_);
+         yMax = Math.max(yMax, p.y + fullResTileH_);
+      }
+      return new int[]{xMin, yMin, xMax, yMax};
    }
 
    @Override
@@ -244,6 +338,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       if (storage_ == null) {
          return null;
       }
+      // NDTiffStorage.getDisplayImage handles grid-based tile placement internally.
       return storage_.getDisplayImage(axes, resolutionIndex,
               (int) xOffset, (int) yOffset, imageWidth, imageHeight);
    }
@@ -364,7 +459,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    @Override
    public void mouseReleased(MouseEvent e) {
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
-         if (!readOnly_ && tileWidth_ > 0 && tileHeight_ > 0) {
+         if (!readOnly_ && !settingsMismatch_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
             if (tile != null) {
                selectionStart_ = tile;
@@ -407,13 +502,15 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       int dx = dragStart_.x - current.x;
       int dy = dragStart_.y - current.y;
 
-      if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+      if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
+         // Right-drag creates and extends the selection — blocked in read-only mode.
+         // Right-press already set selectionStart_ to the tile under the cursor.
          if (!readOnly_ && selectionStart_ != null
                  && tileWidth_ > 0 && tileHeight_ > 0) {
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-               isLeftDragging_ = true;
+               isRightDragging_ = true;
             }
-            if (isLeftDragging_) {
+            if (isRightDragging_) {
                Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
                if (tile != null && !tile.equals(selectionEnd_)) {
                   selectionEnd_ = tile;
@@ -421,13 +518,14 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
                }
             }
          }
-      } else if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
+      } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+         // Left-drag pans the view. Note: panning intentionally does NOT clear any
+         // existing tile selection — a tentative single-tile selection set by a prior
+         // right-press is left in place so the user can pan and then keep selecting.
          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-            isRightDragging_ = true;
-            selectionStart_ = null;
-            selectionEnd_ = null;
+            isLeftDragging_ = true;
          }
-         if (isRightDragging_) {
+         if (isLeftDragging_) {
             manager_.pan(dx, dy);
             dragStart_ = current;
          }
@@ -510,7 +608,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          line1.setStrokeColor(Color.WHITE);
          overlay.add(line1);
 
-         TextRoi line2 = new TextRoi(centerX - 120, centerY - 10, "Left-drag: expand selection");
+         TextRoi line2 = new TextRoi(centerX - 120, centerY - 10, "Right-drag: expand selection");
          line2.setStrokeColor(Color.WHITE);
          overlay.add(line2);
 
@@ -519,7 +617,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          line3.setStrokeColor(Color.WHITE);
          overlay.add(line3);
 
-         TextRoi line4 = new TextRoi(centerX - 120, centerY + 30, "Right-drag: pan view");
+         TextRoi line4 = new TextRoi(centerX - 120, centerY + 30, "Left-drag: pan view");
          line4.setStrokeColor(Color.WHITE);
          overlay.add(line4);
 
@@ -594,8 +692,8 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          String instructions;
          if (selectionEnd_ == null) {
             instructions = acquisitionInProgress_
-                  ? "Left-drag to extend, left-click to queue"
-                  : "Left-drag to extend, left-click to acquire";
+                  ? "Right-drag to extend, left-click to queue"
+                  : "Right-drag to extend, left-click to acquire";
          } else {
             instructions = acquisitionInProgress_
                   ? "Left-click to queue " + tileCount + " tile(s)"
@@ -612,19 +710,25 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          overlay.add(boundsRoi);
       }
 
-      // Red rectangle showing the current stage FOV position
+      // Red rectangle showing the current stage FOV position.
+      // Size scales with the current pixel size relative to the session pixel size,
+      // so the rectangle reflects the physical area the camera sees on the tile grid.
       Point2D.Double stagePixel = stagePositionPixel_;
       if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
          double overlapPct = manager_.getOverlapPercentage();
-         int overlapPx = (int) Math.round(tileWidth_ * overlapPct / 100.0);
-         double effW = tileWidth_ - overlapPx;
-         double effH = tileHeight_ - overlapPx;
-         double tilePixelX = stagePixel.x - effW / 2.0;
-         double tilePixelY = stagePixel.y - effH / 2.0;
+         int overlapPxX = (int) Math.round(tileWidth_  * overlapPct / 100.0);
+         int overlapPxY = (int) Math.round(tileHeight_ * overlapPct / 100.0);
+         double effW = tileWidth_  - overlapPxX;
+         double effH = tileHeight_ - overlapPxY;
+         double pixelSizeRatio = manager_.getPixelSizeRatio();
+         double fovW = effW * pixelSizeRatio;
+         double fovH = effH * pixelSizeRatio;
+         double tilePixelX = stagePixel.x - fovW / 2.0;
+         double tilePixelY = stagePixel.y - fovH / 2.0;
          int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
          int dispY = (int) ((tilePixelY - viewOffset.y) * magnification);
-         int dispW = (int) (effW * magnification);
-         int dispH = (int) (effH * magnification);
+         int dispW = (int) (fovW * magnification);
+         int dispH = (int) (fovH * magnification);
          Roi stageRoi = new Roi(dispX, dispY, dispW, dispH);
          stageRoi.setStrokeColor(Color.RED);
          stageRoi.setStrokeWidth(2);

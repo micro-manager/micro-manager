@@ -30,6 +30,31 @@ import org.micromanager.tileddataprovider.TiledDataProviderAPI;
 public final class TiledDataViewerInspectorPanelController
       extends AbstractInspectorPanelController {
 
+   /**
+    * Shared help text describing the Explorer / TiledDataViewer mouse and button controls.
+    * Used by this panel's Help button and by the Explorer/Deskew plugin frames so the
+    * documentation stays in one place.
+    */
+   public static final String EXPLORE_HELP_TEXT =
+         "Navigation:\n"
+               + "  Left-drag: pan view\n"
+               + "  Scroll wheel: zoom in/out\n"
+               + "\n"
+               + "Tile selection (live explore):\n"
+               + "  Right-click: select tile\n"
+               + "  Right-drag: expand selection\n"
+               + "  Left-click: acquire (or queue) selected tiles\n"
+               + "  Interrupt: cancel queued tiles; the current tile finishes first\n"
+               + "  Ctrl+left-click: move stage to position\n"
+               + "\n"
+               + "View controls:\n"
+               + "  Center: pan to center of dataset (keep zoom)\n"
+               + "  No Zoom: zoom to 1:1 and center on dataset\n"
+               + "\n"
+               + "Export:\n"
+               + "  Click Export, drag to draw ROI, then confirm export\n"
+               + "  Click anywhere to dismiss the ROI";
+
    private static final DecimalFormat FMT_POS = new DecimalFormat("000");
 
    private final Studio studio_;
@@ -37,8 +62,16 @@ public final class TiledDataViewerInspectorPanelController
    private final JLabel statusLabel_;
    private final JButton exportButton_;
    private final JButton posListButton_;
+   private final JButton interruptButton_;
+   private final JButton helpButton_;
    private TiledDataViewerDataViewerAPI viewer_;
    private static boolean expanded_ = true;
+
+   // Live-explore acquisition controls for the attached viewer, or null if the data
+   // source does not support interrupting (e.g. a read-only opened dataset).
+   private TiledDataViewerExploreControls exploreControls_;
+   // Listener registered on exploreControls_ while attached; updates the Interrupt button.
+   private TiledDataViewerExploreControls.AcquisitionStateListener acqStateListener_;
 
    // Last confirmed export ROI in full-resolution pixels [x, y, w, h]; null when none.
    private int[] lastRoi_ = null;
@@ -48,6 +81,8 @@ public final class TiledDataViewerInspectorPanelController
       statusLabel_ = new JLabel(" ");
       exportButton_ = new JButton("Export...");
       posListButton_ = new JButton("Create Positions...");
+      interruptButton_ = new JButton("Interrupt");
+      helpButton_ = new JButton("Help");
       panel_ = buildPanel();
    }
 
@@ -59,12 +94,28 @@ public final class TiledDataViewerInspectorPanelController
       noZoom.addActionListener(e -> onNoZoom());
       exportButton_.addActionListener(e -> onExportClicked());
       posListButton_.addActionListener(e -> onPosListClicked());
+      interruptButton_.setToolTipText(
+            "Stop tile acquisition after the current tile finishes.");
+      interruptButton_.setEnabled(false);
+      interruptButton_.addActionListener(e -> {
+         if (exploreControls_ != null) {
+            exploreControls_.interruptAcquisition();
+         }
+      });
+      helpButton_.addActionListener(e -> showHelp());
       p.add(center);
       p.add(noZoom, "wrap");
       p.add(exportButton_);
       p.add(posListButton_, "wrap");
+      p.add(interruptButton_);
+      p.add(helpButton_, "wrap");
       p.add(statusLabel_, "span 2, wrap");
       return p;
+   }
+
+   private void showHelp() {
+      JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(panel_),
+            EXPLORE_HELP_TEXT, "Explorer Help", JOptionPane.PLAIN_MESSAGE);
    }
 
    /** Returns the center of the dataset in full-res pixel coordinates, or null if unknown. */
@@ -83,7 +134,7 @@ public final class TiledDataViewerInspectorPanelController
       if (viewer_ == null) {
          return;
       }
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double dataCenter = getDataCenter();
       if (dataCenter == null) {
          return;
@@ -98,7 +149,7 @@ public final class TiledDataViewerInspectorPanelController
       if (viewer_ == null) {
          return;
       }
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double displaySize = v.getDisplayImageSize();
       Point2D.Double dataCenter = getDataCenter();
       double centerX = dataCenter != null ? dataCenter.x
@@ -124,7 +175,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void startExportMode() {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       v.getCanvasJPanel().setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       setStatus("Draw a selection on the image");
 
@@ -160,7 +211,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void onRoiSelected(Point dragStart, Point dragEnd) {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double viewOffset = v.getViewOffset();
       double mag = v.getMagnification();
       int x1 = (int) (viewOffset.x + Math.min(dragStart.x, dragEnd.x) / mag);
@@ -197,7 +248,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void startPositionListMode() {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       v.getCanvasJPanel().setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       setStatus("Draw a selection for the position list");
 
@@ -239,7 +290,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void onPosListRoiSelected(Point dragStart, Point dragEnd) {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double viewOffset = v.getViewOffset();
       double mag = v.getMagnification();
       int x1 = (int) (viewOffset.x + Math.min(dragStart.x, dragEnd.x) / mag);
@@ -423,23 +474,30 @@ public final class TiledDataViewerInspectorPanelController
             int roiW = roi[2];
             int roiH = roi[3];
 
-            // Canvas pixels → stage: use the live affine so that axis orientation
-            // (including any camera-X / stage-X inversion, e.g. affine (-0.3, 0, 0, 0.3))
-            // is preserved.  The scalar storedPixelSizeUm is only used as a fallback when
-            // no live affine is available.  Transform all 4 corners so that rotation/shear
-            // does not produce a wrong bounding box.
+            // Canvas pixels → stage must use the STORED pixel size, because the canvas was
+            // laid out using the dataset's pixel size (not the current objective).
+            // If the live affine is available we scale it to match the stored pixel size so that
+            // axis orientation (camera-X/stage-X inversion, rotation) is preserved while the
+            // scale matches the stored dataset.  Without the live affine we fall back to the
+            // stored scalar.
+            AffineTransform storedPixToStage = null;
+            if (pixToStage != null && livePixelSizeUm > 0.0) {
+               double scale = storedPixelSizeUm / livePixelSizeUm;
+               storedPixToStage = new AffineTransform(pixToStage);
+               storedPixToStage.scale(scale, scale);
+            }
             Point2D.Double stageTL = pixelToStage(roiX,        roiY,
                   refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
-                  pixToStage);
+                  storedPixToStage);
             Point2D.Double stageTR = pixelToStage(roiX + roiW, roiY,
                   refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
-                  pixToStage);
+                  storedPixToStage);
             Point2D.Double stageBL = pixelToStage(roiX,        roiY + roiH,
                   refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
-                  pixToStage);
+                  storedPixToStage);
             Point2D.Double stageBR = pixelToStage(roiX + roiW, roiY + roiH,
                   refPixCenterX, refPixCenterY, refStageX, refStageY, storedPixelSizeUm,
-                  pixToStage);
+                  storedPixToStage);
 
             // ---- 5. Compute step vectors for the new acquisition grid ----
             int stepPxX = tileW - overlapX;
@@ -635,12 +693,37 @@ public final class TiledDataViewerInspectorPanelController
 
    @Override
    public void attachDataViewer(DataViewer viewer) {
+      // The Inspector reuses one controller instance and may re-attach without an
+      // intervening detach when the active viewer changes; detach first so we never
+      // leak a listener on the previous viewer's explore controls.
+      if (viewer_ != null) {
+         detachDataViewer();
+      }
       viewer_ = (TiledDataViewerDataViewerAPI) viewer;
       lastRoi_ = null;
+
+      exploreControls_ = viewer_.getExploreControls();
+      final boolean inProgress =
+            exploreControls_ != null && exploreControls_.isAcquisitionInProgress();
+      // Interrupt is only meaningful for a live explore session; for a read-only
+      // viewer it stays present but disabled (matching the other panel buttons).
+      // Touch Swing on the EDT in case attach is ever called off-EDT.
+      SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(inProgress));
+      if (exploreControls_ != null) {
+         acqStateListener_ = changed ->
+               SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(changed));
+         exploreControls_.addAcquisitionStateListener(acqStateListener_);
+      }
    }
 
    @Override
    public void detachDataViewer() {
+      if (exploreControls_ != null && acqStateListener_ != null) {
+         exploreControls_.removeAcquisitionStateListener(acqStateListener_);
+      }
+      exploreControls_ = null;
+      acqStateListener_ = null;
+      SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(false));
       viewer_ = null;
       lastRoi_ = null;
       setStatus(null);

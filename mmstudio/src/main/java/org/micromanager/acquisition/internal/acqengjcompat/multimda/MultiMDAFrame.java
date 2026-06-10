@@ -349,7 +349,8 @@ public class MultiMDAFrame extends JFrame {
          acqPanel_.add(presetCombo, "gapx 20");
 
          String positionListText = "current position";
-         if (acqs_.get(lineNr).getPositionList() != null) {
+         if (acqs_.get(lineNr).getPositionList() != null
+               && acqs_.get(lineNr).getPositionListFile() != null) {
             positionListText = acqs_.get(lineNr).getPositionListFile().getName();
          }
          final JLabelC positionListLabel = new JLabelC(positionListText);

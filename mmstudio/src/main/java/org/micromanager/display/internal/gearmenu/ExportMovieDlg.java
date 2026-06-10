@@ -66,7 +66,7 @@ import org.micromanager.internal.utils.FileDialogs;
  * This dialog provides an interface for exporting (a portion of) a dataset
  * to an image sequence, complete with all MicroManager overlays.
  */
-public final class ExportMovieDlg extends JDialog {
+public final class ExportMovieDlg extends JDialog implements AxisPanelParent {
    private static final Icon ADD_ICON =
          IconLoader.getIcon("/org/micromanager/icons/plus_green.png");
    private static final Icon DELETE_ICON =
@@ -110,7 +110,7 @@ public final class ExportMovieDlg extends JDialog {
       private boolean amInSetAxis_ = false;
 
 
-      public AxisPanel(DisplayWindow display, final ExportMovieDlg parent) {
+      public AxisPanel(DisplayWindow display, final AxisPanelParent parent) {
          super(new MigLayout("flowx"));
          super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
          store_ = display.getDataProvider();
