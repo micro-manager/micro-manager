@@ -275,9 +275,9 @@ public interface DataManager {
     * Generate a new Image with the provided pixel data, rules for interpreting
     * that pixel data, coordinates, and metadata. Pixel data will be copied.
     *
-    * @param pixels        A byte[] or short[] array of unsigned pixel data. This array
-    *                      will be copied, so changes in this array will not be propagated
-    *                      to the Image
+    * @param pixels        A byte[], short[], int[], or float[] array of pixel data.
+    *                      This array will be copied, so changes in this array will not
+    *                      be propagated to the Image
     * @param width         Width of the image, in pixels
     * @param height        Height of the image, in pixels
     * @param bytesPerPixel How many bytes are allocated to each pixel in the
