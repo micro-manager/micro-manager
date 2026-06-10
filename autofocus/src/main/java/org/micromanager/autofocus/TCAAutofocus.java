@@ -176,21 +176,12 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       return result;
    }
 
-   /**
-    * Old fashioned run method.
-    *
-    * @param arg Unsure what should go here, please fill in.
-    */
-   public void run(String arg) {
+   @Override
+   public double fullFocus() throws Exception {
       long t0 = System.currentTimeMillis();
       double bestDist = 5000;
       double bestSh = 0;
-      //############# CHECK INPUT ARG AND CORE ########
-      verbose_ = arg.compareTo("silent") != 0;
-
-      if (arg.compareTo("options") == 0) {
-         app_.app().showAutofocusDialog();
-      }
+      
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
@@ -201,15 +192,17 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          IJ.error("Unable to get Micro-Manager Core API handle.\n"
                + "If this module is used as ImageJ plugin, Micro-Manager Studio "
                + "must be running first!");
-         return;
+         return 0.0;
       }
       
       applySettings();
 
       //######################## START THE ROUTINE ###########
-
+      double original_z = core_.getPosition(core_.getFocusDevice());
+      double bestZ = original_z;
+      
       try {
-         IJ.log("Autofocus started.");
+         IJ.log("TCA Autofocus started.");
          final boolean shutterOpen = core_.getShutterOpen();
          core_.setShutterOpen(true);
          final boolean autoShutter = core_.getAutoShutter();
@@ -239,7 +232,6 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          //double rel_z_min = -80.0;
          //double rel_z_max = 40.0;
          int numImages = (int) ((rel_z_max_ - rel_z_min_) / deltaz_) + 1;
-         double original_z = core_.getPosition(core_.getFocusDevice());
 
 
          for (int i = 0; i < numImages; i++) {
@@ -294,7 +286,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          
 
 
-         double bestZ = original_z;
+         
 
          if(Double.isNaN(results.z_best_focus)){
             IJ.log("Unable to estimate best focus position. Please check the input parameters and try again.");
@@ -379,7 +371,8 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          IJ.log("Total Time: " + (System.currentTimeMillis() - t0));
       } catch (Exception e) {
          IJ.error(e.getMessage());
-      }     
+      }
+      return bestZ; 
    }
    private static void saveXYSeriesToCsv(XYSeries series, String filePath) throws IOException {
       try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
@@ -491,20 +484,13 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    }
 
    @Override
-   public double fullFocus() {
-      run("silent");
-      return 0;
-   }
-
-   @Override
    public String getVerboseStatus() {
       return "OK";
    }
-
+   
    @Override
-   public double incrementalFocus() {
-      run("silent");
-      return 0;
+   public double incrementalFocus() throws Exception {
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
