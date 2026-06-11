@@ -29,7 +29,15 @@ public class MDASettingData {
       try {
          positionList_.load(positionListFile);
          positionListFile_ = positionListFile;
+         // A separate position list file does not flip the usePositionList flag that
+         // came from the acquisition settings file, so set it here based on the loaded
+         // list. Both the GUI explanation and the executor read this flag.
+         acqSettings_ = new SequenceSettings.Builder(acqSettings_)
+               .usePositionList(positionList_.getNumberOfPositions() > 0).build();
       } catch (Exception e) {
+         positionList_ = null;
+         acqSettings_ = new SequenceSettings.Builder(acqSettings_)
+               .usePositionList(false).build();
          studio_.logs().showError(e);
       }
    }
@@ -52,7 +60,11 @@ public class MDASettingData {
 
    public void setAcqSettings(File acqFile, SequenceSettings acqSettings) {
       acqSettingFile_ = acqFile;
-      acqSettings_ = acqSettings;
+      // A newly loaded acquisition settings file would clobber the usePositionList flag,
+      // so re-apply it based on whether a position list is currently loaded for this row.
+      acqSettings_ = new SequenceSettings.Builder(acqSettings)
+            .usePositionList(positionList_ != null
+                  && positionList_.getNumberOfPositions() > 0).build();
    }
 
    public void setPresetGroup(String presetGroup) {
