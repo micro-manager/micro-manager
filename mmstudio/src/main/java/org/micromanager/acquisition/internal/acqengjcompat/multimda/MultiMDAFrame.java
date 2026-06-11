@@ -241,7 +241,11 @@ public class MultiMDAFrame extends JFrame {
                continue;
             }
             acqs_.add(count, new MDASettingData(studio_, f, seqSb));
-            if (positionListFiles.size() > count) {
+            // Rows without a position list are persisted as an empty path (see the
+            // save logic). Skip those, otherwise setPositionListFile() tries to load
+            // "" and throws FileNotFoundException on every startup.
+            if (positionListFiles.size() > count
+                  && !positionListFiles.get(count).isEmpty()) {
                File posFile = new File(positionListFiles.get(count));
                acqs_.get(count).setPositionListFile(posFile);
             }
@@ -271,6 +275,12 @@ public class MultiMDAFrame extends JFrame {
    private int adjustNrSettings(int nr) {
       acqPanel_.removeAll();
       acqLabels_.clear();
+      // These are rebuilt below alongside acqLabels_; clear them too or they keep
+      // growing and the *.get(lineNr) lookups below return stale entries from a
+      // previous build (e.g. a newly added acquisition showing an earlier row's
+      // explanation/preset).
+      acqExplanations_.clear();
+      presetCombos_.clear();
       // add headers to the table
       acqPanel_.add(new JLabel("Acquisition Settings File"), "span 2, alignx center");
       acqPanel_.add(new JLabel("Preset"), "alignx center");
@@ -348,12 +358,15 @@ public class MultiMDAFrame extends JFrame {
          presetCombos_.add(presetCombo);
          acqPanel_.add(presetCombo, "gapx 20");
 
-         String positionListText = "current position";
+         String positionListText = "current position (at run time)";
          if (acqs_.get(lineNr).getPositionList() != null
                && acqs_.get(lineNr).getPositionListFile() != null) {
             positionListText = acqs_.get(lineNr).getPositionListFile().getName();
          }
          final JLabelC positionListLabel = new JLabelC(positionListText);
+         positionListLabel.setToolTipText("<html>When no position list is selected, the stage "
+               + "position<br>at the time the acquisition is run is used "
+               + "(not the<br>position when this acquisition was added).</html>");
          acqPanel_.add(positionListLabel, "gapx 20");
 
          JButton selectPosFile = new JButton("...");
@@ -530,12 +543,13 @@ public class MultiMDAFrame extends JFrame {
          }
       }
       if (mdaSettingData.getSequenceSettings().usePositionList()
+            && mdaSettingData.getPositionListFile() != null
             && mdaSettingData.getPositionList() != null
             && mdaSettingData.getPositionList().getNumberOfPositions() > 0) {
          sb.append("Positions: ").append(mdaSettingData.getPositionList().getNumberOfPositions());
          sb.append(".");
       } else {
-         sb.append("Positions: current only.");
+         sb.append("Positions: current at run time.");
       }
       if (mdaSettingData.getSequenceSettings().save()) {
          sb.append(" Saving.");
