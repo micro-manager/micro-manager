@@ -36,13 +36,21 @@ public class MDASettingData {
       PositionList positionList = new PositionList();
       try {
          positionList.load(positionListFile);
-         positionList_ = positionList;
-         positionListFile_ = positionListFile;
+         if (positionList.getNumberOfPositions() > 0) {
+            positionList_ = positionList;
+            positionListFile_ = positionListFile;
+         } else {
+            // An empty list is treated the same as "no position list": keep both
+            // references null so the UI shows "current position" instead of a filename
+            // that would not actually be used at run time.
+            positionList_ = null;
+            positionListFile_ = null;
+         }
          // A separate position list file does not flip the usePositionList flag that
          // came from the acquisition settings file, so set it here based on the loaded
          // list. Both the GUI explanation and the executor read this flag.
          acqSettings_ = new SequenceSettings.Builder(acqSettings_)
-               .usePositionList(positionList_.getNumberOfPositions() > 0).build();
+               .usePositionList(positionList_ != null).build();
       } catch (Exception e) {
          positionList_ = null;
          positionListFile_ = null;

@@ -93,6 +93,9 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
    private List<Datastore> stores_;
    private final Set<Datastore> endedStores_ = new HashSet<>();
+   // Guards the ended-store bookkeeping and teardown in onAcquisitionEnded, which can
+   // be invoked concurrently for different stores on the EventBus posting thread.
+   private final Object endedStoresLock_ = new Object();
    private List<Pipeline> pipelines_;
    private SequenceSettings timeLapseSettings_ = null;
 
@@ -172,8 +175,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          return null;
       }
       timeLapseSettings_ = basicSettings;
-      stores_ = new ArrayList<>(sequenceSettings.size());
-      endedStores_.clear();
+      synchronized (endedStoresLock_) {
+         stores_ = new ArrayList<>(sequenceSettings.size());
+         endedStores_.clear();
+      }
       pipelines_ = new ArrayList<>(sequenceSettings.size());
       for (int i = 0; i < sequenceSettings.size(); i++) {
          if (sequenceSettings.get(i).useCustomIntervals()) {
@@ -1133,15 +1138,27 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       // One AcquisitionEndedEvent fires per store. stores_ is the List of all stores
       // for this Multi-MDA, so we must check membership (not equality with the List),
-      // and only tear down once every store has ended.
-      if (stores_ == null || !stores_.contains(event.getStore())) {
-         return;
-      }
-      endedStores_.add(event.getStore());
-      if (endedStores_.size() < stores_.size()) {
-         return;
+      // and only tear down once every store has ended. Guava's EventBus dispatches on
+      // the posting thread, so this handler can run concurrently for different stores;
+      // do the ended-store bookkeeping and the "am I the last one" decision under a lock
+      // so exactly one thread performs the teardown.
+      synchronized (endedStoresLock_) {
+         if (stores_ == null || !stores_.contains(event.getStore())) {
+            return;
+         }
+         endedStores_.add(event.getStore());
+         if (endedStores_.size() < stores_.size()) {
+            return;
+         }
+         // This thread observed the last store ending; clear shared state now so a
+         // concurrent invocation cannot also reach the teardown below.
+         stores_ = null;
+         pipelines_ = null;
+         currentMultiMDA_ = null;
+         endedStores_.clear();
       }
       // All stores have ended: restore original Z position and autofocus if applicable.
+      // Done outside the lock to avoid holding it during core/hardware calls.
       if (isFocusStageAvailable()) {
          try {
             core_.setPosition(zStage_, zStart_);
@@ -1152,10 +1169,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
             studio_.logs().logError(e);
          }
       }
-      stores_ = null;
-      pipelines_ = null;
-      currentMultiMDA_ = null;
-      endedStores_.clear();
       studio_.events().unregisterForEvents(this);
    }
 

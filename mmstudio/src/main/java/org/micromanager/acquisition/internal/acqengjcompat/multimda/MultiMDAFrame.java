@@ -81,7 +81,9 @@ public class MultiMDAFrame extends JFrame {
    private static final String POSITION_LIST_PATHS = "PositionListPaths";
    private final JSpinner nrSpinner_;
    private JButton acquireButton_;
-   private MultiAcqEngJAdapter currentAcqj_;
+   // Written on the acquisition thread, read on the EDT (button handler); volatile so
+   // the EDT sees the start/clear promptly and the Run/Stop behavior stays consistent.
+   private volatile MultiAcqEngJAdapter currentAcqj_;
    private final Color runButtonColor_;
    private final CheckBoxPanel framesPanel_;
    private final CheckBoxPanel autoFocusPanel_;
@@ -413,12 +415,17 @@ public class MultiMDAFrame extends JFrame {
                   "Load position list", POSITION_LIST_FILE);
             if (f != null) {
                acqs_.get(lineNr).setPositionListFile(f);
+               // The load may have failed or yielded an empty list, in which case
+               // getPositionList()/getPositionListFile() are null; reflect that by
+               // showing "current position" rather than leaving a stale filename.
                if (acqs_.get(lineNr).getPositionList() != null) {
                   positionListLabel.setText(acqs_.get(lineNr).getPositionListFile().getName());
-                  JLabel explanation = acqExplanations_.get(lineNr);
-                  if (explanation != null) {
-                     explanation.setText(oneLineSummary(acqs_.get(lineNr)));
-                  }
+               } else {
+                  positionListLabel.setText("current position (at run time)");
+               }
+               JLabel explanation = acqExplanations_.get(lineNr);
+               if (explanation != null) {
+                  explanation.setText(oneLineSummary(acqs_.get(lineNr)));
                }
             }
          });
