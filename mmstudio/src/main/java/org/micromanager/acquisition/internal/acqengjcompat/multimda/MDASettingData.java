@@ -25,9 +25,13 @@ public class MDASettingData {
    }
 
    public void setPositionListFile(File positionListFile) {
-      positionList_ = new PositionList();
+      // Load into a temporary list so a failed load does not leave a stale
+      // positionListFile_ around (which would otherwise be persisted on shutdown
+      // and keep the UI showing the old filename even though positions are disabled).
+      PositionList positionList = new PositionList();
       try {
-         positionList_.load(positionListFile);
+         positionList.load(positionListFile);
+         positionList_ = positionList;
          positionListFile_ = positionListFile;
          // A separate position list file does not flip the usePositionList flag that
          // came from the acquisition settings file, so set it here based on the loaded
@@ -36,6 +40,7 @@ public class MDASettingData {
                .usePositionList(positionList_.getNumberOfPositions() > 0).build();
       } catch (Exception e) {
          positionList_ = null;
+         positionListFile_ = null;
          acqSettings_ = new SequenceSettings.Builder(acqSettings_)
                .usePositionList(false).build();
          studio_.logs().showError(e);
