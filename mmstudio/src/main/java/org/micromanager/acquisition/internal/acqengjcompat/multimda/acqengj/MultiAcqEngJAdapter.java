@@ -26,8 +26,10 @@ import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -90,6 +92,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    private String zStage_;
 
    private List<Datastore> stores_;
+   private final Set<Datastore> endedStores_ = new HashSet<>();
    private List<Pipeline> pipelines_;
    private SequenceSettings timeLapseSettings_ = null;
 
@@ -147,6 +150,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          PositionList pl = acq.getPositionList();
          if (pl == null) {
             try {
+               // No position list for this acquisition: use the current stage position,
+               // evaluated now (at run time), not when the acquisition was added. Only XY
+               // is captured here; Z comes from the acquisition's own slice settings
+               // (see createAcqEventIterator, which uses core_.getPosition() as the Z origin).
                MultiStagePosition msp = new MultiStagePosition(studio_.core().getXYStageDevice(),
                        studio_.core().getXYStagePosition().getX(),
                        studio_.core().getXYStagePosition().getY(),
@@ -166,6 +173,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       }
       timeLapseSettings_ = basicSettings;
       stores_ = new ArrayList<>(sequenceSettings.size());
+      endedStores_.clear();
       pipelines_ = new ArrayList<>(sequenceSettings.size());
       for (int i = 0; i < sequenceSettings.size(); i++) {
          if (sequenceSettings.get(i).useCustomIntervals()) {
@@ -175,7 +183,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          if (sequenceSettings.get(i).acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                || sequenceSettings.get(i).acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
             // we only handle time first acquisitions (at least for now)
-            studio_.logs().showError("PLease select Time first for all acquisitions");
+            studio_.logs().showError("Please select Time first for all acquisitions");
             return null;
          }
          // Make sure computer can write to selected location and there is enough space to do so
@@ -197,7 +205,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                   ReportingUtils.showMessage("Acquisition canceled.");
                   return null;
                }
-            } else if (!this.enoughDiskSpace(root)) {
+            } else if (!this.enoughDiskSpace(root, sequenceSettings.get(i))) {
                ReportingUtils.showError(
                      "Not enough space on disk to save the requested image set; "
                            + "acquisition canceled.");
@@ -479,7 +487,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return sequenceSettings;
    }
 
-   private boolean enoughDiskSpace(File root) {
+   private boolean enoughDiskSpace(File root, SequenceSettings sequenceSettings) {
       // Need to find a file that exists to check space
       while (!root.exists()) {
          root = root.getParentFile();
@@ -488,7 +496,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
       }
       long usableMB = root.getUsableSpace();
-      return (1.25 * getTotalMemory()) < usableMB;
+      // Use the multi-MDA overload that takes the specific acquisition's settings.
+      // The no-arg getTotalMemory() in the superclass relies on sequenceSettings_,
+      // which is never set in this adapter.
+      return (1.25 * getTotalMemory(sequenceSettings)) < usableMB;
    }
 
    private String getSource(ChannelSpec channel) {
@@ -680,27 +691,29 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    @Override
    public boolean abortRequest() {
       if (isAcquisitionRunning()) {
-         boolean abortCancelled = false;
          String[] options = {"Abort", "Cancel"};
-         for (Datastore store : stores_) {
-            if (store != null) {
-               List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) store);
-               Component parentComponent = null;
-               if (displays != null && !displays.isEmpty()) {
-                  parentComponent = displays.get(0).getWindow();
-               }
-               int result = JOptionPane.showOptionDialog(parentComponent,
-                       "Abort current acquisition task?",
-                       "Micro-Manager",
-                       JOptionPane.DEFAULT_OPTION,
-                       JOptionPane.QUESTION_MESSAGE, null,
-                       options, options[1]);
-               if (result != 0) {
-                  abortCancelled = true;
+         // Show a single confirmation for the whole Multi-MDA (all stores are aborted
+         // together), parented to the first available display window.
+         Component parentComponent = null;
+         if (stores_ != null) {
+            for (Datastore store : stores_) {
+               if (store != null) {
+                  List<DisplayWindow> displays =
+                        studio_.displays().getDisplays((DataProvider) store);
+                  if (displays != null && !displays.isEmpty()) {
+                     parentComponent = displays.get(0).getWindow();
+                     break;
+                  }
                }
             }
          }
-         if (!abortCancelled) {
+         int result = JOptionPane.showOptionDialog(parentComponent,
+                 "Abort current acquisition task?",
+                 "Micro-Manager",
+                 JOptionPane.DEFAULT_OPTION,
+                 JOptionPane.QUESTION_MESSAGE, null,
+                 options, options[1]);
+         if (result == 0) {
             stop(true);
             return true;
          } else {
@@ -803,10 +816,12 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    }
 
    /**
-    * This is ignored by the Clojure engine, and also does not have any function
-    * in this engine.  Deprecate?  Do not rely on this to do anything.
+    * Sets the focus device label used for the Z-position restore at the end of the
+    * acquisition (see zStart_ / onAcquisitionEnded). Note that runAcquisition()
+    * overwrites this with core_.getFocusDevice() before each run, so callers should
+    * not rely on a value set here persisting across a run.
     *
-    * @param stageLabel Name of the focus drive to use.  Ignored.
+    * @param stageLabel Name of the focus drive to use.
     */
    public void setZStageDevice(String stageLabel) {
       zStage_ = stageLabel;
@@ -942,7 +957,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       }
 
       final int totalImages = getTotalImages(sequenceSettings);
-      final long totalMB = getTotalMemory() / (1024 * 1024);
+      final long totalMB = getTotalMemory(sequenceSettings) / (1024 * 1024);
 
       double totalDurationSec = 0;
       double interval = Math.max(sequenceSettings.intervalMs(), exposurePerTimePointMs);
@@ -1116,23 +1131,32 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
     */
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
-      if (event.getStore().equals(stores_)) {
-         // Restore original Z position and autofocus if applicable.
-         if (isFocusStageAvailable()) {
-            try {
-               core_.setPosition(zStage_, zStart_);
-               if (autofocusMethod_ != null) {
-                  autofocusMethod_.enableContinuousFocus(autofocusOn_);
-               }
-            } catch (Exception e) {
-               studio_.logs().logError(e);
-            }
-         }
-         stores_ = null;
-         pipelines_ = null;
-         currentMultiMDA_ = null;
-         studio_.events().unregisterForEvents(this);
+      // One AcquisitionEndedEvent fires per store. stores_ is the List of all stores
+      // for this Multi-MDA, so we must check membership (not equality with the List),
+      // and only tear down once every store has ended.
+      if (stores_ == null || !stores_.contains(event.getStore())) {
+         return;
       }
+      endedStores_.add(event.getStore());
+      if (endedStores_.size() < stores_.size()) {
+         return;
+      }
+      // All stores have ended: restore original Z position and autofocus if applicable.
+      if (isFocusStageAvailable()) {
+         try {
+            core_.setPosition(zStage_, zStart_);
+            if (autofocusMethod_ != null) {
+               autofocusMethod_.enableContinuousFocus(autofocusOn_);
+            }
+         } catch (Exception e) {
+            studio_.logs().logError(e);
+         }
+      }
+      stores_ = null;
+      pipelines_ = null;
+      currentMultiMDA_ = null;
+      endedStores_.clear();
+      studio_.events().unregisterForEvents(this);
    }
 
    @Subscribe

@@ -8,6 +8,11 @@ import org.micromanager.acquisition.SequenceSettings;
 /**
  * Data structure to remember the AcqSettings file, as well as
  * PositionList.
+ *
+ * <p>Note: the acqSettings_.usePositionList() flag is always derived from whether a
+ * position list with positions is currently loaded for this row; it is never taken
+ * directly from a user toggle. Both setPositionListFile() and setAcqSettings()
+ * re-derive it so the GUI explanation and the executor stay consistent.
  */
 public class MDASettingData {
    private final Studio studio_;
