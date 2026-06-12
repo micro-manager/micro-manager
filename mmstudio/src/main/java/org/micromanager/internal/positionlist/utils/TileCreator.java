@@ -78,6 +78,120 @@ public final class TileCreator {
                                    MultiStagePosition[] endPoints, double pixelSizeUm,
                                    String labelPrefix, String xyStage, StrVector zStages,
                                    ZGenerator.Type zType) {
+      if (zStages == null) {
+         zStages = new StrVector();
+      }
+      ZGenerator zGen = null;
+      if (zStages.size() > 0) {
+         PositionList posList = new PositionList();
+         posList.setPositions(endPoints);
+         zGen = ZGenerator.create(zType, posList);
+      }
+      return createTiles(overlap, overlapUnit, endPoints, pixelSizeUm, labelPrefix,
+            xyStage, zStages, zGen);
+   }
+
+   /**
+    * Create the tile list, using a pre-built {@link ZGenerator} for Z positions.
+    * The grid geometry is always derived from {@code endPoints}; the supplied
+    * {@code zGen} (if not null) supplies the interpolated Z values.  This lets
+    * callers (e.g. Refine Z) feed an interpolator built from refined interior
+    * points rather than just the corners.
+    *
+    * @param overlap Overlap desired by user.  This may be increased, but not decreased.
+    * @param overlapUnit Units used to specify desired overlap
+    * @param endPoints Array of MultiStagePositions (should be size 2-4) with corners.
+    * @param pixelSizeUm Pixel Size of the camera in Microns at the image plane.
+    * @param labelPrefix Label Prefix to be used for naming the positions.
+    * @param xyStage Name of the xyStage that will be used.
+    * @param zStages Names of the Z stages that will be used (optional).
+    * @param zGen ZGenerator supplying Z positions, or null for no Z positions.
+    * @return PositionList with annotated MultiStagePositions, or null on error.
+    */
+   public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit,
+                                   MultiStagePosition[] endPoints, double pixelSizeUm,
+                                   String labelPrefix, String xyStage, StrVector zStages,
+                                   ZGenerator zGen) {
+      if (zStages == null) {
+         zStages = new StrVector();
+      }
+
+      TileGrid grid = computeGrid(overlap, overlapUnit, endPoints, pixelSizeUm, xyStage);
+      if (grid == null) {
+         return null;
+      }
+      final double overlapXUm = grid.overlapXUm;
+      final double overlapYUm = grid.overlapYUm;
+
+      PositionList posList = new PositionList();
+      for (int y = 0; y < grid.nrImagesY; y++) {
+         for (int x = 0; x < grid.nrImagesX; x++) {
+            // on even rows go left to right, on odd rows right to left
+            int tmpX = grid.snakeColumn(x, y);
+            MultiStagePosition msp = new MultiStagePosition();
+
+            // Add XY position
+            // xyStage is not null; we've checked above.
+            msp.setDefaultXYStage(xyStage);
+            double dx = grid.tileCenterX(tmpX, y);
+            double dy = grid.tileCenterY(tmpX, y);
+            StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
+            msp.add(spXY);
+
+            // Add Z position
+            if (zGen != null && zStages.size() > 0) {
+               msp.setDefaultZStage(zStages.get(0));
+               //loop over Z coordinates and add the correct positions for any we are using
+               for (int a = 0; a < zStages.size(); a++) {
+                  StagePosition newSP = StagePosition.create1D(zStages.get(a),
+                        zGen.getZ(dx, dy, zStages.get(a)));
+                  msp.add(newSP);
+               }
+            }
+
+            // Add 'metadata'
+            msp.setLabel(labelPrefix + "-" + FMT_POS.format(tmpX) + "_" + FMT_POS.format(y));
+            msp.setGridCoordinates(y, tmpX);
+            msp.setProperty("Source", "TileCreator");
+
+            if (overlapUnit == OverlapUnitEnum.UM || overlapUnit == OverlapUnitEnum.PX) {
+               msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
+               int overlapPix = (int) Math.floor(overlapXUm / pixelSizeUm);
+
+               msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
+            } else { // overlapUnit_ == OverlapUnit.PERCENT
+               // overlapUmX != overlapUmY; store both
+               msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
+               msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
+               int overlapPixX = (int) Math.floor(overlapXUm / pixelSizeUm);
+               int overlapPixY = (int) Math.floor(overlapYUm / pixelSizeUm);
+               msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
+               msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
+            }
+            posList.addPosition(msp);
+         }
+      }
+      return posList;
+   }
+
+   /**
+    * Computes the tile grid geometry (tile counts, center, and step vectors)
+    * for the given corners and imaging parameters.  This is the same geometry
+    * used by {@link #createTiles}; it is exposed separately so a graphical
+    * overview can draw the tile cells and find tile centers without generating
+    * the full position list.
+    *
+    * @param overlap Overlap desired by user.
+    * @param overlapUnit Units used to specify desired overlap.
+    * @param endPoints Array of MultiStagePositions (size 2-4) with corners.
+    * @param pixelSizeUm Pixel size of the camera in microns at the image plane.
+    * @param xyStage Name of the xyStage that will be used.
+    * @return a TileGrid describing the layout, or null on error (after showing
+    *         an error dialog).
+    */
+   public TileGrid computeGrid(double overlap, OverlapUnitEnum overlapUnit,
+                               MultiStagePosition[] endPoints, double pixelSizeUm,
+                               String xyStage) {
       // Make sure at least two corners were set
       if (endPoints.length < 2) {
          ReportingUtils.showError("At least two corners should be set", dialog_);
@@ -92,25 +206,6 @@ public final class TileCreator {
             return null;
          }
       }
-
-      ZGenerator zGen = null;
-      if (zStages == null) {
-         zStages = new StrVector();
-      }
-      if (zStages.size() > 0) {
-         PositionList posList = new PositionList();
-         posList.setPositions(endPoints);
-         switch (zType) {
-            case SHEPINTERPOLATE:
-               zGen = new ZGeneratorShepard(posList);
-               break;
-            case AVERAGE:
-            default:
-               zGen = new ZGeneratorAverage(posList);
-               break;
-         }
-      }
-
 
       // Calculate a bounding rectangle around the defaultXYStage positions
       // TODO: develop method to deal with multiple axis
@@ -148,7 +243,7 @@ public final class TileCreator {
 
       // Compute per-tile step vectors in stage space.
       // With an affine transform, moving one tile to the right in camera-pixel space
-      // corresponds to affine * (tileWidthPx, 0) in stage microns — not simply
+      // corresponds to affine * (tileWidthPx, 0) in stage microns -- not simply
       // (tileSizeXUm, 0).  Similarly for the Y direction.
       // Without a valid affine we fall back to the existing axis-aligned behaviour.
       final AffineTransform affine = getPixelSizeAffine(pixelSizeUm);
@@ -182,60 +277,9 @@ public final class TileCreator {
       final double centerX = (minX + maxX) / 2.0;
       final double centerY = (minY + maxY) / 2.0;
 
-      PositionList posList = new PositionList();
-      for (int y = 0; y < nrImagesY; y++) {
-         for (int x = 0; x < nrImagesX; x++) {
-            // on even rows go left to right, on odd rows right to left
-            int tmpX = x;
-            if ((y & 1) == 1) { //If y is odd then we will go backwards in x
-               tmpX = nrImagesX - x - 1;
-            }
-            MultiStagePosition msp = new MultiStagePosition();
-
-            // Add XY position
-            // xyStage is not null; we've checked above.
-            msp.setDefaultXYStage(xyStage);
-            double offX = tmpX - (nrImagesX - 1) / 2.0;
-            double offY = y - (nrImagesY - 1) / 2.0;
-            double dx = centerX + offX * stepXdx + offY * stepYdx;
-            double dy = centerY + offX * stepXdy + offY * stepYdy;
-            StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
-            msp.add(spXY);
-
-            // Add Z position
-            if (zGen != null) {
-               msp.setDefaultZStage(zStages.get(0));
-               //loop over Z coordinates and add the correct positions for any we are using
-               for (int a = 0; a < zStages.size(); a++) {
-                  StagePosition newSP = StagePosition.create1D(zStages.get(a),
-                        zGen.getZ(dx, dy, zStages.get(a)));
-                  msp.add(newSP);
-               }
-            }
-
-            // Add 'metadata'
-            msp.setLabel(labelPrefix + "-" + FMT_POS.format(tmpX) + "_" + FMT_POS.format(y));
-            msp.setGridCoordinates(y, tmpX);
-            msp.setProperty("Source", "TileCreator");
-
-            if (overlapUnit == OverlapUnitEnum.UM || overlapUnit == OverlapUnitEnum.PX) {
-               msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
-               int overlapPix = (int) Math.floor(overlapXUm / pixelSizeUm);
-
-               msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
-            } else { // overlapUnit_ == OverlapUnit.PERCENT
-               // overlapUmX != overlapUmY; store both
-               msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
-               msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
-               int overlapPixX = (int) Math.floor(overlapXUm / pixelSizeUm);
-               int overlapPixY = (int) Math.floor(overlapYUm / pixelSizeUm);
-               msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
-               msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
-            }
-            posList.addPosition(msp);
-         }
-      }
-      return posList;
+      return new TileGrid(nrImagesX, nrImagesY, centerX, centerY,
+            stepXdx, stepXdy, stepYdx, stepYdy, tileSizeXUm, tileSizeYUm,
+            overlapXUm, overlapYUm, xyStage);
    }
 
    /**
@@ -284,15 +328,7 @@ public final class TileCreator {
       if (!zStages.isEmpty()) {
          PositionList posList = new PositionList();
          posList.setPositions(endPoints);
-         switch (zType) {
-            case SHEPINTERPOLATE:
-               zGen = new ZGeneratorShepard(posList);
-               break;
-            case AVERAGE:
-            default:
-               zGen = new ZGeneratorAverage(posList);
-               break;
-         }
+         zGen = ZGenerator.create(zType, posList);
       }
 
       // Calculate a bounding rectangle around the defaultXYStage positions
