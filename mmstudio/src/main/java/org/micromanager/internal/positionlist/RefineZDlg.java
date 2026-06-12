@@ -358,6 +358,13 @@ public final class RefineZDlg extends JDialog {
       cancelButton_.setEnabled(true);
       progressBar_.setValue(0);
       worker_ = new AutoRefineWorker(cells);
+      // SwingWorker fires "progress" property changes on the EDT; reflect them
+      // in the progress bar so it advances during the run (not just at the end).
+      worker_.addPropertyChangeListener(evt -> {
+         if ("progress".equals(evt.getPropertyName())) {
+            progressBar_.setValue((Integer) evt.getNewValue());
+         }
+      });
       worker_.execute();
    }
 
@@ -430,13 +437,19 @@ public final class RefineZDlg extends JDialog {
          chosen.add(bestKey);
       }
 
-      // Return in row-major order for a predictable visiting pattern.
+      // Return in row-major order for a predictable visiting pattern. The keys
+      // above index plain (unsnaked) columns; convert to the logical (snaked)
+      // column convention used everywhere else (TileGrid.tileCenterX,
+      // cellKey, the overview panel) so refined points are stored and drawn on
+      // the tiles that were actually visited.
       List<Long> sorted = new ArrayList<Long>(chosen);
       Collections.sort(sorted);
       List<int[]> cells = new ArrayList<int[]>(sorted.size());
       for (Long key : sorted) {
          int idx = (int) (long) key;
-         cells.add(new int[] {idx % nx, idx / nx});
+         int plainCol = idx % nx;
+         int row = idx / nx;
+         cells.add(new int[] {grid_.snakeColumn(plainCol, row), row});
       }
       return cells;
    }
@@ -714,6 +727,11 @@ public final class RefineZDlg extends JDialog {
    // -------------------------------------------------------------------------
 
    private void apply() {
+      if (worker_ != null && !worker_.isDone()) {
+         ReportingUtils.showError("An automatic refinement run is in progress. "
+               + "Wait for it to finish or press Cancel first.", this);
+         return;
+      }
       if (refined_.isEmpty()) {
          ReportingUtils.showError("No refined points captured yet", this);
          return;
@@ -790,6 +808,11 @@ public final class RefineZDlg extends JDialog {
 
    @Override
    public void dispose() {
+      // Stop any in-progress automatic run so it does not keep moving the stage
+      // or publishing into disposed UI components after the window closes.
+      if (worker_ != null && !worker_.isDone()) {
+         worker_.cancel(true);
+      }
       studio_.events().unregisterForEvents(this);
       super.dispose();
    }
