@@ -43,6 +43,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
@@ -68,13 +69,22 @@ public class MultiMDAFrame extends JFrame {
    private final List<JLabel> acqExplanations_ = new ArrayList<>();
    private final List<JComboBox<String>> presetCombos_ = new ArrayList<>();
    private static final String USE_TIME_POINTS = "UseTimePoints";
+   private static final String NR_FRAMES = "NumberOfFrames";
+   private static final String INTERVAL = "Interval";
+   private static final String TIME_UNIT = "TimeUnit";
    private static final String USE_AUTOFOCUS = "UseAutofocus";
+   private static final String AF_SKIP_INTERVAL = "AutofocusSkipInterval";
    private static final String USE_PRESET = "UsePreset";
    private static final String PRESET_GROUP = "PresetGroup";
    private static final String NR_ACQ_SETTINGS = "NumberOfSettings";
    private static final String ACQ_PATHS = "AcquisitionPaths";
    private static final String POSITION_LIST_PATHS = "PositionListPaths";
    private final JSpinner nrSpinner_;
+   private JButton acquireButton_;
+   // Written on the acquisition thread, read on the EDT (button handler); volatile so
+   // the EDT sees the start/clear promptly and the Run/Stop behavior stays consistent.
+   private volatile MultiAcqEngJAdapter currentAcqj_;
+   private final Color runButtonColor_;
    private final CheckBoxPanel framesPanel_;
    private final CheckBoxPanel autoFocusPanel_;
    private final CheckBoxPanel presetPanel_;
@@ -180,15 +190,27 @@ public class MultiMDAFrame extends JFrame {
       super.add(new JLabel(""), "growx");
 
       // Run an acquisition using the current MDA parameters.
-      JButton acquireButton = new JButton("Run Multi MDA");
-      acquireButton.addActionListener(e -> {
+      acquireButton_ = new JButton("Run Multi MDA");
+      runButtonColor_ = acquireButton_.getForeground();
+      acquireButton_.addActionListener(e -> {
+         // This handler runs on the EDT. If an acquisition is already running (or one
+         // is in the process of starting), this button acts as a Stop button.
+         if (currentAcqj_ != null) {
+            currentAcqj_.abortRequest();
+            return;
+         }
+         // Claim the "running" slot here on the EDT, before starting the background
+         // thread, so a fast double-click cannot pass the guard above twice and start
+         // two acquisitions. The same adapter is reused inside run().
+         final MultiAcqEngJAdapter acqj = new MultiAcqEngJAdapter(studio_);
+         currentAcqj_ = acqj;
+         setRunningState(true);
          // All GUI event handlers are invoked on the EDT (Event Dispatch
          // Thread). Acquisitions are not allowed to be started from the
          // EDT. Therefore, we must make a new thread to run this.
          Thread acqThread = new Thread(new Runnable() {
             @Override
             public void run() {
-               final MultiAcqEngJAdapter acqj = new MultiAcqEngJAdapter(studio_);
                SequenceSettings.Builder sb = new SequenceSettings.Builder();
                double multiplier = 1;
                String token = (String) timeUnitCombo_.getSelectedItem();
@@ -208,13 +230,26 @@ public class MultiMDAFrame extends JFrame {
                   studio_.logs().logError(ex);
                }
                SequenceSettings baseSettings = sb.build();
-               acqj.runAcquisition(baseSettings, acqs_);
+               try {
+                  acqj.runAcquisition(baseSettings, acqs_);
+                  // runAcquisition() returns once events are submitted, but the engine
+                  // keeps running on its own threads. Wait for it to actually finish (or
+                  // be aborted) before reverting the button to "Run".
+                  while (acqj.isAcquisitionRunning()) {
+                     Thread.sleep(250);
+                  }
+               } catch (InterruptedException ex) {
+                  Thread.currentThread().interrupt();
+               } finally {
+                  currentAcqj_ = null;
+                  setRunningState(false);
+               }
             }
          });
          acqThread.start();
       });
 
-      super.add(acquireButton, "align right, push, gap 10, wrap");
+      super.add(acquireButton_, "align right, push, gap 10, wrap");
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -224,15 +259,21 @@ public class MultiMDAFrame extends JFrame {
       // restore settings from previous session
       final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
       framesPanel_.setSelected(settings.getBoolean(USE_TIME_POINTS, false));
+      numFrames_.setValue(settings.getInteger(NR_FRAMES, (Integer) numFrames_.getValue()));
+      interval_.setValue(settings.getDouble(INTERVAL,
+            ((Number) interval_.getValue()).doubleValue()));
+      timeUnitCombo_.setSelectedItem(settings.getString(TIME_UNIT,
+            (String) timeUnitCombo_.getSelectedItem()));
       autoFocusPanel_.setSelected(settings.getBoolean(USE_AUTOFOCUS, false));
+      afSkipInterval_.setValue(settings.getInteger(AF_SKIP_INTERVAL,
+            (Integer) afSkipInterval_.getValue()));
       presetPanel_.setSelected(settings.getBoolean(USE_PRESET, false));
       int nrAcquisitions = settings.getInteger(NR_ACQ_SETTINGS, 0);
       if (nrAcquisitions > 0) {
          List<String> acqPaths = settings.getStringList(ACQ_PATHS);
          List<String> positionListFiles = settings.getStringList(POSITION_LIST_PATHS);
-         int count = 0;
-         for (String acqPath : acqPaths) {
-            File f = new File(acqPath);
+         for (int origIndex = 0; origIndex < acqPaths.size(); origIndex++) {
+            File f = new File(acqPaths.get(origIndex));
             SequenceSettings seqSb;
             try {
                seqSb = studio_.acquisitions().loadSequenceSettings(f.getPath());
@@ -240,14 +281,20 @@ public class MultiMDAFrame extends JFrame {
                studio_.logs().logError(ex, "Failed to load Acquisition setting file");
                continue;
             }
-            acqs_.add(count, new MDASettingData(studio_, f, seqSb));
-            if (positionListFiles.size() > count) {
-               File posFile = new File(positionListFiles.get(count));
-               acqs_.get(count).setPositionListFile(posFile);
+            MDASettingData mdaSettingData = new MDASettingData(studio_, f, seqSb);
+            acqs_.add(mdaSettingData);
+            // The position list paths are persisted parallel to acqPaths, so index them
+            // by the original position (not by the number of successfully loaded rows);
+            // otherwise a failed acquisition load would shift every later pairing.
+            // Rows without a position list are persisted as an empty path (see the
+            // save logic). Skip those, otherwise setPositionListFile() tries to load
+            // "" and throws FileNotFoundException on every startup.
+            if (positionListFiles.size() > origIndex
+                  && !positionListFiles.get(origIndex).isEmpty()) {
+               mdaSettingData.setPositionListFile(new File(positionListFiles.get(origIndex)));
             }
-            count++;
          }
-         nrSpinner_.setValue(count);
+         nrSpinner_.setValue(acqs_.size());
       }
 
       super.pack();
@@ -271,6 +318,12 @@ public class MultiMDAFrame extends JFrame {
    private int adjustNrSettings(int nr) {
       acqPanel_.removeAll();
       acqLabels_.clear();
+      // These are rebuilt below alongside acqLabels_; clear them too or they keep
+      // growing and the *.get(lineNr) lookups below return stale entries from a
+      // previous build (e.g. a newly added acquisition showing an earlier row's
+      // explanation/preset).
+      acqExplanations_.clear();
+      presetCombos_.clear();
       // add headers to the table
       acqPanel_.add(new JLabel("Acquisition Settings File"), "span 2, alignx center");
       acqPanel_.add(new JLabel("Preset"), "alignx center");
@@ -348,12 +401,15 @@ public class MultiMDAFrame extends JFrame {
          presetCombos_.add(presetCombo);
          acqPanel_.add(presetCombo, "gapx 20");
 
-         String positionListText = "current position";
+         String positionListText = "current position (at run time)";
          if (acqs_.get(lineNr).getPositionList() != null
                && acqs_.get(lineNr).getPositionListFile() != null) {
             positionListText = acqs_.get(lineNr).getPositionListFile().getName();
          }
          final JLabelC positionListLabel = new JLabelC(positionListText);
+         positionListLabel.setToolTipText("<html>When no position list is selected, the stage "
+               + "position<br>at the time the acquisition is run is used "
+               + "(not the<br>position when this acquisition was added).</html>");
          acqPanel_.add(positionListLabel, "gapx 20");
 
          JButton selectPosFile = new JButton("...");
@@ -363,12 +419,17 @@ public class MultiMDAFrame extends JFrame {
                   "Load position list", POSITION_LIST_FILE);
             if (f != null) {
                acqs_.get(lineNr).setPositionListFile(f);
+               // The load may have failed or yielded an empty list, in which case
+               // getPositionList()/getPositionListFile() are null; reflect that by
+               // showing "current position" rather than leaving a stale filename.
                if (acqs_.get(lineNr).getPositionList() != null) {
                   positionListLabel.setText(acqs_.get(lineNr).getPositionListFile().getName());
-                  JLabel explanation = acqExplanations_.get(lineNr);
-                  if (explanation != null) {
-                     explanation.setText(oneLineSummary(acqs_.get(lineNr)));
-                  }
+               } else {
+                  positionListLabel.setText("current position (at run time)");
+               }
+               JLabel explanation = acqExplanations_.get(lineNr);
+               if (explanation != null) {
+                  explanation.setText(oneLineSummary(acqs_.get(lineNr)));
                }
             }
          });
@@ -434,10 +495,6 @@ public class MultiMDAFrame extends JFrame {
       // vertical space as the spinner for the number of timepoints.
       timeUnitCombo_.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(timeUnitCombo_, "pad 0 -15 0 0, wrap");
-
-      JLabelC overrideLabel = new JLabelC("Custom time intervals enabled");
-      overrideLabel.setFont(new Font("Arial", Font.BOLD, 12));
-      overrideLabel.setForeground(Color.red);
 
       return framesPanel;
    }
@@ -515,6 +572,30 @@ public class MultiMDAFrame extends JFrame {
       return presetPanel;
    }
 
+   /**
+    * Switches the Run/Stop button between its two states. Safe to call from any
+    * thread; the actual Swing mutation is marshalled onto the EDT.
+    *
+    * @param running true while an acquisition is running (button becomes a red
+    *                "Stop Multi MDA"), false otherwise ("Run Multi MDA").
+    */
+   private void setRunningState(boolean running) {
+      Runnable r = () -> {
+         if (running) {
+            acquireButton_.setText("Stop Multi MDA");
+            acquireButton_.setForeground(Color.RED);
+         } else {
+            acquireButton_.setText("Run Multi MDA");
+            acquireButton_.setForeground(runButtonColor_);
+         }
+      };
+      if (SwingUtilities.isEventDispatchThread()) {
+         r.run();
+      } else {
+         SwingUtilities.invokeLater(r);
+      }
+   }
+
    private String oneLineSummary(MDASettingData mdaSettingData) {
       StringBuilder sb = new StringBuilder();
       if (mdaSettingData.getSequenceSettings().useSlices()) {
@@ -530,12 +611,13 @@ public class MultiMDAFrame extends JFrame {
          }
       }
       if (mdaSettingData.getSequenceSettings().usePositionList()
+            && mdaSettingData.getPositionListFile() != null
             && mdaSettingData.getPositionList() != null
             && mdaSettingData.getPositionList().getNumberOfPositions() > 0) {
          sb.append("Positions: ").append(mdaSettingData.getPositionList().getNumberOfPositions());
          sb.append(".");
       } else {
-         sb.append("Positions: current only.");
+         sb.append("Positions: current at run time.");
       }
       if (mdaSettingData.getSequenceSettings().save()) {
          sb.append(" Saving.");
@@ -557,7 +639,11 @@ public class MultiMDAFrame extends JFrame {
       MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
       settings.putInteger(NR_ACQ_SETTINGS, (Integer) nrSpinner_.getValue());
       settings.putBoolean(USE_TIME_POINTS, framesPanel_.isSelected());
+      settings.putInteger(NR_FRAMES, (Integer) numFrames_.getValue());
+      settings.putDouble(INTERVAL, ((Number) interval_.getValue()).doubleValue());
+      settings.putString(TIME_UNIT, (String) timeUnitCombo_.getSelectedItem());
       settings.putBoolean(USE_AUTOFOCUS, autoFocusPanel_.isSelected());
+      settings.putInteger(AF_SKIP_INTERVAL, (Integer) afSkipInterval_.getValue());
       settings.putBoolean(USE_PRESET, presetPanel_.isSelected());
 
       List<String> acqPaths = new ArrayList<>(acqs_.size());
