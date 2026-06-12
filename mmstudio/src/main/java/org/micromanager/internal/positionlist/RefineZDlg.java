@@ -21,7 +21,9 @@
 
 package org.micromanager.internal.positionlist;
 
+import com.google.common.eventbus.Subscribe;
 import ij.process.ImageProcessor;
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -35,9 +37,12 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -60,6 +65,7 @@ import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
+import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.positionlist.utils.TileCreator;
 import org.micromanager.internal.positionlist.utils.TileGrid;
 import org.micromanager.internal.positionlist.utils.ZGenerator;
@@ -127,6 +133,14 @@ public final class RefineZDlg extends JDialog {
    private int[] pendingCell_; // {tmpX, row} of last ctrl-clicked tile in MANUAL mode
    private AutoRefineWorker worker_;
 
+   // Current XY stage position (for the live view rectangle). Updated from
+   // XYStagePositionChangedEvent, which only fires on MM-driven moves.
+   private volatile double curX_;
+   private volatile double curY_;
+   private volatile boolean haveCurrentPos_ = false;
+   private final double fovXUm_; // camera field of view width in stage microns
+   private final double fovYUm_; // camera field of view height in stage microns
+
    private final GridOverviewPanel overview_;
    private final JComboBox<ZGenerator.Type> methodCombo_;
    private final JRadioButton automaticButton_;
@@ -177,6 +191,20 @@ public final class RefineZDlg extends JDialog {
       zStages_ = zStages;
       endPoints_ = endPoints;
       labelPrefix_ = labelPrefix;
+
+      // Camera field of view in stage microns (accounts for XY swap).
+      double[] fov = tileCreator_.getImageSize(pixelSizeUm_);
+      fovXUm_ = fov[0];
+      fovYUm_ = fov[1];
+
+      // Seed the current XY position; updated thereafter via events.
+      try {
+         curX_ = core_.getXPosition(xyStage_);
+         curY_ = core_.getYPosition(xyStage_);
+         haveCurrentPos_ = true;
+      } catch (Exception e) {
+         ReportingUtils.logError(e, "RefineZ: failed to read initial XY position");
+      }
 
       setDefaultCloseOperation(DISPOSE_ON_CLOSE);
       setLayout(new BorderLayout(5, 5));
@@ -256,12 +284,16 @@ public final class RefineZDlg extends JDialog {
 
       add(controls, BorderLayout.SOUTH);
 
-      // Ctrl-click handling for manual mode.
+      // Ctrl-left-click moves the stage to the clicked tile in any mode (also
+      // before Manual mode is started), except while an automatic run is busy
+      // moving the stage itself.
       overview_.addMouseListener(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
-            if (mode_ == Mode.MANUAL && SwingUtilities.isLeftMouseButton(e)
-                  && e.isControlDown()) {
+            if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown()) {
+               if (worker_ != null && !worker_.isDone()) {
+                  return;
+               }
                handleManualClick(e.getPoint());
             }
          }
@@ -270,6 +302,8 @@ public final class RefineZDlg extends JDialog {
       setMode(Mode.AUTOMATIC);
       pack();
       setLocationRelativeTo(tileCreatorDlg);
+
+      studio_.events().registerForEvents(this);
    }
 
    private void setMode(Mode mode) {
@@ -318,25 +352,93 @@ public final class RefineZDlg extends JDialog {
       }
       nPointsField_.setText(Integer.toString(n));
 
-      // Pick n tiles evenly across the flattened (row-major, logical-column) list.
-      List<int[]> cells = new ArrayList<int[]>();
-      boolean[] used = new boolean[total];
-      for (int k = 0; k < n; k++) {
-         int idx = (n == 1) ? 0 : (int) Math.round((double) k * (total - 1) / (n - 1));
-         while (used[idx]) {
-            idx = (idx + 1) % total;
-         }
-         used[idx] = true;
-         int row = idx / grid_.nrImagesX;
-         int tmpX = idx % grid_.nrImagesX;
-         cells.add(new int[] {tmpX, row});
-      }
+      final List<int[]> cells = selectCells(n);
 
       startButton_.setEnabled(false);
       cancelButton_.setEnabled(true);
       progressBar_.setValue(0);
       worker_ = new AutoRefineWorker(cells);
       worker_.execute();
+   }
+
+   /**
+    * Chooses n tiles spread across the grid using farthest-point sampling
+    * seeded with the grid corners.  This yields corners first, then the
+    * center, then edge midpoints, then evenly distributed interior fill -- for
+    * any n and any grid aspect ratio.  For example on an 8x8 grid: n=1 ->
+    * center; n=4 -> 4 corners; n=5 -> 4 corners + center; n=9 -> ~3x3.
+    *
+    * @param n requested number of points (already clamped to 1..total)
+    * @return list of {tmpX, row} cells in row-major order
+    */
+   private List<int[]> selectCells(int n) {
+      final int nx = grid_.nrImagesX;
+      final int ny = grid_.nrImagesY;
+      final int total = nx * ny;
+      final int target = Math.min(n, total);
+
+      Set<Long> chosen = new LinkedHashSet<Long>();
+      if (target == 1) {
+         // Single point: the center tile.
+         chosen.add((long) ((ny - 1) / 2) * nx + (nx - 1) / 2);
+      } else {
+         // Seed with the (up to four) distinct grid corners.
+         long[] corners = {
+               (long) 0 * nx + 0,
+               (long) 0 * nx + (nx - 1),
+               (long) (ny - 1) * nx + 0,
+               (long) (ny - 1) * nx + (nx - 1)};
+         for (long corner : corners) {
+            if (chosen.size() >= target) {
+               break;
+            }
+            chosen.add(corner);
+         }
+      }
+
+      // Farthest-point sampling: repeatedly add the tile whose distance to the
+      // nearest already-chosen tile is largest.  Distance is Euclidean in
+      // (column, row) tile-index space.
+      while (chosen.size() < target) {
+         long bestKey = -1;
+         double bestDist = -1.0;
+         for (int idx = 0; idx < total; idx++) {
+            long key = idx;
+            if (chosen.contains(key)) {
+               continue;
+            }
+            int cx = idx % nx;
+            int cy = idx / nx;
+            double nearest = Double.POSITIVE_INFINITY;
+            for (Long ck : chosen) {
+               int ci = (int) (long) ck;
+               double dx = cx - (ci % nx);
+               double dy = cy - (ci / nx);
+               double d = dx * dx + dy * dy;
+               if (d < nearest) {
+                  nearest = d;
+               }
+            }
+            if (nearest > bestDist) {
+               bestDist = nearest;
+               bestKey = key;
+            }
+         }
+         if (bestKey < 0) {
+            break;
+         }
+         chosen.add(bestKey);
+      }
+
+      // Return in row-major order for a predictable visiting pattern.
+      List<Long> sorted = new ArrayList<Long>(chosen);
+      Collections.sort(sorted);
+      List<int[]> cells = new ArrayList<int[]>(sorted.size());
+      for (Long key : sorted) {
+         int idx = (int) (long) key;
+         cells.add(new int[] {idx % nx, idx / nx});
+      }
+      return cells;
    }
 
    private final class AutoRefineWorker extends SwingWorker<Void, RefinedPoint> {
@@ -443,12 +545,21 @@ public final class RefineZDlg extends JDialog {
       final int row = cell[1];
       final double cx = grid_.tileCenterX(tmpX, row);
       final double cy = grid_.tileCenterY(tmpX, row);
+      // Z target for each checked Z stage: the stored value if this tile was
+      // already refined, otherwise the interpolated estimate at (cx, cy).
+      final Map<String, Double> zTarget = targetZ(tmpX, row, cx, cy);
       setStatus("Moving to " + tileName(tmpX, row) + "...");
       overview_.repaint();
       new Thread(() -> {
          try {
             core_.setXYPosition(xyStage_, cx, cy);
+            for (Map.Entry<String, Double> e : zTarget.entrySet()) {
+               core_.setPosition(e.getKey(), e.getValue());
+            }
             core_.waitForDevice(xyStage_);
+            for (String z : zTarget.keySet()) {
+               core_.waitForDevice(z);
+            }
             SwingUtilities.invokeLater(() ->
                   setStatus("At " + tileName(tmpX, row) + ". Focus, then press Add."));
          } catch (Exception e) {
@@ -456,6 +567,74 @@ public final class RefineZDlg extends JDialog {
                   ReportingUtils.showError(e, "Failed to move stage", RefineZDlg.this));
          }
       }, "RefineZ manual move").start();
+   }
+
+   /**
+    * Returns the Z target (per checked Z stage) for the given tile: the stored
+    * value if the tile is already refined, otherwise the Z interpolated at
+    * (cx, cy) from the available points (refined points if any, else the
+    * corners) using the currently selected interpolation method.  Returns an
+    * empty map if no Z stages are in use or interpolation is not possible.
+    *
+    * @param tmpX logical column
+    * @param row row
+    * @param cx tile center stage X
+    * @param cy tile center stage Y
+    * @return map of Z-stage name to target position (microns)
+    */
+   private Map<String, Double> targetZ(int tmpX, int row, double cx, double cy) {
+      Map<String, Double> result = new LinkedHashMap<String, Double>();
+      if (zStages_.size() == 0) {
+         return result;
+      }
+      RefinedPoint existing = refined_.get(cellKey(tmpX, row));
+      if (existing != null) {
+         for (int a = 0; a < zStages_.size(); a++) {
+            String z = zStages_.get(a);
+            Double v = existing.z.get(z);
+            if (v != null) {
+               result.put(z, v);
+            }
+         }
+         if (!result.isEmpty()) {
+            return result;
+         }
+      }
+      // Build an interpolator from refined points if available, else corners.
+      PositionList points = new PositionList();
+      if (!refined_.isEmpty()) {
+         for (RefinedPoint rp : refined_.values()) {
+            MultiStagePosition msp = new MultiStagePosition();
+            msp.setDefaultXYStage(xyStage_);
+            msp.add(StagePosition.create2D(xyStage_, rp.stageX, rp.stageY));
+            msp.setDefaultZStage(zStages_.get(0));
+            for (int a = 0; a < zStages_.size(); a++) {
+               String z = zStages_.get(a);
+               Double v = rp.z.get(z);
+               if (v != null) {
+                  msp.add(StagePosition.create1D(z, v));
+               }
+            }
+            points.addPosition(msp);
+         }
+      } else {
+         points.setPositions(endPoints_);
+      }
+      try {
+         ZGenerator.Type type = (ZGenerator.Type) methodCombo_.getSelectedItem();
+         ZGenerator zGen = ZGenerator.create(type, points);
+         for (int a = 0; a < zStages_.size(); a++) {
+            String z = zStages_.get(a);
+            double zVal = zGen.getZ(cx, cy, z);
+            if (!Double.isNaN(zVal) && !Double.isInfinite(zVal)) {
+               result.put(z, zVal);
+            }
+         }
+      } catch (Exception e) {
+         ReportingUtils.logError(e, "RefineZ: failed to interpolate Z for manual move");
+         result.clear();
+      }
+      return result;
    }
 
    private void manualAdd() {
@@ -589,6 +768,33 @@ public final class RefineZDlg extends JDialog {
    }
 
    // -------------------------------------------------------------------------
+   // Live current-view rectangle
+   // -------------------------------------------------------------------------
+
+   /**
+    * Updates the current-view rectangle when the XY stage moves.  Only fires
+    * for MM-driven moves (ctrl-click, the automatic sweep, other MM windows);
+    * manual joystick moves are not reported by the core.
+    *
+    * @param event the XY stage position changed event
+    */
+   @Subscribe
+   public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
+      if (event.getDeviceName().equals(xyStage_)) {
+         curX_ = event.getXPos();
+         curY_ = event.getYPos();
+         haveCurrentPos_ = true;
+         overview_.repaint();
+      }
+   }
+
+   @Override
+   public void dispose() {
+      studio_.events().unregisterForEvents(this);
+      super.dispose();
+   }
+
+   // -------------------------------------------------------------------------
    // Overview panel
    // -------------------------------------------------------------------------
 
@@ -711,6 +917,18 @@ public final class RefineZDlg extends JDialog {
                g2.setColor(pending ? PENDING_COLOR : Color.DARK_GRAY);
                g2.drawRect(left, top, cellW, cellH);
             }
+         }
+
+         // Live current camera view, drawn on top of the tiles. Swing clips it
+         // to the panel bounds if the stage is outside the mapped region.
+         if (haveCurrentPos_) {
+            int rw = Math.max((int) Math.round(fovXUm_ * scale_), 2);
+            int rh = Math.max((int) Math.round(fovYUm_ * scale_), 2);
+            int cx = screenX(curX_);
+            int cy = screenY(curY_);
+            g2.setColor(Color.RED);
+            g2.setStroke(new BasicStroke(2f));
+            g2.drawRect(cx - rw / 2, cy - rh / 2, rw, rh);
          }
          g2.dispose();
       }

@@ -626,6 +626,7 @@ public final class TileCreatorDlg extends JDialog {
                throw new IllegalStateException("Unexpected value: " + location);
          }
       }
+      updateRefineZEnabled();
    }
 
    private double getPixelSizeUm() throws TileCreatorDlg.TileCreatorException {
