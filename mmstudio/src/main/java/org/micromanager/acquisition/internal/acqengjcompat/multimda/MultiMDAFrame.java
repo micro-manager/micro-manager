@@ -193,20 +193,24 @@ public class MultiMDAFrame extends JFrame {
       acquireButton_ = new JButton("Run Multi MDA");
       runButtonColor_ = acquireButton_.getForeground();
       acquireButton_.addActionListener(e -> {
-         // If an acquisition is already running, this button acts as a Stop button.
-         if (currentAcqj_ != null && currentAcqj_.isAcquisitionRunning()) {
+         // This handler runs on the EDT. If an acquisition is already running (or one
+         // is in the process of starting), this button acts as a Stop button.
+         if (currentAcqj_ != null) {
             currentAcqj_.abortRequest();
             return;
          }
+         // Claim the "running" slot here on the EDT, before starting the background
+         // thread, so a fast double-click cannot pass the guard above twice and start
+         // two acquisitions. The same adapter is reused inside run().
+         final MultiAcqEngJAdapter acqj = new MultiAcqEngJAdapter(studio_);
+         currentAcqj_ = acqj;
+         setRunningState(true);
          // All GUI event handlers are invoked on the EDT (Event Dispatch
          // Thread). Acquisitions are not allowed to be started from the
          // EDT. Therefore, we must make a new thread to run this.
          Thread acqThread = new Thread(new Runnable() {
             @Override
             public void run() {
-               final MultiAcqEngJAdapter acqj = new MultiAcqEngJAdapter(studio_);
-               currentAcqj_ = acqj;
-               setRunningState(true);
                SequenceSettings.Builder sb = new SequenceSettings.Builder();
                double multiplier = 1;
                String token = (String) timeUnitCombo_.getSelectedItem();
