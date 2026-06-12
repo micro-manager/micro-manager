@@ -502,7 +502,9 @@ public final class RefineZDlg extends JDialog {
             core_.setXYPosition(xyStage_, cx, cy);
             core_.waitForDevice(xyStage_);
          } catch (Exception e) {
-            return tileName(tmpX, row) + " (move failed)";
+            ReportingUtils.logError(e, "RefineZ: move to " + tileName(tmpX, row)
+                  + " failed");
+            return tileName(tmpX, row) + " (move failed: " + e.getMessage() + ")";
          }
          if (af == null) {
             return tileName(tmpX, row) + " (no autofocus device)";
@@ -510,7 +512,9 @@ public final class RefineZDlg extends JDialog {
          try {
             af.fullFocus();
          } catch (Exception e) {
-            return tileName(tmpX, row);
+            ReportingUtils.logError(e, "RefineZ: autofocus at " + tileName(tmpX, row)
+                  + " failed");
+            return tileName(tmpX, row) + " (autofocus failed: " + e.getMessage() + ")";
          }
          RefinedPoint rp = readPoint(tmpX, row, cx, cy);
          if (rp == null) {
