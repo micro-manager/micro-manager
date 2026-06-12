@@ -44,6 +44,7 @@ import org.micromanager.Studio;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.positionlist.utils.TileCreator;
+import org.micromanager.internal.positionlist.utils.TileGrid;
 import org.micromanager.internal.positionlist.utils.ZGenerator;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -71,6 +72,7 @@ public final class TileCreatorDlg extends JDialog {
    private final JLabel labelBottom_ = new JLabel();
    private final JLabel labelWidth_ = new JLabel();
    private final JLabel labelWidthUmPx_ = new JLabel();
+   private final JButton refineZButton_ = new JButton();
    private static int numericPrefix_ = 0;
 
    private static final String OVERLAP_PREF = "overlap";
@@ -111,7 +113,7 @@ public final class TileCreatorDlg extends JDialog {
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(300, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
-      super.setSize(344, 280);
+      super.setSize(344, 312);
 
       final JButton goToLeftButton = new JButton();
       goToLeftButton.setFont(plainFont10);
@@ -262,6 +264,17 @@ public final class TileCreatorDlg extends JDialog {
       super.getContentPane().add(labelWidthUmPx_);
 
 
+      // "Refine Z" opens the mesh-leveling overview.  Only meaningful for grids,
+      // so it is disabled in Line mode along with the other grid-only controls.
+      // It is also disabled until at least two corners have been set (see
+      // updateRefineZEnabled()).
+      refineZButton_.setFont(plainFont10);
+      refineZButton_.setText("Refine Z...");
+      refineZButton_.setBounds(20, 216, 140, 23);
+      refineZButton_.setEnabled(false);
+      refineZButton_.addActionListener(arg0 -> openRefineZ());
+      super.getContentPane().add(refineZButton_);
+
       final JComponent[] lineDisableComponents = {
             goToBottomButton, goToTopButton, labelTop_,
             setBottomButton, setTopButton, labelBottom_};
@@ -274,6 +287,7 @@ public final class TileCreatorDlg extends JDialog {
             component.setEnabled(true);
          }
          settings.putBoolean(GRID_SELECTED, true);
+         updateRefineZEnabled();
       });
       gridButton.setSelected(settings.getBoolean(GRID_SELECTED, true));
       super.getContentPane().add(gridButton);
@@ -286,6 +300,7 @@ public final class TileCreatorDlg extends JDialog {
             component.setEnabled(false);
          }
          settings.putBoolean(GRID_SELECTED, false);
+         updateRefineZEnabled();
       });
       lineButton.setSelected(!settings.getBoolean(GRID_SELECTED, false));
       super.getContentPane().add(lineButton);
@@ -363,11 +378,11 @@ public final class TileCreatorDlg extends JDialog {
          settings.putString(PREFIX_PREF, prefixField.getText());
          addToPositionList();
       });
-      okButton.setBounds(20, 216, 93, 23);
+      okButton.setBounds(20, 246, 93, 23);
       super.getContentPane().add(okButton);
 
       final JButton cancelButton = new JButton();
-      cancelButton.setBounds(129, 216, 93, 23);
+      cancelButton.setBounds(129, 246, 93, 23);
       cancelButton.setFont(plainFont10);
       cancelButton.addActionListener(arg0 -> dispose());
       cancelButton.setText("Cancel");
@@ -375,7 +390,7 @@ public final class TileCreatorDlg extends JDialog {
       super.getContentPane().add(cancelButton);
 
       final JButton resetButton = new JButton();
-      resetButton.setBounds(234, 216, 93, 23);
+      resetButton.setBounds(234, 246, 93, 23);
       resetButton.setFont(plainFont10);
       resetButton.addActionListener(arg0 -> reset());
       resetButton.setText("Reset");
@@ -441,9 +456,27 @@ public final class TileCreatorDlg extends JDialog {
 
       endPosition_[location] = msp;
       endPositionSet_[location] = true;
+      updateRefineZEnabled();
 
       return msp;
 
+   }
+
+   /**
+    * Enables the Refine Z button only when in Grid mode and at least two
+    * corners have been set (the minimum the TileCreator needs).
+    */
+   private void updateRefineZEnabled() {
+      final MutablePropertyMapView settings = studio_.profile().getSettings(
+            TileCreatorDlg.class);
+      boolean gridMode = settings.getBoolean(GRID_SELECTED, true);
+      int cornersSet = 0;
+      for (boolean set : endPositionSet_) {
+         if (set) {
+            cornersSet++;
+         }
+      }
+      refineZButton_.setEnabled(gridMode && cornersSet >= 2);
    }
 
    /**
@@ -680,6 +713,54 @@ public final class TileCreatorDlg extends JDialog {
    }
 
    /**
+    * Opens the Refine Z (mesh leveling) window for the current grid.  Gathers
+    * the same context as {@link #addToPositionList} (XY stage, overlap, pixel
+    * size, checked Z stages, corner positions) and the precomputed grid
+    * geometry, then hands them to a {@link RefineZDlg}.
+    */
+   private void openRefineZ() {
+      String xyStage = positionListDlg_.get2DAxis();
+      if (xyStage == null) {
+         return;
+      }
+      final double overlap = getOverlap();
+      double pixelSizeUm;
+      try {
+         pixelSizeUm = getPixelSizeUm();
+      } catch (TileCreatorDlg.TileCreatorException ex) {
+         ReportingUtils.showError(ex, this);
+         return;
+      }
+      final StrVector zStages = positionListDlg_.get1DAxes();
+      final PositionList endPoints = new PositionList();
+      for (MultiStagePosition multiStagePosition : endPosition_) {
+         if (multiStagePosition != null) {
+            endPoints.addPosition(multiStagePosition);
+         }
+      }
+      if (endPoints.getNumberOfPositions() < 2) {
+         ReportingUtils.showError("Set at least two corners first", this);
+         return;
+      }
+
+      final MutablePropertyMapView settings = studio_.profile().getSettings(
+            TileCreatorDlg.class);
+      numericPrefix_ += 1;
+      String prefix = settings.getString(PREFIX_PREF, "Pos") + "-" + numericPrefix_;
+
+      TileGrid grid = tileCreator_.computeGrid(overlap, overlapUnit_,
+            endPoints.getPositions(), pixelSizeUm, xyStage);
+      if (grid == null) {
+         return;
+      }
+
+      RefineZDlg dlg = new RefineZDlg(core_, studio_, positionListDlg_, this, tileCreator_,
+            grid, overlap, overlapUnit_, pixelSizeUm, xyStage, zStages,
+            endPoints.getPositions(), prefix);
+      dlg.setVisible(true);
+   }
+
+   /**
     * Delete all positions from the dialog and update labels. Re-read pixel
     * calibration - when available - from the core
     */
@@ -697,6 +778,7 @@ public final class TileCreatorDlg extends JDialog {
       double pxsz = core_.getPixelSizeUm();
       pixelSizeField_.setText(NumberUtils.doubleToDisplayString(pxsz));
       centeredFrames_ = 0;
+      updateRefineZEnabled();
    }
 
    /**
