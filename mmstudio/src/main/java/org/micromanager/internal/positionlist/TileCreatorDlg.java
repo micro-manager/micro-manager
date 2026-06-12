@@ -714,6 +714,19 @@ public final class TileCreatorDlg extends JDialog {
    }
 
    /**
+    * Claims the next numeric prefix suffix (used to disambiguate repeated
+    * generations).  Called by {@link RefineZDlg} when it actually generates a
+    * position list, so opening Refine Z without applying does not consume a
+    * number.
+    *
+    * @return the next numeric prefix value
+    */
+   int nextNumericPrefix() {
+      numericPrefix_ += 1;
+      return numericPrefix_;
+   }
+
+   /**
     * Opens the Refine Z (mesh leveling) window for the current grid.  Gathers
     * the same context as {@link #addToPositionList} (XY stage, overlap, pixel
     * size, checked Z stages, corner positions) and the precomputed grid
@@ -744,20 +757,22 @@ public final class TileCreatorDlg extends JDialog {
          return;
       }
 
-      final MutablePropertyMapView settings = studio_.profile().getSettings(
-            TileCreatorDlg.class);
-      numericPrefix_ += 1;
-      String prefix = settings.getString(PREFIX_PREF, "Pos") + "-" + numericPrefix_;
-
       TileGrid grid = tileCreator_.computeGrid(overlap, overlapUnit_,
             endPoints.getPositions(), pixelSizeUm, xyStage);
       if (grid == null) {
          return;
       }
 
+      // Pass the unnumbered prefix; RefineZDlg claims a number via
+      // nextNumericPrefix() only when it actually generates positions, so
+      // opening and cancelling Refine Z does not consume a label number.
+      final MutablePropertyMapView settings = studio_.profile().getSettings(
+            TileCreatorDlg.class);
+      String prefixBase = settings.getString(PREFIX_PREF, "Pos");
+
       RefineZDlg dlg = new RefineZDlg(core_, studio_, positionListDlg_, this, tileCreator_,
             grid, overlap, overlapUnit_, pixelSizeUm, xyStage, zStages,
-            endPoints.getPositions(), prefix);
+            endPoints.getPositions(), prefixBase);
       dlg.setVisible(true);
    }
 

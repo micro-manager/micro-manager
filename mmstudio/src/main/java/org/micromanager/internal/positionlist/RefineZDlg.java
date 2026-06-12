@@ -43,6 +43,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -132,6 +134,7 @@ public final class RefineZDlg extends JDialog {
    private Mode mode_ = Mode.AUTOMATIC;
    private int[] pendingCell_; // {tmpX, row} of last ctrl-clicked tile in MANUAL mode
    private AutoRefineWorker worker_;
+   private ManualWorker manualWorker_;
 
    // Current XY stage position (for the live view rectangle). Updated from
    // XYStagePositionChangedEvent, which only fires on MM-driven moves.
@@ -170,7 +173,8 @@ public final class RefineZDlg extends JDialog {
     * @param xyStage XY stage name
     * @param zStages checked Z stage names
     * @param endPoints corner positions (define the grid extent)
-    * @param labelPrefix label prefix for generated positions
+    * @param labelPrefix base label prefix for generated positions (a numeric
+    *                    suffix is appended at generation time)
     */
    public RefineZDlg(CMMCore core, Studio studio, PositionListDlg positionListDlg,
                      TileCreatorDlg tileCreatorDlg, TileCreator tileCreator, TileGrid grid,
@@ -291,9 +295,6 @@ public final class RefineZDlg extends JDialog {
          @Override
          public void mousePressed(MouseEvent e) {
             if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown()) {
-               if (worker_ != null && !worker_.isDone()) {
-                  return;
-               }
                handleManualClick(e.getPoint());
             }
          }
@@ -311,7 +312,7 @@ public final class RefineZDlg extends JDialog {
       automaticButton_.setSelected(mode == Mode.AUTOMATIC);
       manualButton_.setSelected(mode == Mode.MANUAL);
       boolean auto = mode == Mode.AUTOMATIC;
-      boolean running = worker_ != null && !worker_.isDone();
+      boolean running = isBusy();
       nPointsField_.setEnabled(auto);
       startButton_.setEnabled(auto && !running);
       addButton_.setEnabled(!auto);
@@ -336,6 +337,11 @@ public final class RefineZDlg extends JDialog {
    // -------------------------------------------------------------------------
 
    private void startAutomatic() {
+      if (isBusy()) {
+         ReportingUtils.showError("A refinement operation is in progress. "
+               + "Wait for it to finish or press Cancel first.", this);
+         return;
+      }
       int total = grid_.nrImagesX * grid_.nrImagesY;
       int n;
       try {
@@ -470,46 +476,48 @@ public final class RefineZDlg extends JDialog {
             if (isCancelled()) {
                break;
             }
-            int tmpX = cell[0];
-            int row = cell[1];
-            double cx = grid_.tileCenterX(tmpX, row);
-            double cy = grid_.tileCenterY(tmpX, row);
-            try {
-               core_.setXYPosition(xyStage_, cx, cy);
-               core_.waitForDevice(xyStage_);
-            } catch (Exception e) {
-               failures_.add(tileName(tmpX, row) + " (move failed)");
-               done++;
-               setProgress(100 * done / cells_.size());
-               continue;
-            }
-            if (af == null) {
-               failures_.add(tileName(tmpX, row) + " (no autofocus device)");
-               done++;
-               setProgress(100 * done / cells_.size());
-               continue;
-            }
-            try {
-               af.fullFocus();
-            } catch (Exception e) {
-               failures_.add(tileName(tmpX, row));
-               done++;
-               setProgress(100 * done / cells_.size());
-               continue;
-            }
-            RefinedPoint rp = readPoint(tmpX, row, cx, cy);
-            if (rp == null) {
-               failures_.add(tileName(tmpX, row) + " (Z read failed)");
-            } else {
-               rp.thumb = grabThumbnail();
-               if (rp.thumb == null) {
-                  rp.marker = VISITED_COLOR;
-               }
-               publish(rp);
+            String failure = refineOneTile(af, cell[0], cell[1]);
+            if (failure != null) {
+               failures_.add(failure);
             }
             done++;
             setProgress(100 * done / cells_.size());
          }
+         return null;
+      }
+
+      /**
+       * Visits one tile: move, autofocus, read Z, grab thumbnail, and publish
+       * the refined point on success.
+       *
+       * @param af the autofocus plugin (may be null)
+       * @param tmpX logical column
+       * @param row row
+       * @return a failure description if the tile was skipped, or null on success
+       */
+      private String refineOneTile(AutofocusPlugin af, int tmpX, int row) {
+         double cx = grid_.tileCenterX(tmpX, row);
+         double cy = grid_.tileCenterY(tmpX, row);
+         try {
+            core_.setXYPosition(xyStage_, cx, cy);
+            core_.waitForDevice(xyStage_);
+         } catch (Exception e) {
+            return tileName(tmpX, row) + " (move failed)";
+         }
+         if (af == null) {
+            return tileName(tmpX, row) + " (no autofocus device)";
+         }
+         try {
+            af.fullFocus();
+         } catch (Exception e) {
+            return tileName(tmpX, row);
+         }
+         RefinedPoint rp = readPoint(tmpX, row, cx, cy);
+         if (rp == null) {
+            return tileName(tmpX, row) + " (Z read failed)";
+         }
+         rp.thumb = grabThumbnail();
+         publish(rp);
          return null;
       }
 
@@ -549,6 +557,9 @@ public final class RefineZDlg extends JDialog {
    // -------------------------------------------------------------------------
 
    private void handleManualClick(Point p) {
+      if (isBusy()) {
+         return;
+      }
       final int[] cell = overview_.screenToCell(p);
       if (cell == null) {
          return;
@@ -563,23 +574,20 @@ public final class RefineZDlg extends JDialog {
       final Map<String, Double> zTarget = targetZ(tmpX, row, cx, cy);
       setStatus("Moving to " + tileName(tmpX, row) + "...");
       overview_.repaint();
-      new Thread(() -> {
-         try {
-            core_.setXYPosition(xyStage_, cx, cy);
-            for (Map.Entry<String, Double> e : zTarget.entrySet()) {
-               core_.setPosition(e.getKey(), e.getValue());
-            }
-            core_.waitForDevice(xyStage_);
-            for (String z : zTarget.keySet()) {
-               core_.waitForDevice(z);
-            }
-            SwingUtilities.invokeLater(() ->
-                  setStatus("At " + tileName(tmpX, row) + ". Focus, then press Add."));
-         } catch (Exception e) {
-            SwingUtilities.invokeLater(() ->
-                  ReportingUtils.showError(e, "Failed to move stage", RefineZDlg.this));
+      manualWorker_ = new ManualWorker(() -> {
+         core_.setXYPosition(xyStage_, cx, cy);
+         for (Map.Entry<String, Double> e : zTarget.entrySet()) {
+            core_.setPosition(e.getKey(), e.getValue());
          }
-      }, "RefineZ manual move").start();
+         core_.waitForDevice(xyStage_);
+         for (String z : zTarget.keySet()) {
+            core_.waitForDevice(z);
+         }
+         return null;
+      }, "Failed to move stage",
+            ignored -> setStatus("At " + tileName(tmpX, row)
+                  + ". Focus, then press Add."));
+      manualWorker_.execute();
    }
 
    /**
@@ -614,23 +622,11 @@ public final class RefineZDlg extends JDialog {
          }
       }
       // Build an interpolator from refined points if available, else corners.
-      PositionList points = new PositionList();
+      PositionList points;
       if (!refined_.isEmpty()) {
-         for (RefinedPoint rp : refined_.values()) {
-            MultiStagePosition msp = new MultiStagePosition();
-            msp.setDefaultXYStage(xyStage_);
-            msp.add(StagePosition.create2D(xyStage_, rp.stageX, rp.stageY));
-            msp.setDefaultZStage(zStages_.get(0));
-            for (int a = 0; a < zStages_.size(); a++) {
-               String z = zStages_.get(a);
-               Double v = rp.z.get(z);
-               if (v != null) {
-                  msp.add(StagePosition.create1D(z, v));
-               }
-            }
-            points.addPosition(msp);
-         }
+         points = buildRefinedPositionList();
       } else {
+         points = new PositionList();
          points.setPositions(endPoints_);
       }
       try {
@@ -651,6 +647,9 @@ public final class RefineZDlg extends JDialog {
    }
 
    private void manualAdd() {
+      if (isBusy()) {
+         return;
+      }
       if (pendingCell_ == null) {
          ReportingUtils.showError("Ctrl-click a tile first", this);
          return;
@@ -660,21 +659,75 @@ public final class RefineZDlg extends JDialog {
       final double cx = grid_.tileCenterX(tmpX, row);
       final double cy = grid_.tileCenterY(tmpX, row);
       setStatus("Recording Z for " + tileName(tmpX, row) + "...");
-      new Thread(() -> {
-         final RefinedPoint rp = readPoint(tmpX, row, cx, cy);
+      manualWorker_ = new ManualWorker(() -> {
+         RefinedPoint rp = readPoint(tmpX, row, cx, cy);
          if (rp == null) {
-            SwingUtilities.invokeLater(() ->
-                  ReportingUtils.showError("Failed to read Z position", RefineZDlg.this));
-            return;
+            throw new Exception("Failed to read Z position");
          }
          rp.thumb = grabThumbnail();
-         SwingUtilities.invokeLater(() -> {
-            refined_.put(cellKey(tmpX, row), rp);
-            overview_.repaint();
-            setStatus("Recorded " + tileName(tmpX, row) + ". "
-                  + refined_.size() + " point(s).");
-         });
-      }, "RefineZ manual add").start();
+         return rp;
+      }, "Failed to record Z", rp -> {
+         refined_.put(cellKey(tmpX, row), rp);
+         overview_.repaint();
+         setStatus("Recorded " + tileName(tmpX, row) + ". "
+               + refined_.size() + " point(s).");
+      });
+      manualWorker_.execute();
+   }
+
+   /**
+    * True if either an automatic refinement run or a manual move/add is in
+    * progress.  Used to gate manual clicks, Add, and Apply so they do not race
+    * concurrent stage commands.
+    *
+    * @return whether a background stage operation is running
+    */
+   private boolean isBusy() {
+      return (worker_ != null && !worker_.isDone())
+            || (manualWorker_ != null && !manualWorker_.isDone());
+   }
+
+   /**
+    * Runs a single off-EDT manual stage operation (move or Z-capture) and
+    * delivers its result back on the EDT.  Replaces the previous raw threads so
+    * the operation is tracked (gated against re-entry via {@link #isBusy}) and
+    * cancellable from {@link #dispose}.
+    */
+   private final class ManualWorker extends SwingWorker<RefinedPoint, Void> {
+      private final Callable<RefinedPoint> background_;
+      private final String errorMessage_;
+      private final Consumer<RefinedPoint> onSuccess_;
+
+      ManualWorker(Callable<RefinedPoint> background,
+                   String errorMessage,
+                   Consumer<RefinedPoint> onSuccess) {
+         background_ = background;
+         errorMessage_ = errorMessage;
+         onSuccess_ = onSuccess;
+      }
+
+      @Override
+      protected RefinedPoint doInBackground() throws Exception {
+         return background_.call();
+      }
+
+      @Override
+      protected void done() {
+         if (isCancelled()) {
+            return;
+         }
+         try {
+            RefinedPoint rp = get();
+            onSuccess_.accept(rp);
+         } catch (Exception e) {
+            ReportingUtils.showError(e, errorMessage_, RefineZDlg.this);
+         } finally {
+            // Re-enable the Start button if we are back in Automatic mode and
+            // nothing else is running (a manual op may have finished while the
+            // user switched modes).
+            startButton_.setEnabled(mode_ == Mode.AUTOMATIC && !isBusy());
+         }
+      }
    }
 
    // -------------------------------------------------------------------------
@@ -727,8 +780,8 @@ public final class RefineZDlg extends JDialog {
    // -------------------------------------------------------------------------
 
    private void apply() {
-      if (worker_ != null && !worker_.isDone()) {
-         ReportingUtils.showError("An automatic refinement run is in progress. "
+      if (isBusy()) {
+         ReportingUtils.showError("A refinement operation is in progress. "
                + "Wait for it to finish or press Cancel first.", this);
          return;
       }
@@ -746,7 +799,45 @@ public final class RefineZDlg extends JDialog {
          }
       }
 
-      PositionList refinedList = new PositionList();
+      PositionList refinedList = buildRefinedPositionList();
+
+      ZGenerator zGen = null;
+      if (zStages_.size() > 0) {
+         ZGenerator.Type type = (ZGenerator.Type) methodCombo_.getSelectedItem();
+         zGen = ZGenerator.create(type, refinedList);
+      }
+
+      // Claim a numeric suffix only now that we are actually generating.
+      String labelPrefix = labelPrefix_;
+      if (tileCreatorDlg_ != null) {
+         labelPrefix = labelPrefix_ + "-" + tileCreatorDlg_.nextNumericPrefix();
+      }
+      PositionList full = tileCreator_.createTiles(overlap_, overlapUnit_, endPoints_,
+            pixelSizeUm_, labelPrefix, xyStage_, zStages_, zGen);
+      if (full == null) {
+         return;
+      }
+      for (MultiStagePosition msp : full.getPositions()) {
+         positionListDlg_.addPosition(msp, msp.getLabel());
+      }
+      positionListDlg_.activateAxisTable(true);
+      dispose();
+      if (tileCreatorDlg_ != null) {
+         tileCreatorDlg_.dispose();
+      }
+   }
+
+   /**
+    * Builds a PositionList from the captured refined points: one
+    * MultiStagePosition per point with the XY stage position and a 1D position
+    * for each checked Z stage that has a stored value.  Shared by
+    * {@link #apply} (to build the final interpolator) and {@link #targetZ} (to
+    * estimate Z for a manual move) so the two cannot diverge.
+    *
+    * @return position list of the refined points
+    */
+   private PositionList buildRefinedPositionList() {
+      PositionList list = new PositionList();
       for (RefinedPoint rp : refined_.values()) {
          MultiStagePosition msp = new MultiStagePosition();
          msp.setDefaultXYStage(xyStage_);
@@ -761,28 +852,9 @@ public final class RefineZDlg extends JDialog {
                }
             }
          }
-         refinedList.addPosition(msp);
+         list.addPosition(msp);
       }
-
-      ZGenerator zGen = null;
-      if (zStages_.size() > 0) {
-         ZGenerator.Type type = (ZGenerator.Type) methodCombo_.getSelectedItem();
-         zGen = ZGenerator.create(type, refinedList);
-      }
-
-      PositionList full = tileCreator_.createTiles(overlap_, overlapUnit_, endPoints_,
-            pixelSizeUm_, labelPrefix_, xyStage_, zStages_, zGen);
-      if (full == null) {
-         return;
-      }
-      for (MultiStagePosition msp : full.getPositions()) {
-         positionListDlg_.addPosition(msp, msp.getLabel());
-      }
-      positionListDlg_.activateAxisTable(true);
-      dispose();
-      if (tileCreatorDlg_ != null) {
-         tileCreatorDlg_.dispose();
-      }
+      return list;
    }
 
    // -------------------------------------------------------------------------
@@ -808,10 +880,14 @@ public final class RefineZDlg extends JDialog {
 
    @Override
    public void dispose() {
-      // Stop any in-progress automatic run so it does not keep moving the stage
-      // or publishing into disposed UI components after the window closes.
+      // Stop any in-progress automatic run or manual move/add so it does not
+      // keep moving the stage or publishing into disposed UI components after
+      // the window closes.
       if (worker_ != null && !worker_.isDone()) {
          worker_.cancel(true);
+      }
+      if (manualWorker_ != null && !manualWorker_.isDone()) {
+         manualWorker_.cancel(true);
       }
       studio_.events().unregisterForEvents(this);
       super.dispose();
@@ -825,17 +901,20 @@ public final class RefineZDlg extends JDialog {
       private static final long serialVersionUID = 1L;
       private static final int MARGIN = 12;
 
-      // Mapping from stage microns to screen pixels, recomputed each paint.
+      // Mapping from stage microns to screen pixels. scale_/origin depend on
+      // the panel size and are recomputed per paint; the padded stage bounds
+      // depend only on the immutable grid_ and are computed once (lazily).
       private double scale_ = 1.0;
       private double originX_ = 0.0; // stage X mapped to screen x=MARGIN
       private double originY_ = 0.0; // stage Y mapped to screen y=MARGIN
+      private boolean boundsValid_ = false;
+      private double boundsMinX_;
+      private double boundsMinY_;
+      private double spanX_;
+      private double spanY_;
 
-      /**
-       * Computes a uniform stage->screen transform that fits all tile cells
-       * with a margin. Stage +Y is drawn downward (screen +y), matching the
-       * convention used elsewhere in the position list UI.
-       */
-      private void computeTransform() {
+      /** Computes the padded stage-coordinate bounds of all tiles (once). */
+      private void computeBounds() {
          double minX = Double.POSITIVE_INFINITY;
          double minY = Double.POSITIVE_INFINITY;
          double maxX = Double.NEGATIVE_INFINITY;
@@ -854,17 +933,29 @@ public final class RefineZDlg extends JDialog {
          // Pad by half a tile so cells are not clipped at the edges.
          double padX = Math.abs(grid_.tileSizeXUm) / 2.0 + 1.0;
          double padY = Math.abs(grid_.tileSizeYUm) / 2.0 + 1.0;
-         minX -= padX;
-         maxX += padX;
-         minY -= padY;
-         maxY += padY;
-         double spanX = Math.max(maxX - minX, 1e-6);
-         double spanY = Math.max(maxY - minY, 1e-6);
+         boundsMinX_ = minX - padX;
+         boundsMinY_ = minY - padY;
+         spanX_ = Math.max((maxX + padX) - boundsMinX_, 1e-6);
+         spanY_ = Math.max((maxY + padY) - boundsMinY_, 1e-6);
+         boundsValid_ = true;
+      }
+
+      /**
+       * Computes a uniform stage->screen transform that fits all tile cells
+       * with a margin. Stage +Y is drawn downward (screen +y), matching the
+       * convention used elsewhere in the position list UI.  The tile bounds are
+       * cached (grid is immutable); only the panel-size-dependent scale/origin
+       * are recomputed here.
+       */
+      private void computeTransform() {
+         if (!boundsValid_) {
+            computeBounds();
+         }
          double availW = Math.max(getWidth() - 2 * MARGIN, 1);
          double availH = Math.max(getHeight() - 2 * MARGIN, 1);
-         scale_ = Math.min(availW / spanX, availH / spanY);
-         originX_ = minX;
-         originY_ = minY;
+         scale_ = Math.min(availW / spanX_, availH / spanY_);
+         originX_ = boundsMinX_;
+         originY_ = boundsMinY_;
       }
 
       private int screenX(double stageX) {
