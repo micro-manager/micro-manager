@@ -358,7 +358,9 @@ public class TiledDataViewer implements TiledDataViewerAPI {
    }
 
    public void redrawOverlay() {
-      //this will automatically trigger overlay redrawing in a coalescent fashion
+      if (displayCalculationExecutor_ == null) {
+         return;
+      }
       displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(
             new DisplayImageComputationRunnable());
    }
