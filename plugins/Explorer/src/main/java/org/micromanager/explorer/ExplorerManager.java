@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PropertyMap;
@@ -160,6 +161,9 @@ public class ExplorerManager {
    // Slice positions captured at session start, applied to every tile acquisition so the
    // z-axis shape is independent of later MDA slice edits. Empty when not using slices.
    private java.util.ArrayList<Double> sessionSlices_ = new java.util.ArrayList<>();
+   // Set to true after the first time we notify the user that MDA slice settings were
+   // overridden; prevents showing the same dialog on every subsequent tile.
+   private volatile boolean mdaSliceOverrideWarningShown_ = false;
 
    // Camera orientation / Image Flipper correction
    private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
@@ -237,6 +241,7 @@ public class ExplorerManager {
          sessionSlices_ = sessionUseSlices_
                  ? new java.util.ArrayList<>(startSettings.slices())
                  : new java.util.ArrayList<>();
+         mdaSliceOverrideWarningShown_ = false;
 
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
@@ -1193,6 +1198,32 @@ public class ExplorerManager {
    private void acquireSingleTileBlocking(int row, int col) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+
+         // Detect if the user changed MDA slice settings mid-session and warn once.
+         if (!mdaSliceOverrideWarningShown_) {
+            boolean currentUseSlices = settings.useSlices() && !settings.slices().isEmpty();
+            boolean slicesDiffer = (currentUseSlices != sessionUseSlices_)
+                    || (sessionUseSlices_ && !settings.slices().equals(sessionSlices_));
+            if (slicesDiffer) {
+               mdaSliceOverrideWarningShown_ = true;
+               SwingUtilities.invokeLater(() ->
+                     JOptionPane.showMessageDialog(
+                           frame_,
+                           "<html><body style='width:350px'>"
+                           + "The MDA slice (z-stack) settings were changed after this "
+                           + "Explorer session started.<br><br>"
+                           + "To keep the z-axis consistent across all tiles already "
+                           + "acquired, the Explorer will continue using the "
+                           + "<b>original slice settings</b> for the rest of this session."
+                           + "<br><br>"
+                           + "Start a new Explorer session if you want the updated "
+                           + "slice settings to take effect."
+                           + "</body></html>",
+                           "Explorer: MDA Settings Override",
+                           JOptionPane.INFORMATION_MESSAGE));
+            }
+         }
+
          // Use the z-axis decision locked at session start, not the current MDA
          // settings, so every tile in this session has the same axes shape.
          boolean useSlices = sessionUseSlices_;
