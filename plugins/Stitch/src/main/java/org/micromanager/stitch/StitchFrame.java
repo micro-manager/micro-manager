@@ -406,6 +406,10 @@ public class StitchFrame extends JDialog {
       progressDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       JProgressBar bar = new JProgressBar(0, 100);
       bar.setStringPainted(true);
+      // Start animated: the "Preparing" phase (adapter build, canvas sizing) has no
+      // measurable progress, so an indeterminate bar shows the user it is alive until the
+      // first determinate phase (Aligning/Writing) sets a 0->100 value.
+      bar.setIndeterminate(true);
       JLabel statusLabel = new JLabel("Preparing...");
       progressDialog.getContentPane().setLayout(
             new MigLayout("insets 12, gap 8", "[grow]"));
@@ -553,6 +557,33 @@ public class StitchFrame extends JDialog {
    }
 
    /**
+    * Set the progress bar to a phase-local 0-100 value on the EDT. Each export phase
+    * (Aligning, Writing, ...) drives the bar across the full 0-100 range so the user
+    * always sees motion within the current phase; the status label names the phase.
+    */
+   private static void setPhaseProgress(JProgressBar bar, int pct) {
+      final int v = Math.max(0, Math.min(100, pct));
+      SwingUtilities.invokeLater(() -> {
+         if (bar.isIndeterminate()) {
+            bar.setIndeterminate(false);
+         }
+         bar.setValue(v);
+      });
+   }
+
+   /**
+    * Put the progress bar into indeterminate (animated) mode with a status label, for
+    * phases that have no measurable sub-progress (e.g. NDTiff finalization) so the bar
+    * keeps moving and the user knows the process is still alive.
+    */
+   private static void setIndeterminate(JProgressBar bar, JLabel statusLabel, String text) {
+      SwingUtilities.invokeLater(() -> {
+         statusLabel.setText(text);
+         bar.setIndeterminate(true);
+      });
+   }
+
+   /**
     * Build an MM Datastore from the stitched/blended tile data and display it.
     *
     * <p>All pixel assembly happens here — no temp files.</p>
@@ -638,7 +669,9 @@ public class StitchFrame extends JDialog {
       try {
          // Step 2: detect pixel type, determine effectiveChNames, run alignment (if enabled)
          // — all before writing SummaryMetadata so the canvas size is final.
-         SwingUtilities.invokeLater(() -> statusLabel.setText("Computing..."));
+         // No measurable sub-progress here, so animate the bar (indeterminate) instead of
+         // sitting at a dead 0%. The Aligning/Writing phases set a determinate 0->100 after.
+         setIndeterminate(bar, statusLabel, "Computing...");
 
          // raw count from caller; effective count set after probe
          final int numCh = chNames.size();
@@ -730,12 +763,15 @@ public class StitchFrame extends JDialog {
          Map<Point, Point2D.Float> t0Origins = null;
          if (doAlign) {
             SwingUtilities.invokeLater(() -> statusLabel.setText("Aligning..."));
+            setPhaseProgress(bar, 0);  // determinate 0%, clears the "Computing" animation
             TileAligner t0Aligner = new TileAligner(adapter, alignAxes, effectiveChNames,
                   adapter.getSummaryMetadata());
             if (doMirror || rotationDeg != 0) {
                t0Aligner.setTileTransform(doMirror, rotationDeg);
             }
-            t0Origins = t0Aligner.computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
+            // Alignment is its own phase: drive the bar 0->100 across the alignment work.
+            t0Origins = t0Aligner.computeAlignedOrigins(0, maxDisplacementPx,
+                  pct -> setPhaseProgress(bar, pct));
             if (t0Origins == null) {
                String msg = "Alignment skipped: overlap is 0 px (overlapX="
                      + adapter.getOverlapX() + " overlapY=" + adapter.getOverlapY() + ")";
@@ -882,6 +918,10 @@ public class StitchFrame extends JDialog {
             correctedBlendSummaryMD = blendSummaryMD;
          }
 
+         // Writing is a fresh phase: restart the bar at a determinate 0 so it fills 0->100
+         // across all (t, z, channel) output images regardless of how the prior phase left
+         // it (also clears the "Computing" indeterminate animation when alignment is off).
+         setPhaseProgress(bar, 0);
          int imagesWritten = 0;
          for (int t = 0; t < numT; t++) {
             // Compute aligned origins once per time point at the selected z slice.
@@ -893,8 +933,7 @@ public class StitchFrame extends JDialog {
                origins = t0Origins;  // already computed and canvas-adjusted above
             } else {
                final int tIdx = t;
-               SwingUtilities.invokeLater(() -> statusLabel.setText(
-                     "Aligning t=" + (tIdx + 1) + "..."));
+               setIndeterminate(bar, statusLabel, "Aligning t=" + (tIdx + 1) + "...");
                HashMap<String, Object> tAlignAxes = new HashMap<>(alignAxes);
                tAlignAxes.put(Coords.TIME_POINT, t);
                TileAligner aligner = new TileAligner(adapter, tAlignAxes, effectiveChNames,
@@ -902,7 +941,8 @@ public class StitchFrame extends JDialog {
                if (doMirror || rotationDeg != 0) {
                   aligner.setTileTransform(doMirror, rotationDeg);
                }
-               origins = aligner.computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
+               origins = aligner.computeAlignedOrigins(0, maxDisplacementPx,
+                     pct -> setPhaseProgress(bar, pct));
                if (origins != null) {
                   studio_.logs().logMessage("Stitch alignment t=" + (t + 1) + ": "
                         + aligner.getLastAlignmentStats());
@@ -992,13 +1032,17 @@ public class StitchFrame extends JDialog {
                   final int zIdx = z;
                   SwingUtilities.invokeLater(() -> statusLabel.setText(
                         "Writing t=" + (tIdx + 1) + " z=" + (zIdx + 1) + "..."));
-                  final int imagesBefore = imagesWritten;
+                  // One writeCanvasTiledNdtiff call per (t, z); its pct (0-100) already covers
+                  // all channels and output tiles for that slice. The write phase therefore
+                  // spans numT*numZ such calls: global pct = (callIdx*100 + pct)/(numT*numZ).
+                  // (Do NOT divide by totalImages here -- writeCanvasTiledNdtiff returns a
+                  // count of output TILES, a different unit, which previously capped the bar
+                  // at ~100/numChannels percent.)
+                  final int ndtiffCallsBefore = tIdx * numZ + zIdx;
+                  final int ndtiffTotalCalls = numT * numZ;
                   final IntConsumer ndtiffProgress = pct ->
-                        SwingUtilities.invokeLater(() -> {
-                           int base = doAlign ? 50 : 0;
-                           int half = doAlign ? 2 : 1;
-                           bar.setValue(base + (imagesBefore * 100 + pct) / (totalImages * half));
-                        });
+                        setPhaseProgress(bar,
+                              (ndtiffCallsBefore * 100 + pct) / Math.max(1, ndtiffTotalCalls));
                   imagesWritten += writeCanvasTiledNdtiff(adapter, ndtiffStorage, tzAxes,
                         effectiveChNames,
                         tOrigins, doBlend, is16bit, isRgb, z, t,
@@ -1022,12 +1066,8 @@ public class StitchFrame extends JDialog {
                            "Blending t=" + (tIdx + 1) + " z=" + (zIdx + 1) + " " + chName + "..."));
                      final int imagesBefore = imagesWritten;
                      final IntConsumer blendProgress =
-                           pct -> SwingUtilities.invokeLater(() -> {
-                              int base = doAlign ? 50 : 0;
-                              int half = doAlign ? 2 : 1;
-                              bar.setValue(base
-                                    + (imagesBefore * 100 + pct) / (totalImages * half));
-                           });
+                           pct -> setPhaseProgress(bar,
+                                 (imagesBefore * 100 + pct) / Math.max(1, totalImages));
 
                      Object pixelData;
                      int bytesPerPixel;
@@ -1097,13 +1137,8 @@ public class StitchFrame extends JDialog {
                               outCanvasW,
                               outCanvasH,
                            correction, tOrigins, is16bit, isRgb,
-                           pct -> {
-                              int base = doAlign ? 50 : 0;
-                              int half = doAlign ? 2 : 1;
-                              int overall = base
-                                    + (imagesBefore * 100 + pct) / (totalImages * half);
-                              SwingUtilities.invokeLater(() -> bar.setValue(overall));
-                           });
+                           pct -> setPhaseProgress(bar,
+                                 (imagesBefore * 100 + pct) / Math.max(1, totalImages)));
                      Object canvas = result[0];
                      int bytesPerPixel = (Integer) result[1];
                      int numComponents = (Integer) result[2];
@@ -1130,10 +1165,9 @@ public class StitchFrame extends JDialog {
             // no-op when they exist; guard it so a pyramid hiccup can never prevent
             // finishedWriting(), which MUST always run -- an unfinalized NDTiff throws
             // NegativeArraySizeException when a viewer opens it.
-            SwingUtilities.invokeLater(() -> {
-               bar.setValue(98);
-               statusLabel.setText("Finalizing...");
-            });
+            // Finalizing has no measurable sub-progress, so show an animated (indeterminate)
+            // bar rather than freezing the user at a fixed value.
+            setIndeterminate(bar, statusLabel, "Finalizing...");
             try {
                ndtiffStorage.increaseMaxResolutionLevel(NDTIFF_MAX_RES_LEVEL);
             } catch (Throwable pyramidError) {
@@ -1142,7 +1176,7 @@ public class StitchFrame extends JDialog {
                      + "still valid. Zoomed-out display may be limited.");
             }
             ndtiffStorage.finishedWriting();
-            SwingUtilities.invokeLater(() -> bar.setValue(100));
+            setPhaseProgress(bar, 100);
             final NDTiffStorage finalStorage = ndtiffStorage;
             final String ndtiffPath = destPath;
             final DisplaySettings dispSettings = sourceDisplaySettings;
