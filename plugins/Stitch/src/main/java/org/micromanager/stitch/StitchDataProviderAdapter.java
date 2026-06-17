@@ -2,6 +2,9 @@ package org.micromanager.stitch;
 
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -538,19 +541,90 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       if (xyByPos.isEmpty()) {
          return null;
       }
-      // Pre-rotation tile step in canvas pixels. M is axis-aligned (M = O * A^-1), so a
-      // tile step of `imageWidth` camera pixels maps to ~`imageWidth` canvas pixels; the
-      // 90/270 dimension swap is handled downstream when converting to canvas coordinates.
-      double stepX = imageWidth;
-      double stepY = imageHeight;
+      // Map every position to canvas-pixel space, then quantize each axis to integer
+      // grid indices using the ACTUAL measured tile pitch (not imageWidth).
+      //
+      // The tile pitch in canvas pixels is imageWidth - overlap, which is strictly
+      // smaller than imageWidth whenever tiles overlap (the normal case). Quantizing
+      // with imageWidth therefore drifts: over many columns, adjacent positions can
+      // round to the same index (collisions that drop tiles AND poison the overlap
+      // estimate, collapsing the stitch into a single column). Measuring the pitch
+      // from the data makes the indices exact regardless of overlap.
+      List<Integer> posList = new ArrayList<>(xyByPos.keySet());
+      double[] canvasX = new double[posList.size()];
+      double[] canvasY = new double[posList.size()];
+      for (int i = 0; i < posList.size(); i++) {
+         double[] xy = xyByPos.get(posList.get(i));
+         double[] canvas = orientation.toCanvas(xy[0], xy[1]);
+         canvasX[i] = canvas[0];
+         canvasY[i] = canvas[1];
+      }
+      double pitchX = estimateAxisPitch(canvasX, imageWidth);
+      double pitchY = estimateAxisPitch(canvasY, imageHeight);
       Map<Integer, GridCell> grid = new HashMap<>();
-      for (Map.Entry<Integer, double[]> entry : xyByPos.entrySet()) {
-         double[] canvas = orientation.toCanvas(entry.getValue()[0], entry.getValue()[1]);
-         int col = (int) Math.round(canvas[0] / stepX);
-         int row = (int) Math.round(canvas[1] / stepY);
-         grid.put(entry.getKey(), new GridCell(row, col));
+      for (int i = 0; i < posList.size(); i++) {
+         int col = (int) Math.round(canvasX[i] / pitchX);
+         int row = (int) Math.round(canvasY[i] / pitchY);
+         grid.put(posList.get(i), new GridCell(row, col));
       }
       return shiftToZero(grid);
+   }
+
+   /**
+    * Estimate the regular tile pitch (spacing between adjacent tile origins) along a
+    * single axis from the projected per-position coordinates.
+    *
+    * <p>Sorts the distinct coordinate values, takes the gaps between consecutive ones,
+    * and returns the median of the "small" gaps (those within 1.5x of the smallest gap),
+    * which corresponds to the spacing between immediately-adjacent tiles. Larger gaps
+    * (row/column wrap, or missing tiles in an operator-terminated acquisition) are
+    * ignored. Falls back to {@code fallback} when fewer than two distinct values exist.</p>
+    *
+    * @param coords   per-position coordinate along this axis (canvas pixels)
+    * @param fallback pitch to use when it cannot be measured (e.g. single column)
+    * @return the estimated pitch in the same units as {@code coords}; never <= 0
+    */
+   private static double estimateAxisPitch(double[] coords, double fallback) {
+      if (coords.length < 2) {
+         return fallback > 0 ? fallback : 1.0;
+      }
+      double[] sorted = coords.clone();
+      Arrays.sort(sorted);
+      // Collect positive gaps between consecutive distinct coordinates.
+      List<Double> gaps = new ArrayList<>();
+      for (int i = 1; i < sorted.length; i++) {
+         double g = sorted[i] - sorted[i - 1];
+         if (g > 1.0) {  // ignore duplicates / sub-pixel jitter
+            gaps.add(g);
+         }
+      }
+      if (gaps.isEmpty()) {
+         return fallback > 0 ? fallback : 1.0;
+      }
+      Collections.sort(gaps);
+      // The smallest gaps correspond to immediately-adjacent tiles. Take the median of
+      // the cluster within 1.5x of the smallest gap so outliers (wraps, missing tiles)
+      // don't skew the estimate.
+      double smallest = gaps.get(0);
+      List<Double> adjacent = new ArrayList<>();
+      for (double g : gaps) {
+         if (g <= smallest * 1.5) {
+            adjacent.add(g);
+         }
+      }
+      double pitch = adjacent.get(adjacent.size() / 2);
+      return pitch > 0 ? pitch : (fallback > 0 ? fallback : 1.0);
+   }
+
+   /**
+    * Returns the median of a non-empty list of values. Sorts a copy, so the caller's
+    * list is left unmodified. For an even count, returns the lower of the two central
+    * values (the tile step is regular, so interpolation is unnecessary).
+    */
+   private static double median(List<Double> values) {
+      List<Double> sorted = new ArrayList<>(values);
+      Collections.sort(sorted);
+      return sorted.get((sorted.size() - 1) / 2);
    }
 
    /**
@@ -668,11 +742,20 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          rcToPos.put(((long) cell.row << 32) | (cell.col & 0xFFFFFFFFL), entry.getKey());
       }
 
-      // Find minimum step between horizontally and vertically adjacent grid cells.
+      // Collect the step between horizontally and vertically adjacent grid cells.
       // Only check the immediate right (dCol=+1) and bottom (dRow=+1) neighbour of
       // each cell — O(N) rather than O(N²).
-      double minStepX = Double.MAX_VALUE;
-      double minStepY = Double.MAX_VALUE;
+      //
+      // Use the MEDIAN of these steps rather than the minimum. The minimum is fragile:
+      // a single anomalous adjacent pair (e.g. a duplicate/near-coincident position, or
+      // a grid quantization collision) produces a near-zero step that, taken as the step,
+      // yields overlap = tileSize and collapses every tile into one row/column. The median
+      // is robust to such outliers. Steps below a small fraction of the tile size are
+      // physically impossible for genuinely adjacent tiles and are discarded outright.
+      final double minPlausibleStepX = tileW * 0.05 / xToPx;
+      final double minPlausibleStepY = tileH * 0.05 / yToPx;
+      List<Double> stepsX = new ArrayList<>();
+      List<Double> stepsY = new ArrayList<>();
       for (Map.Entry<Integer, GridCell> a : grid.entrySet()) {
          double[] xyA = xyByPos.get(a.getKey());
          if (xyA == null) {
@@ -687,8 +770,8 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
             double[] xyB = xyByPos.get(rightPos);
             if (xyB != null) {
                double step = Math.abs(xyB[0] - xyA[0]);
-               if (step > 0 && step < minStepX) {
-                  minStepX = step;
+               if (step > minPlausibleStepX) {
+                  stepsX.add(step);
                }
             }
          }
@@ -700,8 +783,8 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
             double[] xyB = xyByPos.get(bottomPos);
             if (xyB != null) {
                double step = Math.abs(xyB[1] - xyA[1]);
-               if (step > 0 && step < minStepY) {
-                  minStepY = step;
+               if (step > minPlausibleStepY) {
+                  stepsY.add(step);
                }
             }
          }
@@ -709,12 +792,12 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
 
       int overlapX = 0;
       int overlapY = 0;
-      if (minStepX < Double.MAX_VALUE) {
-         int stepXPx = (int) Math.round(minStepX * xToPx);
+      if (!stepsX.isEmpty()) {
+         int stepXPx = (int) Math.round(median(stepsX) * xToPx);
          overlapX = Math.max(0, tileW - stepXPx);
       }
-      if (minStepY < Double.MAX_VALUE) {
-         int stepYPx = (int) Math.round(minStepY * yToPx);
+      if (!stepsY.isEmpty()) {
+         int stepYPx = (int) Math.round(median(stepsY) * yToPx);
          overlapY = Math.max(0, tileH - stepYPx);
       }
       return new int[]{overlapX, overlapY};
