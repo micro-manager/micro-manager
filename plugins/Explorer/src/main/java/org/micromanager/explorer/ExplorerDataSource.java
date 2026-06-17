@@ -26,6 +26,7 @@ import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterf
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
 import org.micromanager.tileddataviewer.TiledDataViewerExploreControls;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
+import org.micromanager.tileddataviewer.overlay.OvalRoi;
 import org.micromanager.tileddataviewer.overlay.Overlay;
 import org.micromanager.tileddataviewer.overlay.Roi;
 import org.micromanager.tileddataviewer.overlay.TextRoi;
@@ -87,6 +88,13 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    // Display tile dimensions (pipeline-output size; set after first acquisition)
    private int tileWidth_ = -1;
    private int tileHeight_ = -1;
+
+   // Vessel outline — set by ExplorerManager when anchor is confirmed; null = not set.
+   private VesselType vesselType_ = null;
+   private double vesselTlX_ = 0;
+   private double vesselTlY_ = 0;
+   private double vesselWidthPx_ = 0;
+   private double vesselHeightPx_ = 0;
 
    public ExplorerDataSource(ExplorerManager manager) {
       manager_ = manager;
@@ -165,6 +173,24 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void clearPendingTiles() {
       pendingTiles_.clear();
+   }
+
+   /**
+    * Sets the vessel outline to be drawn in the overlay.
+    * All coordinates are in full-resolution pixel space (tile-grid coordinates).
+    */
+   public synchronized void setVesselOutline(VesselType type,
+         double tlX, double tlY, double widthPx, double heightPx) {
+      vesselType_     = type;
+      vesselTlX_      = tlX;
+      vesselTlY_      = tlY;
+      vesselWidthPx_  = widthPx;
+      vesselHeightPx_ = heightPx;
+   }
+
+   /** Removes the vessel outline from the overlay. */
+   public synchronized void clearVesselOutline() {
+      vesselType_ = null;
    }
 
    public void clearSelection() {
@@ -733,6 +759,56 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          stageRoi.setStrokeColor(Color.RED);
          stageRoi.setStrokeWidth(2);
          overlay.add(stageRoi);
+      }
+
+      // Green vessel outline — drawn last so it appears on top.
+      VesselType vessel;
+      double tlX;
+      double tlY;
+      double widthPx;
+      double heightPx;
+      synchronized (this) {
+         vessel   = vesselType_;
+         tlX      = vesselTlX_;
+         tlY      = vesselTlY_;
+         widthPx  = vesselWidthPx_;
+         heightPx = vesselHeightPx_;
+      }
+      if (vessel != null && !vessel.isNone() && widthPx > 0 && heightPx > 0) {
+         int bx = (int) ((tlX - viewOffset.x) * magnification);
+         int by = (int) ((tlY - viewOffset.y) * magnification);
+         int bw = (int) (widthPx  * magnification);
+         int bh = (int) (heightPx * magnification);
+         Roi border = new Roi(bx, by, bw, bh);
+         border.setStrokeColor(new Color(0, 220, 80));
+         border.setStrokeWidth(3);
+         overlay.add(border);
+
+         if (vessel.isMultiWell()) {
+            double pxPerUm  = widthPx / vessel.getWidthUm();
+            double wellW    = vessel.getWellWidthUm()    * pxPerUm;
+            double wellH    = vessel.getWellHeightUm()   * pxPerUm;
+            double spacX    = vessel.getWellSpacingXUm() * pxPerUm;
+            double spacY    = vessel.getWellSpacingYUm() * pxPerUm;
+            double firstWx  = vessel.getFirstWellXUm()  * pxPerUm;
+            double firstWy  = vessel.getFirstWellYUm()  * pxPerUm;
+            for (int r = 0; r < vessel.getWellRows(); r++) {
+               for (int c = 0; c < vessel.getWellCols(); c++) {
+                  double cx = tlX + firstWx + c * spacX;
+                  double cy = tlY + firstWy + r * spacY;
+                  int wx = (int) ((cx - wellW / 2.0 - viewOffset.x) * magnification);
+                  int wy = (int) ((cy - wellH / 2.0 - viewOffset.y) * magnification);
+                  int ww = (int) (wellW * magnification);
+                  int wh = (int) (wellH * magnification);
+                  Roi wellRoi = vessel.isWellsCircular()
+                        ? new OvalRoi(wx, wy, ww, wh)
+                        : new Roi(wx, wy, ww, wh);
+                  wellRoi.setStrokeColor(new Color(0, 180, 60));
+                  wellRoi.setStrokeWidth(1);
+                  overlay.add(wellRoi);
+               }
+            }
+         }
       }
    }
 }

@@ -165,6 +165,20 @@ public class ExplorerManager {
    // overridden; prevents showing the same dialog on every subsequent tile.
    private volatile boolean mdaSliceOverrideWarningShown_ = false;
 
+   // Vessel outline: type selected in ExplorerFrame, anchor set at runtime.
+   // Vessel axes are assumed parallel to stage X/Y (standard setup).
+   private VesselType vesselType_ = VesselType.NONE;
+   private VesselType.AnchorType vesselAnchorType_ = null;
+   // For simple vessels: stage position of the named anchor point.
+   // For multi-well plates: stage position of the plate top-left corner.
+   private double vesselAnchorStageX_ = 0;
+   private double vesselAnchorStageY_ = 0;
+   private int vesselAnchorWellRow_ = 0;
+   private int vesselAnchorWellCol_ = 0;
+   private boolean vesselUsedHcsCal_ = false;
+   // True when anchor is set but stageToPixel() was not ready; retry after first tile.
+   private boolean vesselOutlinePending_ = false;
+
    // Camera orientation / Image Flipper correction
    private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
    private boolean sessionCorrectionMirror_ = false; // horizontal mirror
@@ -330,6 +344,26 @@ public class ExplorerManager {
 
          startStagePositionPolling();
          studio_.events().registerForEvents(this);
+
+         // Restore vessel type from profile; anchor is always re-set per session.
+         String savedVessel = studio_.profile().getSettings(ExplorerFrame.class)
+               .getString(ExplorerFrame.VESSEL_TYPE, VesselType.NONE.getName());
+         vesselType_ = VesselType.builtIn().stream()
+               .filter(v -> v.getName().equals(savedVessel))
+               .findFirst().orElse(VesselType.NONE);
+         vesselAnchorType_ = null;
+         vesselUsedHcsCal_ = false;
+         vesselOutlinePending_ = false;
+         frame_.setExploringActive(true);
+         if (vesselType_.isMultiWell()) {
+            Point2D.Double hcsOffset = tryReadHcsCalibration();
+            frame_.setHcsCalibrationStatus(hcsOffset != null);
+            if (hcsOffset != null) {
+               applyHcsCalibration(hcsOffset);
+            }
+         } else {
+            frame_.setHcsCalibrationStatus(false);
+         }
 
       } catch (Exception e) {
          studio_.logs().showError(e, "Failed to start Explorer.");
@@ -598,8 +632,13 @@ public class ExplorerManager {
       flipperInPipeline_         = false;
       rawPixelSizeAffine_        = null;
       rawInitialPixelSizeAffine_ = null;
+      frame_.setExploringActive(false);
+      vesselAnchorType_ = null;
+      vesselUsedHcsCal_ = false;
+      vesselOutlinePending_ = false;
       if (dataSource_ != null) {
          dataSource_.clearPendingTiles();
+         dataSource_.clearVesselOutline();
       }
 
       if (displayExecutor_ != null) {
@@ -1275,6 +1314,9 @@ public class ExplorerManager {
                tileWidth_ = firstImage.getWidth();
                tileHeight_ = firstImage.getHeight();
                dataSource_.setTileDimensions(tileWidth_, tileHeight_);
+               if (vesselOutlinePending_) {
+                  updateVesselOutline();
+               }
 
                // Update storage overlap metadata with actual tile dimensions
                int overlapX = (int) Math.round(tileWidth_ * overlapPercentage_ / 100.0);
@@ -1979,5 +2021,222 @@ public class ExplorerManager {
       } catch (Exception e) {
          return null;
       }
+   }
+
+   // ===================== Vessel outline =====================
+
+   /**
+    * Called from ExplorerFrame when the operator changes the vessel type dropdown.
+    * Clears any existing anchor and outline so the new vessel starts fresh.
+    */
+   public void setVesselType(VesselType v) {
+      vesselType_ = (v != null) ? v : VesselType.NONE;
+      vesselAnchorType_ = null;
+      vesselUsedHcsCal_ = false;
+      vesselOutlinePending_ = false;
+      if (dataSource_ != null) {
+         dataSource_.clearVesselOutline();
+         redrawOverlay();
+      }
+      if (exploring_ && vesselType_.isMultiWell()) {
+         Point2D.Double hcsOffset = tryReadHcsCalibration();
+         frame_.setHcsCalibrationStatus(hcsOffset != null);
+         if (hcsOffset != null) {
+            applyHcsCalibration(hcsOffset);
+         }
+      } else {
+         frame_.setHcsCalibrationStatus(false);
+      }
+      frame_.setExploringActive(exploring_);
+   }
+
+   /**
+    * Called from ExplorerFrame when an anchor button is clicked.
+    * Reads the current stage position, computes the vessel outline in pixel space,
+    * pushes it to ExplorerDataSource, triggers a redraw, and zooms to show the vessel.
+    */
+   public void setVesselAnchor(VesselType.AnchorType anchorType) {
+      if (!exploring_ || vesselType_.isNone()) {
+         return;
+      }
+      try {
+         vesselAnchorStageX_ = studio_.core().getXPosition();
+         vesselAnchorStageY_ = studio_.core().getYPosition();
+         vesselAnchorType_   = anchorType;
+         updateVesselOutline();
+      } catch (Exception e) {
+         studio_.logs().showError(e,
+               "Explorer: could not read stage position for vessel anchor.");
+      }
+   }
+
+   private void updateVesselOutline() {
+      if (dataSource_ == null || vesselType_.isNone()) {
+         return;
+      }
+      if (!vesselType_.isMultiWell() && vesselAnchorType_ == null) {
+         return;
+      }
+
+      double pxPerUm = computePxPerUm();
+      if (pxPerUm <= 0) {
+         vesselOutlinePending_ = true;
+         return;
+      }
+      vesselOutlinePending_ = false;
+
+      double widthPx  = vesselType_.getWidthUm()  * pxPerUm;
+      double heightPx = vesselType_.getHeightUm() * pxPerUm;
+
+      double tlX;
+      double tlY;
+      if (vesselType_.isMultiWell()) {
+         // vesselAnchorStageX_/Y_ holds the plate top-left in stage coordinates
+         // (set by applyHcsCalibration or setVesselWellAnchor).
+         Point2D.Double plateTlPx = stageToPixel(vesselAnchorStageX_, vesselAnchorStageY_);
+         if (plateTlPx == null) {
+            vesselOutlinePending_ = true;
+            return;
+         }
+         tlX = plateTlPx.x;
+         tlY = plateTlPx.y;
+      } else {
+         Point2D.Double anchorPx = stageToPixel(vesselAnchorStageX_, vesselAnchorStageY_);
+         if (anchorPx == null) {
+            vesselOutlinePending_ = true;
+            return;
+         }
+         switch (vesselAnchorType_) {
+            case TOP_LEFT:
+               tlX = anchorPx.x;
+               tlY = anchorPx.y;
+               break;
+            case TOP_RIGHT:
+               tlX = anchorPx.x - widthPx;
+               tlY = anchorPx.y;
+               break;
+            case BOTTOM_LEFT:
+               tlX = anchorPx.x;
+               tlY = anchorPx.y - heightPx;
+               break;
+            case BOTTOM_RIGHT:
+               tlX = anchorPx.x - widthPx;
+               tlY = anchorPx.y - heightPx;
+               break;
+            case CENTER:
+            default:
+               tlX = anchorPx.x - widthPx / 2.0;
+               tlY = anchorPx.y - heightPx / 2.0;
+               break;
+         }
+      }
+      dataSource_.setVesselOutline(vesselType_, tlX, tlY, widthPx, heightPx);
+      redrawOverlay();
+      zoomToVessel(tlX, tlY, widthPx, heightPx);
+   }
+
+   private double computePxPerUm() {
+      int tw = dataSource_ != null ? dataSource_.getTileWidth() : -1;
+      if (tw <= 0 || initialCameraWidth_ <= 0 || initialPixelSizeUm_ <= 0) {
+         return -1;
+      }
+      return ((double) tw / initialCameraWidth_) / initialPixelSizeUm_;
+   }
+
+   private void zoomToVessel(double tlX, double tlY, double widthPx, double heightPx) {
+      if (viewer_ == null) {
+         return;
+      }
+      final double margin = 0.15;
+      final double displayW = widthPx  * (1.0 + 2 * margin);
+      final double displayH = heightPx * (1.0 + 2 * margin);
+      final double offsetX  = tlX - widthPx  * margin;
+      final double offsetY  = tlY - heightPx * margin;
+      SwingUtilities.invokeLater(() -> {
+         viewer_.setViewOffset(offsetX, offsetY);
+         viewer_.setFullResSourceDataSizeAspectCorrected(displayW, displayH);
+      });
+   }
+
+   /**
+    * Re-reads the HCS calibration from the profile and applies it if found.
+    * Called from ExplorerFrame when the operator clicks "Refresh".
+    */
+   public void refreshHcsCalibration() {
+      if (!exploring_ || !vesselType_.isMultiWell()) {
+         return;
+      }
+      Point2D.Double hcsOffset = tryReadHcsCalibration();
+      frame_.setHcsCalibrationStatus(hcsOffset != null);
+      if (hcsOffset != null) {
+         applyHcsCalibration(hcsOffset);
+      }
+   }
+
+   private void applyHcsCalibration(Point2D.Double offset) {
+      // HCS formula: stage_XY = plate_definition_XY + offset.
+      // Plate top-left is at plate definition (0, 0), so plateTL in stage coords = offset.
+      vesselAnchorStageX_ = offset.x;
+      vesselAnchorStageY_ = offset.y;
+      vesselUsedHcsCal_   = true;
+      vesselAnchorWellRow_ = 0;
+      vesselAnchorWellCol_ = 0;
+      updateVesselOutline();
+   }
+
+   /**
+    * Sets the vessel anchor from the current stage position, interpreted as the center of
+    * the given well (0-based row/col).  Computes the plate top-left from the well geometry.
+    * Called from ExplorerFrame when the operator clicks "Set Anchor".
+    */
+   public void setVesselWellAnchor(int row, int col) {
+      if (!exploring_ || !vesselType_.isMultiWell()) {
+         return;
+      }
+      try {
+         double stageX = studio_.core().getXPosition();
+         double stageY = studio_.core().getYPosition();
+         // Stage position of plate top-left = stage position of well center minus
+         // how far that well's center is from the plate's top-left corner.
+         vesselAnchorStageX_ = stageX
+               - vesselType_.getFirstWellXUm()
+               - col * vesselType_.getWellSpacingXUm();
+         vesselAnchorStageY_ = stageY
+               - vesselType_.getFirstWellYUm()
+               - row * vesselType_.getWellSpacingYUm();
+         vesselAnchorWellRow_ = row;
+         vesselAnchorWellCol_ = col;
+         vesselUsedHcsCal_ = false;
+         vesselAnchorType_ = null;
+         updateVesselOutline();
+      } catch (Exception e) {
+         studio_.logs().showError(e,
+               "Explorer: could not read stage position for vessel well anchor.");
+      }
+   }
+
+   /**
+    * Reads the HCS SiteGenerator offset from the profile via reflection.
+    * Returns null if HCS is not installed, not calibrated, or calibration values are NaN.
+    * The returned offset satisfies: stage_XY = plate_definition_XY + offset.
+    */
+   private Point2D.Double tryReadHcsCalibration() {
+      try {
+         Class<?> sgClass = Class.forName("org.micromanager.hcs.SiteGenerator");
+         java.util.List<Double> offset = studio_.profile()
+               .getSettings(sgClass)
+               .getDoubleList("site_offset",
+                     java.util.Arrays.asList(Double.NaN, Double.NaN));
+         if (offset.size() >= 2
+               && Double.isFinite(offset.get(0))
+               && Double.isFinite(offset.get(1))) {
+            return new Point2D.Double(offset.get(0), offset.get(1));
+         }
+      } catch (ClassNotFoundException ignored) {
+         // HCS plugin not installed
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: error reading HCS calibration");
+      }
+      return null;
    }
 }
