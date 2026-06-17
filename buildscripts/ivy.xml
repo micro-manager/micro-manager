@@ -11,6 +11,7 @@
       <conf name="optional" description="optional compile-time dependencies"/>
       <conf name="imagej" description="ij.jar only"/>
       <conf name="runtime" description="runtime-only dependencies"/>
+      <conf name="pitest" visibility="private" description="PIT mutation testing"/>
    </configurations>
 
    <dependencies defaultconf="compile">
@@ -146,6 +147,11 @@
 
       <!-- Gamepad plugin dependency; only works on Windows; not in Maven -->
       <dependency conf="optional"  name="jxinput" rev="0.8"/>
+
+      <!-- PIT mutation testing -->
+      <dependency conf="pitest->default" org="org.pitest" name="pitest" rev="1.22.1"/>
+      <dependency conf="pitest->default" org="org.pitest" name="pitest-ant" rev="1.22.1"/>
+      <dependency conf="pitest->default" org="org.pitest" name="pitest-entry" rev="1.22.1"/>
 
       <!-- Run-time-only dependencies -->
       <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
