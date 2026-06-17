@@ -513,6 +513,26 @@ public class StitchFrame extends JDialog {
                   canvasW, canvasH, doBlend, doAlign, finalCorrection, finalMaxDisplacement,
                   toStack, toNdtiff, destPath, datasetName, exportAlignZ,
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
+         } catch (OutOfMemoryError oom) {
+            // OutOfMemoryError is an Error, not an Exception, so it would otherwise
+            // escape the catch below and kill the export thread silently. Report it with
+            // actionable guidance: the stitch holds the output canvas plus alignment data
+            // in the heap, so a large grid needs a larger -Xmx (Edit > Options > Memory).
+            // logError takes an Exception; OutOfMemoryError is an Error, so wrap it.
+            studio_.logs().logError(new RuntimeException(oom),
+                  "Stitch export ran out of heap memory");
+            long maxMb = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+            final String oomMsg =
+                  "Out of memory while stitching.\n\n"
+                  + "The JVM heap (currently about " + maxMb + " MB) was exhausted. "
+                  + "Increase it via ImageJ: Edit > Options > Memory & Threads, set a "
+                  + "larger value (e.g. 50000 MB), then restart Micro-Manager. Reducing "
+                  + "the output region or disabling alignment also lowers memory use.";
+            SwingUtilities.invokeLater(() -> {
+               progressDialog.dispose();
+               JOptionPane.showMessageDialog(null, oomMsg,
+                     "Export Error - Out of Memory", JOptionPane.ERROR_MESSAGE);
+            });
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Stitch export failed");
             String msg = ex.getMessage();
@@ -589,6 +609,30 @@ public class StitchFrame extends JDialog {
       } else {
          outCanvasW = canvasW;
          outCanvasH = canvasH;
+      }
+
+      // The in-memory (RAM / MM Datastore) path materialises the whole canvas as a single
+      // pixel array per channel. A Java array is indexed by int, so a canvas with more than
+      // Integer.MAX_VALUE pixels cannot be represented and would throw a cryptic
+      // NegativeArraySizeException deep in TileBlender. Reject it up front with an
+      // actionable message. The NDTiff path has no such limit (it writes uniform output
+      // tiles), so steer the user there.
+      if (!toNdtiff) {
+         long canvasPixels = (long) outCanvasW * (long) outCanvasH;
+         if (canvasPixels > Integer.MAX_VALUE) {
+            final String msg = "The stitched canvas is " + outCanvasW + " x " + outCanvasH
+                  + " (" + canvasPixels + " pixels), which exceeds the "
+                  + Integer.MAX_VALUE + "-pixel limit of a single in-memory image. "
+                  + "Save to NDTiff instead -- it stores the canvas as tiles and has no "
+                  + "such size limit.";
+            SwingUtilities.invokeLater(() -> {
+               progressDialog.dispose();
+               JOptionPane.showMessageDialog(null, msg,
+                     "Canvas too large for in-memory export", JOptionPane.ERROR_MESSAGE);
+            });
+            // The caller's finally-block closes the adapter; just return here.
+            return;
+         }
       }
 
       try {
@@ -1081,13 +1125,22 @@ public class StitchFrame extends JDialog {
          SwingUtilities.invokeLater(() -> bar.setValue(100));
 
          if (toNdtiff) {
-            // Pre-build downsampled pyramid levels then finalize.
+            // The pyramid was built incrementally during writing (NDTIFF_MAX_RES_LEVEL set
+            // after the first tile). This call backstops the already-built levels and is a
+            // no-op when they exist; guard it so a pyramid hiccup can never prevent
+            // finishedWriting(), which MUST always run -- an unfinalized NDTiff throws
+            // NegativeArraySizeException when a viewer opens it.
             SwingUtilities.invokeLater(() -> {
                bar.setValue(98);
-               statusLabel.setText("Building pyramid levels...");
+               statusLabel.setText("Finalizing...");
             });
-            ndtiffStorage.increaseMaxResolutionLevel(4);
-            SwingUtilities.invokeLater(() -> statusLabel.setText("Finalizing..."));
+            try {
+               ndtiffStorage.increaseMaxResolutionLevel(NDTIFF_MAX_RES_LEVEL);
+            } catch (Throwable pyramidError) {
+               studio_.logs().logError(new RuntimeException(pyramidError),
+                     "Stitch: pyramid (low-res) generation issue; full-resolution data is "
+                     + "still valid. Zoomed-out display may be limited.");
+            }
             ndtiffStorage.finishedWriting();
             SwingUtilities.invokeLater(() -> bar.setValue(100));
             final NDTiffStorage finalStorage = ndtiffStorage;
@@ -1148,6 +1201,14 @@ public class StitchFrame extends JDialog {
     * One tile uses outTileSize² × bytesPerPixel of memory for the pixel buffer.
     */
    private static final int NDTIFF_OUTPUT_TILE_SIZE = 2048;
+
+   /**
+    * Pyramid depth for NDTiff output (number of downsampled levels). Set once after the
+    * first tile is written so the pyramid builds incrementally while tiff writers are open.
+    * Required for multi-gigapixel canvases: without a pyramid the viewer clamps to res
+    * level 0 and tries to allocate a full-canvas array, overflowing int.
+    */
+   private static final int NDTIFF_MAX_RES_LEVEL = 4;
 
    /**
     * Composites the fully blended, alignment-corrected stitched canvas into a regular
@@ -1309,6 +1370,18 @@ public class StitchFrame extends JDialog {
                      outTileSize, outTileSize, isRgb, is16bit, pixelSizeUm, axes);
                ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
                      isRgb, is16bit ? 16 : 8, outTileSize, outTileSize).get();
+               // Set the pyramid depth once, right after the first tile is written, so every
+               // subsequent putImageMultiRes builds the low-res levels inline. NDTiff's
+               // pyramid path overwrites shared downsampled tiles in place, which previously
+               // NPEd when a contributing tile lived in a rotated/closed tiff file
+               // (NDTiffWriter.fileChannel_ == null). That is now fixed in NDTiff
+               // (overwritePixels reopens a closed file for the in-place write), so the
+               // pyramid is safe to build again. A multi-gigapixel canvas REQUIRES the
+               // pyramid: without it the TiledDataViewer clamps to res level 0 and allocates
+               // a full-canvas int[] that overflows int (NegativeArraySizeException).
+               if (written == 0) {
+                  ndtiffStorage.increaseMaxResolutionLevel(NDTIFF_MAX_RES_LEVEL);
+               }
                written++;
                tilesWritten++;
                if (tileProgress != null && totalTilesThisCall > 0) {
