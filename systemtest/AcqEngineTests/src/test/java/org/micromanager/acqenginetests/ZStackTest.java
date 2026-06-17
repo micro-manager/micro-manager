@@ -1,7 +1,6 @@
 package org.micromanager.acqenginetests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -122,10 +121,13 @@ public class ZStackTest {
          }
       }
       if (useAcqEngJ_) {
-         // At most one Z set (to the single fake-stack origin), and the images
-         // all live on a single Z index.
+         // The images all live on a single Z index (no multi-slice stack)...
          assertEquals("AcqEngJ should not produce a multi-slice Z axis",
                1, result.axisLength(Coords.Z));
+         // ...and Z is set at most once (to the single fake-stack origin). This
+         // guards against AcqEngJ regressing into redundant Z sets per image.
+         assertTrue("AcqEngJ should set Z at most once for a channel-only MDA "
+               + "(was " + zSets + ")", zSets <= 1);
       } else {
          assertEquals("legacy engine must not touch Z for a channel-only MDA",
                0, zSets);

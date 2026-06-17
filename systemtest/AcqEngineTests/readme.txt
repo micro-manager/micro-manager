@@ -72,8 +72,12 @@ test-only compiles and runs the tests directly. Reports are written to
 build/JavaTestReports/AcqEngineTester/; a failure fails the ant build.
 
 These tests reuse the image decoder (TestImageDecoder/TaggedImageDecoder) from
-the SequenceTests module, so its test classes are added to the classpath in
-build.xml; SequenceTests is therefore compiled as part of this run.
+the SequenceTests module. The test-only target in build.xml compiles the
+SequenceTests "testing" helper sources together with our own test sources (it
+adds ../SequenceTests/src/test/java as a second source root), so the helpers are
+always available and you do NOT need to build SequenceTests first. This also
+works on the Unix build, which does not define the Windows-only intermediate
+output directories.
 
 
 Notes and gotchas

@@ -91,7 +91,7 @@ public class SequencedTest {
       studio.core().setProperty("TSwitcher", "TriggerSourcePort",
             "ExposureStartEdge");
       studio.core().setProperty("TSwitcher", "TriggerSequenceMaxLength", 2);
-      fixture_.drainEdt();
+      StudioTestFixture.drainEdt();
 
       SequenceSettings settings = studio.acquisitions().sequenceSettingsBuilder()
             .useChannels(true)

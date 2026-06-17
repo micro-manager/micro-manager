@@ -8,12 +8,16 @@
 
 		These tests reuse the image-decoding helpers (TestImageDecoder,
 		TaggedImageDecoder) from the SequenceTests module rather than
-		duplicating them. SequenceTests must therefore be compiled first; its
-		compiled test classes are added to our test classpath below.
+		duplicating them. We compile the SequenceTests 'testing' helper sources
+		together with our own test sources (see the test-only override below).
+		This keeps the build self-contained and works on both the Windows (Ant)
+		and Unix (Autotools) builds. Referencing SequenceTests' compiled output
+		dir would not, because that dir only exists under the Windows build
+		properties.
 	-->
 
-	<property name="seqtests.test.intdir"
-		location="${mm.java.test.intdir}/SequenceTester"/>
+	<property name="seqtests.testdir"
+		location="../SequenceTests/src/test/java"/>
 
 	<path id="project.classpath">
 		<path refid="mm.compile.classpath"/>
@@ -24,20 +28,25 @@
 
 	<path id="project.test.classpath">
 		<path refid="mm.test.classpath"/>
-		<!-- Reuse TestImageDecoder / TaggedImageDecoder from SequenceTests -->
-		<pathelement location="${seqtests.test.intdir}"/>
 	</path>
 
 	<!--
-		Override the shared 'test-only' target. Unlike the unit tests, these
-		integration tests instantiate a full MMStudio, which builds Swing
-		components (Background frames, etc.) and therefore CANNOT run with
-		java.awt.headless=true. We run non-headless instead. On a headless CI
-		host this requires a virtual display (e.g. Xvfb on Linux).
+		Override the shared 'test-only' target. Two reasons:
+		1. Unlike the unit tests, these integration tests instantiate a full
+		   MMStudio, which builds Swing components (Background frames, etc.) and
+		   therefore CANNOT run with java.awt.headless=true. We run non-headless
+		   instead. On a headless CI host this requires a virtual display (e.g.
+		   Xvfb on Linux).
+		2. We compile the SequenceTests 'testing' helper package alongside our
+		   own test sources so the shared image decoders are available without
+		   depending on SequenceTests having been built first.
 	-->
 	<target name="test-only" if="has.tests" unless="mm.java.disable.build">
 		<mkdir dir="${test.intdir}"/>
-		<mm-javac srcdir="${testdir}" destdir="${test.intdir}">
+		<mm-javac destdir="${test.intdir}">
+			<src path="${testdir}"/>
+			<!-- Shared helpers (TestImageDecoder, TaggedImageDecoder, ...). -->
+			<src path="${seqtests.testdir}"/>
 			<classpath refid="project.test.classpath"/>
 		</mm-javac>
 		<copy todir="${test.intdir}">

@@ -113,6 +113,13 @@ public class TimeLapseTest {
          cumulativeByFrame[t] =
                result.infoPacketAt(c).camera.cumulativeImageNr;
       }
+      // Verify every frame index was actually observed before comparing, so a
+      // missing frame gives a clear failure rather than a confusing comparison
+      // against the -1 sentinel.
+      for (int t = 0; t < numFrames; t++) {
+         assertTrue("no image observed for frame " + t,
+               cumulativeByFrame[t] >= 0);
+      }
       for (int t = 1; t < numFrames; t++) {
          assertTrue("frame " + t + " should be captured after frame " + (t - 1),
                cumulativeByFrame[t] > cumulativeByFrame[t - 1]);

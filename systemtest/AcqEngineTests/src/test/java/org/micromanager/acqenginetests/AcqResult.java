@@ -36,11 +36,16 @@ public final class AcqResult {
     * early can miss the last image(s). Wait (bounded) for the store to freeze.
     */
    private static void waitUntilFrozen(Datastore store) {
-      final long deadline = System.currentTimeMillis() + 10_000L;
+      final long timeoutMs = 10_000L;
+      final long deadline = System.currentTimeMillis() + timeoutMs;
       try {
          while (!store.isFrozen() && System.currentTimeMillis() < deadline) {
             Thread.sleep(10);
          }
+         // Fail fast rather than reading counts/coords while the sink thread is
+         // still writing -- a silent timeout would make assertions flaky.
+         assertTrue("Datastore did not freeze within " + timeoutMs
+               + " ms after the acquisition returned", store.isFrozen());
          // Give any final in-flight image a moment to be added after freeze.
          Thread.sleep(50);
       } catch (InterruptedException e) {
@@ -120,8 +125,7 @@ public final class AcqResult {
    public List<InfoPacket> infoPackets() throws IOException {
       List<InfoPacket> packets = new ArrayList<>();
       for (Coords c : store_.getUnorderedImageCoords()) {
-         Image img = store_.getImage(c);
-         packets.add(TestImageDecoder.decode((byte[]) img.getRawPixels()));
+         packets.add(infoPacketAt(c));
       }
       return packets;
    }
