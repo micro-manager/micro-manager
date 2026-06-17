@@ -637,16 +637,37 @@ public class TileAligner {
 
       List<TranslationResult> results = new ArrayList<>();
 
-      // Cache loaded tile pixels keyed by (col, row) Point
+      // Cache loaded tile pixels keyed by (col, row) Point.
+      //
+      // Memory: each pairwise comparison only needs the current tile plus its WEST
+      // (same row, col-1) and NORTH (row-1, same col) neighbours. Iterating in
+      // row-major order means at most the current row and the previous row are ever
+      // live. We therefore evict every row older than the previous one as we advance,
+      // bounding cache memory to ~2 rows of tiles instead of the whole grid (which for
+      // a 1387-tile dataset at ~5 MB/tile was ~7 GB and caused OutOfMemoryError).
       Map<Point, TilePixels> pixCache = new HashMap<>();
 
-      int total = tiles.size();
+      // Iterate row-major (row, then col) so the bounded cache always holds the needed
+      // west/north neighbours.
+      List<Point> ordered = new ArrayList<>(tiles);
+      ordered.sort((a, b) -> a.y != b.y ? a.y - b.y : a.x - b.x);
+
+      int total = ordered.size();
       int done = 0;
-      for (Point tile : tiles) {
+      int lastRow = Integer.MIN_VALUE;
+      for (Point tile : ordered) {
          progress.accept(total > 0 ? (done * 100 / total) : 0);
          done++;
          int col = tile.x;
          int row = tile.y;
+
+         // Advanced to a new row: drop any cached tiles from rows older than the
+         // previous one (row-2 and earlier) -- they can no longer be neighbours.
+         if (row != lastRow) {
+            final int keepFrom = row - 1;
+            pixCache.keySet().removeIf(p -> p.y < keepFrom);
+            lastRow = row;
+         }
 
          TilePixels cur = getOrLoad(pixCache, row, col, resLevel);
          if (cur == null) {
