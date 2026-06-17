@@ -768,6 +768,12 @@ public class TiledDataViewer implements TiledDataViewerAPI {
          }
          //This is where most of the calculation of creating a display image happens
          Image img = guiManager_.makeOrGetImage(view_);
+         if (img == null) {
+            // Render was deferred (e.g. display size not yet known for a very large
+            // dataset, so the requested image would be degenerate/oversized). Skip this
+            // repaint; the viewer will re-render once the canvas is laid out.
+            return;
+         }
          JSONObject tags = guiManager_.getLatestTags();
          currentMetadata_ = tags;
 
