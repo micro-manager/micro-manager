@@ -1185,7 +1185,8 @@ public class StitchFrame extends JDialog {
             // bar rather than freezing the user at a fixed value.
             setIndeterminate(bar, statusLabel, "Finalizing...");
             try {
-               ndtiffStorage.increaseMaxResolutionLevel(NDTIFF_MAX_RES_LEVEL);
+               ndtiffStorage.increaseMaxResolutionLevel(
+                     pyramidDepthForCanvas(outCanvasW, outCanvasH));
             } catch (Throwable pyramidError) {
                studio_.logs().logError(new RuntimeException(pyramidError),
                      "Stitch: pyramid (low-res) generation issue; full-resolution data is "
@@ -1258,12 +1259,37 @@ public class StitchFrame extends JDialog {
    private static final int NDTIFF_OUTPUT_TILE_SIZE = 2048;
 
    /**
-    * Pyramid depth for NDTiff output (number of downsampled levels). Set once after the
-    * first tile is written so the pyramid builds incrementally while tiff writers are open.
-    * Required for multi-gigapixel canvases: without a pyramid the viewer clamps to res
-    * level 0 and tries to allocate a full-canvas array, overflowing int.
+    * Minimum pyramid depth for NDTiff output. The actual depth is chosen per canvas by
+    * {@link #pyramidDepthForCanvas(int, int)} so the coarsest level fits in a window.
     */
-   private static final int NDTIFF_MAX_RES_LEVEL = 4;
+   private static final int NDTIFF_MIN_RES_LEVEL = 4;
+
+   /**
+    * Largest dimension (px) the coarsest pyramid level should have. The pyramid depth is
+    * chosen so the canvas downsampled by 2^depth fits within this, which keeps the fully
+    * zoomed-out view small enough to drag smoothly. NDTiff caps levels at MAX_RESOLUTION_LEVEL.
+    */
+   private static final int NDTIFF_COARSEST_TARGET_PX = 2048;
+
+   /**
+    * Choose the NDTiff pyramid depth (number of downsampled levels) for a canvas so the
+    * coarsest level's larger dimension is at most {@link #NDTIFF_COARSEST_TARGET_PX}.
+    * Without enough levels, a very zoomed-out view must assemble a large image from many
+    * low-res tiles on every drag, making panning sluggish. Bounded below by
+    * {@link #NDTIFF_MIN_RES_LEVEL} and above by NDTiffStorage.MAX_RESOLUTION_LEVEL.
+    *
+    * <p>Required for multi-gigapixel canvases: without a pyramid the viewer clamps to res
+    * level 0 and tries to allocate a full-canvas array, overflowing int.</p>
+    */
+   private static int pyramidDepthForCanvas(int canvasW, int canvasH) {
+      int largest = Math.max(canvasW, canvasH);
+      int depth = NDTIFF_MIN_RES_LEVEL;
+      while (depth < NDTiffStorage.MAX_RESOLUTION_LEVEL
+            && (largest >> depth) > NDTIFF_COARSEST_TARGET_PX) {
+         depth++;
+      }
+      return depth;
+   }
 
    /**
     * Composites the fully blended, alignment-corrected stitched canvas into a regular
@@ -1435,7 +1461,8 @@ public class StitchFrame extends JDialog {
                // pyramid: without it the TiledDataViewer clamps to res level 0 and allocates
                // a full-canvas int[] that overflows int (NegativeArraySizeException).
                if (written == 0) {
-                  ndtiffStorage.increaseMaxResolutionLevel(NDTIFF_MAX_RES_LEVEL);
+                  ndtiffStorage.increaseMaxResolutionLevel(
+                        pyramidDepthForCanvas(canvasW, canvasH));
                }
                written++;
                tilesWritten++;
