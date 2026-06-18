@@ -358,6 +358,13 @@ public class TiledDataViewer implements TiledDataViewerAPI {
    }
 
    public void redrawOverlay() {
+      // Guard against use after shutdown: displayCalculationExecutor_ is set to null when
+      // the viewer closes (shutdownMM2Resources), but overlay add/remove/activate events
+      // can still fire redrawOverlay during the close/detach cascade (and on a stale viewer
+      // reference after reopening). Without this guard those paths NPE -- mirrors update().
+      if (displayCalculationExecutor_ == null) {
+         return; // not initialized or already shut down
+      }
       //this will automatically trigger overlay redrawing in a coalescent fashion
       displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(
             new DisplayImageComputationRunnable());

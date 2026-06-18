@@ -1266,6 +1266,40 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             }
             final Image finalPrimaryImage = primaryImage;
 
+            // The images list passed to overlays must contain ONE image per visible channel:
+            // some overlays (e.g. TextOverlay in composite mode) iterate it to render every
+            // channel name. For a tiled/stitched dataset, dataProvider_.getImage(coords)
+            // returns null at a canvas position (display images come from getImageForDisplay,
+            // not per-coord getImage), so fetching real per-channel images yields at most one.
+            // TextOverlay only needs each image's channel Coords (to look up the name), so we
+            // build a minimal 1x1 placeholder per visible channel carrying the channel coord.
+            // This mirrors the histogram-routing placeholder pattern used in postImageMakerStats.
+            // Build defensively: this runs on every overlay redraw, so any failure here
+            // must NOT abort overlay painting (that would drop the scale bar and all names).
+            List<Image> overlayImages = new ArrayList<>();
+            try {
+               List<String> channelNames = axesBridge_.getChannelNames();
+               for (int i = 0; i < channelNames.size(); i++) {
+                  boolean visible = (i < ds.getNumberOfChannels())
+                        ? ds.isChannelVisible(i) : true;
+                  if (!visible) {
+                     continue;
+                  }
+                  Coords coords = Coordinates.builder().channel(i).build();
+                  overlayImages.add(studio_.data().createImage(
+                        new byte[1], 1, 1, 1, 1, coords,
+                        studio_.data().metadataBuilder().build()));
+               }
+            } catch (Exception ex) {
+               overlayImages.clear();
+            }
+            // Always fall back to the (non-null) primary image so overlays that only need a
+            // single representative image (ScaleBar, Pattern) keep working.
+            if (overlayImages.isEmpty()) {
+               overlayImages.add(finalPrimaryImage);
+            }
+            final List<Image> finalOverlayImages = overlayImages;
+
             // Paint all visible MM overlays into a fresh transparent BufferedImage
             BufferedImage buf = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
             Graphics2D bg = buf.createGraphics();
@@ -1275,10 +1309,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                   if (overlay.isVisible()) {
                      try {
                         overlay.paintOverlay(bg, screenRect, ds,
-                              finalPrimaryImage != null
-                                    ? Collections.singletonList(finalPrimaryImage)
-                                    : Collections.emptyList(),
-                              finalPrimaryImage, viewPort);
+                              finalOverlayImages, finalPrimaryImage, viewPort);
                         anyPainted = true;
                      } catch (Exception ex) {
                         studio_.logs().logError(ex,
