@@ -97,6 +97,12 @@ public class StitchFrame extends JDialog {
    private final DataProvider dataProvider_;
    private final MutablePropertyMapView settings_;
 
+   // Set by the progress dialog's Stop button to request a cooperative cancel of the export.
+   // The write loop checks it per output tile and stops at a safe point, still finalizing the
+   // (partial) NDTiff so it remains valid. Reset at the start of each export.
+   private final java.util.concurrent.atomic.AtomicBoolean exportCancelled_ =
+         new java.util.concurrent.atomic.AtomicBoolean(false);
+
    private JLabel alignChannelLabel_;
    private JComboBox<String> alignChannelCombo_;
    private JLabel alignZLabel_;
@@ -402,26 +408,40 @@ public class StitchFrame extends JDialog {
       dispose();
 
       // Progress dialog
-      JDialog progressDialog = new JDialog((Window) null, "Exporting...",
+      // Parent the progress dialog to the source display window so it appears over it.
+      final Window sourceWindow = displayWindow_ != null ? displayWindow_.getWindow() : null;
+      JDialog progressDialog = new JDialog(sourceWindow, "Exporting...",
             Dialog.ModalityType.MODELESS);
       progressDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       JProgressBar bar = new JProgressBar(0, 100);
       bar.setStringPainted(true);
       // Start animated: the "Preparing" phase (adapter build, canvas sizing) has no
       // measurable progress, so an indeterminate bar shows the user it is alive until the
-      // first determinate phase (Aligning/Writing) sets a 0->100 value.
+      // first determinate phase (Aligning/Writing) sets a 0->100 value. Hide the "0%" string
+      // while indeterminate -- it is meaningless and confusing during this phase.
+      bar.setStringPainted(false);
       bar.setIndeterminate(true);
       JLabel statusLabel = new JLabel("Preparing...");
+      // Reset cancel state for this export and wire a Stop button.
+      exportCancelled_.set(false);
+      JButton stopButton = new JButton("Stop");
+      stopButton.addActionListener(evt -> {
+         exportCancelled_.set(true);
+         stopButton.setEnabled(false);
+         statusLabel.setText("Stopping...");
+      });
       progressDialog.getContentPane().setLayout(
             new MigLayout("insets 12, gap 8", "[grow]"));
       progressDialog.getContentPane().add(statusLabel, "wrap");
       progressDialog.getContentPane().add(bar, "growx, wrap");
+      progressDialog.getContentPane().add(stopButton, "align center");
       URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
       if (iconUrl != null) {
          progressDialog.setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
       }
       progressDialog.pack();
-      progressDialog.setLocationRelativeTo(null);
+      // Position over the source window (falls back to screen-centre if it is null).
+      progressDialog.setLocationRelativeTo(sourceWindow);
       progressDialog.setVisible(true);
 
       final boolean doBlend = blend;
@@ -471,7 +491,7 @@ public class StitchFrame extends JDialog {
             final String msg = ex.getMessage();
             SwingUtilities.invokeLater(() -> {
                progressDialog.dispose();
-               JOptionPane.showMessageDialog(null,
+               JOptionPane.showMessageDialog(sourceWindow,
                      "Cannot determine tile grid positions: " + msg,
                      "Export Error", JOptionPane.ERROR_MESSAGE);
             });
@@ -535,7 +555,7 @@ public class StitchFrame extends JDialog {
                   + "the output region or disabling alignment also lowers memory use.";
             SwingUtilities.invokeLater(() -> {
                progressDialog.dispose();
-               JOptionPane.showMessageDialog(null, oomMsg,
+               JOptionPane.showMessageDialog(sourceWindow, oomMsg,
                      "Export Error - Out of Memory", JOptionPane.ERROR_MESSAGE);
             });
          } catch (Exception ex) {
@@ -547,7 +567,7 @@ public class StitchFrame extends JDialog {
             final String displayMsg = msg;
             SwingUtilities.invokeLater(() -> {
                progressDialog.dispose();
-               JOptionPane.showMessageDialog(null,
+               JOptionPane.showMessageDialog(sourceWindow,
                      "Export failed: " + displayMsg,
                      "Export Error", JOptionPane.ERROR_MESSAGE);
             });
@@ -568,6 +588,8 @@ public class StitchFrame extends JDialog {
          if (bar.isIndeterminate()) {
             bar.setIndeterminate(false);
          }
+         // Show the percentage now that we have a meaningful determinate value.
+         bar.setStringPainted(true);
          bar.setValue(v);
       });
    }
@@ -580,6 +602,8 @@ public class StitchFrame extends JDialog {
    private static void setIndeterminate(JProgressBar bar, JLabel statusLabel, String text) {
       SwingUtilities.invokeLater(() -> {
          statusLabel.setText(text);
+         // Hide the percentage string -- it has no meaning during an indeterminate phase.
+         bar.setStringPainted(false);
          bar.setIndeterminate(true);
       });
    }
@@ -658,8 +682,9 @@ public class StitchFrame extends JDialog {
                   + "Save to NDTiff instead -- it stores the canvas as tiles and has no "
                   + "such size limit.";
             SwingUtilities.invokeLater(() -> {
+               Window owner = progressDialog.getOwner();
                progressDialog.dispose();
-               JOptionPane.showMessageDialog(null, msg,
+               JOptionPane.showMessageDialog(owner, msg,
                      "Canvas too large for in-memory export", JOptionPane.ERROR_MESSAGE);
             });
             // The caller's finally-block closes the adapter; just return here.
@@ -925,6 +950,9 @@ public class StitchFrame extends JDialog {
          setPhaseProgress(bar, 0);
          int imagesWritten = 0;
          for (int t = 0; t < numT; t++) {
+            if (exportCancelled_.get()) {
+               break; // stop before starting a new time point
+            }
             // Compute aligned origins once per time point at the selected z slice.
             // t=0 was already computed before SummaryMetadata was written; reuse it.
             Map<Point, Point2D.Float> origins;
@@ -1199,6 +1227,7 @@ public class StitchFrame extends JDialog {
             writeNdtiffDisplaySettings(ndtiffStorage, effectiveChNames, sourceDisplaySettings);
             ndtiffStorage.finishedWriting();
             setPhaseProgress(bar, 100);
+            final boolean wasCancelled = exportCancelled_.get();
             final NDTiffStorage finalStorage = ndtiffStorage;
             final String ndtiffPath = destPath;
             final DisplaySettings dispSettings = sourceDisplaySettings;
@@ -1206,7 +1235,18 @@ public class StitchFrame extends JDialog {
             final int finalCanvasW = outCanvasW;
             final int finalCanvasH = outCanvasH;
             SwingUtilities.invokeLater(() -> {
+               // Capture the dialog's owner (the source display window) before disposing so
+               // the cancelled message can be centred over it rather than the screen.
+               Window owner = progressDialog.getOwner();
                progressDialog.dispose();
+               if (wasCancelled) {
+                  // Partial dataset was finalized and is valid, but incomplete -- don't open
+                  // it as if it were a finished stitch; tell the user where it is.
+                  JOptionPane.showMessageDialog(owner,
+                        "Stitch cancelled. A partial dataset was saved to:\n" + ndtiffPath,
+                        "Stitch Cancelled", JOptionPane.INFORMATION_MESSAGE);
+                  return;
+               }
                try {
                   openInTiledDataViewer(finalStorage, ndtiffPath, datasetName,
                         dispSettings, finalIsRgb, finalCanvasW, finalCanvasH);
@@ -1497,6 +1537,13 @@ public class StitchFrame extends JDialog {
       int written = 0;
       try {
          while (true) {
+            // Cooperative cancel: stop feeding/writing at a tile boundary. Workers see the
+            // abort flag and stop too; the caller still calls finishedWriting() so the
+            // partial NDTiff is valid.
+            if (exportCancelled_.get()) {
+               abort.set(true);
+               break;
+            }
             Object[] item = writeQueue.take();
             if (item == poison) {
                break;
