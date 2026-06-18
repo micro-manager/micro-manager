@@ -585,26 +585,35 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
     * @return the estimated pitch in the same units as {@code coords}; never <= 0
     */
    private static double estimateAxisPitch(double[] coords, double fallback) {
-      if (coords.length < 2) {
+      if (coords.length < 2 || fallback <= 0) {
          return fallback > 0 ? fallback : 1.0;
       }
       double[] sorted = coords.clone();
       Arrays.sort(sorted);
-      // Collect positive gaps between consecutive distinct coordinates.
+      // Collect gaps between consecutive sorted coordinates that represent a genuine
+      // step to an ADJACENT tile, ignoring tiny gaps from stage jitter between positions
+      // in the same row/column. The real tile pitch is imageWidth - overlap, i.e. close
+      // to `fallback` (the image dimension); jitter is only a few pixels. Requiring a gap
+      // to exceed a fraction of `fallback` cleanly separates the two. (A 1px threshold,
+      // as used previously, mistook intra-column jitter for the pitch and produced wildly
+      // inflated column indices -- e.g. col 1130 for a 3-column grid.)
+      double minRealStep = fallback * 0.3;
       List<Double> gaps = new ArrayList<>();
       for (int i = 1; i < sorted.length; i++) {
          double g = sorted[i] - sorted[i - 1];
-         if (g > 1.0) {  // ignore duplicates / sub-pixel jitter
+         if (g > minRealStep) {
             gaps.add(g);
          }
       }
       if (gaps.isEmpty()) {
-         return fallback > 0 ? fallback : 1.0;
+         // No adjacent-tile step found (e.g. a single row/column on this axis); the image
+         // dimension is the best available estimate of the pitch.
+         return fallback;
       }
+      // Among real steps, the adjacent-tile pitch is the SMALLEST (larger gaps are
+      // row/column wraps or skips over missing tiles). Use the median of the smallest
+      // cluster (within 1.5x of the minimum) for robustness against a stray small gap.
       Collections.sort(gaps);
-      // The smallest gaps correspond to immediately-adjacent tiles. Take the median of
-      // the cluster within 1.5x of the smallest gap so outliers (wraps, missing tiles)
-      // don't skew the estimate.
       double smallest = gaps.get(0);
       List<Double> adjacent = new ArrayList<>();
       for (double g : gaps) {
@@ -613,7 +622,7 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          }
       }
       double pitch = adjacent.get(adjacent.size() / 2);
-      return pitch > 0 ? pitch : (fallback > 0 ? fallback : 1.0);
+      return pitch > 0 ? pitch : fallback;
    }
 
    /**

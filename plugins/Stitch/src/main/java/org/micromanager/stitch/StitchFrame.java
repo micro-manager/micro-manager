@@ -997,13 +997,28 @@ public class StitchFrame extends JDialog {
                            nomX, nomY, o.x - nomX, o.y - nomY));
                   }
                } else {
+                  // Nominal placement: log only tiles that actually exist (from the adapter
+                  // axes set), not the full maxRow x maxCol product -- the latter can be huge
+                  // and floods the log. Cap the number of lines as a final safety net.
                   sortedTiles = new ArrayList<>();
-                  for (int row = 0; row <= adapter.getMaxRow(); row++) {
-                     for (int col = 0; col <= adapter.getMaxCol(); col++) {
-                        sortedTiles.add(new Point(col, row));
+                  Set<Point> realTiles = new HashSet<>();
+                  for (HashMap<String, Object> stored : adapter.getAxesSet()) {
+                     Object rowObj = stored.get(NDTiffStorage.ROW_AXIS);
+                     Object colObj = stored.get(NDTiffStorage.COL_AXIS);
+                     if (rowObj instanceof Integer && colObj instanceof Integer) {
+                        realTiles.add(new Point((Integer) colObj, (Integer) rowObj));
                      }
                   }
+                  sortedTiles.addAll(realTiles);
+                  sortedTiles.sort((a, b) -> a.y != b.y ? a.y - b.y : a.x - b.x);
+                  final int maxLogLines = 500;
+                  int logged = 0;
                   for (Point tile : sortedTiles) {
+                     if (logged++ >= maxLogLines) {
+                        studio_.logs().logMessage("Stitch: ... (" + (sortedTiles.size()
+                              - maxLogLines) + " more nominal tiles not logged)");
+                        break;
+                     }
                      int nomX = tile.x * nomStepX;
                      int nomY = tile.y * nomStepY;
                      studio_.logs().logMessage(String.format(
@@ -1175,6 +1190,11 @@ public class StitchFrame extends JDialog {
                      "Stitch: pyramid (low-res) generation issue; full-resolution data is "
                      + "still valid. Zoomed-out display may be limited.");
             }
+            // Persist the source channel colors/contrast into the NDTiff (written to
+            // display_settings.txt by finishedWriting()) so that reopening the dataset
+            // (e.g. in the Explorer plugin) restores the colors set here rather than
+            // falling back to guessed palette colors.
+            writeNdtiffDisplaySettings(ndtiffStorage, effectiveChNames, sourceDisplaySettings);
             ndtiffStorage.finishedWriting();
             setPhaseProgress(bar, 100);
             final NDTiffStorage finalStorage = ndtiffStorage;
@@ -1484,6 +1504,56 @@ public class StitchFrame extends JDialog {
       }
       tags.put("Axes", axesJson);
       return tags;
+   }
+
+   /**
+    * Persist per-channel display settings (color and contrast) into the NDTiff storage in
+    * the NDViewer/NDTiff format: a JSON object keyed by channel name, each value an object
+    * with an integer {@code "Color"} (packed RGB) and {@code "Min"}/{@code "Max"} contrast.
+    * NDTiffStorage.finishedWriting() writes this to {@code display_settings.txt}; the
+    * Explorer plugin reads {@code Color} per channel name when reopening the dataset.
+    *
+    * <p>Best-effort: any failure is logged and ignored so it can never block finalization.</p>
+    */
+   private void writeNdtiffDisplaySettings(NDTiffStorage storage, List<String> channelNames,
+                                           DisplaySettings sourceSettings) {
+      if (storage == null || sourceSettings == null || channelNames == null) {
+         return;
+      }
+      try {
+         JSONObject ds = new JSONObject();
+         for (int i = 0; i < channelNames.size(); i++) {
+            String name = channelNames.get(i);
+            if (name == null) {
+               continue; // RGB / unnamed channel
+            }
+            JSONObject chJson = new JSONObject();
+            try {
+               java.awt.Color color = sourceSettings.getChannelColor(i);
+               if (color != null) {
+                  chJson.put("Color", color.getRGB() & 0xFFFFFF);
+               }
+            } catch (Exception e) {
+               // no color for this channel; skip
+            }
+            try {
+               org.micromanager.display.ComponentDisplaySettings comp =
+                     sourceSettings.getChannelSettings(i).getComponentSettings(0);
+               chJson.put("Min", comp.getScalingMinimum());
+               chJson.put("Max", comp.getScalingMaximum());
+            } catch (Exception e) {
+               // no contrast for this channel; skip
+            }
+            if (chJson.length() > 0) {
+               ds.put(name, chJson);
+            }
+         }
+         if (ds.length() > 0) {
+            storage.setDisplaySettings(ds);
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Stitch: could not write NDTiff display settings");
+      }
    }
 
    /**
