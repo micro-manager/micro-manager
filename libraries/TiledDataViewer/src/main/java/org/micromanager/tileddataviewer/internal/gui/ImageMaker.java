@@ -598,6 +598,16 @@ public class ImageMaker {
       }
 
       public void recompute() {
+         // No pixels have been supplied for this channel yet (changePixels not called),
+         // so rawHistogram is null. This happens when a channel processor has been created
+         // during channel registration but a redraw (e.g. a canvas resize) fires before the
+         // first tile for that channel arrives. Skip until pixels exist; the caller's
+         // "no pixels yet" guard then continues past this channel. Without this, the redraw
+         // throws NPE in processHistogram and aborts the whole render (which also prevents
+         // the Inspector from finishing channel setup).
+         if (pixels == null || rawHistogram == null) {
+            return;
+         }
          ChannelRenderSettings rs = getChannelSettings(channelName_);
          final GlobalRenderSettings gs = globalRenderSettings_;
          contrastMin_ = rs.contrastMin;
