@@ -358,6 +358,18 @@ public class TiledDataViewer implements TiledDataViewerAPI {
    }
 
    public void redrawOverlay() {
+      // Guard against use after shutdown: displayCalculationExecutor_ is set to null when
+      // the viewer closes (shutdownMM2Resources), but overlay add/remove/activate events
+      // can still fire redrawOverlay during the close/detach cascade (and on a stale viewer
+      // reference after reopening). Without this guard those paths NPE -- mirrors update().
+      // This null-guard (and the similar ones in ImageMaker/recompute) is a targeted defence
+      // against a known limitation: the inner close() tears down viewer state on a background
+      // thread while overlay/Inspector events may still fire. The more thorough fix would be
+      // to stop dispatching display/overlay events once close() begins; until then, callers
+      // into a closing viewer must tolerate the torn-down state.
+      if (displayCalculationExecutor_ == null) {
+         return; // not initialized or already shut down
+      }
       //this will automatically trigger overlay redrawing in a coalescent fashion
       displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(
             new DisplayImageComputationRunnable());
@@ -699,7 +711,7 @@ public class TiledDataViewer implements TiledDataViewerAPI {
                //not ,uch to do at this point
                e.printStackTrace();
             } finally {
-               //Now all resources should be released, so evertthing can be shut down
+               //Now all resources should be released, so everything can be shut down
 
                //make everything else close
                guiManager_.shutdown();
@@ -768,6 +780,12 @@ public class TiledDataViewer implements TiledDataViewerAPI {
          }
          //This is where most of the calculation of creating a display image happens
          Image img = guiManager_.makeOrGetImage(view_);
+         if (img == null) {
+            // Render was deferred (e.g. display size not yet known for a very large
+            // dataset, so the requested image would be degenerate/oversized). Skip this
+            // repaint; the viewer will re-render once the canvas is laid out.
+            return;
+         }
          JSONObject tags = guiManager_.getLatestTags();
          currentMetadata_ = tags;
 

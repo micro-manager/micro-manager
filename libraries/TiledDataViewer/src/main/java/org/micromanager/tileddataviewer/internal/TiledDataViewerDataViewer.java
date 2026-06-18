@@ -164,6 +164,12 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    private final Map<Overlay, OverlayListener> mmOverlayListeners_ = new HashMap<>();
    // External overlayer plugin slot (e.g. DeskewExploreDataSource tile grid)
    private volatile TiledDataViewerOverlayerPlugin externalOverlayerPlugin_ = null;
+   // Cached per-visible-channel placeholder images passed to MM overlays (TextOverlay reads
+   // their channel Coords). Overlay redraws are frequent during pan/zoom, so we reuse these
+   // 1x1 placeholders and rebuild only when the channel set or its visibility changes
+   // (tracked by overlayImagesSignature_). Accessed only on the overlay-render path.
+   private List<Image> overlayChannelImages_ = null;
+   private String overlayImagesSignature_ = null;
    // Last rendered BufferedImage of MM overlays — read by the persistent mmOverlayRoi_
    private volatile BufferedImage mmOverlayBuf_ = null;
    // Single persistent Roi that draws mmOverlayBuf_ onto the canvas each repaint
@@ -1266,6 +1272,23 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             }
             final Image finalPrimaryImage = primaryImage;
 
+            // The images list passed to overlays must contain ONE image per visible channel:
+            // some overlays (e.g. TextOverlay in composite mode) iterate it to render every
+            // channel name. For a tiled/stitched dataset, dataProvider_.getImage(coords)
+            // returns null at a canvas position (display images come from getImageForDisplay,
+            // not per-coord getImage), so fetching real per-channel images yields at most one.
+            // TextOverlay only needs each image's channel Coords (to look up the name), so we
+            // build a minimal 1x1 placeholder per visible channel carrying the channel coord.
+            // These are cached and rebuilt only when the channel set/visibility changes (this
+            // runs on every overlay redraw, which is frequent during pan/zoom).
+            List<Image> overlayImages = getOrBuildOverlayChannelImages(ds);
+            // Always fall back to the (non-null) primary image so overlays that only need a
+            // single representative image (ScaleBar, Pattern) keep working.
+            if (overlayImages == null || overlayImages.isEmpty()) {
+               overlayImages = Collections.singletonList(finalPrimaryImage);
+            }
+            final List<Image> finalOverlayImages = overlayImages;
+
             // Paint all visible MM overlays into a fresh transparent BufferedImage
             BufferedImage buf = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
             Graphics2D bg = buf.createGraphics();
@@ -1275,10 +1298,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                   if (overlay.isVisible()) {
                      try {
                         overlay.paintOverlay(bg, screenRect, ds,
-                              finalPrimaryImage != null
-                                    ? Collections.singletonList(finalPrimaryImage)
-                                    : Collections.emptyList(),
-                              finalPrimaryImage, viewPort);
+                              finalOverlayImages, finalPrimaryImage, viewPort);
                         anyPainted = true;
                      } catch (Exception ex) {
                         studio_.logs().logError(ex,
@@ -1310,6 +1330,45 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             tiledDataViewer_.setOverlay(combined);
          }
       };
+   }
+
+   /**
+    * Return cached 1x1 placeholder images (one per visible channel, each carrying its channel
+    * Coords) for the MM overlays, rebuilding only when the channel set or its visibility has
+    * changed. Avoids allocating fresh placeholder Images on every overlay redraw (frequent
+    * during pan/zoom). Returns null on failure so the caller falls back to the primary image;
+    * this never throws so overlay painting is not aborted.
+    */
+   private synchronized List<Image> getOrBuildOverlayChannelImages(DisplaySettings ds) {
+      try {
+         List<String> channelNames = axesBridge_.getChannelNames();
+         // Signature captures channel names + visibility; rebuild only when it changes.
+         StringBuilder sig = new StringBuilder();
+         for (int i = 0; i < channelNames.size(); i++) {
+            boolean visible = (i < ds.getNumberOfChannels()) ? ds.isChannelVisible(i) : true;
+            sig.append(channelNames.get(i)).append(visible ? "=1;" : "=0;");
+         }
+         String signature = sig.toString();
+         if (signature.equals(overlayImagesSignature_) && overlayChannelImages_ != null) {
+            return overlayChannelImages_;
+         }
+         List<Image> images = new ArrayList<>();
+         for (int i = 0; i < channelNames.size(); i++) {
+            boolean visible = (i < ds.getNumberOfChannels()) ? ds.isChannelVisible(i) : true;
+            if (!visible) {
+               continue;
+            }
+            Coords coords = Coordinates.builder().channel(i).build();
+            images.add(studio_.data().createImage(
+                  new byte[1], 1, 1, 1, 1, coords,
+                  studio_.data().metadataBuilder().build()));
+         }
+         overlayChannelImages_ = images;
+         overlayImagesSignature_ = signature;
+         return images;
+      } catch (Exception ex) {
+         return null;
+      }
    }
 
    @Override

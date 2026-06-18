@@ -435,19 +435,15 @@ public class ExplorerManager {
                summaryMetadata, pixelSizeUm_, isRGB_);
          mm2Viewer_.setAccumulateStats(true);
 
-         // Load saved MM display settings or derive from heuristics
+         // Load saved MM display settings or derive from heuristics. Applying these is
+         // deferred until after initializeViewerToLoaded() has registered the channels
+         // (below), so the settings attach to channels that already exist in the display
+         // model. The channel NAMES shown in the Inspector and overlay dropdowns come from
+         // each channel's DisplaySettings .getName() (see applyDisplaySettingsHeuristics,
+         // which now sets .name(...)), not from the channel scrollbar.
          File mmSettingsFile = new File(dir, MM_DISPLAY_SETTINGS_FILE);
          final DisplaySettings savedMMSettings = mmSettingsFile.canRead()
                ? DefaultDisplaySettings.getSavedDisplaySettings(mmSettingsFile) : null;
-         try {
-            if (savedMMSettings != null) {
-               mm2Viewer_.setDisplaySettings(savedMMSettings);
-            } else {
-               applyDisplaySettingsHeuristics(summaryMetadata);
-            }
-         } catch (Exception e) {
-            studio_.logs().logError(e, "Failed to initialize DisplaySettings");
-         }
 
          viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
@@ -502,7 +498,20 @@ public class ExplorerManager {
                   if (mm2Viewer_ != null && !seedImages.isEmpty()) {
                      mm2Viewer_.newTileArrived(seedImages, seedAxesList);
                   }
+                  // Register the (named) channels in the display model FIRST.
                   viewer_.initializeViewerToLoaded(null);
+                  // Now that channels exist, apply display settings so they attach to the
+                  // named channels (colors, contrast). Done here -- not synchronously during
+                  // construction -- so the channel names are not lost.
+                  try {
+                     if (savedMMSettings != null) {
+                        mm2Viewer_.setDisplaySettings(savedMMSettings);
+                     } else {
+                        applyDisplaySettingsHeuristics(summaryMetadata);
+                     }
+                  } catch (Exception e) {
+                     studio_.logs().logError(e, "Failed to initialize DisplaySettings");
+                  }
                   viewer_.update();
 
                   if (savedViewState != null && viewer_ != null) {
@@ -1886,6 +1895,7 @@ public class ExplorerManager {
             }
             dsBuilder.channel(i,
                   studio_.displays().channelDisplaySettingsBuilder()
+                        .name(name)
                         .color(color).build());
          }
          mm2Viewer_.setDisplaySettings(dsBuilder.build());

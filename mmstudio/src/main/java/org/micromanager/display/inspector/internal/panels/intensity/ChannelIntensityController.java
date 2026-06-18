@@ -1249,7 +1249,18 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             settings.getChannelSettings(channelIndex_);
       channelVisibleButton_.setSelected(channelSettings.isVisible());
       channelColorSwatch_.setColor(channelSettings.getColor());
-      channelNameLabel_.setText(channelSettings.getName());
+      // The display-settings channel name can be empty (e.g. settings built without a
+      // name, as when reopening a dataset and deriving settings from heuristics). Fall
+      // back to the authoritative channel name from SummaryMetadata so the label is not
+      // blanked out -- this is the same source used when the panel was first created.
+      // This path is shared by all data viewers; the fallback only fires when the name is
+      // empty, so viewers that already set a non-empty channel name are unaffected.
+      String dsName = channelSettings.getName();
+      if (dsName == null || dsName.isEmpty()) {
+         dsName = viewer_.getDataProvider().getSummaryMetadata()
+               .getSafeChannelName(channelIndex_);
+      }
+      channelNameLabel_.setText(dsName);
 
       histoRangeComboBoxModel_.setBits(channelSettings);
 
