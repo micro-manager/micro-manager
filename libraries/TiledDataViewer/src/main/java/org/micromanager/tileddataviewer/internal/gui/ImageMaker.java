@@ -136,10 +136,27 @@ public class ImageMaker {
 
          boolean remakeDisplayImage = false; //remake the actual Image object if size
          // has changed, otherwise just set pixels
-         if (((int) viewCoords.getSourceImageSizeAtResLevel().x) != imageWidth_
-                 || ((int) viewCoords.getSourceImageSizeAtResLevel().y) != imageHeight_) {
-            imageWidth_ = (int) viewCoords.getSourceImageSizeAtResLevel().x;
-            imageHeight_ = (int) viewCoords.getSourceImageSizeAtResLevel().y;
+         int newWidth = (int) viewCoords.getSourceImageSizeAtResLevel().x;
+         int newHeight = (int) viewCoords.getSourceImageSizeAtResLevel().y;
+         // Guard against a degenerate or oversized display size. This happens transiently
+         // during viewer construction for very large (multi-gigapixel) datasets: an overlay
+         // redraw or setDisplaySettings fires before the canvas has been laid out, so the
+         // display image size has not been set and the resolution index is still 0, making
+         // the source size at res level the FULL canvas. For a >2.1 gigapixel canvas
+         // newWidth*newHeight then overflows int and throws NegativeArraySizeException.
+         // Returning null defers the render; the viewer re-renders once the canvas is laid
+         // out and the resolution index has been clamped to the available pyramid levels.
+         // This applies to every TiledDataViewer consumer (Stitch, Explorer, Deskew). For
+         // normal-sized datasets both the degenerate (<=0) and overflow branches are
+         // unreachable, so this only defers a render in the pathological cases described
+         // above and does not affect ordinary display.
+         if (newWidth <= 0 || newHeight <= 0
+                 || (long) newWidth * (long) newHeight > Integer.MAX_VALUE) {
+            return null;
+         }
+         if (newWidth != imageWidth_ || newHeight != imageHeight_) {
+            imageWidth_ = newWidth;
+            imageHeight_ = newHeight;
             rgbPixels_ = new int[imageWidth_ * imageHeight_];
             remakeDisplayImage = true;
          }
@@ -585,6 +602,16 @@ public class ImageMaker {
       }
 
       public void recompute() {
+         // No pixels have been supplied for this channel yet (changePixels not called),
+         // so rawHistogram is null. This happens when a channel processor has been created
+         // during channel registration but a redraw (e.g. a canvas resize) fires before the
+         // first tile for that channel arrives. Skip until pixels exist; the caller's
+         // "no pixels yet" guard then continues past this channel. Without this, the redraw
+         // throws NPE in processHistogram and aborts the whole render (which also prevents
+         // the Inspector from finishing channel setup).
+         if (pixels == null || rawHistogram == null) {
+            return;
+         }
          ChannelRenderSettings rs = getChannelSettings(channelName_);
          final GlobalRenderSettings gs = globalRenderSettings_;
          contrastMin_ = rs.contrastMin;

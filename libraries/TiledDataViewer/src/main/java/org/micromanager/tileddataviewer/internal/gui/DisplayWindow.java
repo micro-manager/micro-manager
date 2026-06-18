@@ -91,10 +91,6 @@ public class DisplayWindow implements WindowListener {
 
    }
 
-   public void onScollPositionChanged(AxisScroller scroller, int value) {
-      subImageControls_.onScollPositionChanged(scroller, value);
-   }
-
    public void onScrollersAdded() {
       subImageControls_.onScrollersAdded();
 
@@ -127,7 +123,7 @@ public class DisplayWindow implements WindowListener {
    }
 
    /**
-    * Called on EDT. Update image and make sure scrollers are in right positions
+    * Called on EDT. Update image and make sure scrollers are in correct positions
     *
     */
    public void displayImage(Image image, HashMap<String, int[]> hists, DataViewCoords view) {

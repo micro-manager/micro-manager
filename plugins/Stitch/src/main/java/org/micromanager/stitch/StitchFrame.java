@@ -57,6 +57,7 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
+import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
 import org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI;
@@ -95,6 +96,12 @@ public class StitchFrame extends JDialog {
    private final DisplayWindow displayWindow_;
    private final DataProvider dataProvider_;
    private final MutablePropertyMapView settings_;
+
+   // Set by the progress dialog's Stop button to request a cooperative cancel of the export.
+   // The write loop checks it per output tile and stops at a safe point, still finalizing the
+   // (partial) NDTiff so it remains valid. Reset at the start of each export.
+   private final java.util.concurrent.atomic.AtomicBoolean exportCancelled_ =
+         new java.util.concurrent.atomic.AtomicBoolean(false);
 
    private JLabel alignChannelLabel_;
    private JComboBox<String> alignChannelCombo_;
@@ -401,22 +408,40 @@ public class StitchFrame extends JDialog {
       dispose();
 
       // Progress dialog
-      JDialog progressDialog = new JDialog((Window) null, "Exporting...",
+      // Parent the progress dialog to the source display window so it appears over it.
+      final Window sourceWindow = displayWindow_ != null ? displayWindow_.getWindow() : null;
+      JDialog progressDialog = new JDialog(sourceWindow, "Exporting...",
             Dialog.ModalityType.MODELESS);
       progressDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       JProgressBar bar = new JProgressBar(0, 100);
       bar.setStringPainted(true);
+      // Start animated: the "Preparing" phase (adapter build, canvas sizing) has no
+      // measurable progress, so an indeterminate bar shows the user it is alive until the
+      // first determinate phase (Aligning/Writing) sets a 0->100 value. Hide the "0%" string
+      // while indeterminate -- it is meaningless and confusing during this phase.
+      bar.setStringPainted(false);
+      bar.setIndeterminate(true);
       JLabel statusLabel = new JLabel("Preparing...");
+      // Reset cancel state for this export and wire a Stop button.
+      exportCancelled_.set(false);
+      JButton stopButton = new JButton("Stop");
+      stopButton.addActionListener(evt -> {
+         exportCancelled_.set(true);
+         stopButton.setEnabled(false);
+         statusLabel.setText("Stopping...");
+      });
       progressDialog.getContentPane().setLayout(
             new MigLayout("insets 12, gap 8", "[grow]"));
       progressDialog.getContentPane().add(statusLabel, "wrap");
       progressDialog.getContentPane().add(bar, "growx, wrap");
+      progressDialog.getContentPane().add(stopButton, "align center");
       URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
       if (iconUrl != null) {
          progressDialog.setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
       }
       progressDialog.pack();
-      progressDialog.setLocationRelativeTo(null);
+      // Position over the source window (falls back to screen-centre if it is null).
+      progressDialog.setLocationRelativeTo(sourceWindow);
       progressDialog.setVisible(true);
 
       final boolean doBlend = blend;
@@ -466,7 +491,7 @@ public class StitchFrame extends JDialog {
             final String msg = ex.getMessage();
             SwingUtilities.invokeLater(() -> {
                progressDialog.dispose();
-               JOptionPane.showMessageDialog(null,
+               JOptionPane.showMessageDialog(sourceWindow,
                      "Cannot determine tile grid positions: " + msg,
                      "Export Error", JOptionPane.ERROR_MESSAGE);
             });
@@ -513,6 +538,26 @@ public class StitchFrame extends JDialog {
                   canvasW, canvasH, doBlend, doAlign, finalCorrection, finalMaxDisplacement,
                   toStack, toNdtiff, destPath, datasetName, exportAlignZ,
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
+         } catch (OutOfMemoryError oom) {
+            // OutOfMemoryError is an Error, not an Exception, so it would otherwise
+            // escape the catch below and kill the export thread silently. Report it with
+            // actionable guidance: the stitch holds the output canvas plus alignment data
+            // in the heap, so a large grid needs a larger -Xmx (Edit > Options > Memory).
+            // logError takes an Exception; OutOfMemoryError is an Error, so wrap it.
+            studio_.logs().logError(new RuntimeException(oom),
+                  "Stitch export ran out of heap memory");
+            long maxMb = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+            final String oomMsg =
+                  "Out of memory while stitching.\n\n"
+                  + "The JVM heap (currently about " + maxMb + " MB) was exhausted. "
+                  + "Increase it via ImageJ: Edit > Options > Memory & Threads, set a "
+                  + "larger value (e.g. 50000 MB), then restart Micro-Manager. Reducing "
+                  + "the output region or disabling alignment also lowers memory use.";
+            SwingUtilities.invokeLater(() -> {
+               progressDialog.dispose();
+               JOptionPane.showMessageDialog(sourceWindow, oomMsg,
+                     "Export Error - Out of Memory", JOptionPane.ERROR_MESSAGE);
+            });
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Stitch export failed");
             String msg = ex.getMessage();
@@ -522,7 +567,7 @@ public class StitchFrame extends JDialog {
             final String displayMsg = msg;
             SwingUtilities.invokeLater(() -> {
                progressDialog.dispose();
-               JOptionPane.showMessageDialog(null,
+               JOptionPane.showMessageDialog(sourceWindow,
                      "Export failed: " + displayMsg,
                      "Export Error", JOptionPane.ERROR_MESSAGE);
             });
@@ -530,6 +575,37 @@ public class StitchFrame extends JDialog {
             adapter.close();
          }
       }, "ExportMMTiles-Export").start();
+   }
+
+   /**
+    * Set the progress bar to a phase-local 0-100 value on the EDT. Each export phase
+    * (Aligning, Writing, ...) drives the bar across the full 0-100 range so the user
+    * always sees motion within the current phase; the status label names the phase.
+    */
+   private static void setPhaseProgress(JProgressBar bar, int pct) {
+      final int v = Math.max(0, Math.min(100, pct));
+      SwingUtilities.invokeLater(() -> {
+         if (bar.isIndeterminate()) {
+            bar.setIndeterminate(false);
+         }
+         // Show the percentage now that we have a meaningful determinate value.
+         bar.setStringPainted(true);
+         bar.setValue(v);
+      });
+   }
+
+   /**
+    * Put the progress bar into indeterminate (animated) mode with a status label, for
+    * phases that have no measurable sub-progress (e.g. NDTiff finalization) so the bar
+    * keeps moving and the user knows the process is still alive.
+    */
+   private static void setIndeterminate(JProgressBar bar, JLabel statusLabel, String text) {
+      SwingUtilities.invokeLater(() -> {
+         statusLabel.setText(text);
+         // Hide the percentage string -- it has no meaning during an indeterminate phase.
+         bar.setStringPainted(false);
+         bar.setIndeterminate(true);
+      });
    }
 
    /**
@@ -591,10 +667,37 @@ public class StitchFrame extends JDialog {
          outCanvasH = canvasH;
       }
 
+      // The in-memory (RAM / MM Datastore) path materialises the whole canvas as a single
+      // pixel array per channel. A Java array is indexed by int, so a canvas with more than
+      // Integer.MAX_VALUE pixels cannot be represented and would throw a cryptic
+      // NegativeArraySizeException deep in TileBlender. Reject it up front with an
+      // actionable message. The NDTiff path has no such limit (it writes uniform output
+      // tiles), so steer the user there.
+      if (!toNdtiff) {
+         long canvasPixels = (long) outCanvasW * (long) outCanvasH;
+         if (canvasPixels > Integer.MAX_VALUE) {
+            final String msg = "The stitched canvas is " + outCanvasW + " x " + outCanvasH
+                  + " (" + canvasPixels + " pixels), which exceeds the "
+                  + Integer.MAX_VALUE + "-pixel limit of a single in-memory image. "
+                  + "Save to NDTiff instead -- it stores the canvas as tiles and has no "
+                  + "such size limit.";
+            SwingUtilities.invokeLater(() -> {
+               Window owner = progressDialog.getOwner();
+               progressDialog.dispose();
+               JOptionPane.showMessageDialog(owner, msg,
+                     "Canvas too large for in-memory export", JOptionPane.ERROR_MESSAGE);
+            });
+            // The caller's finally-block closes the adapter; just return here.
+            return;
+         }
+      }
+
       try {
          // Step 2: detect pixel type, determine effectiveChNames, run alignment (if enabled)
          // — all before writing SummaryMetadata so the canvas size is final.
-         SwingUtilities.invokeLater(() -> statusLabel.setText("Computing..."));
+         // No measurable sub-progress here, so animate the bar (indeterminate) instead of
+         // sitting at a dead 0%. The Aligning/Writing phases set a determinate 0->100 after.
+         setIndeterminate(bar, statusLabel, "Computing...");
 
          // raw count from caller; effective count set after probe
          final int numCh = chNames.size();
@@ -686,12 +789,15 @@ public class StitchFrame extends JDialog {
          Map<Point, Point2D.Float> t0Origins = null;
          if (doAlign) {
             SwingUtilities.invokeLater(() -> statusLabel.setText("Aligning..."));
+            setPhaseProgress(bar, 0);  // determinate 0%, clears the "Computing" animation
             TileAligner t0Aligner = new TileAligner(adapter, alignAxes, effectiveChNames,
                   adapter.getSummaryMetadata());
             if (doMirror || rotationDeg != 0) {
                t0Aligner.setTileTransform(doMirror, rotationDeg);
             }
-            t0Origins = t0Aligner.computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
+            // Alignment is its own phase: drive the bar 0->100 across the alignment work.
+            t0Origins = t0Aligner.computeAlignedOrigins(0, maxDisplacementPx,
+                  pct -> setPhaseProgress(bar, pct));
             if (t0Origins == null) {
                String msg = "Alignment skipped: overlap is 0 px (overlapX="
                      + adapter.getOverlapX() + " overlapY=" + adapter.getOverlapY() + ")";
@@ -838,8 +944,15 @@ public class StitchFrame extends JDialog {
             correctedBlendSummaryMD = blendSummaryMD;
          }
 
+         // Writing is a fresh phase: restart the bar at a determinate 0 so it fills 0->100
+         // across all (t, z, channel) output images regardless of how the prior phase left
+         // it (also clears the "Computing" indeterminate animation when alignment is off).
+         setPhaseProgress(bar, 0);
          int imagesWritten = 0;
          for (int t = 0; t < numT; t++) {
+            if (exportCancelled_.get()) {
+               break; // stop before starting a new time point
+            }
             // Compute aligned origins once per time point at the selected z slice.
             // t=0 was already computed before SummaryMetadata was written; reuse it.
             Map<Point, Point2D.Float> origins;
@@ -849,8 +962,7 @@ public class StitchFrame extends JDialog {
                origins = t0Origins;  // already computed and canvas-adjusted above
             } else {
                final int tIdx = t;
-               SwingUtilities.invokeLater(() -> statusLabel.setText(
-                     "Aligning t=" + (tIdx + 1) + "..."));
+               setIndeterminate(bar, statusLabel, "Aligning t=" + (tIdx + 1) + "...");
                HashMap<String, Object> tAlignAxes = new HashMap<>(alignAxes);
                tAlignAxes.put(Coords.TIME_POINT, t);
                TileAligner aligner = new TileAligner(adapter, tAlignAxes, effectiveChNames,
@@ -858,7 +970,8 @@ public class StitchFrame extends JDialog {
                if (doMirror || rotationDeg != 0) {
                   aligner.setTileTransform(doMirror, rotationDeg);
                }
-               origins = aligner.computeAlignedOrigins(0, maxDisplacementPx, pct -> {});
+               origins = aligner.computeAlignedOrigins(0, maxDisplacementPx,
+                     pct -> setPhaseProgress(bar, pct));
                if (origins != null) {
                   studio_.logs().logMessage("Stitch alignment t=" + (t + 1) + ": "
                         + aligner.getLastAlignmentStats());
@@ -913,13 +1026,28 @@ public class StitchFrame extends JDialog {
                            nomX, nomY, o.x - nomX, o.y - nomY));
                   }
                } else {
+                  // Nominal placement: log only tiles that actually exist (from the adapter
+                  // axes set), not the full maxRow x maxCol product -- the latter can be huge
+                  // and floods the log. Cap the number of lines as a final safety net.
                   sortedTiles = new ArrayList<>();
-                  for (int row = 0; row <= adapter.getMaxRow(); row++) {
-                     for (int col = 0; col <= adapter.getMaxCol(); col++) {
-                        sortedTiles.add(new Point(col, row));
+                  Set<Point> realTiles = new HashSet<>();
+                  for (HashMap<String, Object> stored : adapter.getAxesSet()) {
+                     Object rowObj = stored.get(NDTiffStorage.ROW_AXIS);
+                     Object colObj = stored.get(NDTiffStorage.COL_AXIS);
+                     if (rowObj instanceof Integer && colObj instanceof Integer) {
+                        realTiles.add(new Point((Integer) colObj, (Integer) rowObj));
                      }
                   }
+                  sortedTiles.addAll(realTiles);
+                  sortedTiles.sort((a, b) -> a.y != b.y ? a.y - b.y : a.x - b.x);
+                  final int maxLogLines = 500;
+                  int logged = 0;
                   for (Point tile : sortedTiles) {
+                     if (logged++ >= maxLogLines) {
+                        studio_.logs().logMessage("Stitch: ... (" + (sortedTiles.size()
+                              - maxLogLines) + " more nominal tiles not logged)");
+                        break;
+                     }
                      int nomX = tile.x * nomStepX;
                      int nomY = tile.y * nomStepY;
                      studio_.logs().logMessage(String.format(
@@ -948,13 +1076,17 @@ public class StitchFrame extends JDialog {
                   final int zIdx = z;
                   SwingUtilities.invokeLater(() -> statusLabel.setText(
                         "Writing t=" + (tIdx + 1) + " z=" + (zIdx + 1) + "..."));
-                  final int imagesBefore = imagesWritten;
+                  // One writeCanvasTiledNdtiff call per (t, z); its pct (0-100) already covers
+                  // all channels and output tiles for that slice. The write phase therefore
+                  // spans numT*numZ such calls: global pct = (callIdx*100 + pct)/(numT*numZ).
+                  // (Do NOT divide by totalImages here -- writeCanvasTiledNdtiff returns a
+                  // count of output TILES, a different unit, which previously capped the bar
+                  // at ~100/numChannels percent.)
+                  final int ndtiffCallsBefore = tIdx * numZ + zIdx;
+                  final int ndtiffTotalCalls = numT * numZ;
                   final IntConsumer ndtiffProgress = pct ->
-                        SwingUtilities.invokeLater(() -> {
-                           int base = doAlign ? 50 : 0;
-                           int half = doAlign ? 2 : 1;
-                           bar.setValue(base + (imagesBefore * 100 + pct) / (totalImages * half));
-                        });
+                        setPhaseProgress(bar,
+                              (ndtiffCallsBefore * 100 + pct) / Math.max(1, ndtiffTotalCalls));
                   imagesWritten += writeCanvasTiledNdtiff(adapter, ndtiffStorage, tzAxes,
                         effectiveChNames,
                         tOrigins, doBlend, is16bit, isRgb, z, t,
@@ -978,12 +1110,8 @@ public class StitchFrame extends JDialog {
                            "Blending t=" + (tIdx + 1) + " z=" + (zIdx + 1) + " " + chName + "..."));
                      final int imagesBefore = imagesWritten;
                      final IntConsumer blendProgress =
-                           pct -> SwingUtilities.invokeLater(() -> {
-                              int base = doAlign ? 50 : 0;
-                              int half = doAlign ? 2 : 1;
-                              bar.setValue(base
-                                    + (imagesBefore * 100 + pct) / (totalImages * half));
-                           });
+                           pct -> setPhaseProgress(bar,
+                                 (imagesBefore * 100 + pct) / Math.max(1, totalImages));
 
                      Object pixelData;
                      int bytesPerPixel;
@@ -1053,13 +1181,8 @@ public class StitchFrame extends JDialog {
                               outCanvasW,
                               outCanvasH,
                            correction, tOrigins, is16bit, isRgb,
-                           pct -> {
-                              int base = doAlign ? 50 : 0;
-                              int half = doAlign ? 2 : 1;
-                              int overall = base
-                                    + (imagesBefore * 100 + pct) / (totalImages * half);
-                              SwingUtilities.invokeLater(() -> bar.setValue(overall));
-                           });
+                           pct -> setPhaseProgress(bar,
+                                 (imagesBefore * 100 + pct) / Math.max(1, totalImages)));
                      Object canvas = result[0];
                      int bytesPerPixel = (Integer) result[1];
                      int numComponents = (Integer) result[2];
@@ -1081,15 +1204,30 @@ public class StitchFrame extends JDialog {
          SwingUtilities.invokeLater(() -> bar.setValue(100));
 
          if (toNdtiff) {
-            // Pre-build downsampled pyramid levels then finalize.
-            SwingUtilities.invokeLater(() -> {
-               bar.setValue(98);
-               statusLabel.setText("Building pyramid levels...");
-            });
-            ndtiffStorage.increaseMaxResolutionLevel(4);
-            SwingUtilities.invokeLater(() -> statusLabel.setText("Finalizing..."));
+            // The pyramid was built incrementally during writing (NDTIFF_MAX_RES_LEVEL set
+            // after the first tile). This call backstops the already-built levels and is a
+            // no-op when they exist; guard it so a pyramid hiccup can never prevent
+            // finishedWriting(), which MUST always run -- an unfinalized NDTiff throws
+            // NegativeArraySizeException when a viewer opens it.
+            // Finalizing has no measurable sub-progress, so show an animated (indeterminate)
+            // bar rather than freezing the user at a fixed value.
+            setIndeterminate(bar, statusLabel, "Finalizing...");
+            try {
+               ndtiffStorage.increaseMaxResolutionLevel(
+                     pyramidDepthForCanvas(outCanvasW, outCanvasH));
+            } catch (Throwable pyramidError) {
+               studio_.logs().logError(new RuntimeException(pyramidError),
+                     "Stitch: pyramid (low-res) generation issue; full-resolution data is "
+                     + "still valid. Zoomed-out display may be limited.");
+            }
+            // Persist the source channel colors/contrast into the NDTiff (written to
+            // display_settings.txt by finishedWriting()) so that reopening the dataset
+            // (e.g. in the Explorer plugin) restores the colors set here rather than
+            // falling back to guessed palette colors.
+            writeNdtiffDisplaySettings(ndtiffStorage, effectiveChNames, sourceDisplaySettings);
             ndtiffStorage.finishedWriting();
-            SwingUtilities.invokeLater(() -> bar.setValue(100));
+            setPhaseProgress(bar, 100);
+            final boolean wasCancelled = exportCancelled_.get();
             final NDTiffStorage finalStorage = ndtiffStorage;
             final String ndtiffPath = destPath;
             final DisplaySettings dispSettings = sourceDisplaySettings;
@@ -1097,7 +1235,18 @@ public class StitchFrame extends JDialog {
             final int finalCanvasW = outCanvasW;
             final int finalCanvasH = outCanvasH;
             SwingUtilities.invokeLater(() -> {
+               // Capture the dialog's owner (the source display window) before disposing so
+               // the cancelled message can be centred over it rather than the screen.
+               Window owner = progressDialog.getOwner();
                progressDialog.dispose();
+               if (wasCancelled) {
+                  // Partial dataset was finalized and is valid, but incomplete -- don't open
+                  // it as if it were a finished stitch; tell the user where it is.
+                  JOptionPane.showMessageDialog(owner,
+                        "Stitch cancelled. A partial dataset was saved to:\n" + ndtiffPath,
+                        "Stitch Cancelled", JOptionPane.INFORMATION_MESSAGE);
+                  return;
+               }
                try {
                   openInTiledDataViewer(finalStorage, ndtiffPath, datasetName,
                         dispSettings, finalIsRgb, finalCanvasW, finalCanvasH);
@@ -1148,6 +1297,47 @@ public class StitchFrame extends JDialog {
     * One tile uses outTileSize² × bytesPerPixel of memory for the pixel buffer.
     */
    private static final int NDTIFF_OUTPUT_TILE_SIZE = 2048;
+
+   /**
+    * Maximum number of parallel compositing worker threads, or 0 for "auto"
+    * (availableProcessors - 1). Set to 1 to force fully single-threaded compositing if a
+    * source storage ever proves unsafe for concurrent reads. NDTiff writes always remain
+    * single-threaded regardless of this value.
+    */
+   private static final int STITCH_MAX_COMPOSITE_THREADS = 0;
+
+   /**
+    * Minimum pyramid depth for NDTiff output. The actual depth is chosen per canvas by
+    * {@link #pyramidDepthForCanvas(int, int)} so the coarsest level fits in a window.
+    */
+   private static final int NDTIFF_MIN_RES_LEVEL = 4;
+
+   /**
+    * Largest dimension (px) the coarsest pyramid level should have. The pyramid depth is
+    * chosen so the canvas downsampled by 2^depth fits within this, which keeps the fully
+    * zoomed-out view small enough to drag smoothly. NDTiff caps levels at MAX_RESOLUTION_LEVEL.
+    */
+   private static final int NDTIFF_COARSEST_TARGET_PX = 2048;
+
+   /**
+    * Choose the NDTiff pyramid depth (number of downsampled levels) for a canvas so the
+    * coarsest level's larger dimension is at most {@link #NDTIFF_COARSEST_TARGET_PX}.
+    * Without enough levels, a very zoomed-out view must assemble a large image from many
+    * low-res tiles on every drag, making panning sluggish. Bounded below by
+    * {@link #NDTIFF_MIN_RES_LEVEL} and above by NDTiffStorage.MAX_RESOLUTION_LEVEL.
+    *
+    * <p>Required for multi-gigapixel canvases: without a pyramid the viewer clamps to res
+    * level 0 and tries to allocate a full-canvas array, overflowing int.</p>
+    */
+   private static int pyramidDepthForCanvas(int canvasW, int canvasH) {
+      int largest = Math.max(canvasW, canvasH);
+      int depth = NDTIFF_MIN_RES_LEVEL;
+      while (depth < NDTiffStorage.MAX_RESOLUTION_LEVEL
+            && (largest >> depth) > NDTIFF_COARSEST_TARGET_PX) {
+         depth++;
+      }
+      return depth;
+   }
 
    /**
     * Composites the fully blended, alignment-corrected stitched canvas into a regular
@@ -1240,84 +1430,139 @@ public class StitchFrame extends JDialog {
       JSONObject storageMD = ndtiffStorage.getSummaryMetadata();
       double pixelSizeUm = storageMD != null ? storageMD.optDouble("PixelSize_um", 0) : 0;
 
-      int numCols = (int) Math.ceil((double) canvasW / outTileSize);
-      int numRows = (int) Math.ceil((double) canvasH / outTileSize);
-      int written = 0;
-      int totalTilesThisCall = numRows * numCols * effectiveChNames.size();
-      int tilesWritten = 0;
+      final int numCols = (int) Math.ceil((double) canvasW / outTileSize);
+      final int numRows = (int) Math.ceil((double) canvasH / outTileSize);
+      final int numCh = effectiveChNames.size();
+      final int totalTilesThisCall = numRows * numCols * numCh;
 
-      for (int canvasRow = 0; canvasRow < numRows; canvasRow++) {
-         for (int canvasCol = 0; canvasCol < numCols; canvasCol++) {
-            int roiX = canvasCol * outTileSize;
-            int roiY = canvasRow * outTileSize;
-            int roiW = Math.min(outTileSize, canvasW - roiX);
-            int roiH = Math.min(outTileSize, canvasH - roiY);
+      // Work items are (canvasRow, canvasCol, channel) triples enumerated by a single index
+      // in [0, total); the producer derives the triple from the index by arithmetic. This
+      // avoids allocating a List<int[]> with one small object per output tile, which on a
+      // very large canvas would be a lot of short-lived heap (and works against the
+      // "one output tile at a time" memory goal).
 
-            for (String chName : effectiveChNames) {
-               Object pixelData;
+      // Parallelise the CPU-bound compositing across worker threads, but keep the NDTiff
+      // writes (and the inline pyramid build, which is NOT thread-safe) on a single writer.
+      // Disk I/O is not the bottleneck (spindle vs SSD measured identical) -- compositing is.
+      // The concurrency lives in ParallelTileWriter (unit-tested separately); here we only
+      // supply the producer (composite a tile) and consumer (write a tile).
+      //
+      // THREAD-SAFETY CAVEAT: producers call compositeOutputTile concurrently, which reads
+      // from the shared source storage via TileBlender. That is only safe because
+      // StitchDataProviderAdapter serializes source reads (MultipageTiffReader is not
+      // concurrent-read-safe). If a new source path bypasses that adapter, revisit this.
+      // STITCH_MAX_COMPOSITE_THREADS=1 forces fully serial compositing as an escape hatch.
+      final int numWorkers = STITCH_MAX_COMPOSITE_THREADS > 0
+            ? STITCH_MAX_COMPOSITE_THREADS
+            : Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+      final TileBlender finalCompositor = compositor;
+      final Map<Point, Point2D.Float> finalTileOrigins = tileOrigins;
+      final double finalPixelSizeUm = pixelSizeUm;
+      // Tracks whether the pyramid depth has been set (once, on the first write).
+      final boolean[] pyramidSet = {false};
 
-               // Composite the output ROI from source tiles.
-               // Always write full outTileSize×outTileSize tiles (padding the last tile in
-               // each row/column with zeros) so NDTiffStorage sees a consistent row stride.
-               if (isRgb) {
-                  BufferedImage bimg =
-                        compositor.composite(roiX, roiY, roiW, roiH, 0, tileOrigins, pct -> {});
-                  int[] argb = new int[roiW * roiH];
-                  bimg.getRGB(0, 0, roiW, roiH, argb, 0, roiW);
-                  byte[] bgra = argbToBgra(argb);
-                  if (roiW < outTileSize || roiH < outTileSize) {
-                     byte[] padded = new byte[outTileSize * outTileSize * 4];
-                     for (int row = 0; row < roiH; row++) {
-                        System.arraycopy(bgra, row * roiW * 4,
-                              padded, row * outTileSize * 4, roiW * 4);
-                     }
-                     pixelData = padded;
-                  } else {
-                     pixelData = bgra;
-                  }
-               } else if (is16bit) {
-                  short[] composited = compositor.composite16(roiX, roiY, roiW, roiH, 0,
-                        chName, tileOrigins, tileTransform16, pct -> {});
-                  if (roiW < outTileSize || roiH < outTileSize) {
-                     short[] padded = new short[outTileSize * outTileSize];
-                     for (int row = 0; row < roiH; row++) {
-                        System.arraycopy(composited, row * roiW,
-                              padded, row * outTileSize, roiW);
-                     }
-                     pixelData = padded;
-                  } else {
-                     pixelData = composited;
-                  }
-               } else {
-                  byte[] composited = compositor.composite8(roiX, roiY, roiW, roiH, 0,
-                        chName, tileOrigins, tileTransform8, pct -> {});
-                  if (roiW < outTileSize || roiH < outTileSize) {
-                     byte[] padded = new byte[outTileSize * outTileSize];
-                     for (int row = 0; row < roiH; row++) {
-                        System.arraycopy(composited, row * roiW,
-                              padded, row * outTileSize, roiW);
-                     }
-                     pixelData = padded;
-                  } else {
-                     pixelData = composited;
-                  }
-               }
+      ParallelTileWriter.Producer<Object[]> producer = idx -> {
+         // Decode the flat index into (canvasRow, canvasCol, channel) -- inverse of the
+         // row-major (row, col, ch) enumeration. No per-item allocation.
+         int ch = idx % numCh;
+         int tileIndex = idx / numCh;
+         int canvasCol = tileIndex % numCols;
+         int canvasRow = tileIndex / numCols;
+         String chName = effectiveChNames.get(ch);
+         int roiX = canvasCol * outTileSize;
+         int roiY = canvasRow * outTileSize;
+         int roiW = Math.min(outTileSize, canvasW - roiX);
+         int roiH = Math.min(outTileSize, canvasH - roiY);
+         Object pixelData = compositeOutputTile(finalCompositor, finalTileOrigins,
+               roiX, roiY, roiW, roiH, outTileSize, isRgb, is16bit,
+               chName, tileTransform16, tileTransform8);
+         HashMap<String, Object> axes = buildNdtiffAxes(canvasRow, canvasCol, z, t,
+               isRgb ? null : chName, numZ, numT);
+         JSONObject tags = buildNdtiffTags(
+               outTileSize, outTileSize, isRgb, is16bit, finalPixelSizeUm, axes);
+         return new Object[]{pixelData, tags, axes};
+      };
 
-               HashMap<String, Object> axes = buildNdtiffAxes(canvasRow, canvasCol, z, t,
-                     isRgb ? null : chName, numZ, numT);
-               JSONObject tags = buildNdtiffTags(
-                     outTileSize, outTileSize, isRgb, is16bit, pixelSizeUm, axes);
-               ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
-                     isRgb, is16bit ? 16 : 8, outTileSize, outTileSize).get();
-               written++;
-               tilesWritten++;
-               if (tileProgress != null && totalTilesThisCall > 0) {
-                  tileProgress.accept(tilesWritten * 100 / totalTilesThisCall);
-               }
-            }
+      ParallelTileWriter.Consumer<Object[]> consumer = (item, consumedCount) -> {
+         Object pixelData = item[0];
+         JSONObject tags = (JSONObject) item[1];
+         @SuppressWarnings("unchecked")
+         HashMap<String, Object> axes = (HashMap<String, Object>) item[2];
+         ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
+               isRgb, is16bit ? 16 : 8, outTileSize, outTileSize).get();
+         // Set the pyramid depth once, right after the first tile is written, so every
+         // subsequent putImageMultiRes builds the low-res levels inline. The inline pyramid
+         // uses overwritePixels on shared low-res tiles and is NOT thread-safe, which is
+         // exactly why the consumer (and this call) stays single-threaded.
+         if (!pyramidSet[0]) {
+            ndtiffStorage.increaseMaxResolutionLevel(pyramidDepthForCanvas(canvasW, canvasH));
+            pyramidSet[0] = true;
          }
+      };
+
+      // Cooperative cancel: stop at a tile boundary. The caller still calls finishedWriting()
+      // so the partial NDTiff is valid.
+      return ParallelTileWriter.run(totalTilesThisCall, numWorkers, producer, consumer,
+            exportCancelled_::get,
+            tileProgress == null ? null : pct -> tileProgress.accept(pct));
+   }
+
+   /**
+    * Composite one output ROI from source tiles and pad it to a full
+    * {@code outTileSize x outTileSize} tile (NDTiff needs a consistent row stride).
+    *
+    * <p>Pure and thread-safe: it only reads from the (stateless) {@link TileBlender} and the
+    * read-only source storage, and returns a freshly-allocated pixel array. This is the
+    * CPU-bound work parallelised across composite worker threads in
+    * {@link #writeCanvasTiledNdtiff}.</p>
+    *
+    * @return {@code short[]} (16-bit gray), {@code byte[]} (8-bit gray), or {@code byte[]}
+    *         (RGB32 BGRA), each of length {@code outTileSize * outTileSize [* 4 for RGB]}.
+    */
+   private Object compositeOutputTile(TileBlender compositor,
+                                      Map<Point, Point2D.Float> tileOrigins,
+                                      int roiX, int roiY, int roiW, int roiH, int outTileSize,
+                                      boolean isRgb, boolean is16bit, String chName,
+                                      UnaryOperator<short[]> tileTransform16,
+                                      UnaryOperator<byte[]> tileTransform8) {
+      if (isRgb) {
+         BufferedImage bimg =
+               compositor.composite(roiX, roiY, roiW, roiH, 0, tileOrigins, pct -> { });
+         int[] argb = new int[roiW * roiH];
+         bimg.getRGB(0, 0, roiW, roiH, argb, 0, roiW);
+         byte[] bgra = argbToBgra(argb);
+         if (roiW < outTileSize || roiH < outTileSize) {
+            byte[] padded = new byte[outTileSize * outTileSize * 4];
+            for (int row = 0; row < roiH; row++) {
+               System.arraycopy(bgra, row * roiW * 4,
+                     padded, row * outTileSize * 4, roiW * 4);
+            }
+            return padded;
+         }
+         return bgra;
+      } else if (is16bit) {
+         short[] composited = compositor.composite16(roiX, roiY, roiW, roiH, 0,
+               chName, tileOrigins, tileTransform16, pct -> { });
+         if (roiW < outTileSize || roiH < outTileSize) {
+            short[] padded = new short[outTileSize * outTileSize];
+            for (int row = 0; row < roiH; row++) {
+               System.arraycopy(composited, row * roiW, padded, row * outTileSize, roiW);
+            }
+            return padded;
+         }
+         return composited;
+      } else {
+         byte[] composited = compositor.composite8(roiX, roiY, roiW, roiH, 0,
+               chName, tileOrigins, tileTransform8, pct -> { });
+         if (roiW < outTileSize || roiH < outTileSize) {
+            byte[] padded = new byte[outTileSize * outTileSize];
+            for (int row = 0; row < roiH; row++) {
+               System.arraycopy(composited, row * roiW, padded, row * outTileSize, roiW);
+            }
+            return padded;
+         }
+         return composited;
       }
-      return written;
    }
 
    /**
@@ -1377,6 +1622,56 @@ public class StitchFrame extends JDialog {
       }
       tags.put("Axes", axesJson);
       return tags;
+   }
+
+   /**
+    * Persist per-channel display settings (color and contrast) into the NDTiff storage in
+    * the NDViewer/NDTiff format: a JSON object keyed by channel name, each value an object
+    * with an integer {@code "Color"} (packed RGB) and {@code "Min"}/{@code "Max"} contrast.
+    * NDTiffStorage.finishedWriting() writes this to {@code display_settings.txt}; the
+    * Explorer plugin reads {@code Color} per channel name when reopening the dataset.
+    *
+    * <p>Best-effort: any failure is logged and ignored so it can never block finalization.</p>
+    */
+   private void writeNdtiffDisplaySettings(NDTiffStorage storage, List<String> channelNames,
+                                           DisplaySettings sourceSettings) {
+      if (storage == null || sourceSettings == null || channelNames == null) {
+         return;
+      }
+      try {
+         JSONObject ds = new JSONObject();
+         for (int i = 0; i < channelNames.size(); i++) {
+            String name = channelNames.get(i);
+            if (name == null) {
+               continue; // RGB / unnamed channel
+            }
+            JSONObject chJson = new JSONObject();
+            try {
+               java.awt.Color color = sourceSettings.getChannelColor(i);
+               if (color != null) {
+                  chJson.put("Color", color.getRGB() & 0xFFFFFF);
+               }
+            } catch (Exception e) {
+               // no color for this channel; skip
+            }
+            try {
+               org.micromanager.display.ComponentDisplaySettings comp =
+                     sourceSettings.getChannelSettings(i).getComponentSettings(0);
+               chJson.put("Min", comp.getScalingMinimum());
+               chJson.put("Max", comp.getScalingMaximum());
+            } catch (Exception e) {
+               // no contrast for this channel; skip
+            }
+            if (chJson.length() > 0) {
+               ds.put(name, chJson);
+            }
+         }
+         if (ds.length() > 0) {
+            storage.setDisplaySettings(ds);
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Stitch: could not write NDTiff display settings");
+      }
    }
 
    /**
@@ -1479,6 +1774,13 @@ public class StitchFrame extends JDialog {
       // DisplaySettings expects, and passing it causes JSONExceptions for every setting read.
       viewer.getTiledDataViewer().initializeViewerToLoaded(new JSONObject());
 
+      // Seed the initial view size to the full canvas. The data source reports null bounds
+      // (to allow free zoom-out), so the viewer cannot derive the initial source-data size
+      // from getBounds(); set it explicitly so the first view frames the whole stitch.
+      if (canvasW > 0 && canvasH > 0) {
+         viewer.getTiledDataViewer().setFullResSourceDataSize(canvasW, canvasH);
+      }
+
       // Apply source display settings after channels have been registered.
       if (displaySettings != null) {
          viewer.setDisplaySettings(displaySettings);
@@ -1513,6 +1815,79 @@ public class StitchFrame extends JDialog {
       }
       if (!seedImages.isEmpty()) {
          viewer.newTileArrived(seedImages, seedAxesList);
+      }
+
+      // Save the view state (zoom/pan) to view_state.json when the viewer window closes, so
+      // reopening (e.g. in Explorer) restores the zoom the user left it at. Use a WindowListener
+      // rather than the MM DataViewerWillCloseEvent: closing the window goes through the
+      // TiledDataViewer's internal GUI close() path, which tears the viewer down but does NOT
+      // post DataViewerWillCloseEvent, so an event subscriber never fires.
+      // Write to the storage's ACTUAL on-disk directory (the unique subdirectory NDTiff
+      // created), not the parent `path` -- that subdir is where Explorer reads view_state.json.
+      final String stateDir = storage.getDiskLocation() != null
+            ? storage.getDiskLocation() : path;
+      if (stateDir != null) {
+         final TiledDataViewerAPI tdv = viewer.getTiledDataViewer();
+         // Defer so the window exists and is realized before we look it up.
+         SwingUtilities.invokeLater(() -> {
+            try {
+               java.awt.Component canvas = tdv.getCanvasJPanel();
+               java.awt.Window window = canvas != null
+                     ? SwingUtilities.getWindowAncestor(canvas) : null;
+               if (window != null) {
+                  window.addWindowListener(new java.awt.event.WindowAdapter() {
+                     private boolean saved = false;
+
+                     @Override
+                     public void windowClosing(java.awt.event.WindowEvent e) {
+                        save();
+                     }
+
+                     @Override
+                     public void windowClosed(java.awt.event.WindowEvent e) {
+                        save();
+                     }
+
+                     private void save() {
+                        if (saved) {
+                           return; // windowClosing and windowClosed can both fire; write once
+                        }
+                        saved = true;
+                        writeViewState(tdv, stateDir);
+                     }
+                  });
+               } else {
+                  studio_.logs().logMessage(
+                        "Stitch: could not attach view-state save listener (no window yet)");
+               }
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Stitch: failed to attach view-state save listener");
+            }
+         });
+      }
+   }
+
+   /**
+    * Write the current zoom/pan of the viewer to {@code view_state.json} in the dataset
+    * directory, in the format the Explorer plugin reads on reopen
+    * ({@code magnification}, {@code xView}, {@code yView}). Best-effort.
+    */
+   private void writeViewState(TiledDataViewerAPI viewer, String dir) {
+      try {
+         java.awt.geom.Point2D.Double offset = viewer.getViewOffset();
+         java.awt.geom.Point2D.Double displaySize = viewer.getDisplayImageSize();
+         java.awt.geom.Point2D.Double sourceSize = viewer.getFullResSourceDataSize();
+         JSONObject json = new JSONObject();
+         json.put("xView", offset.x);
+         json.put("yView", offset.y);
+         if (displaySize.x > 0 && sourceSize.x > 0) {
+            json.put("magnification", displaySize.x / sourceSize.x);
+         }
+         java.io.File f = new java.io.File(dir, "view_state.json");
+         java.nio.file.Files.write(f.toPath(),
+               json.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Stitch: could not write view_state.json");
       }
    }
 
@@ -2019,7 +2394,11 @@ public class StitchFrame extends JDialog {
 
       @Override
       public int[] getBounds() {
-         return new int[]{0, 0, canvasW_, canvasH_};
+         // Return null (unbounded) so the viewer does not clamp zoom-out to "the whole
+         // canvas fits the window" -- this matches the Explorer plugin's free zoom-out.
+         // The initial view size is seeded explicitly via setFullResSourceDataSize() in
+         // openInTiledDataViewer(), since with null bounds the viewer can't derive it here.
+         return null;
       }
 
       @Override
