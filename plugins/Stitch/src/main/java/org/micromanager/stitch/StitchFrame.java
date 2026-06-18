@@ -1446,142 +1446,65 @@ public class StitchFrame extends JDialog {
 
       // Parallelise the CPU-bound compositing across worker threads, but keep the NDTiff
       // writes (and the inline pyramid build, which is NOT thread-safe) on a single writer.
-      // Workers composite output tiles into buffers and hand them to a bounded queue; one
-      // writer thread drains the queue and calls putImageMultiRes serially. Disk I/O is not
-      // the bottleneck (spindle vs SSD measured identical) -- compositing is -- so this
-      // targets the real cost. The queue is bounded so in-flight tiles don't blow up the heap
-      // (each 16-bit output tile is outTileSize^2 * 2 bytes, ~8 MB at 2048).
+      // Disk I/O is not the bottleneck (spindle vs SSD measured identical) -- compositing is.
+      // The concurrency lives in ParallelTileWriter (unit-tested separately); here we only
+      // supply the producer (composite a tile) and consumer (write a tile).
+      //
+      // THREAD-SAFETY CAVEAT: producers call compositeOutputTile concurrently, which reads
+      // from the shared source storage via TileBlender. That is only safe because
+      // StitchDataProviderAdapter serializes source reads (MultipageTiffReader is not
+      // concurrent-read-safe). If a new source path bypasses that adapter, revisit this.
+      // STITCH_MAX_COMPOSITE_THREADS=1 forces fully serial compositing as an escape hatch.
       final int numWorkers = STITCH_MAX_COMPOSITE_THREADS > 0
             ? STITCH_MAX_COMPOSITE_THREADS
             : Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
       final TileBlender finalCompositor = compositor;
       final Map<Point, Point2D.Float> finalTileOrigins = tileOrigins;
       final double finalPixelSizeUm = pixelSizeUm;
+      // Tracks whether the pyramid depth has been set (once, on the first write).
+      final boolean[] pyramidSet = {false};
 
-      // Each queued item carries the composited pixels plus the axes/tags for writing.
-      final java.util.concurrent.BlockingQueue<Object[]> writeQueue =
-            new java.util.concurrent.ArrayBlockingQueue<>(numWorkers * 2);
-      final Object[] poison = new Object[0];
-      final java.util.concurrent.atomic.AtomicInteger nextWork =
-            new java.util.concurrent.atomic.AtomicInteger(0);
-      final java.util.concurrent.atomic.AtomicReference<Exception> workerError =
-            new java.util.concurrent.atomic.AtomicReference<>(null);
-      final java.util.concurrent.atomic.AtomicInteger activeWorkers =
-            new java.util.concurrent.atomic.AtomicInteger(numWorkers);
-      // Set when the pipeline must stop early (worker error, or writer failure). Workers
-      // poll this while waiting to enqueue so they never block forever if the writer has
-      // gone away -- avoids a deadlock where a worker is stuck on a full queue while the
-      // writer thread is joining it.
-      final java.util.concurrent.atomic.AtomicBoolean abort =
-            new java.util.concurrent.atomic.AtomicBoolean(false);
+      ParallelTileWriter.Producer<Object[]> producer = idx -> {
+         int[] wi = workItems.get(idx);
+         int canvasRow = wi[0];
+         int canvasCol = wi[1];
+         String chName = effectiveChNames.get(wi[2]);
+         int roiX = canvasCol * outTileSize;
+         int roiY = canvasRow * outTileSize;
+         int roiW = Math.min(outTileSize, canvasW - roiX);
+         int roiH = Math.min(outTileSize, canvasH - roiY);
+         Object pixelData = compositeOutputTile(finalCompositor, finalTileOrigins,
+               roiX, roiY, roiW, roiH, outTileSize, isRgb, is16bit,
+               chName, tileTransform16, tileTransform8);
+         HashMap<String, Object> axes = buildNdtiffAxes(canvasRow, canvasCol, z, t,
+               isRgb ? null : chName, numZ, numT);
+         JSONObject tags = buildNdtiffTags(
+               outTileSize, outTileSize, isRgb, is16bit, finalPixelSizeUm, axes);
+         return new Object[]{pixelData, tags, axes};
+      };
 
-      Runnable worker = () -> {
-         try {
-            int idx;
-            while ((idx = nextWork.getAndIncrement()) < workItems.size()) {
-               if (abort.get() || workerError.get() != null) {
-                  break;
-               }
-               int[] wi = workItems.get(idx);
-               int canvasRow = wi[0];
-               int canvasCol = wi[1];
-               String chName = effectiveChNames.get(wi[2]);
-               int roiX = canvasCol * outTileSize;
-               int roiY = canvasRow * outTileSize;
-               int roiW = Math.min(outTileSize, canvasW - roiX);
-               int roiH = Math.min(outTileSize, canvasH - roiY);
-               Object pixelData = compositeOutputTile(finalCompositor, finalTileOrigins,
-                     roiX, roiY, roiW, roiH, outTileSize, isRgb, is16bit,
-                     chName, tileTransform16, tileTransform8);
-               HashMap<String, Object> axes = buildNdtiffAxes(canvasRow, canvasCol, z, t,
-                     isRgb ? null : chName, numZ, numT);
-               JSONObject tags = buildNdtiffTags(
-                     outTileSize, outTileSize, isRgb, is16bit, finalPixelSizeUm, axes);
-               // Offer with a timeout so the worker periodically re-checks `abort` rather
-               // than blocking indefinitely on a full queue.
-               Object[] queued = new Object[]{pixelData, tags, axes};
-               while (!abort.get()
-                     && !writeQueue.offer(queued, 200,
-                           java.util.concurrent.TimeUnit.MILLISECONDS)) {
-                  // retry until enqueued or aborted
-               }
-            }
-         } catch (Exception e) {
-            workerError.compareAndSet(null, e);
-         } finally {
-            // Last worker to finish signals the writer to stop. Use a timed offer loop so
-            // delivery is reliable even if the queue is momentarily full, but bail if the
-            // writer has already stopped (abort) so we never block forever.
-            if (activeWorkers.decrementAndGet() == 0) {
-               try {
-                  while (!abort.get()
-                        && !writeQueue.offer(poison, 200,
-                              java.util.concurrent.TimeUnit.MILLISECONDS)) {
-                     // retry until the writer takes it or we are aborting
-                  }
-               } catch (InterruptedException ie) {
-                  Thread.currentThread().interrupt();
-               }
-            }
+      ParallelTileWriter.Consumer<Object[]> consumer = (item, consumedCount) -> {
+         Object pixelData = item[0];
+         JSONObject tags = (JSONObject) item[1];
+         @SuppressWarnings("unchecked")
+         HashMap<String, Object> axes = (HashMap<String, Object>) item[2];
+         ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
+               isRgb, is16bit ? 16 : 8, outTileSize, outTileSize).get();
+         // Set the pyramid depth once, right after the first tile is written, so every
+         // subsequent putImageMultiRes builds the low-res levels inline. The inline pyramid
+         // uses overwritePixels on shared low-res tiles and is NOT thread-safe, which is
+         // exactly why the consumer (and this call) stays single-threaded.
+         if (!pyramidSet[0]) {
+            ndtiffStorage.increaseMaxResolutionLevel(pyramidDepthForCanvas(canvasW, canvasH));
+            pyramidSet[0] = true;
          }
       };
 
-      List<Thread> workers = new ArrayList<>(numWorkers);
-      for (int i = 0; i < numWorkers; i++) {
-         Thread th = new Thread(worker, "Stitch-composite-" + i);
-         workers.add(th);
-         th.start();
-      }
-
-      // Writer loop (this thread): drain the queue and write serially.
-      int written = 0;
-      try {
-         while (true) {
-            // Cooperative cancel: stop feeding/writing at a tile boundary. Workers see the
-            // abort flag and stop too; the caller still calls finishedWriting() so the
-            // partial NDTiff is valid.
-            if (exportCancelled_.get()) {
-               abort.set(true);
-               break;
-            }
-            Object[] item = writeQueue.take();
-            if (item == poison) {
-               break;
-            }
-            Object pixelData = item[0];
-            JSONObject tags = (JSONObject) item[1];
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> axes = (HashMap<String, Object>) item[2];
-            ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
-                  isRgb, is16bit ? 16 : 8, outTileSize, outTileSize).get();
-            // Set the pyramid depth once, right after the first tile is written, so every
-            // subsequent putImageMultiRes builds the low-res levels inline. The inline
-            // pyramid uses overwritePixels on shared low-res tiles and is NOT thread-safe,
-            // which is exactly why all writes (and this call) stay on this single thread.
-            if (written == 0) {
-               ndtiffStorage.increaseMaxResolutionLevel(
-                     pyramidDepthForCanvas(canvasW, canvasH));
-            }
-            written++;
-            if (tileProgress != null && totalTilesThisCall > 0) {
-               tileProgress.accept(written * 100 / totalTilesThisCall);
-            }
-         }
-      } finally {
-         // Signal workers to stop and drain the queue so any worker blocked trying to
-         // enqueue can complete, then join. This runs on both the normal-completion path
-         // (harmless: workers are already done) and the error path (prevents a deadlock
-         // where a worker is stuck offering to a full queue we are no longer draining).
-         abort.set(true);
-         writeQueue.clear();
-         for (Thread th : workers) {
-            th.join();
-         }
-      }
-      if (workerError.get() != null) {
-         throw new Exception("Stitch: compositing failed", workerError.get());
-      }
-      return written;
+      // Cooperative cancel: stop at a tile boundary. The caller still calls finishedWriting()
+      // so the partial NDTiff is valid.
+      return ParallelTileWriter.run(workItems.size(), numWorkers, producer, consumer,
+            exportCancelled_::get,
+            tileProgress == null ? null : pct -> tileProgress.accept(pct));
    }
 
    /**
