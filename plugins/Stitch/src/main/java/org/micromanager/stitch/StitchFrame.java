@@ -57,6 +57,7 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
+import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
 import org.micromanager.tileddataviewer.TiledDataViewerDataViewerAPI;
@@ -1656,6 +1657,13 @@ public class StitchFrame extends JDialog {
       // DisplaySettings expects, and passing it causes JSONExceptions for every setting read.
       viewer.getTiledDataViewer().initializeViewerToLoaded(new JSONObject());
 
+      // Seed the initial view size to the full canvas. The data source reports null bounds
+      // (to allow free zoom-out), so the viewer cannot derive the initial source-data size
+      // from getBounds(); set it explicitly so the first view frames the whole stitch.
+      if (canvasW > 0 && canvasH > 0) {
+         viewer.getTiledDataViewer().setFullResSourceDataSize(canvasW, canvasH);
+      }
+
       // Apply source display settings after channels have been registered.
       if (displaySettings != null) {
          viewer.setDisplaySettings(displaySettings);
@@ -1690,6 +1698,79 @@ public class StitchFrame extends JDialog {
       }
       if (!seedImages.isEmpty()) {
          viewer.newTileArrived(seedImages, seedAxesList);
+      }
+
+      // Save the view state (zoom/pan) to view_state.json when the viewer window closes, so
+      // reopening (e.g. in Explorer) restores the zoom the user left it at. Use a WindowListener
+      // rather than the MM DataViewerWillCloseEvent: closing the window goes through the
+      // TiledDataViewer's internal GUI close() path, which tears the viewer down but does NOT
+      // post DataViewerWillCloseEvent, so an event subscriber never fires.
+      // Write to the storage's ACTUAL on-disk directory (the unique subdirectory NDTiff
+      // created), not the parent `path` -- that subdir is where Explorer reads view_state.json.
+      final String stateDir = storage.getDiskLocation() != null
+            ? storage.getDiskLocation() : path;
+      if (stateDir != null) {
+         final TiledDataViewerAPI tdv = viewer.getTiledDataViewer();
+         // Defer so the window exists and is realized before we look it up.
+         SwingUtilities.invokeLater(() -> {
+            try {
+               java.awt.Component canvas = tdv.getCanvasJPanel();
+               java.awt.Window window = canvas != null
+                     ? SwingUtilities.getWindowAncestor(canvas) : null;
+               if (window != null) {
+                  window.addWindowListener(new java.awt.event.WindowAdapter() {
+                     private boolean saved = false;
+
+                     @Override
+                     public void windowClosing(java.awt.event.WindowEvent e) {
+                        save();
+                     }
+
+                     @Override
+                     public void windowClosed(java.awt.event.WindowEvent e) {
+                        save();
+                     }
+
+                     private void save() {
+                        if (saved) {
+                           return; // windowClosing and windowClosed can both fire; write once
+                        }
+                        saved = true;
+                        writeViewState(tdv, stateDir);
+                     }
+                  });
+               } else {
+                  studio_.logs().logMessage(
+                        "Stitch: could not attach view-state save listener (no window yet)");
+               }
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Stitch: failed to attach view-state save listener");
+            }
+         });
+      }
+   }
+
+   /**
+    * Write the current zoom/pan of the viewer to {@code view_state.json} in the dataset
+    * directory, in the format the Explorer plugin reads on reopen
+    * ({@code magnification}, {@code xView}, {@code yView}). Best-effort.
+    */
+   private void writeViewState(TiledDataViewerAPI viewer, String dir) {
+      try {
+         java.awt.geom.Point2D.Double offset = viewer.getViewOffset();
+         java.awt.geom.Point2D.Double displaySize = viewer.getDisplayImageSize();
+         java.awt.geom.Point2D.Double sourceSize = viewer.getFullResSourceDataSize();
+         JSONObject json = new JSONObject();
+         json.put("xView", offset.x);
+         json.put("yView", offset.y);
+         if (displaySize.x > 0 && sourceSize.x > 0) {
+            json.put("magnification", displaySize.x / sourceSize.x);
+         }
+         java.io.File f = new java.io.File(dir, "view_state.json");
+         java.nio.file.Files.write(f.toPath(),
+               json.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Stitch: could not write view_state.json");
       }
    }
 
@@ -2196,7 +2277,11 @@ public class StitchFrame extends JDialog {
 
       @Override
       public int[] getBounds() {
-         return new int[]{0, 0, canvasW_, canvasH_};
+         // Return null (unbounded) so the viewer does not clamp zoom-out to "the whole
+         // canvas fits the window" -- this matches the Explorer plugin's free zoom-out.
+         // The initial view size is seeded explicitly via setFullResSourceDataSize() in
+         // openInTiledDataViewer(), since with null bounds the viewer can't derive it here.
+         return null;
       }
 
       @Override
