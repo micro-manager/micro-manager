@@ -25,6 +25,10 @@ import java.awt.Color;
 import java.awt.Polygon;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
@@ -43,6 +47,7 @@ public class SLM implements ProjectionDevice {
    private boolean imageOn_ = false;
    HashSet<OnStateListener> onStateListeners_ = new HashSet<>();
    private String externalShutter_;
+   private final ExecutorService slmExecutor_;
 
    // The constructor.
    public SLM(Studio app, CMMCore mmc, double spotDiameter) {
@@ -50,12 +55,13 @@ public class SLM implements ProjectionDevice {
       mmc_ = mmc;
       slm_ = mmc_.getSLMDevice();
       spotDiameter_ = spotDiameter;
+      slmExecutor_ = Executors.newSingleThreadExecutor();
       try {
          slmWidth_ = (int) mmc.getSLMWidth(slm_);
          slmHeight_ = (int) mmc.getSLMHeight(slm_);
       } catch (Exception ex) {
-         // TODO: Refactor this class to allow for multiple SLMs, 
-         // handle an invalid device label with more grace 
+         // TODO: Refactor this class to allow for multiple SLMs,
+         // handle an invalid device label with more grace
       }
    }
 
@@ -106,9 +112,16 @@ public class SLM implements ProjectionDevice {
 
    @Override
    public void waitForDevice() {
+      Future<?> result = slmExecutor_.submit(() -> {
+         try {
+            mmc_.waitForDevice(slm_);
+         } catch (Exception ex) {
+            app_.logs().logError(ex);
+         }
+      });
       try {
-         mmc_.waitForDevice(slm_);
-      } catch (Exception ex) {
+         result.get();
+      } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError(ex);
       }
    }
@@ -223,8 +236,15 @@ public class SLM implements ProjectionDevice {
          mmc_.displaySLMImage(slm_);
          if (externalShutter_ != null) {
             mmc_.setShutterOpen(externalShutter_, true);
-            Thread.sleep(getExposure() / 1000);
-            mmc_.setShutterOpen(externalShutter_, false);
+            final long exposureUs = getExposure();
+            slmExecutor_.execute(() -> {
+               try {
+                  Thread.sleep(exposureUs / 1000);
+                  mmc_.setShutterOpen(externalShutter_, false);
+               } catch (Exception ex) {
+                  app_.logs().logError(ex);
+               }
+            });
          }
       } catch (Exception e) {
          app_.logs().showError("SLM not connecting properly.");
