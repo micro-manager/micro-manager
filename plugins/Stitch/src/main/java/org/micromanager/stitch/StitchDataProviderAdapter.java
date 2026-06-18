@@ -84,6 +84,13 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       }
    }
 
+   // Serializes reads from the underlying source storage. The Stitch compositing step runs
+   // on multiple worker threads, but some MM source storages (notably MultipageTiff, whose
+   // MultipageTiffReader shares a single FileChannel) are NOT safe for concurrent reads and
+   // throw ClosedChannelException/AsynchronousCloseException. Guarding every source read
+   // with this lock keeps reads serial while the expensive per-pixel blending stays parallel.
+   private final Object sourceReadLock_ = new Object();
+
    // position index → grid cell
    private final Map<Integer, GridCell> positionGrid_;
    // (row << 32 | col) → position index, for O(1) reverse lookup in stripRowCol()
@@ -205,7 +212,11 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
 
    @Override
    public Set<HashMap<String, Object>> getAxesSet() {
-      Set<HashMap<String, Object>> base = super.getAxesSet();
+      final Set<HashMap<String, Object>> base;
+      // Guard in case a source storage does file I/O when enumerating coords.
+      synchronized (sourceReadLock_) {
+         base = super.getAxesSet();
+      }
       Set<HashMap<String, Object>> result = new HashSet<>();
       for (HashMap<String, Object> axes : base) {
          result.add(addRowCol(axes));
@@ -230,13 +241,21 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       if (stripped == null) {
          return null;
       }
-      return super.getImage(stripped, 0);
+      // Serialize the actual source read (see sourceReadLock_).
+      synchronized (sourceReadLock_) {
+         return super.getImage(stripped, 0);
+      }
    }
 
    @Override
    public boolean hasImage(HashMap<String, Object> axes) {
       HashMap<String, Object> stripped = stripRowCol(axes);
-      return stripped != null && super.hasImage(stripped);
+      if (stripped == null) {
+         return false;
+      }
+      synchronized (sourceReadLock_) {
+         return super.hasImage(stripped);
+      }
    }
 
    @Override

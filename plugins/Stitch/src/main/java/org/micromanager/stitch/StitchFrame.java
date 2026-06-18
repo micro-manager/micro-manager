@@ -1259,6 +1259,14 @@ public class StitchFrame extends JDialog {
    private static final int NDTIFF_OUTPUT_TILE_SIZE = 2048;
 
    /**
+    * Maximum number of parallel compositing worker threads, or 0 for "auto"
+    * (availableProcessors - 1). Set to 1 to force fully single-threaded compositing if a
+    * source storage ever proves unsafe for concurrent reads. NDTiff writes always remain
+    * single-threaded regardless of this value.
+    */
+   private static final int STITCH_MAX_COMPOSITE_THREADS = 0;
+
+   /**
     * Minimum pyramid depth for NDTiff output. The actual depth is chosen per canvas by
     * {@link #pyramidDepthForCanvas(int, int)} so the coarsest level fits in a window.
     */
@@ -1382,97 +1390,209 @@ public class StitchFrame extends JDialog {
       JSONObject storageMD = ndtiffStorage.getSummaryMetadata();
       double pixelSizeUm = storageMD != null ? storageMD.optDouble("PixelSize_um", 0) : 0;
 
-      int numCols = (int) Math.ceil((double) canvasW / outTileSize);
-      int numRows = (int) Math.ceil((double) canvasH / outTileSize);
-      int written = 0;
-      int totalTilesThisCall = numRows * numCols * effectiveChNames.size();
-      int tilesWritten = 0;
+      final int numCols = (int) Math.ceil((double) canvasW / outTileSize);
+      final int numRows = (int) Math.ceil((double) canvasH / outTileSize);
+      final int totalTilesThisCall = numRows * numCols * effectiveChNames.size();
 
+      // Build the list of output-tile work items (one per canvas tile per channel).
+      final List<int[]> workItems = new ArrayList<>(totalTilesThisCall);
       for (int canvasRow = 0; canvasRow < numRows; canvasRow++) {
          for (int canvasCol = 0; canvasCol < numCols; canvasCol++) {
-            int roiX = canvasCol * outTileSize;
-            int roiY = canvasRow * outTileSize;
-            int roiW = Math.min(outTileSize, canvasW - roiX);
-            int roiH = Math.min(outTileSize, canvasH - roiY);
-
-            for (String chName : effectiveChNames) {
-               Object pixelData;
-
-               // Composite the output ROI from source tiles.
-               // Always write full outTileSize×outTileSize tiles (padding the last tile in
-               // each row/column with zeros) so NDTiffStorage sees a consistent row stride.
-               if (isRgb) {
-                  BufferedImage bimg =
-                        compositor.composite(roiX, roiY, roiW, roiH, 0, tileOrigins, pct -> {});
-                  int[] argb = new int[roiW * roiH];
-                  bimg.getRGB(0, 0, roiW, roiH, argb, 0, roiW);
-                  byte[] bgra = argbToBgra(argb);
-                  if (roiW < outTileSize || roiH < outTileSize) {
-                     byte[] padded = new byte[outTileSize * outTileSize * 4];
-                     for (int row = 0; row < roiH; row++) {
-                        System.arraycopy(bgra, row * roiW * 4,
-                              padded, row * outTileSize * 4, roiW * 4);
-                     }
-                     pixelData = padded;
-                  } else {
-                     pixelData = bgra;
-                  }
-               } else if (is16bit) {
-                  short[] composited = compositor.composite16(roiX, roiY, roiW, roiH, 0,
-                        chName, tileOrigins, tileTransform16, pct -> {});
-                  if (roiW < outTileSize || roiH < outTileSize) {
-                     short[] padded = new short[outTileSize * outTileSize];
-                     for (int row = 0; row < roiH; row++) {
-                        System.arraycopy(composited, row * roiW,
-                              padded, row * outTileSize, roiW);
-                     }
-                     pixelData = padded;
-                  } else {
-                     pixelData = composited;
-                  }
-               } else {
-                  byte[] composited = compositor.composite8(roiX, roiY, roiW, roiH, 0,
-                        chName, tileOrigins, tileTransform8, pct -> {});
-                  if (roiW < outTileSize || roiH < outTileSize) {
-                     byte[] padded = new byte[outTileSize * outTileSize];
-                     for (int row = 0; row < roiH; row++) {
-                        System.arraycopy(composited, row * roiW,
-                              padded, row * outTileSize, roiW);
-                     }
-                     pixelData = padded;
-                  } else {
-                     pixelData = composited;
-                  }
-               }
-
-               HashMap<String, Object> axes = buildNdtiffAxes(canvasRow, canvasCol, z, t,
-                     isRgb ? null : chName, numZ, numT);
-               JSONObject tags = buildNdtiffTags(
-                     outTileSize, outTileSize, isRgb, is16bit, pixelSizeUm, axes);
-               ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
-                     isRgb, is16bit ? 16 : 8, outTileSize, outTileSize).get();
-               // Set the pyramid depth once, right after the first tile is written, so every
-               // subsequent putImageMultiRes builds the low-res levels inline. NDTiff's
-               // pyramid path overwrites shared downsampled tiles in place, which previously
-               // NPEd when a contributing tile lived in a rotated/closed tiff file
-               // (NDTiffWriter.fileChannel_ == null). That is now fixed in NDTiff
-               // (overwritePixels reopens a closed file for the in-place write), so the
-               // pyramid is safe to build again. A multi-gigapixel canvas REQUIRES the
-               // pyramid: without it the TiledDataViewer clamps to res level 0 and allocates
-               // a full-canvas int[] that overflows int (NegativeArraySizeException).
-               if (written == 0) {
-                  ndtiffStorage.increaseMaxResolutionLevel(
-                        pyramidDepthForCanvas(canvasW, canvasH));
-               }
-               written++;
-               tilesWritten++;
-               if (tileProgress != null && totalTilesThisCall > 0) {
-                  tileProgress.accept(tilesWritten * 100 / totalTilesThisCall);
-               }
+            for (int ch = 0; ch < effectiveChNames.size(); ch++) {
+               workItems.add(new int[]{canvasRow, canvasCol, ch});
             }
          }
       }
+
+      // Parallelise the CPU-bound compositing across worker threads, but keep the NDTiff
+      // writes (and the inline pyramid build, which is NOT thread-safe) on a single writer.
+      // Workers composite output tiles into buffers and hand them to a bounded queue; one
+      // writer thread drains the queue and calls putImageMultiRes serially. Disk I/O is not
+      // the bottleneck (spindle vs SSD measured identical) -- compositing is -- so this
+      // targets the real cost. The queue is bounded so in-flight tiles don't blow up the heap
+      // (each 16-bit output tile is outTileSize^2 * 2 bytes, ~8 MB at 2048).
+      final int numWorkers = STITCH_MAX_COMPOSITE_THREADS > 0
+            ? STITCH_MAX_COMPOSITE_THREADS
+            : Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+      final TileBlender finalCompositor = compositor;
+      final Map<Point, Point2D.Float> finalTileOrigins = tileOrigins;
+      final double finalPixelSizeUm = pixelSizeUm;
+
+      // Each queued item carries the composited pixels plus the axes/tags for writing.
+      final java.util.concurrent.BlockingQueue<Object[]> writeQueue =
+            new java.util.concurrent.ArrayBlockingQueue<>(numWorkers * 2);
+      final Object[] poison = new Object[0];
+      final java.util.concurrent.atomic.AtomicInteger nextWork =
+            new java.util.concurrent.atomic.AtomicInteger(0);
+      final java.util.concurrent.atomic.AtomicReference<Exception> workerError =
+            new java.util.concurrent.atomic.AtomicReference<>(null);
+      final java.util.concurrent.atomic.AtomicInteger activeWorkers =
+            new java.util.concurrent.atomic.AtomicInteger(numWorkers);
+      // Set when the pipeline must stop early (worker error, or writer failure). Workers
+      // poll this while waiting to enqueue so they never block forever if the writer has
+      // gone away -- avoids a deadlock where a worker is stuck on a full queue while the
+      // writer thread is joining it.
+      final java.util.concurrent.atomic.AtomicBoolean abort =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+      Runnable worker = () -> {
+         try {
+            int idx;
+            while ((idx = nextWork.getAndIncrement()) < workItems.size()) {
+               if (abort.get() || workerError.get() != null) {
+                  break;
+               }
+               int[] wi = workItems.get(idx);
+               int canvasRow = wi[0];
+               int canvasCol = wi[1];
+               String chName = effectiveChNames.get(wi[2]);
+               int roiX = canvasCol * outTileSize;
+               int roiY = canvasRow * outTileSize;
+               int roiW = Math.min(outTileSize, canvasW - roiX);
+               int roiH = Math.min(outTileSize, canvasH - roiY);
+               Object pixelData = compositeOutputTile(finalCompositor, finalTileOrigins,
+                     roiX, roiY, roiW, roiH, outTileSize, isRgb, is16bit,
+                     chName, tileTransform16, tileTransform8);
+               HashMap<String, Object> axes = buildNdtiffAxes(canvasRow, canvasCol, z, t,
+                     isRgb ? null : chName, numZ, numT);
+               JSONObject tags = buildNdtiffTags(
+                     outTileSize, outTileSize, isRgb, is16bit, finalPixelSizeUm, axes);
+               // Offer with a timeout so the worker periodically re-checks `abort` rather
+               // than blocking indefinitely on a full queue.
+               Object[] queued = new Object[]{pixelData, tags, axes};
+               while (!abort.get()
+                     && !writeQueue.offer(queued, 200,
+                           java.util.concurrent.TimeUnit.MILLISECONDS)) {
+                  // retry until enqueued or aborted
+               }
+            }
+         } catch (Exception e) {
+            workerError.compareAndSet(null, e);
+         } finally {
+            // Last worker to finish signals the writer to stop. Use a timed offer loop so
+            // delivery is reliable even if the queue is momentarily full, but bail if the
+            // writer has already stopped (abort) so we never block forever.
+            if (activeWorkers.decrementAndGet() == 0) {
+               try {
+                  while (!abort.get()
+                        && !writeQueue.offer(poison, 200,
+                              java.util.concurrent.TimeUnit.MILLISECONDS)) {
+                     // retry until the writer takes it or we are aborting
+                  }
+               } catch (InterruptedException ie) {
+                  Thread.currentThread().interrupt();
+               }
+            }
+         }
+      };
+
+      List<Thread> workers = new ArrayList<>(numWorkers);
+      for (int i = 0; i < numWorkers; i++) {
+         Thread th = new Thread(worker, "Stitch-composite-" + i);
+         workers.add(th);
+         th.start();
+      }
+
+      // Writer loop (this thread): drain the queue and write serially.
+      int written = 0;
+      try {
+         while (true) {
+            Object[] item = writeQueue.take();
+            if (item == poison) {
+               break;
+            }
+            Object pixelData = item[0];
+            JSONObject tags = (JSONObject) item[1];
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> axes = (HashMap<String, Object>) item[2];
+            ndtiffStorage.putImageMultiRes(pixelData, tags, axes,
+                  isRgb, is16bit ? 16 : 8, outTileSize, outTileSize).get();
+            // Set the pyramid depth once, right after the first tile is written, so every
+            // subsequent putImageMultiRes builds the low-res levels inline. The inline
+            // pyramid uses overwritePixels on shared low-res tiles and is NOT thread-safe,
+            // which is exactly why all writes (and this call) stay on this single thread.
+            if (written == 0) {
+               ndtiffStorage.increaseMaxResolutionLevel(
+                     pyramidDepthForCanvas(canvasW, canvasH));
+            }
+            written++;
+            if (tileProgress != null && totalTilesThisCall > 0) {
+               tileProgress.accept(written * 100 / totalTilesThisCall);
+            }
+         }
+      } finally {
+         // Signal workers to stop and drain the queue so any worker blocked trying to
+         // enqueue can complete, then join. This runs on both the normal-completion path
+         // (harmless: workers are already done) and the error path (prevents a deadlock
+         // where a worker is stuck offering to a full queue we are no longer draining).
+         abort.set(true);
+         writeQueue.clear();
+         for (Thread th : workers) {
+            th.join();
+         }
+      }
+      if (workerError.get() != null) {
+         throw new Exception("Stitch: compositing failed", workerError.get());
+      }
       return written;
+   }
+
+   /**
+    * Composite one output ROI from source tiles and pad it to a full
+    * {@code outTileSize x outTileSize} tile (NDTiff needs a consistent row stride).
+    *
+    * <p>Pure and thread-safe: it only reads from the (stateless) {@link TileBlender} and the
+    * read-only source storage, and returns a freshly-allocated pixel array. This is the
+    * CPU-bound work parallelised across composite worker threads in
+    * {@link #writeCanvasTiledNdtiff}.</p>
+    *
+    * @return {@code short[]} (16-bit gray), {@code byte[]} (8-bit gray), or {@code byte[]}
+    *         (RGB32 BGRA), each of length {@code outTileSize * outTileSize [* 4 for RGB]}.
+    */
+   private Object compositeOutputTile(TileBlender compositor,
+                                      Map<Point, Point2D.Float> tileOrigins,
+                                      int roiX, int roiY, int roiW, int roiH, int outTileSize,
+                                      boolean isRgb, boolean is16bit, String chName,
+                                      UnaryOperator<short[]> tileTransform16,
+                                      UnaryOperator<byte[]> tileTransform8) {
+      if (isRgb) {
+         BufferedImage bimg =
+               compositor.composite(roiX, roiY, roiW, roiH, 0, tileOrigins, pct -> { });
+         int[] argb = new int[roiW * roiH];
+         bimg.getRGB(0, 0, roiW, roiH, argb, 0, roiW);
+         byte[] bgra = argbToBgra(argb);
+         if (roiW < outTileSize || roiH < outTileSize) {
+            byte[] padded = new byte[outTileSize * outTileSize * 4];
+            for (int row = 0; row < roiH; row++) {
+               System.arraycopy(bgra, row * roiW * 4,
+                     padded, row * outTileSize * 4, roiW * 4);
+            }
+            return padded;
+         }
+         return bgra;
+      } else if (is16bit) {
+         short[] composited = compositor.composite16(roiX, roiY, roiW, roiH, 0,
+               chName, tileOrigins, tileTransform16, pct -> { });
+         if (roiW < outTileSize || roiH < outTileSize) {
+            short[] padded = new short[outTileSize * outTileSize];
+            for (int row = 0; row < roiH; row++) {
+               System.arraycopy(composited, row * roiW, padded, row * outTileSize, roiW);
+            }
+            return padded;
+         }
+         return composited;
+      } else {
+         byte[] composited = compositor.composite8(roiX, roiY, roiW, roiH, 0,
+               chName, tileOrigins, tileTransform8, pct -> { });
+         if (roiW < outTileSize || roiH < outTileSize) {
+            byte[] padded = new byte[outTileSize * outTileSize];
+            for (int row = 0; row < roiH; row++) {
+               System.arraycopy(composited, row * roiW, padded, row * outTileSize, roiW);
+            }
+            return padded;
+         }
+         return composited;
+      }
    }
 
    /**
