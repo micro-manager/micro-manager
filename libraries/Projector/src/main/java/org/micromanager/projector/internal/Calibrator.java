@@ -168,6 +168,11 @@ public class Calibrator {
    private void measureAndAddToSpotMap(Map<Point2D.Double, Point2D.Double> spotMap,
          Point2D.Double ptSLM) {
       Point ptCam = measureSpotOnCamera(ptSLM);
+      if (ptCam == null) {
+         throw new RuntimeException("Spot at (" + (int) ptSLM.x + ", " + (int) ptSLM.y
+               + ") was not detected on camera. "
+               + "Is the projector beam visible and aimed at the camera?");
+      }
       Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
       spotMap.put(ptCamDouble, ptSLM);
    }

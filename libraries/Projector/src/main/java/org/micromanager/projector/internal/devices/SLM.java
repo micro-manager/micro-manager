@@ -112,7 +112,13 @@ public class SLM implements ProjectionDevice {
 
    @Override
    public void waitForDevice() {
-      Future<?> result = slmExecutor_.submit(() -> { });
+      Future<?> result = slmExecutor_.submit(() -> {
+         try {
+            mmc_.waitForDevice(slm_);
+         } catch (Exception ex) {
+            app_.logs().logError(ex);
+         }
+      });
       try {
          result.get();
       } catch (InterruptedException | ExecutionException ex) {
@@ -229,10 +235,11 @@ public class SLM implements ProjectionDevice {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
          if (externalShutter_ != null) {
+            mmc_.setShutterOpen(externalShutter_, true);
+            final long exposureUs = getExposure();
             slmExecutor_.execute(() -> {
                try {
-                  mmc_.setShutterOpen(externalShutter_, true);
-                  Thread.sleep(getExposure() / 1000);
+                  Thread.sleep(exposureUs / 1000);
                   mmc_.setShutterOpen(externalShutter_, false);
                } catch (Exception ex) {
                   app_.logs().logError(ex);
