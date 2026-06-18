@@ -36,6 +36,9 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  */
 public class Calibrator {
 
+   private static final double EDGE_MARGIN_FRACTION = 0.10;
+   private static final double MIN_SPOT_INTENSITY = 100.0;
+
    private final Studio app_;
    private final CMMCore core_;
    private final ProjectionDevice dev_;
@@ -143,6 +146,9 @@ public class Calibrator {
          ImageProcessor diffImage = ImageUtils
                .subtractImageProcessors(proc2.convertToFloatProcessor(),
                      proc1.convertToFloatProcessor());
+         if (diffImage.getMax() < MIN_SPOT_INTENSITY) {
+            return null;
+         }
          Point maxPt = findPeak(diffImage);
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
@@ -266,6 +272,14 @@ public class Calibrator {
       final double width = right - left;
       final double height = bottom - top;
 
+      // inset the grid away from the (potentially inaccurate) extrapolated edges
+      final double marginX = width * EDGE_MARGIN_FRACTION;
+      final double marginY = height * EDGE_MARGIN_FRACTION;
+      final double gridLeft   = left   + marginX;
+      final double gridTop    = top    + marginY;
+      final double gridWidth  = width  - 2 * marginX;
+      final double gridHeight = height - 2 * marginY;
+
       // compute a grid of SLM points inside the "overlap region"
       // nGrid is how many polygons in both X and Y
       // require (nGrid + 1)^2 spot measurements to get nGrid^2 squares
@@ -277,9 +291,9 @@ public class Calibrator {
       // tabulate the camera spot at each of SLM grid points
       for (int i = 0; i <= nGrid; ++i) {
          for (int j = 0; j <= nGrid; ++j) {
-            double xoffset = ((i + 0.5) * width / (nGrid + 1.0));
-            double yoffset = ((j + 0.5) * height / (nGrid + 1.0));
-            slmPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
+            double xoffset = ((i + 0.5) * gridWidth  / (nGrid + 1.0));
+            double yoffset = ((j + 0.5) * gridHeight / (nGrid + 1.0));
+            slmPoint[i][j] = new Point2D.Double(gridLeft + xoffset, gridTop + yoffset);
             Point spot = measureSpotOnCamera(slmPoint[i][j]);
             if (spot != null) {
                camPoint[i][j] = new Point2D.Double(spot.x, spot.y);
@@ -296,6 +310,10 @@ public class Calibrator {
       Map<Polygon, AffineTransform> bigMap = new HashMap<>();
       for (int i = 0; i <= nGrid - 1; ++i) {
          for (int j = 0; j <= nGrid - 1; ++j) {
+            if (camPoint[i][j] == null || camPoint[i][j + 1] == null
+                  || camPoint[i + 1][j] == null || camPoint[i + 1][j + 1] == null) {
+               continue;
+            }
             Polygon poly = new Polygon();
             Utils.addVertex(poly, Utils.toIntPoint(camPoint[i][j]));
             Utils.addVertex(poly, Utils.toIntPoint(camPoint[i][j + 1]));
