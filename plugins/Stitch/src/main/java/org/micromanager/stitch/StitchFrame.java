@@ -1432,17 +1432,14 @@ public class StitchFrame extends JDialog {
 
       final int numCols = (int) Math.ceil((double) canvasW / outTileSize);
       final int numRows = (int) Math.ceil((double) canvasH / outTileSize);
-      final int totalTilesThisCall = numRows * numCols * effectiveChNames.size();
+      final int numCh = effectiveChNames.size();
+      final int totalTilesThisCall = numRows * numCols * numCh;
 
-      // Build the list of output-tile work items (one per canvas tile per channel).
-      final List<int[]> workItems = new ArrayList<>(totalTilesThisCall);
-      for (int canvasRow = 0; canvasRow < numRows; canvasRow++) {
-         for (int canvasCol = 0; canvasCol < numCols; canvasCol++) {
-            for (int ch = 0; ch < effectiveChNames.size(); ch++) {
-               workItems.add(new int[]{canvasRow, canvasCol, ch});
-            }
-         }
-      }
+      // Work items are (canvasRow, canvasCol, channel) triples enumerated by a single index
+      // in [0, total); the producer derives the triple from the index by arithmetic. This
+      // avoids allocating a List<int[]> with one small object per output tile, which on a
+      // very large canvas would be a lot of short-lived heap (and works against the
+      // "one output tile at a time" memory goal).
 
       // Parallelise the CPU-bound compositing across worker threads, but keep the NDTiff
       // writes (and the inline pyramid build, which is NOT thread-safe) on a single writer.
@@ -1465,10 +1462,13 @@ public class StitchFrame extends JDialog {
       final boolean[] pyramidSet = {false};
 
       ParallelTileWriter.Producer<Object[]> producer = idx -> {
-         int[] wi = workItems.get(idx);
-         int canvasRow = wi[0];
-         int canvasCol = wi[1];
-         String chName = effectiveChNames.get(wi[2]);
+         // Decode the flat index into (canvasRow, canvasCol, channel) -- inverse of the
+         // row-major (row, col, ch) enumeration. No per-item allocation.
+         int ch = idx % numCh;
+         int tileIndex = idx / numCh;
+         int canvasCol = tileIndex % numCols;
+         int canvasRow = tileIndex / numCols;
+         String chName = effectiveChNames.get(ch);
          int roiX = canvasCol * outTileSize;
          int roiY = canvasRow * outTileSize;
          int roiW = Math.min(outTileSize, canvasW - roiX);
@@ -1502,7 +1502,7 @@ public class StitchFrame extends JDialog {
 
       // Cooperative cancel: stop at a tile boundary. The caller still calls finishedWriting()
       // so the partial NDTiff is valid.
-      return ParallelTileWriter.run(workItems.size(), numWorkers, producer, consumer,
+      return ParallelTileWriter.run(totalTilesThisCall, numWorkers, producer, consumer,
             exportCancelled_::get,
             tileProgress == null ? null : pct -> tileProgress.accept(pct));
    }

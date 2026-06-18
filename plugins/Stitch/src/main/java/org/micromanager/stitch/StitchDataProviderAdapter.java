@@ -616,10 +616,11 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       // to exceed a fraction of `fallback` cleanly separates the two. (A 1px threshold,
       // as used previously, mistook intra-column jitter for the pitch and produced wildly
       // inflated column indices -- e.g. col 1130 for a 3-column grid.)
-      // REVIEWER NOTE: the 0.3 factor assumes overlap < ~70% of the FOV (the normal case).
-      // For >70% overlap the real adjacent step would be below this threshold and get
-      // filtered out, so we'd fall back to the image dimension (tiles slightly too far
-      // apart) rather than crash. Chosen to fix specific real datasets; not formally tuned.
+      // The 0.3 factor assumes overlap is below ~70% of the FOV (the normal tiling case).
+      // For >70% overlap the real adjacent step would fall below this threshold and be
+      // filtered out; the code then falls back to the image dimension (tiles placed slightly
+      // too far apart) rather than failing. The factor was chosen empirically from real
+      // datasets, not formally derived.
       double minRealStep = fallback * 0.3;
       List<Double> gaps = new ArrayList<>();
       for (int i = 1; i < sorted.length; i++) {

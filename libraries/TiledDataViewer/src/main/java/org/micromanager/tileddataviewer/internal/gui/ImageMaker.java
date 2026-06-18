@@ -146,10 +146,10 @@ public class ImageMaker {
          // newWidth*newHeight then overflows int and throws NegativeArraySizeException.
          // Returning null defers the render; the viewer re-renders once the canvas is laid
          // out and the resolution index has been clamped to the available pyramid levels.
-         // REVIEWER NOTE: this changes render behaviour for EVERY TiledDataViewer consumer
-         // (Stitch, Explorer, Deskew), not just the Stitch path that motivated it. It was
-         // tested mainly via Stitch; the degenerate (<=0) and overflow branches should be
-         // unreachable in normal-sized datasets, so the risk is low, but it is shared code.
+         // This applies to every TiledDataViewer consumer (Stitch, Explorer, Deskew). For
+         // normal-sized datasets both the degenerate (<=0) and overflow branches are
+         // unreachable, so this only defers a render in the pathological cases described
+         // above and does not affect ordinary display.
          if (newWidth <= 0 || newHeight <= 0
                  || (long) newWidth * (long) newHeight > Integer.MAX_VALUE) {
             return null;

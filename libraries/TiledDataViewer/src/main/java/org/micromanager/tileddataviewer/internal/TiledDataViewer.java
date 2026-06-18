@@ -362,10 +362,11 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       // the viewer closes (shutdownMM2Resources), but overlay add/remove/activate events
       // can still fire redrawOverlay during the close/detach cascade (and on a stale viewer
       // reference after reopening). Without this guard those paths NPE -- mirrors update().
-      // REVIEWER NOTE: this (and the similar null-guards in ImageMaker/recompute) is a
-      // targeted band-aid, not a cure. The underlying issue is that the inner close() tears
-      // down viewer state on a background thread while overlay/Inspector events still fire.
-      // A proper fix would stop dispatching display/overlay events once close() begins.
+      // This null-guard (and the similar ones in ImageMaker/recompute) is a targeted defence
+      // against a known limitation: the inner close() tears down viewer state on a background
+      // thread while overlay/Inspector events may still fire. The more thorough fix would be
+      // to stop dispatching display/overlay events once close() begins; until then, callers
+      // into a closing viewer must tolerate the torn-down state.
       if (displayCalculationExecutor_ == null) {
          return; // not initialized or already shut down
       }

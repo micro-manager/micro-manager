@@ -31,9 +31,9 @@ import java.util.function.IntConsumer;
  *   <li>No deadlock: producers poll a shared abort flag with a timed queue offer, and the
  *       consumer's finally-block sets abort + drains the queue before joining, so a producer
  *       blocked on a full queue can always complete.</li>
- *   <li>The first producer/consumer exception aborts the run and is rethrown from
- *       {@link #run} (wrapped). Items already produced before the failure may still be
- *       consumed.</li>
+ *   <li>The first producer/consumer throwable (Exception or Error) aborts the run and is
+ *       rethrown from {@link #run} (wrapped). Items already produced before the failure may
+ *       still be consumed.</li>
  * </ul>
  *
  * <p>Not reusable: construct one per run.</p>
@@ -86,7 +86,10 @@ final class ParallelTileWriter<T> {
       final Object poison = new Object();
       final AtomicInteger nextIndex = new AtomicInteger(0);
       final AtomicInteger activeWorkers = new AtomicInteger(numWorkers);
-      final AtomicReference<Exception> failure = new AtomicReference<>(null);
+      // Throwable, not Exception: an Error (e.g. OutOfMemoryError, or one thrown from native
+      // NDTiff code) must also abort the pipeline and be reported, otherwise a worker could
+      // die silently and run() would return as if it had written every tile.
+      final AtomicReference<Throwable> failure = new AtomicReference<>(null);
       final AtomicBoolean abort = new AtomicBoolean(false);
       final int totalItems = total;
 
@@ -105,7 +108,7 @@ final class ParallelTileWriter<T> {
                   // retry until enqueued or aborting
                }
             }
-         } catch (Exception e) {
+         } catch (Throwable e) {
             failure.compareAndSet(null, e);
          } finally {
             // The last worker to finish signals the consumer to stop.
@@ -136,7 +139,16 @@ final class ParallelTileWriter<T> {
                abort.set(true);
                break;
             }
-            Object item = queue.take();
+            if (failure.get() != null) {
+               break; // a worker already failed; stop and report below
+            }
+            // Poll with a timeout (not take()) so a cancel request or worker failure is
+            // observed even when the queue is momentarily empty -- e.g. all producers are
+            // mid-compute -- rather than blocking until the next item or the poison pill.
+            Object item = queue.poll(OFFER_POLL_MS, TimeUnit.MILLISECONDS);
+            if (item == null) {
+               continue;
+            }
             if (item == poison) {
                break;
             }
@@ -148,14 +160,21 @@ final class ParallelTileWriter<T> {
                progress.accept(consumed * 100 / totalItems);
             }
          }
-      } catch (Exception e) {
+      } catch (Throwable e) {
          failure.compareAndSet(null, e);
       } finally {
          // Stop workers and drain so any worker blocked offering can complete, then join.
          abort.set(true);
          queue.clear();
          for (Thread th : workers) {
-            th.join();
+            try {
+               th.join();
+            } catch (InterruptedException ie) {
+               // Restore the interrupt flag and record the failure so the caller sees that
+               // the run was interrupted rather than silently completing.
+               Thread.currentThread().interrupt();
+               failure.compareAndSet(null, ie);
+            }
          }
       }
       if (failure.get() != null) {
