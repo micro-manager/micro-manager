@@ -4,14 +4,17 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -31,9 +34,13 @@ import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acquisition.SequenceSettings;
@@ -354,7 +361,7 @@ public class ExplorerManager {
          vesselAnchorType_ = null;
          vesselUsedHcsCal_ = false;
          vesselOutlinePending_ = false;
-         frame_.setExploringActive(true);
+         frame_.setExploringActive(true, true);
          if (vesselType_.isMultiWell()) {
             Point2D.Double hcsOffset = tryReadHcsCalibration();
             frame_.setHcsCalibrationStatus(hcsOffset != null);
@@ -641,13 +648,14 @@ public class ExplorerManager {
       flipperInPipeline_         = false;
       rawPixelSizeAffine_        = null;
       rawInitialPixelSizeAffine_ = null;
-      frame_.setExploringActive(false);
+      frame_.setExploringActive(false, false);
       vesselAnchorType_ = null;
       vesselUsedHcsCal_ = false;
       vesselOutlinePending_ = false;
       if (dataSource_ != null) {
          dataSource_.clearPendingTiles();
          dataSource_.clearVesselOutline();
+         dataSource_.setPositionTool(ExplorerDataSource.PositionTool.NONE);
       }
 
       if (displayExecutor_ != null) {
@@ -1747,50 +1755,362 @@ public class ExplorerManager {
       }
       acquisitionExecutor_.submit(() -> {
          try {
-            int tw = dataSource_ != null ? dataSource_.getTileWidth() : cameraWidth_;
-            int th = dataSource_ != null ? dataSource_.getTileHeight() : cameraHeight_;
-            int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
-            int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
-            double effectiveTileWidth = tw - overlapPixelsX;
-            double effectiveTileHeight = th - overlapPixelsY;
-
-            double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
-            double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
-
-            double targetX;
-            double targetY;
-            // Always invert using the session-start pixel size / affine so that clicks on
-            // the tile grid map to consistent physical stage positions regardless of the
-            // current objective.
-            if (initialPixelSizeAffine_ != null) {
-               // Convert canvas-pixel delta to camera-pixel delta using initial camera dims,
-               // then apply the session-start affine (forward: camera-pixel → stage-micron).
-               double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
-                     ? (double) initialCameraWidth_  / tw : 1.0;
-               double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
-                     ? (double) initialCameraHeight_ / th : 1.0;
-               Point2D.Double camPixelDelta = new Point2D.Double(
-                     offsetPixelX * pipelineScaleX, offsetPixelY * pipelineScaleY);
-               Point2D.Double stageOffset = new Point2D.Double();
-               initialPixelSizeAffine_.transform(camPixelDelta, stageOffset);
-               targetX = initialStageX_ + stageOffset.x;
-               targetY = initialStageY_ + stageOffset.y;
-            } else {
-               double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
-                     ? (double) initialCameraWidth_  / tw : 1.0;
-               double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
-                     ? (double) initialCameraHeight_ / th : 1.0;
-               targetX = initialStageX_ + offsetPixelX * pipelineScaleX * initialPixelSizeUm_;
-               targetY = initialStageY_ + offsetPixelY * pipelineScaleY * initialPixelSizeUm_;
+            Point2D.Double target = pixelToStageSessionFrame(pixelX, pixelY);
+            if (target == null) {
+               return;
             }
-
-            studio_.core().setXYPosition(targetX, targetY);
+            studio_.core().setXYPosition(target.x, target.y);
             studio_.core().waitForDevice(studio_.core().getXYStageDevice());
-
          } catch (Exception e) {
             studio_.logs().logError(e, "Explorer: error moving stage");
          }
       });
+   }
+
+   /**
+    * Converts a full-resolution canvas pixel coordinate (the center of a tile/FOV) to the
+    * stage coordinate it represents, using the SESSION-START pixel size / affine. This keeps
+    * canvas positions mapped to consistent physical stage positions regardless of the current
+    * objective. Returns null if the conversion is not possible (no tile dimensions yet).
+    */
+   private Point2D.Double pixelToStageSessionFrame(double pixelX, double pixelY) {
+      int tw = dataSource_ != null ? dataSource_.getTileWidth() : cameraWidth_;
+      int th = dataSource_ != null ? dataSource_.getTileHeight() : cameraHeight_;
+      if (tw <= 0 || th <= 0) {
+         return null;
+      }
+      int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+      int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
+      double effectiveTileWidth = tw - overlapPixelsX;
+      double effectiveTileHeight = th - overlapPixelsY;
+
+      double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
+      double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
+
+      double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
+            ? (double) initialCameraWidth_  / tw : 1.0;
+      double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
+            ? (double) initialCameraHeight_ / th : 1.0;
+
+      double targetX;
+      double targetY;
+      if (initialPixelSizeAffine_ != null) {
+         // Convert canvas-pixel delta to camera-pixel delta using initial camera dims,
+         // then apply the session-start affine (forward: camera-pixel -> stage-micron).
+         Point2D.Double camPixelDelta = new Point2D.Double(
+               offsetPixelX * pipelineScaleX, offsetPixelY * pipelineScaleY);
+         Point2D.Double stageOffset = new Point2D.Double();
+         initialPixelSizeAffine_.transform(camPixelDelta, stageOffset);
+         targetX = initialStageX_ + stageOffset.x;
+         targetY = initialStageY_ + stageOffset.y;
+      } else {
+         targetX = initialStageX_ + offsetPixelX * pipelineScaleX * initialPixelSizeUm_;
+         targetY = initialStageY_ + offsetPixelY * pipelineScaleY * initialPixelSizeUm_;
+      }
+      return new Point2D.Double(targetX, targetY);
+   }
+
+   // ===================== Create Positions =====================
+
+   private static final DecimalFormat FMT_POS = new DecimalFormat("000");
+
+   /**
+    * Enters or leaves position-draw mode. Only allowed for a live (Started) session, not for
+    * an opened (read-only) dataset. Passing {@link ExplorerDataSource.PositionTool#NONE} leaves
+    * draw mode. Sets the canvas cursor accordingly.
+    */
+   public void setPositionDrawTool(ExplorerDataSource.PositionTool tool) {
+      if (dataSource_ == null) {
+         return;
+      }
+      if (!exploring_ || loadedData_) {
+         dataSource_.setPositionTool(ExplorerDataSource.PositionTool.NONE);
+         return;
+      }
+      dataSource_.setPositionTool(tool);
+      if (viewer_ != null) {
+         boolean drawing = tool != null && tool != ExplorerDataSource.PositionTool.NONE;
+         viewer_.getCanvasJPanel().setCursor(java.awt.Cursor.getPredefinedCursor(
+               drawing ? java.awt.Cursor.CROSSHAIR_CURSOR : java.awt.Cursor.DEFAULT_CURSOR));
+      }
+      redrawOverlay();
+   }
+
+   /** Discards the current Create-Positions ROI. */
+   public void clearPositionRoi() {
+      if (dataSource_ != null) {
+         dataSource_.clearPositionRoi();
+         redrawOverlay();
+      }
+   }
+
+   /** True when a completed Create-Positions ROI exists. */
+   public boolean hasPositionRoi() {
+      return dataSource_ != null && dataSource_.hasPositionRoi();
+   }
+
+   /** Notifies the frame that the ROI state changed so it can update the Generate button. */
+   public void onPositionRoiChanged() {
+      final boolean has = hasPositionRoi();
+      SwingUtilities.invokeLater(() -> frame_.setGenerateEnabled(has));
+   }
+
+   /**
+    * Generates a tile-grid position list covering the drawn ROI and adds it to the MM position
+    * list. Positions are sized using the CURRENT pixel size and camera FOV (which may differ
+    * from the session-start objective). When {@code withinVesselOnly} is true the ROI is first
+    * intersected with the vessel boundary.
+    *
+    * <p>A tile is included if its FOV rectangle overlaps the (clipped) ROI shape. Positions are
+    * ordered in a serpentine pattern. The computation runs off the EDT.</p>
+    */
+   public void createPositionsFromRoi(boolean withinVesselOnly) {
+      if (dataSource_ == null || !exploring_ || loadedData_) {
+         return;
+      }
+      final Area roiAreaPx = dataSource_.getPositionRoiAreaPx();
+      if (roiAreaPx == null) {
+         frame_.setPositionStatus("Draw an ROI first.");
+         return;
+      }
+      if (withinVesselOnly) {
+         Area vesselArea = dataSource_.getVesselAreaPx();
+         if (vesselArea != null) {
+            roiAreaPx.intersect(vesselArea);
+         }
+      }
+      if (roiAreaPx.isEmpty()) {
+         frame_.setPositionStatus("ROI does not overlap the vessel.");
+         return;
+      }
+
+      frame_.setPositionStatus("Computing positions...");
+      frame_.setGenerateEnabled(false);
+
+      new SwingWorker<PositionList, Void>() {
+         private String warning = null;
+         // FOV rectangles (full-res pixels) of accepted positions, for the grey overlay.
+         private final java.util.List<Rectangle2D.Double> fovsPx =
+               new java.util.ArrayList<>();
+
+         @Override
+         protected PositionList doInBackground() throws Exception {
+            // ---- Live hardware: affine + FOV for the new position grid ----
+            AffineTransform pixToStage = null;
+            double livePixelSizeUm = 0.0;
+            try {
+               AffineTransform at = AffineUtils.doubleToAffine(
+                     studio_.core().getPixelSizeAffine(true));
+               livePixelSizeUm = AffineUtils.deducePixelSize(at);
+               if (livePixelSizeUm > 0.0) {
+                  pixToStage = at;
+               }
+            } catch (Exception ignore) {
+               // No affine configured -- scalar fallback below.
+            }
+            if (livePixelSizeUm <= 0.0) {
+               livePixelSizeUm = pixelSizeUm_ > 0 ? pixelSizeUm_ : 1.0;
+            }
+
+            int tileW = (int) studio_.core().getImageWidth();
+            int tileH = (int) studio_.core().getImageHeight();
+            if (tileW <= 0 || tileH <= 0) {
+               throw new Exception("Cannot create positions: camera image size unavailable.");
+            }
+
+            int overlapX = (int) Math.round(tileW * overlapPercentage_ / 100.0);
+            int overlapY = (int) Math.round(tileH * overlapPercentage_ / 100.0);
+            int stepPxX = tileW - overlapX;
+            int stepPxY = tileH - overlapY;
+            if (stepPxX <= 0 || stepPxY <= 0) {
+               throw new Exception("Cannot create positions: overlap is >= tile size.");
+            }
+
+            if (Math.abs(livePixelSizeUm - initialPixelSizeUm_) > 0.01 * initialPixelSizeUm_) {
+               warning = String.format(
+                     "Note: current pixel size (%.4f um) differs from session start (%.4f um) "
+                     + "- positions sized for the current objective.",
+                     livePixelSizeUm, initialPixelSizeUm_);
+            }
+
+            // ---- Step vectors and FOV magnitudes in stage space (current hardware) ----
+            final double stageStepXdx;
+            final double stageStepXdy;
+            final double stageStepYdx;
+            final double stageStepYdy;
+            double fovW;
+            double fovH;
+            if (pixToStage != null) {
+               Point2D.Double sx = new Point2D.Double();
+               Point2D.Double sy = new Point2D.Double();
+               Point2D.Double fx = new Point2D.Double();
+               Point2D.Double fy = new Point2D.Double();
+               pixToStage.deltaTransform(new Point2D.Double(stepPxX, 0), sx);
+               pixToStage.deltaTransform(new Point2D.Double(0, stepPxY), sy);
+               pixToStage.deltaTransform(new Point2D.Double(tileW, 0), fx);
+               pixToStage.deltaTransform(new Point2D.Double(0, tileH), fy);
+               stageStepXdx = sx.x;
+               stageStepXdy = sx.y;
+               stageStepYdx = sy.x;
+               stageStepYdy = sy.y;
+               fovW = Math.hypot(fx.x, fx.y);
+               fovH = Math.hypot(fy.x, fy.y);
+            } else {
+               stageStepXdx = stepPxX * livePixelSizeUm;
+               stageStepXdy = 0;
+               stageStepYdx = 0;
+               stageStepYdy = stepPxY * livePixelSizeUm;
+               fovW = tileW * livePixelSizeUm;
+               fovH = tileH * livePixelSizeUm;
+            }
+            double stepMagX = Math.hypot(stageStepXdx, stageStepXdy);
+            double stepMagY = Math.hypot(stageStepYdx, stageStepYdy);
+            if (stepMagX <= 0 || stepMagY <= 0) {
+               throw new Exception("Cannot create positions: degenerate step size.");
+            }
+
+            // ---- ROI corners -> stage space (session-start frame) ----
+            Rectangle2D bbox = roiAreaPx.getBounds2D();
+            Point2D.Double[] cornersPx = new Point2D.Double[] {
+               new Point2D.Double(bbox.getMinX(), bbox.getMinY()),
+               new Point2D.Double(bbox.getMaxX(), bbox.getMinY()),
+               new Point2D.Double(bbox.getMinX(), bbox.getMaxY()),
+               new Point2D.Double(bbox.getMaxX(), bbox.getMaxY())
+            };
+            Point2D.Double[] cornersStage = new Point2D.Double[4];
+            for (int i = 0; i < 4; i++) {
+               cornersStage[i] = pixelToStageSessionFrame(cornersPx[i].x, cornersPx[i].y);
+               if (cornersStage[i] == null) {
+                  throw new Exception("Cannot create positions: tile dimensions not ready.");
+               }
+            }
+
+            // ---- Grid dimensions: project corners onto unit step axes ----
+            double uxX = stageStepXdx / stepMagX;
+            double uxY = stageStepXdy / stepMagX;
+            double uyX = stageStepYdx / stepMagY;
+            double uyY = stageStepYdy / stepMagY;
+            double projXMin = Double.MAX_VALUE;
+            double projXMax = -Double.MAX_VALUE;
+            double projYMin = Double.MAX_VALUE;
+            double projYMax = -Double.MAX_VALUE;
+            double sumX = 0;
+            double sumY = 0;
+            for (Point2D.Double c : cornersStage) {
+               double px = c.x * uxX + c.y * uxY;
+               double py = c.x * uyX + c.y * uyY;
+               projXMin = Math.min(projXMin, px);
+               projXMax = Math.max(projXMax, px);
+               projYMin = Math.min(projYMin, py);
+               projYMax = Math.max(projYMax, py);
+               sumX += c.x;
+               sumY += c.y;
+            }
+            double roiExtentX = projXMax - projXMin;
+            double roiExtentY = projYMax - projYMin;
+            int nCols = Math.max(1, (int) Math.ceil((roiExtentX + fovW - stepMagX) / stepMagX));
+            int nRows = Math.max(1, (int) Math.ceil((roiExtentY + fovH - stepMagY) / stepMagY));
+
+            // ---- Grid origin: center over the ROI bounding box ----
+            double roiStageCX = sumX / 4.0;
+            double roiStageCY = sumY / 4.0;
+            double originX = roiStageCX
+                  - (nCols - 1) / 2.0 * stageStepXdx
+                  - (nRows - 1) / 2.0 * stageStepYdx;
+            double originY = roiStageCY
+                  - (nCols - 1) / 2.0 * stageStepXdy
+                  - (nRows - 1) / 2.0 * stageStepYdy;
+
+            String xyStage;
+            try {
+               xyStage = studio_.core().getXYStageDevice();
+            } catch (Exception e) {
+               xyStage = null;
+            }
+            if (xyStage == null || xyStage.isEmpty()) {
+               throw new Exception("Cannot create positions: no XY stage device is configured.");
+            }
+
+            // FOV size in full-resolution pixels (session frame), for the overlap test.
+            double pxPerUm = computePxPerUm();
+            double fovPxW = pxPerUm > 0 ? fovW * pxPerUm : tileW;
+            double fovPxH = pxPerUm > 0 ? fovH * pxPerUm : tileH;
+
+            final double overlapXUm = overlapX * livePixelSizeUm;
+            final double overlapYUm = overlapY * livePixelSizeUm;
+
+            PositionList posList = new PositionList();
+            for (int row = 0; row < nRows; row++) {
+               for (int col = 0; col < nCols; col++) {
+                  int c = ((row & 1) == 0) ? col : (nCols - 1 - col); // serpentine
+                  double dx = c * stageStepXdx + row * stageStepYdx;
+                  double dy = c * stageStepXdy + row * stageStepYdy;
+                  double stageX = originX + dx;
+                  double stageY = originY + dy;
+
+                  // Include the tile if its FOV rectangle overlaps the ROI shape.
+                  Point2D.Double centerPx = stageToPixel(stageX, stageY);
+                  Rectangle2D.Double fovRect = null;
+                  if (centerPx != null) {
+                     fovRect = new Rectangle2D.Double(
+                           centerPx.x - fovPxW / 2.0, centerPx.y - fovPxH / 2.0, fovPxW, fovPxH);
+                     if (!roiAreaPx.intersects(fovRect)) {
+                        continue;
+                     }
+                  }
+                  if (fovRect != null) {
+                     fovsPx.add(fovRect);
+                  }
+
+                  MultiStagePosition msp = new MultiStagePosition();
+                  msp.setDefaultXYStage(xyStage);
+                  msp.add(StagePosition.create2D(xyStage, stageX, stageY));
+                  msp.setLabel("Pos-" + FMT_POS.format(row) + "_" + FMT_POS.format(c));
+                  msp.setGridCoordinates(row, c);
+                  msp.setProperty("OverlapUmX", String.valueOf(overlapXUm));
+                  msp.setProperty("OverlapUmY", String.valueOf(overlapYUm));
+                  msp.setProperty("OverlapPixelsX", String.valueOf(overlapX));
+                  msp.setProperty("OverlapPixelsY", String.valueOf(overlapY));
+                  msp.setProperty("Source", "ExplorerCreatePositions");
+                  posList.addPosition(msp);
+               }
+            }
+            if (posList.getNumberOfPositions() == 0) {
+               throw new Exception("No positions fall within the ROI.");
+            }
+            return posList;
+         }
+
+         @Override
+         protected void done() {
+            PositionList posList;
+            try {
+               posList = get();
+            } catch (Exception ex) {
+               String msg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+               frame_.setPositionStatus(msg);
+               frame_.setGenerateEnabled(hasPositionRoi());
+               return;
+            }
+            PositionList existing = studio_.positions().getPositionList();
+            for (int i = 0; i < posList.getNumberOfPositions(); i++) {
+               existing.addPosition(posList.getPosition(i));
+            }
+            studio_.positions().setPositionList(existing);
+            studio_.app().showPositionList();
+            if (dataSource_ != null) {
+               dataSource_.setGeneratedPositionFovs(fovsPx);
+               redrawOverlay();
+            }
+            String status = "Added " + posList.getNumberOfPositions() + " positions";
+            if (warning != null) {
+               status = warning + " (" + posList.getNumberOfPositions() + " added)";
+            }
+            frame_.setPositionStatus(status);
+            // Keep the ROI so the operator can tweak / regenerate.
+            frame_.setGenerateEnabled(hasPositionRoi());
+         }
+      }.execute();
    }
 
    // ===================== Private helpers =====================
@@ -2057,7 +2377,7 @@ public class ExplorerManager {
       } else {
          frame_.setHcsCalibrationStatus(false);
       }
-      frame_.setExploringActive(exploring_);
+      frame_.setExploringActive(exploring_, exploring_ && !loadedData_);
    }
 
    /**

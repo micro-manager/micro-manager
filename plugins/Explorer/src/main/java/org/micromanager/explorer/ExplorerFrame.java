@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -44,9 +45,20 @@ public class ExplorerFrame extends JFrame {
    private final ExplorerManager explorerManager_;
 
    private boolean sessionActive_ = false;
+   // True only for a live (Started) session; false for an opened (read-only) dataset.
+   private boolean liveSession_ = false;
 
    private JButton stopButton_;
    private JComboBox<VesselType> vesselCombo_;
+
+   // Create-Positions controls (live session only).
+   private JButton createPositionsButton_;
+   private JComboBox<String> positionToolCombo_;
+   private JCheckBox withinVesselCheck_;
+   private JButton generatePositionsButton_;
+   private JButton clearRoiButton_;
+   private JLabel positionStatusLabel_;
+   private boolean positionDrawActive_ = false;
 
    // Simple-vessel anchor (coverslips): 5 corner/center buttons.
    private JPanel simpleAnchorPanel_;
@@ -152,6 +164,7 @@ public class ExplorerFrame extends JFrame {
             explorerManager_.setVesselType(selected);
          }
          updateAnchorPanels();
+         updatePositionToolsEnabled();
       });
       add(vesselCombo_, "wrap");
 
@@ -201,6 +214,54 @@ public class ExplorerFrame extends JFrame {
       wellAnchorPanel_.add(setWellAnchorButton_, "wrap");
       wellAnchorPanel_.setVisible(false);
       add(wellAnchorPanel_, "growx, wrap");
+
+      // Create Positions panel (live session only).
+      final JPanel positionPanel = new JPanel(new MigLayout("insets 0, fillx"));
+      createPositionsButton_ = new JButton("Create Positions");
+      createPositionsButton_.setToolTipText(
+            "Draw an ROI on the image, then add a tiled position list covering it.");
+      createPositionsButton_.setEnabled(false);
+      createPositionsButton_.addActionListener(e -> togglePositionDraw());
+      positionPanel.add(createPositionsButton_);
+
+      positionToolCombo_ = new JComboBox<>(
+            new String[] {"Rectangle", "Oval", "Polygon", "Freehand"});
+      positionToolCombo_.setToolTipText("Shape to draw for the position region");
+      positionToolCombo_.setEnabled(false);
+      positionToolCombo_.addActionListener(e -> {
+         if (positionDrawActive_) {
+            explorerManager_.setPositionDrawTool(selectedPositionTool());
+         }
+      });
+      positionPanel.add(positionToolCombo_);
+
+      withinVesselCheck_ = new JCheckBox("Only within vessel");
+      withinVesselCheck_.setToolTipText(
+            "Generate positions only where they fall within the vessel boundary");
+      withinVesselCheck_.setEnabled(false);
+      positionPanel.add(withinVesselCheck_);
+
+      generatePositionsButton_ = new JButton("Add to Position List");
+      generatePositionsButton_.setToolTipText(
+            "Generate positions covering the drawn ROI using the current pixel size");
+      generatePositionsButton_.setEnabled(false);
+      generatePositionsButton_.addActionListener(e ->
+            explorerManager_.createPositionsFromRoi(withinVesselCheck_.isSelected()));
+      positionPanel.add(generatePositionsButton_);
+
+      clearRoiButton_ = new JButton("Clear");
+      clearRoiButton_.setToolTipText("Clear the drawn ROI");
+      clearRoiButton_.setEnabled(false);
+      clearRoiButton_.addActionListener(e -> {
+         explorerManager_.clearPositionRoi();
+         setGenerateEnabled(false);
+         setPositionStatus("Draw an ROI.");
+      });
+      positionPanel.add(clearRoiButton_, "wrap");
+
+      positionStatusLabel_ = new JLabel(" ");
+      positionPanel.add(positionStatusLabel_, "span, growx, wrap");
+      add(positionPanel, "growx, wrap");
 
       JButton openButton = new JButton("Open Existing");
       openButton.setToolTipText("Open a previously saved Explorer dataset.");
@@ -259,13 +320,19 @@ public class ExplorerFrame extends JFrame {
 
    /**
     * Notifies the frame that an explore session has started or stopped.
-    * Enables or disables anchor controls accordingly.
+    * Enables or disables anchor controls accordingly. {@code live} is true only for a
+    * Started session (not an opened, read-only dataset); Create-Positions tools are gated on it.
     * Called from ExplorerManager; switches to EDT.
     */
-   public void setExploringActive(boolean active) {
+   public void setExploringActive(boolean active, boolean live) {
       SwingUtilities.invokeLater(() -> {
          sessionActive_ = active;
+         liveSession_ = active && live;
+         if (!liveSession_ && positionDrawActive_) {
+            exitPositionDraw();
+         }
          updateAnchorPanels();
+         updatePositionToolsEnabled();
       });
    }
 
@@ -327,6 +394,73 @@ public class ExplorerFrame extends JFrame {
       SpinnerNumberModel model = new SpinnerNumberModel(
             Math.min(currentCol, v.getWellCols()), 1, v.getWellCols(), 1);
       wellColSpinner_.setModel(model);
+   }
+
+   private ExplorerDataSource.PositionTool selectedPositionTool() {
+      Object sel = positionToolCombo_.getSelectedItem();
+      String name = sel != null ? sel.toString() : "Rectangle";
+      switch (name) {
+         case "Oval":
+            return ExplorerDataSource.PositionTool.OVAL;
+         case "Polygon":
+            return ExplorerDataSource.PositionTool.POLYGON;
+         case "Freehand":
+            return ExplorerDataSource.PositionTool.FREEHAND;
+         case "Rectangle":
+         default:
+            return ExplorerDataSource.PositionTool.RECTANGLE;
+      }
+   }
+
+   private void togglePositionDraw() {
+      if (positionDrawActive_) {
+         exitPositionDraw();
+      } else {
+         positionDrawActive_ = true;
+         createPositionsButton_.setText("Stop Drawing");
+         explorerManager_.setPositionDrawTool(selectedPositionTool());
+         setPositionStatus("Draw an ROI on the image.");
+         updatePositionToolsEnabled();
+      }
+   }
+
+   private void exitPositionDraw() {
+      positionDrawActive_ = false;
+      if (createPositionsButton_ != null) {
+         createPositionsButton_.setText("Create Positions");
+      }
+      explorerManager_.setPositionDrawTool(ExplorerDataSource.PositionTool.NONE);
+      updatePositionToolsEnabled();
+   }
+
+   /** Enables/disables the Generate button. Called from ExplorerManager; switches to EDT. */
+   public void setGenerateEnabled(boolean enabled) {
+      SwingUtilities.invokeLater(() -> {
+         if (generatePositionsButton_ != null) {
+            generatePositionsButton_.setEnabled(enabled && liveSession_ && positionDrawActive_);
+         }
+      });
+   }
+
+   /** Sets the Create-Positions status text. Called from ExplorerManager; switches to EDT. */
+   public void setPositionStatus(String text) {
+      SwingUtilities.invokeLater(() ->
+            positionStatusLabel_.setText(text == null || text.isEmpty() ? " " : text));
+   }
+
+   private void updatePositionToolsEnabled() {
+      if (createPositionsButton_ == null) {
+         return;
+      }
+      createPositionsButton_.setEnabled(liveSession_);
+      boolean drawing = liveSession_ && positionDrawActive_;
+      positionToolCombo_.setEnabled(drawing);
+      clearRoiButton_.setEnabled(drawing);
+      boolean vesselSelected = !getSelectedVessel().isNone();
+      withinVesselCheck_.setEnabled(drawing && vesselSelected);
+      if (!drawing) {
+         generatePositionsButton_.setEnabled(false);
+      }
    }
 
    private static String anchorLabel(VesselType.AnchorType at) {
