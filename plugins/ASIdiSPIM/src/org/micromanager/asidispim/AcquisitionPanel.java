@@ -1220,6 +1220,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.saveDirectoryRoot = rootField_.getText();
       acqSettings.saveNamePrefix = prefixField_.getText();
       acqSettings.pluginVersion = ASIdiSPIM.menuName;
+      acqSettings.isStaticSheet = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE);
       // missing from this init:
       // durationSlice
       // durationVolume
@@ -2800,9 +2802,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return AcquisitionStatus.FATAL_ERROR;
       }
 
-      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET
-         && prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
-              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE)) {
+      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET && acqSettingsOrig.isStaticSheet) {
          MyDialogUtils.showError("Cannot use static light sheet together with camera light sheet mode.", hideErrors);
          return AcquisitionStatus.FATAL_ERROR;
       }
