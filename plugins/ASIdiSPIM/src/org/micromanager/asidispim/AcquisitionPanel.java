@@ -1347,9 +1347,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private SliceTiming getTimingSingleObjective(boolean showWarnings) {
       
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
-      
-      // temporary measure: use diSPIM-like settings unless we are doing stage scanning
-      if (!acqSettings.isStageScanning) {
+
+      // for SCOPE specifically, during galvo-scanned acquisitions we want to avoid
+      //    moving the galvo while the laser is on to avoid blurring unless that is specifically chosen
+      if (ASIdiSPIM.SCOPE && !acqSettings.isStageScanning
+              && !prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PLUGIN_SMOOTH_SLICE_SCAN, false) ) {
          return getTimingFromPeriodAndLightExposure(showWarnings);
       }
       
