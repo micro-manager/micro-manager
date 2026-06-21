@@ -1220,6 +1220,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.saveDirectoryRoot = rootField_.getText();
       acqSettings.saveNamePrefix = prefixField_.getText();
       acqSettings.pluginVersion = ASIdiSPIM.menuName;
+      acqSettings.isStaticSheet = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE);
       // missing from this init:
       // durationSlice
       // durationVolume
@@ -1345,9 +1347,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private SliceTiming getTimingSingleObjective(boolean showWarnings) {
       
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
-      
-      // temporary measure: use diSPIM-like settings unless we are doing stage scanning
-      if (!acqSettings.isStageScanning) {
+
+      // for SCOPE specifically, during galvo-scanned acquisitions we want to avoid
+      //    moving the galvo while the laser is on to avoid blurring unless that is specifically chosen
+      if (ASIdiSPIM.SCOPE && !acqSettings.isStageScanning
+              && !prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PLUGIN_SMOOTH_SLICE_SCAN, false) ) {
          return getTimingFromPeriodAndLightExposure(showWarnings);
       }
       
@@ -2800,9 +2805,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return AcquisitionStatus.FATAL_ERROR;
       }
 
-      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET
-         && prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
-              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE)) {
+      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET && acqSettingsOrig.isStaticSheet) {
          MyDialogUtils.showError("Cannot use static light sheet together with camera light sheet mode.", hideErrors);
          return AcquisitionStatus.FATAL_ERROR;
       }

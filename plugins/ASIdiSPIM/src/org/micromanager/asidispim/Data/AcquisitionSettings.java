@@ -75,6 +75,7 @@ public class AcquisitionSettings {
       this.durationVolumeMs = orig.durationVolumeMs;
       this.durationTotalSec = orig.durationTotalSec;
       this.pluginVersion = orig.pluginVersion;
+      this.isStaticSheet = orig.isStaticSheet;
    }
 
    // piezo scanning, vibration, stage scanning, i.e. what is 
@@ -192,4 +193,7 @@ public class AcquisitionSettings {
    public float durationTotalSec;
    
    public String pluginVersion;
+
+   // true if static sheet enabled from Settings panel
+   public boolean isStaticSheet;
 }
