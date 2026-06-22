@@ -64,6 +64,7 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -200,6 +201,7 @@ public class ExplorerManager {
    private final java.util.List<RefineZPoint> refineZPoints_ = new java.util.ArrayList<>();
    private ZGenerator.Type refineZMethod_ = ZGenerator.Type.SHEPINTERPOLATE;
    private RefineZWorker refineZWorker_ = null;
+   private static final int REFINE_Z_THUMB_PX = 256;
    // The Refine Z window while it is open (status/running route here), else null.
    private RefineZFrame refineZFrame_ = null;
 
@@ -1859,6 +1861,7 @@ public class ExplorerManager {
             refineZPoints_.clear();
          }
          dataSource_.setRefineZMarkers(null);
+         dataSource_.setRefineZThumbnails(null);
       }
       dataSource_.setPositionTool(tool);
       if (viewer_ != null) {
@@ -2096,20 +2099,32 @@ public class ExplorerManager {
       String warning = null;
 
       // ---- Live hardware: affine + FOV for the new position grid ----
-      AffineTransform pixToStage = null;
+      // The grid is sized by the CURRENT pixel size from getPixelSizeUm(); the affine is used only
+      // for step-vector DIRECTION (rotation/shear). The affine's own scale can be stale (it does
+      // not always vary per objective), so we normalize it to the current pixel size below.
       double livePixelSizeUm = 0.0;
       try {
-         AffineTransform at = AffineUtils.doubleToAffine(
-               studio_.core().getPixelSizeAffine(true));
-         livePixelSizeUm = AffineUtils.deducePixelSize(at);
-         if (livePixelSizeUm > 0.0) {
-            pixToStage = at;
-         }
+         livePixelSizeUm = studio_.core().getPixelSizeUm();
       } catch (Exception ignore) {
-         // No affine configured -- scalar fallback below.
+         // Core unavailable -- fall back below.
       }
       if (livePixelSizeUm <= 0.0) {
          livePixelSizeUm = pixelSizeUm_ > 0 ? pixelSizeUm_ : 1.0;
+      }
+      AffineTransform pixToStage = null;
+      double affineScale = 1.0;
+      try {
+         AffineTransform at = AffineUtils.doubleToAffine(
+               studio_.core().getPixelSizeAffine(true));
+         double affinePixelSize = AffineUtils.deducePixelSize(at);
+         if (affinePixelSize > 0.0) {
+            pixToStage = at;
+            // Rescale the affine's vectors from its (possibly stale) pixel size to the current one
+            // so directions are preserved but magnitudes match getPixelSizeUm().
+            affineScale = livePixelSizeUm / affinePixelSize;
+         }
+      } catch (Exception ignore) {
+         // No affine configured -- scalar fallback below.
       }
 
       int tileW = (int) studio_.core().getImageWidth();
@@ -2149,12 +2164,13 @@ public class ExplorerManager {
          pixToStage.deltaTransform(new Point2D.Double(0, stepPxY), sy);
          pixToStage.deltaTransform(new Point2D.Double(tileW, 0), fx);
          pixToStage.deltaTransform(new Point2D.Double(0, tileH), fy);
-         stageStepXdx = sx.x;
-         stageStepXdy = sx.y;
-         stageStepYdx = sy.x;
-         stageStepYdy = sy.y;
-         fovW = Math.hypot(fx.x, fx.y);
-         fovH = Math.hypot(fy.x, fy.y);
+         // Normalize the affine's scale to the current pixel size (see affineScale above).
+         stageStepXdx = sx.x * affineScale;
+         stageStepXdy = sx.y * affineScale;
+         stageStepYdx = sy.x * affineScale;
+         stageStepYdy = sy.y * affineScale;
+         fovW = Math.hypot(fx.x, fx.y) * affineScale;
+         fovH = Math.hypot(fy.x, fy.y) * affineScale;
       } else {
          stageStepXdx = stepPxX * livePixelSizeUm;
          stageStepXdy = 0;
@@ -2231,10 +2247,26 @@ public class ExplorerManager {
          throw new Exception("Cannot create positions: no XY stage device is configured.");
       }
 
-      // FOV size in full-resolution pixels (session frame), for the overlap test.
-      double pxPerUm = computePxPerUm();
-      double fovPxW = pxPerUm > 0 ? fovW * pxPerUm : tileW;
-      double fovPxH = pxPerUm > 0 ? fovH * pxPerUm : tileH;
+      // FOV size in full-resolution (session-frame) canvas pixels, for the overlap test and the
+      // grey preview. Sized identically to the red live-FOV indicator so the two coincide:
+      // session-frame effective tile px * current/session pixel-size ratio * camera-ROI scale.
+      // This is robust to a stale or rotated pixel-size affine and to camera-ROI (WxH) changes.
+      final double fovPxW;
+      final double fovPxH;
+      final int twCanvas = dataSource_ != null ? dataSource_.getTileWidth() : -1;
+      final int thCanvas = dataSource_ != null ? dataSource_.getTileHeight() : -1;
+      if (twCanvas > 0 && thCanvas > 0 && initialCameraWidth_ > 0 && initialCameraHeight_ > 0) {
+         final double ratio = getPixelSizeRatio();
+         final double widthScale  = (double) tileW / initialCameraWidth_;
+         final double heightScale = (double) tileH / initialCameraHeight_;
+         final int ovCanvasX = (int) Math.round(twCanvas * overlapPercentage_ / 100.0);
+         final int ovCanvasY = (int) Math.round(thCanvas * overlapPercentage_ / 100.0);
+         fovPxW = (twCanvas - ovCanvasX) * ratio * widthScale;
+         fovPxH = (thCanvas - ovCanvasY) * ratio * heightScale;
+      } else {
+         fovPxW = tileW;
+         fovPxH = tileH;
+      }
 
       final double overlapXUm = overlapX * livePixelSizeUm;
       final double overlapYUm = overlapY * livePixelSizeUm;
@@ -2594,6 +2626,8 @@ public class ExplorerManager {
       private final double stageY;
       private final java.util.Map<String, Double> z;
       private final int[] well; // {wellRow, wellCol} on multi-well plates, else null
+      // In-focus thumbnail captured at this point (immutable once set); null until snapped.
+      private volatile java.awt.image.BufferedImage thumb;
 
       private RefineZPoint(double stageX, double stageY,
             java.util.Map<String, Double> z, int[] well) {
@@ -2618,12 +2652,13 @@ public class ExplorerManager {
       }
    }
 
-   /** Discards all collected Refine-Z reference points and clears their markers. */
+   /** Discards all collected Refine-Z reference points and clears their markers/thumbnails. */
    public void clearRefineZ() {
       synchronized (refineZPoints_) {
          refineZPoints_.clear();
       }
       pushRefineZMarkers();
+      pushRefineZThumbnails();
       setRefineZStatus("Refine Z cleared.");
    }
 
@@ -2643,6 +2678,68 @@ public class ExplorerManager {
       }
       dataSource_.setRefineZMarkers(markers);
       redrawOverlay();
+   }
+
+   /**
+    * Pushes the in-focus thumbnails to the overlay, sizing each to the current FOV in
+    * session-frame canvas pixels (the same formula as the red live-FOV indicator), centered at the
+    * reference point. Recomputed on every push so it tracks pan/zoom and objective/camera changes.
+    */
+   private void pushRefineZThumbnails() {
+      if (dataSource_ == null) {
+         return;
+      }
+      int tw = dataSource_.getTileWidth();
+      int th = dataSource_.getTileHeight();
+      java.util.List<ExplorerDataSource.RefineZThumb> thumbs = new java.util.ArrayList<>();
+      if (tw > 0 && th > 0) {
+         double ratio = getPixelSizeRatio();
+         double widthScale  = initialCameraWidth_  > 0
+               ? (double) cameraWidth_  / initialCameraWidth_  : 1.0;
+         double heightScale = initialCameraHeight_ > 0
+               ? (double) cameraHeight_ / initialCameraHeight_ : 1.0;
+         int ovX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+         int ovY = (int) Math.round(th * overlapPercentage_ / 100.0);
+         double fovW = (tw - ovX) * ratio * widthScale;
+         double fovH = (th - ovY) * ratio * heightScale;
+         synchronized (refineZPoints_) {
+            for (RefineZPoint p : refineZPoints_) {
+               if (p.thumb == null) {
+                  continue;
+               }
+               Point2D.Double centerPx = stageToPixel(p.stageX, p.stageY);
+               if (centerPx == null) {
+                  continue;
+               }
+               thumbs.add(new ExplorerDataSource.RefineZThumb(
+                     centerPx.x - fovW / 2.0, centerPx.y - fovH / 2.0, fovW, fovH, p.thumb));
+            }
+         }
+      }
+      dataSource_.setRefineZThumbnails(thumbs);
+      redrawOverlay();
+   }
+
+   /** Best-effort in-focus thumbnail from a snap; returns null on any failure. Call off the EDT. */
+   private java.awt.image.BufferedImage grabRefineZThumbnail() {
+      try {
+         java.util.List<Image> images = studio_.live().snap(false);
+         if (images == null || images.isEmpty()) {
+            return null;
+         }
+         Image img = images.get(0);
+         ij.process.ImageProcessor proc = ImageUtils.makeProcessor(
+               img.getImageJPixelType(), img.getWidth(), img.getHeight(), img.getRawPixels());
+         if (proc == null) {
+            return null;
+         }
+         proc.setInterpolationMethod(ij.process.ImageProcessor.BILINEAR);
+         ij.process.ImageProcessor scaled = proc.resize(REFINE_Z_THUMB_PX, REFINE_Z_THUMB_PX);
+         return scaled.getBufferedImage();
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Refine Z: failed to grab thumbnail");
+         return null;
+      }
    }
 
    /** True while the automatic Refine-Z worker is running. */
@@ -2735,13 +2832,8 @@ public class ExplorerManager {
       }
 
       private String refineOneTile(AutofocusPlugin af, Tile t) {
-         // Snap to the Explorer grid cell center under this tile so the reference point, the
-         // autofocus measurement, and the acquired image all coincide on the canvas grid.
-         int[] cell = explorerGridCellForStage(t.stageX, t.stageY);
-         Point2D.Double target = cell != null
-               ? stageForExplorerCell(cell[0], cell[1]) : new Point2D.Double(t.stageX, t.stageY);
          try {
-            studio_.core().setXYPosition(studio_.core().getXYStageDevice(), target.x, target.y);
+            studio_.core().setXYPosition(studio_.core().getXYStageDevice(), t.stageX, t.stageY);
             studio_.core().waitForDevice(studio_.core().getXYStageDevice());
          } catch (Exception e) {
             studio_.logs().logError(e, "Refine Z: move failed");
@@ -2765,9 +2857,10 @@ public class ExplorerManager {
             studio_.logs().logError(e, "Refine Z: read Z failed");
             return "tile (Z read failed)";
          }
-         // Acquire the in-focus image so it shows on the canvas like a normal tile.
-         acquireRefineZTileAtCurrentStage();
-         publish(new RefineZPoint(target.x, target.y, zVals, t.well));
+         RefineZPoint rp = new RefineZPoint(t.stageX, t.stageY, zVals, t.well);
+         // Grab the in-focus image for the overlay thumbnail (no NDTiff tile is stored).
+         rp.thumb = grabRefineZThumbnail();
+         publish(rp);
          return null;
       }
 
@@ -2777,6 +2870,7 @@ public class ExplorerManager {
             refineZPoints_.addAll(chunks);
          }
          pushRefineZMarkers();
+         pushRefineZThumbnails();
          setRefineZStatus("Refined " + refineZPointCount() + " point(s)...");
       }
 
@@ -2807,81 +2901,6 @@ public class ExplorerManager {
    }
 
    /**
-    * Returns the Explorer session tile-grid cell {row, col} that contains the given stage
-    * position, or null if the tile grid is not ready. Uses the same mapping the canvas uses to
-    * place tiles, so acquiring this cell shows the image at the expected canvas location.
-    */
-   private int[] explorerGridCellForStage(double stageX, double stageY) {
-      Point2D.Double px = stageToPixel(stageX, stageY);
-      int tw = dataSource_ != null ? dataSource_.getTileWidth() : -1;
-      int th = dataSource_ != null ? dataSource_.getTileHeight() : -1;
-      if (px == null || tw <= 0 || th <= 0) {
-         return null;
-      }
-      int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
-      int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
-      double effW = tw - overlapPixelsX;
-      double effH = th - overlapPixelsY;
-      int col = (int) Math.floor(px.x / effW);
-      int row = (int) Math.floor(px.y / effH);
-      return new int[]{row, col};
-   }
-
-   /**
-    * Returns the stage XY of the center of the Explorer session tile-grid cell {row, col}, using
-    * the same grid->stage mapping as acquireMultipleTiles so the cell aligns with the canvas.
-    */
-   private Point2D.Double stageForExplorerCell(int row, int col) {
-      double overlapFraction = overlapPercentage_ / 100.0;
-      double effectivePixelStepX = cameraWidth_  * (1.0 - overlapFraction);
-      double effectivePixelStepY = cameraHeight_ * (1.0 - overlapFraction);
-      if (pixelSizeAffine_ != null) {
-         Point2D.Double pixelOffset = new Point2D.Double(
-               col * effectivePixelStepX, row * effectivePixelStepY);
-         Point2D.Double stageOffset = new Point2D.Double();
-         pixelSizeAffine_.transform(pixelOffset, stageOffset);
-         return new Point2D.Double(initialStageX_ + stageOffset.x, initialStageY_ + stageOffset.y);
-      }
-      double effectiveStepWidthUm  = stageTileWidthUm_  * (1.0 - overlapFraction);
-      double effectiveStepHeightUm = stageTileHeightUm_ * (1.0 - overlapFraction);
-      return new Point2D.Double(initialStageX_ + col * effectiveStepWidthUm,
-            initialStageY_ + row * effectiveStepHeightUm);
-   }
-
-   /**
-    * Moves the stage to the center of the Explorer grid cell under the current position and
-    * acquires that tile so the in-focus image appears on the canvas (exactly like a left-click
-    * acquisition) at the correct cell. Runs synchronously; must be called off the EDT. Returns
-    * the cell-center stage XY actually acquired, or null on failure.
-    */
-   private Point2D.Double acquireRefineZTileAtCurrentStage() {
-      try {
-         double stageX = studio_.core().getXPosition();
-         double stageY = studio_.core().getYPosition();
-         int[] cell = explorerGridCellForStage(stageX, stageY);
-         if (cell == null) {
-            return null;
-         }
-         int row = cell[0];
-         int col = cell[1];
-         // Snap to the exact cell center so the stored tile aligns with the canvas grid.
-         Point2D.Double cellCenter = stageForExplorerCell(row, col);
-         studio_.core().setXYPosition(cellCenter.x, cellCenter.y);
-         studio_.core().waitForDevice(studio_.core().getXYStageDevice());
-         if (!dataSource_.isTileAcquired(row, col)) {
-            acquireSingleTileBlocking(row, col);
-            dataSource_.markTileAcquired(row, col);
-            dataSource_.invalidateImageKeysCache();
-            redrawOverlay();
-         }
-         return cellCenter;
-      } catch (Exception e) {
-         studio_.logs().logError(e, "Refine Z: could not acquire in-focus tile");
-         return null;
-      }
-   }
-
-   /**
     * Manual Refine Z: moves the stage so the clicked full-res pixel becomes the FOV center, so the
     * operator can focus there and then capture with {@link #addManualRefineZ()}.
     */
@@ -2894,7 +2913,7 @@ public class ExplorerManager {
 
    /**
     * Captures the current Z of every checked Z stage at the current stage XY as a Refine-Z
-    * reference point.
+    * reference point, then snaps an in-focus thumbnail (off the EDT) for the overlay.
     */
    public void addManualRefineZ() {
       if (!exploring_ || loadedData_) {
@@ -2912,21 +2931,20 @@ public class ExplorerManager {
          for (String z : zStages) {
             zVals.put(z, studio_.core().getPosition(z));
          }
-         // Record the point at the Explorer grid cell center so the marker, the reference point,
-         // and the acquired tile all coincide on the canvas grid.
-         int[] cell = explorerGridCellForStage(stageX, stageY);
-         Point2D.Double refXy = cell != null
-               ? stageForExplorerCell(cell[0], cell[1]) : new Point2D.Double(stageX, stageY);
          int[] well = (vesselType_ != null && vesselType_.isMultiWell())
-               ? wellIndexForStage(refXy.x, refXy.y) : null;
+               ? wellIndexForStage(stageX, stageY) : null;
+         final RefineZPoint rp = new RefineZPoint(stageX, stageY, zVals, well);
          synchronized (refineZPoints_) {
-            refineZPoints_.add(new RefineZPoint(refXy.x, refXy.y, zVals, well));
+            refineZPoints_.add(rp);
          }
          pushRefineZMarkers();
          setRefineZStatus("Set Z (" + refineZPointCount() + " points).");
-         // Acquire the in-focus image (off the EDT) so it shows on the canvas.
+         // Snap the in-focus image off the EDT, then push thumbnails on the EDT.
          if (acquisitionExecutor_ != null) {
-            acquisitionExecutor_.submit(this::acquireRefineZTileAtCurrentStage);
+            acquisitionExecutor_.submit(() -> {
+               rp.thumb = grabRefineZThumbnail();
+               SwingUtilities.invokeLater(this::pushRefineZThumbnails);
+            });
          }
       } catch (Exception e) {
          studio_.logs().showError(e, "Refine Z: could not read stage position.");

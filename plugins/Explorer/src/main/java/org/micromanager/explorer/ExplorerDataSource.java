@@ -10,6 +10,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterf
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
 import org.micromanager.tileddataviewer.TiledDataViewerExploreControls;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
+import org.micromanager.tileddataviewer.overlay.ImageRoi;
 import org.micromanager.tileddataviewer.overlay.OvalRoi;
 import org.micromanager.tileddataviewer.overlay.Overlay;
 import org.micromanager.tileddataviewer.overlay.PolygonRoi;
@@ -126,6 +128,26 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    // drawn until the operator leaves draw mode.
    private volatile boolean refineZActive_ = false;
    private final ArrayList<Point2D.Double> refineZMarkersPx_ = new ArrayList<>();
+
+   /** A Refine-Z in-focus thumbnail to draw at a full-resolution pixel rectangle. */
+   public static final class RefineZThumb {
+      public final double fullResX;
+      public final double fullResY;
+      public final double fullResW;
+      public final double fullResH;
+      public final BufferedImage img;
+
+      public RefineZThumb(double fullResX, double fullResY, double fullResW, double fullResH,
+            BufferedImage img) {
+         this.fullResX = fullResX;
+         this.fullResY = fullResY;
+         this.fullResW = fullResW;
+         this.fullResH = fullResH;
+         this.img = img;
+      }
+   }
+
+   private final ArrayList<RefineZThumb> refineZThumbs_ = new ArrayList<>();
 
    public ExplorerDataSource(ExplorerManager manager) {
       manager_ = manager;
@@ -236,6 +258,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       roiClosed_ = false;
       rubberBandPx_ = null;
       positionFovsPx_.clear();
+      refineZThumbs_.clear();
    }
 
    /**
@@ -253,6 +276,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       roiClosed_ = false;
       rubberBandPx_ = null;
       positionFovsPx_.clear();
+      refineZThumbs_.clear();
    }
 
    /**
@@ -281,6 +305,14 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       refineZMarkersPx_.clear();
       if (markers != null) {
          refineZMarkersPx_.addAll(markers);
+      }
+   }
+
+   /** Sets the Refine-Z in-focus thumbnails (full-res rectangles) to draw on the overlay. */
+   public synchronized void setRefineZThumbnails(java.util.List<RefineZThumb> thumbs) {
+      refineZThumbs_.clear();
+      if (thumbs != null) {
+         refineZThumbs_.addAll(thumbs);
       }
    }
 
@@ -1153,7 +1185,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       // Generated-position FOV rectangles (light grey), drawn under the ROI outline.
       addGeneratedPositionFovs(overlay, magnification, viewOffset);
 
-      // Refine-Z reference-point markers (green crosses), drawn over the FOVs.
+      // Refine-Z in-focus thumbnails (under the markers).
+      addRefineZThumbnails(overlay, magnification, viewOffset);
+
+      // Refine-Z reference-point markers (green crosses), drawn over the FOVs/thumbnails.
       addRefineZMarkers(overlay, magnification, viewOffset);
 
       // Create-Positions ROI — added last so it draws on top of everything (including the
@@ -1181,6 +1216,28 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          marker.setStrokeColor(green);
          marker.setFillColor(green);
          overlay.add(marker);
+      }
+   }
+
+   /** Adds the Refine-Z in-focus thumbnails to the overlay as ImageRois. */
+   private void addRefineZThumbnails(Overlay overlay, double magnification,
+                                     Point2D.Double viewOffset) {
+      ArrayList<RefineZThumb> thumbs;
+      synchronized (this) {
+         if (refineZThumbs_.isEmpty()) {
+            return;
+         }
+         thumbs = new ArrayList<>(refineZThumbs_);
+      }
+      for (RefineZThumb t : thumbs) {
+         if (t.img == null) {
+            continue;
+         }
+         int x = (int) ((t.fullResX - viewOffset.x) * magnification);
+         int y = (int) ((t.fullResY - viewOffset.y) * magnification);
+         int w = (int) (t.fullResW * magnification);
+         int h = (int) (t.fullResH * magnification);
+         overlay.add(new ImageRoi(x, y, Math.max(1, w), Math.max(1, h), t.img));
       }
    }
 
