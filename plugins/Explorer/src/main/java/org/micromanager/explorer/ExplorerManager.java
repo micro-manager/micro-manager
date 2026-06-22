@@ -2728,8 +2728,22 @@ public class ExplorerManager {
             return null;
          }
          Image img = images.get(0);
+         Object pixels = img.getRawPixels();
+         int w = img.getWidth();
+         int h = img.getHeight();
+         // Apply the same camera orientation correction (mirror + rotation) the canvas applies to
+         // acquired tiles, so thumbnails match the main images. Skip if the Flipper already did it.
+         if (!flipperInPipeline_
+               && (sessionCorrectionMirror_ || sessionCorrectionRotation_ != 0)) {
+            Object[] result = ImageTransformUtils.transformPixels(
+                  pixels, w, h, img.getBytesPerPixel(),
+                  sessionCorrectionMirror_, sessionCorrectionRotation_);
+            pixels = result[0];
+            w = (Integer) result[1];
+            h = (Integer) result[2];
+         }
          ij.process.ImageProcessor proc = ImageUtils.makeProcessor(
-               img.getImageJPixelType(), img.getWidth(), img.getHeight(), img.getRawPixels());
+               img.getImageJPixelType(), w, h, pixels);
          if (proc == null) {
             return null;
          }

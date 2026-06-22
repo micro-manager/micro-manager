@@ -46,6 +46,9 @@ public class RefineZFrame extends JFrame {
    private final JLabel statusLabel_;
 
    private boolean running_ = false;
+   // True while we are programmatically syncing the AF combo to the main method, to avoid the
+   // combo's action listener echoing the change back to the AutofocusManager.
+   private boolean syncingAf_ = false;
 
    /**
     * Constructs the Refine Z window.
@@ -95,7 +98,19 @@ public class RefineZFrame extends JFrame {
       pointsSpinner_.setToolTipText("Number of autofocus reference points");
       panel.add(pointsSpinner_);
       afCombo_ = new JComboBox<>();
-      afCombo_.setToolTipText("Autofocus method to run at each reference point");
+      afCombo_.setToolTipText(
+            "Autofocus method to run at each reference point (shared with the main MM window)");
+      // Selecting a method here switches the main MM autofocus method too, keeping them in sync.
+      afCombo_.addActionListener(e -> {
+         Object sel = afCombo_.getSelectedItem();
+         if (sel != null && !syncingAf_) {
+            try {
+               studio_.getAutofocusManager().setAutofocusMethodByName(sel.toString());
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Refine Z: could not select autofocus method");
+            }
+         }
+      });
       panel.add(afCombo_);
       startButton_ = new JButton("Start");
       startButton_.addActionListener(e -> {
@@ -144,24 +159,41 @@ public class RefineZFrame extends JFrame {
       refreshAfMethods();
       explorerManager_.setRefineZMethod((ZGenerator.Type) interpCombo_.getSelectedItem());
 
+      // Re-sync the AF method from the main window each time this window regains focus, since the
+      // AutofocusManager has no change event to subscribe to.
+      addWindowFocusListener(new java.awt.event.WindowAdapter() {
+         @Override
+         public void windowGainedFocus(java.awt.event.WindowEvent e) {
+            refreshAfMethods();
+         }
+      });
+
       pack();
       setLocationRelativeTo(explorerFrame);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       updateEnabled();
    }
 
+   /**
+    * Repopulates the autofocus list and selects the method currently active in the main MM window,
+    * so the Refine Z device stays in sync with the rest of the application.
+    */
    private void refreshAfMethods() {
-      Object selected = afCombo_.getSelectedItem();
-      afCombo_.removeAllItems();
+      syncingAf_ = true;
       try {
+         afCombo_.removeAllItems();
          for (String name : studio_.getAutofocusManager().getAllAutofocusMethods()) {
             afCombo_.addItem(name);
          }
+         org.micromanager.AutofocusPlugin current =
+               studio_.getAutofocusManager().getAutofocusMethod();
+         if (current != null) {
+            afCombo_.setSelectedItem(current.getName());
+         }
       } catch (Exception e) {
          // No autofocus methods available; combo stays empty.
-      }
-      if (selected != null) {
-         afCombo_.setSelectedItem(selected);
+      } finally {
+         syncingAf_ = false;
       }
    }
 
