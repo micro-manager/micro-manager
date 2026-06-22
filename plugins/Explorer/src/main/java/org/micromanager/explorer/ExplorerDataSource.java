@@ -258,7 +258,8 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       roiClosed_ = false;
       rubberBandPx_ = null;
       positionFovsPx_.clear();
-      refineZThumbs_.clear();
+      // Refine-Z markers/thumbnails are NOT cleared here: they belong to the Refine-Z lifecycle
+      // (managed by ExplorerManager), which preserves reference points across ROI-tool switches.
    }
 
    /**
@@ -276,7 +277,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       roiClosed_ = false;
       rubberBandPx_ = null;
       positionFovsPx_.clear();
-      refineZThumbs_.clear();
+      // Refine-Z markers/thumbnails are managed separately (see setPositionTool); not cleared here.
    }
 
    /**
@@ -1132,7 +1133,8 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          overlay.add(stageRoi);
       }
 
-      // Green vessel outline — drawn last so it appears on top.
+      // Green vessel outline, drawn over the tiles/stage-FOV. The generated-position FOVs,
+      // Refine-Z overlays, and the in-progress ROI are added afterward so they appear on top.
       VesselType vessel;
       double tlX;
       double tlY;
@@ -1188,7 +1190,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       // Refine-Z in-focus thumbnails (under the markers).
       addRefineZThumbnails(overlay, magnification, viewOffset);
 
-      // Refine-Z reference-point markers (green crosses), drawn over the FOVs/thumbnails.
+      // Refine-Z reference-point markers (green filled squares), drawn over the FOVs/thumbnails.
       addRefineZMarkers(overlay, magnification, viewOffset);
 
       // Create-Positions ROI — added last so it draws on top of everything (including the

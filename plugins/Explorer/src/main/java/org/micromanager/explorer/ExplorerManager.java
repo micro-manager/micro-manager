@@ -1990,33 +1990,37 @@ public class ExplorerManager {
    }
 
    /**
-    * Chooses up to {@code n} tiles spread across the given set using farthest-point sampling in
-    * stage space. On multi-well plates the budget is split across wells so each gets coverage.
+    * Chooses up to {@code n} tiles TOTAL, spread across the given set using farthest-point sampling
+    * in stage space. On multi-well plates the total budget {@code n} is distributed across the
+    * occupied wells (each occupied well gets at least one point until the budget is exhausted), so
+    * dense plates do not explode into hundreds of autofocus points.
     */
    private java.util.List<Tile> chooseSpreadTiles(java.util.List<Tile> tiles, int n) {
       java.util.List<Tile> result = new java.util.ArrayList<>();
       if (tiles.isEmpty() || n <= 0) {
          return result;
       }
-      // Group by well so each well is sampled; non-plate -> single group.
+      // Group by well so the budget is spread across wells; non-plate -> single group.
       java.util.Map<Long, java.util.List<Tile>> byWell = new java.util.LinkedHashMap<>();
-      boolean multiWell = false;
       for (Tile t : tiles) {
          long key = 0;
          if (t.well != null) {
-            multiWell = true;
             key = ((long) t.well[0] << 32) | (t.well[1] & 0xffffffffL);
          }
          byWell.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(t);
       }
       int nWells = byWell.size();
+      // Distribute n across wells: a base count each, plus one extra to the first 'remainder'
+      // wells. When n < nWells only the first n wells get a point (base 0, remainder n).
+      int base = n / nWells;
+      int remainder = n % nWells;
+      int idx = 0;
       for (java.util.List<Tile> group : byWell.values()) {
-         int budget = multiWell ? Math.max(1, n) : n; // n points per well on plates, else n total
-         result.addAll(farthestPointSample(group, Math.min(budget, group.size())));
-      }
-      // On non-plate the loop ran once; on plates each well got up to n points.
-      if (!multiWell && result.size() > n) {
-         return result.subList(0, n);
+         int budget = base + (idx < remainder ? 1 : 0);
+         if (budget > 0) {
+            result.addAll(farthestPointSample(group, Math.min(budget, group.size())));
+         }
+         idx++;
       }
       return result;
    }

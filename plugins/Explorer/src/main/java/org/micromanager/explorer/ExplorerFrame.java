@@ -14,9 +14,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
@@ -57,7 +59,7 @@ public class ExplorerFrame extends JFrame {
    private JCheckBox withinVesselCheck_;
    private JButton generatePositionsButton_;
    private JButton clearRoiButton_;
-   private JLabel positionStatusLabel_;
+   private JTextArea positionStatusLabel_;
    private boolean positionDrawActive_ = false;
 
    // Refine-Z control (opens a separate RefineZFrame).
@@ -269,8 +271,19 @@ public class ExplorerFrame extends JFrame {
 
       buildRefineZPanel(positionPanel);
 
-      positionStatusLabel_ = new JLabel(" ");
-      positionPanel.add(positionStatusLabel_, "span, growx, wrap");
+      // A read-only, word-wrapping JTextArea styled as a label: long status/Note text wraps to
+      // multiple lines (reporting its true height to the layout, so nothing is clipped) instead
+      // of widening the window.
+      positionStatusLabel_ = new JTextArea(" ");
+      positionStatusLabel_.setEditable(false);
+      positionStatusLabel_.setFocusable(false);
+      positionStatusLabel_.setLineWrap(true);
+      positionStatusLabel_.setWrapStyleWord(true);
+      positionStatusLabel_.setOpaque(false);
+      positionStatusLabel_.setBorder(null);
+      positionStatusLabel_.setFont(UIManager.getFont("Label.font"));
+      // wmin 0 lets the cell shrink with the panel; wmax caps the width so text wraps.
+      positionPanel.add(positionStatusLabel_, "span, growx, wmin 0, wmax 400, wrap");
       add(positionPanel, "growx, wrap");
 
       JButton openButton = new JButton("Open Existing");
@@ -459,10 +472,17 @@ public class ExplorerFrame extends JFrame {
       });
    }
 
-   /** Sets the Create-Positions status text. Called from ExplorerManager; switches to EDT. */
+   /**
+    * Sets the Create-Positions status text. Long messages (e.g. the pixel-size Note) wrap to
+    * multiple lines rather than widening the window. Called from ExplorerManager; switches to EDT.
+    */
    public void setPositionStatus(String text) {
-      SwingUtilities.invokeLater(() ->
-            positionStatusLabel_.setText(text == null || text.isEmpty() ? " " : text));
+      final String shown = (text == null || text.isEmpty()) ? " " : text;
+      SwingUtilities.invokeLater(() -> {
+         positionStatusLabel_.setText(shown);
+         // Re-pack so the window grows taller for a wrapped (multi-line) status, never wider.
+         pack();
+      });
    }
 
    private void updatePositionToolsEnabled() {
