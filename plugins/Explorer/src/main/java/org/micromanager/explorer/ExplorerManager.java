@@ -34,7 +34,8 @@ import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
+import mmcorej.DeviceType;
+import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.MultiStagePosition;
@@ -62,6 +63,7 @@ import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
+import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
@@ -185,6 +187,9 @@ public class ExplorerManager {
    private boolean vesselUsedHcsCal_ = false;
    // True when anchor is set but stageToPixel() was not ready; retry after first tile.
    private boolean vesselOutlinePending_ = false;
+
+   // Create-Positions: number of regions already committed this session (for "Reg<n>" labels).
+   private int regionCounter_ = 0;
 
    // Camera orientation / Image Flipper correction
    private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
@@ -361,6 +366,7 @@ public class ExplorerManager {
          vesselAnchorType_ = null;
          vesselUsedHcsCal_ = false;
          vesselOutlinePending_ = false;
+         regionCounter_ = 0;
          frame_.setExploringActive(true, true);
          if (vesselType_.isMultiWell()) {
             Point2D.Double hcsOffset = tryReadHcsCalibration();
@@ -1849,29 +1855,113 @@ public class ExplorerManager {
       return dataSource_ != null && dataSource_.hasPositionRoi();
    }
 
-   /** Notifies the frame that the ROI state changed so it can update the Generate button. */
+   /**
+    * Notifies that the ROI state changed: refreshes the live position preview (grey FOVs) and
+    * the Generate button. Called from ExplorerDataSource when an ROI is completed or cleared.
+    */
    public void onPositionRoiChanged() {
-      final boolean has = hasPositionRoi();
-      SwingUtilities.invokeLater(() -> frame_.setGenerateEnabled(has));
+      SwingUtilities.invokeLater(() -> updatePositionPreview(frame_.isWithinVesselSelected()));
    }
 
    /**
-    * Generates a tile-grid position list covering the drawn ROI and adds it to the MM position
-    * list. Positions are sized using the CURRENT pixel size and camera FOV (which may differ
-    * from the session-start objective). When {@code withinVesselOnly} is true the ROI is first
-    * intersected with the vessel boundary.
-    *
-    * <p>A tile is included if its FOV rectangle overlaps the (clipped) ROI shape. Positions are
-    * ordered in a serpentine pattern. The computation runs off the EDT.</p>
+    * Recomputes the position grid for the current ROI and shows it as grey FOV rectangles on
+    * the overlay WITHOUT committing it to the MM position list. Safe to call repeatedly (on ROI
+    * completion and when the "within vessel" checkbox toggles). Clears the preview when there is
+    * no usable ROI.
     */
-   public void createPositionsFromRoi(boolean withinVesselOnly) {
-      if (dataSource_ == null || !exploring_ || loadedData_) {
+   public void updatePositionPreview(boolean withinVesselOnly) {
+      if (dataSource_ == null || !exploring_ || loadedData_ || !hasPositionRoi()) {
+         if (dataSource_ != null) {
+            dataSource_.setGeneratedPositionFovs(null);
+            redrawOverlay();
+         }
+         frame_.setGenerateEnabled(false);
          return;
       }
-      final Area roiAreaPx = dataSource_.getPositionRoiAreaPx();
-      if (roiAreaPx == null) {
+      try {
+         PositionGridResult preview = computePositionGrid(withinVesselOnly);
+         dataSource_.setGeneratedPositionFovs(preview.fovsPx);
+         redrawOverlay();
+         String status = preview.posList.getNumberOfPositions() + " positions ("
+               + preview.regionLabel + ")";
+         if (preview.warning != null) {
+            status = preview.warning + " (" + status + ")";
+         }
+         frame_.setPositionStatus(status);
+         frame_.setGenerateEnabled(true);
+      } catch (Exception ex) {
+         dataSource_.setGeneratedPositionFovs(null);
+         redrawOverlay();
+         frame_.setPositionStatus(ex.getMessage());
+         frame_.setGenerateEnabled(false);
+      }
+   }
+
+   /**
+    * Commits the previewed positions to the MM position list. Positions are sized using the
+    * CURRENT pixel size and camera FOV. When {@code withinVesselOnly} is true the ROI is first
+    * intersected with the vessel boundary. The grid is recomputed so the committed list reflects
+    * the latest hardware/checkbox state, then a region counter is advanced so the next region
+    * gets a fresh identifier.
+    */
+   public void createPositionsFromRoi(boolean withinVesselOnly) {
+      if (dataSource_ == null || !exploring_ || loadedData_ || !hasPositionRoi()) {
          frame_.setPositionStatus("Draw an ROI first.");
          return;
+      }
+      PositionGridResult result;
+      try {
+         result = computePositionGrid(withinVesselOnly);
+      } catch (Exception ex) {
+         frame_.setPositionStatus(ex.getMessage());
+         return;
+      }
+      PositionList existing = studio_.positions().getPositionList();
+      for (int i = 0; i < result.posList.getNumberOfPositions(); i++) {
+         existing.addPosition(result.posList.getPosition(i));
+      }
+      studio_.positions().setPositionList(existing);
+      studio_.app().showPositionList();
+      dataSource_.setGeneratedPositionFovs(result.fovsPx);
+      redrawOverlay();
+      // Advance the region counter so a subsequent ROI gets the next identifier.
+      regionCounter_++;
+      String status = "Added " + result.posList.getNumberOfPositions() + " positions ("
+            + result.regionLabel + ")";
+      if (result.warning != null) {
+         status = result.warning + " (" + status + ")";
+      }
+      frame_.setPositionStatus(status);
+      // Refresh the preview (now showing the NEXT region's identifier) and keep the ROI.
+      updatePositionPreview(withinVesselOnly);
+   }
+
+   /** Holds the result of a position-grid computation. */
+   private static final class PositionGridResult {
+      private final PositionList posList;
+      private final java.util.List<Rectangle2D.Double> fovsPx;
+      private final String warning;
+      private final String regionLabel;
+
+      private PositionGridResult(PositionList posList,
+            java.util.List<Rectangle2D.Double> fovsPx, String warning, String regionLabel) {
+         this.posList = posList;
+         this.fovsPx = fovsPx;
+         this.warning = warning;
+         this.regionLabel = regionLabel;
+      }
+   }
+
+   /**
+    * Computes the tile-grid position list and FOV rectangles for the current ROI. Pure
+    * computation (plus current-hardware reads); does not mutate the MM position list. A tile is
+    * included if its FOV rectangle overlaps the (optionally vessel-clipped) ROI shape. Positions
+    * are ordered serpentine, prefixed with a region identifier, and include every checked stage.
+    */
+   private PositionGridResult computePositionGrid(boolean withinVesselOnly) throws Exception {
+      final Area roiAreaPx = dataSource_.getPositionRoiAreaPx();
+      if (roiAreaPx == null) {
+         throw new Exception("Draw an ROI first.");
       }
       if (withinVesselOnly) {
          Area vesselArea = dataSource_.getVesselAreaPx();
@@ -1880,237 +1970,381 @@ public class ExplorerManager {
          }
       }
       if (roiAreaPx.isEmpty()) {
-         frame_.setPositionStatus("ROI does not overlap the vessel.");
-         return;
+         throw new Exception("ROI does not overlap the vessel.");
       }
 
-      frame_.setPositionStatus("Computing positions...");
-      frame_.setGenerateEnabled(false);
+      String warning = null;
 
-      new SwingWorker<PositionList, Void>() {
-         private String warning = null;
-         // FOV rectangles (full-res pixels) of accepted positions, for the grey overlay.
-         private final java.util.List<Rectangle2D.Double> fovsPx =
-               new java.util.ArrayList<>();
+      // ---- Live hardware: affine + FOV for the new position grid ----
+      AffineTransform pixToStage = null;
+      double livePixelSizeUm = 0.0;
+      try {
+         AffineTransform at = AffineUtils.doubleToAffine(
+               studio_.core().getPixelSizeAffine(true));
+         livePixelSizeUm = AffineUtils.deducePixelSize(at);
+         if (livePixelSizeUm > 0.0) {
+            pixToStage = at;
+         }
+      } catch (Exception ignore) {
+         // No affine configured -- scalar fallback below.
+      }
+      if (livePixelSizeUm <= 0.0) {
+         livePixelSizeUm = pixelSizeUm_ > 0 ? pixelSizeUm_ : 1.0;
+      }
 
-         @Override
-         protected PositionList doInBackground() throws Exception {
-            // ---- Live hardware: affine + FOV for the new position grid ----
-            AffineTransform pixToStage = null;
-            double livePixelSizeUm = 0.0;
-            try {
-               AffineTransform at = AffineUtils.doubleToAffine(
-                     studio_.core().getPixelSizeAffine(true));
-               livePixelSizeUm = AffineUtils.deducePixelSize(at);
-               if (livePixelSizeUm > 0.0) {
-                  pixToStage = at;
+      int tileW = (int) studio_.core().getImageWidth();
+      int tileH = (int) studio_.core().getImageHeight();
+      if (tileW <= 0 || tileH <= 0) {
+         throw new Exception("Cannot create positions: camera image size unavailable.");
+      }
+
+      int overlapX = (int) Math.round(tileW * overlapPercentage_ / 100.0);
+      int overlapY = (int) Math.round(tileH * overlapPercentage_ / 100.0);
+      int stepPxX = tileW - overlapX;
+      int stepPxY = tileH - overlapY;
+      if (stepPxX <= 0 || stepPxY <= 0) {
+         throw new Exception("Cannot create positions: overlap is >= tile size.");
+      }
+
+      if (Math.abs(livePixelSizeUm - initialPixelSizeUm_) > 0.01 * initialPixelSizeUm_) {
+         warning = String.format(
+               "Note: current pixel size (%.4f um) differs from session start (%.4f um) "
+               + "- positions sized for the current objective.",
+               livePixelSizeUm, initialPixelSizeUm_);
+      }
+
+      // ---- Step vectors and FOV magnitudes in stage space (current hardware) ----
+      final double stageStepXdx;
+      final double stageStepXdy;
+      final double stageStepYdx;
+      final double stageStepYdy;
+      double fovW;
+      double fovH;
+      if (pixToStage != null) {
+         Point2D.Double sx = new Point2D.Double();
+         Point2D.Double sy = new Point2D.Double();
+         Point2D.Double fx = new Point2D.Double();
+         Point2D.Double fy = new Point2D.Double();
+         pixToStage.deltaTransform(new Point2D.Double(stepPxX, 0), sx);
+         pixToStage.deltaTransform(new Point2D.Double(0, stepPxY), sy);
+         pixToStage.deltaTransform(new Point2D.Double(tileW, 0), fx);
+         pixToStage.deltaTransform(new Point2D.Double(0, tileH), fy);
+         stageStepXdx = sx.x;
+         stageStepXdy = sx.y;
+         stageStepYdx = sy.x;
+         stageStepYdy = sy.y;
+         fovW = Math.hypot(fx.x, fx.y);
+         fovH = Math.hypot(fy.x, fy.y);
+      } else {
+         stageStepXdx = stepPxX * livePixelSizeUm;
+         stageStepXdy = 0;
+         stageStepYdx = 0;
+         stageStepYdy = stepPxY * livePixelSizeUm;
+         fovW = tileW * livePixelSizeUm;
+         fovH = tileH * livePixelSizeUm;
+      }
+      double stepMagX = Math.hypot(stageStepXdx, stageStepXdy);
+      double stepMagY = Math.hypot(stageStepYdx, stageStepYdy);
+      if (stepMagX <= 0 || stepMagY <= 0) {
+         throw new Exception("Cannot create positions: degenerate step size.");
+      }
+
+      // ---- ROI corners -> stage space (session-start frame) ----
+      Rectangle2D bbox = roiAreaPx.getBounds2D();
+      Point2D.Double[] cornersPx = new Point2D.Double[] {
+         new Point2D.Double(bbox.getMinX(), bbox.getMinY()),
+         new Point2D.Double(bbox.getMaxX(), bbox.getMinY()),
+         new Point2D.Double(bbox.getMinX(), bbox.getMaxY()),
+         new Point2D.Double(bbox.getMaxX(), bbox.getMaxY())
+      };
+      Point2D.Double[] cornersStage = new Point2D.Double[4];
+      for (int i = 0; i < 4; i++) {
+         cornersStage[i] = pixelToStageSessionFrame(cornersPx[i].x, cornersPx[i].y);
+         if (cornersStage[i] == null) {
+            throw new Exception("Cannot create positions: tile dimensions not ready.");
+         }
+      }
+
+      // ---- Grid dimensions: project corners onto unit step axes ----
+      double uxX = stageStepXdx / stepMagX;
+      double uxY = stageStepXdy / stepMagX;
+      double uyX = stageStepYdx / stepMagY;
+      double uyY = stageStepYdy / stepMagY;
+      double projXMin = Double.MAX_VALUE;
+      double projXMax = -Double.MAX_VALUE;
+      double projYMin = Double.MAX_VALUE;
+      double projYMax = -Double.MAX_VALUE;
+      double sumX = 0;
+      double sumY = 0;
+      for (Point2D.Double c : cornersStage) {
+         double px = c.x * uxX + c.y * uxY;
+         double py = c.x * uyX + c.y * uyY;
+         projXMin = Math.min(projXMin, px);
+         projXMax = Math.max(projXMax, px);
+         projYMin = Math.min(projYMin, py);
+         projYMax = Math.max(projYMax, py);
+         sumX += c.x;
+         sumY += c.y;
+      }
+      double roiExtentX = projXMax - projXMin;
+      double roiExtentY = projYMax - projYMin;
+      int nCols = Math.max(1, (int) Math.ceil((roiExtentX + fovW - stepMagX) / stepMagX));
+      int nRows = Math.max(1, (int) Math.ceil((roiExtentY + fovH - stepMagY) / stepMagY));
+
+      // ---- Grid origin: center over the ROI bounding box ----
+      double roiStageCX = sumX / 4.0;
+      double roiStageCY = sumY / 4.0;
+      double originX = roiStageCX
+            - (nCols - 1) / 2.0 * stageStepXdx
+            - (nRows - 1) / 2.0 * stageStepYdx;
+      double originY = roiStageCY
+            - (nCols - 1) / 2.0 * stageStepXdy
+            - (nRows - 1) / 2.0 * stageStepYdy;
+
+      String xyStage;
+      try {
+         xyStage = studio_.core().getXYStageDevice();
+      } catch (Exception e) {
+         xyStage = null;
+      }
+      if (xyStage == null || xyStage.isEmpty()) {
+         throw new Exception("Cannot create positions: no XY stage device is configured.");
+      }
+
+      // FOV size in full-resolution pixels (session frame), for the overlap test.
+      double pxPerUm = computePxPerUm();
+      double fovPxW = pxPerUm > 0 ? fovW * pxPerUm : tileW;
+      double fovPxH = pxPerUm > 0 ? fovH * pxPerUm : tileH;
+
+      final double overlapXUm = overlapX * livePixelSizeUm;
+      final double overlapYUm = overlapY * livePixelSizeUm;
+
+      // Region number (shared by all positions in this ROI). The per-position well prefix is
+      // computed individually below so an ROI spanning several wells labels each correctly.
+      // Use the NEXT region number; createPositionsFromRoi advances it on commit.
+      int regionNumber = regionCounter_ + 1;
+      String regionLabel = "Reg" + regionNumber;
+      boolean multiWell = vesselType_ != null && vesselType_.isMultiWell();
+
+      // Snapshot the checked auxiliary stages (e.g. Z) once, applied to every position.
+      java.util.List<StagePosition> auxStages = readCheckedAuxStages(xyStage);
+
+      // Group positions by well only when clipping to a multi-well vessel; otherwise the whole
+      // ROI is one contiguous region and the global serpentine already minimizes travel.
+      boolean groupByWell = multiWell && withinVesselOnly;
+
+      // ---- Pass 1: collect accepted tiles (already in global serpentine row/col order) ----
+      java.util.List<Tile> tiles = new java.util.ArrayList<>();
+      java.util.List<Rectangle2D.Double> fovsPx = new java.util.ArrayList<>();
+      for (int row = 0; row < nRows; row++) {
+         for (int col = 0; col < nCols; col++) {
+            int c = ((row & 1) == 0) ? col : (nCols - 1 - col); // serpentine
+            double dx = c * stageStepXdx + row * stageStepYdx;
+            double dy = c * stageStepXdy + row * stageStepYdy;
+            double stageX = originX + dx;
+            double stageY = originY + dy;
+
+            // Include the tile if its FOV rectangle overlaps the ROI shape.
+            Point2D.Double centerPx = stageToPixel(stageX, stageY);
+            Rectangle2D.Double fovRect = null;
+            if (centerPx != null) {
+               fovRect = new Rectangle2D.Double(
+                     centerPx.x - fovPxW / 2.0, centerPx.y - fovPxH / 2.0, fovPxW, fovPxH);
+               if (!roiAreaPx.intersects(fovRect)) {
+                  continue;
                }
-            } catch (Exception ignore) {
-               // No affine configured -- scalar fallback below.
             }
-            if (livePixelSizeUm <= 0.0) {
-               livePixelSizeUm = pixelSizeUm_ > 0 ? pixelSizeUm_ : 1.0;
+            if (fovRect != null) {
+               fovsPx.add(fovRect);
             }
+            int[] well = groupByWell ? wellIndexForStage(stageX, stageY) : null;
+            tiles.add(new Tile(row, c, stageX, stageY, well));
+         }
+      }
+      if (tiles.isEmpty()) {
+         throw new Exception("No positions fall within the ROI.");
+      }
 
-            int tileW = (int) studio_.core().getImageWidth();
-            int tileH = (int) studio_.core().getImageHeight();
-            if (tileW <= 0 || tileH <= 0) {
-               throw new Exception("Cannot create positions: camera image size unavailable.");
-            }
+      // ---- Pass 2: order tiles. When grouping by well, visit wells in a boustrophedon
+      // (snake) pattern across the plate and snake the tiles within each well, so the stage
+      // never jumps back and forth between wells. ----
+      if (groupByWell) {
+         orderTilesByWell(tiles);
+      }
 
-            int overlapX = (int) Math.round(tileW * overlapPercentage_ / 100.0);
-            int overlapY = (int) Math.round(tileH * overlapPercentage_ / 100.0);
-            int stepPxX = tileW - overlapX;
-            int stepPxY = tileH - overlapY;
-            if (stepPxX <= 0 || stepPxY <= 0) {
-               throw new Exception("Cannot create positions: overlap is >= tile size.");
+      // ---- Pass 3: build the position list in the chosen order ----
+      PositionList posList = new PositionList();
+      for (Tile t : tiles) {
+         String prefix = regionLabel;
+         if (multiWell) {
+            String well = t.well != null
+                  ? VesselType.getWellLabel(t.well[0], t.well[1])
+                  : wellLabelForStage(t.stageX, t.stageY);
+            if (well != null) {
+               prefix = well + "-" + regionLabel;
             }
+         }
 
-            if (Math.abs(livePixelSizeUm - initialPixelSizeUm_) > 0.01 * initialPixelSizeUm_) {
-               warning = String.format(
-                     "Note: current pixel size (%.4f um) differs from session start (%.4f um) "
-                     + "- positions sized for the current objective.",
-                     livePixelSizeUm, initialPixelSizeUm_);
+         MultiStagePosition msp = new MultiStagePosition();
+         msp.setDefaultXYStage(xyStage);
+         msp.add(StagePosition.create2D(xyStage, t.stageX, t.stageY));
+         for (StagePosition aux : auxStages) {
+            msp.add(StagePosition.newInstance(aux));
+         }
+         msp.setLabel(prefix + "-Pos-" + FMT_POS.format(t.row) + "_" + FMT_POS.format(t.col));
+         msp.setGridCoordinates(t.row, t.col);
+         msp.setProperty("OverlapUmX", String.valueOf(overlapXUm));
+         msp.setProperty("OverlapUmY", String.valueOf(overlapYUm));
+         msp.setProperty("OverlapPixelsX", String.valueOf(overlapX));
+         msp.setProperty("OverlapPixelsY", String.valueOf(overlapY));
+         msp.setProperty("Source", "ExplorerCreatePositions");
+         msp.setProperty("Region", regionLabel);
+         posList.addPosition(msp);
+      }
+      return new PositionGridResult(posList, fovsPx, warning, regionLabel);
+   }
+
+   /** One accepted grid tile, before being turned into a MultiStagePosition. */
+   private static final class Tile {
+      private final int row;
+      private final int col;
+      private final double stageX;
+      private final double stageY;
+      private final int[] well; // {wellRow, wellCol} when grouping by well, else null
+
+      private Tile(int row, int col, double stageX, double stageY, int[] well) {
+         this.row = row;
+         this.col = col;
+         this.stageX = stageX;
+         this.stageY = stageY;
+         this.well = well;
+      }
+   }
+
+   /**
+    * Re-orders the tiles in place so that all tiles of one well are visited consecutively, the
+    * wells themselves are traversed in a boustrophedon (snake) pattern (left-to-right on even
+    * well-rows, right-to-left on odd ones), and within each well the tiles snake by grid row/col.
+    * Minimizes stage travel by never jumping back and forth between wells.
+    */
+   private void orderTilesByWell(java.util.List<Tile> tiles) {
+      // Bucket tiles by well. LinkedHashMap keeps first-seen order as a stable fallback.
+      java.util.Map<Long, java.util.List<Tile>> byWell = new java.util.LinkedHashMap<>();
+      for (Tile t : tiles) {
+         int wr = t.well != null ? t.well[0] : 0;
+         int wc = t.well != null ? t.well[1] : 0;
+         long key = ((long) wr << 32) | (wc & 0xffffffffL);
+         byWell.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(t);
+      }
+      // Sort wells: row ascending; column ascending on even rows, descending on odd rows.
+      java.util.List<Long> wellKeys = new java.util.ArrayList<>(byWell.keySet());
+      wellKeys.sort((a, b) -> {
+         int ra = (int) (a >> 32);
+         int rb = (int) (b >> 32);
+         if (ra != rb) {
+            return Integer.compare(ra, rb);
+         }
+         int ca = (int) (a & 0xffffffffL);
+         int cb = (int) (b & 0xffffffffL);
+         return (ra & 1) == 0 ? Integer.compare(ca, cb) : Integer.compare(cb, ca);
+      });
+      tiles.clear();
+      for (Long key : wellKeys) {
+         java.util.List<Tile> wellTiles = byWell.get(key);
+         // Snake within the well: grid row ascending; col ascending on even rows, desc on odd.
+         wellTiles.sort((a, b) -> {
+            if (a.row != b.row) {
+               return Integer.compare(a.row, b.row);
             }
+            return (a.row & 1) == 0 ? Integer.compare(a.col, b.col) : Integer.compare(b.col, a.col);
+         });
+         tiles.addAll(wellTiles);
+      }
+   }
 
-            // ---- Step vectors and FOV magnitudes in stage space (current hardware) ----
-            final double stageStepXdx;
-            final double stageStepXdy;
-            final double stageStepYdx;
-            final double stageStepYdy;
-            double fovW;
-            double fovH;
-            if (pixToStage != null) {
-               Point2D.Double sx = new Point2D.Double();
-               Point2D.Double sy = new Point2D.Double();
-               Point2D.Double fx = new Point2D.Double();
-               Point2D.Double fy = new Point2D.Double();
-               pixToStage.deltaTransform(new Point2D.Double(stepPxX, 0), sx);
-               pixToStage.deltaTransform(new Point2D.Double(0, stepPxY), sy);
-               pixToStage.deltaTransform(new Point2D.Double(tileW, 0), fx);
-               pixToStage.deltaTransform(new Point2D.Double(0, tileH), fy);
-               stageStepXdx = sx.x;
-               stageStepXdy = sx.y;
-               stageStepYdx = sy.x;
-               stageStepYdy = sy.y;
-               fovW = Math.hypot(fx.x, fx.y);
-               fovH = Math.hypot(fy.x, fy.y);
-            } else {
-               stageStepXdx = stepPxX * livePixelSizeUm;
-               stageStepXdy = 0;
-               stageStepYdx = 0;
-               stageStepYdy = stepPxY * livePixelSizeUm;
-               fovW = tileW * livePixelSizeUm;
-               fovH = tileH * livePixelSizeUm;
+   /**
+    * Returns the well label (e.g. "B7") whose center is nearest the given stage coordinate for
+    * the current multi-well vessel, or null if no vessel/anchor is available. The plate top-left
+    * in stage coordinates is {@code vesselAnchorStageX_/Y_}; wells are laid out by the vessel
+    * geometry (axes assumed parallel to stage X/Y).
+    */
+   private String wellLabelForStage(double stageX, double stageY) {
+      int[] well = wellIndexForStage(stageX, stageY);
+      return well != null ? VesselType.getWellLabel(well[0], well[1]) : null;
+   }
+
+   /**
+    * Returns the 0-based {@code {row, col}} of the well whose center is nearest the given stage
+    * coordinate for the current multi-well vessel, or null if no vessel/anchor is available.
+    */
+   private int[] wellIndexForStage(double stageX, double stageY) {
+      if (vesselType_ == null || !vesselType_.isMultiWell()) {
+         return null;
+      }
+      double relX = stageX - vesselAnchorStageX_ - vesselType_.getFirstWellXUm();
+      double relY = stageY - vesselAnchorStageY_ - vesselType_.getFirstWellYUm();
+      double spacX = vesselType_.getWellSpacingXUm();
+      double spacY = vesselType_.getWellSpacingYUm();
+      if (spacX <= 0 || spacY <= 0) {
+         return null;
+      }
+      int col = (int) Math.round(relX / spacX);
+      int row = (int) Math.round(relY / spacY);
+      col = Math.max(0, Math.min(vesselType_.getWellCols() - 1, col));
+      row = Math.max(0, Math.min(vesselType_.getWellRows() - 1, row));
+      return new int[]{row, col};
+   }
+
+   /**
+    * Reads the current positions of every stage that is checked ("use") in the MM Stage Position
+    * List, EXCLUDING the main XY stage (which carries the grid position). The checked state is the
+    * same profile setting the Position List editor uses. Failures are logged and skipped.
+    */
+   private java.util.List<StagePosition> readCheckedAuxStages(String mainXyStage) {
+      java.util.List<StagePosition> result = new java.util.ArrayList<>();
+      MutablePropertyMapView axisSettings = null;
+      try {
+         Class<?> axisModel = Class.forName(
+               "org.micromanager.internal.positionlist.AxisTableModel");
+         axisSettings = studio_.profile().getSettings(axisModel);
+      } catch (Exception e) {
+         // Can't read the checked state -- fall back to including all stages.
+      }
+      try {
+         StrVector oneDStages = studio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
+         for (int i = 0; i < oneDStages.size(); i++) {
+            String name = oneDStages.get(i);
+            if (axisSettings != null && !axisSettings.getBoolean(name, true)) {
+               continue;
             }
-            double stepMagX = Math.hypot(stageStepXdx, stageStepXdy);
-            double stepMagY = Math.hypot(stageStepYdx, stageStepYdy);
-            if (stepMagX <= 0 || stepMagY <= 0) {
-               throw new Exception("Cannot create positions: degenerate step size.");
-            }
-
-            // ---- ROI corners -> stage space (session-start frame) ----
-            Rectangle2D bbox = roiAreaPx.getBounds2D();
-            Point2D.Double[] cornersPx = new Point2D.Double[] {
-               new Point2D.Double(bbox.getMinX(), bbox.getMinY()),
-               new Point2D.Double(bbox.getMaxX(), bbox.getMinY()),
-               new Point2D.Double(bbox.getMinX(), bbox.getMaxY()),
-               new Point2D.Double(bbox.getMaxX(), bbox.getMaxY())
-            };
-            Point2D.Double[] cornersStage = new Point2D.Double[4];
-            for (int i = 0; i < 4; i++) {
-               cornersStage[i] = pixelToStageSessionFrame(cornersPx[i].x, cornersPx[i].y);
-               if (cornersStage[i] == null) {
-                  throw new Exception("Cannot create positions: tile dimensions not ready.");
-               }
-            }
-
-            // ---- Grid dimensions: project corners onto unit step axes ----
-            double uxX = stageStepXdx / stepMagX;
-            double uxY = stageStepXdy / stepMagX;
-            double uyX = stageStepYdx / stepMagY;
-            double uyY = stageStepYdy / stepMagY;
-            double projXMin = Double.MAX_VALUE;
-            double projXMax = -Double.MAX_VALUE;
-            double projYMin = Double.MAX_VALUE;
-            double projYMax = -Double.MAX_VALUE;
-            double sumX = 0;
-            double sumY = 0;
-            for (Point2D.Double c : cornersStage) {
-               double px = c.x * uxX + c.y * uxY;
-               double py = c.x * uyX + c.y * uyY;
-               projXMin = Math.min(projXMin, px);
-               projXMax = Math.max(projXMax, px);
-               projYMin = Math.min(projYMin, py);
-               projYMax = Math.max(projYMax, py);
-               sumX += c.x;
-               sumY += c.y;
-            }
-            double roiExtentX = projXMax - projXMin;
-            double roiExtentY = projYMax - projYMin;
-            int nCols = Math.max(1, (int) Math.ceil((roiExtentX + fovW - stepMagX) / stepMagX));
-            int nRows = Math.max(1, (int) Math.ceil((roiExtentY + fovH - stepMagY) / stepMagY));
-
-            // ---- Grid origin: center over the ROI bounding box ----
-            double roiStageCX = sumX / 4.0;
-            double roiStageCY = sumY / 4.0;
-            double originX = roiStageCX
-                  - (nCols - 1) / 2.0 * stageStepXdx
-                  - (nRows - 1) / 2.0 * stageStepYdx;
-            double originY = roiStageCY
-                  - (nCols - 1) / 2.0 * stageStepXdy
-                  - (nRows - 1) / 2.0 * stageStepYdy;
-
-            String xyStage;
             try {
-               xyStage = studio_.core().getXYStageDevice();
+               double pos = studio_.core().getPosition(name);
+               result.add(StagePosition.create1D(name, pos));
             } catch (Exception e) {
-               xyStage = null;
+               studio_.logs().logError(e, "Explorer: could not read position of " + name);
             }
-            if (xyStage == null || xyStage.isEmpty()) {
-               throw new Exception("Cannot create positions: no XY stage device is configured.");
-            }
-
-            // FOV size in full-resolution pixels (session frame), for the overlap test.
-            double pxPerUm = computePxPerUm();
-            double fovPxW = pxPerUm > 0 ? fovW * pxPerUm : tileW;
-            double fovPxH = pxPerUm > 0 ? fovH * pxPerUm : tileH;
-
-            final double overlapXUm = overlapX * livePixelSizeUm;
-            final double overlapYUm = overlapY * livePixelSizeUm;
-
-            PositionList posList = new PositionList();
-            for (int row = 0; row < nRows; row++) {
-               for (int col = 0; col < nCols; col++) {
-                  int c = ((row & 1) == 0) ? col : (nCols - 1 - col); // serpentine
-                  double dx = c * stageStepXdx + row * stageStepYdx;
-                  double dy = c * stageStepXdy + row * stageStepYdy;
-                  double stageX = originX + dx;
-                  double stageY = originY + dy;
-
-                  // Include the tile if its FOV rectangle overlaps the ROI shape.
-                  Point2D.Double centerPx = stageToPixel(stageX, stageY);
-                  Rectangle2D.Double fovRect = null;
-                  if (centerPx != null) {
-                     fovRect = new Rectangle2D.Double(
-                           centerPx.x - fovPxW / 2.0, centerPx.y - fovPxH / 2.0, fovPxW, fovPxH);
-                     if (!roiAreaPx.intersects(fovRect)) {
-                        continue;
-                     }
-                  }
-                  if (fovRect != null) {
-                     fovsPx.add(fovRect);
-                  }
-
-                  MultiStagePosition msp = new MultiStagePosition();
-                  msp.setDefaultXYStage(xyStage);
-                  msp.add(StagePosition.create2D(xyStage, stageX, stageY));
-                  msp.setLabel("Pos-" + FMT_POS.format(row) + "_" + FMT_POS.format(c));
-                  msp.setGridCoordinates(row, c);
-                  msp.setProperty("OverlapUmX", String.valueOf(overlapXUm));
-                  msp.setProperty("OverlapUmY", String.valueOf(overlapYUm));
-                  msp.setProperty("OverlapPixelsX", String.valueOf(overlapX));
-                  msp.setProperty("OverlapPixelsY", String.valueOf(overlapY));
-                  msp.setProperty("Source", "ExplorerCreatePositions");
-                  posList.addPosition(msp);
-               }
-            }
-            if (posList.getNumberOfPositions() == 0) {
-               throw new Exception("No positions fall within the ROI.");
-            }
-            return posList;
          }
-
-         @Override
-         protected void done() {
-            PositionList posList;
+         StrVector xyStages = studio_.core().getLoadedDevicesOfType(DeviceType.XYStageDevice);
+         for (int i = 0; i < xyStages.size(); i++) {
+            String name = xyStages.get(i);
+            if (name.equals(mainXyStage)) {
+               continue;
+            }
+            if (axisSettings != null && !axisSettings.getBoolean(name, true)) {
+               continue;
+            }
             try {
-               posList = get();
-            } catch (Exception ex) {
-               String msg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
-               frame_.setPositionStatus(msg);
-               frame_.setGenerateEnabled(hasPositionRoi());
-               return;
+               double x = studio_.core().getXPosition(name);
+               double y = studio_.core().getYPosition(name);
+               result.add(StagePosition.create2D(name, x, y));
+            } catch (Exception e) {
+               studio_.logs().logError(e, "Explorer: could not read position of " + name);
             }
-            PositionList existing = studio_.positions().getPositionList();
-            for (int i = 0; i < posList.getNumberOfPositions(); i++) {
-               existing.addPosition(posList.getPosition(i));
-            }
-            studio_.positions().setPositionList(existing);
-            studio_.app().showPositionList();
-            if (dataSource_ != null) {
-               dataSource_.setGeneratedPositionFovs(fovsPx);
-               redrawOverlay();
-            }
-            String status = "Added " + posList.getNumberOfPositions() + " positions";
-            if (warning != null) {
-               status = warning + " (" + posList.getNumberOfPositions() + " added)";
-            }
-            frame_.setPositionStatus(status);
-            // Keep the ROI so the operator can tweak / regenerate.
-            frame_.setGenerateEnabled(hasPositionRoi());
          }
-      }.execute();
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: could not enumerate stage devices");
+      }
+      return result;
    }
 
    // ===================== Private helpers =====================

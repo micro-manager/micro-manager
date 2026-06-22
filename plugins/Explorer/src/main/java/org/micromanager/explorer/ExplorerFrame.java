@@ -239,6 +239,11 @@ public class ExplorerFrame extends JFrame {
       withinVesselCheck_.setToolTipText(
             "Generate positions only where they fall within the vessel boundary");
       withinVesselCheck_.setEnabled(false);
+      withinVesselCheck_.addActionListener(e -> {
+         if (positionDrawActive_) {
+            explorerManager_.updatePositionPreview(withinVesselCheck_.isSelected());
+         }
+      });
       positionPanel.add(withinVesselCheck_);
 
       generatePositionsButton_ = new JButton("Add to Position List");
@@ -345,6 +350,11 @@ public class ExplorerFrame extends JFrame {
          hcsStatusLabel_.setText(found ? "Found ✓" : "Not found");
          updateAnchorPanels();
       });
+   }
+
+   /** Returns whether the "Only within vessel" checkbox is selected. */
+   public boolean isWithinVesselSelected() {
+      return withinVesselCheck_ != null && withinVesselCheck_.isSelected();
    }
 
    /** Returns the vessel currently selected in the combo box. */
@@ -454,7 +464,9 @@ public class ExplorerFrame extends JFrame {
       }
       createPositionsButton_.setEnabled(liveSession_);
       boolean drawing = liveSession_ && positionDrawActive_;
-      positionToolCombo_.setEnabled(drawing);
+      // The shape can be chosen before entering draw mode, so it follows the session, not
+      // the draw-mode state.
+      positionToolCombo_.setEnabled(liveSession_);
       clearRoiButton_.setEnabled(drawing);
       boolean vesselSelected = !getSelectedVessel().isNone();
       withinVesselCheck_.setEnabled(drawing && vesselSelected);
