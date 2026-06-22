@@ -60,6 +60,9 @@ public class ExplorerFrame extends JFrame {
    private JLabel positionStatusLabel_;
    private boolean positionDrawActive_ = false;
 
+   // Refine-Z control (opens a separate RefineZFrame).
+   private JButton refineZButton_;
+
    // Simple-vessel anchor (coverslips): 5 corner/center buttons.
    private JPanel simpleAnchorPanel_;
    private final List<JButton> simpleAnchorButtons_ = new ArrayList<>();
@@ -264,6 +267,8 @@ public class ExplorerFrame extends JFrame {
       });
       positionPanel.add(clearRoiButton_, "wrap");
 
+      buildRefineZPanel(positionPanel);
+
       positionStatusLabel_ = new JLabel(" ");
       positionPanel.add(positionStatusLabel_, "span, growx, wrap");
       add(positionPanel, "growx, wrap");
@@ -439,6 +444,7 @@ public class ExplorerFrame extends JFrame {
       if (createPositionsButton_ != null) {
          createPositionsButton_.setText("Create Positions");
       }
+      // setPositionDrawTool(NONE) also closes the Refine Z window and drops its points.
       explorerManager_.setPositionDrawTool(ExplorerDataSource.PositionTool.NONE);
       updatePositionToolsEnabled();
    }
@@ -449,6 +455,7 @@ public class ExplorerFrame extends JFrame {
          if (generatePositionsButton_ != null) {
             generatePositionsButton_.setEnabled(enabled && liveSession_ && positionDrawActive_);
          }
+         updateRefineZEnabled();
       });
    }
 
@@ -473,6 +480,28 @@ public class ExplorerFrame extends JFrame {
       if (!drawing) {
          generatePositionsButton_.setEnabled(false);
       }
+      updateRefineZEnabled();
+   }
+
+   // ===================== Refine Z =====================
+
+   private void buildRefineZPanel(JPanel parent) {
+      refineZButton_ = new JButton("Refine Z...");
+      refineZButton_.setToolTipText(
+            "Open the Refine Z window to measure focus at reference points and interpolate it "
+            + "across the generated positions.");
+      refineZButton_.setEnabled(false);
+      refineZButton_.addActionListener(e -> explorerManager_.showRefineZFrame());
+      parent.add(refineZButton_, "wrap");
+   }
+
+   /** Enables the "Refine Z..." button when a position preview exists to refine over. */
+   private void updateRefineZEnabled() {
+      if (refineZButton_ == null) {
+         return;
+      }
+      refineZButton_.setEnabled(liveSession_ && positionDrawActive_
+            && generatePositionsButton_.isEnabled());
    }
 
    private static String anchorLabel(VesselType.AnchorType at) {

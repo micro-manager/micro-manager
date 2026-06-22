@@ -121,6 +121,12 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    // light grey until the operator leaves draw mode. Empty = none generated yet.
    private final ArrayList<Rectangle2D.Double> positionFovsPx_ = new ArrayList<>();
 
+   // Refine-Z mode: when active, ctrl+left-click moves the stage to that tile (for manual focus)
+   // instead of the normal move-stage behavior. Reference-point markers (full-res pixels) are
+   // drawn until the operator leaves draw mode.
+   private volatile boolean refineZActive_ = false;
+   private final ArrayList<Point2D.Double> refineZMarkersPx_ = new ArrayList<>();
+
    public ExplorerDataSource(ExplorerManager manager) {
       manager_ = manager;
    }
@@ -232,9 +238,13 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       positionFovsPx_.clear();
    }
 
-   /** True when a drawing tool is active. */
+   /**
+    * True when a drawing tool is active AND Refine Z is not open. While the Refine Z window is
+    * open, ROI drawing is suppressed so clicks drive refinement (Ctrl-click navigation, Set Z)
+    * instead of redrawing the ROI; the existing ROI/preview stays put.
+    */
    public boolean isPositionDrawMode() {
-      return positionTool_ != PositionTool.NONE;
+      return positionTool_ != PositionTool.NONE && !refineZActive_;
    }
 
    /** Discards the current ROI (and any generated positions) but keeps the active tool. */
@@ -253,6 +263,24 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       positionFovsPx_.clear();
       if (fovs != null) {
          positionFovsPx_.addAll(fovs);
+      }
+   }
+
+   /** Enables/disables manual Refine-Z mode (ctrl-click moves the stage to focus a tile). */
+   public void setRefineZActive(boolean active) {
+      refineZActive_ = active;
+   }
+
+   /** True when manual Refine-Z mode is active. */
+   public boolean isRefineZActive() {
+      return refineZActive_;
+   }
+
+   /** Sets the Refine-Z reference-point markers (full-res pixels) to draw on the overlay. */
+   public synchronized void setRefineZMarkers(java.util.List<Point2D.Double> markers) {
+      refineZMarkersPx_.clear();
+      if (markers != null) {
+         refineZMarkersPx_.addAll(markers);
       }
    }
 
@@ -628,6 +656,12 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    @Override
    public void mousePressed(MouseEvent e) {
       dragStart_ = e.getPoint();
+      // Refine-Z manual navigation: a ctrl+left-click moves the stage, even while a drawing
+      // tool is selected, so it must take precedence over ROI drawing. Handled on release.
+      if (refineZActive_ && e.isControlDown()
+            && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+         return;
+      }
       if (isPositionDrawMode()) {
          // RECTANGLE/OVAL start a drag; FREEHAND starts collecting points.
          // POLYGON is click-driven and handled in mouseClicked.
@@ -669,6 +703,18 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public void mouseReleased(MouseEvent e) {
+      // Refine-Z manual navigation: ctrl+left-click moves the stage to the clicked tile,
+      // taking precedence over ROI drawing so the operator can focus there and click Set Z.
+      if (refineZActive_ && e.isControlDown()
+            && javax.swing.SwingUtilities.isLeftMouseButton(e) && !isLeftDragging_) {
+         Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
+         if (px != null) {
+            manager_.refineZManualMove(px.x, px.y);
+         }
+         dragStart_ = null;
+         isLeftDragging_ = false;
+         return;
+      }
       if (isPositionDrawMode()) {
          if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
             Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
@@ -714,9 +760,11 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          if (!readOnly_ && e.isControlDown()) {
             Point2D.Double pixelPos = getFullResPixelCoords(e.getX(), e.getY());
             if (pixelPos != null) {
+               // In refine-Z mode this navigates to a tile so the operator can focus it.
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
-         } else if (!readOnly_) {
+         } else if (!readOnly_ && !refineZActive_) {
+            // Plain left-click acquires selected tiles, but not while refining Z.
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
@@ -777,6 +825,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public void mouseDragged(MouseEvent e) {
+      // Don't draw while ctrl-navigating during Refine Z.
+      if (refineZActive_ && e.isControlDown()) {
+         return;
+      }
       if (isPositionDrawMode()) {
          if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
             Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
@@ -1101,10 +1153,35 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       // Generated-position FOV rectangles (light grey), drawn under the ROI outline.
       addGeneratedPositionFovs(overlay, magnification, viewOffset);
 
+      // Refine-Z reference-point markers (green crosses), drawn over the FOVs.
+      addRefineZMarkers(overlay, magnification, viewOffset);
+
       // Create-Positions ROI — added last so it draws on top of everything (including the
       // vessel) and never hides the vessel outline. Added as Roi objects (not drawn straight
       // to Graphics) so it persists across repaints, like every other overlay element.
       addPositionRoi(overlay, magnification, viewOffset);
+   }
+
+   /** Adds the Refine-Z reference-point markers (small green filled squares) to the overlay. */
+   private void addRefineZMarkers(Overlay overlay, double magnification,
+                                  Point2D.Double viewOffset) {
+      ArrayList<Point2D.Double> markers;
+      synchronized (this) {
+         if (refineZMarkersPx_.isEmpty()) {
+            return;
+         }
+         markers = new ArrayList<>(refineZMarkersPx_);
+      }
+      Color green = new Color(60, 200, 90);
+      int half = 5;
+      for (Point2D.Double p : markers) {
+         int x = (int) ((p.x - viewOffset.x) * magnification);
+         int y = (int) ((p.y - viewOffset.y) * magnification);
+         Roi marker = new Roi(x - half, y - half, 2 * half, 2 * half);
+         marker.setStrokeColor(green);
+         marker.setFillColor(green);
+         overlay.add(marker);
+      }
    }
 
    /** Adds the most recently generated positions' FOV rectangles to the overlay (light grey). */

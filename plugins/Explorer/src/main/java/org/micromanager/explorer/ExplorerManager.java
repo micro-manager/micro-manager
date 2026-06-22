@@ -34,10 +34,12 @@ import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
@@ -57,6 +59,7 @@ import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.imageprocessing.ImageTransformUtils;
+import org.micromanager.internal.positionlist.utils.ZGenerator;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ColorPalettes;
@@ -190,6 +193,15 @@ public class ExplorerManager {
 
    // Create-Positions: number of regions already committed this session (for "Reg<n>" labels).
    private int regionCounter_ = 0;
+
+   // Refine-Z state. Reference points (stage XY + measured Z per checked Z stage), the chosen
+   // interpolation method, and the pending manual tile. Read on the EDT; the automatic collection
+   // runs on a SwingWorker. Guarded where shared.
+   private final java.util.List<RefineZPoint> refineZPoints_ = new java.util.ArrayList<>();
+   private ZGenerator.Type refineZMethod_ = ZGenerator.Type.SHEPINTERPOLATE;
+   private RefineZWorker refineZWorker_ = null;
+   // The Refine Z window while it is open (status/running route here), else null.
+   private RefineZFrame refineZFrame_ = null;
 
    // Camera orientation / Image Flipper correction
    private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
@@ -367,6 +379,9 @@ public class ExplorerManager {
          vesselUsedHcsCal_ = false;
          vesselOutlinePending_ = false;
          regionCounter_ = 0;
+         synchronized (refineZPoints_) {
+            refineZPoints_.clear();
+         }
          frame_.setExploringActive(true, true);
          if (vesselType_.isMultiWell()) {
             Point2D.Double hcsOffset = tryReadHcsCalibration();
@@ -1833,9 +1848,20 @@ public class ExplorerManager {
          dataSource_.setPositionTool(ExplorerDataSource.PositionTool.NONE);
          return;
       }
+      boolean drawing = tool != null && tool != ExplorerDataSource.PositionTool.NONE;
+      if (!drawing) {
+         // Leaving draw mode ends the whole Create-Positions flow: close Refine Z and drop points.
+         cancelRefineZ();
+         if (refineZFrame_ != null) {
+            refineZFrame_.dispose(); // disposes -> onRefineZFrameClosed disarms the canvas
+         }
+         synchronized (refineZPoints_) {
+            refineZPoints_.clear();
+         }
+         dataSource_.setRefineZMarkers(null);
+      }
       dataSource_.setPositionTool(tool);
       if (viewer_ != null) {
-         boolean drawing = tool != null && tool != ExplorerDataSource.PositionTool.NONE;
          viewer_.getCanvasJPanel().setCursor(java.awt.Cursor.getPredefinedCursor(
                drawing ? java.awt.Cursor.CROSSHAIR_CURSOR : java.awt.Cursor.DEFAULT_CURSOR));
       }
@@ -1940,16 +1966,110 @@ public class ExplorerManager {
    private static final class PositionGridResult {
       private final PositionList posList;
       private final java.util.List<Rectangle2D.Double> fovsPx;
+      private final java.util.List<Tile> tiles;
       private final String warning;
       private final String regionLabel;
 
       private PositionGridResult(PositionList posList,
-            java.util.List<Rectangle2D.Double> fovsPx, String warning, String regionLabel) {
+            java.util.List<Rectangle2D.Double> fovsPx, java.util.List<Tile> tiles,
+            String warning, String regionLabel) {
          this.posList = posList;
          this.fovsPx = fovsPx;
+         this.tiles = tiles;
          this.warning = warning;
          this.regionLabel = regionLabel;
       }
+   }
+
+   /** Returns the accepted, ordered tiles for the current ROI (used by automatic Refine Z). */
+   private java.util.List<Tile> collectAcceptedTiles(boolean withinVesselOnly) throws Exception {
+      return computePositionGrid(withinVesselOnly).tiles;
+   }
+
+   /**
+    * Chooses up to {@code n} tiles spread across the given set using farthest-point sampling in
+    * stage space. On multi-well plates the budget is split across wells so each gets coverage.
+    */
+   private java.util.List<Tile> chooseSpreadTiles(java.util.List<Tile> tiles, int n) {
+      java.util.List<Tile> result = new java.util.ArrayList<>();
+      if (tiles.isEmpty() || n <= 0) {
+         return result;
+      }
+      // Group by well so each well is sampled; non-plate -> single group.
+      java.util.Map<Long, java.util.List<Tile>> byWell = new java.util.LinkedHashMap<>();
+      boolean multiWell = false;
+      for (Tile t : tiles) {
+         long key = 0;
+         if (t.well != null) {
+            multiWell = true;
+            key = ((long) t.well[0] << 32) | (t.well[1] & 0xffffffffL);
+         }
+         byWell.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(t);
+      }
+      int nWells = byWell.size();
+      for (java.util.List<Tile> group : byWell.values()) {
+         int budget = multiWell ? Math.max(1, n) : n; // n points per well on plates, else n total
+         result.addAll(farthestPointSample(group, Math.min(budget, group.size())));
+      }
+      // On non-plate the loop ran once; on plates each well got up to n points.
+      if (!multiWell && result.size() > n) {
+         return result.subList(0, n);
+      }
+      return result;
+   }
+
+   /** Farthest-point sampling of {@code count} tiles from {@code group} (Euclidean stage XY). */
+   private java.util.List<Tile> farthestPointSample(java.util.List<Tile> group, int count) {
+      java.util.List<Tile> chosen = new java.util.ArrayList<>();
+      if (group.isEmpty() || count <= 0) {
+         return chosen;
+      }
+      // Seed with the tile nearest the group's centroid for a stable first pick.
+      double cx = 0;
+      double cy = 0;
+      for (Tile t : group) {
+         cx += t.stageX;
+         cy += t.stageY;
+      }
+      cx /= group.size();
+      cy /= group.size();
+      Tile seed = group.get(0);
+      double best = Double.MAX_VALUE;
+      for (Tile t : group) {
+         double d = (t.stageX - cx) * (t.stageX - cx) + (t.stageY - cy) * (t.stageY - cy);
+         if (d < best) {
+            best = d;
+            seed = t;
+         }
+      }
+      chosen.add(seed);
+      while (chosen.size() < count) {
+         Tile bestTile = null;
+         double bestDist = -1.0;
+         for (Tile t : group) {
+            if (chosen.contains(t)) {
+               continue;
+            }
+            double nearest = Double.MAX_VALUE;
+            for (Tile c : chosen) {
+               double dx = t.stageX - c.stageX;
+               double dy = t.stageY - c.stageY;
+               double d = dx * dx + dy * dy;
+               if (d < nearest) {
+                  nearest = d;
+               }
+            }
+            if (nearest > bestDist) {
+               bestDist = nearest;
+               bestTile = t;
+            }
+         }
+         if (bestTile == null) {
+            break;
+         }
+         chosen.add(bestTile);
+      }
+      return chosen;
    }
 
    /**
@@ -2127,7 +2247,17 @@ public class ExplorerManager {
       boolean multiWell = vesselType_ != null && vesselType_.isMultiWell();
 
       // Snapshot the checked auxiliary stages (e.g. Z) once, applied to every position.
+      // When Refine Z has reference points, the 1D (Z) stages it measured are interpolated
+      // per tile instead of using this snapshot; other aux stages keep the snapshot.
       java.util.List<StagePosition> auxStages = readCheckedAuxStages(xyStage);
+      boolean haveRefineZ = hasRefineZPoints();
+      java.util.Set<String> refinedZStages = haveRefineZ
+            ? new java.util.HashSet<>(getCheckedZStages()) : java.util.Collections.emptySet();
+      // ZGenerators keyed by well key (or one global generator under key 0 when not per-well).
+      java.util.Map<Long, java.util.Map<String, ZGenerator>> zGenByWell =
+            new java.util.HashMap<>();
+      java.util.Map<String, ZGenerator> zGenGlobal = haveRefineZ
+            ? buildZGenerators(null) : java.util.Collections.emptyMap();
 
       // Group positions by well only when clipping to a multi-well vessel; otherwise the whole
       // ROI is one contiguous region and the global serpentine already minimizes travel.
@@ -2157,7 +2287,9 @@ public class ExplorerManager {
             if (fovRect != null) {
                fovsPx.add(fovRect);
             }
-            int[] well = groupByWell ? wellIndexForStage(stageX, stageY) : null;
+            // Compute the well whenever multi-well so both per-well ordering and per-well Z
+            // interpolation work, even without within-vessel clipping.
+            int[] well = multiWell ? wellIndexForStage(stageX, stageY) : null;
             tiles.add(new Tile(row, c, stageX, stageY, well));
          }
       }
@@ -2188,8 +2320,40 @@ public class ExplorerManager {
          MultiStagePosition msp = new MultiStagePosition();
          msp.setDefaultXYStage(xyStage);
          msp.add(StagePosition.create2D(xyStage, t.stageX, t.stageY));
+         // Non-refined aux stages keep their snapshot; refined Z stages are interpolated below.
          for (StagePosition aux : auxStages) {
+            if (refinedZStages.contains(aux.getStageDeviceLabel())) {
+               continue;
+            }
             msp.add(StagePosition.newInstance(aux));
+         }
+         if (haveRefineZ) {
+            // Per-well generator when this tile has a well and that well was refined, else global.
+            java.util.Map<String, ZGenerator> gens = zGenGlobal;
+            if (t.well != null) {
+               long wkey = ((long) t.well[0] << 32) | (t.well[1] & 0xffffffffL);
+               java.util.Map<String, ZGenerator> perWell = zGenByWell.get(wkey);
+               if (perWell == null) {
+                  perWell = buildZGenerators(t.well);
+                  zGenByWell.put(wkey, perWell);
+               }
+               if (!perWell.isEmpty()) {
+                  gens = perWell;
+               }
+            }
+            String defaultZ = null;
+            for (String zStage : refinedZStages) {
+               ZGenerator gen = gens.get(zStage);
+               if (gen != null) {
+                  msp.add(StagePosition.create1D(zStage, gen.getZ(t.stageX, t.stageY, zStage)));
+                  if (defaultZ == null) {
+                     defaultZ = zStage;
+                  }
+               }
+            }
+            if (defaultZ != null) {
+               msp.setDefaultZStage(defaultZ);
+            }
          }
          msp.setLabel(prefix + "-Pos-" + FMT_POS.format(t.row) + "_" + FMT_POS.format(t.col));
          msp.setGridCoordinates(t.row, t.col);
@@ -2201,7 +2365,7 @@ public class ExplorerManager {
          msp.setProperty("Region", regionLabel);
          posList.addPosition(msp);
       }
-      return new PositionGridResult(posList, fovsPx, warning, regionLabel);
+      return new PositionGridResult(posList, fovsPx, tiles, warning, regionLabel);
    }
 
    /** One accepted grid tile, before being turned into a MultiStagePosition. */
@@ -2302,19 +2466,12 @@ public class ExplorerManager {
     */
    private java.util.List<StagePosition> readCheckedAuxStages(String mainXyStage) {
       java.util.List<StagePosition> result = new java.util.ArrayList<>();
-      MutablePropertyMapView axisSettings = null;
-      try {
-         Class<?> axisModel = Class.forName(
-               "org.micromanager.internal.positionlist.AxisTableModel");
-         axisSettings = studio_.profile().getSettings(axisModel);
-      } catch (Exception e) {
-         // Can't read the checked state -- fall back to including all stages.
-      }
+      MutablePropertyMapView axisSettings = axisCheckedSettings();
       try {
          StrVector oneDStages = studio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
          for (int i = 0; i < oneDStages.size(); i++) {
             String name = oneDStages.get(i);
-            if (axisSettings != null && !axisSettings.getBoolean(name, true)) {
+            if (!axisChecked(axisSettings, name)) {
                continue;
             }
             try {
@@ -2330,7 +2487,7 @@ public class ExplorerManager {
             if (name.equals(mainXyStage)) {
                continue;
             }
-            if (axisSettings != null && !axisSettings.getBoolean(name, true)) {
+            if (!axisChecked(axisSettings, name)) {
                continue;
             }
             try {
@@ -2345,6 +2502,483 @@ public class ExplorerManager {
          studio_.logs().logError(e, "Explorer: could not enumerate stage devices");
       }
       return result;
+   }
+
+   /**
+    * Returns the profile settings node the MM Position List editor uses to persist which stage
+    * axes are checked ("use"), or null if it cannot be read (then all axes are treated as checked).
+    */
+   private MutablePropertyMapView axisCheckedSettings() {
+      try {
+         Class<?> axisModel = Class.forName(
+               "org.micromanager.internal.positionlist.AxisTableModel");
+         return studio_.profile().getSettings(axisModel);
+      } catch (Exception e) {
+         return null;
+      }
+   }
+
+   /** True if the named stage axis is checked in the Position List editor (default true). */
+   private boolean axisChecked(MutablePropertyMapView axisSettings, String name) {
+      return axisSettings == null || axisSettings.getBoolean(name, true);
+   }
+
+   /** Returns the checked 1D stage (Z) device names, in core order. */
+   private java.util.List<String> getCheckedZStages() {
+      java.util.List<String> zStages = new java.util.ArrayList<>();
+      MutablePropertyMapView axisSettings = axisCheckedSettings();
+      try {
+         StrVector oneDStages = studio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
+         for (int i = 0; i < oneDStages.size(); i++) {
+            String name = oneDStages.get(i);
+            if (axisChecked(axisSettings, name)) {
+               zStages.add(name);
+            }
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: could not enumerate Z stages");
+      }
+      return zStages;
+   }
+
+   // ===================== Refine Z =====================
+
+   /** Opens (or brings to front) the Refine Z window for the current session. */
+   public void showRefineZFrame() {
+      if (!exploring_ || loadedData_) {
+         return;
+      }
+      if (refineZFrame_ == null || !refineZFrame_.isDisplayable()) {
+         refineZFrame_ = new RefineZFrame(studio_, this, frame_);
+      }
+      // While the window is open, suppress ROI drawing so canvas clicks drive refinement.
+      if (dataSource_ != null) {
+         dataSource_.setRefineZActive(true);
+      }
+      refineZFrame_.setVisible(true);
+      refineZFrame_.toFront();
+   }
+
+   /** Called by the Refine Z window when it is disposed. */
+   public void onRefineZFrameClosed(RefineZFrame frame) {
+      if (refineZFrame_ == frame) {
+         refineZFrame_ = null;
+      }
+      if (dataSource_ != null) {
+         dataSource_.setRefineZActive(false);
+      }
+   }
+
+   /** True while the Refine Z window is open. */
+   public boolean isRefineZFrameOpen() {
+      return refineZFrame_ != null && refineZFrame_.isDisplayable();
+   }
+
+   /** Routes a Refine-Z status message to the Refine Z window if open. */
+   private void setRefineZStatus(String text) {
+      if (refineZFrame_ != null) {
+         refineZFrame_.setRefineZStatus(text);
+      }
+   }
+
+   /** Routes the running state to the Refine Z window if open. */
+   private void setRefineZRunningUi(boolean running) {
+      if (refineZFrame_ != null) {
+         refineZFrame_.setRefineZRunning(running);
+      }
+   }
+
+   /** One Refine-Z reference point: stage XY, measured Z per checked stage, and well index. */
+   private static final class RefineZPoint {
+      private final double stageX;
+      private final double stageY;
+      private final java.util.Map<String, Double> z;
+      private final int[] well; // {wellRow, wellCol} on multi-well plates, else null
+
+      private RefineZPoint(double stageX, double stageY,
+            java.util.Map<String, Double> z, int[] well) {
+         this.stageX = stageX;
+         this.stageY = stageY;
+         this.z = z;
+         this.well = well;
+      }
+   }
+
+   /** Sets the Z interpolation method (Weighted / Average). */
+   public void setRefineZMethod(ZGenerator.Type method) {
+      if (method != null) {
+         refineZMethod_ = method;
+      }
+   }
+
+   /** True when at least one Refine-Z reference point has been collected. */
+   public boolean hasRefineZPoints() {
+      synchronized (refineZPoints_) {
+         return !refineZPoints_.isEmpty();
+      }
+   }
+
+   /** Discards all collected Refine-Z reference points and clears their markers. */
+   public void clearRefineZ() {
+      synchronized (refineZPoints_) {
+         refineZPoints_.clear();
+      }
+      pushRefineZMarkers();
+      setRefineZStatus("Refine Z cleared.");
+   }
+
+   /** Pushes the current reference-point markers (stage->pixel) to the data source overlay. */
+   private void pushRefineZMarkers() {
+      if (dataSource_ == null) {
+         return;
+      }
+      java.util.List<Point2D.Double> markers = new java.util.ArrayList<>();
+      synchronized (refineZPoints_) {
+         for (RefineZPoint p : refineZPoints_) {
+            Point2D.Double px = stageToPixel(p.stageX, p.stageY);
+            if (px != null) {
+               markers.add(px);
+            }
+         }
+      }
+      dataSource_.setRefineZMarkers(markers);
+      redrawOverlay();
+   }
+
+   /** True while the automatic Refine-Z worker is running. */
+   public boolean isRefineZRunning() {
+      return refineZWorker_ != null && !refineZWorker_.isDone();
+   }
+
+   /** Cancels a running automatic Refine-Z run. */
+   public void cancelRefineZ() {
+      if (refineZWorker_ != null) {
+         refineZWorker_.cancel(true);
+      }
+   }
+
+   /**
+    * Starts automatic Refine Z: chooses up to {@code nPoints} reference tiles spread across the
+    * current previewed grid (per well on multi-well plates), then for each one moves the stage,
+    * runs the selected autofocus method, and records the resulting Z of every checked Z stage.
+    * Runs off the EDT.
+    */
+   public void startRefineZAutomatic(int nPoints, String afMethodName, boolean withinVesselOnly) {
+      if (dataSource_ == null || !exploring_ || loadedData_ || !hasPositionRoi()) {
+         setRefineZStatus("Draw an ROI first.");
+         return;
+      }
+      if (isRefineZRunning()) {
+         return;
+      }
+      final java.util.List<String> zStages = getCheckedZStages();
+      if (zStages.isEmpty()) {
+         setRefineZStatus("No Z stage is checked in the Position List.");
+         return;
+      }
+      java.util.List<Tile> tiles;
+      try {
+         tiles = collectAcceptedTiles(withinVesselOnly);
+      } catch (Exception ex) {
+         setRefineZStatus(ex.getMessage());
+         return;
+      }
+      java.util.List<Tile> chosen = chooseSpreadTiles(tiles, nPoints);
+      if (chosen.isEmpty()) {
+         setRefineZStatus("No tiles to refine.");
+         return;
+      }
+      setRefineZRunningUi(true);
+      setRefineZStatus("Refining Z...");
+      refineZWorker_ = new RefineZWorker(chosen, zStages, afMethodName);
+      refineZWorker_.execute();
+   }
+
+   /** SwingWorker that visits chosen tiles, autofocuses, and records Z. */
+   private final class RefineZWorker extends SwingWorker<Void, RefineZPoint> {
+      private final java.util.List<Tile> cells_;
+      private final java.util.List<String> zStages_;
+      private final String afMethodName_;
+      private final java.util.List<String> failures_ = new java.util.ArrayList<>();
+
+      private RefineZWorker(java.util.List<Tile> cells, java.util.List<String> zStages,
+            String afMethodName) {
+         cells_ = cells;
+         zStages_ = zStages;
+         afMethodName_ = afMethodName;
+      }
+
+      @Override
+      protected Void doInBackground() {
+         AutofocusPlugin af = null;
+         try {
+            if (afMethodName_ != null && !afMethodName_.isEmpty()) {
+               studio_.getAutofocusManager().setAutofocusMethodByName(afMethodName_);
+            }
+            af = studio_.getAutofocusManager().getAutofocusMethod();
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Refine Z: could not select autofocus method");
+         }
+         int done = 0;
+         for (Tile t : cells_) {
+            if (isCancelled()) {
+               break;
+            }
+            String failure = refineOneTile(af, t);
+            if (failure != null) {
+               failures_.add(failure);
+            }
+            done++;
+            setProgress(100 * done / cells_.size());
+         }
+         return null;
+      }
+
+      private String refineOneTile(AutofocusPlugin af, Tile t) {
+         // Snap to the Explorer grid cell center under this tile so the reference point, the
+         // autofocus measurement, and the acquired image all coincide on the canvas grid.
+         int[] cell = explorerGridCellForStage(t.stageX, t.stageY);
+         Point2D.Double target = cell != null
+               ? stageForExplorerCell(cell[0], cell[1]) : new Point2D.Double(t.stageX, t.stageY);
+         try {
+            studio_.core().setXYPosition(studio_.core().getXYStageDevice(), target.x, target.y);
+            studio_.core().waitForDevice(studio_.core().getXYStageDevice());
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Refine Z: move failed");
+            return "tile (move failed: " + e.getMessage() + ")";
+         }
+         if (af == null) {
+            return "tile (no autofocus method)";
+         }
+         try {
+            af.fullFocus();
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Refine Z: autofocus failed");
+            return "tile (autofocus failed: " + e.getMessage() + ")";
+         }
+         java.util.Map<String, Double> zVals = new java.util.LinkedHashMap<>();
+         try {
+            for (String z : zStages_) {
+               zVals.put(z, studio_.core().getPosition(z));
+            }
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Refine Z: read Z failed");
+            return "tile (Z read failed)";
+         }
+         // Acquire the in-focus image so it shows on the canvas like a normal tile.
+         acquireRefineZTileAtCurrentStage();
+         publish(new RefineZPoint(target.x, target.y, zVals, t.well));
+         return null;
+      }
+
+      @Override
+      protected void process(java.util.List<RefineZPoint> chunks) {
+         synchronized (refineZPoints_) {
+            refineZPoints_.addAll(chunks);
+         }
+         pushRefineZMarkers();
+         setRefineZStatus("Refined " + refineZPointCount() + " point(s)...");
+      }
+
+      @Override
+      protected void done() {
+         setRefineZRunningUi(false);
+         if (isCancelled()) {
+            setRefineZStatus("Refine Z cancelled (" + refineZPointCount() + " points).");
+            return;
+         }
+         if (!failures_.isEmpty()) {
+            StringBuilder sb = new StringBuilder("Autofocus skipped some tiles:\n");
+            for (String f : failures_) {
+               sb.append("  ").append(f).append('\n');
+            }
+            JOptionPane.showMessageDialog(refineZFrame_ != null ? refineZFrame_ : frame_,
+                  sb.toString(), "Refine Z", JOptionPane.WARNING_MESSAGE);
+         }
+         setRefineZStatus("Refine Z done (" + refineZPointCount() + " points).");
+         pushRefineZMarkers();
+      }
+   }
+
+   private int refineZPointCount() {
+      synchronized (refineZPoints_) {
+         return refineZPoints_.size();
+      }
+   }
+
+   /**
+    * Returns the Explorer session tile-grid cell {row, col} that contains the given stage
+    * position, or null if the tile grid is not ready. Uses the same mapping the canvas uses to
+    * place tiles, so acquiring this cell shows the image at the expected canvas location.
+    */
+   private int[] explorerGridCellForStage(double stageX, double stageY) {
+      Point2D.Double px = stageToPixel(stageX, stageY);
+      int tw = dataSource_ != null ? dataSource_.getTileWidth() : -1;
+      int th = dataSource_ != null ? dataSource_.getTileHeight() : -1;
+      if (px == null || tw <= 0 || th <= 0) {
+         return null;
+      }
+      int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+      int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
+      double effW = tw - overlapPixelsX;
+      double effH = th - overlapPixelsY;
+      int col = (int) Math.floor(px.x / effW);
+      int row = (int) Math.floor(px.y / effH);
+      return new int[]{row, col};
+   }
+
+   /**
+    * Returns the stage XY of the center of the Explorer session tile-grid cell {row, col}, using
+    * the same grid->stage mapping as acquireMultipleTiles so the cell aligns with the canvas.
+    */
+   private Point2D.Double stageForExplorerCell(int row, int col) {
+      double overlapFraction = overlapPercentage_ / 100.0;
+      double effectivePixelStepX = cameraWidth_  * (1.0 - overlapFraction);
+      double effectivePixelStepY = cameraHeight_ * (1.0 - overlapFraction);
+      if (pixelSizeAffine_ != null) {
+         Point2D.Double pixelOffset = new Point2D.Double(
+               col * effectivePixelStepX, row * effectivePixelStepY);
+         Point2D.Double stageOffset = new Point2D.Double();
+         pixelSizeAffine_.transform(pixelOffset, stageOffset);
+         return new Point2D.Double(initialStageX_ + stageOffset.x, initialStageY_ + stageOffset.y);
+      }
+      double effectiveStepWidthUm  = stageTileWidthUm_  * (1.0 - overlapFraction);
+      double effectiveStepHeightUm = stageTileHeightUm_ * (1.0 - overlapFraction);
+      return new Point2D.Double(initialStageX_ + col * effectiveStepWidthUm,
+            initialStageY_ + row * effectiveStepHeightUm);
+   }
+
+   /**
+    * Moves the stage to the center of the Explorer grid cell under the current position and
+    * acquires that tile so the in-focus image appears on the canvas (exactly like a left-click
+    * acquisition) at the correct cell. Runs synchronously; must be called off the EDT. Returns
+    * the cell-center stage XY actually acquired, or null on failure.
+    */
+   private Point2D.Double acquireRefineZTileAtCurrentStage() {
+      try {
+         double stageX = studio_.core().getXPosition();
+         double stageY = studio_.core().getYPosition();
+         int[] cell = explorerGridCellForStage(stageX, stageY);
+         if (cell == null) {
+            return null;
+         }
+         int row = cell[0];
+         int col = cell[1];
+         // Snap to the exact cell center so the stored tile aligns with the canvas grid.
+         Point2D.Double cellCenter = stageForExplorerCell(row, col);
+         studio_.core().setXYPosition(cellCenter.x, cellCenter.y);
+         studio_.core().waitForDevice(studio_.core().getXYStageDevice());
+         if (!dataSource_.isTileAcquired(row, col)) {
+            acquireSingleTileBlocking(row, col);
+            dataSource_.markTileAcquired(row, col);
+            dataSource_.invalidateImageKeysCache();
+            redrawOverlay();
+         }
+         return cellCenter;
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Refine Z: could not acquire in-focus tile");
+         return null;
+      }
+   }
+
+   /**
+    * Manual Refine Z: moves the stage so the clicked full-res pixel becomes the FOV center, so the
+    * operator can focus there and then capture with {@link #addManualRefineZ()}.
+    */
+   public void refineZManualMove(double fullResX, double fullResY) {
+      if (!exploring_ || loadedData_) {
+         return;
+      }
+      moveStageToPixelPosition(fullResX, fullResY);
+   }
+
+   /**
+    * Captures the current Z of every checked Z stage at the current stage XY as a Refine-Z
+    * reference point.
+    */
+   public void addManualRefineZ() {
+      if (!exploring_ || loadedData_) {
+         return;
+      }
+      java.util.List<String> zStages = getCheckedZStages();
+      if (zStages.isEmpty()) {
+         setRefineZStatus("No Z stage is checked in the Position List.");
+         return;
+      }
+      try {
+         double stageX = studio_.core().getXPosition();
+         double stageY = studio_.core().getYPosition();
+         java.util.Map<String, Double> zVals = new java.util.LinkedHashMap<>();
+         for (String z : zStages) {
+            zVals.put(z, studio_.core().getPosition(z));
+         }
+         // Record the point at the Explorer grid cell center so the marker, the reference point,
+         // and the acquired tile all coincide on the canvas grid.
+         int[] cell = explorerGridCellForStage(stageX, stageY);
+         Point2D.Double refXy = cell != null
+               ? stageForExplorerCell(cell[0], cell[1]) : new Point2D.Double(stageX, stageY);
+         int[] well = (vesselType_ != null && vesselType_.isMultiWell())
+               ? wellIndexForStage(refXy.x, refXy.y) : null;
+         synchronized (refineZPoints_) {
+            refineZPoints_.add(new RefineZPoint(refXy.x, refXy.y, zVals, well));
+         }
+         pushRefineZMarkers();
+         setRefineZStatus("Set Z (" + refineZPointCount() + " points).");
+         // Acquire the in-focus image (off the EDT) so it shows on the canvas.
+         if (acquisitionExecutor_ != null) {
+            acquisitionExecutor_.submit(this::acquireRefineZTileAtCurrentStage);
+         }
+      } catch (Exception e) {
+         studio_.logs().showError(e, "Refine Z: could not read stage position.");
+      }
+   }
+
+   /**
+    * Builds, per Z stage, a ZGenerator from the collected reference points (optionally restricted
+    * to a single well). Returns an empty map when there are no usable reference points.
+    */
+   private java.util.Map<String, ZGenerator> buildZGenerators(int[] well) {
+      java.util.List<RefineZPoint> pts = new java.util.ArrayList<>();
+      synchronized (refineZPoints_) {
+         for (RefineZPoint p : refineZPoints_) {
+            if (well == null || p.well == null
+                  || (p.well[0] == well[0] && p.well[1] == well[1])) {
+               pts.add(p);
+            }
+         }
+      }
+      java.util.Map<String, ZGenerator> generators = new java.util.HashMap<>();
+      if (pts.isEmpty()) {
+         return generators;
+      }
+      // ZGenerator builds one interpolator per 1D stage present on the first position, so each
+      // reference MultiStagePosition must carry every checked Z stage.
+      PositionList refList = new PositionList();
+      String xyStage;
+      try {
+         xyStage = studio_.core().getXYStageDevice();
+      } catch (Exception e) {
+         xyStage = "XY";
+      }
+      for (RefineZPoint p : pts) {
+         MultiStagePosition msp = new MultiStagePosition();
+         // setDefaultXYStage is REQUIRED: ZGeneratorShepard reads each reference point's XY via
+         // MultiStagePosition.getX()/getY(), which return 0 unless the default XY stage is set.
+         // Without it every reference point reads (0,0) and the interpolator returns a constant.
+         msp.setDefaultXYStage(xyStage);
+         msp.add(StagePosition.create2D(xyStage, p.stageX, p.stageY));
+         for (java.util.Map.Entry<String, Double> e : p.z.entrySet()) {
+            msp.add(StagePosition.create1D(e.getKey(), e.getValue()));
+         }
+         refList.addPosition(msp);
+      }
+      ZGenerator gen = ZGenerator.create(refineZMethod_, refList);
+      synchronized (refineZPoints_) {
+         for (String z : pts.get(0).z.keySet()) {
+            generators.put(z, gen);
+         }
+      }
+      return generators;
    }
 
    // ===================== Private helpers =====================
