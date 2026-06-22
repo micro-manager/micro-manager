@@ -4,14 +4,17 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -30,9 +33,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import mmcorej.DeviceType;
+import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.AutofocusPlugin;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acquisition.SequenceSettings;
@@ -48,12 +59,15 @@ import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.imageprocessing.ImageTransformUtils;
+import org.micromanager.internal.positionlist.utils.ZGenerator;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
+import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
@@ -160,6 +174,36 @@ public class ExplorerManager {
    // Slice positions captured at session start, applied to every tile acquisition so the
    // z-axis shape is independent of later MDA slice edits. Empty when not using slices.
    private java.util.ArrayList<Double> sessionSlices_ = new java.util.ArrayList<>();
+   // Set to true after the first time we notify the user that MDA slice settings were
+   // overridden; prevents showing the same dialog on every subsequent tile.
+   private volatile boolean mdaSliceOverrideWarningShown_ = false;
+
+   // Vessel outline: type selected in ExplorerFrame, anchor set at runtime.
+   // Vessel axes are assumed parallel to stage X/Y (standard setup).
+   private VesselType vesselType_ = VesselType.NONE;
+   private VesselType.AnchorType vesselAnchorType_ = null;
+   // For simple vessels: stage position of the named anchor point.
+   // For multi-well plates: stage position of the plate top-left corner.
+   private double vesselAnchorStageX_ = 0;
+   private double vesselAnchorStageY_ = 0;
+   private int vesselAnchorWellRow_ = 0;
+   private int vesselAnchorWellCol_ = 0;
+   private boolean vesselUsedHcsCal_ = false;
+   // True when anchor is set but stageToPixel() was not ready; retry after first tile.
+   private boolean vesselOutlinePending_ = false;
+
+   // Create-Positions: number of regions already committed this session (for "Reg<n>" labels).
+   private int regionCounter_ = 0;
+
+   // Refine-Z state. Reference points (stage XY + measured Z per checked Z stage), the chosen
+   // interpolation method, and the pending manual tile. Read on the EDT; the automatic collection
+   // runs on a SwingWorker. Guarded where shared.
+   private final java.util.List<RefineZPoint> refineZPoints_ = new java.util.ArrayList<>();
+   private ZGenerator.Type refineZMethod_ = ZGenerator.Type.SHEPINTERPOLATE;
+   private RefineZWorker refineZWorker_ = null;
+   private static final int REFINE_Z_THUMB_PX = 256;
+   // The Refine Z window while it is open (status/running route here), else null.
+   private RefineZFrame refineZFrame_ = null;
 
    // Camera orientation / Image Flipper correction
    private int sessionCorrectionRotation_ = 0;    // 0/90/180/270
@@ -237,6 +281,7 @@ public class ExplorerManager {
          sessionSlices_ = sessionUseSlices_
                  ? new java.util.ArrayList<>(startSettings.slices())
                  : new java.util.ArrayList<>();
+         mdaSliceOverrideWarningShown_ = false;
 
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
@@ -325,6 +370,30 @@ public class ExplorerManager {
 
          startStagePositionPolling();
          studio_.events().registerForEvents(this);
+
+         // Restore vessel type from profile; anchor is always re-set per session.
+         String savedVessel = studio_.profile().getSettings(ExplorerFrame.class)
+               .getString(ExplorerFrame.VESSEL_TYPE, VesselType.NONE.getName());
+         vesselType_ = VesselType.builtIn().stream()
+               .filter(v -> v.getName().equals(savedVessel))
+               .findFirst().orElse(VesselType.NONE);
+         vesselAnchorType_ = null;
+         vesselUsedHcsCal_ = false;
+         vesselOutlinePending_ = false;
+         regionCounter_ = 0;
+         synchronized (refineZPoints_) {
+            refineZPoints_.clear();
+         }
+         frame_.setExploringActive(true, true);
+         if (vesselType_.isMultiWell()) {
+            Point2D.Double hcsOffset = tryReadHcsCalibration();
+            frame_.setHcsCalibrationStatus(hcsOffset != null);
+            if (hcsOffset != null) {
+               applyHcsCalibration(hcsOffset);
+            }
+         } else {
+            frame_.setHcsCalibrationStatus(false);
+         }
 
       } catch (Exception e) {
          studio_.logs().showError(e, "Failed to start Explorer.");
@@ -602,8 +671,14 @@ public class ExplorerManager {
       flipperInPipeline_         = false;
       rawPixelSizeAffine_        = null;
       rawInitialPixelSizeAffine_ = null;
+      frame_.setExploringActive(false, false);
+      vesselAnchorType_ = null;
+      vesselUsedHcsCal_ = false;
+      vesselOutlinePending_ = false;
       if (dataSource_ != null) {
          dataSource_.clearPendingTiles();
+         dataSource_.clearVesselOutline();
+         dataSource_.setPositionTool(ExplorerDataSource.PositionTool.NONE);
       }
 
       if (displayExecutor_ != null) {
@@ -1202,6 +1277,32 @@ public class ExplorerManager {
    private void acquireSingleTileBlocking(int row, int col) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
+
+         // Detect if the user changed MDA slice settings mid-session and warn once.
+         if (!mdaSliceOverrideWarningShown_) {
+            boolean currentUseSlices = settings.useSlices() && !settings.slices().isEmpty();
+            boolean slicesDiffer = (currentUseSlices != sessionUseSlices_)
+                    || (sessionUseSlices_ && !settings.slices().equals(sessionSlices_));
+            if (slicesDiffer) {
+               mdaSliceOverrideWarningShown_ = true;
+               SwingUtilities.invokeLater(() ->
+                     JOptionPane.showMessageDialog(
+                           frame_,
+                           "<html><body style='width:350px'>"
+                           + "The MDA slice (z-stack) settings were changed after this "
+                           + "Explorer session started.<br><br>"
+                           + "To keep the z-axis consistent across all tiles already "
+                           + "acquired, the Explorer will continue using the "
+                           + "<b>original slice settings</b> for the rest of this session."
+                           + "<br><br>"
+                           + "Start a new Explorer session if you want the updated "
+                           + "slice settings to take effect."
+                           + "</body></html>",
+                           "Explorer: MDA Settings Override",
+                           JOptionPane.INFORMATION_MESSAGE));
+            }
+         }
+
          // Use the z-axis decision locked at session start, not the current MDA
          // settings, so every tile in this session has the same axes shape.
          boolean useSlices = sessionUseSlices_;
@@ -1253,6 +1354,9 @@ public class ExplorerManager {
                tileWidth_ = firstImage.getWidth();
                tileHeight_ = firstImage.getHeight();
                dataSource_.setTileDimensions(tileWidth_, tileHeight_);
+               if (vesselOutlinePending_) {
+                  updateVesselOutline();
+               }
 
                // Update storage overlap metadata with actual tile dimensions
                int overlapX = (int) Math.round(tileWidth_ * overlapPercentage_ / 100.0);
@@ -1674,50 +1778,1243 @@ public class ExplorerManager {
       }
       acquisitionExecutor_.submit(() -> {
          try {
-            int tw = dataSource_ != null ? dataSource_.getTileWidth() : cameraWidth_;
-            int th = dataSource_ != null ? dataSource_.getTileHeight() : cameraHeight_;
-            int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
-            int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
-            double effectiveTileWidth = tw - overlapPixelsX;
-            double effectiveTileHeight = th - overlapPixelsY;
-
-            double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
-            double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
-
-            double targetX;
-            double targetY;
-            // Always invert using the session-start pixel size / affine so that clicks on
-            // the tile grid map to consistent physical stage positions regardless of the
-            // current objective.
-            if (initialPixelSizeAffine_ != null) {
-               // Convert canvas-pixel delta to camera-pixel delta using initial camera dims,
-               // then apply the session-start affine (forward: camera-pixel → stage-micron).
-               double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
-                     ? (double) initialCameraWidth_  / tw : 1.0;
-               double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
-                     ? (double) initialCameraHeight_ / th : 1.0;
-               Point2D.Double camPixelDelta = new Point2D.Double(
-                     offsetPixelX * pipelineScaleX, offsetPixelY * pipelineScaleY);
-               Point2D.Double stageOffset = new Point2D.Double();
-               initialPixelSizeAffine_.transform(camPixelDelta, stageOffset);
-               targetX = initialStageX_ + stageOffset.x;
-               targetY = initialStageY_ + stageOffset.y;
-            } else {
-               double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
-                     ? (double) initialCameraWidth_  / tw : 1.0;
-               double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
-                     ? (double) initialCameraHeight_ / th : 1.0;
-               targetX = initialStageX_ + offsetPixelX * pipelineScaleX * initialPixelSizeUm_;
-               targetY = initialStageY_ + offsetPixelY * pipelineScaleY * initialPixelSizeUm_;
+            Point2D.Double target = pixelToStageSessionFrame(pixelX, pixelY);
+            if (target == null) {
+               return;
             }
-
-            studio_.core().setXYPosition(targetX, targetY);
+            studio_.core().setXYPosition(target.x, target.y);
             studio_.core().waitForDevice(studio_.core().getXYStageDevice());
-
          } catch (Exception e) {
             studio_.logs().logError(e, "Explorer: error moving stage");
          }
       });
+   }
+
+   /**
+    * Converts a full-resolution canvas pixel coordinate (the center of a tile/FOV) to the
+    * stage coordinate it represents, using the SESSION-START pixel size / affine. This keeps
+    * canvas positions mapped to consistent physical stage positions regardless of the current
+    * objective. Returns null if the conversion is not possible (no tile dimensions yet).
+    */
+   private Point2D.Double pixelToStageSessionFrame(double pixelX, double pixelY) {
+      int tw = dataSource_ != null ? dataSource_.getTileWidth() : cameraWidth_;
+      int th = dataSource_ != null ? dataSource_.getTileHeight() : cameraHeight_;
+      if (tw <= 0 || th <= 0) {
+         return null;
+      }
+      int overlapPixelsX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+      int overlapPixelsY = (int) Math.round(th * overlapPercentage_ / 100.0);
+      double effectiveTileWidth = tw - overlapPixelsX;
+      double effectiveTileHeight = th - overlapPixelsY;
+
+      double offsetPixelX = pixelX - effectiveTileWidth / 2.0;
+      double offsetPixelY = pixelY - effectiveTileHeight / 2.0;
+
+      double pipelineScaleX = (tw > 0 && initialCameraWidth_  > 0)
+            ? (double) initialCameraWidth_  / tw : 1.0;
+      double pipelineScaleY = (th > 0 && initialCameraHeight_ > 0)
+            ? (double) initialCameraHeight_ / th : 1.0;
+
+      double targetX;
+      double targetY;
+      if (initialPixelSizeAffine_ != null) {
+         // Convert canvas-pixel delta to camera-pixel delta using initial camera dims,
+         // then apply the session-start affine (forward: camera-pixel -> stage-micron).
+         Point2D.Double camPixelDelta = new Point2D.Double(
+               offsetPixelX * pipelineScaleX, offsetPixelY * pipelineScaleY);
+         Point2D.Double stageOffset = new Point2D.Double();
+         initialPixelSizeAffine_.transform(camPixelDelta, stageOffset);
+         targetX = initialStageX_ + stageOffset.x;
+         targetY = initialStageY_ + stageOffset.y;
+      } else {
+         targetX = initialStageX_ + offsetPixelX * pipelineScaleX * initialPixelSizeUm_;
+         targetY = initialStageY_ + offsetPixelY * pipelineScaleY * initialPixelSizeUm_;
+      }
+      return new Point2D.Double(targetX, targetY);
+   }
+
+   // ===================== Create Positions =====================
+
+   private static final DecimalFormat FMT_POS = new DecimalFormat("000");
+
+   /**
+    * Enters or leaves position-draw mode. Only allowed for a live (Started) session, not for
+    * an opened (read-only) dataset. Passing {@link ExplorerDataSource.PositionTool#NONE} leaves
+    * draw mode. Sets the canvas cursor accordingly.
+    */
+   public void setPositionDrawTool(ExplorerDataSource.PositionTool tool) {
+      if (dataSource_ == null) {
+         return;
+      }
+      if (!exploring_ || loadedData_) {
+         dataSource_.setPositionTool(ExplorerDataSource.PositionTool.NONE);
+         return;
+      }
+      boolean drawing = tool != null && tool != ExplorerDataSource.PositionTool.NONE;
+      if (!drawing) {
+         // Leaving draw mode ends the whole Create-Positions flow: close Refine Z and drop points.
+         cancelRefineZ();
+         if (refineZFrame_ != null) {
+            refineZFrame_.dispose(); // disposes -> onRefineZFrameClosed disarms the canvas
+         }
+         synchronized (refineZPoints_) {
+            refineZPoints_.clear();
+         }
+         dataSource_.setRefineZMarkers(null);
+         dataSource_.setRefineZThumbnails(null);
+      }
+      dataSource_.setPositionTool(tool);
+      if (viewer_ != null) {
+         viewer_.getCanvasJPanel().setCursor(java.awt.Cursor.getPredefinedCursor(
+               drawing ? java.awt.Cursor.CROSSHAIR_CURSOR : java.awt.Cursor.DEFAULT_CURSOR));
+      }
+      redrawOverlay();
+   }
+
+   /** Discards the current Create-Positions ROI. */
+   public void clearPositionRoi() {
+      if (dataSource_ != null) {
+         dataSource_.clearPositionRoi();
+         redrawOverlay();
+      }
+   }
+
+   /** True when a completed Create-Positions ROI exists. */
+   public boolean hasPositionRoi() {
+      return dataSource_ != null && dataSource_.hasPositionRoi();
+   }
+
+   /**
+    * Notifies that the ROI state changed: refreshes the live position preview (grey FOVs) and
+    * the Generate button. Called from ExplorerDataSource when an ROI is completed or cleared.
+    */
+   public void onPositionRoiChanged() {
+      SwingUtilities.invokeLater(() -> updatePositionPreview(frame_.isWithinVesselSelected()));
+   }
+
+   /**
+    * Recomputes the position grid for the current ROI and shows it as grey FOV rectangles on
+    * the overlay WITHOUT committing it to the MM position list. Safe to call repeatedly (on ROI
+    * completion and when the "within vessel" checkbox toggles). Clears the preview when there is
+    * no usable ROI.
+    */
+   public void updatePositionPreview(boolean withinVesselOnly) {
+      if (dataSource_ == null || !exploring_ || loadedData_ || !hasPositionRoi()) {
+         if (dataSource_ != null) {
+            dataSource_.setGeneratedPositionFovs(null);
+            redrawOverlay();
+         }
+         frame_.setGenerateEnabled(false);
+         return;
+      }
+      try {
+         PositionGridResult preview = computePositionGrid(withinVesselOnly);
+         dataSource_.setGeneratedPositionFovs(preview.fovsPx);
+         redrawOverlay();
+         String status = preview.posList.getNumberOfPositions() + " positions ("
+               + preview.regionLabel + ")";
+         if (preview.warning != null) {
+            status = preview.warning + " (" + status + ")";
+         }
+         frame_.setPositionStatus(status);
+         frame_.setGenerateEnabled(true);
+      } catch (Exception ex) {
+         dataSource_.setGeneratedPositionFovs(null);
+         redrawOverlay();
+         frame_.setPositionStatus(ex.getMessage());
+         frame_.setGenerateEnabled(false);
+      }
+   }
+
+   /**
+    * Commits the previewed positions to the MM position list. Positions are sized using the
+    * CURRENT pixel size and camera FOV. When {@code withinVesselOnly} is true the ROI is first
+    * intersected with the vessel boundary. The grid is recomputed so the committed list reflects
+    * the latest hardware/checkbox state, then a region counter is advanced so the next region
+    * gets a fresh identifier.
+    */
+   public void createPositionsFromRoi(boolean withinVesselOnly) {
+      if (dataSource_ == null || !exploring_ || loadedData_ || !hasPositionRoi()) {
+         frame_.setPositionStatus("Draw an ROI first.");
+         return;
+      }
+      PositionGridResult result;
+      try {
+         result = computePositionGrid(withinVesselOnly);
+      } catch (Exception ex) {
+         frame_.setPositionStatus(ex.getMessage());
+         return;
+      }
+      PositionList existing = studio_.positions().getPositionList();
+      for (int i = 0; i < result.posList.getNumberOfPositions(); i++) {
+         existing.addPosition(result.posList.getPosition(i));
+      }
+      studio_.positions().setPositionList(existing);
+      studio_.app().showPositionList();
+      dataSource_.setGeneratedPositionFovs(result.fovsPx);
+      redrawOverlay();
+      // Advance the region counter so a subsequent ROI gets the next identifier.
+      regionCounter_++;
+      String status = "Added " + result.posList.getNumberOfPositions() + " positions ("
+            + result.regionLabel + ")";
+      if (result.warning != null) {
+         status = result.warning + " (" + status + ")";
+      }
+      frame_.setPositionStatus(status);
+      // Refresh the preview (now showing the NEXT region's identifier) and keep the ROI.
+      updatePositionPreview(withinVesselOnly);
+   }
+
+   /** Holds the result of a position-grid computation. */
+   private static final class PositionGridResult {
+      private final PositionList posList;
+      private final java.util.List<Rectangle2D.Double> fovsPx;
+      private final java.util.List<Tile> tiles;
+      private final String warning;
+      private final String regionLabel;
+
+      private PositionGridResult(PositionList posList,
+            java.util.List<Rectangle2D.Double> fovsPx, java.util.List<Tile> tiles,
+            String warning, String regionLabel) {
+         this.posList = posList;
+         this.fovsPx = fovsPx;
+         this.tiles = tiles;
+         this.warning = warning;
+         this.regionLabel = regionLabel;
+      }
+   }
+
+   /** Returns the accepted, ordered tiles for the current ROI (used by automatic Refine Z). */
+   private java.util.List<Tile> collectAcceptedTiles(boolean withinVesselOnly) throws Exception {
+      return computePositionGrid(withinVesselOnly).tiles;
+   }
+
+   /**
+    * Chooses up to {@code n} tiles TOTAL, spread across the given set using farthest-point sampling
+    * in stage space. On multi-well plates the total budget {@code n} is distributed across the
+    * occupied wells (each occupied well gets at least one point until the budget is exhausted), so
+    * dense plates do not explode into hundreds of autofocus points.
+    */
+   private java.util.List<Tile> chooseSpreadTiles(java.util.List<Tile> tiles, int n) {
+      java.util.List<Tile> result = new java.util.ArrayList<>();
+      if (tiles.isEmpty() || n <= 0) {
+         return result;
+      }
+      // Group by well so the budget is spread across wells; non-plate -> single group.
+      java.util.Map<Long, java.util.List<Tile>> byWell = new java.util.LinkedHashMap<>();
+      for (Tile t : tiles) {
+         long key = 0;
+         if (t.well != null) {
+            key = ((long) t.well[0] << 32) | (t.well[1] & 0xffffffffL);
+         }
+         byWell.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(t);
+      }
+      int nWells = byWell.size();
+      // Distribute n across wells: a base count each, plus one extra to the first 'remainder'
+      // wells. When n < nWells only the first n wells get a point (base 0, remainder n).
+      int base = n / nWells;
+      int remainder = n % nWells;
+      int idx = 0;
+      for (java.util.List<Tile> group : byWell.values()) {
+         int budget = base + (idx < remainder ? 1 : 0);
+         if (budget > 0) {
+            result.addAll(farthestPointSample(group, Math.min(budget, group.size())));
+         }
+         idx++;
+      }
+      return result;
+   }
+
+   /** Farthest-point sampling of {@code count} tiles from {@code group} (Euclidean stage XY). */
+   private java.util.List<Tile> farthestPointSample(java.util.List<Tile> group, int count) {
+      java.util.List<Tile> chosen = new java.util.ArrayList<>();
+      if (group.isEmpty() || count <= 0) {
+         return chosen;
+      }
+      // Seed with the tile nearest the group's centroid for a stable first pick.
+      double cx = 0;
+      double cy = 0;
+      for (Tile t : group) {
+         cx += t.stageX;
+         cy += t.stageY;
+      }
+      cx /= group.size();
+      cy /= group.size();
+      Tile seed = group.get(0);
+      double best = Double.MAX_VALUE;
+      for (Tile t : group) {
+         double d = (t.stageX - cx) * (t.stageX - cx) + (t.stageY - cy) * (t.stageY - cy);
+         if (d < best) {
+            best = d;
+            seed = t;
+         }
+      }
+      chosen.add(seed);
+      while (chosen.size() < count) {
+         Tile bestTile = null;
+         double bestDist = -1.0;
+         for (Tile t : group) {
+            if (chosen.contains(t)) {
+               continue;
+            }
+            double nearest = Double.MAX_VALUE;
+            for (Tile c : chosen) {
+               double dx = t.stageX - c.stageX;
+               double dy = t.stageY - c.stageY;
+               double d = dx * dx + dy * dy;
+               if (d < nearest) {
+                  nearest = d;
+               }
+            }
+            if (nearest > bestDist) {
+               bestDist = nearest;
+               bestTile = t;
+            }
+         }
+         if (bestTile == null) {
+            break;
+         }
+         chosen.add(bestTile);
+      }
+      return chosen;
+   }
+
+   /**
+    * Computes the tile-grid position list and FOV rectangles for the current ROI. Pure
+    * computation (plus current-hardware reads); does not mutate the MM position list. A tile is
+    * included if its FOV rectangle overlaps the (optionally vessel-clipped) ROI shape. Positions
+    * are ordered serpentine, prefixed with a region identifier, and include every checked stage.
+    */
+   private PositionGridResult computePositionGrid(boolean withinVesselOnly) throws Exception {
+      final Area roiAreaPx = dataSource_.getPositionRoiAreaPx();
+      if (roiAreaPx == null) {
+         throw new Exception("Draw an ROI first.");
+      }
+      if (withinVesselOnly) {
+         Area vesselArea = dataSource_.getVesselAreaPx();
+         if (vesselArea != null) {
+            roiAreaPx.intersect(vesselArea);
+         }
+      }
+      if (roiAreaPx.isEmpty()) {
+         throw new Exception("ROI does not overlap the vessel.");
+      }
+
+      String warning = null;
+
+      // ---- Live hardware: affine + FOV for the new position grid ----
+      // The grid is sized by the CURRENT pixel size from getPixelSizeUm(); the affine is used only
+      // for step-vector DIRECTION (rotation/shear). The affine's own scale can be stale (it does
+      // not always vary per objective), so we normalize it to the current pixel size below.
+      double livePixelSizeUm = 0.0;
+      try {
+         livePixelSizeUm = studio_.core().getPixelSizeUm();
+      } catch (Exception ignore) {
+         // Core unavailable -- fall back below.
+      }
+      if (livePixelSizeUm <= 0.0) {
+         livePixelSizeUm = pixelSizeUm_ > 0 ? pixelSizeUm_ : 1.0;
+      }
+      AffineTransform pixToStage = null;
+      double affineScale = 1.0;
+      try {
+         AffineTransform at = AffineUtils.doubleToAffine(
+               studio_.core().getPixelSizeAffine(true));
+         double affinePixelSize = AffineUtils.deducePixelSize(at);
+         if (affinePixelSize > 0.0) {
+            pixToStage = at;
+            // Rescale the affine's vectors from its (possibly stale) pixel size to the current one
+            // so directions are preserved but magnitudes match getPixelSizeUm().
+            affineScale = livePixelSizeUm / affinePixelSize;
+         }
+      } catch (Exception ignore) {
+         // No affine configured -- scalar fallback below.
+      }
+
+      int tileW = (int) studio_.core().getImageWidth();
+      int tileH = (int) studio_.core().getImageHeight();
+      if (tileW <= 0 || tileH <= 0) {
+         throw new Exception("Cannot create positions: camera image size unavailable.");
+      }
+
+      int overlapX = (int) Math.round(tileW * overlapPercentage_ / 100.0);
+      int overlapY = (int) Math.round(tileH * overlapPercentage_ / 100.0);
+      int stepPxX = tileW - overlapX;
+      int stepPxY = tileH - overlapY;
+      if (stepPxX <= 0 || stepPxY <= 0) {
+         throw new Exception("Cannot create positions: overlap is >= tile size.");
+      }
+
+      if (Math.abs(livePixelSizeUm - initialPixelSizeUm_) > 0.01 * initialPixelSizeUm_) {
+         warning = String.format(
+               "Note: current pixel size (%.4f um) differs from session start (%.4f um) "
+               + "- positions sized for the current objective.",
+               livePixelSizeUm, initialPixelSizeUm_);
+      }
+
+      // ---- Step vectors and FOV magnitudes in stage space (current hardware) ----
+      final double stageStepXdx;
+      final double stageStepXdy;
+      final double stageStepYdx;
+      final double stageStepYdy;
+      double fovW;
+      double fovH;
+      if (pixToStage != null) {
+         Point2D.Double sx = new Point2D.Double();
+         Point2D.Double sy = new Point2D.Double();
+         Point2D.Double fx = new Point2D.Double();
+         Point2D.Double fy = new Point2D.Double();
+         pixToStage.deltaTransform(new Point2D.Double(stepPxX, 0), sx);
+         pixToStage.deltaTransform(new Point2D.Double(0, stepPxY), sy);
+         pixToStage.deltaTransform(new Point2D.Double(tileW, 0), fx);
+         pixToStage.deltaTransform(new Point2D.Double(0, tileH), fy);
+         // Normalize the affine's scale to the current pixel size (see affineScale above).
+         stageStepXdx = sx.x * affineScale;
+         stageStepXdy = sx.y * affineScale;
+         stageStepYdx = sy.x * affineScale;
+         stageStepYdy = sy.y * affineScale;
+         fovW = Math.hypot(fx.x, fx.y) * affineScale;
+         fovH = Math.hypot(fy.x, fy.y) * affineScale;
+      } else {
+         stageStepXdx = stepPxX * livePixelSizeUm;
+         stageStepXdy = 0;
+         stageStepYdx = 0;
+         stageStepYdy = stepPxY * livePixelSizeUm;
+         fovW = tileW * livePixelSizeUm;
+         fovH = tileH * livePixelSizeUm;
+      }
+      double stepMagX = Math.hypot(stageStepXdx, stageStepXdy);
+      double stepMagY = Math.hypot(stageStepYdx, stageStepYdy);
+      if (stepMagX <= 0 || stepMagY <= 0) {
+         throw new Exception("Cannot create positions: degenerate step size.");
+      }
+
+      // ---- ROI corners -> stage space (session-start frame) ----
+      Rectangle2D bbox = roiAreaPx.getBounds2D();
+      Point2D.Double[] cornersPx = new Point2D.Double[] {
+         new Point2D.Double(bbox.getMinX(), bbox.getMinY()),
+         new Point2D.Double(bbox.getMaxX(), bbox.getMinY()),
+         new Point2D.Double(bbox.getMinX(), bbox.getMaxY()),
+         new Point2D.Double(bbox.getMaxX(), bbox.getMaxY())
+      };
+      Point2D.Double[] cornersStage = new Point2D.Double[4];
+      for (int i = 0; i < 4; i++) {
+         cornersStage[i] = pixelToStageSessionFrame(cornersPx[i].x, cornersPx[i].y);
+         if (cornersStage[i] == null) {
+            throw new Exception("Cannot create positions: tile dimensions not ready.");
+         }
+      }
+
+      // ---- Grid dimensions: project corners onto unit step axes ----
+      double uxX = stageStepXdx / stepMagX;
+      double uxY = stageStepXdy / stepMagX;
+      double uyX = stageStepYdx / stepMagY;
+      double uyY = stageStepYdy / stepMagY;
+      double projXMin = Double.MAX_VALUE;
+      double projXMax = -Double.MAX_VALUE;
+      double projYMin = Double.MAX_VALUE;
+      double projYMax = -Double.MAX_VALUE;
+      double sumX = 0;
+      double sumY = 0;
+      for (Point2D.Double c : cornersStage) {
+         double px = c.x * uxX + c.y * uxY;
+         double py = c.x * uyX + c.y * uyY;
+         projXMin = Math.min(projXMin, px);
+         projXMax = Math.max(projXMax, px);
+         projYMin = Math.min(projYMin, py);
+         projYMax = Math.max(projYMax, py);
+         sumX += c.x;
+         sumY += c.y;
+      }
+      double roiExtentX = projXMax - projXMin;
+      double roiExtentY = projYMax - projYMin;
+      int nCols = Math.max(1, (int) Math.ceil((roiExtentX + fovW - stepMagX) / stepMagX));
+      int nRows = Math.max(1, (int) Math.ceil((roiExtentY + fovH - stepMagY) / stepMagY));
+
+      // ---- Grid origin: center over the ROI bounding box ----
+      double roiStageCX = sumX / 4.0;
+      double roiStageCY = sumY / 4.0;
+      double originX = roiStageCX
+            - (nCols - 1) / 2.0 * stageStepXdx
+            - (nRows - 1) / 2.0 * stageStepYdx;
+      double originY = roiStageCY
+            - (nCols - 1) / 2.0 * stageStepXdy
+            - (nRows - 1) / 2.0 * stageStepYdy;
+
+      String xyStage;
+      try {
+         xyStage = studio_.core().getXYStageDevice();
+      } catch (Exception e) {
+         xyStage = null;
+      }
+      if (xyStage == null || xyStage.isEmpty()) {
+         throw new Exception("Cannot create positions: no XY stage device is configured.");
+      }
+
+      // FOV size in full-resolution (session-frame) canvas pixels, for the overlap test and the
+      // grey preview. Sized identically to the red live-FOV indicator so the two coincide:
+      // session-frame effective tile px * current/session pixel-size ratio * camera-ROI scale.
+      // This is robust to a stale or rotated pixel-size affine and to camera-ROI (WxH) changes.
+      final double fovPxW;
+      final double fovPxH;
+      final int twCanvas = dataSource_ != null ? dataSource_.getTileWidth() : -1;
+      final int thCanvas = dataSource_ != null ? dataSource_.getTileHeight() : -1;
+      if (twCanvas > 0 && thCanvas > 0 && initialCameraWidth_ > 0 && initialCameraHeight_ > 0) {
+         final double ratio = getPixelSizeRatio();
+         final double widthScale  = (double) tileW / initialCameraWidth_;
+         final double heightScale = (double) tileH / initialCameraHeight_;
+         final int ovCanvasX = (int) Math.round(twCanvas * overlapPercentage_ / 100.0);
+         final int ovCanvasY = (int) Math.round(thCanvas * overlapPercentage_ / 100.0);
+         fovPxW = (twCanvas - ovCanvasX) * ratio * widthScale;
+         fovPxH = (thCanvas - ovCanvasY) * ratio * heightScale;
+      } else {
+         fovPxW = tileW;
+         fovPxH = tileH;
+      }
+
+      final double overlapXUm = overlapX * livePixelSizeUm;
+      final double overlapYUm = overlapY * livePixelSizeUm;
+
+      // Region number (shared by all positions in this ROI). The per-position well prefix is
+      // computed individually below so an ROI spanning several wells labels each correctly.
+      // Use the NEXT region number; createPositionsFromRoi advances it on commit.
+      int regionNumber = regionCounter_ + 1;
+      String regionLabel = "Reg" + regionNumber;
+      boolean multiWell = vesselType_ != null && vesselType_.isMultiWell();
+
+      // Snapshot the checked auxiliary stages (e.g. Z) once, applied to every position.
+      // When Refine Z has reference points, the 1D (Z) stages it measured are interpolated
+      // per tile instead of using this snapshot; other aux stages keep the snapshot.
+      java.util.List<StagePosition> auxStages = readCheckedAuxStages(xyStage);
+      boolean haveRefineZ = hasRefineZPoints();
+      java.util.Set<String> refinedZStages = haveRefineZ
+            ? new java.util.HashSet<>(getCheckedZStages()) : java.util.Collections.emptySet();
+      // ZGenerators keyed by well key (or one global generator under key 0 when not per-well).
+      java.util.Map<Long, java.util.Map<String, ZGenerator>> zGenByWell =
+            new java.util.HashMap<>();
+      java.util.Map<String, ZGenerator> zGenGlobal = haveRefineZ
+            ? buildZGenerators(null) : java.util.Collections.emptyMap();
+
+      // Group positions by well only when clipping to a multi-well vessel; otherwise the whole
+      // ROI is one contiguous region and the global serpentine already minimizes travel.
+      boolean groupByWell = multiWell && withinVesselOnly;
+
+      // ---- Pass 1: collect accepted tiles (already in global serpentine row/col order) ----
+      java.util.List<Tile> tiles = new java.util.ArrayList<>();
+      java.util.List<Rectangle2D.Double> fovsPx = new java.util.ArrayList<>();
+      for (int row = 0; row < nRows; row++) {
+         for (int col = 0; col < nCols; col++) {
+            int c = ((row & 1) == 0) ? col : (nCols - 1 - col); // serpentine
+            double dx = c * stageStepXdx + row * stageStepYdx;
+            double dy = c * stageStepXdy + row * stageStepYdy;
+            double stageX = originX + dx;
+            double stageY = originY + dy;
+
+            // Include the tile if its FOV rectangle overlaps the ROI shape.
+            Point2D.Double centerPx = stageToPixel(stageX, stageY);
+            Rectangle2D.Double fovRect = null;
+            if (centerPx != null) {
+               fovRect = new Rectangle2D.Double(
+                     centerPx.x - fovPxW / 2.0, centerPx.y - fovPxH / 2.0, fovPxW, fovPxH);
+               if (!roiAreaPx.intersects(fovRect)) {
+                  continue;
+               }
+            }
+            if (fovRect != null) {
+               fovsPx.add(fovRect);
+            }
+            // Compute the well whenever multi-well so both per-well ordering and per-well Z
+            // interpolation work, even without within-vessel clipping.
+            int[] well = multiWell ? wellIndexForStage(stageX, stageY) : null;
+            tiles.add(new Tile(row, c, stageX, stageY, well));
+         }
+      }
+      if (tiles.isEmpty()) {
+         throw new Exception("No positions fall within the ROI.");
+      }
+
+      // ---- Pass 2: order tiles. When grouping by well, visit wells in a boustrophedon
+      // (snake) pattern across the plate and snake the tiles within each well, so the stage
+      // never jumps back and forth between wells. ----
+      if (groupByWell) {
+         orderTilesByWell(tiles);
+      }
+
+      // ---- Pass 3: build the position list in the chosen order ----
+      PositionList posList = new PositionList();
+      for (Tile t : tiles) {
+         String prefix = regionLabel;
+         if (multiWell) {
+            String well = t.well != null
+                  ? VesselType.getWellLabel(t.well[0], t.well[1])
+                  : wellLabelForStage(t.stageX, t.stageY);
+            if (well != null) {
+               prefix = well + "-" + regionLabel;
+            }
+         }
+
+         MultiStagePosition msp = new MultiStagePosition();
+         msp.setDefaultXYStage(xyStage);
+         msp.add(StagePosition.create2D(xyStage, t.stageX, t.stageY));
+         // Non-refined aux stages keep their snapshot; refined Z stages are interpolated below.
+         for (StagePosition aux : auxStages) {
+            if (refinedZStages.contains(aux.getStageDeviceLabel())) {
+               continue;
+            }
+            msp.add(StagePosition.newInstance(aux));
+         }
+         if (haveRefineZ) {
+            // Per-well generator when this tile has a well and that well was refined, else global.
+            java.util.Map<String, ZGenerator> gens = zGenGlobal;
+            if (t.well != null) {
+               long wkey = ((long) t.well[0] << 32) | (t.well[1] & 0xffffffffL);
+               java.util.Map<String, ZGenerator> perWell = zGenByWell.get(wkey);
+               if (perWell == null) {
+                  perWell = buildZGenerators(t.well);
+                  zGenByWell.put(wkey, perWell);
+               }
+               if (!perWell.isEmpty()) {
+                  gens = perWell;
+               }
+            }
+            String defaultZ = null;
+            for (String zStage : refinedZStages) {
+               ZGenerator gen = gens.get(zStage);
+               if (gen != null) {
+                  msp.add(StagePosition.create1D(zStage, gen.getZ(t.stageX, t.stageY, zStage)));
+                  if (defaultZ == null) {
+                     defaultZ = zStage;
+                  }
+               }
+            }
+            if (defaultZ != null) {
+               msp.setDefaultZStage(defaultZ);
+            }
+         }
+         msp.setLabel(prefix + "-Pos-" + FMT_POS.format(t.row) + "_" + FMT_POS.format(t.col));
+         msp.setGridCoordinates(t.row, t.col);
+         msp.setProperty("OverlapUmX", String.valueOf(overlapXUm));
+         msp.setProperty("OverlapUmY", String.valueOf(overlapYUm));
+         msp.setProperty("OverlapPixelsX", String.valueOf(overlapX));
+         msp.setProperty("OverlapPixelsY", String.valueOf(overlapY));
+         msp.setProperty("Source", "ExplorerCreatePositions");
+         msp.setProperty("Region", regionLabel);
+         posList.addPosition(msp);
+      }
+      return new PositionGridResult(posList, fovsPx, tiles, warning, regionLabel);
+   }
+
+   /** One accepted grid tile, before being turned into a MultiStagePosition. */
+   private static final class Tile {
+      private final int row;
+      private final int col;
+      private final double stageX;
+      private final double stageY;
+      private final int[] well; // {wellRow, wellCol} when grouping by well, else null
+
+      private Tile(int row, int col, double stageX, double stageY, int[] well) {
+         this.row = row;
+         this.col = col;
+         this.stageX = stageX;
+         this.stageY = stageY;
+         this.well = well;
+      }
+   }
+
+   /**
+    * Re-orders the tiles in place so that all tiles of one well are visited consecutively, the
+    * wells themselves are traversed in a boustrophedon (snake) pattern (left-to-right on even
+    * well-rows, right-to-left on odd ones), and within each well the tiles snake by grid row/col.
+    * Minimizes stage travel by never jumping back and forth between wells.
+    */
+   private void orderTilesByWell(java.util.List<Tile> tiles) {
+      // Bucket tiles by well. LinkedHashMap keeps first-seen order as a stable fallback.
+      java.util.Map<Long, java.util.List<Tile>> byWell = new java.util.LinkedHashMap<>();
+      for (Tile t : tiles) {
+         int wr = t.well != null ? t.well[0] : 0;
+         int wc = t.well != null ? t.well[1] : 0;
+         long key = ((long) wr << 32) | (wc & 0xffffffffL);
+         byWell.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(t);
+      }
+      // Sort wells: row ascending; column ascending on even rows, descending on odd rows.
+      java.util.List<Long> wellKeys = new java.util.ArrayList<>(byWell.keySet());
+      wellKeys.sort((a, b) -> {
+         int ra = (int) (a >> 32);
+         int rb = (int) (b >> 32);
+         if (ra != rb) {
+            return Integer.compare(ra, rb);
+         }
+         int ca = (int) (a & 0xffffffffL);
+         int cb = (int) (b & 0xffffffffL);
+         return (ra & 1) == 0 ? Integer.compare(ca, cb) : Integer.compare(cb, ca);
+      });
+      tiles.clear();
+      for (Long key : wellKeys) {
+         java.util.List<Tile> wellTiles = byWell.get(key);
+         // Snake within the well: grid row ascending; col ascending on even rows, desc on odd.
+         wellTiles.sort((a, b) -> {
+            if (a.row != b.row) {
+               return Integer.compare(a.row, b.row);
+            }
+            return (a.row & 1) == 0 ? Integer.compare(a.col, b.col) : Integer.compare(b.col, a.col);
+         });
+         tiles.addAll(wellTiles);
+      }
+   }
+
+   /**
+    * Returns the well label (e.g. "B7") whose center is nearest the given stage coordinate for
+    * the current multi-well vessel, or null if no vessel/anchor is available. The plate top-left
+    * in stage coordinates is {@code vesselAnchorStageX_/Y_}; wells are laid out by the vessel
+    * geometry (axes assumed parallel to stage X/Y).
+    */
+   private String wellLabelForStage(double stageX, double stageY) {
+      int[] well = wellIndexForStage(stageX, stageY);
+      return well != null ? VesselType.getWellLabel(well[0], well[1]) : null;
+   }
+
+   /**
+    * Returns the 0-based {@code {row, col}} of the well whose center is nearest the given stage
+    * coordinate for the current multi-well vessel, or null if no vessel/anchor is available.
+    */
+   private int[] wellIndexForStage(double stageX, double stageY) {
+      if (vesselType_ == null || !vesselType_.isMultiWell()) {
+         return null;
+      }
+      double relX = stageX - vesselAnchorStageX_ - vesselType_.getFirstWellXUm();
+      double relY = stageY - vesselAnchorStageY_ - vesselType_.getFirstWellYUm();
+      double spacX = vesselType_.getWellSpacingXUm();
+      double spacY = vesselType_.getWellSpacingYUm();
+      if (spacX <= 0 || spacY <= 0) {
+         return null;
+      }
+      int col = (int) Math.round(relX / spacX);
+      int row = (int) Math.round(relY / spacY);
+      col = Math.max(0, Math.min(vesselType_.getWellCols() - 1, col));
+      row = Math.max(0, Math.min(vesselType_.getWellRows() - 1, row));
+      return new int[]{row, col};
+   }
+
+   /**
+    * Reads the current positions of every stage that is checked ("use") in the MM Stage Position
+    * List, EXCLUDING the main XY stage (which carries the grid position). The checked state is the
+    * same profile setting the Position List editor uses. Failures are logged and skipped.
+    */
+   private java.util.List<StagePosition> readCheckedAuxStages(String mainXyStage) {
+      java.util.List<StagePosition> result = new java.util.ArrayList<>();
+      MutablePropertyMapView axisSettings = axisCheckedSettings();
+      try {
+         StrVector oneDStages = studio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
+         for (int i = 0; i < oneDStages.size(); i++) {
+            String name = oneDStages.get(i);
+            if (!axisChecked(axisSettings, name)) {
+               continue;
+            }
+            try {
+               double pos = studio_.core().getPosition(name);
+               result.add(StagePosition.create1D(name, pos));
+            } catch (Exception e) {
+               studio_.logs().logError(e, "Explorer: could not read position of " + name);
+            }
+         }
+         StrVector xyStages = studio_.core().getLoadedDevicesOfType(DeviceType.XYStageDevice);
+         for (int i = 0; i < xyStages.size(); i++) {
+            String name = xyStages.get(i);
+            if (name.equals(mainXyStage)) {
+               continue;
+            }
+            if (!axisChecked(axisSettings, name)) {
+               continue;
+            }
+            try {
+               double x = studio_.core().getXPosition(name);
+               double y = studio_.core().getYPosition(name);
+               result.add(StagePosition.create2D(name, x, y));
+            } catch (Exception e) {
+               studio_.logs().logError(e, "Explorer: could not read position of " + name);
+            }
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: could not enumerate stage devices");
+      }
+      return result;
+   }
+
+   /**
+    * Returns the profile settings node the MM Position List editor uses to persist which stage
+    * axes are checked ("use"), or null if it cannot be read (then all axes are treated as checked).
+    */
+   private MutablePropertyMapView axisCheckedSettings() {
+      try {
+         Class<?> axisModel = Class.forName(
+               "org.micromanager.internal.positionlist.AxisTableModel");
+         return studio_.profile().getSettings(axisModel);
+      } catch (Exception e) {
+         return null;
+      }
+   }
+
+   /** True if the named stage axis is checked in the Position List editor (default true). */
+   private boolean axisChecked(MutablePropertyMapView axisSettings, String name) {
+      return axisSettings == null || axisSettings.getBoolean(name, true);
+   }
+
+   /** Returns the checked 1D stage (Z) device names, in core order. */
+   private java.util.List<String> getCheckedZStages() {
+      java.util.List<String> zStages = new java.util.ArrayList<>();
+      MutablePropertyMapView axisSettings = axisCheckedSettings();
+      try {
+         StrVector oneDStages = studio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
+         for (int i = 0; i < oneDStages.size(); i++) {
+            String name = oneDStages.get(i);
+            if (axisChecked(axisSettings, name)) {
+               zStages.add(name);
+            }
+         }
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: could not enumerate Z stages");
+      }
+      return zStages;
+   }
+
+   // ===================== Refine Z =====================
+
+   /** Opens (or brings to front) the Refine Z window for the current session. */
+   public void showRefineZFrame() {
+      if (!exploring_ || loadedData_) {
+         return;
+      }
+      if (refineZFrame_ == null || !refineZFrame_.isDisplayable()) {
+         refineZFrame_ = new RefineZFrame(studio_, this, frame_);
+      }
+      // While the window is open, suppress ROI drawing so canvas clicks drive refinement.
+      if (dataSource_ != null) {
+         dataSource_.setRefineZActive(true);
+      }
+      refineZFrame_.setVisible(true);
+      refineZFrame_.toFront();
+   }
+
+   /** Called by the Refine Z window when it is disposed. */
+   public void onRefineZFrameClosed(RefineZFrame frame) {
+      if (refineZFrame_ == frame) {
+         refineZFrame_ = null;
+      }
+      if (dataSource_ != null) {
+         dataSource_.setRefineZActive(false);
+      }
+   }
+
+   /** True while the Refine Z window is open. */
+   public boolean isRefineZFrameOpen() {
+      return refineZFrame_ != null && refineZFrame_.isDisplayable();
+   }
+
+   /** Routes a Refine-Z status message to the Refine Z window if open. */
+   private void setRefineZStatus(String text) {
+      if (refineZFrame_ != null) {
+         refineZFrame_.setRefineZStatus(text);
+      }
+   }
+
+   /** Routes the running state to the Refine Z window if open. */
+   private void setRefineZRunningUi(boolean running) {
+      if (refineZFrame_ != null) {
+         refineZFrame_.setRefineZRunning(running);
+      }
+   }
+
+   /** One Refine-Z reference point: stage XY, measured Z per checked stage, and well index. */
+   private static final class RefineZPoint {
+      private final double stageX;
+      private final double stageY;
+      private final java.util.Map<String, Double> z;
+      private final int[] well; // {wellRow, wellCol} on multi-well plates, else null
+      // In-focus thumbnail captured at this point (immutable once set); null until snapped.
+      private volatile java.awt.image.BufferedImage thumb;
+
+      private RefineZPoint(double stageX, double stageY,
+            java.util.Map<String, Double> z, int[] well) {
+         this.stageX = stageX;
+         this.stageY = stageY;
+         this.z = z;
+         this.well = well;
+      }
+   }
+
+   /** Sets the Z interpolation method (Weighted / Average). */
+   public void setRefineZMethod(ZGenerator.Type method) {
+      if (method != null) {
+         refineZMethod_ = method;
+      }
+   }
+
+   /** True when at least one Refine-Z reference point has been collected. */
+   public boolean hasRefineZPoints() {
+      synchronized (refineZPoints_) {
+         return !refineZPoints_.isEmpty();
+      }
+   }
+
+   /** Discards all collected Refine-Z reference points and clears their markers/thumbnails. */
+   public void clearRefineZ() {
+      synchronized (refineZPoints_) {
+         refineZPoints_.clear();
+      }
+      pushRefineZMarkers();
+      pushRefineZThumbnails();
+      setRefineZStatus("Refine Z cleared.");
+   }
+
+   /** Pushes the current reference-point markers (stage->pixel) to the data source overlay. */
+   private void pushRefineZMarkers() {
+      if (dataSource_ == null) {
+         return;
+      }
+      java.util.List<Point2D.Double> markers = new java.util.ArrayList<>();
+      synchronized (refineZPoints_) {
+         for (RefineZPoint p : refineZPoints_) {
+            Point2D.Double px = stageToPixel(p.stageX, p.stageY);
+            if (px != null) {
+               markers.add(px);
+            }
+         }
+      }
+      dataSource_.setRefineZMarkers(markers);
+      redrawOverlay();
+   }
+
+   /**
+    * Pushes the in-focus thumbnails to the overlay, sizing each to the current FOV in
+    * session-frame canvas pixels (the same formula as the red live-FOV indicator), centered at the
+    * reference point. Recomputed on every push so it tracks pan/zoom and objective/camera changes.
+    */
+   private void pushRefineZThumbnails() {
+      if (dataSource_ == null) {
+         return;
+      }
+      int tw = dataSource_.getTileWidth();
+      int th = dataSource_.getTileHeight();
+      java.util.List<ExplorerDataSource.RefineZThumb> thumbs = new java.util.ArrayList<>();
+      if (tw > 0 && th > 0) {
+         double ratio = getPixelSizeRatio();
+         double widthScale  = initialCameraWidth_  > 0
+               ? (double) cameraWidth_  / initialCameraWidth_  : 1.0;
+         double heightScale = initialCameraHeight_ > 0
+               ? (double) cameraHeight_ / initialCameraHeight_ : 1.0;
+         int ovX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+         int ovY = (int) Math.round(th * overlapPercentage_ / 100.0);
+         double fovW = (tw - ovX) * ratio * widthScale;
+         double fovH = (th - ovY) * ratio * heightScale;
+         synchronized (refineZPoints_) {
+            for (RefineZPoint p : refineZPoints_) {
+               if (p.thumb == null) {
+                  continue;
+               }
+               Point2D.Double centerPx = stageToPixel(p.stageX, p.stageY);
+               if (centerPx == null) {
+                  continue;
+               }
+               thumbs.add(new ExplorerDataSource.RefineZThumb(
+                     centerPx.x - fovW / 2.0, centerPx.y - fovH / 2.0, fovW, fovH, p.thumb));
+            }
+         }
+      }
+      dataSource_.setRefineZThumbnails(thumbs);
+      redrawOverlay();
+   }
+
+   /** Best-effort in-focus thumbnail from a snap; returns null on any failure. Call off the EDT. */
+   private java.awt.image.BufferedImage grabRefineZThumbnail() {
+      try {
+         java.util.List<Image> images = studio_.live().snap(false);
+         if (images == null || images.isEmpty()) {
+            return null;
+         }
+         Image img = images.get(0);
+         Object pixels = img.getRawPixels();
+         int w = img.getWidth();
+         int h = img.getHeight();
+         // Apply the same camera orientation correction (mirror + rotation) the canvas applies to
+         // acquired tiles, so thumbnails match the main images. Skip if the Flipper already did it.
+         if (!flipperInPipeline_
+               && (sessionCorrectionMirror_ || sessionCorrectionRotation_ != 0)) {
+            Object[] result = ImageTransformUtils.transformPixels(
+                  pixels, w, h, img.getBytesPerPixel(),
+                  sessionCorrectionMirror_, sessionCorrectionRotation_);
+            pixels = result[0];
+            w = (Integer) result[1];
+            h = (Integer) result[2];
+         }
+         ij.process.ImageProcessor proc = ImageUtils.makeProcessor(
+               img.getImageJPixelType(), w, h, pixels);
+         if (proc == null) {
+            return null;
+         }
+         proc.setInterpolationMethod(ij.process.ImageProcessor.BILINEAR);
+         ij.process.ImageProcessor scaled = proc.resize(REFINE_Z_THUMB_PX, REFINE_Z_THUMB_PX);
+         return scaled.getBufferedImage();
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Refine Z: failed to grab thumbnail");
+         return null;
+      }
+   }
+
+   /** True while the automatic Refine-Z worker is running. */
+   public boolean isRefineZRunning() {
+      return refineZWorker_ != null && !refineZWorker_.isDone();
+   }
+
+   /** Cancels a running automatic Refine-Z run. */
+   public void cancelRefineZ() {
+      if (refineZWorker_ != null) {
+         refineZWorker_.cancel(true);
+      }
+   }
+
+   /**
+    * Starts automatic Refine Z: chooses up to {@code nPoints} reference tiles spread across the
+    * current previewed grid (per well on multi-well plates), then for each one moves the stage,
+    * runs the selected autofocus method, and records the resulting Z of every checked Z stage.
+    * Runs off the EDT.
+    */
+   public void startRefineZAutomatic(int nPoints, String afMethodName, boolean withinVesselOnly) {
+      if (dataSource_ == null || !exploring_ || loadedData_ || !hasPositionRoi()) {
+         setRefineZStatus("Draw an ROI first.");
+         return;
+      }
+      if (isRefineZRunning()) {
+         return;
+      }
+      final java.util.List<String> zStages = getCheckedZStages();
+      if (zStages.isEmpty()) {
+         setRefineZStatus("No Z stage is checked in the Position List.");
+         return;
+      }
+      java.util.List<Tile> tiles;
+      try {
+         tiles = collectAcceptedTiles(withinVesselOnly);
+      } catch (Exception ex) {
+         setRefineZStatus(ex.getMessage());
+         return;
+      }
+      java.util.List<Tile> chosen = chooseSpreadTiles(tiles, nPoints);
+      if (chosen.isEmpty()) {
+         setRefineZStatus("No tiles to refine.");
+         return;
+      }
+      setRefineZRunningUi(true);
+      setRefineZStatus("Refining Z...");
+      refineZWorker_ = new RefineZWorker(chosen, zStages, afMethodName);
+      refineZWorker_.execute();
+   }
+
+   /** SwingWorker that visits chosen tiles, autofocuses, and records Z. */
+   private final class RefineZWorker extends SwingWorker<Void, RefineZPoint> {
+      private final java.util.List<Tile> cells_;
+      private final java.util.List<String> zStages_;
+      private final String afMethodName_;
+      private final java.util.List<String> failures_ = new java.util.ArrayList<>();
+
+      private RefineZWorker(java.util.List<Tile> cells, java.util.List<String> zStages,
+            String afMethodName) {
+         cells_ = cells;
+         zStages_ = zStages;
+         afMethodName_ = afMethodName;
+      }
+
+      @Override
+      protected Void doInBackground() {
+         AutofocusPlugin af = null;
+         try {
+            if (afMethodName_ != null && !afMethodName_.isEmpty()) {
+               studio_.getAutofocusManager().setAutofocusMethodByName(afMethodName_);
+            }
+            af = studio_.getAutofocusManager().getAutofocusMethod();
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Refine Z: could not select autofocus method");
+         }
+         int done = 0;
+         for (Tile t : cells_) {
+            if (isCancelled()) {
+               break;
+            }
+            String failure = refineOneTile(af, t);
+            if (failure != null) {
+               failures_.add(failure);
+            }
+            done++;
+            setProgress(100 * done / cells_.size());
+         }
+         return null;
+      }
+
+      private String refineOneTile(AutofocusPlugin af, Tile t) {
+         try {
+            studio_.core().setXYPosition(studio_.core().getXYStageDevice(), t.stageX, t.stageY);
+            studio_.core().waitForDevice(studio_.core().getXYStageDevice());
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Refine Z: move failed");
+            return "tile (move failed: " + e.getMessage() + ")";
+         }
+         if (af == null) {
+            return "tile (no autofocus method)";
+         }
+         try {
+            af.fullFocus();
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Refine Z: autofocus failed");
+            return "tile (autofocus failed: " + e.getMessage() + ")";
+         }
+         java.util.Map<String, Double> zVals = new java.util.LinkedHashMap<>();
+         try {
+            for (String z : zStages_) {
+               zVals.put(z, studio_.core().getPosition(z));
+            }
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Refine Z: read Z failed");
+            return "tile (Z read failed)";
+         }
+         RefineZPoint rp = new RefineZPoint(t.stageX, t.stageY, zVals, t.well);
+         // Grab the in-focus image for the overlay thumbnail (no NDTiff tile is stored).
+         rp.thumb = grabRefineZThumbnail();
+         publish(rp);
+         return null;
+      }
+
+      @Override
+      protected void process(java.util.List<RefineZPoint> chunks) {
+         synchronized (refineZPoints_) {
+            refineZPoints_.addAll(chunks);
+         }
+         pushRefineZMarkers();
+         pushRefineZThumbnails();
+         setRefineZStatus("Refined " + refineZPointCount() + " point(s)...");
+      }
+
+      @Override
+      protected void done() {
+         setRefineZRunningUi(false);
+         if (isCancelled()) {
+            setRefineZStatus("Refine Z cancelled (" + refineZPointCount() + " points).");
+            return;
+         }
+         if (!failures_.isEmpty()) {
+            StringBuilder sb = new StringBuilder("Autofocus skipped some tiles:\n");
+            for (String f : failures_) {
+               sb.append("  ").append(f).append('\n');
+            }
+            JOptionPane.showMessageDialog(refineZFrame_ != null ? refineZFrame_ : frame_,
+                  sb.toString(), "Refine Z", JOptionPane.WARNING_MESSAGE);
+         }
+         setRefineZStatus("Refine Z done (" + refineZPointCount() + " points).");
+         pushRefineZMarkers();
+      }
+   }
+
+   private int refineZPointCount() {
+      synchronized (refineZPoints_) {
+         return refineZPoints_.size();
+      }
+   }
+
+   /**
+    * Manual Refine Z: moves the stage so the clicked full-res pixel becomes the FOV center, so the
+    * operator can focus there and then capture with {@link #addManualRefineZ()}.
+    */
+   public void refineZManualMove(double fullResX, double fullResY) {
+      if (!exploring_ || loadedData_) {
+         return;
+      }
+      moveStageToPixelPosition(fullResX, fullResY);
+   }
+
+   /**
+    * Captures the current Z of every checked Z stage at the current stage XY as a Refine-Z
+    * reference point, then snaps an in-focus thumbnail (off the EDT) for the overlay.
+    */
+   public void addManualRefineZ() {
+      if (!exploring_ || loadedData_) {
+         return;
+      }
+      java.util.List<String> zStages = getCheckedZStages();
+      if (zStages.isEmpty()) {
+         setRefineZStatus("No Z stage is checked in the Position List.");
+         return;
+      }
+      try {
+         double stageX = studio_.core().getXPosition();
+         double stageY = studio_.core().getYPosition();
+         java.util.Map<String, Double> zVals = new java.util.LinkedHashMap<>();
+         for (String z : zStages) {
+            zVals.put(z, studio_.core().getPosition(z));
+         }
+         int[] well = (vesselType_ != null && vesselType_.isMultiWell())
+               ? wellIndexForStage(stageX, stageY) : null;
+         final RefineZPoint rp = new RefineZPoint(stageX, stageY, zVals, well);
+         synchronized (refineZPoints_) {
+            refineZPoints_.add(rp);
+         }
+         pushRefineZMarkers();
+         setRefineZStatus("Set Z (" + refineZPointCount() + " points).");
+         // Snap the in-focus image off the EDT, then push thumbnails on the EDT.
+         if (acquisitionExecutor_ != null) {
+            acquisitionExecutor_.submit(() -> {
+               rp.thumb = grabRefineZThumbnail();
+               SwingUtilities.invokeLater(this::pushRefineZThumbnails);
+            });
+         }
+      } catch (Exception e) {
+         studio_.logs().showError(e, "Refine Z: could not read stage position.");
+      }
+   }
+
+   /**
+    * Builds, per Z stage, a ZGenerator from the collected reference points (optionally restricted
+    * to a single well). Returns an empty map when there are no usable reference points.
+    */
+   private java.util.Map<String, ZGenerator> buildZGenerators(int[] well) {
+      java.util.List<RefineZPoint> pts = new java.util.ArrayList<>();
+      synchronized (refineZPoints_) {
+         for (RefineZPoint p : refineZPoints_) {
+            if (well == null || p.well == null
+                  || (p.well[0] == well[0] && p.well[1] == well[1])) {
+               pts.add(p);
+            }
+         }
+      }
+      java.util.Map<String, ZGenerator> generators = new java.util.HashMap<>();
+      if (pts.isEmpty()) {
+         return generators;
+      }
+      // ZGenerator builds one interpolator per 1D stage present on the first position, so each
+      // reference MultiStagePosition must carry every checked Z stage.
+      PositionList refList = new PositionList();
+      String xyStage;
+      try {
+         xyStage = studio_.core().getXYStageDevice();
+      } catch (Exception e) {
+         xyStage = "XY";
+      }
+      for (RefineZPoint p : pts) {
+         MultiStagePosition msp = new MultiStagePosition();
+         // setDefaultXYStage is REQUIRED: ZGeneratorShepard reads each reference point's XY via
+         // MultiStagePosition.getX()/getY(), which return 0 unless the default XY stage is set.
+         // Without it every reference point reads (0,0) and the interpolator returns a constant.
+         msp.setDefaultXYStage(xyStage);
+         msp.add(StagePosition.create2D(xyStage, p.stageX, p.stageY));
+         for (java.util.Map.Entry<String, Double> e : p.z.entrySet()) {
+            msp.add(StagePosition.create1D(e.getKey(), e.getValue()));
+         }
+         refList.addPosition(msp);
+      }
+      ZGenerator gen = ZGenerator.create(refineZMethod_, refList);
+      synchronized (refineZPoints_) {
+         for (String z : pts.get(0).z.keySet()) {
+            generators.put(z, gen);
+         }
+      }
+      return generators;
    }
 
    // ===================== Private helpers =====================
@@ -1958,5 +3255,222 @@ public class ExplorerManager {
       } catch (Exception e) {
          return null;
       }
+   }
+
+   // ===================== Vessel outline =====================
+
+   /**
+    * Called from ExplorerFrame when the operator changes the vessel type dropdown.
+    * Clears any existing anchor and outline so the new vessel starts fresh.
+    */
+   public void setVesselType(VesselType v) {
+      vesselType_ = (v != null) ? v : VesselType.NONE;
+      vesselAnchorType_ = null;
+      vesselUsedHcsCal_ = false;
+      vesselOutlinePending_ = false;
+      if (dataSource_ != null) {
+         dataSource_.clearVesselOutline();
+         redrawOverlay();
+      }
+      if (exploring_ && vesselType_.isMultiWell()) {
+         Point2D.Double hcsOffset = tryReadHcsCalibration();
+         frame_.setHcsCalibrationStatus(hcsOffset != null);
+         if (hcsOffset != null) {
+            applyHcsCalibration(hcsOffset);
+         }
+      } else {
+         frame_.setHcsCalibrationStatus(false);
+      }
+      frame_.setExploringActive(exploring_, exploring_ && !loadedData_);
+   }
+
+   /**
+    * Called from ExplorerFrame when an anchor button is clicked.
+    * Reads the current stage position, computes the vessel outline in pixel space,
+    * pushes it to ExplorerDataSource, triggers a redraw, and zooms to show the vessel.
+    */
+   public void setVesselAnchor(VesselType.AnchorType anchorType) {
+      if (!exploring_ || vesselType_.isNone()) {
+         return;
+      }
+      try {
+         vesselAnchorStageX_ = studio_.core().getXPosition();
+         vesselAnchorStageY_ = studio_.core().getYPosition();
+         vesselAnchorType_   = anchorType;
+         updateVesselOutline();
+      } catch (Exception e) {
+         studio_.logs().showError(e,
+               "Explorer: could not read stage position for vessel anchor.");
+      }
+   }
+
+   private void updateVesselOutline() {
+      if (dataSource_ == null || vesselType_.isNone()) {
+         return;
+      }
+      if (!vesselType_.isMultiWell() && vesselAnchorType_ == null) {
+         return;
+      }
+
+      double pxPerUm = computePxPerUm();
+      if (pxPerUm <= 0) {
+         vesselOutlinePending_ = true;
+         return;
+      }
+      vesselOutlinePending_ = false;
+
+      double widthPx  = vesselType_.getWidthUm()  * pxPerUm;
+      double heightPx = vesselType_.getHeightUm() * pxPerUm;
+
+      double tlX;
+      double tlY;
+      if (vesselType_.isMultiWell()) {
+         // vesselAnchorStageX_/Y_ holds the plate top-left in stage coordinates
+         // (set by applyHcsCalibration or setVesselWellAnchor).
+         Point2D.Double plateTlPx = stageToPixel(vesselAnchorStageX_, vesselAnchorStageY_);
+         if (plateTlPx == null) {
+            vesselOutlinePending_ = true;
+            return;
+         }
+         tlX = plateTlPx.x;
+         tlY = plateTlPx.y;
+      } else {
+         Point2D.Double anchorPx = stageToPixel(vesselAnchorStageX_, vesselAnchorStageY_);
+         if (anchorPx == null) {
+            vesselOutlinePending_ = true;
+            return;
+         }
+         switch (vesselAnchorType_) {
+            case TOP_LEFT:
+               tlX = anchorPx.x;
+               tlY = anchorPx.y;
+               break;
+            case TOP_RIGHT:
+               tlX = anchorPx.x - widthPx;
+               tlY = anchorPx.y;
+               break;
+            case BOTTOM_LEFT:
+               tlX = anchorPx.x;
+               tlY = anchorPx.y - heightPx;
+               break;
+            case BOTTOM_RIGHT:
+               tlX = anchorPx.x - widthPx;
+               tlY = anchorPx.y - heightPx;
+               break;
+            case CENTER:
+            default:
+               tlX = anchorPx.x - widthPx / 2.0;
+               tlY = anchorPx.y - heightPx / 2.0;
+               break;
+         }
+      }
+      dataSource_.setVesselOutline(vesselType_, tlX, tlY, widthPx, heightPx);
+      redrawOverlay();
+      zoomToVessel(tlX, tlY, widthPx, heightPx);
+   }
+
+   private double computePxPerUm() {
+      int tw = dataSource_ != null ? dataSource_.getTileWidth() : -1;
+      if (tw <= 0 || initialCameraWidth_ <= 0 || initialPixelSizeUm_ <= 0) {
+         return -1;
+      }
+      return ((double) tw / initialCameraWidth_) / initialPixelSizeUm_;
+   }
+
+   private void zoomToVessel(double tlX, double tlY, double widthPx, double heightPx) {
+      if (viewer_ == null) {
+         return;
+      }
+      final double margin = 0.15;
+      final double displayW = widthPx  * (1.0 + 2 * margin);
+      final double displayH = heightPx * (1.0 + 2 * margin);
+      final double offsetX  = tlX - widthPx  * margin;
+      final double offsetY  = tlY - heightPx * margin;
+      SwingUtilities.invokeLater(() -> {
+         viewer_.setViewOffset(offsetX, offsetY);
+         viewer_.setFullResSourceDataSizeAspectCorrected(displayW, displayH);
+      });
+   }
+
+   /**
+    * Re-reads the HCS calibration from the profile and applies it if found.
+    * Called from ExplorerFrame when the operator clicks "Refresh".
+    */
+   public void refreshHcsCalibration() {
+      if (!exploring_ || !vesselType_.isMultiWell()) {
+         return;
+      }
+      Point2D.Double hcsOffset = tryReadHcsCalibration();
+      frame_.setHcsCalibrationStatus(hcsOffset != null);
+      if (hcsOffset != null) {
+         applyHcsCalibration(hcsOffset);
+      }
+   }
+
+   private void applyHcsCalibration(Point2D.Double offset) {
+      // HCS formula: stage_XY = plate_definition_XY + offset.
+      // Plate top-left is at plate definition (0, 0), so plateTL in stage coords = offset.
+      vesselAnchorStageX_ = offset.x;
+      vesselAnchorStageY_ = offset.y;
+      vesselUsedHcsCal_   = true;
+      vesselAnchorWellRow_ = 0;
+      vesselAnchorWellCol_ = 0;
+      updateVesselOutline();
+   }
+
+   /**
+    * Sets the vessel anchor from the current stage position, interpreted as the center of
+    * the given well (0-based row/col).  Computes the plate top-left from the well geometry.
+    * Called from ExplorerFrame when the operator clicks "Set Anchor".
+    */
+   public void setVesselWellAnchor(int row, int col) {
+      if (!exploring_ || !vesselType_.isMultiWell()) {
+         return;
+      }
+      try {
+         double stageX = studio_.core().getXPosition();
+         double stageY = studio_.core().getYPosition();
+         // Stage position of plate top-left = stage position of well center minus
+         // how far that well's center is from the plate's top-left corner.
+         vesselAnchorStageX_ = stageX
+               - vesselType_.getFirstWellXUm()
+               - col * vesselType_.getWellSpacingXUm();
+         vesselAnchorStageY_ = stageY
+               - vesselType_.getFirstWellYUm()
+               - row * vesselType_.getWellSpacingYUm();
+         vesselAnchorWellRow_ = row;
+         vesselAnchorWellCol_ = col;
+         vesselUsedHcsCal_ = false;
+         vesselAnchorType_ = null;
+         updateVesselOutline();
+      } catch (Exception e) {
+         studio_.logs().showError(e,
+               "Explorer: could not read stage position for vessel well anchor.");
+      }
+   }
+
+   /**
+    * Reads the HCS SiteGenerator offset from the profile via reflection.
+    * Returns null if HCS is not installed, not calibrated, or calibration values are NaN.
+    * The returned offset satisfies: stage_XY = plate_definition_XY + offset.
+    */
+   private Point2D.Double tryReadHcsCalibration() {
+      try {
+         Class<?> sgClass = Class.forName("org.micromanager.hcs.SiteGenerator");
+         java.util.List<Double> offset = studio_.profile()
+               .getSettings(sgClass)
+               .getDoubleList("site_offset",
+                     java.util.Arrays.asList(Double.NaN, Double.NaN));
+         if (offset.size() >= 2
+               && Double.isFinite(offset.get(0))
+               && Double.isFinite(offset.get(1))) {
+            return new Point2D.Double(offset.get(0), offset.get(1));
+         }
+      } catch (ClassNotFoundException ignored) {
+         // HCS plugin not installed
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: error reading HCS calibration");
+      }
+      return null;
    }
 }

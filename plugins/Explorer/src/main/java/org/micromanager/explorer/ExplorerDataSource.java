@@ -5,7 +5,12 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +31,10 @@ import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterf
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
 import org.micromanager.tileddataviewer.TiledDataViewerExploreControls;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
+import org.micromanager.tileddataviewer.overlay.ImageRoi;
+import org.micromanager.tileddataviewer.overlay.OvalRoi;
 import org.micromanager.tileddataviewer.overlay.Overlay;
+import org.micromanager.tileddataviewer.overlay.PolygonRoi;
 import org.micromanager.tileddataviewer.overlay.Roi;
 import org.micromanager.tileddataviewer.overlay.TextRoi;
 
@@ -87,6 +95,59 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    // Display tile dimensions (pipeline-output size; set after first acquisition)
    private int tileWidth_ = -1;
    private int tileHeight_ = -1;
+
+   // Vessel outline — set by ExplorerManager when anchor is confirmed; null = not set.
+   private VesselType vesselType_ = null;
+   private double vesselTlX_ = 0;
+   private double vesselTlY_ = 0;
+   private double vesselWidthPx_ = 0;
+   private double vesselHeightPx_ = 0;
+
+   /** Drawing tool for the Create-Positions ROI; NONE means draw mode is off. */
+   public enum PositionTool { NONE, RECTANGLE, OVAL, POLYGON, FREEHAND }
+
+   // Position-draw mode state. All coordinates are full-resolution canvas pixels.
+   // Read by drawOverlay (paint thread) and written by the mouse handlers (EDT),
+   // so every access is guarded by synchronized(this) (like the vessel state).
+   private volatile PositionTool positionTool_ = PositionTool.NONE;
+   // For RECTANGLE/OVAL: [start, end]. For POLYGON/FREEHAND: ordered vertices.
+   private final ArrayList<Point2D.Double> roiPointsPx_ = new ArrayList<>();
+   // True once the shape is complete (drag finished, or polygon closed).
+   private boolean roiClosed_ = false;
+   // Elastic point that follows the cursor while drawing (rubber-band rect/oval edge
+   // or the in-progress polygon segment); null when not dragging / not hovering.
+   private Point2D.Double rubberBandPx_ = null;
+   // Distance (display pixels) within which a polygon click snaps to the first vertex to close.
+   private static final int POLYGON_CLOSE_TOLERANCE = 8;
+   // FOV rectangles (full-res pixels) of the most recently generated positions, drawn in
+   // light grey until the operator leaves draw mode. Empty = none generated yet.
+   private final ArrayList<Rectangle2D.Double> positionFovsPx_ = new ArrayList<>();
+
+   // Refine-Z mode: when active, ctrl+left-click moves the stage to that tile (for manual focus)
+   // instead of the normal move-stage behavior. Reference-point markers (full-res pixels) are
+   // drawn until the operator leaves draw mode.
+   private volatile boolean refineZActive_ = false;
+   private final ArrayList<Point2D.Double> refineZMarkersPx_ = new ArrayList<>();
+
+   /** A Refine-Z in-focus thumbnail to draw at a full-resolution pixel rectangle. */
+   public static final class RefineZThumb {
+      public final double fullResX;
+      public final double fullResY;
+      public final double fullResW;
+      public final double fullResH;
+      public final BufferedImage img;
+
+      public RefineZThumb(double fullResX, double fullResY, double fullResW, double fullResH,
+            BufferedImage img) {
+         this.fullResX = fullResX;
+         this.fullResY = fullResY;
+         this.fullResW = fullResW;
+         this.fullResH = fullResH;
+         this.img = img;
+      }
+   }
+
+   private final ArrayList<RefineZThumb> refineZThumbs_ = new ArrayList<>();
 
    public ExplorerDataSource(ExplorerManager manager) {
       manager_ = manager;
@@ -165,6 +226,193 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void clearPendingTiles() {
       pendingTiles_.clear();
+   }
+
+   /**
+    * Sets the vessel outline to be drawn in the overlay.
+    * All coordinates are in full-resolution pixel space (tile-grid coordinates).
+    */
+   public synchronized void setVesselOutline(VesselType type,
+         double tlX, double tlY, double widthPx, double heightPx) {
+      vesselType_     = type;
+      vesselTlX_      = tlX;
+      vesselTlY_      = tlY;
+      vesselWidthPx_  = widthPx;
+      vesselHeightPx_ = heightPx;
+   }
+
+   /** Removes the vessel outline from the overlay. */
+   public synchronized void clearVesselOutline() {
+      vesselType_ = null;
+   }
+
+   // ===================== Create-Positions draw mode =====================
+
+   /**
+    * Selects the drawing tool. {@link PositionTool#NONE} turns draw mode off.
+    * Switching tools discards any in-progress ROI.
+    */
+   public synchronized void setPositionTool(PositionTool tool) {
+      positionTool_ = tool != null ? tool : PositionTool.NONE;
+      roiPointsPx_.clear();
+      roiClosed_ = false;
+      rubberBandPx_ = null;
+      positionFovsPx_.clear();
+      // Refine-Z markers/thumbnails are NOT cleared here: they belong to the Refine-Z lifecycle
+      // (managed by ExplorerManager), which preserves reference points across ROI-tool switches.
+   }
+
+   /**
+    * True when a drawing tool is active AND Refine Z is not open. While the Refine Z window is
+    * open, ROI drawing is suppressed so clicks drive refinement (Ctrl-click navigation, Set Z)
+    * instead of redrawing the ROI; the existing ROI/preview stays put.
+    */
+   public boolean isPositionDrawMode() {
+      return positionTool_ != PositionTool.NONE && !refineZActive_;
+   }
+
+   /** Discards the current ROI (and any generated positions) but keeps the active tool. */
+   public synchronized void clearPositionRoi() {
+      roiPointsPx_.clear();
+      roiClosed_ = false;
+      rubberBandPx_ = null;
+      positionFovsPx_.clear();
+      // Refine-Z markers/thumbnails are managed separately (see setPositionTool); not cleared here.
+   }
+
+   /**
+    * Sets the FOV rectangles (full-resolution pixels) of the just-generated positions, to be
+    * drawn in light grey until the operator leaves draw mode.
+    */
+   public synchronized void setGeneratedPositionFovs(java.util.List<Rectangle2D.Double> fovs) {
+      positionFovsPx_.clear();
+      if (fovs != null) {
+         positionFovsPx_.addAll(fovs);
+      }
+   }
+
+   /** Enables/disables manual Refine-Z mode (ctrl-click moves the stage to focus a tile). */
+   public void setRefineZActive(boolean active) {
+      refineZActive_ = active;
+   }
+
+   /** True when manual Refine-Z mode is active. */
+   public boolean isRefineZActive() {
+      return refineZActive_;
+   }
+
+   /** Sets the Refine-Z reference-point markers (full-res pixels) to draw on the overlay. */
+   public synchronized void setRefineZMarkers(java.util.List<Point2D.Double> markers) {
+      refineZMarkersPx_.clear();
+      if (markers != null) {
+         refineZMarkersPx_.addAll(markers);
+      }
+   }
+
+   /** Sets the Refine-Z in-focus thumbnails (full-res rectangles) to draw on the overlay. */
+   public synchronized void setRefineZThumbnails(java.util.List<RefineZThumb> thumbs) {
+      refineZThumbs_.clear();
+      if (thumbs != null) {
+         refineZThumbs_.addAll(thumbs);
+      }
+   }
+
+   /** True when a completed ROI is available for position generation. */
+   public synchronized boolean hasPositionRoi() {
+      if (!roiClosed_) {
+         return false;
+      }
+      switch (positionTool_) {
+         case RECTANGLE:
+         case OVAL:
+            return roiPointsPx_.size() == 2;
+         case POLYGON:
+         case FREEHAND:
+            return roiPointsPx_.size() >= 3;
+         default:
+            return false;
+      }
+   }
+
+   /**
+    * Returns the completed ROI as an {@link Area} in full-resolution pixel space,
+    * or null if no completed ROI exists.
+    */
+   public synchronized Area getPositionRoiAreaPx() {
+      if (!hasPositionRoi()) {
+         return null;
+      }
+      switch (positionTool_) {
+         case RECTANGLE: {
+            Point2D.Double a = roiPointsPx_.get(0);
+            Point2D.Double b = roiPointsPx_.get(1);
+            double x = Math.min(a.x, b.x);
+            double y = Math.min(a.y, b.y);
+            double w = Math.abs(a.x - b.x);
+            double h = Math.abs(a.y - b.y);
+            return new Area(new Rectangle2D.Double(x, y, w, h));
+         }
+         case OVAL: {
+            Point2D.Double a = roiPointsPx_.get(0);
+            Point2D.Double b = roiPointsPx_.get(1);
+            double x = Math.min(a.x, b.x);
+            double y = Math.min(a.y, b.y);
+            double w = Math.abs(a.x - b.x);
+            double h = Math.abs(a.y - b.y);
+            return new Area(new Ellipse2D.Double(x, y, w, h));
+         }
+         case POLYGON:
+         case FREEHAND: {
+            Path2D.Double path = new Path2D.Double();
+            Point2D.Double first = roiPointsPx_.get(0);
+            path.moveTo(first.x, first.y);
+            for (int i = 1; i < roiPointsPx_.size(); i++) {
+               Point2D.Double p = roiPointsPx_.get(i);
+               path.lineTo(p.x, p.y);
+            }
+            path.closePath();
+            return new Area(path);
+         }
+         default:
+            return null;
+      }
+   }
+
+   /**
+    * Returns the vessel boundary as an {@link Area} in full-resolution pixel space,
+    * or null when no vessel is set. Simple vessels yield the rectangular outline;
+    * multi-well plates yield the union of the individual well shapes.
+    */
+   public synchronized Area getVesselAreaPx() {
+      VesselType vessel = vesselType_;
+      if (vessel == null || vessel.isNone() || vesselWidthPx_ <= 0 || vesselHeightPx_ <= 0) {
+         return null;
+      }
+      if (!vessel.isMultiWell()) {
+         return new Area(new Rectangle2D.Double(
+               vesselTlX_, vesselTlY_, vesselWidthPx_, vesselHeightPx_));
+      }
+      double pxPerUm = vesselWidthPx_ / vessel.getWidthUm();
+      double wellW = vessel.getWellWidthUm()   * pxPerUm;
+      double wellH = vessel.getWellHeightUm()  * pxPerUm;
+      double spacX = vessel.getWellSpacingXUm() * pxPerUm;
+      double spacY = vessel.getWellSpacingYUm() * pxPerUm;
+      double firstWx = vessel.getFirstWellXUm() * pxPerUm;
+      double firstWy = vessel.getFirstWellYUm() * pxPerUm;
+      Area area = new Area();
+      for (int r = 0; r < vessel.getWellRows(); r++) {
+         for (int c = 0; c < vessel.getWellCols(); c++) {
+            double cx = vesselTlX_ + firstWx + c * spacX;
+            double cy = vesselTlY_ + firstWy + r * spacY;
+            double wx = cx - wellW / 2.0;
+            double wy = cy - wellH / 2.0;
+            Area well = vessel.isWellsCircular()
+                  ? new Area(new Ellipse2D.Double(wx, wy, wellW, wellH))
+                  : new Area(new Rectangle2D.Double(wx, wy, wellW, wellH));
+            area.add(well);
+         }
+      }
+      return area;
    }
 
    public void clearSelection() {
@@ -441,6 +689,36 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    @Override
    public void mousePressed(MouseEvent e) {
       dragStart_ = e.getPoint();
+      // Refine-Z manual navigation: a ctrl+left-click moves the stage, even while a drawing
+      // tool is selected, so it must take precedence over ROI drawing. Handled on release.
+      if (refineZActive_ && e.isControlDown()
+            && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+         return;
+      }
+      if (isPositionDrawMode()) {
+         // RECTANGLE/OVAL start a drag; FREEHAND starts collecting points.
+         // POLYGON is click-driven and handled in mouseClicked.
+         if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+            Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
+            if (px != null) {
+               synchronized (this) {
+                  if (positionTool_ == PositionTool.RECTANGLE
+                        || positionTool_ == PositionTool.OVAL) {
+                     roiPointsPx_.clear();
+                     roiClosed_ = false;
+                     roiPointsPx_.add(px);
+                     rubberBandPx_ = px;
+                  } else if (positionTool_ == PositionTool.FREEHAND) {
+                     roiPointsPx_.clear();
+                     roiClosed_ = false;
+                     roiPointsPx_.add(px);
+                  }
+               }
+               manager_.redrawOverlay();
+            }
+         }
+         return;
+      }
       if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
          isRightDragging_ = false;
          if (!readOnly_ && tileWidth_ > 0 && tileHeight_ > 0) {
@@ -458,6 +736,50 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public void mouseReleased(MouseEvent e) {
+      // Refine-Z manual navigation: ctrl+left-click moves the stage to the clicked tile,
+      // taking precedence over ROI drawing so the operator can focus there and click Set Z.
+      if (refineZActive_ && e.isControlDown()
+            && javax.swing.SwingUtilities.isLeftMouseButton(e) && !isLeftDragging_) {
+         Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
+         if (px != null) {
+            manager_.refineZManualMove(px.x, px.y);
+         }
+         dragStart_ = null;
+         isLeftDragging_ = false;
+         return;
+      }
+      if (isPositionDrawMode()) {
+         if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+            Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
+            boolean changed = false;
+            synchronized (this) {
+               if (positionTool_ == PositionTool.RECTANGLE
+                     || positionTool_ == PositionTool.OVAL) {
+                  if (px != null && roiPointsPx_.size() == 1) {
+                     roiPointsPx_.add(px);
+                     roiClosed_ = true;
+                     rubberBandPx_ = null;
+                     changed = true;
+                  }
+               } else if (positionTool_ == PositionTool.FREEHAND) {
+                  if (px != null) {
+                     roiPointsPx_.add(px);
+                  }
+                  if (roiPointsPx_.size() >= 3) {
+                     roiClosed_ = true;
+                     changed = true;
+                  }
+               }
+            }
+            manager_.redrawOverlay();
+            if (changed) {
+               manager_.onPositionRoiChanged();
+            }
+         }
+         dragStart_ = null;
+         isLeftDragging_ = false;
+         return;
+      }
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
          if (!readOnly_ && !settingsMismatch_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
@@ -471,9 +793,11 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          if (!readOnly_ && e.isControlDown()) {
             Point2D.Double pixelPos = getFullResPixelCoords(e.getX(), e.getY());
             if (pixelPos != null) {
+               // In refine-Z mode this navigates to a tile so the operator can focus it.
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
-         } else if (!readOnly_) {
+         } else if (!readOnly_ && !refineZActive_) {
+            // Plain left-click acquires selected tiles, but not while refining Z.
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
@@ -490,10 +814,71 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public void mouseClicked(MouseEvent e) {
+      if (!isPositionDrawMode() || positionTool_ != PositionTool.POLYGON
+            || !javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+         return;
+      }
+      Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
+      if (px == null) {
+         return;
+      }
+      boolean closed = false;
+      synchronized (this) {
+         if (roiClosed_) {
+            // Start a fresh polygon when clicking after one was completed.
+            roiPointsPx_.clear();
+            roiClosed_ = false;
+         }
+         double mag = manager_.getMagnification();
+         boolean closeRequested = e.getClickCount() >= 2;
+         // Also close when clicking near the first vertex.
+         if (!closeRequested && roiPointsPx_.size() >= 3) {
+            Point2D.Double first = roiPointsPx_.get(0);
+            double dispDx = (px.x - first.x) * mag;
+            double dispDy = (px.y - first.y) * mag;
+            if (Math.hypot(dispDx, dispDy) <= POLYGON_CLOSE_TOLERANCE) {
+               closeRequested = true;
+            }
+         }
+         if (closeRequested) {
+            if (roiPointsPx_.size() >= 3) {
+               roiClosed_ = true;
+               rubberBandPx_ = null;
+               closed = true;
+            }
+         } else {
+            roiPointsPx_.add(px);
+         }
+      }
+      manager_.redrawOverlay();
+      if (closed) {
+         manager_.onPositionRoiChanged();
+      }
    }
 
    @Override
    public void mouseDragged(MouseEvent e) {
+      // Don't draw while ctrl-navigating during Refine Z.
+      if (refineZActive_ && e.isControlDown()) {
+         return;
+      }
+      if (isPositionDrawMode()) {
+         if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+            Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
+            if (px != null) {
+               synchronized (this) {
+                  if (positionTool_ == PositionTool.RECTANGLE
+                        || positionTool_ == PositionTool.OVAL) {
+                     rubberBandPx_ = px;
+                  } else if (positionTool_ == PositionTool.FREEHAND && !roiClosed_) {
+                     roiPointsPx_.add(px);
+                  }
+               }
+               manager_.redrawOverlay();
+            }
+         }
+         return;
+      }
       if (dragStart_ == null) {
          return;
       }
@@ -544,6 +929,19 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public void mouseMoved(MouseEvent e) {
+      if (isPositionDrawMode() && positionTool_ == PositionTool.POLYGON) {
+         Point2D.Double px = getFullResPixelCoords(e.getX(), e.getY());
+         boolean redraw = false;
+         synchronized (this) {
+            if (!roiClosed_ && !roiPointsPx_.isEmpty()) {
+               rubberBandPx_ = px;
+               redraw = true;
+            }
+         }
+         if (redraw) {
+            manager_.redrawOverlay();
+         }
+      }
    }
 
    @Override
@@ -733,6 +1131,202 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          stageRoi.setStrokeColor(Color.RED);
          stageRoi.setStrokeWidth(2);
          overlay.add(stageRoi);
+      }
+
+      // Green vessel outline, drawn over the tiles/stage-FOV. The generated-position FOVs,
+      // Refine-Z overlays, and the in-progress ROI are added afterward so they appear on top.
+      VesselType vessel;
+      double tlX;
+      double tlY;
+      double widthPx;
+      double heightPx;
+      synchronized (this) {
+         vessel   = vesselType_;
+         tlX      = vesselTlX_;
+         tlY      = vesselTlY_;
+         widthPx  = vesselWidthPx_;
+         heightPx = vesselHeightPx_;
+      }
+      if (vessel != null && !vessel.isNone() && widthPx > 0 && heightPx > 0) {
+         int bx = (int) ((tlX - viewOffset.x) * magnification);
+         int by = (int) ((tlY - viewOffset.y) * magnification);
+         int bw = (int) (widthPx  * magnification);
+         int bh = (int) (heightPx * magnification);
+         Roi border = new Roi(bx, by, bw, bh);
+         border.setStrokeColor(new Color(0, 220, 80));
+         border.setStrokeWidth(3);
+         overlay.add(border);
+
+         if (vessel.isMultiWell()) {
+            double pxPerUm  = widthPx / vessel.getWidthUm();
+            double wellW    = vessel.getWellWidthUm()    * pxPerUm;
+            double wellH    = vessel.getWellHeightUm()   * pxPerUm;
+            double spacX    = vessel.getWellSpacingXUm() * pxPerUm;
+            double spacY    = vessel.getWellSpacingYUm() * pxPerUm;
+            double firstWx  = vessel.getFirstWellXUm()  * pxPerUm;
+            double firstWy  = vessel.getFirstWellYUm()  * pxPerUm;
+            for (int r = 0; r < vessel.getWellRows(); r++) {
+               for (int c = 0; c < vessel.getWellCols(); c++) {
+                  double cx = tlX + firstWx + c * spacX;
+                  double cy = tlY + firstWy + r * spacY;
+                  int wx = (int) ((cx - wellW / 2.0 - viewOffset.x) * magnification);
+                  int wy = (int) ((cy - wellH / 2.0 - viewOffset.y) * magnification);
+                  int ww = (int) (wellW * magnification);
+                  int wh = (int) (wellH * magnification);
+                  Roi wellRoi = vessel.isWellsCircular()
+                        ? new OvalRoi(wx, wy, ww, wh)
+                        : new Roi(wx, wy, ww, wh);
+                  wellRoi.setStrokeColor(new Color(0, 180, 60));
+                  wellRoi.setStrokeWidth(1);
+                  overlay.add(wellRoi);
+               }
+            }
+         }
+      }
+
+      // Generated-position FOV rectangles (light grey), drawn under the ROI outline.
+      addGeneratedPositionFovs(overlay, magnification, viewOffset);
+
+      // Refine-Z in-focus thumbnails (under the markers).
+      addRefineZThumbnails(overlay, magnification, viewOffset);
+
+      // Refine-Z reference-point markers (green filled squares), drawn over the FOVs/thumbnails.
+      addRefineZMarkers(overlay, magnification, viewOffset);
+
+      // Create-Positions ROI — added last so it draws on top of everything (including the
+      // vessel) and never hides the vessel outline. Added as Roi objects (not drawn straight
+      // to Graphics) so it persists across repaints, like every other overlay element.
+      addPositionRoi(overlay, magnification, viewOffset);
+   }
+
+   /** Adds the Refine-Z reference-point markers (small green filled squares) to the overlay. */
+   private void addRefineZMarkers(Overlay overlay, double magnification,
+                                  Point2D.Double viewOffset) {
+      ArrayList<Point2D.Double> markers;
+      synchronized (this) {
+         if (refineZMarkersPx_.isEmpty()) {
+            return;
+         }
+         markers = new ArrayList<>(refineZMarkersPx_);
+      }
+      Color green = new Color(60, 200, 90);
+      int half = 5;
+      for (Point2D.Double p : markers) {
+         int x = (int) ((p.x - viewOffset.x) * magnification);
+         int y = (int) ((p.y - viewOffset.y) * magnification);
+         Roi marker = new Roi(x - half, y - half, 2 * half, 2 * half);
+         marker.setStrokeColor(green);
+         marker.setFillColor(green);
+         overlay.add(marker);
+      }
+   }
+
+   /** Adds the Refine-Z in-focus thumbnails to the overlay as ImageRois. */
+   private void addRefineZThumbnails(Overlay overlay, double magnification,
+                                     Point2D.Double viewOffset) {
+      ArrayList<RefineZThumb> thumbs;
+      synchronized (this) {
+         if (refineZThumbs_.isEmpty()) {
+            return;
+         }
+         thumbs = new ArrayList<>(refineZThumbs_);
+      }
+      for (RefineZThumb t : thumbs) {
+         if (t.img == null) {
+            continue;
+         }
+         int x = (int) ((t.fullResX - viewOffset.x) * magnification);
+         int y = (int) ((t.fullResY - viewOffset.y) * magnification);
+         int w = (int) (t.fullResW * magnification);
+         int h = (int) (t.fullResH * magnification);
+         overlay.add(new ImageRoi(x, y, Math.max(1, w), Math.max(1, h), t.img));
+      }
+   }
+
+   /** Adds the most recently generated positions' FOV rectangles to the overlay (light grey). */
+   private void addGeneratedPositionFovs(Overlay overlay, double magnification,
+                                         Point2D.Double viewOffset) {
+      ArrayList<Rectangle2D.Double> fovs;
+      synchronized (this) {
+         if (positionFovsPx_.isEmpty()) {
+            return;
+         }
+         fovs = new ArrayList<>(positionFovsPx_);
+      }
+      Color grey = new Color(200, 200, 200);
+      for (Rectangle2D.Double r : fovs) {
+         int x = (int) ((r.x - viewOffset.x) * magnification);
+         int y = (int) ((r.y - viewOffset.y) * magnification);
+         int w = (int) (r.width * magnification);
+         int h = (int) (r.height * magnification);
+         Roi roi = new Roi(x, y, Math.max(1, w), Math.max(1, h));
+         roi.setStrokeColor(grey);
+         roi.setStrokeWidth(1);
+         overlay.add(roi);
+      }
+   }
+
+   /**
+    * Adds the in-progress / completed Create-Positions ROI to the overlay, converting the
+    * stored full-resolution pixel coordinates to display coordinates. Snapshots the ROI state
+    * under the instance lock first.
+    */
+   private void addPositionRoi(Overlay overlay, double magnification, Point2D.Double viewOffset) {
+      PositionTool tool;
+      boolean closed;
+      Point2D.Double rubber;
+      ArrayList<Point2D.Double> pts;
+      synchronized (this) {
+         tool = positionTool_;
+         if (tool == PositionTool.NONE || roiPointsPx_.isEmpty()) {
+            return;
+         }
+         closed = roiClosed_;
+         rubber = rubberBandPx_;
+         pts = new ArrayList<>(roiPointsPx_);
+      }
+
+      final Color roiColor = Color.MAGENTA;
+      if (tool == PositionTool.RECTANGLE || tool == PositionTool.OVAL) {
+         Point2D.Double a = pts.get(0);
+         Point2D.Double b = closed && pts.size() == 2 ? pts.get(1) : rubber;
+         if (b != null) {
+            int x = (int) ((Math.min(a.x, b.x) - viewOffset.x) * magnification);
+            int y = (int) ((Math.min(a.y, b.y) - viewOffset.y) * magnification);
+            int w = (int) (Math.abs(a.x - b.x) * magnification);
+            int h = (int) (Math.abs(a.y - b.y) * magnification);
+            Roi roi = tool == PositionTool.RECTANGLE
+                  ? new Roi(x, y, Math.max(1, w), Math.max(1, h))
+                  : new OvalRoi(x, y, Math.max(1, w), Math.max(1, h));
+            roi.setStrokeColor(roiColor);
+            roi.setStrokeWidth(2);
+            overlay.add(roi);
+         }
+      } else {
+         // POLYGON / FREEHAND
+         int n = pts.size();
+         int extra = (!closed && rubber != null) ? 1 : 0;
+         int[] xs = new int[n + extra];
+         int[] ys = new int[n + extra];
+         for (int i = 0; i < n; i++) {
+            xs[i] = (int) ((pts.get(i).x - viewOffset.x) * magnification);
+            ys[i] = (int) ((pts.get(i).y - viewOffset.y) * magnification);
+         }
+         if (extra == 1) {
+            xs[n] = (int) ((rubber.x - viewOffset.x) * magnification);
+            ys[n] = (int) ((rubber.y - viewOffset.y) * magnification);
+         }
+         PolygonRoi poly = new PolygonRoi(xs, ys, closed);
+         poly.setStrokeColor(roiColor);
+         poly.setStrokeWidth(2);
+         overlay.add(poly);
+         // Mark the first vertex so the user can see where to close an open polygon.
+         if (!closed && tool == PositionTool.POLYGON && xs.length > 0) {
+            Roi marker = new Roi(xs[0] - 3, ys[0] - 3, 7, 7);
+            marker.setStrokeColor(roiColor);
+            marker.setFillColor(roiColor);
+            overlay.add(marker);
+         }
       }
    }
 }
