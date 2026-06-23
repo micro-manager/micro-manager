@@ -69,17 +69,36 @@ public final class DefaultPluginManager implements PluginManager {
 
    private final Studio studio_;
    private final Thread loadingThread_;
+   private final SharedPluginClassLoader pluginClassLoader_;
    private final Map<Class<?>, List<MMGenericPlugin>> pluginTypeToPlugins_ =
          new HashMap<>();
 
    public DefaultPluginManager(Studio studio) {
       studio_ = studio;
 
+      // All plugins are loaded through a single class loader (with Micro-Manager's class loader as
+      // its parent) so that plugins are visible to each other and to Micro-Manager's own code,
+      // including the Pycro-Manager / ZMQ bridge.
+      pluginClassLoader_ = new SharedPluginClassLoader(
+            ((MMStudio) studio_).getClass().getClassLoader());
+
       for (Class<?> classType : VALID_CLASSES) {
          pluginTypeToPlugins_.put(classType, new ArrayList<>());
       }
       loadingThread_ = new Thread(this::loadPlugins, "Plugin loading thread");
       loadingThread_.start();
+   }
+
+   /**
+    * The single class loader through which all plugins are loaded.
+    *
+    * <p>Its parent is Micro-Manager's own class loader, so it can resolve both plugin classes and
+    * Micro-Manager / core classes. The Pycro-Manager / ZMQ bridge uses this to access plugins.
+    *
+    * @return the shared plugin class loader
+    */
+   public SharedPluginClassLoader getPluginClassLoader() {
+      return pluginClassLoader_;
    }
 
    /**
@@ -112,12 +131,12 @@ public final class DefaultPluginManager implements PluginManager {
       String dir = System.getProperty("org.micromanager.plugin.path",
             System.getProperty("user.dir") + "/mmplugins");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
-      loadPlugins(PluginFinder.findPlugins(dir));
+      loadPlugins(PluginFinder.findPlugins(pluginClassLoader_, dir));
 
       dir = System.getProperty("org.micromanager.autofocus.path",
             System.getProperty("user.dir") + "/mmautofocus");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
-      loadPlugins(PluginFinder.findPlugins(dir));
+      loadPlugins(PluginFinder.findPlugins(pluginClassLoader_, dir));
 
       ReportingUtils.logMessage("Searching for plugins in MMStudio's class loader");
       // We need to use our normal class loader to load stuff from the MMJ_.jar

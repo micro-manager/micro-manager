@@ -27,7 +27,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.scijava.InstantiableException;
 import org.scijava.plugin.DefaultPluginFinder;
@@ -66,12 +65,20 @@ public final class PluginFinder {
    }
 
    /**
-    * Find all jars under the given root, check them for the META-INF file that
-    * indicates that they're annotated with the @Plugin annotation, and return
-    * a list of the corresponding annotated classes.
+    * Add all jars under the given root to the shared plugin class loader, then check them for the
+    * META-INF file that indicates they are annotated with the @Plugin annotation, and return a
+    * list of the corresponding annotated classes.
+    *
+    * <p>All plugins are loaded through the single {@code loader} so that they are visible to each
+    * other and to Micro-Manager's own code (the loader's parent). The JARs added by previous
+    * calls remain on the loader, so a plugin in one directory can reference classes from a plugin
+    * in another directory.
+    *
+    * @param loader the shared plugin class loader to add the discovered JARs to
+    * @param root   the directory (or jar file) to search for plugin JARs
+    * @return the @Plugin-annotated classes found under {@code root}, loaded by {@code loader}
     */
-   public static List<Class<?>> findPlugins(String root) {
-      ArrayList<Class<?>> result = new ArrayList<>();
+   public static List<Class<?>> findPlugins(SharedPluginClassLoader loader, String root) {
       List<URL> jarURLs = new ArrayList<>();
       for (String jarPath : findPaths(root, ".jar")) {
          try {
@@ -82,21 +89,62 @@ public final class PluginFinder {
          }
       }
 
-      // The class loader used by the plugin should find classes and
-      // resources within the plugin JAR first, then fall back to the
-      // default class loader.
-      // However, when SciJava is discovering plugin classes, we do NOT
-      // want to search all JARs on the class path.
-      // So we temporarily set the class loader to look only at the given
-      // URL for resources.
+      // Add the plugin JARs to the shared loader so the classes we discover (and any classes
+      // they reference in sibling plugins) resolve through it. SciJava discovery itself runs on a
+      // throwaway loader scoped to just these JARs (see findPluginsInUrls), so it does not pick up
+      // @Plugin index files from every JAR on the parent class path.
       try {
-         PluginClassLoader loader = new PluginClassLoader(jarURLs.toArray(new URL[0]),
-               MMStudio.getInstance().getClass().getClassLoader());
-         loader.setBlockInheritedResources(true);
-         result.addAll(findPluginsWithLoader(loader));
-         loader.setBlockInheritedResources(false);
+         for (URL jarURL : jarURLs) {
+            loader.addURL(jarURL);
+         }
+         return findPluginsInUrls(loader, jarURLs);
       } catch (Throwable e) {
          ReportingUtils.logError(e, "Unable to load JARs at " + root);
+         return new ArrayList<>();
+      }
+   }
+
+   /**
+    * Discover @Plugin-annotated classes contained in the given JARs, loading them through the
+    * shared loader.
+    *
+    * <p>Discovery is scoped to {@code jarURLs} (the JARs just added) by running SciJava's index
+    * scan on a throwaway loader over only those URLs, then loading the resulting classes by name
+    * from the shared loader so they end up on the shared loader, visible to all other plugins.
+    */
+   private static List<Class<?>> findPluginsInUrls(SharedPluginClassLoader sharedLoader,
+                                                    List<URL> jarURLs) {
+      ArrayList<Class<?>> result = new ArrayList<>();
+      URLClassLoader discoveryLoader = new URLClassLoader(jarURLs.toArray(new URL[0]),
+            sharedLoader.getParent()) {
+         @Override
+         public URL getResource(String name) {
+            // Do not defer to the parent during discovery, so SciJava only sees the index files
+            // of the JARs we are scanning, not every JAR on the parent class path.
+            return findResource(name);
+         }
+
+         @Override
+         public Enumeration<URL> getResources(String name) throws IOException {
+            return findResources(name);
+         }
+      };
+      DefaultPluginFinder finder = new DefaultPluginFinder(discoveryLoader);
+      PluginIndex index = new PluginIndex(finder);
+      index.discover();
+      for (PluginInfo<?> info : index.getAll()) {
+         String className = info.getClassName();
+         try {
+            // Load the real class through the shared loader so it is visible to other plugins.
+            result.add(Class.forName(className, false, sharedLoader));
+         } catch (ClassNotFoundException | NoClassDefFoundError e) {
+            ReportingUtils.logError(e, "Unable to load plugin class " + className);
+         }
+      }
+      try {
+         discoveryLoader.close();
+      } catch (IOException e) {
+         ReportingUtils.logError(e, "Failed to close plugin discovery class loader");
       }
       return result;
    }
@@ -114,44 +162,5 @@ public final class PluginFinder {
          }
       }
       return result;
-   }
-
-   /**
-    * Custom class loader for loading plugin classes and resources.
-    *
-    * <p>The only difference from URLClassLoader is that it allows temporary
-    * blockage of resource enumeration and loading from the parent loader.
-    */
-   private static class PluginClassLoader extends URLClassLoader {
-      private boolean blockInheritedResources_ = false;
-
-      public PluginClassLoader(URL[] jarURLs, ClassLoader parent) {
-         super(jarURLs, parent);
-      }
-
-      public void setBlockInheritedResources(boolean flag) {
-         blockInheritedResources_ = flag;
-      }
-
-      @Override
-      public URL getResource(String name) {
-         if (blockInheritedResources_) {
-            // findResource does not defer to the parent ClassLoader, and thus
-            // will return null if the resource is not found in our specific
-            // jar.
-            return findResource(name);
-         } else {
-            return super.getResource(name);
-         }
-      }
-
-      @Override
-      public Enumeration<URL> getResources(String name) throws IOException {
-         if (blockInheritedResources_) {
-            return findResources(name);
-         } else {
-            return super.getResources(name);
-         }
-      }
    }
 }
