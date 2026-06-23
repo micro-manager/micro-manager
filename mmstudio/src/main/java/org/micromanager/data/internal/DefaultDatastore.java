@@ -423,8 +423,10 @@ public class DefaultDatastore implements Datastore {
    @Override
    public void close() throws IOException {
       freeze();
-      studio_.events().post(
-            new DefaultDatastoreClosingEvent(this));
+      if (studio_ != null) {
+         studio_.events().post(
+                  new DefaultDatastoreClosingEvent(this));
+      }
       if (copiedFromStore_ != null) {
          try {
             CommentsHelper.copyComments(this, copiedFromStore_);

@@ -18,6 +18,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 
@@ -64,7 +65,21 @@ public final class ImageStatsRequest {
    }
 
    public int getMaxBinCountPowerOf2() {
-      return 16; // TODO Should be configurable
+      try {
+         return images_.stream()
+                 .map((Image im) -> {
+                    Integer bits = im.getMetadata().getBitDepth();
+                    if (bits != null) {
+                       return bits;
+                    } else {
+                       return im.getBytesPerComponent() * 8;
+                    }
+                 })
+                 .max(Integer::compareTo)
+                 .get();
+      } catch (NoSuchElementException noImages) {
+         return 0;
+      }
    }
 
    public Rectangle getROIBounds() {

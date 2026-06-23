@@ -8,6 +8,7 @@ import ij.process.ImageProcessor;
 import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
@@ -34,6 +35,9 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * @author nico
  */
 public class Calibrator {
+
+   private static final double EDGE_MARGIN_FRACTION = 0.10;
+   private static final double MIN_SPOT_INTENSITY = 100.0;
 
    private final Studio app_;
    private final CMMCore core_;
@@ -142,6 +146,9 @@ public class Calibrator {
          ImageProcessor diffImage = ImageUtils
                .subtractImageProcessors(proc2.convertToFloatProcessor(),
                      proc1.convertToFloatProcessor());
+         if (diffImage.getMax() < MIN_SPOT_INTENSITY) {
+            return null;
+         }
          Point maxPt = findPeak(diffImage);
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
@@ -161,6 +168,11 @@ public class Calibrator {
    private void measureAndAddToSpotMap(Map<Point2D.Double, Point2D.Double> spotMap,
          Point2D.Double ptSLM) {
       Point ptCam = measureSpotOnCamera(ptSLM);
+      if (ptCam == null) {
+         throw new RuntimeException("Spot at (" + (int) ptSLM.x + ", " + (int) ptSLM.y
+               + ") was not detected on camera. "
+               + "Is the projector beam visible and aimed at the camera?");
+      }
       Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
       spotMap.put(ptCamDouble, ptSLM);
    }
@@ -189,7 +201,8 @@ public class Calibrator {
       try {
          // require that the RMS value between the mapped points and the measured points be
          // less than 5% of image size
-         final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight());
+         Rectangle roi = core_.getROI();
+         final long imageSize = Math.min(roi.width, roi.height);
          return MathFunctions
                .generateAffineTransformFromPointPairs(spotMap, imageSize * 0.05, Double.MAX_VALUE);
       } catch (Exception e) {
@@ -211,21 +224,28 @@ public class Calibrator {
       // get the affine transform near the center spot
       final AffineTransform firstApproxAffine = generateLinearMapping();
 
-      // then use this single transform to estimate what SLM coordinates 
-      // correspond to the image's corner positions 
+      Rectangle roi;
+      try {
+         roi = core_.getROI();
+      } catch (Exception ex) {
+         app_.logs().showError(ex, "Cannot get camera ROI for calibration.");
+         return null;
+      }
+
+      // then use this single transform to estimate what SLM coordinates
+      // correspond to the image's corner positions
       final Point2D.Double camCorner1 =
             (Point2D.Double) firstApproxAffine.transform(
                   new Point2D.Double(0, 0), null);
       final Point2D.Double camCorner2 =
             (Point2D.Double) firstApproxAffine.transform(
-                  new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()),
-                  null);
+                  new Point2D.Double(roi.width, roi.height), null);
       final Point2D.Double camCorner3 =
             (Point2D.Double) firstApproxAffine.transform(
-                  new Point2D.Double(0, (int) core_.getImageHeight()), null);
+                  new Point2D.Double(0, roi.height), null);
       final Point2D.Double camCorner4 =
             (Point2D.Double) firstApproxAffine.transform(
-                  new Point2D.Double((int) core_.getImageWidth(), 0), null);
+                  new Point2D.Double(roi.width, 0), null);
 
       // figure out camera's bounds in SLM coordinates
       // min/max because we don't know the relative orientation of the camera and SLM
@@ -257,6 +277,14 @@ public class Calibrator {
       final double width = right - left;
       final double height = bottom - top;
 
+      // inset the grid away from the (potentially inaccurate) extrapolated edges
+      final double marginX = width * EDGE_MARGIN_FRACTION;
+      final double marginY = height * EDGE_MARGIN_FRACTION;
+      final double gridLeft   = left   + marginX;
+      final double gridTop    = top    + marginY;
+      final double gridWidth  = width  - 2 * marginX;
+      final double gridHeight = height - 2 * marginY;
+
       // compute a grid of SLM points inside the "overlap region"
       // nGrid is how many polygons in both X and Y
       // require (nGrid + 1)^2 spot measurements to get nGrid^2 squares
@@ -268,9 +296,9 @@ public class Calibrator {
       // tabulate the camera spot at each of SLM grid points
       for (int i = 0; i <= nGrid; ++i) {
          for (int j = 0; j <= nGrid; ++j) {
-            double xoffset = ((i + 0.5) * width / (nGrid + 1.0));
-            double yoffset = ((j + 0.5) * height / (nGrid + 1.0));
-            slmPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
+            double xoffset = ((i + 0.5) * gridWidth  / (nGrid + 1.0));
+            double yoffset = ((j + 0.5) * gridHeight / (nGrid + 1.0));
+            slmPoint[i][j] = new Point2D.Double(gridLeft + xoffset, gridTop + yoffset);
             Point spot = measureSpotOnCamera(slmPoint[i][j]);
             if (spot != null) {
                camPoint[i][j] = new Point2D.Double(spot.x, spot.y);
@@ -287,6 +315,10 @@ public class Calibrator {
       Map<Polygon, AffineTransform> bigMap = new HashMap<>();
       for (int i = 0; i <= nGrid - 1; ++i) {
          for (int j = 0; j <= nGrid - 1; ++j) {
+            if (camPoint[i][j] == null || camPoint[i][j + 1] == null
+                  || camPoint[i + 1][j] == null || camPoint[i + 1][j + 1] == null) {
+               continue;
+            }
             Polygon poly = new Polygon();
             Utils.addVertex(poly, Utils.toIntPoint(camPoint[i][j]));
             Utils.addVertex(poly, Utils.toIntPoint(camPoint[i][j + 1]));
@@ -317,7 +349,7 @@ public class Calibrator {
          String binningAsString = core_.getProperty(core_.getCameraDevice(), "Binning");
          // Hamamatsu reports 1x1.  I wish there was an api call for binning
          int binning = Integer.parseInt(binningAsString.substring(0, 1));
-         mb.setMap(bigMap).setApproximateTransform(firstApproxAffine).setROI(core_.getROI())
+         mb.setMap(bigMap).setApproximateTransform(firstApproxAffine).setROI(roi)
                .setBinning(binning);
          return mb.build();
       } catch (Exception ex) {

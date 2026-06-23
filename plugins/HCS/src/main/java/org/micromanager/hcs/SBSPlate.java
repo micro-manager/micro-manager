@@ -74,6 +74,9 @@ public class SBSPlate {
    public static final String SBS_96_WELL = "96-Well";
    public static final String SBS_384_WELL = "384-Well";
    public static final String SLIDE_HOLDER = "4 Slides";
+   public static final String CHAMBER_8_WELL = "Cellvis 8-Well Chamber";
+   public static final String COVERSLIP_18MM = "Coverslip 18x18mm";
+   public static final String COVERSLIP_22MM = "Coverslip 22x22mm";
    public static final String DEFAULT_XYSTAGE_NAME = "XYStage";
    public static final String LOAD_CUSTOM = "Load custom...";
    public static final String CUSTOM = "Custom";
@@ -231,6 +234,45 @@ public class SBSPlate {
          wellSizeX_ = 25600.0;
          wellSizeY_ = 75000.0;
          circular_ = false;
+      } else if (id.equals(CHAMBER_8_WELL)) {
+         id_ = CHAMBER_8_WELL;
+         numColumns_ = 4;
+         numRows_ = 2;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellSpacingX_ = 11570.0;
+         wellSpacingY_ = 11200.0;
+         firstWellX_ = 46530.0;
+         firstWellY_ = 37140.0;
+         wellSizeX_ = 9300.0;
+         wellSizeY_ = 8700.0;
+         circular_ = false;
+      } else if (id.equals(COVERSLIP_18MM)) {
+         id_ = COVERSLIP_18MM;
+         numColumns_ = 1;
+         numRows_ = 1;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellSpacingX_ = 18000.0;
+         wellSpacingY_ = 18000.0;
+         firstWellX_ = 63880.0;
+         firstWellY_ = 42740.0;
+         wellSizeX_ = 18000.0;
+         wellSizeY_ = 18000.0;
+         circular_ = false;
+      } else if (id.equals(COVERSLIP_22MM)) {
+         id_ = COVERSLIP_22MM;
+         numColumns_ = 1;
+         numRows_ = 1;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellSpacingX_ = 22000.0;
+         wellSpacingY_ = 22000.0;
+         firstWellX_ = 63880.0;
+         firstWellY_ = 42740.0;
+         wellSizeX_ = 22000.0;
+         wellSizeY_ = 22000.0;
+         circular_ = false;
       } else if (id.equals(LOAD_CUSTOM)) {
          wasLastModeCustom_ = true;
          File file = FileDialogs.openFile(null,
@@ -264,15 +306,12 @@ public class SBSPlate {
 
    public void load(String path) throws HCSException {
       StringBuilder contents = new StringBuilder();
-      try {
-         // read metadata from file            
-         BufferedReader input = new BufferedReader(new FileReader(path));
+      try (BufferedReader input = new BufferedReader(new FileReader(path))) {
          String line;
          while ((line = input.readLine()) != null) {
             contents.append(line);
             contents.append(System.getProperty("line.separator"));
          }
-         input.close();
          restore(contents.toString());
       } catch (IOException e) {
          throw new HCSException(e);
@@ -281,10 +320,8 @@ public class SBSPlate {
    }
 
    public void save(String path) throws HCSException {
-      try {
-         FileWriter fw = new FileWriter(path);
+      try (FileWriter fw = new FileWriter(path)) {
          fw.write(serialize());
-         fw.close();
       } catch (IOException e) {
          throw new HCSException("Unable to create plate definition file: " + e.getMessage());
       }
@@ -328,10 +365,10 @@ public class SBSPlate {
          plate = new JSONObject(ser);
          numRows_ = plate.getInt(ROWS);
          numColumns_ = plate.getInt(COLS);
-         wellSpacingX_ = plate.getInt(WELL_SPACING_X);
-         wellSpacingY_ = plate.getInt(WELL_SPACING_Y);
-         sizeXUm_ = plate.getInt(PLATE_SIZE_X);
-         sizeYUm_ = plate.getInt(PLATE_SIZE_Y);
+         wellSpacingX_ = plate.getDouble(WELL_SPACING_X);
+         wellSpacingY_ = plate.getDouble(WELL_SPACING_Y);
+         sizeXUm_ = plate.getDouble(PLATE_SIZE_X);
+         sizeYUm_ = plate.getDouble(PLATE_SIZE_Y);
          id_ = plate.getString(ID);
          description_ = plate.getString(DESCRIPTION);
          firstWellX_ = plate.getDouble(FIRST_WELL_X);
@@ -457,7 +494,7 @@ public class SBSPlate {
          return "";
       }
 
-      // build the row label
+      // build the row label (least-significant letter first, then reverse)
       int tempRow = row;
       StringBuilder label = new StringBuilder();
       while (tempRow > 0) {
@@ -465,7 +502,7 @@ public class SBSPlate {
          label.append(ROW_ALPHABET[letterIndex]);
          tempRow = (tempRow - 1) / ROW_ALPHABET.length;
       }
-      return label.toString();
+      return label.reverse().toString();
    }
 
    private void generateWells() throws HCSException {
@@ -615,6 +652,16 @@ public class SBSPlate {
       this.firstWellY_ = firstWellY;
    }
 
+   void shiftFirstWell(double dx, double dy) {
+      firstWellX_ += dx;
+      firstWellY_ += dy;
+      try {
+         generateWells();
+      } catch (HCSException e) {
+         ReportingUtils.logError(e);
+      }
+   }
+
    public boolean isWellCircular() {
       return circular_;
    }
@@ -645,7 +692,8 @@ public class SBSPlate {
       if (circular_) {
          return (x * x + y * y < (wellSizeX_ * wellSizeY_ * 0.25));
       } else {
-         return (x < wellSizeX_ * 0.5 && y < wellSizeY_ * 0.5);
+         return (x > -wellSizeX_ * 0.5 && x < wellSizeX_ * 0.5
+               && y > -wellSizeY_ * 0.5 && y < wellSizeY_ * 0.5);
       }
    }
 

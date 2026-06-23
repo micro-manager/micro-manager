@@ -4,11 +4,11 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Window;
 import java.awt.geom.Point2D;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONObject;
@@ -21,20 +21,55 @@ import org.micromanager.exporttiles.ExportTiles;
 public final class TiledDataViewerInspectorPanelController
       extends AbstractInspectorPanelController {
 
+   /**
+    * Shared help text describing the Explorer / TiledDataViewer mouse and button controls.
+    * Used by this panel's Help button and by the Explorer/Deskew plugin frames so the
+    * documentation stays in one place.
+    */
+   public static final String EXPLORE_HELP_TEXT =
+         "Navigation:\n"
+               + "  Left-drag: pan view\n"
+               + "  Scroll wheel: zoom in/out\n"
+               + "\n"
+               + "Tile selection (live explore):\n"
+               + "  Right-click: select tile\n"
+               + "  Right-drag: expand selection\n"
+               + "  Left-click: acquire (or queue) selected tiles\n"
+               + "  Interrupt: cancel queued tiles; the current tile finishes first\n"
+               + "  Ctrl+left-click: move stage to position\n"
+               + "\n"
+               + "View controls:\n"
+               + "  Center: pan to center of dataset (keep zoom)\n"
+               + "  No Zoom: zoom to 1:1 and center on dataset\n"
+               + "\n"
+               + "Export:\n"
+               + "  Click Export, drag to draw ROI, then confirm export\n"
+               + "  Click anywhere to dismiss the ROI";
+
    private final Studio studio_;
    private final JPanel panel_;
    private final JLabel statusLabel_;
    private final JButton exportButton_;
+   private final JButton interruptButton_;
+   private final JButton helpButton_;
    private TiledDataViewerDataViewerAPI viewer_;
    private static boolean expanded_ = true;
 
-   // Last confirmed ROI in full-resolution pixels [x, y, w, h]; null when none.
+   // Live-explore acquisition controls for the attached viewer, or null if the data
+   // source does not support interrupting (e.g. a read-only opened dataset).
+   private TiledDataViewerExploreControls exploreControls_;
+   // Listener registered on exploreControls_ while attached; updates the Interrupt button.
+   private TiledDataViewerExploreControls.AcquisitionStateListener acqStateListener_;
+
+   // Last confirmed export ROI in full-resolution pixels [x, y, w, h]; null when none.
    private int[] lastRoi_ = null;
 
    public TiledDataViewerInspectorPanelController(Studio studio) {
       studio_ = studio;
       statusLabel_ = new JLabel(" ");
       exportButton_ = new JButton("Export...");
+      interruptButton_ = new JButton("Interrupt");
+      helpButton_ = new JButton("Help");
       panel_ = buildPanel();
    }
 
@@ -45,11 +80,27 @@ public final class TiledDataViewerInspectorPanelController
       center.addActionListener(e -> onCenter());
       noZoom.addActionListener(e -> onNoZoom());
       exportButton_.addActionListener(e -> onExportClicked());
+      interruptButton_.setToolTipText(
+            "Stop tile acquisition after the current tile finishes.");
+      interruptButton_.setEnabled(false);
+      interruptButton_.addActionListener(e -> {
+         if (exploreControls_ != null) {
+            exploreControls_.interruptAcquisition();
+         }
+      });
+      helpButton_.addActionListener(e -> showHelp());
       p.add(center);
       p.add(noZoom, "wrap");
-      p.add(exportButton_);
-      p.add(statusLabel_, "wrap");
+      p.add(exportButton_, "wrap");
+      p.add(interruptButton_);
+      p.add(helpButton_, "wrap");
+      p.add(statusLabel_, "span 2, wrap");
       return p;
+   }
+
+   private void showHelp() {
+      JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(panel_),
+            EXPLORE_HELP_TEXT, "Explorer Help", JOptionPane.PLAIN_MESSAGE);
    }
 
    /** Returns the center of the dataset in full-res pixel coordinates, or null if unknown. */
@@ -68,7 +119,7 @@ public final class TiledDataViewerInspectorPanelController
       if (viewer_ == null) {
          return;
       }
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double dataCenter = getDataCenter();
       if (dataCenter == null) {
          return;
@@ -83,7 +134,7 @@ public final class TiledDataViewerInspectorPanelController
       if (viewer_ == null) {
          return;
       }
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double displaySize = v.getDisplayImageSize();
       Point2D.Double dataCenter = getDataCenter();
       double centerX = dataCenter != null ? dataCenter.x
@@ -94,6 +145,8 @@ public final class TiledDataViewerInspectorPanelController
       v.setFullResSourceDataSize(displaySize.x, displaySize.y);
       v.update();
    }
+
+   // ---- Export ----
 
    private void onExportClicked() {
       if (viewer_ == null) {
@@ -107,10 +160,11 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void startExportMode() {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       v.getCanvasJPanel().setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       setStatus("Draw a selection on the image");
 
+      TiledDataViewerOverlayerPlugin previousOverlay = viewer_.getOverlayerPlugin();
       ExportSelectionOverlay exportOverlay = new ExportSelectionOverlay(v);
       viewer_.setOverlayerPlugin(exportOverlay);
 
@@ -119,22 +173,20 @@ public final class TiledDataViewerInspectorPanelController
               () -> {
                  v.getCanvasJPanel().setCursor(Cursor.getDefaultCursor());
                  if (lastRoi_ != null) {
-                    // Freeze the drawn rectangle in the overlay plugin so it survives
-                    // repaints without needing mouse movement. The exportListener stays
-                    // installed — its next mousePressed will call onDismiss.
                     exportOverlay.freezeRoi(el[0].mouseDragStartPoint_,
                             el[0].currentMouseLocation_);
                     el[0].setOnDismiss(() -> {
                        lastRoi_ = null;
-                       viewer_.setOverlayerPlugin(null);
+                       viewer_.setOverlayerPlugin(previousOverlay);
                        v.resetCanvasMouseListener();
                        v.update();
                        setStatus(null);
                     });
                     setStatus("Click to dismiss selection");
                  } else {
-                    viewer_.setOverlayerPlugin(null);
+                    viewer_.setOverlayerPlugin(previousOverlay);
                     v.resetCanvasMouseListener();
+                    v.update();
                     setStatus(null);
                  }
               },
@@ -144,7 +196,7 @@ public final class TiledDataViewerInspectorPanelController
    }
 
    private void onRoiSelected(Point dragStart, Point dragEnd) {
-      TiledDataViewerAPI v = viewer_.getNDViewer();
+      TiledDataViewerAPI v = viewer_.getTiledDataViewer();
       Point2D.Double viewOffset = v.getViewOffset();
       double mag = v.getMagnification();
       int x1 = (int) (viewOffset.x + Math.min(dragStart.x, dragEnd.x) / mag);
@@ -167,10 +219,6 @@ public final class TiledDataViewerInspectorPanelController
             roi[0], roi[1], roi[2], roi[3]);
    }
 
-   /**
-    * Build the display settings JSON that ExportTiles expects.
-    * Reads directly from MM DisplaySettings so autostretch values are current.
-    */
    private JSONObject buildDisplaySettingsJSON() {
       return viewer_.buildExportDisplaySettingsJSON();
    }
@@ -181,12 +229,37 @@ public final class TiledDataViewerInspectorPanelController
 
    @Override
    public void attachDataViewer(DataViewer viewer) {
+      // The Inspector reuses one controller instance and may re-attach without an
+      // intervening detach when the active viewer changes; detach first so we never
+      // leak a listener on the previous viewer's explore controls.
+      if (viewer_ != null) {
+         detachDataViewer();
+      }
       viewer_ = (TiledDataViewerDataViewerAPI) viewer;
       lastRoi_ = null;
+
+      exploreControls_ = viewer_.getExploreControls();
+      final boolean inProgress =
+            exploreControls_ != null && exploreControls_.isAcquisitionInProgress();
+      // Interrupt is only meaningful for a live explore session; for a read-only
+      // viewer it stays present but disabled (matching the other panel buttons).
+      // Touch Swing on the EDT in case attach is ever called off-EDT.
+      SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(inProgress));
+      if (exploreControls_ != null) {
+         acqStateListener_ = changed ->
+               SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(changed));
+         exploreControls_.addAcquisitionStateListener(acqStateListener_);
+      }
    }
 
    @Override
    public void detachDataViewer() {
+      if (exploreControls_ != null && acqStateListener_ != null) {
+         exploreControls_.removeAcquisitionStateListener(acqStateListener_);
+      }
+      exploreControls_ = null;
+      acqStateListener_ = null;
+      SwingUtilities.invokeLater(() -> interruptButton_.setEnabled(false));
       viewer_ = null;
       lastRoi_ = null;
       setStatus(null);
@@ -194,7 +267,7 @@ public final class TiledDataViewerInspectorPanelController
 
    @Override
    public String getTitle() {
-      return "NDViewer2 Controls";
+      return "Tiled Data Viewer (Explorer) Controls";
    }
 
    @Override

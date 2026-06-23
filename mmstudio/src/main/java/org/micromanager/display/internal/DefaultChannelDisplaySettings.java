@@ -8,6 +8,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ChannelIntensityRanges;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.internal.utils.ColorPalettes;
 
@@ -24,7 +25,6 @@ public final class DefaultChannelDisplaySettings
    private final int histoRangeBits_;
    private final boolean useCameraRange_;
    private final List<ComponentDisplaySettings> componentSettings_;
-
 
    private static final class Builder
          implements ChannelDisplaySettings.Builder {
@@ -150,6 +150,23 @@ public final class DefaultChannelDisplaySettings
          component(component);
          componentSettings_.set(component, settings);
          return this;
+      }
+
+      @Override
+      public Builder intensityScaling(ChannelIntensityRanges ranges) {
+         int nComponents = ranges.getNumberOfComponents();
+         if (nComponents == 0) {
+            return this;
+         }
+         Builder ret = this;
+         ret = ret.component(nComponents - 1);
+         for (int c = 0; c < nComponents; ++c) {
+            ret = ret.component(c,
+                  componentSettings_.get(c).copyBuilder()
+                        .scalingRange(ranges.getComponentRange(c))
+                        .build());
+         }
+         return ret;
       }
 
       @Override
@@ -300,7 +317,7 @@ public final class DefaultChannelDisplaySettings
          componentSettings.add(((DefaultComponentDisplaySettings) cs).toPropertyMap());
       }
 
-      return PropertyMaps.builder()
+      PropertyMap.Builder pmBuilder = PropertyMaps.builder()
             .putColor(PropertyKey.COLOR.key(), color_)
             .putString(PropertyKey.CHANNEL_NAME.key(), name_)
             .putString(PropertyKey.CHANNEL_GROUP.key(), groupName_)
@@ -308,8 +325,8 @@ public final class DefaultChannelDisplaySettings
             .putBoolean(PropertyKey.VISIBLE.key(), visible_)
             .putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_)
             .putBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), useCameraRange_)
-            .putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings)
-            .build();
+            .putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings);
+      return pmBuilder.build();
    }
 
    /**
@@ -352,7 +369,6 @@ public final class DefaultChannelDisplaySettings
          b.useCameraHistoRange(pMap.getBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(),
                b.useCameraRange_));
       }
-
       return b;
    }
 

@@ -1033,7 +1033,7 @@ public enum PropertyKey {
    PIXEL_TYPE("PixelType", Image.class) {
       @Override
       public String getDescription() {
-         return "The pixel format of the image (GRAY8, GRAY16, or RGB32)";
+         return "The pixel format of the image (GRAY8, GRAY16, GRAY32, or RGB32)";
       }
 
       @Override

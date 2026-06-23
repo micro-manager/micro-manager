@@ -19,7 +19,6 @@
 package org.micromanager.internal.navigation;
 
 import static org.micromanager.internal.dialogs.StageControlFrame.MEDIUM_MOVEMENT_Z;
-import static org.micromanager.internal.dialogs.StageControlFrame.SELECTED_Z_DRIVE;
 import static org.micromanager.internal.dialogs.StageControlFrame.SMALL_MOVEMENT_Z;
 import static org.micromanager.internal.dialogs.StageControlFrame.X_MOVEMENTS;
 import static org.micromanager.internal.dialogs.StageControlFrame.Y_MOVEMENTS;
@@ -93,8 +92,11 @@ public final class XYZKeyListener {
       for (int i = 0; i < yMovesMicron_.length; ++i) {
          yMovesMicron_[i] = settings_.getDouble(Y_MOVEMENTS[i], yMovesMicron_[i]);
       }
-      zMovesMicron_[0] = settings_.getDouble(SMALL_MOVEMENT_Z, 1.1);
-      zMovesMicron_[1] = settings_.getDouble(MEDIUM_MOVEMENT_Z, 11.1);
+      String focusDevice = core_.getFocusDevice();
+      if (focusDevice != null && !focusDevice.isEmpty()) {
+         zMovesMicron_[0] = settings_.getDouble(SMALL_MOVEMENT_Z + focusDevice, 1.1);
+         zMovesMicron_[1] = settings_.getDouble(MEDIUM_MOVEMENT_Z + focusDevice, 11.1);
+      }
       boolean consumed = false;
 
       switch (e.getKeyCode()) {
@@ -183,7 +185,7 @@ public final class XYZKeyListener {
     */
    public void incrementZ(double micron) {
       // Get needed info from core
-      String zStage = settings_.getString(SELECTED_Z_DRIVE, core_.getFocusDevice());
+      String zStage = core_.getFocusDevice();
       if (zStage == null || zStage.isEmpty()) {
          return;
       }

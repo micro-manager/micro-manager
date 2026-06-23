@@ -1,6 +1,7 @@
 package org.micromanager.internal.utils;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -9,10 +10,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.ParseException;
+import java.util.Objects;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 
 /**
@@ -31,6 +35,11 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
 
    public boolean disableExcluded_;
 
+   // True only after the user picks an item from the open dropdown.
+   // getCellEditorValue() returns the original value when false, making any
+   // external stopCellEditing() call (e.g. Tab) a no-op commit.
+   private boolean selectionMade_ = false;
+
 
    public PropertyValueCellEditor() {
       this(false);
@@ -41,8 +50,34 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
 
       disableExcluded_ = disableExcluded;
 
-      // end editing on selection change
-      combo_.addActionListener(e -> fireEditingStopped());
+      combo_.addPopupMenuListener(new PopupMenuListener() {
+         @Override
+         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            combo_.putClientProperty("popupOpen", Boolean.TRUE);
+         }
+
+         @Override
+         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            combo_.putClientProperty("popupOpen", null);
+         }
+
+         @Override
+         public void popupMenuCanceled(PopupMenuEvent e) {
+            combo_.putClientProperty("popupOpen", null);
+            fireEditingCanceled();
+         }
+      });
+
+      combo_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (Boolean.TRUE.equals(combo_.getClientProperty("popupOpen"))) {
+               selectionMade_ = true;
+               fireEditingStopped();
+            }
+         }
+      });
+
       slider_.addEditActionListener(e -> fireEditingStopped());
 
       slider_.addSliderMouseListener(new MouseAdapter() {
@@ -98,19 +133,16 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
                return text_;
             }
          } else {
-            ActionListener[] l = combo_.getActionListeners();
-            for (ActionListener actionListener : l) {
-               combo_.removeActionListener(actionListener);
-            }
+            selectionMade_ = false;
+            combo_.putClientProperty("popupOpen", null);
             combo_.removeAllItems();
             for (int i = 0; i < item_.allowed.length; i++) {
                combo_.addItem(item_.allowed[i]);
             }
             combo_.setSelectedItem(item_.value);
-
-            // end editing on selection change
-            combo_.addActionListener(e -> fireEditingStopped());
-
+            if (!Objects.equals(item_.value, combo_.getSelectedItem())) {
+               combo_.setSelectedIndex(-1);
+            }
             return combo_;
          }
       } else {
@@ -130,7 +162,7 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
             return text_.getText();
          }
       } else {
-         return combo_.getSelectedItem();
+         return selectionMade_ ? combo_.getSelectedItem() : item_.value;
       }
    }
 }

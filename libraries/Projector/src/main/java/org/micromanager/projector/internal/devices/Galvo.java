@@ -298,6 +298,11 @@ public class Galvo implements ProjectionDevice {
       }
    }
 
+   /**
+    * Sets the galvo spot dwell time. The Core galvo API also expects microseconds.
+    *
+    * @param intervalUs exposure time in microseconds
+    */
    @Override
    public void setExposure(long intervalUs) {
       try {
@@ -308,7 +313,11 @@ public class Galvo implements ProjectionDevice {
       }
    }
 
-   // Reads the exposure time in us
+   /**
+    * Returns the galvo spot dwell time in microseconds.
+    *
+    * @return exposure time in microseconds
+    */
    @Override
    public long getExposure() {
       return intervalUs_;

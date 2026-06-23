@@ -8,6 +8,7 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
@@ -96,7 +97,10 @@ public class PGFocusFrame extends JFrame {
     * Creates pgFocus.
     */
    public PGFocusFrame(Studio gui) {
-
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
 
       gui_ = gui;
       core_ = gui.getCMMCore();

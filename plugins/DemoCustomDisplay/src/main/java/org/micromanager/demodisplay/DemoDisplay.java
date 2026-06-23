@@ -23,6 +23,7 @@ import com.google.common.eventbus.EventBus;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -62,6 +63,10 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
    public DemoDisplay(Studio studio) {
       super("Demo Display");
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       // Ensure we start with valid, if empty, DisplaySettings.
       settings_ = studio_.displays().displaySettingsBuilder().build();

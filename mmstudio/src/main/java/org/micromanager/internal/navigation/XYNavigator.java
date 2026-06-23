@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -13,7 +14,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.swing.JOptionPane;
 import mmcorej.MMCoreJ;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Image;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.internal.DefaultXYStagePositionChangedEvent;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -50,6 +54,71 @@ public class XYNavigator {
       xyStageMoverMap_ = new HashMap<>();
    }
 
+
+   /**
+    * Returns an AffineTransform representing the inverse of the ImageFlipper
+    * transformation currently applied to the live display image, or null if no
+    * ImageFlipper transform is active.  Because we work with pixel *deltas* the
+    * transform is purely linear (no translation term matters).
+    *
+    * <p>The ImageFlipper applies: mirror-X first, then rotation.  To convert
+    * post-flipper mouse-pixel deltas back to raw camera-pixel deltas we must
+    * apply the inverse: rotate by -rotation, then mirror-X again (mirror is its
+    * own inverse).
+    */
+   private AffineTransform getImageFlipperCorrection() {
+      try {
+         DisplayWindow display = studio_.live().getDisplay();
+         if (display == null || display.isClosed()) {
+            return null;
+         }
+         List<Image> images = display.getDisplayedImages();
+         if (images == null || images.isEmpty()) {
+            return null;
+         }
+         PropertyMap userData = images.get(0).getMetadata().getUserData();
+         if (userData == null) {
+            return null;
+         }
+         // Both keys must be present with the correct types for the flipper to have
+         // touched this image.  Type-specific checks avoid ClassCastException if
+         // unrelated metadata happens to use the same key names with different types.
+         if (!userData.containsInteger("ImageFlipper-Rotation")
+               || !userData.containsString("ImageFlipper-Mirror")) {
+            return null;
+         }
+         int rotation = userData.getInteger("ImageFlipper-Rotation", 0);
+         boolean mirrored = "On".equals(userData.getString("ImageFlipper-Mirror", "Off"));
+
+         if (rotation == 0 && !mirrored) {
+            return null; // identity — no correction needed
+         }
+
+         // Build the inverse of "mirror then rotate(rotation)":
+         //   inverse = rotate(-rotation) then mirror
+         // AffineTransform.quadrantRotate(n) rotates CCW by n*90 degrees.
+         // ImageFlipper R90 = ImageJ rotateRight = CW 90, so its inverse is
+         // CCW 90 = quadrantRotate(1).
+         AffineTransform correction = new AffineTransform();
+         // Step 1: undo the rotation
+         if (rotation == 90) {
+            correction.quadrantRotate(1); // CCW 90° = inverse of CW 90°
+         } else if (rotation == 180) {
+            correction.quadrantRotate(2); // 180° is self-inverse
+         } else if (rotation == 270) {
+            correction.quadrantRotate(3); // CCW 270° = inverse of CW 270°
+         }
+         // Step 2: undo the mirror — pre-multiply so mirror is applied AFTER rotate(-N),
+         // giving correction = M * R(-N) rather than R(-N) * M.
+         if (mirrored) {
+            correction.preConcatenate(AffineTransform.getScaleInstance(-1.0, 1.0));
+         }
+         return correction;
+      } catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to read ImageFlipper metadata");
+         return null;
+      }
+   }
 
    /*
     * Ensures that the stage moves in the expected direction
@@ -94,6 +163,17 @@ public class XYNavigator {
             transposeXY_ = !(tmp.equals("0"));
          } catch (Exception exc) {
             ReportingUtils.showError(exc);
+         }
+      } else {
+         // Pre-multiply the affine transform by the inverse of any ImageFlipper
+         // transform so that mouse-pixel deltas (which are in post-flipper image
+         // space) are correctly mapped back to raw camera-pixel space before the
+         // camera→stage affine is applied.
+         AffineTransform flipperCorrection = getImageFlipperCorrection();
+         if (flipperCorrection != null) {
+            // concatenate() applies flipperCorrection first, then affineTransform_,
+            // so the combined transform maps post-flipper pixel deltas → stage microns.
+            affineTransform_.concatenate(flipperCorrection);
          }
       }
    }

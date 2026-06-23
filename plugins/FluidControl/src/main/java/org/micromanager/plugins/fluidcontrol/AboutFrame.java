@@ -1,5 +1,6 @@
 package org.micromanager.plugins.fluidcontrol;
 
+import java.awt.Toolkit;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.WindowConstants;
@@ -9,6 +10,10 @@ public class AboutFrame extends JFrame {
 
    AboutFrame() {
       super("About");
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
       super.setResizable(false);
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

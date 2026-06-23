@@ -91,6 +91,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private static final String SITE_OFFSET     = "site_offset"; // in um
    private static final String SPACING_MODE    = "spacing_mode";
    private static final String LIST_OVERWRITE  = "list_overwrite";
+   private static final String WELL_ZOOM_OPEN  = "well_zoom_open";
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
@@ -100,6 +101,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private double xSpacing_ = 0.0;
    private double ySpacing_ = 0.0;
+
+   private WellZoomFrame wellZoomFrame_ = null;
+   private boolean wellZoomWasOpen_ = false;
+   private JButton setA1Button_ = null;
    
    private final JToggleButton moveStage_;
    private final JToggleButton selectWells_;
@@ -139,8 +144,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent e) {
+            wellZoomWasOpen_ = wellZoomFrame_ != null && wellZoomFrame_.isVisible();
             saveSettings();
+            if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
+               wellZoomFrame_.dispose();
+            }
          }
+
       });
 
       JPanel contentsPanel = new JPanel(
@@ -197,6 +207,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       sidebar.add(selectWells_, "split 2, alignx center, flowx");
       sidebar.add(moveStage_);
 
+      final JLabel ctrlClickHint = new JLabel("Ctrl-click to Move");
+      ctrlClickHint.setFont(ctrlClickHint.getFont().deriveFont(java.awt.Font.ITALIC, 10f));
+      sidebar.add(ctrlClickHint, "alignx center");
+
       final JLabel plateFormatLabel = new JLabel();
       plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
       plateFormatLabel.setText("<html><b>Plate Format:</b></html>");
@@ -211,6 +225,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_384_WELL);
       plateIDCombo_.addItem(SBSPlate.SLIDE_HOLDER);
+      plateIDCombo_.addItem(SBSPlate.CHAMBER_8_WELL);
+      plateIDCombo_.addItem(SBSPlate.COVERSLIP_18MM);
+      plateIDCombo_.addItem(SBSPlate.COVERSLIP_22MM);
       plateIDCombo_.addItem(SBSPlate.LOAD_CUSTOM);
 
       JButton customButton = new JButton("Create Custom");
@@ -220,6 +237,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          csf.setVisible(true);
       });
 
+      setA1Button_ = new JButton("Set A1 Center");
+      setA1Button_.setToolTipText(
+            "Shift the plate layout so A1 is centered at the current stage position "
+            + "(session only).");
+      setA1Button_.setEnabled(false);
+      setA1Button_.addActionListener((final ActionEvent e) -> setA1AtCurrentStagePosition());
+      sidebar.add(setA1Button_, "growx");
+
       plateIDCombo_.addActionListener((final ActionEvent e) -> {
          if (shouldIgnoreFormatEvent_) {
             // Ignore this event, as it occurred due to software setting
@@ -227,6 +252,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             return;
          }
          plate_.initialize((String) plateIDCombo_.getSelectedItem());
+         setA1Button_.setEnabled(
+               usesA1Center((String) plateIDCombo_.getSelectedItem()) && isCalibratedXY_);
          updateXySpacing();
          PositionList sites = generateSitesInWell();
          try {
@@ -237,6 +264,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             }
          }
          platePanel_.repaint();
+         notifyWellZoom();
       });
 
       final FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
@@ -407,6 +435,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       });
       sidebar.add(btnAbout, "growx, gaptop 14");
 
+      JButton btnWellZoom = new JButton("Well Zoom");
+      btnWellZoom.setToolTipText("Open magnified view of a single well");
+      btnWellZoom.addActionListener((ActionEvent e) -> openWellZoom());
+      sidebar.add(btnWellZoom, "growx");
+
       statusLabel_ = new JLabel();
       statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
       contentsPanel.add(statusLabel_, "dock south, gap 0");
@@ -429,8 +462,54 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
    
    @Override
+   public void selectMoveTool() {
+      moveStage_.setSelected(true);
+      platePanel_.setTool(PlatePanel.Tool.MOVE);
+   }
+
+   private void openWellZoom() {
+      if (wellZoomFrame_ == null || !wellZoomFrame_.isDisplayable()) {
+         wellZoomFrame_ = new WellZoomFrame(plate_, this, studio_);
+         wellZoomFrame_.setSites(platePanel_.getWellPositions());
+         wellZoomFrame_.updateStagePosition(
+               xyStagePos_.x, xyStagePos_.y, stageWell_);
+      }
+      wellZoomFrame_.setVisible(true);
+      wellZoomFrame_.toFront();
+   }
+
+   /**
+    * Called at startup to reopen the Well Zoom window if it was open last session.
+    */
+   public void restoreWellZoom() {
+      if (studio_.profile().getSettings(SiteGenerator.class)
+            .getBoolean(WELL_ZOOM_OPEN, false)) {
+         openWellZoom();
+      }
+   }
+
+   private void notifyWellZoom() {
+      if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
+         wellZoomFrame_.setSites(platePanel_.getWellPositions());
+      }
+   }
+
+   @Override
+   public void setVisible(boolean visible) {
+      super.setVisible(visible);
+      if (visible && wellZoomWasOpen_) {
+         openWellZoom();
+         wellZoomWasOpen_ = false;
+      }
+   }
+
+   @Override
    public void dispose() {
       saveSettings();
+      if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
+         wellZoomFrame_.dispose();
+      }
+      super.dispose();
    }
 
    protected void saveSettings() {
@@ -450,6 +529,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
       settings.putDoubleList(SITE_OFFSET, Arrays.asList(offset));
       settings.putBoolean(LIST_OVERWRITE, overWriteMMList_.isSelected());
+      settings.putBoolean(WELL_ZOOM_OPEN,
+            wellZoomFrame_ != null && wellZoomFrame_.isVisible());
    }
 
    protected final void loadSettings() {
@@ -663,9 +744,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
          threePtList_ = PositionList.newInstance(plist);
          focusPlane_ = new AFPlane(threePtList_.getPositions());
-         if (focusPlane_.isValid()) {
-            threePlaneDrive_.setText(ZPLANESTAGE + focusPlane_.getZStage());
+         if (!focusPlane_.isValid()) {
+            displayError("Could not fit a focus plane to the three selected positions. "
+                  + "Make sure the points are not collinear.");
+            focusPlane_ = null;
+            return;
          }
+         threePlaneDrive_.setText(ZPLANESTAGE + focusPlane_.getZStage());
          chckbxThreePt_.setSelected(true);
          platePanel_.repaint();
 
@@ -676,8 +761,26 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
 
    private PositionList generateSitesInWell() {
-      int rows = Integer.parseInt(rowsField_.getText());
-      int cols = Integer.parseInt(columnsField_.getText());
+      int rows;
+      int cols;
+      try {
+         rows = Integer.parseInt(rowsField_.getText().trim());
+         cols = Integer.parseInt(columnsField_.getText().trim());
+      } catch (NumberFormatException nfe) {
+         studio_.logs().showMessage(
+               "Rows and columns must be integers. "
+               + "Got: rows=\"" + rowsField_.getText().trim()
+               + "\", columns=\"" + columnsField_.getText().trim() + "\".",
+               this);
+         return new PositionList();
+      }
+      if (rows <= 0 || cols <= 0) {
+         studio_.logs().showMessage(
+               "Rows and columns must be positive integers. "
+               + "Got: rows=" + rows + ", columns=" + cols + ".",
+               this);
+         return new PositionList();
+      }
       PositionList sites = new PositionList();
       if (visitOrderInWell_.getSelectedItem().equals(CASCADE_ORDER)) {
          for (int col = 0; col < cols; col++) {
@@ -715,6 +818,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       }
 
+      if (sites.getNumberOfPositions() == 0 && rows * cols > 0) {
+         studio_.logs().showMessage(
+               "No imaging sites fall within the well boundaries. "
+               + "Try reducing the spacing or the number of rows/columns.");
+      }
       return sites;
    }
 
@@ -794,7 +902,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    @Override
-   public void updateStagePositions(double x, double y, double z, String wellLabel, 
+   public void updateStagePositions(double x, double y, double z, String wellLabel,
            String siteLabel) {
       xyStagePos_.x = x;
       xyStagePos_.y = y;
@@ -802,6 +910,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       stageWell_ = wellLabel;
 
       displayStatus();
+      if (wellZoomFrame_ != null && wellZoomFrame_.isDisplayable()) {
+         wellZoomFrame_.updateStagePosition(x, y, wellLabel);
+      }
    }
 
    @Override
@@ -842,6 +953,39 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       new CalibrationFrame(studio_, plate_, this);
    }
 
+   private static boolean usesA1Center(String formatId) {
+      return SBSPlate.CHAMBER_8_WELL.equals(formatId)
+            || SBSPlate.COVERSLIP_18MM.equals(formatId)
+            || SBSPlate.COVERSLIP_22MM.equals(formatId);
+   }
+
+   private void setA1AtCurrentStagePosition() {
+      if (!isCalibratedXY_) {
+         studio_.logs().showMessage("Calibrate XY first");
+         return;
+      }
+      try {
+         double devX = studio_.getCMMCore().getXPosition();
+         double devY = studio_.getCMMCore().getYPosition();
+         Point2D.Double offset = getOffset();
+         double plateX = devX - offset.getX();
+         double plateY = devY - offset.getY();
+         plate_.shiftFirstWell(plateX - plate_.getFirstWellX(),
+                               plateY - plate_.getFirstWellY());
+         updateXySpacing();
+         PositionList sites = generateSitesInWell();
+         try {
+            platePanel_.refreshImagingSites(sites);
+         } catch (HCSException e) {
+            displayError(e.getMessage());
+         }
+         platePanel_.repaint();
+         notifyWellZoom();
+      } catch (Exception ex) {
+         studio_.logs().showError(ex, "Could not read stage position");
+      }
+   }
+
    /**
     * Finish Calibration.
     *
@@ -852,6 +996,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       isCalibratedXY_ = true;
       regenerate();
       moveStage_.setEnabled(true);
+      setA1Button_.setEnabled(usesA1Center((String) plateIDCombo_.getSelectedItem()));
    }
    
    private void regenerate() {
@@ -872,6 +1017,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          platePanel_.setSelectedWells(selectedWells);
       }
       platePanel_.repaint();
+      notifyWellZoom();
    }
 
    public void configurationChanged() {
@@ -916,6 +1062,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       plateIDCombo_.setSelectedItem(SBSPlate.LOAD_CUSTOM);
       shouldIgnoreFormatEvent_ = false;
       platePanel_.repaint();
+      notifyWellZoom();
    }
    
    @Override

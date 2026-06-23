@@ -246,7 +246,10 @@ public abstract class NonPropertyMapJSONFormats {
             try {
                key.storeInGsonObject(pmap, jo);
             } catch (NullPointerException npe) {
-               MMStudio.getInstance().logs().logError("Null Pointer for Key: " + key);
+               MMStudio studio = MMStudio.getInstance();
+               if (studio != null) {
+                  studio.logs().logError("Null Pointer for Key: " + key);
+               }
             }
          }
       }

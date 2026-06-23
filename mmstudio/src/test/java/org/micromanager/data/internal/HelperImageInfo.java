@@ -69,6 +69,22 @@ public class HelperImageInfo {
          }
          return result;
       }
+      else if (pixelsArr instanceof float[]) {
+         int result = 0;
+         float[] pixels = (float[]) pixelsArr;
+         for (int i = 0; i < pixels.length; ++i) {
+            result = result * 23 + Float.floatToRawIntBits(pixels[i]);
+         }
+         return result;
+      }
+      else if (pixelsArr instanceof int[]) {
+         int result = 0;
+         int[] pixels = (int[]) pixelsArr;
+         for (int i = 0; i < pixels.length; ++i) {
+            result = result * 23 + pixels[i];
+         }
+         return result;
+      }
       else {
          Assert.fail("Unrecognized pixel type");
          return 0;
@@ -84,7 +100,7 @@ public class HelperImageInfo {
          Assert.assertEquals(metadata_.getBinning(), metadata.getBinning());
          Assert.assertEquals(metadata_.getBitDepth(), metadata.getBitDepth());
          Assert.assertEquals(metadata_.getCamera(), metadata.getCamera());
-         Assert.assertEquals(metadata_.getElapsedTimeMs(0.0), metadata.getElapsedTimeMs(0.0));
+         Assert.assertEquals(metadata_.getElapsedTimeMs(0.0), metadata.getElapsedTimeMs(0.0), 0.1);
          Assert.assertEquals(metadata_.getExposureMs(), metadata.getExposureMs());
          // Assert.assertEquals(metadata_.getIjType(), metadata.getIjType());
          Assert.assertEquals(metadata_.getImageNumber(), metadata.getImageNumber());

@@ -11,11 +11,25 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.Toolkit;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URL;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.micromanager.internal.diagnostics.ProblemReport;
 import org.micromanager.internal.diagnostics.ProblemReportFormatter;
+import org.micromanager.internal.utils.WindowPositioning;
 
 
 /**
@@ -351,11 +365,65 @@ public final class ProblemReportController {
    }
 
    private void openReportWindow(String report) {
-      final int width = 640;
-      final int height = 480;
-      ij.text.TextWindow window = new ij.text.TextWindow("Problem Report", report, width, height);
-      ij.text.TextPanel panel = window.getTextPanel();
-      panel.scrollToTop();
-      window.setVisible(true);
+      JTextArea textArea = new JTextArea(report);
+      textArea.setEditable(false);
+      textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+      textArea.setCaretPosition(0);
+
+      JButton saveButton = new JButton("Save...");
+      saveButton.addActionListener(e -> saveReport(report));
+
+      JPanel buttonPanel = new JPanel();
+      buttonPanel.add(saveButton);
+
+      JDialog dialog = new JDialog(frame_, "Problem Report", false);
+      URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         dialog.setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
+      dialog.getContentPane().add(new JScrollPane(textArea), BorderLayout.CENTER);
+      dialog.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+      dialog.setSize(800, 600);
+      dialog.setLocationRelativeTo(frame_);
+      WindowPositioning.setUpBoundsMemory(dialog, ProblemReportController.class, "ReportWindow");
+      dialog.setVisible(true);
+   }
+
+   private void saveReport(String report) {
+      JFileChooser chooser = new JFileChooser();
+      chooser.setDialogTitle("Save Problem Report");
+      chooser.setSelectedFile(new File("MMProblemReport.txt"));
+      chooser.setFileFilter(new FileNameExtensionFilter("Text files (*.txt)", "txt"));
+      URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         java.awt.Image icon = Toolkit.getDefaultToolkit().getImage(iconUrl);
+         chooser.addAncestorListener(new javax.swing.event.AncestorListener() {
+            @Override
+            public void ancestorAdded(javax.swing.event.AncestorEvent e) {
+               java.awt.Window w = javax.swing.SwingUtilities.windowForComponent(chooser);
+               if (w != null) {
+                  w.setIconImage(icon);
+               }
+            }
+
+            @Override public void ancestorRemoved(javax.swing.event.AncestorEvent e) {}
+
+            @Override public void ancestorMoved(javax.swing.event.AncestorEvent e) {}
+         });
+      }
+      if (chooser.showSaveDialog(frame_) != JFileChooser.APPROVE_OPTION) {
+         return;
+      }
+      File file = chooser.getSelectedFile();
+      if (!file.getName().contains(".")) {
+         file = new File(file.getPath() + ".txt");
+      }
+      try (FileWriter fw = new FileWriter(file)) {
+         fw.write(report);
+      } catch (IOException ex) {
+         JOptionPane.showMessageDialog(frame_,
+               "Failed to save report: " + ex.getMessage(),
+               "Save Error", JOptionPane.ERROR_MESSAGE);
+      }
    }
 }

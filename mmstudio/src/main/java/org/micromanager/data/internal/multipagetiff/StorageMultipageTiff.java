@@ -734,6 +734,9 @@ public final class StorageMultipageTiff implements Storage {
     */
    DisplaySettings getDisplaySettings() {
       MMStudio studio = MMStudio.getInstance();
+      if (studio == null) {
+         return null;
+      }
       DataViewer activeDataViewer = studio.displays().getActiveDataViewer();
       try {
          if (activeDataViewer != null && isViewingOurStore(activeDataViewer)) {
@@ -940,6 +943,10 @@ public final class StorageMultipageTiff implements Storage {
       }
    }
 
+   // NOTE: getImagesIgnoringAxes() calls readImage() directly on each reader, bypassing
+   // getImage() and therefore never calling pause(). This means the display (which uses
+   // this method to fetch all channels at once) never triggers the write-mode reader
+   // NullPointerException described in getImage() above.
    @Override
    public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
          throws IOException {
@@ -1013,6 +1020,9 @@ public final class StorageMultipageTiff implements Storage {
          MultipageTiffReader mptReader = coordsToReader_.get(coords);
          if (!amInWriteMode_ && lastReader_ != null && mptReader != lastReader_) {
             // this could be optional.  Not doing it can result in large memory leaks.
+            // After freeze() (amInWriteMode_ == false), write-mode readers have file_ set
+            // and can reopen their channel via createFileChannel() after pause(), so it is
+            // safe to pause them here just like read-mode readers.
             lastReader_.pause();
          }
          lastReader_ = mptReader;
@@ -1067,8 +1077,11 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public static boolean getShouldGenerateMetadataFile() {
-      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
-            .getBoolean(SHOULD_GENERATE_METADATA_FILE, true);
+      if (MMStudio.getInstance() != null) {
+         return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
+                  .getBoolean(SHOULD_GENERATE_METADATA_FILE, true);
+      }
+      return true;
    }
 
    public static void setShouldGenerateMetadataFile(boolean shouldGen) {
@@ -1077,8 +1090,11 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public static boolean getShouldSplitPositions() {
-      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
-            .getBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
+      if (MMStudio.getInstance() != null) {
+         return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
+                  .getBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
+      }
+      return true;
    }
 
    public static void setShouldSplitPositions(boolean shouldSplit) {

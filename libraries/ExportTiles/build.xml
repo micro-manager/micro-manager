@@ -2,5 +2,6 @@
 	<import file="../javalibrarybuild.xml"/>
 	<path id="library.classpath">
 		<pathelement location="${mm.java.mmlibraries}/TiledDataProvider.jar"/>
+		<pathelement location="${mm.java.mmlibraries}/ImageProcessing.jar"/>
 	</path>
 </project>

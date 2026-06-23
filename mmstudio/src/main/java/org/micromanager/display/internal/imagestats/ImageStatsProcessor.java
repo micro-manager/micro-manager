@@ -26,6 +26,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.histogram.BinMapper1d;
 import net.imglib2.histogram.Histogram1d;
 import net.imglib2.img.Img;
@@ -131,9 +132,6 @@ public final class ImageStatsProcessor {
       final int binCountPowerOf2 =
             Math.min(bitDepth, request.getMaxBinCountPowerOf2());
 
-      // RGB888 images can come with an extra component in the pixel buffer.
-      // TODO XXX Handle this case!
-
       // Determine the overlap between the ROI rect/mask and the image
       boolean useROI;
       Rectangle imageBounds = new Rectangle(0, 0, image.getWidth(), image.getHeight());
@@ -175,14 +173,26 @@ public final class ImageStatsProcessor {
       }
 
       ImageStats result = null;
+      int width = image.getWidth();
+      int height = image.getHeight();
       if (bytesPerSample == 1) {
-         Img<UnsignedByteType> img =
-               ArrayImgs.unsignedBytes((byte[]) image.getRawPixels(),
-                     nComponents, image.getWidth(), image.getHeight());
+         RandomAccessibleInterval<UnsignedByteType> img;
+         if (nComponents == 3) {
+            // Transform BGRA8888 to BGR888 (flipping to RGB is done later)
+            img = ArrayImgs.unsignedBytes((byte[]) image.getRawPixels(),
+                    4, width, height);
+            img = Views.interval(img,
+                    Intervals.createMinSize(
+                            0, 0, 0,
+                            3, width, height));
+         } else {
+            img = ArrayImgs.unsignedBytes((byte[]) image.getRawPixels(),
+                    nComponents, width, height);
+         }
          result = compute(
                clipToRect(img, nComponents, statsBounds),
                mask,
-               nComponents, bitDepth, binCountPowerOf2,
+               nComponents, boxedBitDepth, bitDepth, binCountPowerOf2,
                useROI, index);
       } else if (bytesPerSample == 2) {
          Img<UnsignedShortType> img =
@@ -191,8 +201,10 @@ public final class ImageStatsProcessor {
          result = compute(
                clipToRect(img, nComponents, statsBounds),
                mask,
-               nComponents, bitDepth, binCountPowerOf2,
+               nComponents, boxedBitDepth, bitDepth, binCountPowerOf2,
                useROI, index);
+      } else if (bytesPerSample == 4 && nComponents == 1) {
+         result = computeFloatStats(image, statsBounds, maskBytes, maskBounds, useROI, index);
       }
 
       if (perfMon_ != null) {
@@ -202,10 +214,122 @@ public final class ImageStatsProcessor {
       return result; // null if we don't know how to compute (TODO FIX)
    }
 
+   private ImageStats computeFloatStats(Image image, java.awt.Rectangle statsBounds,
+                                        byte[] maskBytes, java.awt.Rectangle maskBounds,
+                                        boolean useROI, int index) {
+      float[] pixels = (float[]) image.getRawPixels();
+      int width = image.getWidth();
+      float fMin = Float.MAX_VALUE;
+      float fMax = -Float.MAX_VALUE;
+      float fMinNonZero = Float.MAX_VALUE;
+      long count = 0;
+      long countNonZero = 0;
+      double sum = 0.0;
+      double sumNonZero = 0.0;
+      double sumOfSquares = 0.0;
+
+      // First pass: find min/max, accumulate sum/sumOfSquares/counts
+      // (ignoring NaN, Infinity, and masked-out pixels)
+      for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
+         for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
+            if (maskBytes != null) {
+               int maskIdx = (y - maskBounds.y) * maskBounds.width + (x - maskBounds.x);
+               if ((maskBytes[maskIdx] & 0xff) < MASK_THRESH) {
+                  continue;
+               }
+            }
+            float v = pixels[y * width + x];
+            if (Float.isNaN(v) || Float.isInfinite(v)) {
+               continue;
+            }
+            count++;
+            sum += v;
+            sumOfSquares += (double) v * v;
+            if (v < fMin) {
+               fMin = v;
+            }
+            if (v > fMax) {
+               fMax = v;
+            }
+            if (v != 0.0f) {
+               countNonZero++;
+               sumNonZero += v;
+               if (v < fMinNonZero) {
+                  fMinNonZero = v;
+               }
+            }
+         }
+      }
+      if (count == 0) {
+         fMin = 0.0f;
+         fMax = 0.0f;
+      }
+      if (countNonZero == 0) {
+         fMinNonZero = 0.0f;
+      }
+
+      // Second pass: build a 256-bin histogram spanning [fMin, fMax].
+      // bin width = (fMax - fMin) / N_BINS (floating-point, not power-of-2).
+      // Storing rangeMin_ = fMin and binWidthFloat_ in IntegerComponentStats means
+      // getQuantile() returns actual pixel values, which are passed directly to the
+      // ImageJ FloatProcessor LUT. This works for negative fMin as well.
+      final int N_BINS = 256;
+      final float range = fMax - fMin;
+      // When all pixels are identical (range == 0), use binWidth=0 as a sentinel so
+      // that getHistogramRangeMax() returns ceil(fMax) rather than fMin + 256.
+      final double fBinWidth = (range == 0.0f) ? 0.0 : (double) range / N_BINS;
+
+      // [0]=underflow, [1..N_BINS]=in-range, [N_BINS+1]=overflow
+      long[] hist = new long[N_BINS + 2];
+
+      for (int y = statsBounds.y; y < statsBounds.y + statsBounds.height; y++) {
+         for (int x = statsBounds.x; x < statsBounds.x + statsBounds.width; x++) {
+            if (maskBytes != null) {
+               int maskIdx = (y - maskBounds.y) * maskBounds.width + (x - maskBounds.x);
+               if ((maskBytes[maskIdx] & 0xff) < MASK_THRESH) {
+                  continue;
+               }
+            }
+            float v = pixels[y * width + x];
+            if (Float.isNaN(v) || Float.isInfinite(v)) {
+               continue;
+            }
+            int bin;
+            if (range == 0.0f) {
+               bin = 1;
+            } else {
+               bin = 1 + (int) Math.floor((v - fMin) / fBinWidth);
+               bin = Math.max(1, Math.min(N_BINS, bin));
+            }
+            hist[bin]++;
+         }
+      }
+
+      // sum and sumOfSquares are stored as long in IntegerComponentStats.
+      // Round to the nearest integer so that getMeanIntensity() and
+      // getStandardDeviation() return values that are correct to integer precision,
+      // matching the display which shows mean and stdev rounded to integers.
+      ComponentStats stats = ComponentStats.builder()
+            .histogram(hist, 0)
+            .isFloat(true)
+            .rangeMin((double) fMin)
+            .binWidthFloat(fBinWidth)
+            .pixelCount(count)
+            .pixelCountExcludingZeros(countNonZero)
+            .usedROI(useROI)
+            .minimum((long) Math.floor(fMin))
+            .minimumExcludingZeros((long) Math.floor(fMinNonZero))
+            .maximum((long) Math.ceil(fMax))
+            .sum(Math.round(sum))
+            .sumOfSquares(Math.round(sumOfSquares))
+            .build();
+      return ImageStats.create(index, stats);
+   }
+
    private <T extends IntegerType<T>> ImageStats compute(
          IterableInterval<T> img, IterableInterval<UnsignedByteType> mask,
-         int nComponents, int sampleBitDepth, int binCountPowerOf2,
-         boolean isROI, int index) {
+         int nComponents, Integer metadataBitDepth, int sampleBitDepth,
+         int binCountPowerOf2, boolean isROI, int index) {
       // It's easier to debug if we check first...
       Preconditions.checkArgument(img.numDimensions() == 3);
       Preconditions.checkArgument(img.dimension(0) == nComponents);
@@ -247,14 +371,15 @@ public final class ImageStatsProcessor {
       // Perform the actual computations:
       Cursor<T> dataCursor = img.localizingCursor();
       Cursor<UnsignedByteType> maskCursor = mask.cursor();
-      for (int i = 0; dataCursor.hasNext(); ++i) {
-         int component = i % nComponents;
+      while (dataCursor.hasNext()) {
          T dataSample = dataCursor.next();
          UnsignedByteType maskSample = maskCursor.next();
-
          if (maskSample.getInteger() < MASK_THRESH) {
             continue;
          }
+
+         // Flip component index to view BGR as RGB
+         int component = nComponents - 1 - dataCursor.getIntPosition(0);
 
          long dataValue = dataSample.getIntegerLong();
 
@@ -276,10 +401,11 @@ public final class ImageStatsProcessor {
          sumsOfSquares[component] += dataValue * dataValue;
       }
 
-      IntegerComponentStats[] componentStats =
-            new IntegerComponentStats[nComponents];
+      ComponentStats[] componentStats =
+            new ComponentStats[nComponents];
       for (int component = 0; component < nComponents; ++component) {
-         componentStats[component] = IntegerComponentStats.builder()
+         componentStats[component] = ComponentStats.builder()
+               .bitDepth(metadataBitDepth)
                .histogram(histograms.get(component).toLongArray(),
                      Math.max(0, sampleBitDepth - binCountPowerOf2))
                .pixelCount(counts[component])
@@ -297,7 +423,7 @@ public final class ImageStatsProcessor {
    }
 
    private <T extends IntegerType<T>> IterableInterval<T> clipToRect(
-         Img<T> fullImg, int nComponents, Rectangle statsBounds) {
+         RandomAccessibleInterval<T> fullImg, int nComponents, Rectangle statsBounds) {
       Preconditions.checkNotNull(statsBounds);
       return Views.interval(fullImg,
             Intervals.createMinSize(

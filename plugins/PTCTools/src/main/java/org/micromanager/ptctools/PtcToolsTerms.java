@@ -13,5 +13,7 @@ public class PtcToolsTerms {
    public static final String NREXPOSURES = "Nr. Exposures";
    public static final String WINDOWX = "windowX";
    public static final String WINDOWY = "windowY";
-   
+   public static final String DESCRIPTION = "Description";
+   public static final String SPACINGEXPONENT = "Spacing Exponent";
+
 }

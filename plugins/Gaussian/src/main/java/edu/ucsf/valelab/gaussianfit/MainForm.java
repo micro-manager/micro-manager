@@ -54,6 +54,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Polygon;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -191,7 +192,10 @@ public class MainForm extends JFrame {
     * @param studio Instance of the Micro-Manager 2.0 api
     */
    public MainForm(Studio studio) {
-
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       int nrThreads = ij.Prefs.getThreads();
       if (nrThreads > 8) {

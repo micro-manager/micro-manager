@@ -23,6 +23,8 @@
 package org.micromanager.internal.positionlist.utils;
 
 import java.awt.Component;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -31,6 +33,7 @@ import mmcorej.StrVector;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -75,6 +78,120 @@ public final class TileCreator {
                                    MultiStagePosition[] endPoints, double pixelSizeUm,
                                    String labelPrefix, String xyStage, StrVector zStages,
                                    ZGenerator.Type zType) {
+      if (zStages == null) {
+         zStages = new StrVector();
+      }
+      ZGenerator zGen = null;
+      if (zStages.size() > 0) {
+         PositionList posList = new PositionList();
+         posList.setPositions(endPoints);
+         zGen = ZGenerator.create(zType, posList);
+      }
+      return createTiles(overlap, overlapUnit, endPoints, pixelSizeUm, labelPrefix,
+            xyStage, zStages, zGen);
+   }
+
+   /**
+    * Create the tile list, using a pre-built {@link ZGenerator} for Z positions.
+    * The grid geometry is always derived from {@code endPoints}; the supplied
+    * {@code zGen} (if not null) supplies the interpolated Z values.  This lets
+    * callers (e.g. Refine Z) feed an interpolator built from refined interior
+    * points rather than just the corners.
+    *
+    * @param overlap Overlap desired by user.  This may be increased, but not decreased.
+    * @param overlapUnit Units used to specify desired overlap
+    * @param endPoints Array of MultiStagePositions (should be size 2-4) with corners.
+    * @param pixelSizeUm Pixel Size of the camera in Microns at the image plane.
+    * @param labelPrefix Label Prefix to be used for naming the positions.
+    * @param xyStage Name of the xyStage that will be used.
+    * @param zStages Names of the Z stages that will be used (optional).
+    * @param zGen ZGenerator supplying Z positions, or null for no Z positions.
+    * @return PositionList with annotated MultiStagePositions, or null on error.
+    */
+   public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit,
+                                   MultiStagePosition[] endPoints, double pixelSizeUm,
+                                   String labelPrefix, String xyStage, StrVector zStages,
+                                   ZGenerator zGen) {
+      if (zStages == null) {
+         zStages = new StrVector();
+      }
+
+      TileGrid grid = computeGrid(overlap, overlapUnit, endPoints, pixelSizeUm, xyStage);
+      if (grid == null) {
+         return null;
+      }
+      final double overlapXUm = grid.overlapXUm;
+      final double overlapYUm = grid.overlapYUm;
+
+      PositionList posList = new PositionList();
+      for (int y = 0; y < grid.nrImagesY; y++) {
+         for (int x = 0; x < grid.nrImagesX; x++) {
+            // on even rows go left to right, on odd rows right to left
+            int tmpX = grid.snakeColumn(x, y);
+            MultiStagePosition msp = new MultiStagePosition();
+
+            // Add XY position
+            // xyStage is not null; we've checked above.
+            msp.setDefaultXYStage(xyStage);
+            double dx = grid.tileCenterX(tmpX, y);
+            double dy = grid.tileCenterY(tmpX, y);
+            StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
+            msp.add(spXY);
+
+            // Add Z position
+            if (zGen != null && zStages.size() > 0) {
+               msp.setDefaultZStage(zStages.get(0));
+               //loop over Z coordinates and add the correct positions for any we are using
+               for (int a = 0; a < zStages.size(); a++) {
+                  StagePosition newSP = StagePosition.create1D(zStages.get(a),
+                        zGen.getZ(dx, dy, zStages.get(a)));
+                  msp.add(newSP);
+               }
+            }
+
+            // Add 'metadata'
+            msp.setLabel(labelPrefix + "-" + FMT_POS.format(tmpX) + "_" + FMT_POS.format(y));
+            msp.setGridCoordinates(y, tmpX);
+            msp.setProperty("Source", "TileCreator");
+
+            if (overlapUnit == OverlapUnitEnum.UM || overlapUnit == OverlapUnitEnum.PX) {
+               msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
+               int overlapPix = (int) Math.floor(overlapXUm / pixelSizeUm);
+
+               msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
+            } else { // overlapUnit_ == OverlapUnit.PERCENT
+               // overlapUmX != overlapUmY; store both
+               msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
+               msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
+               int overlapPixX = (int) Math.floor(overlapXUm / pixelSizeUm);
+               int overlapPixY = (int) Math.floor(overlapYUm / pixelSizeUm);
+               msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
+               msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
+            }
+            posList.addPosition(msp);
+         }
+      }
+      return posList;
+   }
+
+   /**
+    * Computes the tile grid geometry (tile counts, center, and step vectors)
+    * for the given corners and imaging parameters.  This is the same geometry
+    * used by {@link #createTiles}; it is exposed separately so a graphical
+    * overview can draw the tile cells and find tile centers without generating
+    * the full position list.
+    *
+    * @param overlap Overlap desired by user.
+    * @param overlapUnit Units used to specify desired overlap.
+    * @param endPoints Array of MultiStagePositions (size 2-4) with corners.
+    * @param pixelSizeUm Pixel size of the camera in microns at the image plane.
+    * @param xyStage Name of the xyStage that will be used.
+    * @return a TileGrid describing the layout, or null on error (after showing
+    *         an error dialog).
+    */
+   public TileGrid computeGrid(double overlap, OverlapUnitEnum overlapUnit,
+                               MultiStagePosition[] endPoints, double pixelSizeUm,
+                               String xyStage) {
       // Make sure at least two corners were set
       if (endPoints.length < 2) {
          ReportingUtils.showError("At least two corners should be set", dialog_);
@@ -89,25 +206,6 @@ public final class TileCreator {
             return null;
          }
       }
-
-      ZGenerator zGen = null;
-      if (zStages == null) {
-         zStages = new StrVector();
-      }
-      if (zStages.size() > 0) {
-         PositionList posList = new PositionList();
-         posList.setPositions(endPoints);
-         switch (zType) {
-            case SHEPINTERPOLATE:
-               zGen = new ZGeneratorShepard(posList);
-               break;
-            case AVERAGE:
-            default:
-               zGen = new ZGeneratorAverage(posList);
-               break;
-         }
-      }
-
 
       // Calculate a bounding rectangle around the defaultXYStage positions
       // TODO: develop method to deal with multiple axis
@@ -143,73 +241,45 @@ public final class TileCreator {
          return null;
       }
 
-      double totalSizeXUm = nrImagesX * tileSizeXUm + overlapXUm;
-      double totalSizeYUm = nrImagesY * tileSizeYUm + overlapYUm;
-
-      // Since an evenly spaced grid will likely not perfectly fit the bounding box
-      // that was specified we use this offset so that our grid is still centered properly.
-      // This slightly widens the field that is scanned. Sometime this can result in setting
-      // a position that is outside of the stage's range of motion. This causes issues when
-      // it comes time to stitch.
-      // This approach could also result in damage if the user specified a region that is
-      // near something delicate and then this code expands that range. It may be good to
-      // try a different approach.
-      double offsetXUm = (totalSizeXUm - boundingXUm) / 2;
-      double offsetYUm = (totalSizeYUm - boundingYUm) / 2;
-
-      PositionList posList = new PositionList();
-      // todo handle mirrorX mirrorY
-      for (int y = 0; y < nrImagesY; y++) {
-         for (int x = 0; x < nrImagesX; x++) {
-            // on even rows go left to right, on odd rows right to left
-            int tmpX = x;
-            if ((y & 1) == 1) { //If y is odd then we will go backwards in x
-               tmpX = nrImagesX - x - 1;
-            }
-            MultiStagePosition msp = new MultiStagePosition();
-
-            // Add XY position
-            // xyStage is not null; we've checked above.
-            msp.setDefaultXYStage(xyStage);
-            double dx = minX - offsetXUm + (tmpX * tileSizeXUm);
-            double dy = minY - offsetYUm + (y * tileSizeYUm);
-            StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
-            msp.add(spXY);
-
-            // Add Z position
-            if (zGen != null) {
-               msp.setDefaultZStage(zStages.get(0));
-               //loop over Z coordinates and add the correct positions for any we are using
-               for (int a = 0; a < zStages.size(); a++) {
-                  StagePosition newSP = StagePosition.create1D(zStages.get(a),
-                        zGen.getZ(dx, dy, zStages.get(a)));
-                  msp.add(newSP);
-               }
-            }
-
-            // Add 'metadata'
-            msp.setLabel(labelPrefix + "-" + FMT_POS.format(tmpX) + "_" + FMT_POS.format(y));
-            msp.setGridCoordinates(y, tmpX);
-            msp.setProperty("Source", "TileCreator");
-
-            if (overlapUnit == OverlapUnitEnum.UM || overlapUnit == OverlapUnitEnum.PX) {
-               msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
-               int overlapPix = (int) Math.floor(overlapXUm / pixelSizeUm);
-
-               msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
-            } else { // overlapUnit_ == OverlapUnit.PERCENT
-               // overlapUmX != overlapUmY; store both
-               msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
-               msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
-               int overlapPixX = (int) Math.floor(overlapXUm / pixelSizeUm);
-               int overlapPixY = (int) Math.floor(overlapYUm / pixelSizeUm);
-               msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
-               msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
-            }
-            posList.addPosition(msp);
-         }
+      // Compute per-tile step vectors in stage space.
+      // With an affine transform, moving one tile to the right in camera-pixel space
+      // corresponds to affine * (tileWidthPx, 0) in stage microns -- not simply
+      // (tileSizeXUm, 0).  Similarly for the Y direction.
+      // Without a valid affine we fall back to the existing axis-aligned behaviour.
+      final AffineTransform affine = getPixelSizeAffine(pixelSizeUm);
+      final double stepXdx; // stage-X component of "one step right"
+      final double stepXdy; // stage-Y component of "one step right"
+      final double stepYdx; // stage-X component of "one step down"
+      final double stepYdy; // stage-Y component of "one step down"
+      if (affine != null) {
+         double tileWidthPx  = tileSizeXUm / pixelSizeUm;
+         double tileHeightPx = tileSizeYUm / pixelSizeUm;
+         Point2D.Double stepX = new Point2D.Double();
+         Point2D.Double stepY = new Point2D.Double();
+         affine.transform(new Point2D.Double(tileWidthPx, 0), stepX);
+         affine.transform(new Point2D.Double(0, tileHeightPx), stepY);
+         stepXdx = stepX.x;
+         stepXdy = stepX.y;
+         stepYdx = stepY.x;
+         stepYdy = stepY.y;
+      } else {
+         stepXdx = tileSizeXUm;
+         stepXdy = 0;
+         stepYdx = 0;
+         stepYdy = tileSizeYUm;
       }
-      return posList;
+
+      // Anchor the grid at the center of the bounding box and place tiles
+      // symmetrically around it. Sign-agnostic: affine step vectors may contain
+      // reflections/rotation (negative components), but building outward from the
+      // center keeps the grid centered on the user's region while still applying
+      // the rotation through the step vectors.
+      final double centerX = (minX + maxX) / 2.0;
+      final double centerY = (minY + maxY) / 2.0;
+
+      return new TileGrid(nrImagesX, nrImagesY, centerX, centerY,
+            stepXdx, stepXdy, stepYdx, stepYdy, tileSizeXUm, tileSizeYUm,
+            overlapXUm, overlapYUm, xyStage);
    }
 
    /**
@@ -258,15 +328,7 @@ public final class TileCreator {
       if (!zStages.isEmpty()) {
          PositionList posList = new PositionList();
          posList.setPositions(endPoints);
-         switch (zType) {
-            case SHEPINTERPOLATE:
-               zGen = new ZGeneratorShepard(posList);
-               break;
-            case AVERAGE:
-            default:
-               zGen = new ZGeneratorAverage(posList);
-               break;
-         }
+         zGen = ZGenerator.create(zType, posList);
       }
 
       // Calculate a bounding rectangle around the defaultXYStage positions
@@ -359,6 +421,25 @@ public final class TileCreator {
          posList.addPosition(msp);
       }
       return posList;
+   }
+
+   /**
+    * Returns the validated pixel-size affine transform (camera pixels → stage microns),
+    * or null if none is available or it fails the 10 % consistency check against pixelSizeUm.
+    * The MM core affine always has zero translation terms, so it can be used directly
+    * to transform pixel-delta vectors to stage-micron-delta vectors.
+    */
+   private AffineTransform getPixelSizeAffine(double pixelSizeUm) {
+      try {
+         AffineTransform at = AffineUtils.doubleToAffine(core_.getPixelSizeAffine(true));
+         double affinePixelSize = AffineUtils.deducePixelSize(at);
+         if (Math.abs(pixelSizeUm - affinePixelSize) > 0.1 * pixelSizeUm) {
+            return null;
+         }
+         return at;
+      } catch (Exception e) {
+         return null;
+      }
    }
 
    private boolean isSwappedXY() {

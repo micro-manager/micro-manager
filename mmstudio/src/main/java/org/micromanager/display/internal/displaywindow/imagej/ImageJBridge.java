@@ -450,9 +450,20 @@ public final class ImageJBridge {
    }
 
    @MustCallOnEDT
-   public void mm2ijSetIntensityScaling(int channelOrComponent, int min, int max) {
-      colorModeStrategy_.applyScaling(channelOrComponent, min, max);
-      mm2ijRepaint();
+   public void mm2ijSetIntensityScaling(int channelOrComponent, int min, int max, boolean defer) {
+      colorModeStrategy_.applyScaling(channelOrComponent, min, max, defer);
+      if (!defer) {
+         mm2ijRepaint();
+      }
+   }
+
+   @MustCallOnEDT
+   public void mm2ijSetFloatIntensityScaling(int channelOrComponent,
+                                              double min, double max, boolean defer) {
+      colorModeStrategy_.applyFloatScaling(channelOrComponent, min, max, defer);
+      if (!defer) {
+         mm2ijRepaint();
+      }
    }
 
    @MustCallOnEDT
@@ -574,6 +585,8 @@ public final class ImageJBridge {
          blankPixels = new byte[((byte[]) templatePixels).length];
       } else if (templatePixels instanceof short[]) {
          blankPixels = new short[((short[]) templatePixels).length];
+      } else if (templatePixels instanceof float[]) {
+         blankPixels = new float[((float[]) templatePixels).length];
       } else if (templatePixels instanceof int[]) {
          blankPixels = new int[((int[]) templatePixels).length];
       } else if (templatePixels instanceof long[]) {

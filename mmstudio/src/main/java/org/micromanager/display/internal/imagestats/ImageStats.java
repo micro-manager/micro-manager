@@ -15,13 +15,13 @@ import java.util.List;
  */
 public class ImageStats {
    private final int index_;
-   private final List<IntegerComponentStats> componentStats_;
+   private final List<ComponentStats> componentStats_;
 
-   public static ImageStats create(int index, IntegerComponentStats... componentStats) {
+   public static ImageStats create(int index, ComponentStats... componentStats) {
       return new ImageStats(index, componentStats);
    }
 
-   private ImageStats(int index, IntegerComponentStats... componentStats) {
+   private ImageStats(int index, ComponentStats... componentStats) {
       index_ = index;
       componentStats_ = new ArrayList<>(Arrays.asList(componentStats));
    }
@@ -30,7 +30,7 @@ public class ImageStats {
       return componentStats_.size();
    }
 
-   public IntegerComponentStats getComponentStats(int component) {
+   public ComponentStats getComponentStats(int component) {
       return componentStats_.get(component);
    }
 

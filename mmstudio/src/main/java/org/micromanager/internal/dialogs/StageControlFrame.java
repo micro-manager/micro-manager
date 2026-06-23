@@ -32,11 +32,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -46,7 +44,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
@@ -106,9 +103,6 @@ public final class StageControlFrame extends JFrame {
 
    private static long extraWait_ = 100;
 
-   // used to keep track of the "active" Z Drive
-   public static final String SELECTED_Z_DRIVE = "SELECTED_Z_DRIVE";
-
    // used by Drive selection combo boxes
    private static final String CURRENT_Z_DRIVE = "CURRENTZDRIVE";
 
@@ -124,8 +118,6 @@ public final class StageControlFrame extends JFrame {
    private final JPanel[] zPanel_ = new JPanel[MAX_NUM_Z_PANELS];
    @SuppressWarnings({"unchecked", "rawtypes"})
    private final JComboBox<String>[] zDriveSelect_ = new JComboBox[MAX_NUM_Z_PANELS];
-   private final JRadioButton[] zDriveActiveButtons_ = new JRadioButton[MAX_NUM_Z_PANELS];
-   private final ButtonGroup zDriveActiveGroup_ = new ButtonGroup();
 
    private final JLabel[] zPositionLabel_ = new JLabel[MAX_NUM_Z_PANELS];
    private JPanel settingsPanel_;
@@ -324,8 +316,6 @@ public final class StageControlFrame extends JFrame {
          for (int idx = MAX_NUM_Z_PANELS - 1; idx > -1; idx--) {
             zDriveSelect_[idx].setVisible(true);
             zDriveSelect_[idx].setEnabled(nrZDrives > 1);
-            zDriveActiveButtons_[idx].setVisible(true);
-            zDriveActiveButtons_[idx].setEnabled(nrZDrives > 1);
 
             // remove item listeners temporarily
             ItemListener[] zDriveItemListeners =
@@ -366,9 +356,23 @@ public final class StageControlFrame extends JFrame {
             zDriveSelect_[idx].setSelectedIndex(-1);
 
             zDriveSelect_[idx].setSelectedIndex(cbIndex);
-            if (Objects.equals(zDriveSelect_[idx].getSelectedItem(),
-                  settings_.getString(SELECTED_Z_DRIVE, " "))) {
-               zDriveActiveButtons_[idx].setSelected(true);
+
+            // Ensure per-drive step sizes are written to the profile so that
+            // XYZKeyListener and ZWheelListener can read them even before the
+            // user edits any value in this dialog.
+            String selectedDrive = (String) zDriveSelect_[idx].getSelectedItem();
+            if (selectedDrive != null && !selectedDrive.isEmpty()) {
+               Object smallVal = zStepTextsSmall_[idx].getValue();
+               Object medVal = zStepTextsMedium_[idx].getValue();
+               if (smallVal instanceof Number && medVal instanceof Number) {
+                  settings_.putDouble(SMALL_MOVEMENT_Z + selectedDrive,
+                        ((Number) smallVal).doubleValue());
+                  settings_.putDouble(MEDIUM_MOVEMENT_Z + selectedDrive,
+                        ((Number) medVal).doubleValue());
+               } else {
+                  studio_.logs().logError("Z step size field has unexpected value type for drive \""
+                        + selectedDrive + "\": small=" + smallVal + ", medium=" + medVal);
+               }
             }
 
             plusButtons_[idx].setVisible(false);
@@ -582,19 +586,6 @@ public final class StageControlFrame extends JFrame {
       final JPanel result = new JPanel(new MigLayout("insets 0, gap 0, flowy"));
       // result.add(new JLabel("Z Stage", JLabel.CENTER), "growx, alignx center");
       zDriveSelect_[idx] = new JComboBox<>();
-      zDriveActiveButtons_[idx] = new JRadioButton();
-      zDriveActiveButtons_[idx].addItemListener(e -> {
-         if (e.getStateChange() == ItemEvent.SELECTED) {
-            String activeZDrive = (String) zDriveSelect_[idx].getSelectedItem();
-            // push to profile
-            settings_.putString(SELECTED_Z_DRIVE, activeZDrive);
-            settings_.putDouble(SMALL_MOVEMENT_Z, settings_.getDouble(
-                  SMALL_MOVEMENT_Z + idx, 1.1));
-            settings_.putDouble(MEDIUM_MOVEMENT_Z, settings_.getDouble(
-                  MEDIUM_MOVEMENT_Z + idx, 11.1));
-         }
-      });
-      zDriveActiveGroup_.add(zDriveActiveButtons_[idx]);
 
       // use ItemListener here instead of ActionListener so initialize() only has to worry about
       //   one type of listener on the combo-box (there are also ItemListeners for step size fields)
@@ -615,8 +606,6 @@ public final class StageControlFrame extends JFrame {
       // and Z panels.
       result.add(zDriveSelect_[idx],
             "height 22!, gaptop 4, gapbottom 4, hidemode 0, growx");
-      result.add(zDriveActiveButtons_[idx],
-            "height 22!, gaptop 4, gapbottom 4, hidemode 0, alignx center");
 
       // Create buttons for stepping up/down.
       // Icon name prefix: double, single, single, double
@@ -645,7 +634,6 @@ public final class StageControlFrame extends JFrame {
                return;
             }
             setRelativeStagePosition(dz * stepSize, idx);
-            zDriveActiveButtons_[idx].setSelected(true);
          });
          result.add(button, "alignx center, growx");
          if (i == 1) {

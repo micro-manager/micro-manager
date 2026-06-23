@@ -26,7 +26,7 @@ import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
  * Wraps NDTiffStorage (MultiresNDTiffAPI) as an MM DataProvider.
  *
  * <p>This allows the MM Inspector and other DataProvider consumers to
- * interact with NDTiff datasets that are being displayed through NDViewer2.</p>
+ * interact with NDTiff datasets that are being displayed through TiledDataViewer.</p>
  */
 public final class TiledDataViewerDataProvider implements TiledDataViewerDataProviderAPI {
 
@@ -35,12 +35,13 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    private final AxesBridge axesBridge_;
    private static final SubscriberExceptionHandler EVENT_BUS_EXCEPTION_HANDLER =
          (Throwable ex, SubscriberExceptionContext ctx) ->
-               System.err.println("NDViewer2DataProvider EventBus subscriber threw: "
+               System.err.println("TiledDataViewerDataProvider EventBus subscriber threw: "
                      + ex + " [event=" + ctx.getEvent()
                      + ", subscriber=" + ctx.getSubscriber() + "]");
 
    private final EventBus eventBus_ = new EventBus(EVENT_BUS_EXCEPTION_HANDLER);
    private final String name_;
+   private final SummaryMetadata summaryMetadata_;
 
    /**
     * Construct a data provider wrapping the given NDTiff storage.
@@ -52,17 +53,33 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    public TiledDataViewerDataProvider(DataManager dataManager,
                                       TiledDataProviderAPI storage,
                                       String name) {
+      this(dataManager, storage, name, null);
+   }
+
+   public TiledDataViewerDataProvider(DataManager dataManager,
+                                      TiledDataProviderAPI storage,
+                                      String name,
+                                      SummaryMetadata summaryMetadata) {
       dataManager_ = dataManager;
       storage_ = storage;
       axesBridge_ = new AxesBridge();
       name_ = name;
-      // Discover existing channels
+      summaryMetadata_ = summaryMetadata;
+      // Seed channel order from SummaryMetadata ChNames so the axesBridge
+      // index→name mapping matches the stored channel order, not the arbitrary
+      // iteration order of getAxesSet() (which is a Set with no guarantees).
+      SummaryMetadata sm = getSummaryMetadata();
+      List<String> chNames = sm.getChannelNameList();
+      for (String ch : chNames) {
+         axesBridge_.registerChannel(ch);
+      }
+      // Discover any remaining channels not listed in SummaryMetadata
       axesBridge_.discoverChannels(storage_.getAxesSet());
    }
 
    /**
     * Return the shared axes bridge used by this provider.
-    * Package-private: only NDViewer2DataViewer should need this.
+    * Package-private: only TiledDataViewerDataViewer should need this.
     *
     * @return the axes bridge
     */
@@ -72,7 +89,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
 
    @Override
    public Image getImage(Coords coords) throws IOException {
-      HashMap<String, Object> axes = axesBridge_.coordsToNDViewer(coords);
+      HashMap<String, Object> axes = axesBridge_.coordsToTiledDataViewer(coords);
       TaggedImage ti = storage_.getImage(axes);
       if (ti == null || ti.pix == null) {
          return null;
@@ -85,10 +102,10 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    }
 
    /**
-    * Fetch an image directly using NDViewer axes, bypassing Coords round-trip.
+    * Fetch an image directly using TiledDataViewer axes, bypassing Coords round-trip.
     * This avoids the problem where Coords drops axes with value 0.
-    *
-    * @param axes the NDViewer axes map
+
+    * @param axes the TiledDataViewer axes map
     * @return the image, or null if not found
     */
    public Image getImageByAxes(HashMap<String, Object> axes) throws IOException {
@@ -96,7 +113,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       if (ti == null || ti.pix == null) {
          return null;
       }
-      Coords coords = axesBridge_.ndViewerToCoords(axes);
+      Coords coords = axesBridge_.tiledDataViewerToCoords(axes);
       try {
          return dataManager_.convertTaggedImage(ti, coords, null);
       } catch (JSONException e) {
@@ -115,7 +132,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       if (ti == null || ti.pix == null) {
          return null;
       }
-      Coords coords = axesBridge_.ndViewerToCoords(firstKey);
+      Coords coords = axesBridge_.tiledDataViewerToCoords(firstKey);
       try {
          return dataManager_.convertTaggedImage(ti, coords, null);
       } catch (JSONException e) {
@@ -134,7 +151,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       for (HashMap<String, Object> key : keys) {
          for (String axis : key.keySet()) {
             String mmAxis = axis;
-            // NDViewer "channel" axis maps to Coords.CHANNEL
+            // TiledDataViewer "channel" axis maps to Coords.CHANNEL
             if (TiledDataViewer.CHANNEL_AXIS.equals(axis)) {
                mmAxis = Coords.CHANNEL;
             }
@@ -170,26 +187,25 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
-      // Parse channel names from NDTiff storage for Inspector display
+      if (summaryMetadata_ != null) {
+         return summaryMetadata_;
+      }
+      // Fallback: parse channel names from NDTiff storage summary metadata
+      // (for callers that use createDataProvider without passing a SummaryMetadata)
       SummaryMetadata.Builder builder = dataManager_.summaryMetadataBuilder();
-
       try {
          JSONObject json = storage_.getSummaryMetadata();
-
-         // Parse channel names if present
          if (json.has("ChNames")) {
             JSONArray chNames = json.getJSONArray("ChNames");
             List<String> channelNames = new ArrayList<>();
             for (int i = 0; i < chNames.length(); i++) {
                channelNames.add(chNames.getString(i));
             }
-            String[] channelNamesArray = channelNames.toArray(new String[0]);
-            builder.channelNames(channelNamesArray);
+            builder.channelNames(channelNames.toArray(new String[0]));
          }
-      } catch (Exception e) {
+      } catch (Exception ignore) {
          // If parsing fails, return minimal metadata (no channel names)
       }
-
       return builder.build();
    }
 
@@ -207,14 +223,14 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    public Iterable<Coords> getUnorderedImageCoords() {
       List<Coords> coordsList = new ArrayList<>();
       for (HashMap<String, Object> axes : storage_.getAxesSet()) {
-         coordsList.add(axesBridge_.ndViewerToCoords(axes));
+         coordsList.add(axesBridge_.tiledDataViewerToCoords(axes));
       }
       return coordsList;
    }
 
    @Override
    public boolean hasImage(Coords coords) {
-      HashMap<String, Object> axes = axesBridge_.coordsToNDViewer(coords);
+      HashMap<String, Object> axes = axesBridge_.coordsToTiledDataViewer(coords);
       return storage_.hasImage(axes);
    }
 
@@ -231,7 +247,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       List<Image> result = new ArrayList<>();
       Coords stripped = coords.copyRemovingAxes(ignoreTheseAxes);
       for (HashMap<String, Object> axes : storage_.getAxesSet()) {
-         Coords candidate = axesBridge_.ndViewerToCoords(axes);
+         Coords candidate = axesBridge_.tiledDataViewerToCoords(axes);
          Coords candidateStripped = candidate.copyRemovingAxes(ignoreTheseAxes);
          if (candidateStripped.equals(stripped)) {
             Image img = getImage(candidate);
@@ -289,7 +305,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       if (numLevels <= 1) {
          return getImage(coords);
       }
-      HashMap<String, Object> axes = axesBridge_.coordsToNDViewer(coords);
+      HashMap<String, Object> axes = axesBridge_.coordsToTiledDataViewer(coords);
       int resLevel = numLevels - 1;
       TaggedImage ti = storage_.getImage(axes, resLevel);
       if (ti == null || ti.pix == null) {
@@ -303,11 +319,11 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    }
 
    /**
-    * Fetch a downsampled version of the image by NDViewer axes.
+    * Fetch a downsampled version of the image by TiledDataViewer axes.
     * Uses the coarsest available pyramid level. Falls back to full-res
     * if the storage has only one level or the pyramid level is missing.
     *
-    * @param axes the NDViewer axes map
+    * @param axes the TiledDataViewer axes map
     * @return downsampled image, or null if not found
     */
    public Image getDownsampledImageByAxes(HashMap<String, Object> axes)
@@ -319,7 +335,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       if (ti == null || ti.pix == null) {
          return null;
       }
-      Coords coords = axesBridge_.ndViewerToCoords(axes);
+      Coords coords = axesBridge_.tiledDataViewerToCoords(axes);
       try {
          return dataManager_.convertTaggedImage(ti, coords, null);
       } catch (JSONException e) {
@@ -331,7 +347,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
     * Notify this data provider that a new image has arrived at the given axes.
     * Called by NDTiffAndViewerAdapter when putImage() is invoked.
     *
-    * @param axes the NDViewer axes of the new image
+    * @param axes the TileDataViewer axes of the new image
     */
    public void newImageArrived(HashMap<String, Object> axes) {
       // Register any new channel
@@ -357,7 +373,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
     * which avoids issues with storage indexing delays.
     *
     * @param image the image that arrived
-    * @param axes  the NDViewer axes of the new image
+    * @param axes  the TiledDataViewer axes of the new image
     */
    @Override
    public void newImageArrived(Image image, HashMap<String, Object> axes) {

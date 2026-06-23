@@ -26,6 +26,12 @@ public enum PixelType {
          return 1;
       }
    },
+   GRAY32(4, 4, 1) {
+      @Override
+      public int imageJConstant() {
+         return 2; // ImagePlus.GRAY32
+      }
+   },
    /**
     * RGB 888 format.
     *
@@ -115,6 +121,10 @@ public enum PixelType {
             if (bytesPerPixel == 2) {
                return GRAY16;
             }
+         } else if (bytesPerComponent == 4) {
+            if (bytesPerPixel == 4) {
+               return GRAY32;
+            }
          }
       } else if (numberOfComponents == 3) {
          if (bytesPerComponent == 1) {
@@ -140,6 +150,8 @@ public enum PixelType {
             return RGB32;
 
          case 2: // ImagePlus.GRAY32 (float)
+            return GRAY32;
+
          case 3: // ImagePlus.COLOR_256
          default:
             throw new UnsupportedOperationException(
