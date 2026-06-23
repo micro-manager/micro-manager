@@ -80,7 +80,7 @@ public final class DefaultPluginManager implements PluginManager {
       // its parent) so that plugins are visible to each other and to Micro-Manager's own code,
       // including the Pycro-Manager / ZMQ bridge.
       pluginClassLoader_ = new SharedPluginClassLoader(
-            ((MMStudio) studio_).getClass().getClassLoader());
+            studio_.getClass().getClassLoader());
 
       for (Class<?> classType : VALID_CLASSES) {
          pluginTypeToPlugins_.put(classType, new ArrayList<>());
@@ -143,7 +143,7 @@ public final class DefaultPluginManager implements PluginManager {
       // file, since otherwise we won't be able to cast the new plugin to
       // MMPlugin in loadPlugins(), below.
       loadPlugins(PluginFinder.findPluginsWithLoader(
-            ((MMStudio) studio_).getClass().getClassLoader()));
+            studio_.getClass().getClassLoader()));
 
       ReportingUtils.logMessage("Plugin loading took "
             + (System.currentTimeMillis() - startTime) + "ms");

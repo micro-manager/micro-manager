@@ -129,22 +129,25 @@ public final class PluginFinder {
             return findResources(name);
          }
       };
-      DefaultPluginFinder finder = new DefaultPluginFinder(discoveryLoader);
-      PluginIndex index = new PluginIndex(finder);
-      index.discover();
-      for (PluginInfo<?> info : index.getAll()) {
-         String className = info.getClassName();
-         try {
-            // Load the real class through the shared loader so it is visible to other plugins.
-            result.add(Class.forName(className, false, sharedLoader));
-         } catch (ClassNotFoundException | NoClassDefFoundError e) {
-            ReportingUtils.logError(e, "Unable to load plugin class " + className);
-         }
-      }
       try {
-         discoveryLoader.close();
-      } catch (IOException e) {
-         ReportingUtils.logError(e, "Failed to close plugin discovery class loader");
+         DefaultPluginFinder finder = new DefaultPluginFinder(discoveryLoader);
+         PluginIndex index = new PluginIndex(finder);
+         index.discover();
+         for (PluginInfo<?> info : index.getAll()) {
+            String className = info.getClassName();
+            try {
+               // Load the real class through the shared loader so it is visible to other plugins.
+               result.add(Class.forName(className, false, sharedLoader));
+            } catch (ClassNotFoundException | NoClassDefFoundError e) {
+               ReportingUtils.logError(e, "Unable to load plugin class " + className);
+            }
+         }
+      } finally {
+         try {
+            discoveryLoader.close();
+         } catch (IOException e) {
+            ReportingUtils.logError(e, "Failed to close plugin discovery class loader");
+         }
       }
       return result;
    }

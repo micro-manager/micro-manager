@@ -50,8 +50,9 @@ public final class SharedPluginClassLoader extends URLClassLoader {
    /**
     * Add a plugin JAR (or other URL) to this loader's search path.
     *
-    * <p>{@link URLClassLoader#addURL} is protected; this method exposes it within the package so
-    * that {@link PluginFinder} can accumulate JARs from every scanned directory.
+    *  <p>{@link URLClassLoader#addURL} is protected; this override makes it public (the class
+    *  itself lives in an internal package) so that {@link PluginFinder} can accumulate JARs from
+    *  every scanned directory.
     *
     * @param url the URL to add
     */
