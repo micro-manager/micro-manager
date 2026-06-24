@@ -2078,6 +2078,104 @@ public class ExplorerManager {
       return result;
    }
 
+   /**
+    * Orders the chosen autofocus tiles into a short stage route to minimize XY travel. Uses a
+    * greedy nearest-neighbor tour seeded at the current stage position (so the first hop is short
+    * too), then a 2-opt cleanup pass to remove the obvious crossings the greedy pass leaves. Point
+    * counts here are small (a handful per run), so the O(n^2)/O(n^3) cost is negligible. On
+    * multi-well plates the chosen points are already spatially clustered per well, so nearest-
+    * neighbor naturally finishes one well before crossing to the next.
+    */
+   private java.util.List<Tile> orderForTravel(java.util.List<Tile> chosen) {
+      if (chosen.size() <= 2) {
+         return chosen;
+      }
+      java.util.List<Tile> remaining = new java.util.ArrayList<>(chosen);
+
+      // Seed at the tile nearest the current stage position when it is readable, else the first.
+      double curX = 0;
+      double curY = 0;
+      boolean haveCur = false;
+      try {
+         String xy = studio_.core().getXYStageDevice();
+         if (xy != null && !xy.isEmpty()) {
+            curX = studio_.core().getXPosition(xy);
+            curY = studio_.core().getYPosition(xy);
+            haveCur = true;
+         }
+      } catch (Exception ignore) {
+         // Stage position unavailable -- start from the first chosen tile.
+      }
+      Tile start = remaining.get(0);
+      if (haveCur) {
+         double best = Double.MAX_VALUE;
+         for (Tile t : remaining) {
+            double d = dist2(t.stageX, t.stageY, curX, curY);
+            if (d < best) {
+               best = d;
+               start = t;
+            }
+         }
+      }
+      remaining.remove(start);
+      java.util.List<Tile> route = new java.util.ArrayList<>(chosen.size());
+      route.add(start);
+
+      // Greedy nearest-neighbor.
+      while (!remaining.isEmpty()) {
+         Tile last = route.get(route.size() - 1);
+         Tile next = remaining.get(0);
+         double best = Double.MAX_VALUE;
+         for (Tile t : remaining) {
+            double d = dist2(last.stageX, last.stageY, t.stageX, t.stageY);
+            if (d < best) {
+               best = d;
+               next = t;
+            }
+         }
+         remaining.remove(next);
+         route.add(next);
+      }
+
+      twoOpt(route);
+      return route;
+   }
+
+   /** In-place 2-opt improvement of an open tour (route start/end are not joined). */
+   private void twoOpt(java.util.List<Tile> route) {
+      int n = route.size();
+      boolean improved = true;
+      while (improved) {
+         improved = false;
+         for (int i = 0; i < n - 1; i++) {
+            for (int k = i + 1; k < n; k++) {
+               // Reversing route[i..k] changes only the edges entering i and leaving k.
+               double before = (i > 0 ? edge(route, i - 1, i) : 0)
+                     + (k < n - 1 ? edge(route, k, k + 1) : 0);
+               double after = (i > 0 ? edge(route, i - 1, k) : 0)
+                     + (k < n - 1 ? edge(route, i, k + 1) : 0);
+               if (after + 1e-6 < before) {
+                  java.util.Collections.reverse(route.subList(i, k + 1));
+                  improved = true;
+               }
+            }
+         }
+      }
+   }
+
+   /** Euclidean stage distance between route entries a and b. */
+   private double edge(java.util.List<Tile> route, int a, int b) {
+      Tile ta = route.get(a);
+      Tile tb = route.get(b);
+      return Math.sqrt(dist2(ta.stageX, ta.stageY, tb.stageX, tb.stageY));
+   }
+
+   private static double dist2(double x1, double y1, double x2, double y2) {
+      double dx = x1 - x2;
+      double dy = y1 - y2;
+      return dx * dx + dy * dy;
+   }
+
    /** Farthest-point sampling of {@code count} tiles from {@code group} (Euclidean stage XY). */
    private java.util.List<Tile> farthestPointSample(java.util.List<Tile> group, int count) {
       java.util.List<Tile> chosen = new java.util.ArrayList<>();
@@ -2855,11 +2953,15 @@ public class ExplorerManager {
       if (edgeMargin > 0) {
          java.util.List<Tile> interior = excludeEdgeTiles(tiles, edgeMargin);
          // Only apply the exclusion if it leaves something to focus on; otherwise the grid is
-         // too thin for the requested margin and we fall back to the full set.
+         // too thin for the requested margin and we fall back to the full set. Warn modally so
+         // the fallback is not lost under the "Refining Z..."/progress status updates that follow.
          if (!interior.isEmpty()) {
             tiles = interior;
          } else {
-            setRefineZStatus("Edge margin too large for this grid; using all tiles.");
+            JOptionPane.showMessageDialog(refineZFrame_ != null ? refineZFrame_ : frame_,
+                  "The edge margin of " + edgeMargin + " tile(s) excludes every tile in this "
+                  + "grid.\nRefine Z will use all tiles instead.",
+                  "Refine Z", JOptionPane.WARNING_MESSAGE);
          }
       }
       java.util.List<Tile> chosen = chooseSpreadTiles(tiles, nPoints);
@@ -2867,6 +2969,9 @@ public class ExplorerManager {
          setRefineZStatus("No tiles to refine.");
          return;
       }
+      // The spread-sampling order is travel-arbitrary; reorder into a short stage route so
+      // autofocus visits points with minimal XY motion.
+      chosen = orderForTravel(chosen);
       setRefineZRunningUi(true);
       setRefineZStatus("Refining Z...");
       refineZWorker_ = new RefineZWorker(chosen, zStages, afMethodName);
