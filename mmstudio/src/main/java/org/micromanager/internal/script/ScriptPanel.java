@@ -306,7 +306,16 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
 
       beanshellREPLint_ = new Interpreter(cons_);
 
-      new Thread(beanshellREPLint_, "BeanShell interpreter").start();
+      // Load classes (e.g. in import statements) through the shared plugin class loader, so that
+      // scripts can see plugin classes in addition to Micro-Manager / core classes (its parent).
+      ClassLoader pluginClassLoader = studio_.plugins().getPluginClassLoader();
+      beanshellREPLint_.setClassLoader(pluginClassLoader);
+
+      Thread interpreterThread = new Thread(beanshellREPLint_, "BeanShell interpreter");
+      // Also set the thread context class loader so that library code which resolves classes via
+      // the context loader (rather than BeanShell's class manager) sees plugins too.
+      interpreterThread.setContextClassLoader(pluginClassLoader);
+      interpreterThread.start();
    }
 
    // Add methods and variables to the interpreter
@@ -352,6 +361,33 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
 
    public JConsole getREPLCons() {
       return cons_;
+   }
+
+   /**
+    * The class loader through which plugins are loaded, so that scripts can see plugin classes.
+    *
+    * @return the shared plugin class loader
+    */
+   ClassLoader getPluginClassLoader() {
+      return studio_.plugins().getPluginClassLoader();
+   }
+
+   /**
+    * Clear BeanShell's class cache for the REPL interpreter.
+    *
+    * <p>Plugins are loaded onto the shared plugin class loader on a background thread, which may
+    * not have finished when the REPL interpreter is created. BeanShell caches failed class lookups
+    * ("class not found") permanently, so if a script references a plugin class before that plugin's
+    * JAR has been added to the shared class loader, the class would stay unresolvable for the life
+    * of the interpreter even after the plugin finished loading. Resetting the class manager clears
+    * that negative cache (it does not change the class loader set via setClassLoader), so newly
+    * loaded plugin classes become visible. Call this when the panel is shown, by which time plugin
+    * loading has normally completed.
+    */
+   public void resetReplClassCache() {
+      if (beanshellREPLint_ != null) {
+         beanshellREPLint_.getClassManager().reset();
+      }
    }
 
    private void readFileToTextArea(File file, RSyntaxTextArea rsa)
@@ -1006,6 +1042,9 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          stopButton_.setText("Interrupt");
          stopButton_.setEnabled(true);
 
+         // Clear BeanShell's negative class cache so plugin classes that finished loading after
+         // the interpreter was created are visible to the script.
+         resetReplClassCache();
          interp_.evaluateAsync(scriptArea_.getText());
 
          // Spawn a thread that waits for the execution thread to exit and then

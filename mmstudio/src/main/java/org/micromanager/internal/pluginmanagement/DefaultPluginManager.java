@@ -97,6 +97,7 @@ public final class DefaultPluginManager implements PluginManager {
     *
     * @return the shared plugin class loader
     */
+   @Override
    public SharedPluginClassLoader getPluginClassLoader() {
       return pluginClassLoader_;
    }
