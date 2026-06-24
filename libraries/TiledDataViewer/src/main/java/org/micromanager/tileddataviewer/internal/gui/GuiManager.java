@@ -24,12 +24,12 @@ public class GuiManager {
 
    private TiledDataViewer display_;
 
-   public GuiManager(TiledDataViewer ndViewer2, boolean acquisition) {
-      displayWindow_ = new DisplayWindow(ndViewer2, !acquisition);
+   public GuiManager(TiledDataViewer tiledDataViewer, boolean acquisition) {
+      displayWindow_ = new DisplayWindow(tiledDataViewer, !acquisition);
 
-      overlayer_ = new BaseOverlayer(ndViewer2);
-      imageMaker_ = new ImageMaker(ndViewer2, ndViewer2.getDataSource());
-      display_ = ndViewer2;
+      overlayer_ = new BaseOverlayer(tiledDataViewer);
+      imageMaker_ = new ImageMaker(tiledDataViewer, tiledDataViewer.getDataSource());
+      display_ = tiledDataViewer;
 
    }
 
@@ -154,8 +154,20 @@ public class GuiManager {
       return imageMaker_.getLatestTags();
    }
 
+   public int[] getRenderedPixelRGB(int canvasX, int canvasY) {
+      ViewerCanvas vc = getCanvas();
+      if (vc == null) {
+         return null;
+      }
+      return vc.getRenderedPixelRGB(canvasX, canvasY);
+   }
+
    public HashMap<String, int[]> getHistograms() {
       return imageMaker_.getHistograms();
+   }
+
+   public HashMap<String, int[][]> getComponentHistograms() {
+      return imageMaker_.getComponentHistograms();
    }
 
    public void expandDisplayedRangeToInclude(java.util.List<HashMap<String,
@@ -168,6 +180,12 @@ public class GuiManager {
    public void setWindowActivatedCallback(Runnable callback) {
       if (displayWindow_ != null) {
          displayWindow_.setWindowActivatedCallback(callback);
+      }
+   }
+
+   public void setPersistentMouseAdapter(java.awt.event.MouseAdapter adapter) {
+      if (displayWindow_ != null) {
+         displayWindow_.setPersistentMouseAdapter(adapter);
       }
    }
 

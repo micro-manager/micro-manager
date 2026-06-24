@@ -128,8 +128,12 @@ public final class ConfigGroupPad extends JScrollPane {
    public void refreshGroup(String groupName, String configName) {
       if (data_ != null) {
          data_.refreshGroup(groupName, configName);
-         // Use fireTableDataChanged() to preserve selection during updates
-         data_.fireTableDataChanged();
+         // Skip fireTableDataChanged while a cell is being edited — it would
+         // tear down the editor via removeEditor(), discarding in-progress edits.
+         // A plain repaint keeps non-editing rows up to date.
+         if (!table_.isEditing()) {
+            data_.fireTableDataChanged();
+         }
          table_.repaint();
       }
    }

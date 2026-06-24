@@ -10,16 +10,16 @@ import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 
 /**
- * Utility class translating between NDViewer's HashMap axes and MM's Coords.
+ * Utility class translating between TiledDataViewer's HashMap axes and MM's Coords.
  *
- * <p>NDViewer channel axis values can be either string names (e.g., "DAPI")
+ * <p>TiledDataViewer channel axis values can be either string names (e.g., "DAPI")
  * or integer indices. MM Coords channels are always integer indices. This
  * bridge maintains an ordered list mapping between the two representations,
  * and preserves the original value type for round-trip fidelity.</p>
  */
 final class AxesBridge {
 
-   // Ordered list of channel values as they appear in NDViewer.
+   // Ordered list of channel values as they appear in TiledDataViewer.
    // Index in this list == MM channel index.
    // Values can be String names or Integer indices (stored as Object).
    private final List<Object> channelValues_ =
@@ -28,7 +28,7 @@ final class AxesBridge {
    /**
     * Register a channel value if it is not already known.
     *
-    * @param channelValue the NDViewer channel value (String or Integer)
+    * @param channelValue the TiledDataViewer channel value (String or Integer)
     * @return the MM channel index assigned to this channel
     */
    public int registerChannel(Object channelValue) {
@@ -43,7 +43,7 @@ final class AxesBridge {
    }
 
    /**
-    * Return the NDViewer channel value for a given MM channel index.
+    * Return the TiledDataViewer channel value for a given MM channel index.
     *
     * @param index the MM channel index
     * @return the channel value (String or Integer), or null if out of range
@@ -116,12 +116,12 @@ final class AxesBridge {
    }
 
    /**
-    * Convert NDViewer axes to MM Coords.
+    * Convert TiledDataViewer axes to MM Coords.
     *
-    * @param axes NDViewer axes map
+    * @param axes TiledDataViewer axes map
     * @return equivalent MM Coords
     */
-   public Coords ndViewerToCoords(HashMap<String, Object> axes) {
+   public Coords tiledDataViewerToCoords(HashMap<String, Object> axes) {
       Coords.Builder b = Coordinates.builder();
       for (Map.Entry<String, Object> entry : axes.entrySet()) {
          String key = entry.getKey();
@@ -144,12 +144,12 @@ final class AxesBridge {
    }
 
    /**
-    * Convert MM Coords to NDViewer axes.
+    * Convert MM Coords to TiledDataViewer axes.
     *
     * @param coords MM Coords
-    * @return equivalent NDViewer axes map
+    * @return equivalent TiledDataViewer axes map
     */
-   public HashMap<String, Object> coordsToNDViewer(Coords coords) {
+   public HashMap<String, Object> coordsToTiledDataViewer(Coords coords) {
       HashMap<String, Object> axes = new HashMap<>();
       for (String axis : coords.getAxes()) {
          int value = coords.getIndex(axis);
@@ -174,7 +174,7 @@ final class AxesBridge {
    }
 
    /**
-    * Seed the channel list from a set of NDViewer axes keys.
+    * Seed the channel list from a set of TiledDataViewer axes keys.
     *
     * @param axesSet the set of all axes maps in the storage
     */

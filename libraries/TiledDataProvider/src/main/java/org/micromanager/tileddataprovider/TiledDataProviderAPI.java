@@ -6,7 +6,7 @@ import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 
 /**
- * Narrow read-only interface for storage backends used by NDViewer2 and ExportTiles.
+ * Narrow read-only interface for storage backends used by TiledDataViewer and ExportTiles.
  *
  * <h2>Axes maps</h2>
  *
@@ -125,7 +125,7 @@ public interface TiledDataProviderAPI {
    /**
     * Returns {@code true} once the dataset has been closed for writing.
     *
-    * <p>A finished dataset will not receive new images.  NDViewer uses this to
+    * <p>A finished dataset will not receive new images.  TiledDataViewer uses this to
     * decide whether to keep polling for new data.</p>
     *
     * @return {@code true} if writing is complete

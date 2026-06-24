@@ -309,6 +309,8 @@ public final class DefaultDataManager implements DataManager {
          pixelClone = ((short[]) pixels).clone();
       } else if (pixels instanceof int[]) {
          pixelClone = ((int[]) pixels).clone();
+      } else if (pixels instanceof float[]) {
+         pixelClone = ((float[]) pixels).clone();
       } else {
          throw new IllegalArgumentException("Pixel type is not supported.  It could not be cloned");
       }

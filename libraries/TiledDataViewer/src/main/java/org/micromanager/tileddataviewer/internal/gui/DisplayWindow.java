@@ -9,6 +9,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
@@ -42,6 +43,8 @@ public class DisplayWindow implements WindowListener {
    private TiledDataViewerCanvasMouseListenerInterface listener_;
    private TiledDataViewerCanvasMouseListenerInterface previousCustomListener_;
    private Runnable windowActivatedCallback_;
+   // Persistent adapter always added alongside the switchable listener (e.g. for pixel-info events)
+   private MouseAdapter persistentMouseAdapter_;
 
    public DisplayWindow(TiledDataViewer display, boolean nullAcq) {
       window_ = new JFrame();
@@ -88,10 +91,6 @@ public class DisplayWindow implements WindowListener {
 
    }
 
-   public void onScollPositionChanged(AxisScroller scroller, int value) {
-      subImageControls_.onScollPositionChanged(scroller, value);
-   }
-
    public void onScrollersAdded() {
       subImageControls_.onScrollersAdded();
 
@@ -124,7 +123,7 @@ public class DisplayWindow implements WindowListener {
    }
 
    /**
-    * Called on EDT. Update image and make sure scrollers are in right positions
+    * Called on EDT. Update image and make sure scrollers are in correct positions
     *
     */
    public void displayImage(Image image, HashMap<String, int[]> hists, DataViewCoords view) {
@@ -265,11 +264,38 @@ public class DisplayWindow implements WindowListener {
       return subImageControls_.isScrollerLocked(axis);
    }
 
+   /**
+    * Set a persistent mouse adapter that is always re-added alongside the
+    * switchable canvas listener.  Used by TiledDataViewerDataViewer to post
+    * pixel-info and DisplayMouseEvents for the Inspector white-balance feature.
+    */
+   public void setPersistentMouseAdapter(MouseAdapter adapter) {
+      if (imageCanvas_ == null) {
+         return;
+      }
+      // Remove any previously registered persistent adapter.
+      if (persistentMouseAdapter_ != null) {
+         imageCanvas_.getCanvas().removeMouseListener(persistentMouseAdapter_);
+         imageCanvas_.getCanvas().removeMouseMotionListener(persistentMouseAdapter_);
+      }
+      persistentMouseAdapter_ = adapter;
+      if (adapter != null) {
+         imageCanvas_.getCanvas().addMouseListener(adapter);
+         imageCanvas_.getCanvas().addMouseMotionListener(adapter);
+      }
+   }
+
    public void setCustomCanvasMouseListener(TiledDataViewerCanvasMouseListenerInterface m) {
       // Track the outgoing listener so resetCanvasMouseListener can restore it.
-      java.awt.event.MouseListener[] current = imageCanvas_.getCanvas().getMouseListeners();
-      previousCustomListener_ = (current.length > 0 && current[0] != listener_)
-              ? (TiledDataViewerCanvasMouseListenerInterface) current[0] : null;
+      // Only consider listeners that implement TiledDataViewerCanvasMouseListenerInterface
+      // (ignores the persistent MouseAdapter which is not a full canvas listener).
+      previousCustomListener_ = null;
+      for (java.awt.event.MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
+         if (l instanceof TiledDataViewerCanvasMouseListenerInterface && l != listener_) {
+            previousCustomListener_ = (TiledDataViewerCanvasMouseListenerInterface) l;
+            break;
+         }
+      }
       // Remove all currently registered listeners.
       for (MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
          imageCanvas_.getCanvas().removeMouseListener(l);
@@ -283,6 +309,11 @@ public class DisplayWindow implements WindowListener {
       imageCanvas_.getCanvas().addMouseWheelListener(m);
       imageCanvas_.getCanvas().addMouseMotionListener(m);
       imageCanvas_.getCanvas().addMouseListener(m);
+      // Re-add the persistent adapter so pixel-info events always fire.
+      if (persistentMouseAdapter_ != null) {
+         imageCanvas_.getCanvas().addMouseListener(persistentMouseAdapter_);
+         imageCanvas_.getCanvas().addMouseMotionListener(persistentMouseAdapter_);
+      }
    }
 
    public void resetCanvasMouseListener() {
@@ -303,6 +334,11 @@ public class DisplayWindow implements WindowListener {
       imageCanvas_.getCanvas().addMouseWheelListener(restore);
       imageCanvas_.getCanvas().addMouseMotionListener(restore);
       imageCanvas_.getCanvas().addMouseListener(restore);
+      // Re-add the persistent adapter so pixel-info events always fire.
+      if (persistentMouseAdapter_ != null) {
+         imageCanvas_.getCanvas().addMouseListener(persistentMouseAdapter_);
+         imageCanvas_.getCanvas().addMouseMotionListener(persistentMouseAdapter_);
+      }
    }
 
 }

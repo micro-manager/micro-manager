@@ -58,6 +58,7 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
+import org.micromanager.tileddataviewer.TiledDataViewerInspectorPanelController;
 
 
 /**
@@ -485,24 +486,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       JButton exploreHelpButton = new JButton("Help");
       exploreHelpButton.addActionListener(e -> JOptionPane.showMessageDialog(
             this,
-            "Navigation:\n"
-                  + "  Right-drag: pan view\n"
-                  + "  Scroll wheel: zoom in/out\n"
-                  + "\n"
-                  + "Tile selection (live explore):\n"
-                  + "  Right-click: select tile\n"
-                  + "  Left-drag: expand selection\n"
-                  + "  Left-click: acquire (or queue) selected tiles\n"
-                  + "  Interrupt: stop all queued and running acquisitions\n"
-                  + "  Ctrl+left-click: move stage to position\n"
-                  + "\n"
-                  + "View controls:\n"
-                  + "  Center: pan to center of dataset (keep zoom)\n"
-                  + "  No Zoom: zoom to 1:1 and center on dataset\n"
-                  + "\n"
-                  + "Export:\n"
-                  + "  Click Export, drag to draw ROI, then confirm export\n"
-                  + "  Click anywhere to dismiss the ROI",
+            TiledDataViewerInspectorPanelController.EXPLORE_HELP_TEXT,
             "Deskew Explore Help", JOptionPane.PLAIN_MESSAGE));
       explorePanel.add(exploreHelpButton, "wrap");
 

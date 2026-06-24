@@ -228,7 +228,7 @@ public class DeskewExploreManager {
                  SAVING_QUEUE_SIZE, null, true);
          dataSource_.setStorage(storage_);
 
-         // Create NDViewer2 (NDViewer + MM Inspector)
+         // Create TiledDataViewer (NDViewer + MM Inspector)
          mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(),
                   new NDTiffProviderAdapter(storage_), acqName_);
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
@@ -270,10 +270,10 @@ public class DeskewExploreManager {
             }
          }
 
-         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
-         viewer_.setWindowTitle("Deskew Explore - Right-click to select, "
-               + "Left-drag to extend, Left-click to acquire");
+         viewer_.setWindowTitle("Deskew Explore - Right-click/drag to select, "
+               + "Left-drag to pan, Left-click to acquire");
 
          // Set up overlayer and mouse listener
          // Route through mm2Viewer_ so the bridge plugin chains this as externalOverlayerPlugin_
@@ -392,7 +392,7 @@ public class DeskewExploreManager {
             }
          }
 
-         // Create NDViewer2 (NDViewer + MM Inspector)
+         // Create TiledDataViewer (NDViewer + MM Inspector)
          mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(studio_.data(),
                   new NDTiffProviderAdapter(storage_), acqName_);
          TiledDataViewerAcqInterface acqInterface = createAcqInterface();
@@ -481,7 +481,7 @@ public class DeskewExploreManager {
             studio_.logs().logError(e, "Failed to initialize DisplaySettings");
          }
 
-         viewer_ = mm2Viewer_.getNDViewer();
+         viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
          viewer_.setWindowTitle("Deskew Explore - " + acqName_);
 
@@ -585,7 +585,7 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Create an NDViewer2AcqInterface for the explore session.
+    * Create a TiledDataViewerAcqInterface for the explore session.
     */
    private TiledDataViewerAcqInterface createAcqInterface() {
       return new TiledDataViewerAcqInterface() {
@@ -845,7 +845,7 @@ public class DeskewExploreManager {
       // calling ndViewer_.close() again — a second close would queue EDT runnables
       // that NPE on NDViewer's partially-torn-down internal state.
       if (mm2Viewer_ != null) {
-         mm2Viewer_.closeWithoutNDViewer();
+         mm2Viewer_.closeWithoutTiledDataViewer();
       }
       // Null out viewer references so stopExplore() doesn't try to close them again.
       mm2Viewer_ = null;

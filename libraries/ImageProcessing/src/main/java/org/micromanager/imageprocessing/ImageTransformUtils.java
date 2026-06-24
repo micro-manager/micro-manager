@@ -5,9 +5,10 @@ import java.awt.geom.AffineTransform;
 /**
  * Utility methods for correcting camera orientation in tiled datasets.
  *
- * <p>The affine transform stored in per-image metadata encodes the relationship
- * between stage movement (µm) and camera pixels. This class provides methods to
- * derive the correction needed and apply it to pixel arrays.</p>
+ * <p>The {@code pixelSizeAffine} stored in per-image metadata maps
+ * <em>camera-pixel displacement → stage displacement (µm)</em>, consistent with
+ * how the rest of the codebase uses it (e.g. {@code XYNavigator} and
+ * {@code TileCreator} both call {@code affine.transform(pixelDelta, stageDelta)}).</p>
  */
 public class ImageTransformUtils {
 
@@ -17,9 +18,15 @@ public class ImageTransformUtils {
     * Derive the correction (mirror + rotation) needed to map camera-space pixels
     * back to stage-space orientation, from the pixelSizeAffine stored in image metadata.
     *
-    * <p>The affine maps stage displacement (µm) to camera-pixel displacement.
-    * To convert camera pixels back to stage orientation we apply the inverse linear
-    * transform: correctionRotation = (360 - rot) % 360, correctionMirror = mirror.</p>
+    * <p><b>Affine convention:</b> {@code pixelSizeAffine} maps camera-pixel displacement
+    * → stage displacement (µm).  A rotation angle {@code rot} extracted from the affine
+    * means the camera's pixel axes are rotated {@code rot} degrees relative to stage
+    * space.  Applying that same rotation to the pixel data restores stage orientation:
+    * correctionRotation = rot, correctionMirror = mirror.</p>
+    *
+    * <p><b>Rotation direction:</b> {@link #transformPixels} applies rotations
+    * <em>clockwise</em> — a 90° argument rotates the image 90° CW in screen
+    * coordinates (origin top-left).</p>
     *
     * @param affine the AffineTransform from {@code Metadata.getPixelSizeAffine()},
     *               or null
@@ -38,16 +45,18 @@ public class ImageTransformUtils {
       double m01 = affine.getShearX();   // -sin(theta) * yScale  (or shear)
       double m11 = affine.getScaleY();   // cos(theta) * yScale
 
-      double xScale = Math.sqrt(m00 * m00 + m10 * m10);
-      // Preserve sign: if m00 < 0 after factoring out rotation, the x-axis is flipped
-      // The signed x-scale is the length with sign = sign(m00) when theta near 0
-      // More precisely: xScaleSigned = xScale * sign(m00*cos + m10*sin)
-      // For our purposes: mirror = det < 0 (det = m00*m11 - m01*m10)
+      // Mirror = det < 0 (det = m00*m11 - m01*m10): a reflection is present.
       double det = m00 * m11 - m01 * m10;
       boolean mirror = det < 0;
 
-      // Rotation from the first column (or after un-mirroring)
-      double rotRad = Math.atan2(m10, m00);
+      // Extract rotation from the first column AFTER factoring out the mirror.
+      // transformPixels applies "mirror (horizontal flip) then rotate CW"; a horizontal
+      // mirror negates the camera x-axis (m00, m10). Un-mirroring before reading atan2
+      // yields the canonical (mirror, rotation) pair that transformPixels expects, instead
+      // of a rotation that double-counts the reflection.
+      double rm00 = mirror ? -m00 : m00;
+      double rm10 = mirror ? -m10 : m10;
+      double rotRad = Math.atan2(rm10, rm00);
       double rotDeg = Math.toDegrees(rotRad);
       // Normalise to [0, 360)
       rotDeg = ((rotDeg % 360) + 360) % 360;
@@ -55,11 +64,167 @@ public class ImageTransformUtils {
       // Round to nearest 90°
       int rot = (int) (Math.round(rotDeg / 90.0) * 90) % 360;
 
-      // Correction is the inverse: rotation = (360 - rot) % 360
-      int correctionRot = (360 - rot) % 360;
+      // Correction applies the same rotation to map camera pixels back to stage orientation
+      int correctionRot = rot;
       int correctionMirror = mirror ? 1 : 0;
 
       return new int[]{correctionRot, correctionMirror};
+   }
+
+   // -------------------------------------------------------------------------
+   // Orientation-operator algebra
+   //
+   // An orientation operator is "mirror (horizontal flip) first, then rotate
+   // clockwise by {@code rotation} degrees", matching {@link #transformPixels}
+   // and the Image Flipper (mirror, then rotateRight). It is represented as
+   // {@code int[]{rotation (0/90/180/270), mirror (0 or 1)}}, the same encoding
+   // returned by {@link #correctionFromAffine}.
+   // -------------------------------------------------------------------------
+
+   /**
+    * Returns the inverse of a mirror-then-rotate-CW orientation operator.
+    *
+    * <p>Closed form: {@code mirror} is unchanged; the inverse rotation is
+    * {@code mirror ? rotation : (360 - rotation) % 360}.</p>
+    *
+    * @param rotation rotation in degrees (0/90/180/270)
+    * @param mirror   1 if the operator mirrors, 0 otherwise
+    * @return int[]{rotation, mirror} of the inverse operator
+    */
+   public static int[] invertCorrection(int rotation, int mirror) {
+      int r = ((rotation % 360) + 360) % 360;
+      int m = mirror != 0 ? 1 : 0;
+      int invRot = m == 1 ? r : (360 - r) % 360;
+      return new int[]{invRot, m};
+   }
+
+   /**
+    * Composes two mirror-then-rotate-CW orientation operators: the result applies
+    * operator B first, then operator A (A after B).
+    *
+    * <p>Closed form: {@code mirror = mA xor mB}; {@code rotation =
+    * mA ? (rA - rB) : (rA + rB)} (mod 360). Verified against the full 8-element
+    * operator group by exhaustive 2x2 matrix multiplication.</p>
+    *
+    * @param rotationA outer operator rotation (applied second)
+    * @param mirrorA   outer operator mirror (0/1)
+    * @param rotationB inner operator rotation (applied first)
+    * @param mirrorB   inner operator mirror (0/1)
+    * @return int[]{rotation, mirror} of the composed operator
+    */
+   public static int[] composeCorrection(int rotationA, int mirrorA,
+                                         int rotationB, int mirrorB) {
+      int rA = ((rotationA % 360) + 360) % 360;
+      int rB = ((rotationB % 360) + 360) % 360;
+      int mA = mirrorA != 0 ? 1 : 0;
+      int mB = mirrorB != 0 ? 1 : 0;
+      int rot = mA == 1 ? (((rA - rB) % 360) + 360) % 360 : (rA + rB) % 360;
+      int mirror = mA ^ mB;
+      return new int[]{rot, mirror};
+   }
+
+   /**
+    * Parses Image Flipper metadata into an orientation operator.
+    *
+    * <p>The Image Flipper writes {@code ImageFlipper-Rotation} (0/90/180/270) and
+    * {@code ImageFlipper-Mirror} ("On"/"Off") into per-image user data and has
+    * already physically transformed the pixels (mirror, then rotate CW).</p>
+    *
+    * @param flipRotation the {@code ImageFlipper-Rotation} value
+    * @param flipMirror   the {@code ImageFlipper-Mirror} value ("On"/"Off")
+    * @return int[]{rotation, mirror}, or null when the operator is the identity
+    *         (no rotation and no mirror), i.e. nothing to fold in
+    */
+   public static int[] flipperFromUserData(int flipRotation, String flipMirror) {
+      int rot = ((flipRotation % 360) + 360) % 360;
+      int mirror = "On".equals(flipMirror) ? 1 : 0;
+      if (rot == 0 && mirror == 0) {
+         return null;
+      }
+      return new int[]{rot, mirror};
+   }
+
+   /**
+    * Builds the stage-delta -> canvas-pixel-delta matrix {@code M = O * A^-1}, where
+    * {@code A} is the 2x2 of the pixelSizeAffine (camera-pixel-delta -> stage-micron-delta)
+    * and {@code O} is the 2x2 of the orientation operator (mirror then rotate CW)
+    * applied to the tile pixels.
+    *
+    * <p>Because {@code O} is the orientation extracted from {@code A} (via
+    * {@link #correctionFromAffine}), {@code M} is a pure positive-scaled axis-aligned
+    * map: {@code +canvasX (right)} increases with the orientation-aligned stage X and
+    * {@code +canvasY (down)} with the orientation-aligned stage Y. This is the single
+    * authority for placing tiles consistently with the rotated pixel data, under the
+    * Micro-Manager convention that the lowest stage (X,Y) is the canvas top-left.</p>
+    *
+    * @param affine   the pixelSizeAffine (only its 2x2 linear part is used)
+    * @param rotation orientation rotation in degrees (0/90/180/270)
+    * @param mirror   1 if the orientation mirrors, 0 otherwise
+    * @return the 2x2 matrix M in row-major order {m00, m01, m10, m11},
+    *         or null if affine is null or singular
+    */
+   public static double[] stageToCanvasMatrix(AffineTransform affine,
+                                              int rotation, boolean mirror) {
+      if (affine == null) {
+         return null;
+      }
+      // Inverse of A's 2x2 linear part (camera-pixel-delta from stage-micron-delta).
+      double a00 = affine.getScaleX();
+      double a10 = affine.getShearY();
+      double a01 = affine.getShearX();
+      double a11 = affine.getScaleY();
+      double det = a00 * a11 - a01 * a10;
+      if (det == 0) {
+         return null;
+      }
+      double i00 = a11 / det;
+      double i01 = -a01 / det;
+      double i10 = -a10 / det;
+      double i11 = a00 / det;
+
+      // Orientation operator O = Rcw(rotation) * Mh^mirror (2x2, screen coords y-down).
+      double o00;
+      double o01;
+      double o10;
+      double o11;
+      switch (((rotation % 360) + 360) % 360) {
+         case 90:
+            o00 = 0;
+            o01 = -1;
+            o10 = 1;
+            o11 = 0;
+            break;
+         case 180:
+            o00 = -1;
+            o01 = 0;
+            o10 = 0;
+            o11 = -1;
+            break;
+         case 270:
+            o00 = 0;
+            o01 = 1;
+            o10 = -1;
+            o11 = 0;
+            break;
+         default:
+            o00 = 1;
+            o01 = 0;
+            o10 = 0;
+            o11 = 1;
+            break;
+      }
+      if (mirror) {
+         // Horizontal mirror negates the x-axis: O * diag(-1, 1) flips column 0.
+         o00 = -o00;
+         o10 = -o10;
+      }
+
+      // M = O * A^-1
+      double m00 = o00 * i00 + o01 * i10;
+      double m01 = o00 * i01 + o01 * i11;
+      double m10 = o10 * i00 + o11 * i10;
+      double m11 = o10 * i01 + o11 * i11;
+      return new double[]{m00, m01, m10, m11};
    }
 
    /**

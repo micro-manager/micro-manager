@@ -1,0 +1,9 @@
+# Runtime artifacts written into this directory when the tests run.
+# These regenerate on every run and must not be committed.
+
+# Temp files dropped by the Ant <junit> forked-JVM runner
+junit*.properties
+junitvmwatcher*.properties
+
+# CoreLog files written by MMStudio/CMMCore during a test run
+CoreLogs/

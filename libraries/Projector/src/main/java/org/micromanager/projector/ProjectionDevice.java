@@ -67,19 +67,32 @@ public interface ProjectionDevice {
    // ## Alert when something has changed.
    void addOnStateListener(OnStateListener listener);
 
-   // ## Get/set internal exposure setting
+   /**
+    * Returns the exposure time of the projection device in microseconds.
+    *
+    * @return exposure time in microseconds
+    */
    long getExposure();
 
    /**
-    * Sets exposure of the projection device in Micro-Seconds.
+    * Sets the exposure time of the projection device.
     *
-    * @param intervalUs Exposure in Micro-Seconds
+    * @param intervalUs exposure time in microseconds
     */
    void setExposure(long intervalUs);
 
-   // ## Get/set internal ROI interval setting
+   /**
+    * Sets the interval between successive ROI exposures.
+    *
+    * @param roiIntervalUs interval in microseconds
+    */
    void setRoiInterval(long roiIntervalUs);
 
+   /**
+    * Returns the interval between successive ROI exposures in microseconds.
+    *
+    * @return interval in microseconds
+    */
    long getRoiInterval();
 
    // ## Control illumination

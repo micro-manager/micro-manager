@@ -145,9 +145,6 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
             settings_.getString(PIXELSIZECALIBRATION,
                   studio_.profile().getSettings(MultiChannelShadingMigForm.class)
                         .getString(PIXELSIZECALIBRATION, ANY_PIXELSIZE)));
-      pixelSizeComboBox_.addActionListener(e -> {
-         studio_.data().notifyPipelineChanged();
-      });
       super.add(pixelSizeComboBox_, "wmax 200, wrap");
 
       JLabel channelGroupLabel = new JLabel("Channel Group:");
@@ -252,12 +249,28 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       super.add(scrollPane, "span 5 2, grow, push");
       shadingTableModel_ = new ShadingTableModel(studio_, imageCollection_);
       shadingTableModel_.setChannelGroup(groupName_);
+      shadingTableModel_.setPixelSizeCalibration(
+            settings_.getString(PIXELSIZECALIBRATION,
+                  studio_.profile().getSettings(MultiChannelShadingMigForm.class)
+                        .getString(PIXELSIZECALIBRATION, ANY_PIXELSIZE)));
       // Restore per-instance preset/file mappings from saved settings
-      List<String> savedPresets = settings_.getStringList("Presets");
-      List<String> savedFiles = settings_.getStringList("PresetFiles");
+      String currentCal = shadingTableModel_.getPixelSizeCalibration();
+      List<String> savedPresets = settings_.getStringList("Presets-" + currentCal);
+      List<String> savedFiles = settings_.getStringList("PresetFiles-" + currentCal);
+      if (savedPresets.isEmpty()) {
+         // backward-compat: try old flat keys (written before per-cal support)
+         savedPresets = settings_.getStringList("Presets");
+         savedFiles = settings_.getStringList("PresetFiles");
+      }
       if (!savedPresets.isEmpty() && savedPresets.size() == savedFiles.size()) {
          shadingTableModel_.loadPresets(savedPresets, savedFiles);
       }
+      pixelSizeComboBox_.addActionListener(e -> {
+         shadingTableModel_.setPixelSizeCalibration(
+               (String) pixelSizeComboBox_.getSelectedItem());
+         studio_.data().notifyPipelineChanged();
+      });
+
       final ShadingTable shadingTable =
             new ShadingTable(studio_, shadingTableModel_, this);
       scrollPane.setViewportView(shadingTable);
@@ -316,19 +329,37 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
    @Override
    public PropertyMap getSettings() {
+      // Flush the current table back to profile before reading all calibrations
+      shadingTableModel_.saveCurrentToProfile();
+
       PropertyMap.Builder builder = PropertyMaps.builder();
       builder.putString(CHANNELGROUP, shadingTableModel_.getChannelGroup());
-      builder.putStringList("Presets", shadingTableModel_.getUsedPresets());
       builder.putString(DARKFIELDFILENAME, imageCollection_.getBackgroundFile());
       builder.putBoolean(USEOPENCL, useOpenCLCheckBox_.isSelected());
       builder.putString(PIXELSIZECALIBRATION,
             (String) pixelSizeComboBox_.getSelectedItem());
-      ArrayList<String> files = new ArrayList<>();
-      for (String preset : shadingTableModel_.getUsedPresets()) {
-         String file = imageCollection_.getFileForPreset(preset);
-         files.add(file != null ? file : "");
+
+      // Collect all pixel size configs (plus "any") that have entries in the profile
+      ArrayList<String> configsWithData = new ArrayList<>();
+      ArrayList<String> allCalibrations = new ArrayList<>();
+      allCalibrations.add(ANY_PIXELSIZE);
+      for (String cal : mmc_.getAvailablePixelSizeConfigs()) {
+         allCalibrations.add(cal);
       }
-      builder.putStringList("PresetFiles", files.toArray(new String[] {}));
+      String groupName = shadingTableModel_.getChannelGroup();
+      for (String cal : allCalibrations) {
+         String key = groupName + "-" + cal;
+         List<String> cPresets = studio_.profile().getSettings(ShadingTableModel.class)
+               .getStringList(key + "-channels", new ArrayList<>(0));
+         List<String> cFiles = studio_.profile().getSettings(ShadingTableModel.class)
+               .getStringList(key + "-files", new ArrayList<>(0));
+         if (!cPresets.isEmpty()) {
+            configsWithData.add(cal);
+            builder.putStringList("Presets-" + cal, cPresets.toArray(new String[0]));
+            builder.putStringList("PresetFiles-" + cal, cFiles.toArray(new String[0]));
+         }
+      }
+      builder.putStringList("PixelSizeConfigs", configsWithData.toArray(new String[0]));
       return builder.build();
    }
 

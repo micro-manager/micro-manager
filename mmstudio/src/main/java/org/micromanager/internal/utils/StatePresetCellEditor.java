@@ -7,10 +7,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Objects;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 import org.micromanager.internal.ConfigGroupPad.StateTableData;
 
@@ -29,8 +32,45 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
    StateItem item_;
    SliderPanel slider_ = new SliderPanel();
 
+   // True only after the user picks an item from the open dropdown.
+   // getCellEditorValue() returns the original value when false, making any
+   // external stopCellEditing() call (e.g. Tab) a no-op commit.
+   private boolean selectionMade_ = false;
+
    public StatePresetCellEditor() {
       super();
+
+      combo_.addPopupMenuListener(new PopupMenuListener() {
+         @Override
+         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            combo_.putClientProperty("popupOpen", Boolean.TRUE);
+         }
+
+         @Override
+         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            combo_.putClientProperty("popupOpen", null);
+         }
+
+         @Override
+         public void popupMenuCanceled(PopupMenuEvent e) {
+            // Popup was dismissed without a selection (Escape or click outside).
+            // Clear the flag and cancel the cell edit in one step so the user
+            // does not need a second Escape/click to dismiss the editor too.
+            combo_.putClientProperty("popupOpen", null);
+            fireEditingCanceled();
+         }
+      });
+
+      combo_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (Boolean.TRUE.equals(combo_.getClientProperty("popupOpen"))) {
+               selectionMade_ = true;
+               fireEditingStopped();
+            }
+         }
+      });
+
       slider_.addEditActionListener(new ActionListener() {
 
          @Override
@@ -117,50 +157,37 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
    }
 
    private void setComboBox(String[] allowed) {
-      // remove old listeners
-      ActionListener[] l = combo_.getActionListeners();
-      for (int i = 0; i < l.length; i++) {
-         combo_.removeActionListener(l[i]);
-      }
+      selectionMade_ = false;
+      combo_.putClientProperty("popupOpen", null);
       combo_.removeAllItems();
       for (int i = 0; i < allowed.length; i++) {
          combo_.addItem(allowed[i]);
       }
-
-      // remove old items
-      combo_.removeAllItems();
-
-      // add new items
-      for (int i = 0; i < allowed.length; i++) {
-         combo_.addItem(allowed[i]);
-      }
+      // setSelectedItem silently fails when item_.config is not in the list
+      // (e.g. "" when no preset matches). Fall back to no selection (-1) so
+      // the combo shows blank rather than defaulting to item 0.
       combo_.setSelectedItem(item_.config);
-
-      // end editing on selection change
-      combo_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            fireEditingStopped();
-         }
-      });
-
+      if (!Objects.equals(item_.config, combo_.getSelectedItem())) {
+         combo_.setSelectedIndex(-1);
+      }
    }
 
    // This method is called when editing is completed.
    // It must return the new value to be stored in the cell.
    @Override
    public Object getCellEditorValue() {
-      if (item_.allowed.length == 1) {
+      if (item_.allowed.length == 0) {
+         return text_.getText();
+      } else if (item_.allowed.length == 1) {
          if (item_.singleProp && item_.hasLimits) {
             return slider_.getText();
          } else if (item_.singlePropAllowed != null && item_.singlePropAllowed.length == 0) {
             return text_.getText();
          } else {
-            return combo_.getSelectedItem();
+            return selectionMade_ ? combo_.getSelectedItem() : item_.config;
          }
       } else {
-         return combo_.getSelectedItem();
+         return selectionMade_ ? combo_.getSelectedItem() : item_.config;
       }
    }
 }
