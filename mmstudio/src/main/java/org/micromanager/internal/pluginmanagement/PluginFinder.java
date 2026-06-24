@@ -70,9 +70,11 @@ public final class PluginFinder {
     * list of the corresponding annotated classes.
     *
     * <p>All plugins are loaded through the single {@code loader} so that they are visible to each
-    * other and to Micro-Manager's own code (the loader's parent). The JARs added by previous
-    * calls remain on the loader, so a plugin in one directory can reference classes from a plugin
-    * in another directory.
+    * other and to Micro-Manager's own code (the loader's parent). The JARs added by previous and
+    * subsequent calls remain on the loader. Note that this method only discovers and loads the
+    * plugin classes; the caller is expected to add the JARs from every directory (by calling this
+    * method for each) before instantiating any plugin, so that a plugin in one directory can
+    * reference classes from a plugin in another directory regardless of discovery order.
     *
     * @param loader the shared plugin class loader to add the discovered JARs to
     * @param root   the directory (or jar file) to search for plugin JARs

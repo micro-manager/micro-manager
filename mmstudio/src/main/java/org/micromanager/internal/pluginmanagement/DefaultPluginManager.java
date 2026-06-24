@@ -129,22 +129,31 @@ public final class DefaultPluginManager implements PluginManager {
     */
    private void loadPlugins() {
       final long startTime = System.currentTimeMillis();
+
+      // Discover all plugin classes from every directory first, adding every directory's JARs to
+      // the shared class loader, and only then instantiate any plugin. This way all plugin JARs
+      // are on the shared loader before any plugin constructor runs, so plugins can reference each
+      // other regardless of which directory they live in or the order in which they are found.
+      List<Class<?>> pluginClasses = new ArrayList<>();
+
       String dir = System.getProperty("org.micromanager.plugin.path",
             System.getProperty("user.dir") + "/mmplugins");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
-      loadPlugins(PluginFinder.findPlugins(pluginClassLoader_, dir));
+      pluginClasses.addAll(PluginFinder.findPlugins(pluginClassLoader_, dir));
 
       dir = System.getProperty("org.micromanager.autofocus.path",
             System.getProperty("user.dir") + "/mmautofocus");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
-      loadPlugins(PluginFinder.findPlugins(pluginClassLoader_, dir));
+      pluginClasses.addAll(PluginFinder.findPlugins(pluginClassLoader_, dir));
 
       ReportingUtils.logMessage("Searching for plugins in MMStudio's class loader");
       // We need to use our normal class loader to load stuff from the MMJ_.jar
       // file, since otherwise we won't be able to cast the new plugin to
       // MMPlugin in loadPlugins(), below.
-      loadPlugins(PluginFinder.findPluginsWithLoader(
+      pluginClasses.addAll(PluginFinder.findPluginsWithLoader(
             studio_.getClass().getClassLoader()));
+
+      loadPlugins(pluginClasses);
 
       ReportingUtils.logMessage("Plugin loading took "
             + (System.currentTimeMillis() - startTime) + "ms");
