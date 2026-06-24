@@ -1990,6 +1990,63 @@ public class ExplorerManager {
    }
 
    /**
+    * Drops tiles within {@code margin} grid tiles of the edge of the occupied region, per well.
+    * The edge is followed raggedly: a tile is excluded when it is within {@code margin} of the
+    * first/last occupied column in its own grid row OR of the first/last occupied row in its own
+    * grid column. This removes the outer ring(s) of tiles - which often only partially overlap the
+    * sample and make autofocus fail - while tracking a non-rectangular (curved/diagonal) ROI
+    * outline rather than a plain bounding box. Returns the kept tiles (input order preserved).
+    */
+   private java.util.List<Tile> excludeEdgeTiles(java.util.List<Tile> tiles, int margin) {
+      if (margin <= 0 || tiles.isEmpty()) {
+         return new java.util.ArrayList<>(tiles);
+      }
+      // Per-well occupied extents: for each (well,row) the min/max col, for each (well,col) the
+      // min/max row. Non-plate tiles share a single well key of 0.
+      java.util.Map<Long, int[]> colRangeByRow = new java.util.HashMap<>(); // {minCol,maxCol}
+      java.util.Map<Long, int[]> rowRangeByCol = new java.util.HashMap<>(); // {minRow,maxRow}
+      for (Tile t : tiles) {
+         long well = wellKeyOf(t);
+         long rowKey = (well << 24) ^ (t.row & 0xffffffL);
+         long colKey = (well << 24) ^ (t.col & 0xffffffL);
+         int[] cr = colRangeByRow.get(rowKey);
+         if (cr == null) {
+            colRangeByRow.put(rowKey, new int[] {t.col, t.col});
+         } else {
+            cr[0] = Math.min(cr[0], t.col);
+            cr[1] = Math.max(cr[1], t.col);
+         }
+         int[] rr = rowRangeByCol.get(colKey);
+         if (rr == null) {
+            rowRangeByCol.put(colKey, new int[] {t.row, t.row});
+         } else {
+            rr[0] = Math.min(rr[0], t.row);
+            rr[1] = Math.max(rr[1], t.row);
+         }
+      }
+      java.util.List<Tile> kept = new java.util.ArrayList<>();
+      for (Tile t : tiles) {
+         long well = wellKeyOf(t);
+         int[] cr = colRangeByRow.get((well << 24) ^ (t.row & 0xffffffL));
+         int[] rr = rowRangeByCol.get((well << 24) ^ (t.col & 0xffffffL));
+         boolean edge = (t.col - cr[0] < margin) || (cr[1] - t.col < margin)
+               || (t.row - rr[0] < margin) || (rr[1] - t.row < margin);
+         if (!edge) {
+            kept.add(t);
+         }
+      }
+      return kept;
+   }
+
+   /** Packs a tile's well {row,col} (or 0 for non-plate) into a stable long key. */
+   private static long wellKeyOf(Tile t) {
+      if (t.well == null) {
+         return 0L;
+      }
+      return ((long) t.well[0] << 32) | (t.well[1] & 0xffffffffL);
+   }
+
+   /**
     * Chooses up to {@code n} tiles TOTAL, spread across the given set using farthest-point sampling
     * in stage space. On multi-well plates the total budget {@code n} is distributed across the
     * occupied wells (each occupied well gets at least one point until the budget is exhausted), so
@@ -2003,11 +2060,7 @@ public class ExplorerManager {
       // Group by well so the budget is spread across wells; non-plate -> single group.
       java.util.Map<Long, java.util.List<Tile>> byWell = new java.util.LinkedHashMap<>();
       for (Tile t : tiles) {
-         long key = 0;
-         if (t.well != null) {
-            key = ((long) t.well[0] << 32) | (t.well[1] & 0xffffffffL);
-         }
-         byWell.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(t);
+         byWell.computeIfAbsent(wellKeyOf(t), k -> new java.util.ArrayList<>()).add(t);
       }
       int nWells = byWell.size();
       // Distribute n across wells: a base count each, plus one extra to the first 'remainder'
@@ -2778,7 +2831,8 @@ public class ExplorerManager {
     * runs the selected autofocus method, and records the resulting Z of every checked Z stage.
     * Runs off the EDT.
     */
-   public void startRefineZAutomatic(int nPoints, String afMethodName, boolean withinVesselOnly) {
+   public void startRefineZAutomatic(int nPoints, String afMethodName, boolean withinVesselOnly,
+         int edgeMargin) {
       if (dataSource_ == null || !exploring_ || loadedData_ || !hasPositionRoi()) {
          setRefineZStatus("Draw an ROI first.");
          return;
@@ -2797,6 +2851,16 @@ public class ExplorerManager {
       } catch (Exception ex) {
          setRefineZStatus(ex.getMessage());
          return;
+      }
+      if (edgeMargin > 0) {
+         java.util.List<Tile> interior = excludeEdgeTiles(tiles, edgeMargin);
+         // Only apply the exclusion if it leaves something to focus on; otherwise the grid is
+         // too thin for the requested margin and we fall back to the full set.
+         if (!interior.isEmpty()) {
+            tiles = interior;
+         } else {
+            setRefineZStatus("Edge margin too large for this grid; using all tiles.");
+         }
       }
       java.util.List<Tile> chosen = chooseSpreadTiles(tiles, nPoints);
       if (chosen.isEmpty()) {
