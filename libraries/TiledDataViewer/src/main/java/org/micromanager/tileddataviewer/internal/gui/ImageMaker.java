@@ -210,6 +210,16 @@ public class ImageMaker {
                TaggedImage imageForDisplay = getDisplayImage(axes, viewCoords.getResolutionIndex(),
                        viewOffsetAtResX, viewOffsetAtResY, imagePixelWidth, imagePixelHeight);
 
+               // The requested resolution level / region may have no data yet - e.g. a zoom
+               // that requests a pyramid level still being generated while tiles are acquired
+               // concurrently. Skip this channel for now (keeping the last frame for it); the
+               // next render fills it in once the data is ready. Without this guard the null
+               // deref below throws, aborts the render, and leaves the canvas blank until the
+               // zoom level changes.
+               if (imageForDisplay == null) {
+                  continue;
+               }
+
                if (latestTags_ == null
                         || (viewCoords.getAxesPositions().containsKey(TiledDataViewer.CHANNEL_AXIS)
                         && viewCoords.getAxesPositions().get(TiledDataViewer.CHANNEL_AXIS)
