@@ -21,7 +21,7 @@ import java.net.URLClassLoader;
 /**
  * A single class loader shared by all Micro-Manager plugins.
  *
- * <p>Historically each plugin  got its own {@link URLClassLoader}, which meant plugins
+ * <p>Historically each plugin got its own {@link URLClassLoader}, which meant plugins
  *  could not see each other's classes, and code on Micro-Manager's class
  * loader could not see plugin classes at all (a parent class loader never sees its children).
  *
