@@ -16,6 +16,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.positionlist.utils.ZGenerator;
 import org.micromanager.internal.utils.WindowPositioning;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Stand-alone window for Refine Z. Opened from the Explorer dialog's "Refine Z..." button so the
@@ -28,15 +29,20 @@ import org.micromanager.internal.utils.WindowPositioning;
  */
 public class RefineZFrame extends JFrame {
 
+   private static final String EDGE_MARGIN = "RefineZEdgeMargin";
+   private static final String AF_METHOD = "RefineZAutofocusMethod";
+
    private final Studio studio_;
    private final ExplorerManager explorerManager_;
    private final ExplorerFrame explorerFrame_;
+   private final MutablePropertyMapView settings_;
 
    private final JRadioButton autoRadio_;
    private final JRadioButton manualRadio_;
    private final JComboBox<ZGenerator.Type> interpCombo_;
    private final JComboBox<String> afCombo_;
    private final JSpinner pointsSpinner_;
+   private final JSpinner edgeMarginSpinner_;
    private final JButton startButton_;
    private final JButton cancelButton_;
    private final JButton setButton_;
@@ -62,6 +68,7 @@ public class RefineZFrame extends JFrame {
       studio_ = studio;
       explorerManager_ = explorerManager;
       explorerFrame_ = explorerFrame;
+      settings_ = studio_.profile().getSettings(RefineZFrame.class);
 
       setTitle("Refine Z");
       URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
@@ -104,6 +111,7 @@ public class RefineZFrame extends JFrame {
       afCombo_.addActionListener(e -> {
          Object sel = afCombo_.getSelectedItem();
          if (sel != null && !syncingAf_) {
+            settings_.putString(AF_METHOD, sel.toString());
             try {
                studio_.getAutofocusManager().setAutofocusMethodByName(sel.toString());
             } catch (Exception ex) {
@@ -112,15 +120,28 @@ public class RefineZFrame extends JFrame {
          }
       });
       panel.add(afCombo_);
+      // Created before the Start button so its action listener can read it (final field).
+      edgeMarginSpinner_ = new JSpinner(new SpinnerNumberModel(
+            settings_.getInteger(EDGE_MARGIN, 0), 0, 99, 1));
+      edgeMarginSpinner_.setToolTipText(
+            "Exclude reference points within this many tiles of the grid edge. "
+            + "Outer tiles often only partially overlap the sample and can fail autofocus. "
+            + "0 = use all tiles.");
+      edgeMarginSpinner_.addChangeListener(e ->
+            settings_.putInteger(EDGE_MARGIN, (Integer) edgeMarginSpinner_.getValue()));
       startButton_ = new JButton("Start");
       startButton_.addActionListener(e -> {
          Object af = afCombo_.getSelectedItem();
          explorerManager_.startRefineZAutomatic(
                (Integer) pointsSpinner_.getValue(),
                af != null ? af.toString() : null,
-               explorerFrame_.isWithinVesselSelected());
+               explorerFrame_.isWithinVesselSelected(),
+               (Integer) edgeMarginSpinner_.getValue());
       });
       panel.add(startButton_, "wrap");
+
+      panel.add(new JLabel("Exclude edge margin (tiles):"), "split 2");
+      panel.add(edgeMarginSpinner_, "wrap");
 
       cancelButton_ = new JButton("Cancel");
       cancelButton_.setToolTipText("Cancel the running automatic Refine Z");
@@ -155,8 +176,11 @@ public class RefineZFrame extends JFrame {
 
       add(panel, "growx, wrap");
 
-      // Populate autofocus methods and select the current interpolation method.
+      // Populate autofocus methods. Restore the method saved in the profile when it is still
+      // available, applying it to the main MM window so the two stay in sync; otherwise fall back
+      // to whatever method MM currently has active.
       refreshAfMethods();
+      restoreSavedAfMethod();
       explorerManager_.setRefineZMethod((ZGenerator.Type) interpCombo_.getSelectedItem());
 
       // Re-sync the AF method from the main window each time this window regains focus, since the
@@ -197,6 +221,25 @@ public class RefineZFrame extends JFrame {
       }
    }
 
+   /**
+    * Selects the autofocus method remembered in the profile (if present and still installed) and
+    * pushes it to the main MM window. Called once at construction so a remembered choice wins over
+    * MM's current method; later focus-driven {@link #refreshAfMethods()} calls follow MM.
+    */
+   private void restoreSavedAfMethod() {
+      String saved = settings_.getString(AF_METHOD, null);
+      if (saved == null || saved.isEmpty()) {
+         return;
+      }
+      for (int i = 0; i < afCombo_.getItemCount(); i++) {
+         if (saved.equals(afCombo_.getItemAt(i))) {
+            // Not syncing: we want this selection to propagate to the AutofocusManager.
+            afCombo_.setSelectedItem(saved);
+            return;
+         }
+      }
+   }
+
    /** Notifies whether an automatic Refine-Z run is in progress; switches to EDT. */
    public void setRefineZRunning(boolean running) {
       SwingUtilities.invokeLater(() -> {
@@ -218,6 +261,7 @@ public class RefineZFrame extends JFrame {
       autoRadio_.setEnabled(!running_);
       manualRadio_.setEnabled(!running_);
       pointsSpinner_.setEnabled(auto && !running_);
+      edgeMarginSpinner_.setEnabled(auto && !running_);
       afCombo_.setEnabled(auto && !running_);
       startButton_.setEnabled(auto && !running_);
       cancelButton_.setEnabled(auto && running_);
