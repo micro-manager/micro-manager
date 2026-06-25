@@ -260,26 +260,110 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
     * @param desiredZPos the Z position in microns for the main zDrive
     * @return true on success, false on failure.
     */
+   // Maximum number of offset-adjustment iterations before we give up. Without
+   // a cap, a bad (e.g. non-finite) multiplier or an oscillating ZDrive can keep
+   // this loop running forever, repeatedly commanding the PFS offset.
+   private static final int MAX_ADJUST_ITERATIONS = 20;
+
+   // Set to true to emit verbose per-iteration diagnostics from adjustPFSOffset
+   // (kept available for future investigation of offset-adjustment issues).
+   private static final boolean DEBUG_LOGGING = false;
+
+   private void debugLog(String message) {
+      if (DEBUG_LOGGING) {
+         studio_.logs().logMessage(message);
+      }
+   }
+
    private boolean adjustPFSOffset(double desiredZPos) {
       CMMCore core = studio_.core();
       ArrayList<Pair<Double, Double>> m = new ArrayList<>();
       try {
          String pixelSizeConfig = core.getCurrentPixelSizeConfig();
          MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
-         double multiplier = settings.getDouble(pixelSizeConfig, 1.0);
+         final double defaultMultiplier = 1.0;
+         double multiplier = settings.getDouble(pixelSizeConfig, defaultMultiplier);
+         // A non-finite multiplier may have been persisted by an earlier run.
+         // Reject it as early as possible and fall back to the default, so the
+         // bad value can never propagate into the offset calculation.
+         if (!Double.isFinite(multiplier)) {
+            studio_.logs().logError("PFSOffsetFocusser: stored multiplier for pixelSizeConfig '"
+                  + pixelSizeConfig + "' was non-finite (" + multiplier + "); reverting to default "
+                  + defaultMultiplier + ".");
+            multiplier = defaultMultiplier;
+            settings.putDouble(pixelSizeConfig, defaultMultiplier);
+         }
          double zPos = core.getPosition(zDrive_);
+         debugLog("PFSOffsetFocusser.adjustPFSOffset: start. desiredZPos="
+               + desiredZPos + ", initial zPos=" + zPos + ", precision=" + precision_
+               + ", pixelSizeConfig=" + pixelSizeConfig + ", stored multiplier=" + multiplier);
+         int iteration = 0;
          while (Math.abs(desiredZPos - zPos) > precision_) {
+            if (++iteration > MAX_ADJUST_ITERATIONS) {
+               studio_.logs().logError("PFSOffsetFocusser: gave up adjusting PFS offset after "
+                     + MAX_ADJUST_ITERATIONS + " iterations; ZDrive did not reach the target "
+                     + "position (last deviation " + Math.abs(desiredZPos - zPos) + " um).");
+               return false;
+            }
             double currentOffset = core.getAutoFocusOffset();
             double offsetDiff = multiplier * (desiredZPos - zPos);
-            core.setAutoFocusOffset(currentOffset + offsetDiff);
+            double newOffset = currentOffset + offsetDiff;
+            debugLog("PFSOffsetFocusser iter " + iteration
+                  + ": zPos=" + zPos + ", desiredZPos=" + desiredZPos
+                  + ", (desiredZPos-zPos)=" + (desiredZPos - zPos)
+                  + ", multiplier=" + multiplier
+                  + ", currentOffset=" + currentOffset
+                  + ", offsetDiff=" + offsetDiff
+                  + ", newOffset=" + newOffset);
+            // Never command a non-finite offset to the hardware. This can arise
+            // if the multiplier became non-finite (see weightedAverage below) or
+            // if getAutoFocusOffset() returned an unexpected value.
+            if (!Double.isFinite(newOffset)) {
+               studio_.logs().logError("PFSOffsetFocusser: computed a non-finite PFS offset ("
+                     + newOffset + ") from multiplier=" + multiplier + ", currentOffset="
+                     + currentOffset + ", desiredZPos=" + desiredZPos + ", zPos=" + zPos
+                     + "; aborting offset adjustment.");
+               return false;
+            }
+            core.setAutoFocusOffset(newOffset);
             Thread.sleep(1000);
             double newZPos = core.getPosition(zDrive_);
             double zPosDiff = newZPos - zPos;
-            double multiplierEstimate = offsetDiff / zPosDiff;
-            m.add(new ImmutablePair<>(multiplierEstimate, zPosDiff));
-            multiplier = weightedAverage(m);
+            debugLog("PFSOffsetFocusser iter " + iteration
+                  + ": after setAutoFocusOffset(" + newOffset + "): newZPos=" + newZPos
+                  + ", zPosDiff=" + zPosDiff);
+            if (zPosDiff != 0) {
+               double multiplierEstimate = offsetDiff / zPosDiff;
+               // Weight by the magnitude of the ZDrive move: larger, more
+               // reliable moves get more weight. Using the unsigned magnitude
+               // (rather than signed zPosDiff) prevents the weights from
+               // cancelling to ~0 when the ZDrive oscillates.
+               m.add(new ImmutablePair<>(multiplierEstimate, Math.abs(zPosDiff)));
+               double newMultiplier = weightedAverage(m);
+               debugLog("PFSOffsetFocusser iter " + iteration
+                     + ": multiplierEstimate=" + multiplierEstimate
+                     + ", weight=" + Math.abs(zPosDiff)
+                     + ", weightedAverage=" + newMultiplier
+                     + " (sample count=" + m.size() + ")");
+               // Keep the previous (good) multiplier if the weighted average is
+               // not usable, e.g. when the weights sum to ~0 and produce a
+               // divide-by-zero NaN/Infinity.
+               if (Double.isFinite(newMultiplier)) {
+                  multiplier = newMultiplier;
+               } else {
+                  studio_.logs().logMessage("PFSOffsetFocusser: weighted-average multiplier was "
+                        + "non-finite (" + newMultiplier + "); keeping previous multiplier "
+                        + multiplier + ".");
+               }
+            } else {
+               debugLog("PFSOffsetFocusser iter " + iteration
+                     + ": zPosDiff is 0; not updating multiplier.");
+            }
             zPos = newZPos;
          }
+         debugLog("PFSOffsetFocusser.adjustPFSOffset: converged after "
+               + iteration + " iteration(s); final zPos=" + zPos
+               + ", final multiplier=" + multiplier);
          settings.putDouble(pixelSizeConfig, multiplier);
       } catch (Exception e) {
          studio_.logs().logError(e);
@@ -301,6 +385,13 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
       for (Pair<Double, Double> val : values) {
          sumZPosDiffs += val.getValue();
          weightedEstimateSum += val.getValue() * val.getKey();
+      }
+      // Weights are non-negative magnitudes (|zPosDiff|), so they only sum to ~0
+      // if the list is empty or every move was negligible. Guard the divide-by-
+      // zero and return NaN so the caller can fall back to the previous
+      // multiplier instead of poisoning the offset.
+      if (Math.abs(sumZPosDiffs) < 1e-9) {
+         return Double.NaN;
       }
       return weightedEstimateSum / sumZPosDiffs;
    }
