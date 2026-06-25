@@ -108,16 +108,5 @@ public interface PluginManager {
     */
    HashMap<String, DisplayGearMenuPlugin> getDisplayGearMenuPlugins();
 
-   /**
-    * Return the class loader through which all plugins are loaded.
-    *
-    * <p>All plugins share this single class loader, whose parent is
-    * Micro-Manager's own class loader. It can therefore resolve both plugin
-    * classes and Micro-Manager / core classes. This is useful for code that
-    * needs to see plugin classes, such as scripting engines (so that BeanShell
-    * scripts can import plugin classes) and the Pycro-Manager / ZMQ bridge.
-    *
-    * @return the shared class loader used to load all plugins
-    */
-   ClassLoader getPluginClassLoader();
+
 }

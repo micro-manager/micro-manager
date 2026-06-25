@@ -82,6 +82,7 @@ import org.fife.ui.rtextarea.SearchResult;
 import org.micromanager.ScriptController;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -308,7 +309,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
 
       // Load classes (e.g. in import statements) through the shared plugin class loader, so that
       // scripts can see plugin classes in addition to Micro-Manager / core classes (its parent).
-      ClassLoader pluginClassLoader = studio_.plugins().getPluginClassLoader();
+      ClassLoader pluginClassLoader = ((DefaultPluginManager) studio_.plugins())
+               .getPluginClassLoader();
       beanshellREPLint_.setClassLoader(pluginClassLoader);
 
       Thread interpreterThread = new Thread(beanshellREPLint_, "BeanShell interpreter");
@@ -369,7 +371,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
     * @return the shared plugin class loader
     */
    ClassLoader getPluginClassLoader() {
-      return studio_.plugins().getPluginClassLoader();
+      return ((DefaultPluginManager) studio_.plugins()).getPluginClassLoader();
    }
 
    /**

@@ -90,15 +90,17 @@ public final class DefaultPluginManager implements PluginManager {
    }
 
    /**
-    * The single class loader through which all plugins are loaded.
+    * Return the class loader through which all plugins are loaded.
     *
-    * <p>Its parent is Micro-Manager's own class loader, so it can resolve both plugin classes and
-    * Micro-Manager / core classes. The Pycro-Manager / ZMQ bridge uses this to access plugins.
+    * <p>All plugins share this single class loader, whose parent is
+    * Micro-Manager's own class loader. It can therefore resolve both plugin
+    * classes and Micro-Manager / core classes. This is useful for code that
+    * needs to see plugin classes, such as scripting engines (so that BeanShell
+    * scripts can import plugin classes) and the Pycro-Manager / ZMQ bridge.
     *
-    * @return the shared plugin class loader
+    * @return the shared class loader used to load all plugins
     */
-   @Override
-   public SharedPluginClassLoader getPluginClassLoader() {
+   public ClassLoader getPluginClassLoader() {
       return pluginClassLoader_;
    }
 
