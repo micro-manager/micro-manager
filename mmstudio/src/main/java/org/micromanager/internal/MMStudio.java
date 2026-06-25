@@ -624,28 +624,12 @@ public final class MMStudio implements Studio {
             }
          };
          try {
-            // It appears that every plugin has its own ClassLoader.
-            // We need to extract all of these and pass to ZMQServer, so that it knows
-            // where to search for classes to load. If we don't do this, and just create
-            // new ClassLoaders to instantiate objects, static variables will not be shared
-            // across instances created by the two objects, leading to confusing behavior.
+            // All plugins are loaded through a single shared class loader (whose parent is
+            // Micro-Manager's own class loader). Passing that one loader to ZMQServer lets it
+            // resolve both plugin classes and Micro-Manager / core classes, and avoids the
+            // problem of static variables not being shared across multiple class loaders.
             Collection<ClassLoader> classLoaders = new HashSet<>();
-            for (Object plugin : plugins().getMenuPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-            for (Object plugin : plugins().getAutofocusPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-            for (Object plugin : plugins().getDisplayGearMenuPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-            for (Object plugin : plugins().getProcessorPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-            for (Object plugin : plugins().getOverlayPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-
+            classLoaders.add(pluginManager_.getPluginClassLoader());
 
             zmqServer_ = new ZMQServer(classLoaders,
                   instanceGrabberFunction,
