@@ -187,6 +187,9 @@ public class MMUIManager {
    }
 
    public void showScriptPanel() {
+      // Clear BeanShell's negative class cache so that plugin classes loaded after the REPL
+      // interpreter was created (plugins load on a background thread) become visible to scripts.
+      scriptPanel_.resetReplClassCache();
       scriptPanel_.setVisible(true);
    }
 
