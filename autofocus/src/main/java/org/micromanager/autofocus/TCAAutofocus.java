@@ -69,6 +69,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private static final String KEY_DELTA_Z = "Delta Z";
    private static final String KEY_DRYRUN = "Dry run";
    private static final String[] SHOWVALUES = {"Yes", "No"};
+   private static final String EXPOSURE = "Exposure";
 
    private static final String KEY_FOCUS_ANALYZER = "Focus Analyzer";
    private static final String[] FOCUS_ANALYZER_STRINGS = {"460", "300", "NADH", "FAD"};
@@ -95,6 +96,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private String channelGroup_;
    private double curDist_;
    private String focusAnalyzer_ = "460"; // default to 460nm analyzer
+   private double exposure_ = 100; 
 
    private static class FocusResults {
       public String[] metricNames;
@@ -115,6 +117,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       super.createProperty(KEY_DELTA_Z, Double.toString(deltaz_));
       super.createProperty(KEY_DRYRUN, SHOWVALUES[1], SHOWVALUES);
       super.createProperty(KEY_FOCUS_ANALYZER, FOCUS_ANALYZER_STRINGS[0], FOCUS_ANALYZER_STRINGS);
+      super.createProperty(EXPOSURE, Double.toString(exposure_));
    }
 
 
@@ -127,6 +130,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          rel_z_max_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAX));
          dryrun_ = getPropertyValue(KEY_DRYRUN).contentEquals("Yes");
          focusAnalyzer_ = getPropertyValue(KEY_FOCUS_ANALYZER);
+         exposure_ = Double.parseDouble(getPropertyValue(EXPOSURE));
 
       } catch (Exception e) {
 
@@ -181,7 +185,6 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       long t0 = System.currentTimeMillis();
       double bestDist = 5000;
       double bestSh = 0;
-      
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
@@ -194,9 +197,11 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
                + "must be running first!");
          return 0.0;
       }
+      final double oldExposure = core_.getExposure();
       
       applySettings();
 
+      core_.setExposure(exposure_);
       //######################## START THE ROUTINE ###########
       double original_z = core_.getPosition(core_.getFocusDevice());
       double bestZ = original_z;
@@ -315,6 +320,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          }
          core_.setShutterOpen(shutterOpen);
          core_.setAutoShutter(autoShutter);
+         core_.setExposure(oldExposure);
          IJ.log("Focus scores computed, plotting results...");
 
          // Plot data:
