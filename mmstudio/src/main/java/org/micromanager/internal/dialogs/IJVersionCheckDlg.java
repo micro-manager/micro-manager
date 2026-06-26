@@ -24,8 +24,6 @@
 package org.micromanager.internal.dialogs;
 
 import ij.ImageJ;
-import java.awt.Dimension;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -38,7 +36,6 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -142,12 +139,7 @@ public final class IJVersionCheckDlg extends JDialog {
       contents.add(okay, "align right");
       getContentPane().add(contents);
       pack();
-      // Center us in the middle of the screen.
-      Dimension size = getSize();
-      Rectangle bounds = GUIUtils.getFullScreenBounds(
-            GUIUtils.getGraphicsConfigurationContaining(1, 1));
-      setLocation((int) (bounds.getX() + size.getWidth() / 2),
-            (int) (bounds.getY() + size.getHeight() / 2));
+      setLocationRelativeTo(null);
       setVisible(true);
    }
 }
