@@ -33,6 +33,7 @@ import java.util.TreeMap;
 import mmcorej.CMMCore;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
+import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
@@ -607,6 +608,18 @@ public class SystemController {
     */
    @Subscribe
    public void onPropertiesChanged(PropertiesChangedEvent event) {
+      forceUpdate();
+   }
+
+   /**
+    * Refreshes all UIProperties when a Micro-manager configuration group / preset changes (for
+    * instance {@code core.setConfig("Channel", ...)} from a script). The Core posts this instead
+    * of a per-property event, so the property handlers never fire for preset-driven changes.
+    *
+    * @param event Config-group changed event.
+    */
+   @Subscribe
+   public void onConfigGroupChanged(ConfigGroupChangedEvent event) {
       forceUpdate();
    }
 
