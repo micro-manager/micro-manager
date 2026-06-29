@@ -34,6 +34,7 @@ import mmcorej.CMMCore;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
 import org.micromanager.events.GUIRefreshEvent;
+import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.internal.utils.DaytimeNighttime;
 
@@ -590,6 +591,22 @@ public class SystemController {
     */
    @Subscribe
    public void onGuiRefresh(GUIRefreshEvent event) {
+      forceUpdate();
+   }
+
+   /**
+    * Refreshes all UIProperties when Micro-manager reports that one or more device properties
+    * have changed (the Core's bulk "properties changed" callback). This is the catch-all for
+    * device adapters that do not emit a per-property {@link PropertyChangedEvent} (e.g. some
+    * laser controllers), so the targeted {@link #onPropertyChanged(PropertyChangedEvent)} never
+    * fires for them. Performs the same full re-read as the "Refresh UI" / "Refresh GUI" actions.
+    *
+    * <p>Note: Micro-manager suppresses this callback while an acquisition is running.
+    *
+    * @param event Bulk properties-changed event.
+    */
+   @Subscribe
+   public void onPropertiesChanged(PropertiesChangedEvent event) {
       forceUpdate();
    }
 
