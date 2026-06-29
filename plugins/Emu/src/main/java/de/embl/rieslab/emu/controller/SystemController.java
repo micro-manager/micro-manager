@@ -1,5 +1,6 @@
 package de.embl.rieslab.emu.controller;
 
+import com.google.common.eventbus.Subscribe;
 import de.embl.rieslab.emu.configuration.ConfigurationController;
 import de.embl.rieslab.emu.configuration.data.GlobalConfiguration;
 import de.embl.rieslab.emu.controller.log.Logger;
@@ -32,6 +33,8 @@ import java.util.TreeMap;
 import mmcorej.CMMCore;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
+import org.micromanager.events.GUIRefreshEvent;
+import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.internal.utils.DaytimeNighttime;
 
 
@@ -81,6 +84,10 @@ public class SystemController {
       // extracts MM properties, configuration groups and register configurations groups
       // as properties
       mmregistry_ = new MMRegistry(studio_, logger_);
+
+      // subscribes to Micro-manager events to refresh the UI when properties change
+      // outside of EMU (e.g. from the main MM GUI, a script or hardware)
+      studio_.events().registerForEvents(this);
 
       // loads plugin list
       pluginloader_ = new UIPluginLoader(this);
@@ -551,9 +558,46 @@ public class SystemController {
    }
 
    /**
+    * Updates the single UIProperty affected by a Micro-manager property change. This is
+    * triggered by the Micro-manager Core callback (relayed through the Studio event bus) when
+    * a device property changes outside of EMU. Only properties whose device adapter emits the
+    * change are covered; the broader {@link #onGuiRefresh(GUIRefreshEvent)} acts as a backstop.
+    *
+    * @param event Property change event holding the device label, property label and new value.
+    */
+   @SuppressWarnings("rawtypes")
+   @Subscribe
+   public void onPropertyChanged(PropertyChangedEvent event) {
+      if (mmregistry_ == null) {
+         return;
+      }
+
+      // the MMProperty hash is "{device label}-{property label}", matching the event
+      MMProperty mmprop = mmregistry_.getMMPropertiesRegistry()
+            .getProperty(event.getDevice() + "-" + event.getProperty());
+      if (mmprop != null) {
+         // re-reads the Core value and pushes it to all bound UIProperties (on the EDT)
+         mmprop.updateMMProperty();
+      }
+   }
+
+   /**
+    * Refreshes all UIProperties when the Micro-manager GUI refreshes from the Core, for instance
+    * when a script calls {@code refreshGUI()} / {@code refreshGUIFromCache()} or the user clicks
+    * the main window "Refresh" button. This is relayed through the Studio event bus.
+    *
+    * @param event GUI refresh event.
+    */
+   @Subscribe
+   public void onGuiRefresh(GUIRefreshEvent event) {
+      forceUpdate();
+   }
+
+   /**
     * Shutdowns the UI.
     */
    public void shutDown() {
+      studio_.events().unregisterForEvents(this);
       if (configurationController_ != null) {
          configurationController_.shutDown();
       }
