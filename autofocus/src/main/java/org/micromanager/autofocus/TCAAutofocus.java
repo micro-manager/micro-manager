@@ -238,7 +238,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          //double rel_z_max = 40.0;
          int numImages = (int) ((rel_z_max_ - rel_z_min_) / deltaz_) + 1;
 
-
+         // progress bar (swig library or imagej feature)
          for (int i = 0; i < numImages; i++) {
             core_.setPosition(core_.getFocusDevice(), rel_z_min_ + original_z + i * deltaz_);
             core_.waitForDevice(core_.getFocusDevice());
@@ -249,7 +249,10 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
                imageProcessors.add(ipCurrent_);
                zSampledList.add(curDist_ - original_z);
             }
-         }
+            IJ.showProgress(i, numImages);
+         }  
+         IJ.showProgress(1.1); // delete bar
+
          IJ.log("Created Z positions list, deltaZ = " + deltaz_);
 
          double z_ini = 0.0;
