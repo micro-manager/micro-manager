@@ -250,8 +250,10 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
                zSampledList.add(curDist_ - original_z);
             }
             IJ.showProgress(i, numImages);
+            IJ.showStatus("!Processing image " + (i + 1) + " of " + numImages);
          }  
          IJ.showProgress(1.1); // delete bar
+         IJ.showStatus("!Processing complete");
 
          IJ.log("Created Z positions list, deltaZ = " + deltaz_);
 
