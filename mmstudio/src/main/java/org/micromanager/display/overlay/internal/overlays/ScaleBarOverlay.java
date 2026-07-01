@@ -240,12 +240,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
               : yOffset_ + metrics.getMaxAscent() + 2;
 
       if (drawLabel_) {
-         final String labelText;
-         if (lengthUm >= 0.9995) {
-            labelText = String.format("%d \u00B5m", (int) Math.round(lengthUm)); // micro-m, micron
-         } else {
-            labelText = String.format("%d nm", (int) Math.round(lengthUm * 1000.0));
-         }
+         final String labelText = formatScaleBarLabel(lengthUm);
          final int labelX = x + (lengthPx - metrics.stringWidth(labelText)) / 2;
          final int labelY = atBottom ? y + thickness_ + metrics.getMaxAscent() : y - thickness_;
          g.drawString(labelText, labelX, labelY);
@@ -254,6 +249,29 @@ public final class ScaleBarOverlay extends AbstractOverlay {
          g.fillRect(x, y, lengthPx, thickness_);
       } else {
          g.drawRect(x, y, lengthPx, thickness_);
+      }
+   }
+
+   /**
+    * Formats the scale bar label, choosing the unit (nm, micron, or mm) based on magnitude.
+    * The auto-length algorithm only yields 1/2/5 x 10^n values, so the converted numbers stay
+    * integers in auto mode; manually entered lengths may be fractional and fall back to a
+    * decimal format.
+    *
+    * @param lengthUm bar length in microns
+    * @return the formatted label text
+    */
+   private String formatScaleBarLabel(double lengthUm) {
+      if (lengthUm >= 1000.0) {
+         double lengthMm = lengthUm / 1000.0;
+         if (lengthMm == Math.rint(lengthMm)) {
+            return String.format("%d mm", (int) Math.round(lengthMm));
+         }
+         return String.format("%.3g mm", lengthMm);
+      } else if (lengthUm >= 0.9995) {
+         return String.format("%d \u00B5m", (int) Math.round(lengthUm)); // micro-m, micron
+      } else {
+         return String.format("%d nm", (int) Math.round(lengthUm * 1000.0));
       }
    }
 
