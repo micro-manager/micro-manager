@@ -35,6 +35,7 @@ import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__G
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__GRID_ROW;
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__LABEL;
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__PROPERTIES;
+import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__PROPERTY_WELL;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_ASPECT;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_AFFINE;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_UM;
@@ -42,6 +43,8 @@ import static org.micromanager.data.internal.PropertyKey.PIXEL_TYPE;
 import static org.micromanager.data.internal.PropertyKey.POSITIONS;
 import static org.micromanager.data.internal.PropertyKey.POSITION_INDEX;
 import static org.micromanager.data.internal.PropertyKey.POSITION_LIST__ID;
+import static org.micromanager.data.internal.PropertyKey.POSITION_LIST__IS_PLATE;
+import static org.micromanager.data.internal.PropertyKey.POSITION_LIST__PLATE_NAME;
 import static org.micromanager.data.internal.PropertyKey.POSITION_LIST__VERSION;
 import static org.micromanager.data.internal.PropertyKey.POSITION_NAME;
 import static org.micromanager.data.internal.PropertyKey.PREFIX;
@@ -200,6 +203,9 @@ public abstract class NonPropertyMapJSONFormats {
                ELAPSED_TIME_MS,
                IMAGE_NUMBER,
                RECEIVED_TIME,
+               MULTI_STAGE_POSITION__GRID_COLUMN,
+               MULTI_STAGE_POSITION__GRID_ROW,
+               MULTI_STAGE_POSITION__PROPERTY_WELL,
                PIXEL_SIZE_UM,
                PIXEL_SIZE_AFFINE,
                PIXEL_ASPECT,
@@ -228,6 +234,9 @@ public abstract class NonPropertyMapJSONFormats {
                ELAPSED_TIME_MS,
                IMAGE_NUMBER,
                RECEIVED_TIME,
+               MULTI_STAGE_POSITION__GRID_COLUMN,
+               MULTI_STAGE_POSITION__GRID_ROW,
+               MULTI_STAGE_POSITION__PROPERTY_WELL,
                PIXEL_SIZE_UM,
                PIXEL_SIZE_AFFINE,
                PIXEL_ASPECT,
@@ -350,6 +359,8 @@ public abstract class NonPropertyMapJSONFormats {
          for (PropertyKey key : ImmutableList.of(
                POSITION_LIST__ID,
                POSITION_LIST__VERSION,
+               POSITION_LIST__IS_PLATE,
+               POSITION_LIST__PLATE_NAME,
                STAGE_POSITIONS)) {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }
