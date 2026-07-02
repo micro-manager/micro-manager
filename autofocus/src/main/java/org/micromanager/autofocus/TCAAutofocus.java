@@ -29,6 +29,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Color;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,11 +51,16 @@ import org.micromanager.autofocus.tca_af.ComputeBestFocusFAD;
 import org.micromanager.autofocus.tca_af.ComputeBestFocusNADH;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.display.DataViewer;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.SummaryMetadata;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.imageprocessing.curvefit.PlotUtils;
+
+import javax.swing.JOptionPane;
 
 /**
  */
@@ -70,6 +76,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private static final String KEY_DRYRUN = "Dry run";
    private static final String[] SHOWVALUES = {"Yes", "No"};
    private static final String EXPOSURE = "Exposure";
+   private static final String SAVE_CSV = "Save CSV";
 
    private static final String KEY_FOCUS_ANALYZER = "Focus Analyzer";
    private static final String[] FOCUS_ANALYZER_STRINGS = {"460", "300", "NADH", "FAD"};
@@ -97,6 +104,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private double curDist_;
    private String focusAnalyzer_ = "460"; // default to 460nm analyzer
    private double exposure_ = 100; 
+   private boolean saveCSV_ = true; // default to saving CSV files for debugging
 
    private static class FocusResults {
       public String[] metricNames;
@@ -118,6 +126,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       super.createProperty(KEY_DRYRUN, SHOWVALUES[1], SHOWVALUES);
       super.createProperty(KEY_FOCUS_ANALYZER, FOCUS_ANALYZER_STRINGS[0], FOCUS_ANALYZER_STRINGS);
       super.createProperty(EXPOSURE, Double.toString(exposure_));
+      super.createProperty(SAVE_CSV, "Yes", new String[] {"Yes", "No"});
    }
 
 
@@ -131,6 +140,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          dryrun_ = getPropertyValue(KEY_DRYRUN).contentEquals("Yes");
          focusAnalyzer_ = getPropertyValue(KEY_FOCUS_ANALYZER);
          exposure_ = Double.parseDouble(getPropertyValue(EXPOSURE));
+         saveCSV_ = getPropertyValue(SAVE_CSV).contentEquals("Yes");
 
       } catch (Exception e) {
 
@@ -345,29 +355,18 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
 
           
          XYSeries xySeries = new XYSeries("Focus Score from images");
-         focusScoreMap.forEach(xySeries::add);
-         // save focusScoreMap to CSV for debugging
-         
-         try {
-            String curr_datetime = new Date().toString().replace(" ", "_").replace(":", "-");
-            saveXYSeriesToCsv(xySeries, curr_datetime+"focus_scores.csv");
-         } catch (IOException e) {
-            IJ.log("Error while saving focus scores to CSV: " + e.getMessage());
-         }
-
+         focusScoreMap.forEach(xySeries::add);      
 
          XYSeries xySeriesFitted = new XYSeries("Fitted Focus Score");
          // populate xySeriesFitted with data from results.smoothCurvesNorm[m]
          for (int i = 0; i < results.zFine.length; i++) {
             xySeriesFitted.add(results.zFine[i]+original_z, results.smoothCurvesNorm[i][m]);
          }
-
          
-         
+         // save focusScoreMap to CSV for debugging 
          try {
             String curr_datetime = new Date().toString().replace(" ", "_").replace(":", "-");
-            saveXYSeriesToCsv(xySeries, curr_datetime+"focus_scores.csv");
-            saveXYSeriesToCsv(xySeriesFitted, curr_datetime+"fitted_focus_scores.csv");
+            saveXYSeriesToCsv(xySeries, xySeriesFitted, curr_datetime+"focus_scores.csv");
          } catch (IOException e) {
             IJ.log("Error while saving focus scores to CSV: " + e.getMessage());
          }
@@ -385,18 +384,54 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       }
       return bestZ; 
    }
-   private static void saveXYSeriesToCsv(XYSeries series, String filePath) throws IOException {
+
+   private void saveXYSeriesToCsv(XYSeries series, XYSeries seriesFitted, String fileName) throws IOException {
+
+      if (saveCSV_ == false) {
+         IJ.log("Saving CSV is disabled. Skipping save.");
+         return;
+      }
+
+      DataViewer viewer = app_.getDisplayManager().getActiveDataViewer();
+      String saveDir = System.getProperty("user.dir");
+      String prefix = "AF"; // default prefix if no summary metadata is available
+      String filePath = new File(saveDir, prefix + "_" + fileName).getAbsolutePath();
+
+      if (viewer != null) {
+         // Retrieve the Data Provider backing the display
+         DataProvider provider = viewer.getDataProvider();
+         SummaryMetadata summary = provider.getSummaryMetadata();
+         
+         // Extract the save directory and prefix (filename)
+         saveDir = summary.getDirectory();
+         prefix = summary.getPrefix();
+
+         File acqusitionFolder = new File(saveDir, prefix);
+         filePath = new File(acqusitionFolder, fileName).getAbsolutePath();
+      }        
+      
+      IJ.log("Save Directory: " + saveDir);
+      IJ.log("File Prefix: " + prefix);
+
       try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
 
          // Optional header
-         writer.write("X,Y");
+         writer.write("X_Fit,Y_Fit,X,Y");
          writer.newLine();
 
-         for (int i = 0; i < series.getItemCount(); i++) {
-               double x = series.getX(i).doubleValue();
-               double y = series.getY(i).doubleValue();
+         for (int i = 0; i < seriesFitted.getItemCount(); i++) {
+               double x_fit = seriesFitted.getX(i).doubleValue();
+               double y_fit = seriesFitted.getY(i).doubleValue();
+               double x, y;
+               if (i < series.getItemCount()) {
+                  x = series.getX(i).doubleValue();
+                  y = series.getY(i).doubleValue();
+               } else {
+                  x = Double.NaN;
+                  y = Double.NaN;
+               }
 
-               writer.write(x + "," + y);
+               writer.write(x_fit + "," + y_fit + "," + x + "," + y);
                writer.newLine();
          }
       }
