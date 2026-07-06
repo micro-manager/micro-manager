@@ -402,7 +402,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       String prefix = "AF"; // default prefix if no summary metadata is available
       String filePath = new File(saveDir, prefix + "_" + fileName).getAbsolutePath();
 
-      if (viewer != null) {
+      if (viewer != null && app_.getAcquisitionManager().isAcquisitionRunning()) {
          // Retrieve the Data Provider backing the display
          DataProvider provider = viewer.getDataProvider();
          SummaryMetadata summary = provider.getSummaryMetadata();
