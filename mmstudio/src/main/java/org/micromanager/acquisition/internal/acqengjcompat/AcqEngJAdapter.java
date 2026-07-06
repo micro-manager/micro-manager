@@ -21,7 +21,6 @@
 
 package org.micromanager.acquisition.internal.acqengjcompat;
 
-import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.io.File;
 import java.net.InetAddress;
@@ -33,14 +32,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
+
 import javax.swing.JOptionPane;
-import mmcorej.CMMCore;
-import mmcorej.Configuration;
-import mmcorej.PropertySetting;
-import mmcorej.StrVector;
-import mmcorej.org.json.JSONArray;
-import mmcorej.org.json.JSONException;
-import mmcorej.org.json.JSONObject;
+
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
@@ -61,7 +55,6 @@ import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEv
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.SummaryMetadata;
@@ -77,6 +70,17 @@ import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+
+import org.micromanager.data.DataProvider;
+import com.google.common.eventbus.Subscribe;
+
+import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
+import mmcorej.StrVector;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
+import mmcorej.org.json.JSONObject;
 
 
 /**
@@ -870,10 +874,13 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
+            // print message using core logMessage:
+            studio_.core().logMessage("Running autofocus hook...");
+
             if (!event.isAcquisitionFinishedEvent()
-                  && (event.getZIndex() == null || event.getZIndex() == 0)
-                  && (event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == null
-                        || (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0)) {
+                  && (event.getZIndex() == null || event.getZIndex() == 0)){
+                  //&& (event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == null
+                    //    || (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0)) {
                if (event.getTIndex() != null && skipFrames != 0
                        && event.getTIndex() % skipFrames != 0) {
                   return event;

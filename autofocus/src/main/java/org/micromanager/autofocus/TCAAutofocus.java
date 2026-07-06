@@ -252,6 +252,11 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          double[] zSampled = zSampledList.stream().mapToDouble(Double::doubleValue).toArray();
          IJ.log("Starting focus score computation with Zsampled: " + Arrays.toString(zSampled));
          
+         // get the channel of the current configuration
+         focusAnalyzer_ = core_.getCurrentConfig("Channel");
+   
+         IJ.log("Selected focus analyzer: " + focusAnalyzer_);
+
          FocusResults results = null;
          switch (focusAnalyzer_) {
             case "460":

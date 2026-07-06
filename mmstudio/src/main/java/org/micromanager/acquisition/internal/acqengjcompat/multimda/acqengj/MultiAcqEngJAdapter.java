@@ -271,7 +271,28 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          // These hooks implement Autofocus
          if (basicSettings.useAutofocus()) {
             currentMultiMDA_.addHook(autofocusHook(basicSettings.skipAutofocusCount()),
-                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+               AcquisitionAPI.AFTER_HARDWARE_HOOK);
+
+            // currentMultiMDA_.addHook(
+            //    new AcquisitionHook() {
+            //       @Override
+            //       public AcquisitionEvent run(AcquisitionEvent event) {
+            //             try {
+            //                Thread.sleep(10000);
+            //             } catch (InterruptedException e) {
+            //                Thread.currentThread().interrupt();
+            //             }
+
+            //             return event;
+            //       }
+
+            //       @Override
+            //       public void close() {
+            //             // Nothing to clean up
+            //       }
+            //    },
+            //    AcquisitionAPI.AFTER_HARDWARE_HOOK
+            // );
          }
 
          for (int i = 0; i < sequenceSettings.size(); i++) {
@@ -432,8 +453,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          if (acquisitionSettings.useSlices()) {
             acqFunctions.add(zStack);
          }
-      } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode
-            .TIME_POS_SLICE_CHANNEL) {
+      } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
          if (acquisitionSettings.usePositionList()) {
             acqFunctions.add(positions);
          }

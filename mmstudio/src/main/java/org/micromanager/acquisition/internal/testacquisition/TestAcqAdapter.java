@@ -317,7 +317,7 @@ public class TestAcqAdapter extends DataViewerListener implements
          // These hooks implement Autofocus
          if (sequenceSettings_.useAutofocus()) {
             currentAcquisition_.addHook(autofocusHookBefore(sequenceSettings_.skipAutofocusCount()),
-                    AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+                    AcquisitionAPI.AFTER_HARDWARE_HOOK);
          }
 
          // Hooks to keep shutter open between channel and/or slices if desired
