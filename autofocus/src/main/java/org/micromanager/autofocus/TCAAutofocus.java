@@ -422,7 +422,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       String filePath = new File(saveDir, prefix + "_" + fileName).getAbsolutePath();
       File acquisitionFolder = null;
 
-      if (viewer != null) {
+      if (viewer != null && app_.acquisitions().isAcquisitionRunning()) {
          // Retrieve the Data Provider backing the display
          DataProvider provider = viewer.getDataProvider();
          SummaryMetadata summary = provider.getSummaryMetadata();
