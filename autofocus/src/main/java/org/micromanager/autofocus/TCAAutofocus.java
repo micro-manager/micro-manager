@@ -433,12 +433,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
 
          acquisitionFolder = new File(saveDir, prefix);
          filePath = new File(acquisitionFolder, fileName).getAbsolutePath();
-      }  
-      
-      IJ.log("Save Directory: " + saveDir);
-      IJ.log("File Prefix: " + prefix);
 
-      if (viewer != null && app_.acquisitions().isAcquisitionRunning()) {
          if (acquisitionFolder != null && !acquisitionFolder.exists()) {
             // If an acquisition is running, defer saving the CSV until after the acquisition completes
             IJ.log("Acquisition is running. Deferring saving focus scores to CSV until after acquisition.");
@@ -449,7 +444,10 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
 
             return;  
          }
-      }
+      }  
+      
+      IJ.log("Save Directory: " + saveDir);
+      IJ.log("File Prefix: " + prefix);
       writeXYSeriesToCsv(series, seriesFitted, filePath);
       IJ.log("Focus scores saved to CSV: " + filePath);
    }
