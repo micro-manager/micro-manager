@@ -444,6 +444,14 @@ public class TileAligner {
       // Cap at MAX_DIM to keep FHT manageable.
       final int MAX_DIM = 512;
       int squareSide = Math.min(Math.min(stripW, stripH), MAX_DIM);
+      if (squareSide < 2) {
+         // A 1-pixel-wide/tall overlap strip carries no correlation signal, and
+         // ImageJ's FHT rejects a 1x1 image as "not power of 2" (its power-of-2 check
+         // starts doubling from 2, so width=1 can never match). Skip this pair --
+         // the tile falls back to its nominal grid position, same as a low-quality
+         // correlation result below.
+         return null;
+      }
       if (squareSide != stripW || squareSide != stripH) {
          // Use top-left crop (offset 0) for the short dimension to sample the overlap edge.
          int offX = 0;
