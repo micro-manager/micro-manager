@@ -253,6 +253,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
             core_.setPosition(core_.getFocusDevice(), rel_z_min_ + original_z + i * deltaz_);
             core_.waitForDevice(core_.getFocusDevice());
             curDist_ = core_.getPosition(core_.getFocusDevice());
+            core_.logMessage("Moving to Z = " + curDist_);
             snapSingleImage();
             delayTime(50);
             if(i > 0){ // skip the first image as stage is too slow to update
@@ -267,6 +268,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
 
          IJ.log("Created Z positions list, deltaZ = " + deltaz_);
 
+         
          double z_ini = 0.0;
          double deltaz_samp = deltaz_;
          double[] zSampled = zSampledList.stream().mapToDouble(Double::doubleValue).toArray();
@@ -282,36 +284,36 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
             case "460":
                IJ.log("Using 460nm focus analyzer");
                results = wrapResults(ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
+               core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
             case "300":
                z_ini = -61.0;
                IJ.log("Using 300nm focus analyzer");
                results = wrapResults(ComputeBestFocus300nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
+               core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
             case "NADH":
                z_ini = 5.0;
                IJ.log("Using NADH focus analyzer");
                results = wrapResults(ComputeBestFocusNADH.compute(imageProcessors, z_ini, deltaz_samp, zSampled));
+               core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
             case "FAD":
                z_ini = -10.0;
                IJ.log("Using FAD focus analyzer");
                results = wrapResults(ComputeBestFocusFAD.compute(imageProcessors, z_ini, deltaz_samp, zSampled));
+               core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
             default:
                IJ.log("Unknown focus analyzer selected, defaulting to 460nm");
                results = wrapResults(ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
+               core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
          }
 
          if (results == null) {
             throw new IllegalStateException("Focus results should never be null after analyzer selection.");
          }
-
-         
-
-
-         
 
          if(Double.isNaN(results.z_best_focus)){
             IJ.log("Unable to estimate best focus position. Please check the input parameters and try again.");

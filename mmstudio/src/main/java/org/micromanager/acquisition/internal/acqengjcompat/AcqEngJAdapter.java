@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 import javax.swing.JOptionPane;
 
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
@@ -886,7 +887,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   return event;
                }
                try {
-                  studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+                  //studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+                  AutofocusPlugin af = studio_.getAutofocusManager().getAutofocusMethod();
+
+                  String channel = event.getConfigPreset();
+                  studio_.core().logMessage("channel is " + channel);
+
+                  if (channel != null) {
+                      af.setPropertyValue("Channel", channel);
+                  }
+
+                  af.fullFocus();
                   String posName = event.getTags().get(AcqEngMetadata.POS_NAME);
                   if (posName != null) {
                      MultiStagePosition msp = new MultiStagePosition();
