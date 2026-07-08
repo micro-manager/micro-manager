@@ -106,6 +106,10 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private double exposure_ = 100; 
    private boolean saveCSV_ = true; // default to saving CSV files for debugging
 
+   private XYSeries tempSeries_ = null;
+   private XYSeries tempSeriesFitted_ = null;
+   private String tempFilePath_ = null;
+
    private static class FocusResults {
       public String[] metricNames;
       public double[][] metricValuesNorm;
@@ -399,12 +403,28 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          return;
       }
 
+      if (tempSeries_ != null && tempSeriesFitted_ != null && tempFilePath_ != null) {
+
+         File tempFile = new File(tempFilePath_);
+         File tempFolder = tempFile.getParentFile();
+         
+         if (tempFolder != null && tempFolder.exists()) {
+            IJ.log("Saving previously deferred focus scores to CSV: " + tempFilePath_);
+            writeXYSeriesToCsv(tempSeries_, tempSeriesFitted_, tempFilePath_);
+
+            tempSeries_ = null;
+            tempSeriesFitted_ = null;
+            tempFilePath_ = null;
+         }
+      }
+
       DataViewer viewer = app_.getDisplayManager().getActiveDataViewer();
       String saveDir = System.getProperty("user.dir");
       String prefix = "AF"; // default prefix if no summary metadata is available
       String filePath = new File(saveDir, prefix + "_" + fileName).getAbsolutePath();
+      File acquisitionFolder = null;
 
-      if (viewer != null) {
+      if (viewer != null && app_.acquisitions().isAcquisitionRunning()) {
          // Retrieve the Data Provider backing the display
          DataProvider provider = viewer.getDataProvider();
          SummaryMetadata summary = provider.getSummaryMetadata();
@@ -413,14 +433,29 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          saveDir = summary.getDirectory();
          prefix = summary.getPrefix();
 
-         File acqusitionFolder = new File(saveDir, prefix);
-         filePath = new File(acqusitionFolder, fileName).getAbsolutePath();
-      }        
+         acquisitionFolder = new File(saveDir, prefix);
+         filePath = new File(acquisitionFolder, fileName).getAbsolutePath();
+
+         if (acquisitionFolder != null && !acquisitionFolder.exists()) {
+            // If an acquisition is running, defer saving the CSV until after the acquisition completes
+            IJ.log("Acquisition is running. Deferring saving focus scores to CSV until after acquisition.");
+
+            tempSeries_ = series;
+            tempSeriesFitted_ = seriesFitted;
+            tempFilePath_ = filePath;
+
+            return;  
+         }
+      }  
       
       IJ.log("Save Directory: " + saveDir);
       IJ.log("File Prefix: " + prefix);
+      writeXYSeriesToCsv(series, seriesFitted, filePath);
+      IJ.log("Focus scores saved to CSV: " + filePath);
+   }
 
-      try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+   private void writeXYSeriesToCsv(XYSeries series, XYSeries seriesFitted, String filePath) throws IOException {
+         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
 
          // Optional header
          writer.write("X_Fit,Y_Fit,X,Y");
