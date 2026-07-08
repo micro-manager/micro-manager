@@ -101,7 +101,7 @@ public class ExplorerFrame extends JFrame {
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("fillx", "[grow, fill][]"));
 
-      add(new JLabel("Tmp Path:"), "split 3");
+      add(new JLabel("Tmp Path:"), "split 4");
       JTextField tmpPathField = new JTextField(25);
       tmpPathField.setToolTipText(
             "Directory for temporary explore data (uses system temp dir if empty)");
@@ -124,6 +124,19 @@ public class ExplorerFrame extends JFrame {
          }
       });
       add(tmpPathField, "growx");
+
+      JButton fromMdaButton = new JButton("from MDA");
+      fromMdaButton.setToolTipText("Copy directory root from MDA Window");
+      fromMdaButton.addActionListener(e -> {
+         String path = studio_.acquisitions().getAcquisitionSettings().root();
+         if (path != null && !path.isEmpty()) {
+            tmpPathField.setText(path);
+            settings_.putString(EXPLORE_TMP_PATH, path);
+         } else {
+            studio_.logs().showError("No MDA directory set. Please run an MDA first.");
+         }
+      });
+      add(fromMdaButton);
 
       JButton browseButton = new JButton("...");
       browseButton.setToolTipText("Browse for a temporary storage directory");

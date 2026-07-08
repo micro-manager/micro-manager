@@ -133,6 +133,7 @@ public class ExplorerManager {
    private volatile boolean viewerClosing_ = false;
    private volatile boolean shutdownInProgress_ = false;
    private boolean loadedData_ = false;
+   private boolean keepTempDataOnClose_ = false;
    private DisplaySettings pendingMMDisplaySettings_ = null;
    private JSONObject pendingViewState_ = null;
    private String storageDir_;
@@ -879,17 +880,18 @@ public class ExplorerManager {
       }
 
       closeViewerReferences();
-      stopExplore(!loadedData_);
+      stopExplore(!loadedData_ && !keepTempDataOnClose_);
    }
 
    /**
-    * Shows the save/discard/cancel dialog when there is unsaved Explorer data.
-    * Returns true if the caller should proceed (data was saved or discarded),
+    * Shows the keep/move/delete/cancel dialog when there is unsaved Explorer data.
+    * Returns true if the caller should proceed (data was kept, moved, or deleted),
     * false if the user cancelled.  Returns true immediately when there is no
     * unsaved data (loaded-data sessions, empty storage, etc.).
     * Must be called on the EDT.
     */
    private boolean promptForUnsavedData() {
+      keepTempDataOnClose_ = false;
       if (loadedData_) {
          return true;
       }
@@ -907,18 +909,23 @@ public class ExplorerManager {
       while (true) {
          int choice = JOptionPane.showOptionDialog(
                  null,
-                 "Save the acquired Explorer data?",
-                 "Save Explorer Data",
+                 "What should happen to the acquired Explorer data?",
+                 "Explorer Data",
                  JOptionPane.YES_NO_CANCEL_OPTION,
                  JOptionPane.QUESTION_MESSAGE,
                  null,
-                 new String[]{"Save", "Discard", "Cancel"},
-                 "Save");
-         if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
+                 new String[]{"Keep", "Move", "Delete", "Cancel"},
+                 "Keep");
+         if (choice == 3 || choice == JOptionPane.CLOSED_OPTION) {
             studio_.logs().logMessage(
                   "Explorer: close cancelled, data remains in: " + storageDir_);
             return false;
          } else if (choice == 0) {
+            keepTempDataOnClose_ = true;
+            JOptionPane.showMessageDialog(null, "Data kept in " + storageDir_,
+                  "Explorer Data", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+         } else if (choice == 1) {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Save Explorer Data");
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -940,7 +947,7 @@ public class ExplorerManager {
                }
             }
          } else {
-            return true; // Discard
+            return true; // Delete
          }
       }
    }
