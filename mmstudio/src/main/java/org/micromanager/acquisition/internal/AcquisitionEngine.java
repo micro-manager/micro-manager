@@ -47,6 +47,8 @@ public interface AcquisitionEngine {
     */
    void setPositionList(PositionList posList);
 
+   void setAutofocusEveryChannel(boolean enabled);
+
    /**
     * Provides the acquisition engine with the parent Micro-Manager gui.
     */

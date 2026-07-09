@@ -93,6 +93,7 @@ import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.ScopeDataUtils;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
 import org.micromanager.acquisition.internal.testacquisition.TestAcqAdapter;
 import org.micromanager.data.Datastore;
@@ -754,8 +755,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             + "Autofocus is always run at new stage positions");
 
       afPanel_.add(afSkipFrame1, "split, spanx, alignx center");
-
       afSkipInterval_ = new JSpinner(new SpinnerNumberModel(0, 0, null, 1));
+
       JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) afSkipInterval_.getEditor();
       editor.setFont(DEFAULT_FONT);
       editor.getTextField().setColumns(3);
@@ -765,12 +766,17 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings()
                .skipAutofocusCount());
       });
-      afPanel_.add(afSkipInterval_);
+      afPanel_.add(afSkipInterval_, "wrap");
+
+      JCheckBox afAutofocusCheckBox = new JCheckBox("AF before every channel");
+
+      afAutofocusCheckBox.addActionListener(e -> getAcquisitionEngine().setAutofocusEveryChannel(afAutofocusCheckBox.isSelected()));
+
+      afPanel_.add(afAutofocusCheckBox, "alignx center");
 
       afPanel_.addActionListener((ActionEvent arg0) -> applySettingsFromGUI());
       return afPanel_;
    }
-
    private JPanel createSummary() {
       JPanel summaryPanel = createLabelPanel("Summary");
       summaryPanel.setLayout(new MigLayout(PANEL_CONSTRAINT + ", filly, insets 4 8 4 8"));

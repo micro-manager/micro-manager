@@ -113,6 +113,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private long nextWakeTime_ = -1;
    private long lastFrameIndex_ = -1;
    private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
+   private boolean autofocusEveryChannel_ = false;
 
    private class RunnablePlusIndices {
       int channel_;
@@ -863,6 +864,11 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       };
    }
 
+   @Override
+   public void setAutofocusEveryChannel(boolean enabled) {
+        autofocusEveryChannel_ = enabled;
+   }
+
    /**
     * Hook function executing (software) autofocus.  When autofocus is checked in the MDA,
     * the autofocus should run before each channel / Z Stack combo (i.e. at each time point
@@ -887,17 +893,23 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   return event;
                }
                try {
-                  //studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
-                  AutofocusPlugin af = studio_.getAutofocusManager().getAutofocusMethod();
+                  if(autofocusEveryChannel_){
+                     AutofocusPlugin af = studio_.getAutofocusManager().getAutofocusMethod();
 
-                  String channel = event.getConfigPreset();
-                  studio_.core().logMessage("channel is " + channel);
+                     String channel = event.getConfigPreset();
+                     studio_.core().logMessage("channel is " + channel);
 
-                  if (channel != null) {
-                      af.setPropertyValue("Channel", channel);
+                     if (channel != null) {
+                        af.setPropertyValue("Channel", channel);
+                     }
+
+                     af.fullFocus();
+                  }
+                  else{
+                     studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
                   }
 
-                  af.fullFocus();
+
                   String posName = event.getTags().get(AcqEngMetadata.POS_NAME);
                   if (posName != null) {
                      MultiStagePosition msp = new MultiStagePosition();
