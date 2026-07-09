@@ -75,11 +75,15 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private static final String KEY_DELTA_Z = "Delta Z";
    private static final String KEY_DRYRUN = "Dry run";
    private static final String[] SHOWVALUES = {"Yes", "No"};
-   private static final String EXPOSURE = "Exposure";
+   private static final String EXPOSURE460 = "Exposure 460nm";
+   private static final String EXPOSURE300 = "Exposure 300nm";
+   private static final String EXPOSURENADH = "Exposure NADH";
+   private static final String EXPOSUREFAD = "Exposure FAD";
+
    private static final String SAVE_CSV = "Save CSV";
 
    private static final String KEY_FOCUS_ANALYZER = "Focus Analyzer";
-   private static final String[] FOCUS_ANALYZER_STRINGS = {"460", "300", "NADH", "FAD"};
+   private static final String[] FOCUS_ANALYZER_STRINGS = {"460nm", "300nm", "NADH", "FAD"};
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    
    private static final String AF_DEVICE_NAME = "TCA AF 2.0";
@@ -102,10 +106,14 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    private boolean verbose_ = true; // displaying debug info or not
    private String channelGroup_;
    private double curDist_;
-   private String focusAnalyzer_ = "460"; // default to 460nm analyzer
-   private double exposure_ = 100; 
+   private String focusAnalyzer_ = "460nm"; // default to 460nm analyzer
+   private double exposure460_ = 100; 
+   private double exposure300_ = 100;
+   private double exposureNADH_ = 100;
+   private double exposureFAD_ = 100;
    private boolean saveCSV_ = true; // default to saving CSV files for debugging
-
+   private double exposure_ = 100;
+   
    private XYSeries tempSeries_ = null;
    private XYSeries tempSeriesFitted_ = null;
    private String tempFilePath_ = null;
@@ -124,12 +132,16 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
     */
    public TCAAutofocus() {
       super.createProperty(KEY_CHANNEL, channel_);
+      super.createProperty(KEY_FOCUS_ANALYZER, FOCUS_ANALYZER_STRINGS[0], FOCUS_ANALYZER_STRINGS);
       super.createProperty(KEY_REL_Z_MIN, Double.toString(rel_z_min_));
       super.createProperty(KEY_REL_Z_MAX, Double.toString(rel_z_max_));
       super.createProperty(KEY_DELTA_Z, Double.toString(deltaz_));
       super.createProperty(KEY_DRYRUN, SHOWVALUES[1], SHOWVALUES);
-      super.createProperty(KEY_FOCUS_ANALYZER, FOCUS_ANALYZER_STRINGS[0], FOCUS_ANALYZER_STRINGS);
-      super.createProperty(EXPOSURE, Double.toString(exposure_));
+      
+      super.createProperty(EXPOSURE460, Double.toString(exposure460_));
+      super.createProperty(EXPOSURE300, Double.toString(exposure300_));
+      super.createProperty(EXPOSURENADH, Double.toString(exposureNADH_));
+      super.createProperty(EXPOSUREFAD, Double.toString(exposureFAD_));
       super.createProperty(SAVE_CSV, "Yes", new String[] {"Yes", "No"});
    }
 
@@ -143,7 +155,10 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          rel_z_max_ = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAX));
          dryrun_ = getPropertyValue(KEY_DRYRUN).contentEquals("Yes");
          focusAnalyzer_ = getPropertyValue(KEY_FOCUS_ANALYZER);
-         exposure_ = Double.parseDouble(getPropertyValue(EXPOSURE));
+         exposure460_ = Double.parseDouble(getPropertyValue(EXPOSURE460));
+         exposure300_ = Double.parseDouble(getPropertyValue(EXPOSURE300));
+         exposureNADH_ = Double.parseDouble(getPropertyValue(EXPOSURENADH));
+         exposureFAD_ = Double.parseDouble(getPropertyValue(EXPOSUREFAD));
          saveCSV_ = getPropertyValue(SAVE_CSV).contentEquals("Yes");
 
       } catch (Exception e) {
@@ -212,9 +227,35 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          return 0.0;
       }
       final double oldExposure = core_.getExposure();
+      // get the channel of the current configuration
       
-      applySettings();
 
+      applySettings();
+      
+
+      switch (channel_) {
+         case "460nm":
+            focusAnalyzer_ = "460nm";
+            exposure_ = exposure460_;
+            break;
+         case "300nm":
+            focusAnalyzer_ = "300nm";
+            exposure_ = exposure300_;
+            break;
+         case "NADH":
+            focusAnalyzer_ = "NADH";
+            exposure_ = exposureNADH_;
+            break;
+         case "FAD":
+            focusAnalyzer_ = "FAD";
+            exposure_ = exposureFAD_;
+            break;
+         default:
+            IJ.log("Unknown channel selected, defaulting to 460nm");
+            exposure_ = exposure460_;
+            break;
+      }
+      IJ.log("Selected channel: " + channel_ + ", using exposure: " + exposure_ + " ms, "+ "focus analyzer: " + focusAnalyzer_  );
       core_.setExposure(exposure_);
       //######################## START THE ROUTINE ###########
       double original_z = core_.getPosition(core_.getFocusDevice());
@@ -278,19 +319,18 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
          double[] zSampled = zSampledList.stream().mapToDouble(Double::doubleValue).toArray();
          IJ.log("Starting focus score computation with Zsampled: " + Arrays.toString(zSampled));
          
-         // get the channel of the current configuration
-         focusAnalyzer_ = core_.getCurrentConfig("Channel");
+         
    
          IJ.log("Selected focus analyzer: " + focusAnalyzer_);
 
          FocusResults results = null;
          switch (focusAnalyzer_) {
-            case "460":
+            case "460nm":
                IJ.log("Using 460nm focus analyzer");
                results = wrapResults(ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
                core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
-            case "300":
+            case "300nm":
                z_ini = -61.0;
                IJ.log("Using 300nm focus analyzer");
                results = wrapResults(ComputeBestFocus300nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
