@@ -463,6 +463,16 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          if (acquisitionSettings.useChannels()) {
             acqFunctions.add(channels);
          }
+      } else if(acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_CHANNEL_SLICE_TIME){
+         if (acquisitionSettings.usePositionList()) {
+            acqFunctions.add(positions);
+         }
+         if (acquisitionSettings.useChannels()) {
+            acqFunctions.add(channels);
+         }
+         if (acquisitionSettings.useSlices()) {
+            acqFunctions.add(zStack);
+         }
       } else {
          throw new RuntimeException("Unknown acquisition order");
       }
@@ -1024,6 +1034,23 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
             || sequenceSettings.useChannels()
             || sequenceSettings.useSlices()) {
          StringBuilder order = new StringBuilder("\nOrder: ");
+
+         if(sequenceSettings.acqOrderMode() == AcqOrderMode.POS_CHANNEL_SLICE_TIME){
+            if(sequenceSettings.usePositionList()){
+               order.append("Position, ");
+            }
+            if(sequenceSettings.useChannels()){
+               order.append("Channel, ");
+            }
+            if(sequenceSettings.useSlices()){
+               order.append("Slice, ");
+            }
+            if(sequenceSettings.useFrames()){
+               order.append("Time");
+            }
+            return txt + order.toString();
+         }
+         
          if (sequenceSettings.useFrames() && sequenceSettings.usePositionList()) {
             if (sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
                   || sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {

@@ -15,6 +15,7 @@ public final class AcqOrderMode {
    public static final int TIME_POS_CHANNEL_SLICE = 1;
    public static final int POS_TIME_SLICE_CHANNEL = 2;
    public static final int POS_TIME_CHANNEL_SLICE = 3;
+   public static final int POS_CHANNEL_SLICE_TIME = 4;
 
    private final int id_;
    private boolean timeEnabled_;
@@ -105,6 +106,23 @@ public final class AcqOrderMode {
 
    private ArrayList<String> getOrdering() {
       ArrayList<String> result = new ArrayList<>();
+
+      if(id_ == POS_CHANNEL_SLICE_TIME){
+         if (posEnabled_){
+            result.add("Position");
+         }
+         if (channelEnabled_){
+            result.add("Channel");
+         }
+         if (sliceEnabled_){
+            result.add("Slice");
+         }
+         if (timeEnabled_){
+            result.add("Time");
+         }
+         return result;
+      }
+
       if (timeEnabled_ && posEnabled_) {
          if (id_ == TIME_POS_CHANNEL_SLICE || id_ == TIME_POS_SLICE_CHANNEL) {
             result.add("Time");
@@ -136,6 +154,7 @@ public final class AcqOrderMode {
       return result;
    }
 
+   @Deprecated
    public List<String> getOrderingInCoordStrings() {
       ArrayList<String> result = new ArrayList<>();
       if (timeEnabled_ && posEnabled_) {

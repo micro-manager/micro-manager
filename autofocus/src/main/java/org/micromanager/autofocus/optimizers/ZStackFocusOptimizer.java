@@ -13,6 +13,15 @@ import org.micromanager.Studio;
 import org.micromanager.data.Image;
 import org.micromanager.imageprocessing.curvefit.Fitter;
 import org.micromanager.imageprocessing.curvefit.PlotUtils;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import org.jfree.data.xy.XYDataItem;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import org.micromanager.internal.utils.NumberUtils;
+
 
 /**
  * This class uses a Z-stack of images to perform autofocus. The Z position with the highest focus
@@ -167,9 +176,37 @@ public class ZStackFocusOptimizer implements FocusOptimizer {
          XYSeries[] data = {xySeries, xySeriesFitted};
          boolean[] shapes = {true, false};
          PlotUtils pu = new PlotUtils(studio_);
-         pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes, "", newZ);
+         pu.plotDataN("Focus Score", data, "z position, best z="+NumberUtils.doubleToDisplayString(newZ), "Focus Score", shapes, "", newZ);
+      }
+      String fname = studio_.getAcquisitionManager().getAcquisitionSettings().root() + "/"+isoTimestampFilename("focus-score", "csv");
+      try {
+         File csvFile = new File(fname);
+         saveXYSeriesToCSV(xySeries, csvFile);
+      }catch(Exception e){
+         studio_.logs().logError("Exception trying to save AF results into file " +fname+": " + e );
       }
       return newZ;
    }
+
+   public static void saveXYSeriesToCSV(XYSeries series, File file) throws IOException {
+      try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+         // Header
+         writer.write("X,Y");
+         writer.newLine();
+
+         for (int i = 0; i < series.getItemCount(); i++) {
+            XYDataItem item = series.getDataItem(i);
+            writer.write(item.getXValue() + "," + item.getYValue());
+            writer.newLine();
+         }
+      }
+   }
+   public static String isoTimestampFilename(String prefix, String extension) {
+      DateTimeFormatter formatter =
+            DateTimeFormatter.ofPattern("yyyyMMdd-HH-mm-ss");
+      String timestamp = LocalDateTime.now().format(formatter);
+      return timestamp +"-"+prefix+ "." + extension;
+      }
+
 
 }

@@ -921,6 +921,13 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   }
                   // TODO: Read back the position of the focus drive, and somehow perpetuate it back
                   // to the StagePositionList that is in use.
+
+                  // Double focusZ = af.fullFocus();
+                  // studio_.core().setPosition(focusZ);
+                  // studio_.core().waitForDevice(studio_.core().getFocusDevice());
+                  // studio_.logs().logMessage("   Autofocus best Z + AF offset= " + focusZ);
+                  // studio_.core().updateSystemStateCache();
+
                } catch (Exception ex) {
                   studio_.logs().logError(ex, "Failed to autofocus.");
                }
