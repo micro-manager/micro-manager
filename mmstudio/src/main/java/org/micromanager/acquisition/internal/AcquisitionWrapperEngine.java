@@ -61,6 +61,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
    public SequenceSettings getSequenceSettings() {
       return sequenceSettings_;
    }
+   
+   @Override
+   public void setAutofocusEveryChannel(boolean enabled) {
+      // No-op
+   }
 
    /**
     * Sets the settings to be used in the next acquisition.
@@ -73,7 +78,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
       calculateSlices();
       settingsChanged(sequenceSettings);
    }
-
+   
 
    @Override
    public Datastore acquire() throws MMException {
