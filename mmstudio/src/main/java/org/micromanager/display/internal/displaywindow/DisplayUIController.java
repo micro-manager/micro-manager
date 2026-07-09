@@ -25,6 +25,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.Point;
@@ -321,8 +322,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
          frame = new JFrame();
          frame.setUndecorated(true);
          frame.setResizable(false);
-         frame.setBounds(
-               GUIUtils.getFullScreenBounds(frame_.getGraphicsConfiguration()));
+         GraphicsConfiguration gc = frame_.getGraphicsConfiguration();
+         if (gc == null) {
+            gc = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                  .getDefaultScreenDevice().getDefaultConfiguration();
+         }
+         frame.setBounds(GUIUtils.getFullScreenBounds(gc));
          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
       }
       setTitle(frame);

@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,6 +134,7 @@ public class ExplorerManager {
    private volatile boolean viewerClosing_ = false;
    private volatile boolean shutdownInProgress_ = false;
    private boolean loadedData_ = false;
+   private volatile boolean keepTempDataOnClose_ = false;
    private DisplaySettings pendingMMDisplaySettings_ = null;
    private JSONObject pendingViewState_ = null;
    private String storageDir_;
@@ -879,17 +881,18 @@ public class ExplorerManager {
       }
 
       closeViewerReferences();
-      stopExplore(!loadedData_);
+      stopExplore(!loadedData_ && !keepTempDataOnClose_);
    }
 
    /**
-    * Shows the save/discard/cancel dialog when there is unsaved Explorer data.
-    * Returns true if the caller should proceed (data was saved or discarded),
+    * Shows the keep/move/delete/cancel dialog when there is unsaved Explorer data.
+    * Returns true if the caller should proceed (data was kept, moved, or deleted),
     * false if the user cancelled.  Returns true immediately when there is no
     * unsaved data (loaded-data sessions, empty storage, etc.).
     * Must be called on the EDT.
     */
    private boolean promptForUnsavedData() {
+      keepTempDataOnClose_ = false;
       if (loadedData_) {
          return true;
       }
@@ -907,20 +910,25 @@ public class ExplorerManager {
       while (true) {
          int choice = JOptionPane.showOptionDialog(
                  null,
-                 "Save the acquired Explorer data?",
-                 "Save Explorer Data",
-                 JOptionPane.YES_NO_CANCEL_OPTION,
+                 "What should happen to the acquired Explorer data?",
+                 "Explorer Data",
+                 JOptionPane.DEFAULT_OPTION,
                  JOptionPane.QUESTION_MESSAGE,
                  null,
-                 new String[]{"Save", "Discard", "Cancel"},
-                 "Save");
-         if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
+                 new String[]{"Keep", "Move", "Delete", "Cancel"},
+                 "Keep");
+         if (choice == 3 || choice == JOptionPane.CLOSED_OPTION) {
             studio_.logs().logMessage(
                   "Explorer: close cancelled, data remains in: " + storageDir_);
             return false;
          } else if (choice == 0) {
+            keepTempDataOnClose_ = true;
+            JOptionPane.showMessageDialog(null, "Data kept in " + storageDir_,
+                  "Explorer Data", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+         } else if (choice == 1) {
             JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Save Explorer Data");
+            chooser.setDialogTitle("Move Explorer Data To");
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             String suggestedPath = FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET);
             if (suggestedPath != null) {
@@ -940,7 +948,7 @@ public class ExplorerManager {
                }
             }
          } else {
-            return true; // Discard
+            return true; // Delete
          }
       }
    }
@@ -2251,8 +2259,6 @@ public class ExplorerManager {
          throw new Exception("ROI does not overlap the vessel.");
       }
 
-      String warning = null;
-
       // ---- Live hardware: affine + FOV for the new position grid ----
       // The grid is sized by the CURRENT pixel size from getPixelSizeUm(); the affine is used only
       // for step-vector DIRECTION (rotation/shear). The affine's own scale can be stale (it does
@@ -2296,6 +2302,7 @@ public class ExplorerManager {
          throw new Exception("Cannot create positions: overlap is >= tile size.");
       }
 
+      String warning = null;
       if (Math.abs(livePixelSizeUm - initialPixelSizeUm_) > 0.01 * initialPixelSizeUm_) {
          warning = String.format(
                "Note: current pixel size (%.4f um) differs from session start (%.4f um) "
@@ -2385,10 +2392,10 @@ public class ExplorerManager {
       // ---- Grid origin: center over the ROI bounding box ----
       double roiStageCX = sumX / 4.0;
       double roiStageCY = sumY / 4.0;
-      double originX = roiStageCX
+      final double originX = roiStageCX
             - (nCols - 1) / 2.0 * stageStepXdx
             - (nRows - 1) / 2.0 * stageStepYdx;
-      double originY = roiStageCY
+      final double originY = roiStageCY
             - (nCols - 1) / 2.0 * stageStepXdy
             - (nRows - 1) / 2.0 * stageStepYdy;
 
@@ -2430,20 +2437,20 @@ public class ExplorerManager {
       // computed individually below so an ROI spanning several wells labels each correctly.
       // Use the NEXT region number; createPositionsFromRoi advances it on commit.
       int regionNumber = regionCounter_ + 1;
-      String regionLabel = "Reg" + regionNumber;
+      final String regionLabel = "Reg" + regionNumber;
       boolean multiWell = vesselType_ != null && vesselType_.isMultiWell();
 
       // Snapshot the checked auxiliary stages (e.g. Z) once, applied to every position.
       // When Refine Z has reference points, the 1D (Z) stages it measured are interpolated
       // per tile instead of using this snapshot; other aux stages keep the snapshot.
-      java.util.List<StagePosition> auxStages = readCheckedAuxStages(xyStage);
+      final List<StagePosition> auxStages = readCheckedAuxStages(xyStage);
       boolean haveRefineZ = hasRefineZPoints();
-      java.util.Set<String> refinedZStages = haveRefineZ
+      final Set<String> refinedZStages = haveRefineZ
             ? new java.util.HashSet<>(getCheckedZStages()) : java.util.Collections.emptySet();
       // ZGenerators keyed by well key (or one global generator under key 0 when not per-well).
-      java.util.Map<Long, java.util.Map<String, ZGenerator>> zGenByWell =
+      final Map<Long, Map<String, ZGenerator>> zGenByWell =
             new java.util.HashMap<>();
-      java.util.Map<String, ZGenerator> zGenGlobal = haveRefineZ
+      final Map<String, ZGenerator> zGenGlobal = haveRefineZ
             ? buildZGenerators(null) : java.util.Collections.emptyMap();
 
       // Group positions by well only when clipping to a multi-well vessel; otherwise the whole

@@ -70,8 +70,13 @@ public class BaseOverlayer {
    public synchronized void createOverlay(DataViewCoords viewCoords,
                                           TiledDataViewerOverlayerPlugin overlayerPlugin) {
       if (currentTask_ != null && !currentTask_.isDone()) {
-         //cancel current surface calculation--this call does not block until complete
-         currentTask_.cancel(true);
+         //Supersede the previous overlay calculation, but do NOT interrupt it
+         //(cancel(false)). The overlay task reads NDTiff tiles via an interruptible
+         //FileChannel; interrupting a thread mid-read throws ClosedByInterruptException
+         //and permanently closes that channel, so every later read fails with
+         //ClosedChannelException. A not-yet-started task is still cancelled; a running
+         //one finishes harmlessly and its result is replaced by the newer task.
+         currentTask_.cancel(false);
       }
       currentTask_ = taskExecutor_.submit(new Runnable() {
 
