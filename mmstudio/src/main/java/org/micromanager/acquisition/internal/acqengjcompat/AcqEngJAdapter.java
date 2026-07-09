@@ -230,6 +230,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             sb.timeFirst(true);
             sb.slicesFirst(true);
             break;
+         case AcqOrderMode.POS_CHANNEL_SLICE_TIME:
+            sb.timeFirst(true);
+            sb.slicesFirst(true);
+            break;
          default:
             break;
       }
@@ -730,8 +734,21 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (acquisitionSettings.useChannels()) {
             acqFunctions.add(channels);
          }
-      } else {
-         throw new RuntimeException("Unknown acquisition order");
+      } else if(acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_CHANNEL_SLICE_TIME){
+         if (acquisitionSettings.usePositionList()) {
+            acqFunctions.add(positions);
+         }
+         if (acquisitionSettings.useChannels()) {
+            acqFunctions.add(channels);
+         }
+         if (acquisitionSettings.useSlices()) {
+            acqFunctions.add(zStack);
+         }
+         if (acquisitionSettings.useFrames()) {
+            acqFunctions.add(timelapse);
+         }
+      }else {
+         throw new RuntimeException("Unknown acquisition order " + acquisitionSettings.acqOrderMode());
       }
 
       AcquisitionEvent baseEvent = new AcquisitionEvent(currentAcquisition_);
@@ -875,9 +892,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
-            // print message using core logMessage:
-            studio_.core().logMessage("Running autofocus hook...");
-
+            studio_.logs().logError("Autofocus hook called for event: " + event);
             if (!event.isAcquisitionFinishedEvent()
                   && (event.getZIndex() == null || event.getZIndex() == 0)){
                   //&& (event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == null
@@ -897,13 +912,21 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                       af.setPropertyValue("Channel", channel);
                   }
 
-                  af.fullFocus();
+                  
+                  Double focusZ = af.fullFocus();
+                  studio_.core().setPosition(focusZ);
+                  studio_.core().waitForDevice(studio_.core().getFocusDevice());
+                  studio_.logs().logMessage("   Autofocus best Z + AF offset= " + focusZ);
+                  studio_.core().updateSystemStateCache();
+
                   String posName = event.getTags().get(AcqEngMetadata.POS_NAME);
                   if (posName != null) {
                      MultiStagePosition msp = new MultiStagePosition();
                      msp.setLabel(posName);
                      for (String deviceName : event.getStageDeviceNames()) {
-                        msp.add(StagePosition.create1D(deviceName, core_.getPosition(deviceName)));
+                        Double stage_pos = core_.getPosition(deviceName);
+                        msp.add(StagePosition.create1D(deviceName, stage_pos));
+                        studio_.logs().logMessage("   Autofocus moved stage " + deviceName + " to position " + stage_pos);
                      }
                      positionMap_.put(posName, msp);
                   }
@@ -1824,6 +1847,23 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             || sequenceSettings_.useChannels()
             || sequenceSettings_.useSlices()) {
          StringBuilder order = new StringBuilder("\nOrder: ");
+
+         if(sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_CHANNEL_SLICE_TIME){
+            if(sequenceSettings_.usePositionList()){
+               order.append("Position, ");
+            }
+            if(sequenceSettings_.useChannels()){
+               order.append("Channel, ");
+            }
+            if(sequenceSettings_.useSlices()){
+               order.append("Slice, ");
+            }
+            if(sequenceSettings_.useFrames()){
+               order.append("Time");
+            }
+            return txt + order.toString();
+         }
+
          if (sequenceSettings_.useFrames() && sequenceSettings_.usePositionList()) {
             if (sequenceSettings_.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
                   || sequenceSettings_.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {

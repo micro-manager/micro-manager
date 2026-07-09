@@ -73,12 +73,15 @@ public class DefaultDatastore implements Datastore {
    }
 
    private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
+   private static final String SINGLEPLANE_TIFF_SERIES_CHANNELS = "Separate Image Files split by channel";
    private static final String MULTIPAGE_TIFF = "Image Stack File";
    private static final String ND_TIFF = "NDTiff stack";
 
    // FileFilters for saving.
    private static final FileFilter SINGLEPLANEFILTER = new SaveFileFilter(
          SINGLEPLANE_TIFF_SERIES);
+   private static final FileFilter SINGLEPLANEFILTERCH = new SaveFileFilter(
+         SINGLEPLANE_TIFF_SERIES_CHANNELS);
    private static final FileFilter MULTIPAGEFILTER = new SaveFileFilter(
          MULTIPAGE_TIFF);
    private static final FileFilter NDTIFFFILTER = new SaveFileFilter(
@@ -471,12 +474,15 @@ public class DefaultDatastore implements Datastore {
       JFileChooser chooser = new JFileChooser();
       chooser.setAcceptAllFileFilterUsed(false);
       chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
+      chooser.addChoosableFileFilter(SINGLEPLANEFILTERCH);
       chooser.addChoosableFileFilter(MULTIPAGEFILTER);
       chooser.addChoosableFileFilter(NDTIFFFILTER);
       if (Objects.equals(getPreferredSaveMode(studio_), SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(MULTIPAGEFILTER);
       } else if  (Objects.equals(getPreferredSaveMode(studio_), SaveMode.ND_TIFF)) {
          chooser.setFileFilter(NDTIFFFILTER);
+      } else if  (Objects.equals(getPreferredSaveMode(studio_), SaveMode.SINGLEPLANE_TIFF_SERIES_CHANNELS)) {
+         chooser.setFileFilter(SINGLEPLANEFILTERCH);
       } else {
          chooser.setFileFilter(SINGLEPLANEFILTER);
       }
@@ -495,6 +501,8 @@ public class DefaultDatastore implements Datastore {
       Datastore.SaveMode mode;
       if (filter == SINGLEPLANEFILTER) {
          mode = SaveMode.SINGLEPLANE_TIFF_SERIES;
+      } else if (filter == SINGLEPLANEFILTERCH) {
+         mode = SaveMode.SINGLEPLANE_TIFF_SERIES_CHANNELS;
       } else if (filter == MULTIPAGEFILTER) {
          mode = SaveMode.MULTIPAGE_TIFF;
       } else if (filter == NDTIFFFILTER) {
@@ -575,6 +583,8 @@ public class DefaultDatastore implements Datastore {
          return Datastore.SaveMode.MULTIPAGE_TIFF;
       } else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
          return Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
+      } else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES_CHANNELS)) {
+         return Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES_CHANNELS;
       } else {
          ReportingUtils.logError("Unrecognized save mode " + modeStr);
          return null;
@@ -601,6 +611,9 @@ public class DefaultDatastore implements Datastore {
                break;
             case SINGLEPLANE_TIFF_SERIES:
                modeStr = SINGLEPLANE_TIFF_SERIES;
+               break;
+            case SINGLEPLANE_TIFF_SERIES_CHANNELS:
+               modeStr = SINGLEPLANE_TIFF_SERIES_CHANNELS;
                break;
             default:
                ReportingUtils.logError("Unrecognized save mode " + mode);
