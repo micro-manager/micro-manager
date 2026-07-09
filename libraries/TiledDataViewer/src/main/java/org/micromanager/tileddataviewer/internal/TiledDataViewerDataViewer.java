@@ -170,6 +170,11 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    // (tracked by overlayImagesSignature_). Accessed only on the overlay-render path.
    private List<Image> overlayChannelImages_ = null;
    private String overlayImagesSignature_ = null;
+   // Last image successfully fetched for overlay painting. Reused when a later fetch returns
+   // null or throws (e.g. an empty-axes resize render, or a transient storage read failure),
+   // so overlays that only need a representative image + pixel size (ScaleBar, Pattern) keep
+   // drawing instead of vanishing. Accessed only on the single-threaded overlay-render path.
+   private Image lastGoodOverlayImage_ = null;
    // Last rendered BufferedImage of MM overlays — read by the persistent mmOverlayRoi_
    private volatile BufferedImage mmOverlayBuf_ = null;
    // Single persistent Roi that draws mmOverlayBuf_ onto the canvas each repaint
@@ -1241,7 +1246,6 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                   (float) viewOffset.y,
                   (float) (displayImageSize.x / magnification),
                   (float) (displayImageSize.y / magnification));
-            DisplaySettings ds = getDisplaySettings();
             // Fetch a representative image so overlays can read pixel metadata
             // (e.g. ScaleBarOverlay reads pixelSizeUm from primaryImage,
             //  PatternOverlay requires non-null primaryImage).
@@ -1259,12 +1263,24 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                   primaryImage = dataProvider_.getAnyImage();
                }
             } catch (Exception ex) {
-               // Ignore — primaryImage stays null
+               // A storage read may fail here (e.g. an interrupted FileChannel read on a
+               // resize render). Fall through to the cached last-good image below rather
+               // than dropping the overlay.
+               primaryImage = null;
+            }
+
+            // Reuse the last successfully-fetched image when this render could not obtain
+            // one (empty-axes resize render, transient read failure). Overlays that only
+            // need a representative image + pixel size (ScaleBar, Pattern) then keep drawing.
+            if (primaryImage == null) {
+               primaryImage = lastGoodOverlayImage_;
+            } else {
+               lastGoodOverlayImage_ = primaryImage;
             }
 
             // Many overlays (ScaleBarOverlay, PatternOverlay) require a non-null primaryImage
-            // to read pixel metadata.  If no image is available yet (e.g. before the first
-            // tile arrives in a new acquisition), skip MM overlays entirely.
+            // to read pixel metadata.  If none is available yet (e.g. before the first tile
+            // arrives in a new acquisition and nothing cached), skip MM overlays entirely.
             if (primaryImage == null) {
                mmOverlayBuf_ = null;
                tiledDataViewer_.setOverlay(defaultOverlay);
@@ -1281,6 +1297,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             // build a minimal 1x1 placeholder per visible channel carrying the channel coord.
             // These are cached and rebuilt only when the channel set/visibility changes (this
             // runs on every overlay redraw, which is frequent during pan/zoom).
+            DisplaySettings ds = getDisplaySettings();
             List<Image> overlayImages = getOrBuildOverlayChannelImages(ds);
             // Always fall back to the (non-null) primary image so overlays that only need a
             // single representative image (ScaleBar, Pattern) keep working.
