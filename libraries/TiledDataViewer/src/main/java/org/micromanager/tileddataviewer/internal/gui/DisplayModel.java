@@ -58,11 +58,23 @@ public class DisplayModel {
    }
 
    public int getIntegerPositionFromStringPosition(String axisName, String axisPosition) {
-      return stringAxes_.get(axisName).indexOf(axisPosition);
+      // A scroller can be queried before its string axis has been registered (e.g. the first
+      // repaint races the image event that populates stringAxes_), so default to position 0
+      // rather than dereferencing a missing list. The next image event corrects the position.
+      LinkedList<String> values = stringAxes_.get(axisName);
+      if (values == null) {
+         return 0;
+      }
+      int idx = values.indexOf(axisPosition);
+      return idx < 0 ? 0 : idx;
    }
 
    public String getStringPositionFromIntegerPosition(String axisName, int axisPosition) {
-      return stringAxes_.get(axisName).get(axisPosition);
+      LinkedList<String> values = stringAxes_.get(axisName);
+      if (values == null || axisPosition < 0 || axisPosition >= values.size()) {
+         return null;
+      }
+      return values.get(axisPosition);
    }
 
    public void channelWasSetActiveByCheckbox(String channelName, boolean selected) {
