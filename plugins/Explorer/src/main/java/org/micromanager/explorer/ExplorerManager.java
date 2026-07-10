@@ -67,9 +67,11 @@ import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
+import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
+import org.micromanager.tileddataprovider.OMEZarrMultiresStorage;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
@@ -108,7 +110,7 @@ public class ExplorerManager {
    private TiledDataViewerAPI viewer_;
    private TiledDataViewerDataViewerAPI mm2Viewer_;
    private TiledDataViewerDataProviderAPI mm2DataProvider_;
-   private NDTiffStorage storage_;
+   private MultiresNDTiffAPI storage_;
    private ExplorerDataSource dataSource_;
    private ExecutorService displayExecutor_;
    private ExecutorService acquisitionExecutor_;
@@ -139,6 +141,9 @@ public class ExplorerManager {
    private JSONObject pendingViewState_ = null;
    private String storageDir_;
    private String acqName_;
+   // Absolute path of the actual dataset directory (e.g. <base>/Explorer_<ts>.ome.zarr). This is
+   // what is kept, moved, or deleted — storageDir_ is only its (possibly shared) parent.
+   private String datasetDir_;
 
    private double initialStageX_ = 0;
    private double initialStageY_ = 0;
@@ -244,17 +249,16 @@ public class ExplorerManager {
 
          String tmpPathSetting = frame_.getSettings().getString(
                  ExplorerFrame.EXPLORE_TMP_PATH, "").trim();
-         Path tempDir;
-         if (tmpPathSetting.isEmpty()) {
-            tempDir = Files.createTempDirectory("explorer_");
-         } else {
-            Path base = new File(tmpPathSetting).toPath();
-            Files.createDirectories(base);
-            tempDir = Files.createTempDirectory(base, "explorer_");
-         }
-         storageDir_ = tempDir.toFile().getAbsolutePath();
-         acqName_ = "Explorer_" + LocalDateTime.now()
-                 .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+         // Write the dataset directly into the base directory rather than nesting it inside a
+         // throwaway "explorer_<random>" wrapper. acqName_ already carries a unique timestamp, so
+         // the dataset directory (e.g. Explorer_<ts>.ome.zarr) is self-identifying on its own.
+         Path base = tmpPathSetting.isEmpty()
+                 ? new File(System.getProperty("java.io.tmpdir")).toPath()
+                 : new File(tmpPathSetting).toPath();
+         Files.createDirectories(base);
+         storageDir_ = base.toFile().getAbsolutePath();
+         acqName_ = uniqueAcqName(base, "Explorer_" + LocalDateTime.now()
+                 .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")));
 
          cameraWidth_ = (int) studio_.core().getImageWidth();
          cameraHeight_ = (int) studio_.core().getImageHeight();
@@ -334,9 +338,22 @@ public class ExplorerManager {
          int overlapY = (int) Math.round(cameraHeight_ * overlapPercentage_ / 100.0);
          summaryMetadataJson.put("GridPixelOverlapX", overlapX);
          summaryMetadataJson.put("GridPixelOverlapY", overlapY);
-         storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadataJson,
-                 overlapX, overlapY, true, null,
-                 SAVING_QUEUE_SIZE, null, true);
+         boolean useOmeZarr = studio_.profile().getSettings(ExplorerFrame.class)
+                 .getBoolean(ExplorerFrame.USE_OME_ZARR, false);
+         if (useOmeZarr && isRGB_) {
+            studio_.logs().showMessage("The OME-Zarr backend does not support RGB; "
+                    + "using NDTiff storage for this acquisition.");
+            useOmeZarr = false;
+         }
+         if (useOmeZarr) {
+            storage_ = new OMEZarrMultiresStorage(storageDir_, acqName_, summaryMetadataJson,
+                    overlapX, overlapY, SAVING_QUEUE_SIZE);
+         } else {
+            storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadataJson,
+                    overlapX, overlapY, true, null,
+                    SAVING_QUEUE_SIZE, null, true);
+         }
+         datasetDir_ = storage_.getDiskLocation();
          dataSource_.setStorage(storage_);
 
          mm2DataProvider_ = TiledDataViewerFactory.createDataProvider(
@@ -427,9 +444,14 @@ public class ExplorerManager {
          dataSource_ = new ExplorerDataSource(this);
          dataSource_.setReadOnly(true);
 
-         storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
+         if (OMEZarrMultiresStorage.isOMEZarrDataset(dir)) {
+            storage_ = new OMEZarrMultiresStorage(dir);
+         } else {
+            storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
+         }
          storageDir_ = new File(dir).getParent();
          acqName_ = new File(dir).getName();
+         datasetDir_ = new File(dir).getAbsolutePath();
          dataSource_.setStorage(storage_);
 
          JSONObject summaryMetadata = storage_.getSummaryMetadata();
@@ -740,7 +762,7 @@ public class ExplorerManager {
          dataSource_ = null;
       }
 
-      final NDTiffStorage storageToClose = storage_;
+      final MultiresNDTiffAPI storageToClose = storage_;
       final boolean doDelete = deleteTempFiles;
       storage_ = null;
       if (storageToClose != null || doDelete) {
@@ -919,11 +941,11 @@ public class ExplorerManager {
                  "Keep");
          if (choice == 3 || choice == JOptionPane.CLOSED_OPTION) {
             studio_.logs().logMessage(
-                  "Explorer: close cancelled, data remains in: " + storageDir_);
+                  "Explorer: close cancelled, data remains in: " + dataLocationForMessages());
             return false;
          } else if (choice == 0) {
             keepTempDataOnClose_ = true;
-            JOptionPane.showMessageDialog(null, "Data kept in " + storageDir_,
+            JOptionPane.showMessageDialog(null, "Data kept in " + dataLocationForMessages(),
                   "Explorer Data", JOptionPane.INFORMATION_MESSAGE);
             return true;
          } else if (choice == 1) {
@@ -938,7 +960,8 @@ public class ExplorerManager {
                   chooser.setCurrentDirectory(dir);
                }
             }
-            chooser.setSelectedFile(new File(acqName_));
+            chooser.setSelectedFile(new File(
+                  datasetDir_ != null ? new File(datasetDir_).getName() : acqName_));
             if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                File destDir = chooser.getSelectedFile();
                FileDialogs.storePath(FileDialogs.MM_DATA_SET, destDir);
@@ -977,7 +1000,7 @@ public class ExplorerManager {
 
       try {
          if (storage_ != null) {
-            NDTiffStorage storageRef = storage_;
+            MultiresNDTiffAPI storageRef = storage_;
             storage_ = null;
             try {
                if (!storageRef.isFinished()) {
@@ -989,12 +1012,19 @@ public class ExplorerManager {
             }
          }
 
-         File sourceDir = new File(storageDir_, acqName_);
+         // Copy the dataset directory itself; storageDir_ may now be a base shared with other
+         // datasets, so never copy the whole parent.
+         File sourceDir = datasetDir_ != null ? new File(datasetDir_)
+               : new File(storageDir_, acqName_);
          if (!sourceDir.exists()) {
-            sourceDir = new File(storageDir_);
+            studio_.logs().showError("Cannot locate acquired data to save: " + sourceDir);
+            return false;
          }
 
          Path sourcePath = sourceDir.toPath();
+         // The chosen destDir becomes the dataset root directly (destDir is named by the user in
+         // the Move dialog, pre-filled with the dataset's name), so the result is a single clean
+         // directory with no redundant nesting.
          Path destPath = destDir.toPath();
 
          final int[] copyErrors = {0};
@@ -1019,7 +1049,8 @@ public class ExplorerManager {
          if (copyErrors[0] > 0) {
             studio_.logs().showError("Save incomplete: " + copyErrors[0]
                   + " file(s) could not be copied.\n"
-                  + "Your data is still in the temporary directory:\n  " + storageDir_
+                  + "Your data is still in the temporary directory:\n  "
+                  + dataLocationForMessages()
                   + "\nSee CoreLog for details.");
             return false;
          }
@@ -1035,11 +1066,15 @@ public class ExplorerManager {
    }
 
    private void deleteTempStorage() {
-      if (storageDir_ == null) {
+      // Delete only this dataset, never the (possibly shared) parent base directory.
+      String target = datasetDir_ != null ? datasetDir_
+            : (storageDir_ != null && acqName_ != null
+                  ? new File(storageDir_, acqName_).getAbsolutePath() : null);
+      if (target == null) {
          return;
       }
       try {
-         File dir = new File(storageDir_);
+         File dir = new File(target);
          if (dir.exists()) {
             List<Path> pathsToDelete;
             try (Stream<Path> stream = Files.walk(dir.toPath())) {
@@ -1049,11 +1084,36 @@ public class ExplorerManager {
             for (Path path : pathsToDelete) {
                deleteWithRetry(path);
             }
-            studio_.logs().logMessage("Explorer: deleted temp storage at " + storageDir_);
+            studio_.logs().logMessage("Explorer: deleted temp storage at " + target);
          }
       } catch (IOException e) {
-         studio_.logs().logError(e, "Failed to delete temp storage: " + storageDir_);
+         studio_.logs().logError(e, "Failed to delete temp storage: " + target);
       }
+   }
+
+   /** Human-readable location of the acquired dataset for user messages. */
+   private String dataLocationForMessages() {
+      if (datasetDir_ != null) {
+         return datasetDir_;
+      }
+      if (storageDir_ != null && acqName_ != null) {
+         return new File(storageDir_, acqName_).getAbsolutePath();
+      }
+      return String.valueOf(storageDir_);
+   }
+
+   /**
+    * Returns a dataset name that does not collide with an existing directory under {@code base}
+    * (checking both the bare name and the {@code .ome.zarr} form), appending {@code _N} if needed.
+    */
+   private static String uniqueAcqName(Path base, String candidate) {
+      String name = candidate;
+      int suffix = 1;
+      while (new File(base.toFile(), name).exists()
+            || new File(base.toFile(), name + ".ome.zarr").exists()) {
+         name = candidate + "_" + suffix++;
+      }
+      return name;
    }
 
    private void deleteWithRetry(Path path) {

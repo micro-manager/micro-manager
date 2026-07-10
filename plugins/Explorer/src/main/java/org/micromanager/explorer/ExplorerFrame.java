@@ -41,6 +41,7 @@ public class ExplorerFrame extends JFrame {
    static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
    static final String EXPLORE_OVERLAP_PERCENT = "ExploreOverlapPercent";
    static final String VESSEL_TYPE = "VesselType";
+   static final String USE_OME_ZARR = "UseOmeZarrStorage";
 
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
@@ -165,6 +166,15 @@ public class ExplorerFrame extends JFrame {
       overlapSpinner.addChangeListener(e ->
             settings_.putInteger(EXPLORE_OVERLAP_PERCENT, (Integer) overlapSpinner.getValue()));
       add(overlapSpinner, "wrap");
+
+      // Storage backend selector: NDTiff (default) or the OME-Zarr library.
+      JCheckBox omeZarrCheck = new JCheckBox("Store as OME-Zarr (experimental)");
+      omeZarrCheck.setToolTipText("Write acquisitions in OME-Zarr (OME-NGFF v0.5 / Zarr v3) "
+            + "instead of NDTiff. Grayscale only; RGB falls back to NDTiff.");
+      omeZarrCheck.setSelected(settings_.getBoolean(USE_OME_ZARR, false));
+      omeZarrCheck.addActionListener(e ->
+            settings_.putBoolean(USE_OME_ZARR, omeZarrCheck.isSelected()));
+      add(omeZarrCheck, "wrap");
 
       // Vessel type selector
       add(new JLabel("Vessel:"), "split 2");
