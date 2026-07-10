@@ -1197,6 +1197,26 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
 
    // ---- OverlaySupport / TiledDataViewerDataViewerAPI overlay methods ----
 
+   /** A supplier of an overlay image that may fail with a checked (or runtime) exception. */
+   @FunctionalInterface
+   private interface OverlayImageSupplier {
+      Image get() throws Exception;
+   }
+
+   /**
+    * Run one overlay-image lookup, swallowing any failure and returning null. Used so the
+    * bridge's chain of primaryImage fallbacks (getImageByAxes → getImage → getAnyImage) keeps
+    * trying subsequent lookups even when an earlier one throws, instead of one failure dropping
+    * every MM overlay for the frame.
+    */
+   private Image tryFetchOverlayImage(OverlayImageSupplier supplier) {
+      try {
+         return supplier.get();
+      } catch (Exception ex) {
+         return null;
+      }
+   }
+
    /**
     * Create the internal bridge overlayer plugin that renders MM overlays onto the TiledDataViewer
     * canvas. This plugin also chains to any external overlayer plugin set via setOverlayerPlugin().
@@ -1249,24 +1269,20 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             // Fetch a representative image so overlays can read pixel metadata
             // (e.g. ScaleBarOverlay reads pixelSizeUm from primaryImage,
             //  PatternOverlay requires non-null primaryImage).
-            Image primaryImage = null;
-            try {
-               primaryImage = dataProvider_.getImageByAxes(axes);
-               if (primaryImage == null) {
+            // Each fetch is guarded independently: a read/convert failure in one lookup
+            // (e.g. an interrupted FileChannel read on a resize render, or a storage backend
+            // returning an image with unusable tags) must not skip the remaining fallbacks.
+            // The final fallback below is the cached last-good image.
+            Image primaryImage = tryFetchOverlayImage(() -> dataProvider_.getImageByAxes(axes));
+            if (primaryImage == null) {
+               primaryImage = tryFetchOverlayImage(() -> {
                   Coords pos = axesBridge_.tiledDataViewerToCoords(axes);
-                  if (pos != null) {
-                     primaryImage = dataProvider_.getImage(pos);
-                  }
-               }
-               // Last resort: grab any image from the dataset
-               if (primaryImage == null) {
-                  primaryImage = dataProvider_.getAnyImage();
-               }
-            } catch (Exception ex) {
-               // A storage read may fail here (e.g. an interrupted FileChannel read on a
-               // resize render). Fall through to the cached last-good image below rather
-               // than dropping the overlay.
-               primaryImage = null;
+                  return pos != null ? dataProvider_.getImage(pos) : null;
+               });
+            }
+            if (primaryImage == null) {
+               // Last resort: grab any image from the dataset.
+               primaryImage = tryFetchOverlayImage(dataProvider_::getAnyImage);
             }
 
             // Reuse the last successfully-fetched image when this render could not obtain
