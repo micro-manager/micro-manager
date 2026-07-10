@@ -71,6 +71,7 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
+import org.micromanager.tileddataprovider.OMEBigTiffMultiresStorage;
 import org.micromanager.tileddataprovider.OMEZarrMultiresStorage;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
@@ -338,15 +339,23 @@ public class ExplorerManager {
          int overlapY = (int) Math.round(cameraHeight_ * overlapPercentage_ / 100.0);
          summaryMetadataJson.put("GridPixelOverlapX", overlapX);
          summaryMetadataJson.put("GridPixelOverlapY", overlapY);
-         boolean useOmeZarr = studio_.profile().getSettings(ExplorerFrame.class)
-                 .getBoolean(ExplorerFrame.USE_OME_ZARR, false);
-         if (useOmeZarr && isRGB_) {
-            studio_.logs().showMessage("The OME-Zarr backend does not support RGB; "
+         String backend = studio_.profile().getSettings(ExplorerFrame.class)
+                 .getString(ExplorerFrame.STORAGE_BACKEND,
+                         studio_.profile().getSettings(ExplorerFrame.class)
+                                 .getBoolean(ExplorerFrame.USE_OME_ZARR, false)
+                                 ? ExplorerFrame.BACKEND_OME_ZARR : ExplorerFrame.BACKEND_NDTIFF);
+         // Neither OME backend supports RGB; fall back to NDTiff for RGB acquisitions.
+         if (isRGB_ && (ExplorerFrame.BACKEND_OME_ZARR.equals(backend)
+                 || ExplorerFrame.BACKEND_OME_BIGTIFF.equals(backend))) {
+            studio_.logs().showMessage("The " + backend + " backend does not support RGB; "
                     + "using NDTiff storage for this acquisition.");
-            useOmeZarr = false;
+            backend = ExplorerFrame.BACKEND_NDTIFF;
          }
-         if (useOmeZarr) {
+         if (ExplorerFrame.BACKEND_OME_ZARR.equals(backend)) {
             storage_ = new OMEZarrMultiresStorage(storageDir_, acqName_, summaryMetadataJson,
+                    overlapX, overlapY, SAVING_QUEUE_SIZE);
+         } else if (ExplorerFrame.BACKEND_OME_BIGTIFF.equals(backend)) {
+            storage_ = new OMEBigTiffMultiresStorage(storageDir_, acqName_, summaryMetadataJson,
                     overlapX, overlapY, SAVING_QUEUE_SIZE);
          } else {
             storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadataJson,
@@ -446,6 +455,8 @@ public class ExplorerManager {
 
          if (OMEZarrMultiresStorage.isOMEZarrDataset(dir)) {
             storage_ = new OMEZarrMultiresStorage(dir);
+         } else if (OMEBigTiffMultiresStorage.isOMEBigTiffDataset(dir)) {
+            storage_ = new OMEBigTiffMultiresStorage(dir);
          } else {
             storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
          }

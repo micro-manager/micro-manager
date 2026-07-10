@@ -61,6 +61,12 @@
            vendored at 3rdpartypublic/classext/MM-OME-Zarr-Storage.jar and resolved by the
            thirdpartypublic filesystem resolver. -->
       <dependency org="org.micromanager" name="MM-OME-Zarr-Storage" rev="0.1.0"/>
+      <!-- OME-BigTIFF storage backend for the Explorer plugin (bridged via
+           org.micromanager.tileddataprovider.OMEBigTiffMultiresStorage). This is a self-contained
+           ("all") jar bundling its own dependencies (jackson), vendored at
+           3rdpartypublic/classext/MM-OME-BigTiff-Storage.jar and resolved by the thirdpartypublic
+           filesystem resolver. -->
+      <dependency org="org.micromanager" name="MM-OME-BigTiff-Storage" rev="0.1.0"/>
       <dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.46.19">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
