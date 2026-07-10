@@ -55,6 +55,12 @@
       <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.19.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
+      <!-- OME-Zarr storage backend for the Explorer plugin (bridged via
+           org.micromanager.tileddataprovider.OMEZarrMultiresStorage). This is a self-contained
+           ("all") jar bundling its own dependencies (zarr-java, cdm-core, jackson, blosc, zstd),
+           vendored at 3rdpartypublic/classext/MM-OME-Zarr-Storage.jar and resolved by the
+           thirdpartypublic filesystem resolver. -->
+      <dependency org="org.micromanager" name="MM-OME-Zarr-Storage" rev="0.1.0"/>
       <dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.46.19">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
