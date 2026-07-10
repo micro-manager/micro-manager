@@ -204,10 +204,22 @@ public final class OMEZarrMultiresStorage implements MultiresNDTiffAPI {
    @Override
    public TaggedImage getImage(HashMap<String, Object> axes, int resolutionLevel) {
       OMEZarrImage img = store_.getImage(translate(axes), resolutionLevel);
-      if (img == null) {
+      if (img == null || img.pix == null) {
          return null;
       }
-      String meta = img.metadataJson != null ? img.metadataJson : "{}";
+      // A genuinely stored plane always carries per-image metadata. When the metadata is
+      // absent the requested axes did not match a stored image: the OME-Zarr backend
+      // silently defaults any missing spatial axis (row/column) to 0 and returns plane
+      // (0,0)'s pixels, but there is no metadata under the partial key. Returning that
+      // orphan pixel array with empty tags makes convertTaggedImage() throw
+      // ("Zero or negative image size") because Width/Height are missing. Treat it as
+      // "not found" so callers fall through to their next lookup (e.g. getAnyImage()).
+      // This matters for the overlay bridge, which queries a composite (partial-axes)
+      // position to obtain a representative image for the scale bar and other overlays.
+      String meta = img.metadataJson;
+      if (meta == null || meta.isEmpty() || "{}".equals(meta.trim())) {
+         return null;
+      }
       return new TaggedImage(img.pix, parseJson(meta));
    }
 
