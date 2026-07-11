@@ -120,6 +120,21 @@ public final class OMEBigTiffMultiresStorage implements MultiresNDTiffAPI {
     */
    public OMEBigTiffMultiresStorage(String dir, String name, JSONObject summaryMetadata,
                                     int overlapX, int overlapY, int savingQueueSize) {
+      this(dir, name, summaryMetadata, overlapX, overlapY, savingQueueSize, NUM_RES_LEVELS);
+   }
+
+   /**
+    * Create a new tiled OME-BigTIFF dataset for writing with an explicit pyramid depth. Because
+    * OME-BigTIFF writes a plane's SubIFD array inline, the level count is fixed for the life of
+    * the file and must be chosen up front (unlike NDTiff/OME-Zarr, which grow the pyramid on
+    * demand). Callers with a large output canvas (e.g. the Stitch plugin) pass enough levels for
+    * the coarsest zoomed-out view; the Explorer uses the {@code NUM_RES_LEVELS} default.
+    *
+    * @param numResolutionLevels number of pyramid levels (>= 1); each level halves y and x
+    */
+   public OMEBigTiffMultiresStorage(String dir, String name, JSONObject summaryMetadata,
+                                    int overlapX, int overlapY, int savingQueueSize,
+                                    int numResolutionLevels) {
       this.readOnly_ = false;
       this.summary_ = summaryMetadata != null ? summaryMetadata : new JSONObject();
       this.overlapX_ = overlapX;
@@ -132,7 +147,7 @@ public final class OMEBigTiffMultiresStorage implements MultiresNDTiffAPI {
       }
       OMEBigTiffStorageConfig cfg = new OMEBigTiffStorageConfig()
             .positionAxis(POSITION)
-            .numResolutionLevels(NUM_RES_LEVELS)
+            .numResolutionLevels(Math.max(1, numResolutionLevels))
             .autoDownsample(true)
             .compression(Compression.DEFLATE)
             .pixelSize(pixelSizeUm)
