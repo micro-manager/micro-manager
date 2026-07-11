@@ -822,8 +822,15 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
          // Commit: record the post time and snapshot the histograms for next comparison.
          lastStatsPostNs_ = nowNs;
          for (Map.Entry<String, int[]> entry : rawHists.entrySet()) {
-            int[] snapshot = lastPostedHist_.get(entry.getKey());
             int[] src = entry.getValue();
+            if (src == null) {
+               // A channel whose processor exists but has not rendered a pixel yet reports a
+               // null histogram (common while seeding a reopened multi-channel dataset). Skip
+               // it — cloning null here previously threw and aborted the whole stats post,
+               // which starved the composite render and made the display fall back to grayscale.
+               continue;
+            }
+            int[] snapshot = lastPostedHist_.get(entry.getKey());
             if (snapshot == null || snapshot.length != src.length) {
                snapshot = src.clone();
                lastPostedHist_.put(entry.getKey(), snapshot);
