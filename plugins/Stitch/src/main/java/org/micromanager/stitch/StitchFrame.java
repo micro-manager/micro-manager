@@ -1268,7 +1268,10 @@ public class StitchFrame extends JDialog {
             setPhaseProgress(bar, 100);
             final boolean wasCancelled = exportCancelled_.get();
             final MultiresNDTiffAPI finalStorage = ndtiffStorage;
-            final String ndtiffPath = destPath;
+            // Report the storage's actual on-disk directory (e.g. <root>/stitched_3.ome.tiff),
+            // which now lives directly under the chosen root, rather than the pre-join destPath.
+            final String ndtiffPath = finalStorage.getDiskLocation() != null
+                  ? finalStorage.getDiskLocation() : destPath;
             final DisplaySettings dispSettings = sourceDisplaySettings;
             final boolean finalIsRgb = isRgb;
             final int finalCanvasW = outCanvasW;
@@ -1767,10 +1770,20 @@ public class StitchFrame extends JDialog {
          effective = TiledBackend.NDTIFF;
       }
 
+      // Write the dataset directly into the chosen directory root, not nested inside an extra
+      // wrapper folder of the same name: {@code path} is {@code <root>/<name>}, so the storage's
+      // parent directory is its parent ({@code <root>}) and {@code name} becomes the dataset
+      // itself (e.g. {@code <root>/stitched_3.ome.tiff}), not
+      // {@code <root>/stitched_3/stitched_3.ome.tiff}.
+      String parentDir = new File(path).getParent();
+      if (parentDir == null) {
+         parentDir = path;
+      }
+
       switch (effective) {
          case OME_ZARR: {
             OMEZarrMultiresStorage storage =
-                  new OMEZarrMultiresStorage(path, name, json, 0, 0, 30);
+                  new OMEZarrMultiresStorage(parentDir, name, json, 0, 0, 30);
             // Grow the pyramid to the full depth up front so every tile (including the first)
             // is downsampled to all levels as it is written.
             storage.increaseMaxResolutionLevel(maxResLevel);
@@ -1778,11 +1791,12 @@ public class StitchFrame extends JDialog {
          }
          case OME_BIGTIFF:
             // BigTIFF pyramid depth is fixed at creation; size it for the coarsest view.
-            return new OMEBigTiffMultiresStorage(path, name, json, 0, 0, 30, maxResLevel + 1);
+            return new OMEBigTiffMultiresStorage(
+                  parentDir, name, json, 0, 0, 30, maxResLevel + 1);
          case NDTIFF:
          default:
             return new NDTiffStorage(
-                  path, name, json, 0, 0, true, null, 30, null, true);
+                  parentDir, name, json, 0, 0, true, null, 30, null, true);
       }
    }
 
