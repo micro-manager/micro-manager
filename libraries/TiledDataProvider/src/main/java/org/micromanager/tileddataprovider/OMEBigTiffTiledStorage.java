@@ -209,18 +209,14 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
 
    @Override
    public TaggedImage getImage(HashMap<String, Object> axes) {
-      // Representative image for overlays / seed histograms: the finest pyramid level whose whole
-      // plane fits in a Java array (level 0 for a modest canvas, coarser for a huge one), so a
-      // multi-gigapixel plane never triggers an oversized allocation or the store's array-limit
-      // error.
-      Map<String, Object> plane = planeAxes(axes);
-      for (int level = 0; level < getNumResLevels(); level++) {
-         long[] wh = levelDims(plane, level);
-         if (wh != null && wh[0] * wh[1] <= MAX_ARRAY) {
-            return regionImage(plane, level, 0, 0, (int) wh[0], (int) wh[1]);
-         }
-      }
-      return null;
+      // The single-argument getImage is only ever used as a small, representative/downsampled
+      // image (seed histograms via getDownsampledImageByAxes, overlay primaryImage), never as the
+      // rendered pixels — those go through getDisplayImage. Return the COARSEST pyramid level so a
+      // large canvas never triggers a hundreds-of-MB multi-tile read on a UI-adjacent thread
+      // (which showed up as a couple-second freeze right after the viewer opened). The coarsest
+      // level is a few thousand pixels at most and always fits in an array.
+      int coarsest = Math.max(0, getNumResLevels() - 1);
+      return getImage(axes, coarsest);
    }
 
    @Override
@@ -274,18 +270,41 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
    @Override
    public TaggedImage getDisplayImage(HashMap<String, Object> axes, int resolutionLevel,
                                       int xOffset, int yOffset, int imageWidth, int imageHeight) {
-      // The library assembles the requested region from the covering tiles at this level.
-      TaggedImage ti = regionImage(planeAxes(axes), resolutionLevel,
-            xOffset, yOffset, imageWidth, imageHeight);
-      if (ti != null) {
-         return ti;
-      }
-      // Return an all-zero buffer of the requested size when the plane/region is not (yet)
-      // available, matching the compositing bridges (the viewer expects a non-null tile).
+      // The viewer freely requests a viewport that extends past the canvas (zoomed out, or panned
+      // near an edge), but the library's getRegion requires the region to lie entirely within the
+      // level canvas. So clamp the request to the canvas, read only that sub-region, and place it
+      // into an output buffer of the requested size — zero-padding the rest, exactly as the
+      // compositing bridges do.
       boolean isByte = bitDepth_ <= 8;
       int n = imageWidth * imageHeight;
       Object out = isByte ? new byte[n] : new short[n];
-      return new TaggedImage(out, new JSONObject());
+      JSONObject tags = new JSONObject();
+
+      Map<String, Object> plane = planeAxes(axes);
+      long[] wh = levelDims(plane, resolutionLevel);
+      if (wh != null) {
+         long canvasW = wh[0];
+         long canvasH = wh[1];
+         long rx0 = Math.max(0L, (long) xOffset);
+         long ry0 = Math.max(0L, (long) yOffset);
+         long rx1 = Math.min(canvasW, (long) xOffset + imageWidth);
+         long ry1 = Math.min(canvasH, (long) yOffset + imageHeight);
+         if (rx1 > rx0 && ry1 > ry0) {
+            int rw = (int) (rx1 - rx0);
+            int rh = (int) (ry1 - ry0);
+            OMEBigTiffImage img = store_.getRegion(plane, resolutionLevel, rx0, ry0, rw, rh);
+            if (img != null && img.pix != null) {
+               String meta = img.metadataJson;
+               if (meta != null && !meta.isEmpty()) {
+                  tags = parseJson(meta);
+               }
+               int destX0 = (int) (rx0 - xOffset);
+               int destY0 = (int) (ry0 - yOffset);
+               blit(out, imageWidth, img.pix, rw, rh, destX0, destY0);
+            }
+         }
+      }
+      return new TaggedImage(out, tags);
    }
 
    @Override
@@ -410,6 +429,18 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
          return null;
       }
       return new long[]{e.getWidth(), e.getHeight()};
+   }
+
+   /**
+    * Copy a {@code srcW}×{@code srcH} region into {@code dst} (row stride {@code dstW}) at
+    * ({@code destX0},{@code destY0}). Works for {@code byte[]} or {@code short[]}; the caller
+    * clamps the region to the canvas so it always fits within the destination.
+    */
+   private static void blit(Object dst, int dstW, Object src, int srcW, int srcH,
+                            int destX0, int destY0) {
+      for (int row = 0; row < srcH; row++) {
+         System.arraycopy(src, row * srcW, dst, (destY0 + row) * dstW + destX0, srcW);
+      }
    }
 
    private TaggedImage regionImage(Map<String, Object> plane, int level,
