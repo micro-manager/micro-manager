@@ -72,6 +72,7 @@ import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 import org.micromanager.tileddataprovider.OMEBigTiffMultiresStorage;
+import org.micromanager.tileddataprovider.OMEBigTiffTiledStorage;
 import org.micromanager.tileddataprovider.OMEZarrMultiresStorage;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
@@ -456,7 +457,11 @@ public class ExplorerManager {
          if (OMEZarrMultiresStorage.isOMEZarrDataset(dir)) {
             storage_ = new OMEZarrMultiresStorage(dir);
          } else if (OMEBigTiffMultiresStorage.isOMEBigTiffDataset(dir)) {
-            storage_ = new OMEBigTiffMultiresStorage(dir);
+            // A single-plane tiled dataset (e.g. from Stitch) must use the tiled bridge; the
+            // per-tile bridge only handles Explorer's own one-file-per-tile layout.
+            storage_ = OMEBigTiffTiledStorage.isTiledDataset(dir)
+                  ? new OMEBigTiffTiledStorage(dir)
+                  : new OMEBigTiffMultiresStorage(dir);
          } else {
             storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
          }

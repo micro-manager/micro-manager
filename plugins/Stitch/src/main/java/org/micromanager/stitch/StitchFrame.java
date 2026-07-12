@@ -58,7 +58,7 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
-import org.micromanager.tileddataprovider.OMEBigTiffMultiresStorage;
+import org.micromanager.tileddataprovider.OMEBigTiffTiledStorage;
 import org.micromanager.tileddataprovider.OMEZarrMultiresStorage;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
@@ -922,6 +922,7 @@ public class StitchFrame extends JDialog {
                   backend, destPath, datasetName,
                   NDTIFF_OUTPUT_TILE_SIZE,
                   isRgb, is16bit, chNames,
+                  outCanvasW, outCanvasH, numZ, numT,
                   pyramidDepthForCanvas(outCanvasW, outCanvasH));
          } else {
             ndtiffStorage = null;
@@ -1726,9 +1727,10 @@ public class StitchFrame extends JDialog {
     * works correctly at all zoom levels for a uniform zero-overlap grid.</p>
     *
     * <p>The OME backends are grayscale-only, so an RGB export silently falls back to NDTiff.
-    * OME-BigTIFF's pyramid depth is fixed at creation (SubIFDs are written inline), so it is
-    * created with {@code maxResLevel + 1} levels covering the coarsest zoomed-out view; NDTiff and
-    * OME-Zarr grow the pyramid on demand.</p>
+    * OME-BigTIFF uses the library's tiled mode: the whole canvas is one tiled OME-BigTIFF plane per
+    * (channel, z, time), written tile-by-tile — a single file, and no frame ever exceeds a Java
+    * array. Its pyramid depth is fixed at creation, so it is created with {@code maxResLevel + 1}
+    * levels covering the coarsest view; NDTiff and OME-Zarr grow the pyramid on demand.</p>
     */
    private MultiresNDTiffAPI buildTiledStorage(
          TiledBackend backend,
@@ -1736,6 +1738,7 @@ public class StitchFrame extends JDialog {
          int outTileSize,
          boolean isRgb, boolean is16bit,
          List<String> chNames,
+         int canvasWidth, int canvasHeight, int numZ, int numT,
          int maxResLevel)
          throws JSONException {
       JSONObject json = new JSONObject();
@@ -1790,9 +1793,14 @@ public class StitchFrame extends JDialog {
             return storage;
          }
          case OME_BIGTIFF:
-            // BigTIFF pyramid depth is fixed at creation; size it for the coarsest view.
-            return new OMEBigTiffMultiresStorage(
-                  parentDir, name, json, 0, 0, 30, maxResLevel + 1);
+            // Tiled mode: the whole canvas is one tiled OME-BigTIFF plane per (channel,z,time),
+            // written tile-by-tile. Pyramid depth is fixed at creation; size it for the coarsest
+            // view. Tile size = the stitch output-tile size (a multiple of 16).
+            return new OMEBigTiffTiledStorage(
+                  parentDir, name, json,
+                  canvasWidth, canvasHeight, outTileSize, outTileSize,
+                  Math.max(1, chNames.size()), Math.max(1, numZ), Math.max(1, numT),
+                  maxResLevel + 1, 30);
          case NDTIFF:
          default:
             return new NDTiffStorage(
