@@ -70,11 +70,16 @@ public class DisplayModel {
    }
 
    public String getStringPositionFromIntegerPosition(String axisName, int axisPosition) {
+      // Never return null: ScrollerPanel.checkForImagePositionChanged() caches this value and
+      // later calls .equals() on the cached entry, so a null would NPE on the next scroll during
+      // an early-initialization race. Fall back to "" when the axis has no values yet, and clamp
+      // an out-of-range index to the nearest valid position.
       LinkedList<String> values = stringAxes_.get(axisName);
-      if (values == null || axisPosition < 0 || axisPosition >= values.size()) {
-         return null;
+      if (values == null || values.isEmpty()) {
+         return "";
       }
-      return values.get(axisPosition);
+      int clamped = Math.max(0, Math.min(axisPosition, values.size() - 1));
+      return values.get(clamped);
    }
 
    public void channelWasSetActiveByCheckbox(String channelName, boolean selected) {

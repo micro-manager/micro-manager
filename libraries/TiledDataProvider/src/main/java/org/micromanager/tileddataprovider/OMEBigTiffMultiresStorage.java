@@ -56,7 +56,8 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
  * fixed once writing begins. The pyramid depth is therefore configured up front (covering the
  * Explorer's zoom range) and {@link #increaseMaxResolutionLevel} is best-effort afterwards.
  *
- * <p>RGB is not supported by the OME-BigTIFF backend (grayscale 8/16/32-bit only).
+ * <p>Grayscale 8- and 16-bit only: RGB and 32-bit (float) images are rejected, because the
+ * on-demand mosaic compositor works in {@code byte[]}/{@code short[]}.
  */
 public final class OMEBigTiffMultiresStorage implements MultiresNDTiffAPI {
 
@@ -178,6 +179,13 @@ public final class OMEBigTiffMultiresStorage implements MultiresNDTiffAPI {
       if (rgb) {
          throw new UnsupportedOperationException(
                "The OME-BigTIFF backend does not support RGB images.");
+      }
+      if (bitDepth > 16) {
+         // The on-demand mosaic compositor (getDisplayImage/blit) works in byte[]/short[]; a
+         // 32-bit (GRAY32) image is float[] and would fail with an ArrayStoreException mid-render.
+         throw new UnsupportedOperationException(
+               "The OME-BigTIFF backend supports 8- and 16-bit grayscale only (got bitDepth="
+               + bitDepth + ").");
       }
       this.bitDepth_ = bitDepth;
       this.rgb_ = rgb;

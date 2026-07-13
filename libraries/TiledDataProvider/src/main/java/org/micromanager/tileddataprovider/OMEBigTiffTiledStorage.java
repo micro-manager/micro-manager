@@ -41,7 +41,7 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
  * <p>This requires the canvas geometry and the plane grid to be known up front, so it fits the
  * <b>Stitch</b> plugin (fixed output canvas, known channel/z/time counts) rather than the
  * Explorer's dynamically growing explore canvas. The tile size must be a positive multiple of 16,
- * and edge tiles are zero-padded by the caller. Grayscale (8/16/32-bit) and 8-bit RGB are
+ * and edge tiles are zero-padded by the caller. Grayscale (8/16-bit) and 8-bit RGB are
  * supported: RGB tiles are Micro-Manager's 4-byte BGRA on write, stored as 3-sample RGB by the
  * library, and repacked back to BGRA for the viewer on read.
  *
@@ -171,6 +171,14 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
    public Future<IndexEntryData> putImage(Object pixels, JSONObject metadata,
                                           HashMap<String, Object> axes, boolean rgb,
                                           int bitDepth, int imageHeight, int imageWidth) {
+      if (!rgb && bitDepth > 16) {
+         // The tiled read path (getDisplayImage/blit) works in byte[]/short[]; a 32-bit (GRAY32)
+         // grayscale image is float[] and would fail with an ArrayStoreException mid-render. (RGB
+         // reports bitDepth 8 and is handled separately as 4-byte BGRA.)
+         throw new UnsupportedOperationException(
+               "The tiled OME-BigTIFF backend supports 8-/16-bit grayscale and 8-bit RGB only "
+               + "(got bitDepth=" + bitDepth + ").");
+      }
       this.bitDepth_ = bitDepth;
       this.rgb_ = rgb;
       // RGB tiles arrive as Micro-Manager's 4-byte-per-pixel BGRA byte[]; the underlying library's

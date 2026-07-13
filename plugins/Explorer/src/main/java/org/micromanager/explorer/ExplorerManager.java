@@ -1119,14 +1119,16 @@ public class ExplorerManager {
    }
 
    /**
-    * Returns a dataset name that does not collide with an existing directory under {@code base}
-    * (checking both the bare name and the {@code .ome.zarr} form), appending {@code _N} if needed.
+    * Returns a dataset name that does not collide with an existing directory under {@code base},
+    * checking the bare name and every backend's dataset-folder form ({@code .ome.zarr} and
+    * {@code .ome.tiff}), appending {@code _N} if needed.
     */
    private static String uniqueAcqName(Path base, String candidate) {
       String name = candidate;
       int suffix = 1;
       while (new File(base.toFile(), name).exists()
-            || new File(base.toFile(), name + ".ome.zarr").exists()) {
+            || new File(base.toFile(), name + ".ome.zarr").exists()
+            || new File(base.toFile(), name + ".ome.tiff").exists()) {
          name = candidate + "_" + suffix++;
       }
       return name;

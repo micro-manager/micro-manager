@@ -48,7 +48,8 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
  * the summary's {@code ChNames}), stores the mapping in custom metadata, and reverses it so
  * callers continue to see the original values.
  *
- * <p>RGB is not supported by the OME-Zarr backend (grayscale 8/16/32-bit only).
+ * <p>Grayscale 8- and 16-bit only: RGB and 32-bit (float) images are rejected, because the
+ * on-demand mosaic compositor works in {@code byte[]}/{@code short[]}.
  */
 public final class OMEZarrMultiresStorage implements MultiresNDTiffAPI {
 
@@ -153,6 +154,13 @@ public final class OMEZarrMultiresStorage implements MultiresNDTiffAPI {
       if (rgb) {
          throw new UnsupportedOperationException(
                "The OME-Zarr backend does not support RGB images.");
+      }
+      if (bitDepth > 16) {
+         // The on-demand mosaic compositor (getDisplayImage/blit) works in byte[]/short[]; a
+         // 32-bit (GRAY32) image is float[] and would fail with an ArrayStoreException mid-render.
+         throw new UnsupportedOperationException(
+               "The OME-Zarr backend supports 8- and 16-bit grayscale only (got bitDepth="
+               + bitDepth + ").");
       }
       this.bitDepth_ = bitDepth;
       this.rgb_ = rgb;
