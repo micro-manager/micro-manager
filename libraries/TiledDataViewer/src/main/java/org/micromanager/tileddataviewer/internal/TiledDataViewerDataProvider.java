@@ -175,7 +175,16 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    @Override
    public int getNextIndex(String axis) {
       if (Coords.CHANNEL.equals(axis)) {
-         return axesBridge_.getChannelNames().size();
+         // A dataset with no channel axis (grayscale or RGB) still has one implicit channel to
+         // display. Report at least 1 whenever any image exists, so the Intensity Inspector —
+         // which sizes its histogram panels to getNextIndex(CHANNEL) — creates one panel instead
+         // of none (otherwise a channel-less dataset shows NO histogram at all). Multi-channel
+         // datasets are unaffected (their channel count is already >= 1).
+         int n = axesBridge_.getChannelNames().size();
+         if (n == 0 && !storage_.getAxesSet().isEmpty()) {
+            return 1;
+         }
+         return n;
       }
       Set<HashMap<String, Object>> keys = storage_.getAxesSet();
       int max = -1;

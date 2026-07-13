@@ -41,8 +41,9 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
  * <p>This requires the canvas geometry and the plane grid to be known up front, so it fits the
  * <b>Stitch</b> plugin (fixed output canvas, known channel/z/time counts) rather than the
  * Explorer's dynamically growing explore canvas. The tile size must be a positive multiple of 16,
- * edge tiles
- * are zero-padded by the caller, and RGB is not supported (grayscale 8/16/32-bit only).
+ * and edge tiles are zero-padded by the caller. Grayscale (8/16/32-bit) and 8-bit RGB are
+ * supported: RGB tiles are Micro-Manager's 4-byte BGRA on write, stored as 3-sample RGB by the
+ * library, and repacked back to BGRA for the viewer on read.
  *
  * <p>String channel names are passed straight through: the underlying library assigns each a dense
  * integer index (first-appearance order), persists the mapping in {@code mm-bigtiff.json}, and
@@ -61,6 +62,7 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
    private final JSONObject summary_;
 
    private volatile int bitDepth_ = 16;
+   private volatile boolean rgb_ = false;
    private volatile JSONObject displaySettings_ = new JSONObject();
 
    // ---------------------------------------------------------------------------------------
@@ -125,12 +127,14 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
       String summaryJson = store_.getSummaryMetadata();
       this.summary_ = parseJson(summaryJson != null ? summaryJson : "{}");
       loadDisplaySettings();
-      // Seed bit depth from any stored plane.
+      // Seed bit depth and RGB-ness from any stored plane (the library persists and restores the
+      // rgb flag in mm-bigtiff.json), so a reopened RGB dataset displays in colour.
       for (Map<String, Object> axes : store_.getAxesSet()) {
          org.micromanager.mmomebigtiff.EssentialImageMetadata e =
                store_.getEssentialImageMetadata(axes, 0);
          if (e != null) {
             bitDepth_ = e.getBitDepth();
+            rgb_ = e.isRGB();
             break;
          }
       }
@@ -167,11 +171,11 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
    public Future<IndexEntryData> putImage(Object pixels, JSONObject metadata,
                                           HashMap<String, Object> axes, boolean rgb,
                                           int bitDepth, int imageHeight, int imageWidth) {
-      if (rgb) {
-         throw new UnsupportedOperationException(
-               "The tiled OME-BigTIFF backend does not support RGB images.");
-      }
       this.bitDepth_ = bitDepth;
+      this.rgb_ = rgb;
+      // RGB tiles arrive as Micro-Manager's 4-byte-per-pixel BGRA byte[]; the underlying library's
+      // putTile unpacks that to 3-sample RGB on disk (and returns 3-byte RGB on read, which the
+      // read path here repacks to BGRA for the viewer).
       Integer col = intOf(axes.get(COL));
       Integer row = intOf(axes.get(ROW));
       int tileCol = col != null ? col : 0;
@@ -275,9 +279,10 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
       // level canvas. So clamp the request to the canvas, read only that sub-region, and place it
       // into an output buffer of the requested size — zero-padding the rest, exactly as the
       // compositing bridges do.
+      // RGB is Micro-Manager's 4-byte-per-pixel BGRA; grayscale is 1 (byte) or 2 (short) bytes.
       boolean isByte = bitDepth_ <= 8;
       int n = imageWidth * imageHeight;
-      Object out = isByte ? new byte[n] : new short[n];
+      Object out = rgb_ ? new byte[n * 4] : (isByte ? new byte[n] : new short[n]);
       JSONObject tags = new JSONObject();
 
       Map<String, Object> plane = planeAxes(axes);
@@ -298,11 +303,20 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
                if (meta != null && !meta.isEmpty()) {
                   tags = parseJson(meta);
                }
+               // The library returns 3-byte interleaved RGB; repack to the 4-byte BGRA the
+               // viewer expects before blitting into the output buffer.
+               Object src = rgb_ ? rgbToBgra((byte[]) img.pix, rw * rh) : img.pix;
                int destX0 = (int) (rx0 - xOffset);
                int destY0 = (int) (ry0 - yOffset);
-               blit(out, imageWidth, img.pix, rw, rh, destX0, destY0);
+               blit(out, imageWidth, src, rw, rh, destX0, destY0, rgb_ ? 4 : 1);
             }
          }
+      }
+      // The output buffer is imageWidth x imageHeight; the stored plane metadata carries the source
+      // tile size, so stamp the real dimensions (DefaultImage reads Width/Height from the tags).
+      stampDims(tags, imageWidth, imageHeight);
+      if (rgb_) {
+         addRgbTags(tags);
       }
       return new TaggedImage(out, tags);
    }
@@ -432,14 +446,17 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
    }
 
    /**
-    * Copy a {@code srcW}×{@code srcH} region into {@code dst} (row stride {@code dstW}) at
-    * ({@code destX0},{@code destY0}). Works for {@code byte[]} or {@code short[]}; the caller
-    * clamps the region to the canvas so it always fits within the destination.
+    * Copy a {@code srcW}×{@code srcH} pixel region into {@code dst} (row stride {@code dstW}
+    * pixels) at ({@code destX0},{@code destY0}). Each pixel spans {@code elemsPerPixel} array
+    * elements (1 for {@code byte[]}/{@code short[]} grayscale, 4 for BGRA {@code byte[]} RGB); the
+    * caller clamps the region to the canvas so it always fits within the destination.
     */
    private static void blit(Object dst, int dstW, Object src, int srcW, int srcH,
-                            int destX0, int destY0) {
+                            int destX0, int destY0, int elemsPerPixel) {
+      int e = elemsPerPixel;
       for (int row = 0; row < srcH; row++) {
-         System.arraycopy(src, row * srcW, dst, (destY0 + row) * dstW + destX0, srcW);
+         System.arraycopy(src, row * srcW * e,
+               dst, ((destY0 + row) * dstW + destX0) * e, srcW * e);
       }
    }
 
@@ -451,7 +468,74 @@ public final class OMEBigTiffTiledStorage implements MultiresNDTiffAPI {
       }
       String meta = img.metadataJson;
       JSONObject tags = (meta == null || meta.isEmpty()) ? new JSONObject() : parseJson(meta);
-      return new TaggedImage(img.pix, tags);
+      // The stored per-plane metadata carries the source *tile* Width/Height, not the dimensions
+      // of the region actually returned here (a full pyramid level, or a sub-region). DefaultImage
+      // (used to build the histogram-seed Image) takes Width/Height straight from the tags, so they
+      // must describe this returned buffer or the image/pixel lengths disagree and the histogram
+      // computation gets no usable image.
+      stampDims(tags, w, h);
+      // The library returns 3-byte interleaved RGB; the viewer/TaggedImage expect 4-byte BGRA.
+      Object pix = img.pix;
+      if (rgb_) {
+         pix = rgbToBgra((byte[]) img.pix, w * h);
+         addRgbTags(tags);
+      }
+      return new TaggedImage(pix, tags);
+   }
+
+   /** Overwrite the {@code Width}/{@code Height} tags to describe the returned pixel buffer. */
+   private static void stampDims(JSONObject tags, int w, int h) {
+      try {
+         tags.put("Width", w);
+         tags.put("Height", h);
+      } catch (mmcorej.org.json.JSONException e) {
+         // Unreachable: keys are constant, non-null.
+      }
+   }
+
+   /**
+    * Repack the library's 3-byte interleaved RGB (R,G,B) into Micro-Manager's 4-byte BGRA
+    * ({@code byte[numPixels*4]}, order B,G,R,0xFF). Inverse of the library's {@code packBgraToRgb};
+    * the channel mapping lives here in one place.
+    */
+   private static byte[] rgbToBgra(byte[] rgb, int numPixels) {
+      byte[] bgra = new byte[numPixels * 4];
+      for (int i = 0; i < numPixels; i++) {
+         int s = i * 3;
+         int d = i * 4;
+         byte r = rgb[s];
+         byte g = rgb[s + 1];
+         byte b = rgb[s + 2];
+         bgra[d] = b;
+         bgra[d + 1] = g;
+         bgra[d + 2] = r;
+         bgra[d + 3] = (byte) 0xFF;
+      }
+      return bgra;
+   }
+
+   /**
+    * Add the RGB display tags the MM viewer needs ({@code PixelType}, {@code BytesPerPixel},
+    * {@code NumComponents}, {@code BitDepth}) — mirroring the NDTiff path's RGB tags so
+    * ImageStatsProcessor/overlays don't fail. Existing keys are left untouched.
+    */
+   private static void addRgbTags(JSONObject tags) {
+      try {
+         if (!tags.has("PixelType")) {
+            tags.put("PixelType", "RGB32");
+         }
+         if (!tags.has("BytesPerPixel")) {
+            tags.put("BytesPerPixel", 4);
+         }
+         if (!tags.has("NumComponents")) {
+            tags.put("NumComponents", 3);
+         }
+         if (!tags.has("BitDepth")) {
+            tags.put("BitDepth", 8);
+         }
+      } catch (mmcorej.org.json.JSONException e) {
+         // JSONObject.put only throws on a null key; these keys are constant, so unreachable.
+      }
    }
 
    private void persistDisplaySettings() {

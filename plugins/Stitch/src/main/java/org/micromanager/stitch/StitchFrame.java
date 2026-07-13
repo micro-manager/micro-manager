@@ -91,8 +91,8 @@ public class StitchFrame extends JDialog {
    /**
     * Which {@link MultiresNDTiffAPI} implementation backs the tiled ("TiledDataViewer") output
     * path. All three write a uniform zero-overlap output-tile grid through the same interface;
-    * only the on-disk container differs. The two OME backends are grayscale-only (RGB falls back
-    * to NDTiff), and OME-BigTIFF's pyramid depth is fixed at creation.
+    * only the on-disk container differs. OME-Zarr is grayscale-only (RGB falls back to NDTiff);
+    * NDTiff and OME-BigTIFF also support RGB. OME-BigTIFF's pyramid depth is fixed at creation.
     */
    private enum TiledBackend { NDTIFF, OME_ZARR, OME_BIGTIFF }
 
@@ -1726,11 +1726,12 @@ public class StitchFrame extends JDialog {
     * identical; only the on-disk container differs. TiledDataViewer's built-in pyramid generation
     * works correctly at all zoom levels for a uniform zero-overlap grid.</p>
     *
-    * <p>The OME backends are grayscale-only, so an RGB export silently falls back to NDTiff.
-    * OME-BigTIFF uses the library's tiled mode: the whole canvas is one tiled OME-BigTIFF plane per
-    * (channel, z, time), written tile-by-tile — a single file, and no frame ever exceeds a Java
-    * array. Its pyramid depth is fixed at creation, so it is created with {@code maxResLevel + 1}
-    * levels covering the coarsest view; NDTiff and OME-Zarr grow the pyramid on demand.</p>
+    * <p>OME-Zarr is grayscale-only, so an RGB export to it silently falls back to NDTiff; NDTiff
+    * and OME-BigTIFF both support RGB. OME-BigTIFF uses the library's tiled mode: the whole canvas
+    * is one tiled OME-BigTIFF plane per (channel, z, time), written tile-by-tile — a single file,
+    * and no frame ever exceeds a Java array. Its pyramid depth is fixed at creation, so it is
+    * created with {@code maxResLevel + 1} levels covering the coarsest view; NDTiff and OME-Zarr
+    * grow the pyramid on demand.</p>
     */
    private MultiresNDTiffAPI buildTiledStorage(
          TiledBackend backend,
@@ -1764,11 +1765,11 @@ public class StitchFrame extends JDialog {
          json.put("Channels", chNames.size());
       }
 
-      // The OME backends do not support RGB; fall back to NDTiff for an RGB export.
+      // OME-Zarr does not support RGB; fall back to NDTiff for an RGB export. OME-BigTIFF now
+      // supports 8-bit RGB (stored as 3-sample chunky RGB), so it honours the user's choice.
       TiledBackend effective = backend;
-      if (isRgb && (effective == TiledBackend.OME_ZARR || effective == TiledBackend.OME_BIGTIFF)) {
-         String label = effective == TiledBackend.OME_ZARR ? "OME-Zarr" : "OME-BigTIFF";
-         studio_.logs().showMessage("The " + label + " backend does not support RGB; "
+      if (isRgb && effective == TiledBackend.OME_ZARR) {
+         studio_.logs().showMessage("The OME-Zarr backend does not support RGB; "
                + "saving this stitch as NDTiff instead.");
          effective = TiledBackend.NDTIFF;
       }
