@@ -419,6 +419,7 @@ public class DeviceUtils {
          break;
       case SLICE_SCAN_ONLY: // for single-objective galvo scan
          sign = -1;
+         break;
       default:
          sign = 1;
       }
