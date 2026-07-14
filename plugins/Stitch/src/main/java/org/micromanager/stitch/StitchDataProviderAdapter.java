@@ -560,15 +560,8 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       if (xyByPos.isEmpty()) {
          return null;
       }
-      // Map every position to canvas-pixel space, then quantize each axis to integer
-      // grid indices using the ACTUAL measured tile pitch (not imageWidth).
-      //
-      // The tile pitch in canvas pixels is imageWidth - overlap, which is strictly
-      // smaller than imageWidth whenever tiles overlap (the normal case). Quantizing
-      // with imageWidth therefore drifts: over many columns, adjacent positions can
-      // round to the same index (collisions that drop tiles AND poison the overlap
-      // estimate, collapsing the stitch into a single column). Measuring the pitch
-      // from the data makes the indices exact regardless of overlap.
+      // Map every position to canvas-pixel space so placement is derived from the SAME
+      // affine that drives the per-tile pixel transform.
       List<Integer> posList = new ArrayList<>(xyByPos.keySet());
       double[] canvasX = new double[posList.size()];
       double[] canvasY = new double[posList.size()];
@@ -578,6 +571,30 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          canvasX[i] = canvas[0];
          canvasY[i] = canvas[1];
       }
+
+      // Prefer the AUTHORITATIVE grid indices stored on the MultiStagePositions (set by
+      // the Explorer/TileCreator when the positions were created). These give exact,
+      // collision-free row/col even for irregular grids (rows with different column
+      // counts), where the pitch-estimation fallback below can collapse many positions
+      // onto a handful of cells. The stored indices live in stage/lattice space; mapping
+      // them onto canvas axes (which the affine may rotate) is done by correlating each
+      // stored axis with the canvas coordinates, so the result stays consistent with the
+      // affine-driven pixel transform.
+      Map<Integer, GridCell> fromStored = tryGridFromStoredCoordsInCanvas(
+            source, posList, canvasX, canvasY);
+      if (fromStored != null) {
+         return shiftToZero(fromStored);
+      }
+
+      // Fallback: quantize each canvas axis to integer grid indices using the ACTUAL
+      // measured tile pitch (not imageWidth).
+      //
+      // The tile pitch in canvas pixels is imageWidth - overlap, which is strictly
+      // smaller than imageWidth whenever tiles overlap (the normal case). Quantizing
+      // with imageWidth therefore drifts: over many columns, adjacent positions can
+      // round to the same index (collisions that drop tiles AND poison the overlap
+      // estimate, collapsing the stitch into a single column). Measuring the pitch
+      // from the data makes the indices exact regardless of overlap.
       double pitchX = estimateAxisPitch(canvasX, imageWidth);
       double pitchY = estimateAxisPitch(canvasY, imageHeight);
       Map<Integer, GridCell> grid = new HashMap<>();
@@ -587,6 +604,93 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
          grid.put(posList.get(i), new GridCell(row, col));
       }
       return shiftToZero(grid);
+   }
+
+   /**
+    * Build the grid from the authoritative grid indices stored on the
+    * MultiStagePositions, mapped onto the CANVAS axes.
+    *
+    * <p>The stored {@code gridColumn}/{@code gridRow} are exact integer lattice indices,
+    * so this avoids the pitch-estimation heuristic entirely -- the source of the
+    * irregular-grid collapse (many positions rounding onto the same cell). Because the
+    * orientation affine may rotate stage axes relative to canvas axes, this determines
+    * which stored axis maps to the canvas column (X) and which to the canvas row (Y) by
+    * correlating each stored index with the canvas coordinates, and flips the sign of an
+    * axis when it runs opposite to the canvas coordinate. The output row/col therefore
+    * increase with canvas Y/X respectively, matching how the rest of the adapter places
+    * tiles.</p>
+    *
+    * @return the position-index -> (row, col) map (NOT yet shifted to zero-origin), or
+    *         {@code null} when no usable stored grid coordinates are available
+    */
+   private static Map<Integer, GridCell> tryGridFromStoredCoordsInCanvas(
+         DataProvider source, List<Integer> posList, double[] canvasX, double[] canvasY) {
+      SummaryMetadata summary = source.getSummaryMetadata();
+      if (summary == null) {
+         return null;
+      }
+      List<MultiStagePosition> positions = summary.getStagePositionList();
+      if (positions == null || positions.isEmpty()) {
+         return null;
+      }
+      int n = posList.size();
+      double[] gCol = new double[n];
+      double[] gRow = new double[n];
+      boolean anyNonZero = false;
+      for (int i = 0; i < n; i++) {
+         int posIdx = posList.get(i);
+         if (posIdx < 0 || posIdx >= positions.size()) {
+            return null;  // position index has no matching stored position; bail out
+         }
+         MultiStagePosition msp = positions.get(posIdx);
+         int c = msp.getGridColumn();
+         int r = msp.getGridRow();
+         gCol[i] = c;
+         gRow[i] = r;
+         if (c != 0 || r != 0) {
+            anyNonZero = true;
+         }
+      }
+      // All (0,0) is the unset default -- no authoritative grid to use (unless there is a
+      // single position, where (0,0) is genuinely correct).
+      if (!anyNonZero && n != 1) {
+         return null;
+      }
+
+      // Decide the mapping of stored axes onto canvas axes via absolute correlation.
+      // Canvas column tracks canvas X; canvas row tracks canvas Y. Pick, for each canvas
+      // axis, the stored axis it correlates with most strongly.
+      double colX = Math.abs(pearson(gCol, canvasX));
+      double colY = Math.abs(pearson(gCol, canvasY));
+      double rowX = Math.abs(pearson(gRow, canvasX));
+      double rowY = Math.abs(pearson(gRow, canvasY));
+      // Choose between the two possible axis assignments by TOTAL correlation, not by
+      // requiring both pairwise inequalities: this is a 2x2 assignment problem, and the
+      // best overall mapping can win on the sum even when one pairwise comparison goes the
+      // other way (real data has noise). No-swap maps gCol->X, gRow->Y (score colX + rowY);
+      // swap maps gRow->X, gCol->Y (score rowX + colY), as happens for a 90/270-degree
+      // rotation. Ties keep the no-swap (identity) assignment.
+      boolean swap = (rowX + colY) > (colX + rowY);
+      double[] canvasColSource = swap ? gRow : gCol;
+      double[] canvasRowSource = swap ? gCol : gRow;
+
+      // Orient each axis so the index increases with the canvas coordinate.
+      boolean flipCol = pearson(canvasColSource, canvasX) < 0;
+      boolean flipRow = pearson(canvasRowSource, canvasY) < 0;
+
+      Map<Integer, GridCell> grid = new HashMap<>();
+      for (int i = 0; i < n; i++) {
+         int col = (int) Math.round(canvasColSource[i]);
+         int row = (int) Math.round(canvasRowSource[i]);
+         if (flipCol) {
+            col = -col;
+         }
+         if (flipRow) {
+            row = -row;
+         }
+         grid.put(posList.get(i), new GridCell(row, col));
+      }
+      return grid;
    }
 
    /**
