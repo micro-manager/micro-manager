@@ -1117,7 +1117,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
          String instructions;
          if (settingsMismatch_) {
-            instructions = "Image dimensions have changed. Revert to original to continue";
+            instructions = "Pixel size or camera ROI has changed. Revert to original to continue";
          } else if (selectionEnd_ == null) {
             instructions = acquisitionInProgress_
                   ? "Right-drag to extend, left-click to queue"
