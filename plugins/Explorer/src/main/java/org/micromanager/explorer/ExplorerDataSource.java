@@ -474,10 +474,9 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setSettingsMismatch(boolean mismatch) {
       settingsMismatch_ = mismatch;
-      if (mismatch) {
-         selectionStart_ = null;
-         selectionEnd_ = null;
-      }
+      // Keep any existing selection visible; drawOverlay() shows a "revert to original" message
+      // on it instead of the acquire prompt while the mismatch persists. The right-click and
+      // acquire handlers already block new work when settingsMismatch_ is true.
    }
 
    /**
@@ -814,8 +813,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
                // In refine-Z mode this navigates to a tile so the operator can focus it.
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
-         } else if (!readOnly_ && !refineZActive_) {
-            // Plain left-click acquires selected tiles, but not while refining Z.
+         } else if (!readOnly_ && !refineZActive_ && !settingsMismatch_) {
+            // Plain left-click acquires selected tiles, but not while refining Z or when the
+            // image dimensions have changed from session start (the selection stays visible with
+            // a "revert to original" message instead).
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
@@ -1106,7 +1107,9 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          int textY = (int) ((centerPixelY - viewOffset.y) * magnification);
 
          String instructions;
-         if (selectionEnd_ == null) {
+         if (settingsMismatch_) {
+            instructions = "Image dimensions have changed. Revert to original to continue";
+         } else if (selectionEnd_ == null) {
             instructions = acquisitionInProgress_
                   ? "Right-drag to extend, left-click to queue"
                   : "Right-drag to extend, left-click to acquire";
