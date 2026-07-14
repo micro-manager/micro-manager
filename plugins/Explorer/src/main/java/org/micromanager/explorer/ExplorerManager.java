@@ -56,6 +56,7 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -817,6 +818,10 @@ public class ExplorerManager {
       loadPixelSizeAffine();
       updateStagePositionPixel();
       updateSettingsMismatch();
+      pushPositionListFovs();
+      // A new FOV size changes which tiles fall inside an active Create-Positions ROI, so
+      // recompute the grid preview (no-op when no ROI is active).
+      onPositionRoiChanged();
       redrawOverlay();
    }
 
@@ -826,6 +831,17 @@ public class ExplorerManager {
          return;
       }
       loadPixelSizeAffine();
+      pushPositionListFovs();
+      onPositionRoiChanged();
+      redrawOverlay();
+   }
+
+   @Subscribe
+   public void onNewPositionList(NewPositionListEvent event) {
+      if (!exploring_) {
+         return;
+      }
+      pushPositionListFovs();
       redrawOverlay();
    }
 
@@ -1365,6 +1381,8 @@ public class ExplorerManager {
                if (vesselOutlinePending_) {
                   updateVesselOutline();
                }
+               // Tile dimensions are now known, so stageToPixel() works: show the position list.
+               pushPositionListFovs();
 
                // Update storage overlap metadata with actual tile dimensions
                int overlapX = (int) Math.round(tileWidth_ * overlapPercentage_ / 100.0);
@@ -1672,6 +1690,12 @@ public class ExplorerManager {
                stageTileWidthUm_  = cameraWidth_  * pixelSizeUm_;
                stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
                updateSettingsMismatch();
+               // Camera ROI is the one stage-to-pixel input with no MM event; refresh the
+               // position-list FOVs here (the event handlers cover pixel-size/affine/list changes).
+               pushPositionListFovs();
+               // A changed FOV size changes which tiles fall inside an active ROI; recompute the
+               // grid preview too (no-op when no ROI is active).
+               onPositionRoiChanged();
             }
 
             double stageX = studio_.core().getXPosition();
@@ -1909,7 +1933,7 @@ public class ExplorerManager {
    public void updatePositionPreview(boolean withinVesselOnly) {
       if (dataSource_ == null || !exploring_ || loadedData_ || !hasPositionRoi()) {
          if (dataSource_ != null) {
-            dataSource_.setGeneratedPositionFovs(null);
+            dataSource_.setGeneratedPositionCenters(null);
             redrawOverlay();
          }
          frame_.setGenerateEnabled(false);
@@ -1917,7 +1941,7 @@ public class ExplorerManager {
       }
       try {
          PositionGridResult preview = computePositionGrid(withinVesselOnly);
-         dataSource_.setGeneratedPositionFovs(preview.fovsPx);
+         dataSource_.setGeneratedPositionCenters(preview.centersPx);
          redrawOverlay();
          String status = preview.posList.getNumberOfPositions() + " positions ("
                + preview.regionLabel + ")";
@@ -1927,7 +1951,7 @@ public class ExplorerManager {
          frame_.setPositionStatus(status);
          frame_.setGenerateEnabled(true);
       } catch (Exception ex) {
-         dataSource_.setGeneratedPositionFovs(null);
+         dataSource_.setGeneratedPositionCenters(null);
          redrawOverlay();
          frame_.setPositionStatus(ex.getMessage());
          frame_.setGenerateEnabled(false);
@@ -1959,7 +1983,7 @@ public class ExplorerManager {
       }
       studio_.positions().setPositionList(existing);
       studio_.app().showPositionList();
-      dataSource_.setGeneratedPositionFovs(result.fovsPx);
+      dataSource_.setGeneratedPositionCenters(result.centersPx);
       redrawOverlay();
       // Advance the region counter so a subsequent ROI gets the next identifier.
       regionCounter_++;
@@ -1976,16 +2000,19 @@ public class ExplorerManager {
    /** Holds the result of a position-grid computation. */
    private static final class PositionGridResult {
       private final PositionList posList;
-      private final java.util.List<Rectangle2D.Double> fovsPx;
+      // centersPx feeds the grey overlay preview, which sizes each FOV at paint time. (The ROI
+      // intersection test that accepts/rejects tiles uses a compute-time rectangle locally in
+      // computePositionGrid, sized to current hardware; it is not stored on the result.)
+      private final java.util.List<Point2D.Double> centersPx;
       private final java.util.List<Tile> tiles;
       private final String warning;
       private final String regionLabel;
 
       private PositionGridResult(PositionList posList,
-            java.util.List<Rectangle2D.Double> fovsPx, java.util.List<Tile> tiles,
-            String warning, String regionLabel) {
+            java.util.List<Point2D.Double> centersPx,
+            java.util.List<Tile> tiles, String warning, String regionLabel) {
          this.posList = posList;
-         this.fovsPx = fovsPx;
+         this.centersPx = centersPx;
          this.tiles = tiles;
          this.warning = warning;
          this.regionLabel = regionLabel;
@@ -2459,7 +2486,7 @@ public class ExplorerManager {
 
       // ---- Pass 1: collect accepted tiles (already in global serpentine row/col order) ----
       java.util.List<Tile> tiles = new java.util.ArrayList<>();
-      java.util.List<Rectangle2D.Double> fovsPx = new java.util.ArrayList<>();
+      java.util.List<Point2D.Double> centersPx = new java.util.ArrayList<>();
       for (int row = 0; row < nRows; row++) {
          for (int col = 0; col < nCols; col++) {
             int c = ((row & 1) == 0) ? col : (nCols - 1 - col); // serpentine
@@ -2479,7 +2506,8 @@ public class ExplorerManager {
                }
             }
             if (fovRect != null) {
-               fovsPx.add(fovRect);
+               // The grey overlay preview sizes each FOV at paint time, so store only the center.
+               centersPx.add(centerPx);
             }
             // Compute the well whenever multi-well so both per-well ordering and per-well Z
             // interpolation work, even without within-vessel clipping.
@@ -2559,7 +2587,7 @@ public class ExplorerManager {
          msp.setProperty("Region", regionLabel);
          posList.addPosition(msp);
       }
-      return new PositionGridResult(posList, fovsPx, tiles, warning, regionLabel);
+      return new PositionGridResult(posList, centersPx, tiles, warning, regionLabel);
    }
 
    /** One accepted grid tile, before being turned into a MultiStagePosition. */
@@ -2822,6 +2850,79 @@ public class ExplorerManager {
       pushRefineZMarkers();
       pushRefineZThumbnails();
       setRefineZStatus("Refine Z cleared.");
+   }
+
+   /**
+    * Pushes the application's Stage Position List to the overlay as yellow FOV rectangles, so the
+    * user can see every position (Explorer-generated or not) while acquiring. Only the position
+    * CENTERS (view-independent full-resolution pixels) are pushed; the FOV size is computed at
+    * paint time from the current pixel-size ratio (in ExplorerDataSource.addPositionListFovs, the
+    * same formula as the red live-FOV box), so the outlines resize with the objective/camera ROI
+    * on their own. Because centers depend only on the stage-to-pixel MAPPING (not the live stage
+    * position or the view), only call this when that mapping changes (new position list,
+    * pixel-size/affine change, or when tile dimensions first become available); pan/zoom and FOV
+    * resizing need no push. No-op unless exploring live data (a loaded dataset has no live
+    * stage-to-pixel mapping).
+    */
+   private void pushPositionListFovs() {
+      if (dataSource_ == null || !exploring_ || loadedData_) {
+         return;
+      }
+      int tw = dataSource_.getTileWidth();
+      int th = dataSource_.getTileHeight();
+      java.util.List<Point2D.Double> centers = new java.util.ArrayList<>();
+      if (tw > 0 && th > 0) {
+         // Only the position CENTERS are pushed; the FOV size is computed at paint time from the
+         // current pixel-size ratio (in ExplorerDataSource.addPositionListFovs), so the yellow
+         // outlines resize with the objective/camera ROI without needing a fresh push here.
+         PositionList list = studio_.positions().getPositionList();
+         for (int i = 0; i < list.getNumberOfPositions(); i++) {
+            MultiStagePosition msp = list.getPosition(i);
+            Point2D.Double stageXY = positionStageXY(msp);
+            if (stageXY == null) {
+               continue;
+            }
+            Point2D.Double centerPx = stageToPixel(stageXY.x, stageXY.y);
+            if (centerPx == null) {
+               continue;
+            }
+            centers.add(centerPx);
+         }
+      }
+      dataSource_.setPositionListCenters(centers);
+   }
+
+   /**
+    * Returns the XY stage coordinates of a position, or null if it carries no 2-axis stage.
+    * Prefers the 2-axis entry matching the default XY stage; falls back to the first 2-axis entry
+    * present so positions created elsewhere (without a matching default XY stage label) are still
+    * located. Reads the stage entry directly rather than via {@code msp.getX()/getY()}, which
+    * return 0.0 both for a real origin position and for a missing default XY stage - checking the
+    * coordinates cannot tell those apart and would mis-locate an origin position when multiple 2D
+    * stages are present.
+    */
+   private Point2D.Double positionStageXY(MultiStagePosition msp) {
+      if (msp == null) {
+         return null;
+      }
+      String defaultXYStage = msp.getDefaultXYStage();
+      StagePosition firstXY = null;
+      for (int i = 0; i < msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         if (sp == null || sp.getNumberOfStageAxes() != 2) {
+            continue;
+         }
+         if (defaultXYStage != null && defaultXYStage.equals(sp.getStageDeviceLabel())) {
+            return new Point2D.Double(sp.get2DPositionX(), sp.get2DPositionY());
+         }
+         if (firstXY == null) {
+            firstXY = sp;
+         }
+      }
+      if (firstXY != null) {
+         return new Point2D.Double(firstXY.get2DPositionX(), firstXY.get2DPositionY());
+      }
+      return null;
    }
 
    /** Pushes the current reference-point markers (stage->pixel) to the data source overlay. */

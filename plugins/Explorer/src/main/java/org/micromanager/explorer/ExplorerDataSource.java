@@ -119,9 +119,20 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    private Point2D.Double rubberBandPx_ = null;
    // Distance (display pixels) within which a polygon click snaps to the first vertex to close.
    private static final int POLYGON_CLOSE_TOLERANCE = 8;
-   // FOV rectangles (full-res pixels) of the most recently generated positions, drawn in
-   // light grey until the operator leaves draw mode. Empty = none generated yet.
-   private final ArrayList<Rectangle2D.Double> positionFovsPx_ = new ArrayList<>();
+   // Centers (full-res pixels) of the most recently generated positions, drawn in light grey until
+   // the operator leaves draw mode. Empty = none generated yet. Like the yellow position-list
+   // outlines, only the CENTERS are stored: the FOV size is computed at paint time from the current
+   // pixel-size ratio, so the grey outlines resize with the objective/camera ROI too.
+   private final ArrayList<Point2D.Double> positionCentersPx_ = new ArrayList<>();
+
+   // Centers (full-res pixels) of every position in the application's Stage Position List, drawn
+   // in yellow so they are distinguishable from the Explorer-generated (grey) FOVs and the vessel
+   // outline (green). Only the CENTERS are stored (not full rectangles): the FOV size is computed
+   // at paint time from the current pixel-size ratio, exactly like the red stage-FOV box, so the
+   // yellow outlines resize immediately when the objective or camera ROI changes -- without
+   // depending on which change event happens to fire. Kept in sync with the PositionList via
+   // ExplorerManager's NewPositionListEvent handler.
+   private final ArrayList<Point2D.Double> positionListCentersPx_ = new ArrayList<>();
 
    // Refine-Z mode: when active, ctrl+left-click moves the stage to that tile (for manual focus)
    // instead of the normal move-stage behavior. Reference-point markers (full-res pixels) are
@@ -257,7 +268,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       roiPointsPx_.clear();
       roiClosed_ = false;
       rubberBandPx_ = null;
-      positionFovsPx_.clear();
+      positionCentersPx_.clear();
       // Refine-Z markers/thumbnails are NOT cleared here: they belong to the Refine-Z lifecycle
       // (managed by ExplorerManager), which preserves reference points across ROI-tool switches.
    }
@@ -276,18 +287,34 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       roiPointsPx_.clear();
       roiClosed_ = false;
       rubberBandPx_ = null;
-      positionFovsPx_.clear();
+      positionCentersPx_.clear();
       // Refine-Z markers/thumbnails are managed separately (see setPositionTool); not cleared here.
    }
 
    /**
-    * Sets the FOV rectangles (full-resolution pixels) of the just-generated positions, to be
-    * drawn in light grey until the operator leaves draw mode.
+    * Sets the centers (full-resolution pixels) of the just-generated positions, to be drawn in
+    * light grey until the operator leaves draw mode. The FOV size is computed at paint time from
+    * the current pixel-size ratio (see {@link #addGeneratedPositionFovs}), so the grey outlines
+    * track objective and camera-ROI changes. Pass an empty list (or null) to clear.
     */
-   public synchronized void setGeneratedPositionFovs(java.util.List<Rectangle2D.Double> fovs) {
-      positionFovsPx_.clear();
-      if (fovs != null) {
-         positionFovsPx_.addAll(fovs);
+   public synchronized void setGeneratedPositionCenters(java.util.List<Point2D.Double> centers) {
+      positionCentersPx_.clear();
+      if (centers != null) {
+         positionCentersPx_.addAll(centers);
+      }
+   }
+
+   /**
+    * Sets the centers (full-resolution pixels) of every position in the application's Stage
+    * Position List, drawn in yellow so they are distinguishable from the Explorer-generated (grey)
+    * FOVs and the vessel outline (green). The FOV size is computed at paint time from the current
+    * pixel-size ratio (see {@link #addPositionListFovs}), so the outlines track objective and
+    * camera-ROI changes without needing a fresh push. Pass an empty list (or null) to clear.
+    */
+   public synchronized void setPositionListCenters(java.util.List<Point2D.Double> centers) {
+      positionListCentersPx_.clear();
+      if (centers != null) {
+         positionListCentersPx_.addAll(centers);
       }
    }
 
@@ -456,10 +483,9 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    public void setSettingsMismatch(boolean mismatch) {
       settingsMismatch_ = mismatch;
-      if (mismatch) {
-         selectionStart_ = null;
-         selectionEnd_ = null;
-      }
+      // Keep any existing selection visible; drawOverlay() shows a "revert to original" message
+      // on it instead of the acquire prompt while the mismatch persists. The right-click and
+      // acquire handlers already block new work when settingsMismatch_ is true.
    }
 
    /**
@@ -796,8 +822,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
                // In refine-Z mode this navigates to a tile so the operator can focus it.
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
-         } else if (!readOnly_ && !refineZActive_) {
-            // Plain left-click acquires selected tiles, but not while refining Z.
+         } else if (!readOnly_ && !refineZActive_ && !settingsMismatch_) {
+            // Plain left-click acquires selected tiles, but not while refining Z or when the
+            // image dimensions have changed from session start (the selection stays visible with
+            // a "revert to original" message instead).
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
@@ -1088,7 +1116,9 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          int textY = (int) ((centerPixelY - viewOffset.y) * magnification);
 
          String instructions;
-         if (selectionEnd_ == null) {
+         if (settingsMismatch_) {
+            instructions = "Pixel size or camera ROI has changed. Revert to original to continue";
+         } else if (selectionEnd_ == null) {
             instructions = acquisitionInProgress_
                   ? "Right-drag to extend, left-click to queue"
                   : "Right-drag to extend, left-click to acquire";
@@ -1184,6 +1214,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          }
       }
 
+      // Stage Position List FOV rectangles (yellow), drawn under the generated-position FOVs so
+      // the transient grey generated FOVs remain visible on top while drawing.
+      addPositionListFovs(overlay, magnification, viewOffset);
+
       // Generated-position FOV rectangles (light grey), drawn under the ROI outline.
       addGeneratedPositionFovs(overlay, magnification, viewOffset);
 
@@ -1243,25 +1277,64 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       }
    }
 
-   /** Adds the most recently generated positions' FOV rectangles to the overlay (light grey). */
-   private void addGeneratedPositionFovs(Overlay overlay, double magnification,
-                                         Point2D.Double viewOffset) {
-      ArrayList<Rectangle2D.Double> fovs;
+   /**
+    * Adds the Stage Position List FOV rectangles to the overlay (yellow), sized at paint time so
+    * they reflect the image that would be produced at the current objective/camera ROI.
+    */
+   private void addPositionListFovs(Overlay overlay, double magnification,
+                                    Point2D.Double viewOffset) {
+      ArrayList<Point2D.Double> centers;
       synchronized (this) {
-         if (positionFovsPx_.isEmpty()) {
+         if (positionListCentersPx_.isEmpty()) {
             return;
          }
-         fovs = new ArrayList<>(positionFovsPx_);
+         centers = new ArrayList<>(positionListCentersPx_);
       }
-      Color grey = new Color(200, 200, 200);
-      for (Rectangle2D.Double r : fovs) {
-         int x = (int) ((r.x - viewOffset.x) * magnification);
-         int y = (int) ((r.y - viewOffset.y) * magnification);
-         int w = (int) (r.width * magnification);
-         int h = (int) (r.height * magnification);
+      addCenteredFovs(overlay, centers, Color.YELLOW, 2, magnification, viewOffset);
+   }
+
+   /**
+    * Adds the most recently generated positions' FOV rectangles to the overlay (light grey), sized
+    * at paint time so they resize with the objective/camera ROI like the yellow position-list FOVs.
+    */
+   private void addGeneratedPositionFovs(Overlay overlay, double magnification,
+                                         Point2D.Double viewOffset) {
+      ArrayList<Point2D.Double> centers;
+      synchronized (this) {
+         if (positionCentersPx_.isEmpty()) {
+            return;
+         }
+         centers = new ArrayList<>(positionCentersPx_);
+      }
+      addCenteredFovs(overlay, centers, new Color(200, 200, 200), 1, magnification, viewOffset);
+   }
+
+   /**
+    * Adds one FOV rectangle per center to the overlay. The FOV size is computed here (not stored)
+    * from the current pixel-size ratio, using the SAME formula as the red stage-FOV box, so every
+    * caller's outlines reflect the current objective/camera ROI and resize immediately when either
+    * changes. Callers pass view-independent full-resolution centers. Requires tileWidth_/Height_>0
+    * (guaranteed: drawOverlay returns early otherwise).
+    */
+   private void addCenteredFovs(Overlay overlay, ArrayList<Point2D.Double> centers,
+                                Color color, int strokeWidth,
+                                double magnification, Point2D.Double viewOffset) {
+      double overlapPct = manager_.getOverlapPercentage();
+      int overlapPxX = (int) Math.round(tileWidth_  * overlapPct / 100.0);
+      int overlapPxY = (int) Math.round(tileHeight_ * overlapPct / 100.0);
+      double pixelSizeRatio = manager_.getPixelSizeRatio();
+      double fovW = (tileWidth_  - overlapPxX) * pixelSizeRatio;
+      double fovH = (tileHeight_ - overlapPxY) * pixelSizeRatio;
+      for (Point2D.Double c : centers) {
+         double tilePixelX = c.x - fovW / 2.0;
+         double tilePixelY = c.y - fovH / 2.0;
+         int x = (int) ((tilePixelX - viewOffset.x) * magnification);
+         int y = (int) ((tilePixelY - viewOffset.y) * magnification);
+         int w = (int) (fovW * magnification);
+         int h = (int) (fovH * magnification);
          Roi roi = new Roi(x, y, Math.max(1, w), Math.max(1, h));
-         roi.setStrokeColor(grey);
-         roi.setStrokeWidth(1);
+         roi.setStrokeColor(color);
+         roi.setStrokeWidth(strokeWidth);
          overlay.add(roi);
       }
    }
