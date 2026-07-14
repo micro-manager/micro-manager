@@ -56,6 +56,7 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -817,6 +818,7 @@ public class ExplorerManager {
       loadPixelSizeAffine();
       updateStagePositionPixel();
       updateSettingsMismatch();
+      pushPositionListFovs();
       redrawOverlay();
    }
 
@@ -826,6 +828,16 @@ public class ExplorerManager {
          return;
       }
       loadPixelSizeAffine();
+      pushPositionListFovs();
+      redrawOverlay();
+   }
+
+   @Subscribe
+   public void onNewPositionList(NewPositionListEvent event) {
+      if (!exploring_) {
+         return;
+      }
+      pushPositionListFovs();
       redrawOverlay();
    }
 
@@ -1365,6 +1377,8 @@ public class ExplorerManager {
                if (vesselOutlinePending_) {
                   updateVesselOutline();
                }
+               // Tile dimensions are now known, so stageToPixel() works: show the position list.
+               pushPositionListFovs();
 
                // Update storage overlap metadata with actual tile dimensions
                int overlapX = (int) Math.round(tileWidth_ * overlapPercentage_ / 100.0);
@@ -1678,6 +1692,8 @@ public class ExplorerManager {
             double stageY = studio_.core().getYPosition();
             Point2D.Double pixel = stageToPixel(stageX, stageY);
             dataSource_.setStagePositionPixel(pixel);
+            // Keep the green position-list FOVs in sync with pan/zoom and pixel-size changes.
+            pushPositionListFovs();
             redrawOverlay();
          } catch (Exception e) {
             // Stage or camera not available
@@ -2822,6 +2838,72 @@ public class ExplorerManager {
       pushRefineZMarkers();
       pushRefineZThumbnails();
       setRefineZStatus("Refine Z cleared.");
+   }
+
+   /**
+    * Pushes the application's Stage Position List to the overlay as yellow FOV rectangles, so the
+    * user can see every position (Explorer-generated or not) while acquiring. Each rectangle is
+    * sized to the current FOV in session-frame canvas pixels (the same formula as the red live-FOV
+    * indicator and the Refine-Z thumbnails) and centered on the position's stage XY. Recomputed on
+    * every push so it tracks pan/zoom and objective/camera changes. No-op unless exploring live
+    * data (a loaded dataset has no live stage-to-pixel mapping).
+    */
+   private void pushPositionListFovs() {
+      if (dataSource_ == null || !exploring_ || loadedData_) {
+         return;
+      }
+      int tw = dataSource_.getTileWidth();
+      int th = dataSource_.getTileHeight();
+      java.util.List<Rectangle2D.Double> fovs = new java.util.ArrayList<>();
+      if (tw > 0 && th > 0) {
+         double ratio = getPixelSizeRatio();
+         double widthScale  = initialCameraWidth_  > 0
+               ? (double) cameraWidth_  / initialCameraWidth_  : 1.0;
+         double heightScale = initialCameraHeight_ > 0
+               ? (double) cameraHeight_ / initialCameraHeight_ : 1.0;
+         int ovX = (int) Math.round(tw * overlapPercentage_ / 100.0);
+         int ovY = (int) Math.round(th * overlapPercentage_ / 100.0);
+         double fovW = (tw - ovX) * ratio * widthScale;
+         double fovH = (th - ovY) * ratio * heightScale;
+         PositionList list = studio_.positions().getPositionList();
+         for (int i = 0; i < list.getNumberOfPositions(); i++) {
+            MultiStagePosition msp = list.getPosition(i);
+            Point2D.Double stageXY = positionStageXY(msp);
+            if (stageXY == null) {
+               continue;
+            }
+            Point2D.Double centerPx = stageToPixel(stageXY.x, stageXY.y);
+            if (centerPx == null) {
+               continue;
+            }
+            fovs.add(new Rectangle2D.Double(
+                  centerPx.x - fovW / 2.0, centerPx.y - fovH / 2.0, fovW, fovH));
+         }
+      }
+      dataSource_.setPositionListFovs(fovs);
+   }
+
+   /**
+    * Returns the XY stage coordinates of a position, or null if it carries no 2-axis stage.
+    * Prefers the default XY stage; falls back to the first 2-axis stage present so positions
+    * created elsewhere (without a matching default XY stage label) are still located.
+    */
+   private Point2D.Double positionStageXY(MultiStagePosition msp) {
+      if (msp == null) {
+         return null;
+      }
+      double x = msp.getX();
+      double y = msp.getY();
+      if (x != 0.0 || y != 0.0) {
+         return new Point2D.Double(x, y);
+      }
+      for (int i = 0; i < msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         if (sp != null && sp.getNumberOfStageAxes() == 2) {
+            return new Point2D.Double(sp.get2DPositionX(), sp.get2DPositionY());
+         }
+      }
+      return null;
    }
 
    /** Pushes the current reference-point markers (stage->pixel) to the data source overlay. */
