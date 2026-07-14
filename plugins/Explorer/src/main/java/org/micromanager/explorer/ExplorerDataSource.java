@@ -299,8 +299,8 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    /**
     * Sets the FOV rectangles (full-resolution pixels) of every position in the application's
-    * Stage Position List, drawn in green so they are distinguishable from the Explorer-generated
-    * (grey) FOVs. Pass an empty list (or null) to clear.
+    * Stage Position List, drawn in yellow so they are distinguishable from the Explorer-generated
+    * (grey) FOVs and the vessel outline (green). Pass an empty list (or null) to clear.
     */
    public synchronized void setPositionListFovs(java.util.List<Rectangle2D.Double> fovs) {
       positionListFovsPx_.clear();
