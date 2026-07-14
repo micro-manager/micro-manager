@@ -495,13 +495,11 @@ public class StitchFrame extends JDialog {
          int[] correction = null;
          StitchDataProviderAdapter.OrientationModel orientationModel = null;
          if (doCorrectOrientation) {
+            // resolveOrientation shows its own user-facing message (and returns null) when it
+            // cannot proceed -- either no affine at all, or a miscalibrated one -- so no
+            // generic message is needed here.
             ResolvedOrientation resolved = resolveOrientation(dataProvider_);
-            if (resolved == null) {
-               SwingUtilities.invokeLater(() ->
-                     studio_.logs().showMessage(
-                           "No pixel size affine transform found in image metadata. "
-                           + "Orientation correction will be skipped.", null));
-            } else {
+            if (resolved != null) {
                correction = resolved.pixelOp;
                orientationModel = resolved.model;
                int rot = correction != null ? correction[0] : 0;
@@ -2343,6 +2341,9 @@ public class StitchFrame extends JDialog {
       AffineTransform affine = probeAffineTransform(dataProvider);
       int[] o = ImageTransformUtils.correctionFromAffine(affine);
       if (o == null) {
+         SwingUtilities.invokeLater(() -> studio_.logs().showMessage(
+               "No pixel size affine transform found in image metadata. "
+               + "Orientation correction will be skipped.", StitchFrame.this));
          return null;
       }
 
@@ -2359,6 +2360,33 @@ public class StitchFrame extends JDialog {
          int[] flipInv = ImageTransformUtils.invertCorrection(flipperOp[0], flipperOp[1]);
          pixelOp = ImageTransformUtils.composeCorrection(
                o[0], o[1], flipInv[0], flipInv[1]);
+      }
+
+      // The pixelSizeAffine is the sole authority for tile placement magnitude on this path:
+      // M = O * A^-1 maps stage microns to canvas pixels with scale 1/affineScale. If the
+      // affine is miscalibrated so its scale disagrees with the true pixel size
+      // (getPixelSizeUm()), placement is wrong by that ratio -- e.g. the demo camera's
+      // uncalibrated identity affine [1,0,0,1] claims 1 um/px while the real size is
+      // ~0.25 um/px, so tiles pile up 4x too close ("Picasso"). We do NOT silently rescale
+      // around bad calibration (that would mask a real setup error and discard genuine
+      // anisotropy/rotation in a correct affine). Instead, refuse orientation correction and
+      // tell the user to recalibrate. Tolerance is generous (25%) so ordinary rounding or
+      // mild anisotropy does not trip it.
+      double realPixelSizeUm = probePixelSizeUm(dataProvider);
+      double affineScaleUm = affineScale(affine);
+      if (realPixelSizeUm > 0 && affineScaleUm > 0) {
+         double ratio = affineScaleUm / realPixelSizeUm;
+         if (ratio < 0.75 || ratio > 1.25) {
+            SwingUtilities.invokeLater(() -> studio_.logs().showMessage(String.format(
+                  "Orientation correction was skipped: the pixel-size affine transform%n"
+                  + "is not calibrated for this optical path.%n%n"
+                  + "Its scale (%.4f um/pixel) disagrees with the image pixel size%n"
+                  + "(%.4f um/pixel).%n%n"
+                  + "Recalibrate the pixel-size affine (Devices > Pixel Size Calibration),%n"
+                  + "or stitch without \"Correct camera orientation\".",
+                  affineScaleUm, realPixelSizeUm), StitchFrame.this));
+            return null;
+         }
       }
 
       double[] m = ImageTransformUtils.stageToCanvasMatrix(
@@ -2423,6 +2451,22 @@ public class StitchFrame extends JDialog {
          // Ignore - fall through to origin.
       }
       return new double[]{0.0, 0.0};
+   }
+
+   /**
+    * Returns the scale (microns per pixel) encoded in the affine's 2x2 linear part,
+    * as the average of its two column norms. Matches the fallback used by
+    * {@link #probePixelSizeUm}. Returns 0 for a null or degenerate affine.
+    */
+   private static double affineScale(AffineTransform affine) {
+      if (affine == null) {
+         return 0;
+      }
+      double colX = Math.sqrt(affine.getScaleX() * affine.getScaleX()
+            + affine.getShearY() * affine.getShearY());
+      double colY = Math.sqrt(affine.getShearX() * affine.getShearX()
+            + affine.getScaleY() * affine.getScaleY());
+      return (colX + colY) / 2.0;
    }
 
    private static AffineTransform probeAffineTransform(DataProvider dataProvider) {

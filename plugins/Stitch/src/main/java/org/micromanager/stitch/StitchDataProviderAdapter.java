@@ -664,9 +664,13 @@ public class StitchDataProviderAdapter extends MMDataProviderAdapter {
       double colY = Math.abs(pearson(gCol, canvasY));
       double rowX = Math.abs(pearson(gRow, canvasX));
       double rowY = Math.abs(pearson(gRow, canvasY));
-      // gridColumn maps to canvas X (and gridRow to canvas Y) unless gridRow tracks X
-      // more strongly (a 90/270-degree rotation swaps them).
-      boolean swap = (rowX > colX) && (colY > rowY);
+      // Choose between the two possible axis assignments by TOTAL correlation, not by
+      // requiring both pairwise inequalities: this is a 2x2 assignment problem, and the
+      // best overall mapping can win on the sum even when one pairwise comparison goes the
+      // other way (real data has noise). No-swap maps gCol->X, gRow->Y (score colX + rowY);
+      // swap maps gRow->X, gCol->Y (score rowX + colY), as happens for a 90/270-degree
+      // rotation. Ties keep the no-swap (identity) assignment.
+      boolean swap = (rowX + colY) > (colX + rowY);
       double[] canvasColSource = swap ? gRow : gCol;
       double[] canvasRowSource = swap ? gCol : gRow;
 
