@@ -123,6 +123,12 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    // light grey until the operator leaves draw mode. Empty = none generated yet.
    private final ArrayList<Rectangle2D.Double> positionFovsPx_ = new ArrayList<>();
 
+   // FOV rectangles (full-res pixels) of every position in the application's Stage Position
+   // List, drawn in yellow so they are distinguishable from the Explorer-generated (grey) FOVs
+   // and the vessel outline (green). Kept in sync with the PositionList via ExplorerManager's
+   // NewPositionListEvent handler.
+   private final ArrayList<Rectangle2D.Double> positionListFovsPx_ = new ArrayList<>();
+
    // Refine-Z mode: when active, ctrl+left-click moves the stage to that tile (for manual focus)
    // instead of the normal move-stage behavior. Reference-point markers (full-res pixels) are
    // drawn until the operator leaves draw mode.
@@ -288,6 +294,18 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
       positionFovsPx_.clear();
       if (fovs != null) {
          positionFovsPx_.addAll(fovs);
+      }
+   }
+
+   /**
+    * Sets the FOV rectangles (full-resolution pixels) of every position in the application's
+    * Stage Position List, drawn in green so they are distinguishable from the Explorer-generated
+    * (grey) FOVs. Pass an empty list (or null) to clear.
+    */
+   public synchronized void setPositionListFovs(java.util.List<Rectangle2D.Double> fovs) {
+      positionListFovsPx_.clear();
+      if (fovs != null) {
+         positionListFovsPx_.addAll(fovs);
       }
    }
 
@@ -1184,6 +1202,10 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          }
       }
 
+      // Stage Position List FOV rectangles (yellow), drawn under the generated-position FOVs so
+      // the transient grey generated FOVs remain visible on top while drawing.
+      addPositionListFovs(overlay, magnification, viewOffset);
+
       // Generated-position FOV rectangles (light grey), drawn under the ROI outline.
       addGeneratedPositionFovs(overlay, magnification, viewOffset);
 
@@ -1240,6 +1262,28 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          int w = (int) (t.fullResW * magnification);
          int h = (int) (t.fullResH * magnification);
          overlay.add(new ImageRoi(x, y, Math.max(1, w), Math.max(1, h), t.img));
+      }
+   }
+
+   /** Adds the Stage Position List FOV rectangles to the overlay (yellow). */
+   private void addPositionListFovs(Overlay overlay, double magnification,
+                                    Point2D.Double viewOffset) {
+      ArrayList<Rectangle2D.Double> fovs;
+      synchronized (this) {
+         if (positionListFovsPx_.isEmpty()) {
+            return;
+         }
+         fovs = new ArrayList<>(positionListFovsPx_);
+      }
+      for (Rectangle2D.Double r : fovs) {
+         int x = (int) ((r.x - viewOffset.x) * magnification);
+         int y = (int) ((r.y - viewOffset.y) * magnification);
+         int w = (int) (r.width * magnification);
+         int h = (int) (r.height * magnification);
+         Roi roi = new Roi(x, y, Math.max(1, w), Math.max(1, h));
+         roi.setStrokeColor(Color.YELLOW);
+         roi.setStrokeWidth(2);
+         overlay.add(roi);
       }
    }
 
