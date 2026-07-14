@@ -1686,14 +1686,15 @@ public class ExplorerManager {
                stageTileWidthUm_  = cameraWidth_  * pixelSizeUm_;
                stageTileHeightUm_ = cameraHeight_ * pixelSizeUm_;
                updateSettingsMismatch();
+               // Camera ROI is the one stage-to-pixel input with no MM event; refresh the
+               // position-list FOVs here (the event handlers cover pixel-size/affine/list changes).
+               pushPositionListFovs();
             }
 
             double stageX = studio_.core().getXPosition();
             double stageY = studio_.core().getYPosition();
             Point2D.Double pixel = stageToPixel(stageX, stageY);
             dataSource_.setStagePositionPixel(pixel);
-            // Keep the green position-list FOVs in sync with pan/zoom and pixel-size changes.
-            pushPositionListFovs();
             redrawOverlay();
          } catch (Exception e) {
             // Stage or camera not available
@@ -2844,9 +2845,12 @@ public class ExplorerManager {
     * Pushes the application's Stage Position List to the overlay as yellow FOV rectangles, so the
     * user can see every position (Explorer-generated or not) while acquiring. Each rectangle is
     * sized to the current FOV in session-frame canvas pixels (the same formula as the red live-FOV
-    * indicator and the Refine-Z thumbnails) and centered on the position's stage XY. Recomputed on
-    * every push so it tracks pan/zoom and objective/camera changes. No-op unless exploring live
-    * data (a loaded dataset has no live stage-to-pixel mapping).
+    * indicator and the Refine-Z thumbnails) and centered on the position's stage XY. The rectangles
+    * are stored in view-independent full-resolution pixels, so pan/zoom needs no recompute (the
+    * overlay re-applies the current transform each repaint); only call this when the stage-to-pixel
+    * mapping changes (new position list, pixel-size/affine change, camera-ROI change, or when tile
+    * dimensions first become available). No-op unless exploring live data (a loaded dataset has no
+    * live stage-to-pixel mapping).
     */
    private void pushPositionListFovs() {
       if (dataSource_ == null || !exploring_ || loadedData_) {
@@ -2885,23 +2889,33 @@ public class ExplorerManager {
 
    /**
     * Returns the XY stage coordinates of a position, or null if it carries no 2-axis stage.
-    * Prefers the default XY stage; falls back to the first 2-axis stage present so positions
-    * created elsewhere (without a matching default XY stage label) are still located.
+    * Prefers the 2-axis entry matching the default XY stage; falls back to the first 2-axis entry
+    * present so positions created elsewhere (without a matching default XY stage label) are still
+    * located. Reads the stage entry directly rather than via {@code msp.getX()/getY()}, which
+    * return 0.0 both for a real origin position and for a missing default XY stage - checking the
+    * coordinates cannot tell those apart and would mis-locate an origin position when multiple 2D
+    * stages are present.
     */
    private Point2D.Double positionStageXY(MultiStagePosition msp) {
       if (msp == null) {
          return null;
       }
-      double x = msp.getX();
-      double y = msp.getY();
-      if (x != 0.0 || y != 0.0) {
-         return new Point2D.Double(x, y);
-      }
+      String defaultXYStage = msp.getDefaultXYStage();
+      StagePosition firstXY = null;
       for (int i = 0; i < msp.size(); i++) {
          StagePosition sp = msp.get(i);
-         if (sp != null && sp.getNumberOfStageAxes() == 2) {
+         if (sp == null || sp.getNumberOfStageAxes() != 2) {
+            continue;
+         }
+         if (defaultXYStage != null && defaultXYStage.equals(sp.getStageDeviceLabel())) {
             return new Point2D.Double(sp.get2DPositionX(), sp.get2DPositionY());
          }
+         if (firstXY == null) {
+            firstXY = sp;
+         }
+      }
+      if (firstXY != null) {
+         return new Point2D.Double(firstXY.get2DPositionX(), firstXY.get2DPositionY());
       }
       return null;
    }
