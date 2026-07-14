@@ -146,11 +146,11 @@ public class ASIdiSPIMFrame extends MMFrame
     * @param gui - Micro-Manager script interface
     * @throws ASIdiSPIMException
     */
-   public ASIdiSPIMFrame(ScriptInterface gui, boolean separatePrefs) throws ASIdiSPIMException {
+   public ASIdiSPIMFrame(ScriptInterface gui, boolean altPrefs) throws ASIdiSPIMException {
 
       // create interface objects used by panels
       gui_ = gui;
-      if (separatePrefs) {
+      if (altPrefs) {
          prefs_ = new Prefs(Preferences.userRoot().node("org/micromanager/asidispim2"));
       } else {
          prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
@@ -309,7 +309,7 @@ public class ASIdiSPIMFrame extends MMFrame
       
       // set up the window
       add(tabbedPane_);  // add the pane to the GUI window
-      setTitle(ASIdiSPIM.menuName + " Control"); 
+      setTitle(ASIdiSPIM.menuName + " Control" + (altPrefs ? " BETA" : ""));
       pack();           // shrinks the window as much as it can
       setResizable(false);
       
