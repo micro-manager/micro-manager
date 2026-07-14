@@ -902,10 +902,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                      if (channel != null) {
                         af.setPropertyValue("Channel", channel);
                      }
-
+                     // previous channel AF might have moved the stage away from event's position
+                     // in case previous AF moved away too much, we get back
+                     studio_.core().logMessage("Moving back to event's position: " + event.getZPosition());
+                     studio_.core().setPosition(event.getZPosition());
+                     studio_.core().waitForDevice(studio_.core().getFocusDevice());
+                     
                      af.fullFocus();
-                  }
-                  else{
+                  } else {
                      studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
                   }
 
