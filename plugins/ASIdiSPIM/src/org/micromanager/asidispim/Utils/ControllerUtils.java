@@ -653,7 +653,7 @@ public class ControllerUtils {
       // sets PLogic "acquisition running" flag in the "main" PLOGIC device
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_3, true);
       
-      ReportingUtils.logMessage("Finished preparing controller for acquisition with offset " + channelOffset +
+      ReportingUtils.logMessage("Finished preparing controller for acquisition with channelOffset " + channelOffset +
             " with mode " + settings.spimMode.toString() + " and settings " + settings.toString());
       
       return true;
@@ -1040,7 +1040,10 @@ public class ControllerUtils {
          }
 
       } // end else (offsetOnly == true)
-      
+
+      ReportingUtils.logError("Set up acquisition for path " + side.toString() +
+              " with slope=" + sliceRate + " and offset=" + sliceOffset + " and center=" + piezoCenter);
+
       return true;
    }
    
