@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -70,27 +71,30 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    
    private static final String KEY_CHANNEL = "Channel";
    private static final String NOCHANNEL = "";
-   private static final String KEY_REL_Z_MIN300NM = "Relative Z min 300nm";
-   private static final String KEY_REL_Z_MAX300NM = "Relative Z max 300nm";
-   private static final String KEY_REL_Z_MIN460NM = "Relative Z min 460nm";
-   private static final String KEY_REL_Z_MAX460NM = "Relative Z max 460nm";
-   private static final String KEY_REL_Z_MINNADH = "Relative Z min NADH";
-   private static final String KEY_REL_Z_MAXNADH = "Relative Z max NADH";
-   private static final String KEY_REL_Z_MINFAD = "Relative Z min FAD";
-   private static final String KEY_REL_Z_MAXFAD = "Relative Z max FAD";
+   // private static final String KEY_REL_Z_MIN300NM = "Relative Z min 300nm";
+   // private static final String KEY_REL_Z_MAX300NM = "Relative Z max 300nm";
+   // private static final String KEY_REL_Z_MIN460NM = "Relative Z min 460nm";
+   // private static final String KEY_REL_Z_MAX460NM = "Relative Z max 460nm";
+   // private static final String KEY_REL_Z_MINNADH = "Relative Z min NADH";
+   // private static final String KEY_REL_Z_MAXNADH = "Relative Z max NADH";
+   // private static final String KEY_REL_Z_MINFAD = "Relative Z min FAD";
+   // private static final String KEY_REL_Z_MAXFAD = "Relative Z max FAD";
 
    private static final String KEY_DELTA_Z = "Delta Z";
    private static final String KEY_DRYRUN = "Dry run";
    private static final String[] SHOWVALUES = {"Yes", "No"};
-   private static final String EXPOSURE460 = "Exposure 460nm";
-   private static final String EXPOSURE300 = "Exposure 300nm";
-   private static final String EXPOSURENADH = "Exposure NADH";
-   private static final String EXPOSUREFAD = "Exposure FAD";
+   // private static final String EXPOSURE460 = "Exposure 460nm";
+   // private static final String EXPOSURE300 = "Exposure 300nm";
+   // private static final String EXPOSURENADH = "Exposure NADH";
+   // private static final String EXPOSUREFAD = "Exposure FAD";
+
+   private static final String[] CHANNEL_NAMES = {"300", "460", "NADH", "FAD"};
+
 
    private static final String SAVE_CSV = "Save CSV";
 
    private static final String KEY_FOCUS_ANALYZER = "Focus Analyzer";
-   private static final String[] FOCUS_ANALYZER_STRINGS = {"460nm", "300nm", "NADH", "FAD"};
+   private static final String[] FOCUS_ANALYZER_STRINGS = {"460", "300", "NADH", "FAD"};
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    
    private static final String AF_DEVICE_NAME = "TCA AF 2.0";
@@ -109,24 +113,24 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    public String channel_ = "";
    private double rel_z_min_ = -10.0;
    private double rel_z_max_ = 10.0;
-   private double rel_z_min_300nm = -80.0;
-   private double rel_z_max_300nm = 40.0;
-   private double rel_z_min_460nm = -10.0;
-   private double rel_z_max_460nm = 10.0;
-   private double rel_z_min_NADH = -10.0;
-   private double rel_z_max_NADH = 10.0;
-   private double rel_z_min_FAD = -10.0;
-   private double rel_z_max_FAD = 10.0;
+   // private double rel_z_min_300nm = -80.0;
+   // private double rel_z_max_300nm = 40.0;
+   // private double rel_z_min_460nm = -10.0;
+   // private double rel_z_max_460nm = 10.0;
+   // private double rel_z_min_NADH = -10.0;
+   // private double rel_z_max_NADH = 10.0;
+   // private double rel_z_min_FAD = -10.0;
+   // private double rel_z_max_FAD = 10.0;
 
    private boolean dryrun_ = false;
    private boolean verbose_ = true; // displaying debug info or not
    private String channelGroup_;
    private double curDist_;
-   private String focusAnalyzer_ = "460nm"; // default to 460nm analyzer
-   private double exposure460_ = 100; 
-   private double exposure300_ = 100;
-   private double exposureNADH_ = 100;
-   private double exposureFAD_ = 100;
+   private String focusAnalyzer_ = "460"; // default to 460 analyzer
+   // private double exposure460_ = 100; 
+   // private double exposure300_ = 100;
+   // private double exposureNADH_ = 100;
+   // private double exposureFAD_ = 100;
    private boolean saveCSV_ = true; // default to saving CSV files for debugging
    private double exposure_ = 100;
    
@@ -142,60 +146,53 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       public double z_best_focus;
    }
 
+   private static String propertyLabelFor(String channel) {
+      return channel + " (Zmin, Zmax, Exposure)";
+   }
+
    /**
     * Constructors creates needed properties.
     *
     */
    public TCAAutofocus() {
+      channelSettings_.put("300", new ChannelSettings(-80.0, 40.0, 100));
+      channelSettings_.put("460", new ChannelSettings(-10.0, 10.0, 100));
+      channelSettings_.put("NADH",  new ChannelSettings(-10.0, 10.0, 100));
+      channelSettings_.put("FAD",   new ChannelSettings(-10.0, 10.0, 100));
+
       super.createProperty(KEY_CHANNEL, channel_);
       super.createProperty(KEY_FOCUS_ANALYZER, FOCUS_ANALYZER_STRINGS[0], FOCUS_ANALYZER_STRINGS);
-      super.createProperty(KEY_REL_Z_MIN300NM, Double.toString(rel_z_min_300nm));
-      super.createProperty(KEY_REL_Z_MAX300NM, Double.toString(rel_z_max_300nm));
-      super.createProperty(KEY_REL_Z_MIN460NM, Double.toString(rel_z_min_460nm));
-      super.createProperty(KEY_REL_Z_MAX460NM, Double.toString(rel_z_max_460nm));
-      super.createProperty(KEY_REL_Z_MINNADH, Double.toString(rel_z_min_NADH));
-      super.createProperty(KEY_REL_Z_MAXNADH, Double.toString(rel_z_max_NADH));
-      super.createProperty(KEY_REL_Z_MINFAD, Double.toString(rel_z_min_FAD));
-      super.createProperty(KEY_REL_Z_MAXFAD, Double.toString(rel_z_max_FAD));
+
+      for (String channel : CHANNEL_NAMES) {
+         super.createProperty(propertyLabelFor(channel), formatChannelSettings(channelSettings_.get(channel)));
+      }
 
       super.createProperty(KEY_DELTA_Z, Double.toString(deltaz_));
       super.createProperty(KEY_DRYRUN, SHOWVALUES[1], SHOWVALUES);
-
-      super.createProperty(EXPOSURE300, Double.toString(exposure300_));
-      super.createProperty(EXPOSURE460, Double.toString(exposure460_));
-      super.createProperty(EXPOSURENADH, Double.toString(exposureNADH_));
-      super.createProperty(EXPOSUREFAD, Double.toString(exposureFAD_));
       super.createProperty(SAVE_CSV, "Yes", new String[] {"Yes", "No"});
    }
-
 
    @Override
    public void applySettings() {
       try {
          deltaz_ = Double.parseDouble(getPropertyValue(KEY_DELTA_Z));
          channel_ = getPropertyValue(KEY_CHANNEL);
-         rel_z_min_300nm = Double.parseDouble(getPropertyValue(KEY_REL_Z_MIN300NM));
-         rel_z_max_300nm = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAX300NM));
-         rel_z_min_460nm = Double.parseDouble(getPropertyValue(KEY_REL_Z_MIN460NM));
-         rel_z_max_460nm = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAX460NM));
-         rel_z_min_NADH = Double.parseDouble(getPropertyValue(KEY_REL_Z_MINNADH));
-         rel_z_max_NADH = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAXNADH));
-         rel_z_min_FAD = Double.parseDouble(getPropertyValue(KEY_REL_Z_MINFAD));
-         rel_z_max_FAD = Double.parseDouble(getPropertyValue(KEY_REL_Z_MAXFAD));
          dryrun_ = getPropertyValue(KEY_DRYRUN).contentEquals("Yes");
          focusAnalyzer_ = getPropertyValue(KEY_FOCUS_ANALYZER);
-         exposure460_ = Double.parseDouble(getPropertyValue(EXPOSURE460));
-         exposure300_ = Double.parseDouble(getPropertyValue(EXPOSURE300));
-         exposureNADH_ = Double.parseDouble(getPropertyValue(EXPOSURENADH));
-         exposureFAD_ = Double.parseDouble(getPropertyValue(EXPOSUREFAD));
          saveCSV_ = getPropertyValue(SAVE_CSV).contentEquals("Yes");
 
-      } catch (Exception e) {
+      for (String channel : CHANNEL_NAMES) {
+            try {
+               channelSettings_.put(channel, parseChannelSettings(getPropertyValue(propertyLabelFor(channel))));
+            } catch (Exception ex) {
+               IJ.log("Bad settings for channel " + channel + ": " + ex.getMessage()
+                     + " (keeping previous values)");
+            }
+         }
 
-         // TODO Auto-generated catch block
+      } catch (Exception e) {
          e.printStackTrace();
       }
-
    }
 
    private static FocusResults wrapResults(ComputeBestFocus460nm.Results source) {
@@ -238,6 +235,37 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       return result;
    }
 
+   static class ChannelSettings {
+      double relZMin;
+      double relZMax;
+      double exposure;
+
+      ChannelSettings(double relZMin, double relZMax, double exposure) {
+         this.relZMin = relZMin;
+         this.relZMax = relZMax;
+         this.exposure = exposure;
+      }
+   }
+
+   private final LinkedHashMap<String, ChannelSettings> channelSettings_ = new LinkedHashMap<>();
+
+   private static String formatChannelSettings(ChannelSettings cs) {
+      return cs.relZMin + "," + cs.relZMax + "," + cs.exposure;
+   }
+
+   private static ChannelSettings parseChannelSettings(String value) {
+      String[] parts = value.split(",");
+      if (parts.length != 3) {
+         throw new IllegalArgumentException(
+               "Expected \"Z min,Z max,Exposure\" but got: " + value);
+      }
+      return new ChannelSettings(
+            Double.parseDouble(parts[0].trim()),
+            Double.parseDouble(parts[1].trim()),
+            Double.parseDouble(parts[2].trim()));
+   }
+   
+
    @Override
    public double fullFocus() throws Exception {
       long t0 = System.currentTimeMillis();
@@ -262,37 +290,18 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       applySettings();
       
 
-      switch (channel_) {
-         case "460nm":
-            rel_z_min_ = rel_z_min_460nm;
-            rel_z_max_ = rel_z_max_460nm;
-            focusAnalyzer_ = "460nm";
-            exposure_ = exposure460_;
-            break;
-         case "300nm":
-            rel_z_min_ = rel_z_min_300nm;
-            rel_z_max_ = rel_z_max_300nm;
-            focusAnalyzer_ = "300nm";
-            exposure_ = exposure300_;
-            break;
-         case "NADH":
-            rel_z_min_ = rel_z_min_NADH;
-            rel_z_max_ = rel_z_max_NADH;
-            focusAnalyzer_ = "NADH";
-            exposure_ = exposureNADH_;
-            break;
-         case "FAD":
-            rel_z_min_ = rel_z_min_FAD;
-            rel_z_max_ = rel_z_max_FAD;
-            focusAnalyzer_ = "FAD";
-            exposure_ = exposureFAD_;
-            break;
-         default:
-            IJ.log("Unknown channel selected, defaulting to 460nm");
-            exposure_ = exposure460_;
-            break;
+      ChannelSettings cs = channelSettings_.get(channel_);
+      if (cs == null) {
+         IJ.log("Unknown channel selected, defaulting to 460nm");
+         channel_ = "460nm";
+         cs = channelSettings_.get(channel_);
       }
-      IJ.log("Selected channel: " + channel_ + ", using exposure: " + exposure_ + " ms, "+ "focus analyzer: " + focusAnalyzer_  );
+      rel_z_min_ = cs.relZMin;
+      rel_z_max_ = cs.relZMax;
+      focusAnalyzer_ = channel_;
+      exposure_ = cs.exposure;
+
+      IJ.log("Selected channel: " + channel_ + ", using exposure: " + exposure_ + " ms, "+ "focus analyzer: " + focusAnalyzer_  + ", Z range: [" + rel_z_min_ + ", " + rel_z_max_ + "]");
       core_.setExposure(exposure_);
       //######################## START THE ROUTINE ###########
       double original_z = core_.getPosition(core_.getFocusDevice());
@@ -362,12 +371,12 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
 
          FocusResults results = null;
          switch (focusAnalyzer_) {
-            case "460nm":
+            case "460":
                IJ.log("Using 460nm focus analyzer");
                results = wrapResults(ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
                core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
-            case "300nm":
+            case "300":
                z_ini = -61.0;
                IJ.log("Using 300nm focus analyzer");
                results = wrapResults(ComputeBestFocus300nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
