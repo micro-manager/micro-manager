@@ -304,7 +304,10 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
       IJ.log("Selected channel: " + channel_ + ", using exposure: " + exposure_ + " ms, "+ "focus analyzer: " + focusAnalyzer_  + ", Z range: [" + rel_z_min_ + ", " + rel_z_max_ + "]");
       core_.setExposure(exposure_);
       //######################## START THE ROUTINE ###########
+      core_.sleep(500); // wait for 500 ms to allow the stage movement change to take effect
+      core_.waitForDevice(core_.getFocusDevice());
       double original_z = core_.getPosition(core_.getFocusDevice());
+      IJ.log("original_z = "  + original_z);
       double bestZ = original_z;
       
       try {
