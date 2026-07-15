@@ -1068,9 +1068,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     * (slider setting for "normal" mode, ROI and slope for light sheet mode
     */
    private void updateSheetOffset() {
-      final boolean staticSheet = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
-              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE);
-      if (!staticSheet) {
+      if (!ASIdiSPIM.SCOPE) {
          CameraModes.Keys key = getSPIMCameraMode();
          float offset = controller_.getSheetOffset(key, side_);
          props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device

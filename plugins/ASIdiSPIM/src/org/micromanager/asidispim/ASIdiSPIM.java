@@ -37,11 +37,6 @@ import org.micromanager.utils.ReportingUtils;
 
 public class ASIdiSPIM implements MMPlugin {
    
-   // to create a duplicate plugin that uses different preferences (and has 2 menu entries):
-   // - create a copy of this file under a different name and change the class name to match the file name
-   // - add a distinguishing strung to the menuName, e.g. + " 2"
-   // - change the second parameter in the call to new ASIdiSPIMFrame() to true to use a different preference node
-   
    public static final boolean oSPIM = false;
    public static final boolean SCOPE = false;  // when true also change AcquisitionModes setting for galvo scan text
    public static final boolean singleView = (oSPIM || SCOPE);  // true for SCOPE and oSPIM (and possibly other situations?)
@@ -72,7 +67,14 @@ public class ASIdiSPIM implements MMPlugin {
       }
       // create brand new instance of plugin frame every time
       try {
-         myFrame_ = new ASIdiSPIMFrame(gui_, false);  // make 2nd parameter true to save preferences in alternate location
+         // use alternate prefs location if we have special firmware timestamp of midnight for the TigerCommHub
+         boolean altPrefs = false;
+         try {
+            altPrefs = gui_.getMMCore().getProperty("TigerCommHub", "FirmwareDate").endsWith("00:00:00");
+         } catch (Exception e) {
+            gui_.showError("require TigerCommHub device");
+         }
+         myFrame_ = new ASIdiSPIMFrame(gui_, altPrefs);  // make 2nd parameter true to save preferences in alternate location
          myFrame_.setBackground(gui_.getBackgroundColor());
          gui_.addMMListener(myFrame_);
          gui_.addMMBackgroundListener(myFrame_);
@@ -132,7 +134,7 @@ public class ASIdiSPIM implements MMPlugin {
 
    @Override
    public String getCopyright() {
-      return "University of California and Applied Scientific Instrumentation (ASI), 2013-2016";
+      return "University of California and Applied Scientific Instrumentation (ASI), 2013-2026";
    }
 }
 
