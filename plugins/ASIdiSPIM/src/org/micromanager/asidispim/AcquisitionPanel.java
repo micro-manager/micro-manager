@@ -1220,6 +1220,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.saveDirectoryRoot = rootField_.getText();
       acqSettings.saveNamePrefix = prefixField_.getText();
       acqSettings.pluginVersion = ASIdiSPIM.menuName;
+      acqSettings.isStaticSheet = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+              Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, false);
       // missing from this init:
       // durationSlice
       // durationVolume
@@ -1338,19 +1340,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * Special case for different settings for single-objective light sheet (or really any time we have static sheet instead of scanned beam)
+    * Special case for different settings for static sheet instead of scanned beam (originally for SCOPE)
     * @param showWarnings true to warn user about needing to change slice period
     * @return
     */
-   private SliceTiming getTimingSingleObjective(boolean showWarnings) {
+   private SliceTiming getTimingStaticSheet(boolean showWarnings) {
       
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
-      
-      // temporary measure: use diSPIM-like settings unless we are doing stage scanning
-      if (!acqSettings.isStageScanning) {
+
+      // temporary measure: use diSPIM-like settings for SCOPE unless we are doing stage scanning to avoid motion blur
+      if (ASIdiSPIM.SCOPE && !acqSettings.isStageScanning) {
          return getTimingFromPeriodAndLightExposure(showWarnings);
       }
-      
+
       SliceTiming s = new SliceTiming();
       
       final float cameraResetTime = computeCameraResetTime();      // recalculate for safety, 0 for light sheet
@@ -1732,7 +1734,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updatingTiming_ = true;
       if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
               Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE)) {
-         sliceTiming_ = getTimingSingleObjective(showWarnings);
+         sliceTiming_ = getTimingStaticSheet(showWarnings);
       } else {
          sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
       }

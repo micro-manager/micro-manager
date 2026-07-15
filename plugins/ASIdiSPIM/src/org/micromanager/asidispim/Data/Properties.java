@@ -247,7 +247,7 @@ public class Properties {
       PLUGIN_DESIRED_EXPOSURE("DesiredExposure"),
       PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
       PREFS_MINIMIZE_SLICE_PERIOD("MinimizeSlicePeriod"),
-       PREFS_STATIC_SHEET_GENERATOR("StaticSheetGenerator"),
+      PREFS_STATIC_SHEET_GENERATOR("StaticSheetGenerator"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
       AUTOFOCUS_ACQUSITION_MODE("AutofocusAcquisitionMode"),
       AUTOFOCUS_SCORING_ALGORITHM("AutofocusScoringAlgorithm"),
