@@ -282,7 +282,7 @@ public class ControllerUtils {
    public void setupMilestoneSignalsPLC(final AcquisitionSettings settings) {
 //      MyDialogUtils.showError(getNumCameraTriggersPerPosition(settings) + " camera triggers per position; and " +
 //            getNumPositionsPerTimepoint(settings) + " position triggers per timepoint");
-      if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC) {
+      if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
          ReportingUtils.logError("cannot use milestone signals without a PLogic device");
          return;
       }
