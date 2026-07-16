@@ -48,7 +48,7 @@ import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.autofocus.tca_af.ComputeBestFocus300nm;
 import org.micromanager.autofocus.tca_af.ComputeBestFocus460nm;
-//import org.micromanager.autofocus.tca_af.ComputeBestFocus600nm;
+import org.micromanager.autofocus.tca_af.ComputeBestFocus600nm;
 import org.micromanager.autofocus.tca_af.ComputeBestFocusFAD;
 import org.micromanager.autofocus.tca_af.ComputeBestFocusNADH;
 import org.micromanager.internal.utils.AutofocusBase;
@@ -185,6 +185,16 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    }
 
    private static FocusResults wrapResults(ComputeBestFocus300nm.Results source) {
+      FocusResults result = new FocusResults();
+      result.metricNames = source.metricNames;
+      result.metricValuesNorm = source.metricValuesNorm;
+      result.zFine = source.zFine;
+      result.smoothCurvesNorm = source.smoothCurvesNorm;
+      result.z_best_focus = source.z_best_focus;
+      return result;
+   }
+
+   private static FocusResults wrapResults(ComputeBestFocus600nm.Results source) {
       FocusResults result = new FocusResults();
       result.metricNames = source.metricNames;
       result.metricValuesNorm = source.metricValuesNorm;
@@ -367,7 +377,7 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
             case "600nm":
                z_ini = 5.0;
                IJ.log("Using 600nm focus analyzer");
-               //results = wrapResults(ComputeBestFocus600nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
+               results = wrapResults(ComputeBestFocus600nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
                core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
             case "NADH":

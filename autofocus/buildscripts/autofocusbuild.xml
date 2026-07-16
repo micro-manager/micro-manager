@@ -44,6 +44,7 @@
 			<include name="${sourcefile4}"/>
 			<include name="${sourcefile5}"/>
 			<include name="${sourcefile6}"/>
+			<include name="${sourcefile7}"/>
 			<classpath refid="project.classpath"/>
 		</mm-javac>
 	</target>

@@ -5,6 +5,7 @@
     <property name="sourcefile4" value="src/main/java/org/micromanager/autofocus/tca_af/ComputeBestFocusFAD.java"/>
     <property name="sourcefile5" value="src/main/java/org/micromanager/autofocus/tca_af/LocalSmoothingSplineFit.java"/>
     <property name="sourcefile6" value="src/main/java/org/micromanager/autofocus/TCAAutofocus.java"/>
+    <property name="sourcefile7" value="src/main/java/org/micromanager/autofocus/tca_af/ComputeBestFocus600nm.java"/>
 
 	<import file="autofocusbuild.xml"/>
 </project>

@@ -49,6 +49,7 @@ public class ComputeBestFocus300nm {
         public boolean useMedianForConsensusCenter = true;
     }
 
+
     // Extremum struct
     public static class Extremum {
         public double z;
