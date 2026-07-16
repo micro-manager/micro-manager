@@ -128,11 +128,22 @@ public final class OMEMetadata {
       if (plate.getPlateColumns() != null && plate.getPlateColumns() > 0) {
          metadata_.setPlateColumns(new PositiveInteger(plate.getPlateColumns()), plateIdx);
       }
-      NamingConvention rowConvention = plate.getPlateRowNamingConvention()
-            == MultiWellPlate.WellNamingConvention.NUMBER
+      // Default rows to LETTER and columns to NUMBER when unspecified; these same
+      // values drive both the OME metadata and the well label parsing below, so
+      // the two cannot disagree.
+      final MultiWellPlate.WellNamingConvention mmRowConvention =
+            plate.getPlateRowNamingConvention() == MultiWellPlate.WellNamingConvention.NUMBER
+            ? MultiWellPlate.WellNamingConvention.NUMBER
+            : MultiWellPlate.WellNamingConvention.LETTER;
+      final MultiWellPlate.WellNamingConvention mmColConvention =
+            plate.getPlateColumnNamingConvention() == MultiWellPlate.WellNamingConvention.LETTER
+            ? MultiWellPlate.WellNamingConvention.LETTER
+            : MultiWellPlate.WellNamingConvention.NUMBER;
+      NamingConvention rowConvention =
+            mmRowConvention == MultiWellPlate.WellNamingConvention.NUMBER
             ? NamingConvention.NUMBER : NamingConvention.LETTER;
-      NamingConvention colConvention = plate.getPlateColumnNamingConvention()
-            == MultiWellPlate.WellNamingConvention.LETTER
+      NamingConvention colConvention =
+            mmColConvention == MultiWellPlate.WellNamingConvention.LETTER
             ? NamingConvention.LETTER : NamingConvention.NUMBER;
       metadata_.setPlateRowNamingConvention(rowConvention, plateIdx);
       metadata_.setPlateColumnNamingConvention(colConvention, plateIdx);
@@ -160,29 +171,21 @@ public final class OMEMetadata {
          int col;
          String wellKey;
          if (wellProp != null && !wellProp.isEmpty()) {
-            // Well property is present (e.g. "A1"): parse row/col from it.
-            // Letters prefix the row (A=0, B=1, …); trailing digits give the
-            // 1-based column number. Both are converted to 0-based OME indices.
+            // Well property is present (e.g. "A1"): parse row/col from it using
+            // the plate's declared naming conventions.
             int parsedRow = pos.getGridRow();
             int parsedCol = pos.getGridColumn();
             boolean parsed = false;
             try {
-               int splitIdx = 0;
-               while (splitIdx < wellProp.length()
-                     && Character.isLetter(wellProp.charAt(splitIdx))) {
-                  splitIdx++;
-               }
-               final String rowPart = wellProp.substring(0, splitIdx).toUpperCase();
-               final String colPart = wellProp.substring(splitIdx);
-               int r = 0;
-               for (int ci = 0; ci < rowPart.length(); ci++) {
-                  r = r * 26 + (rowPart.charAt(ci) - 'A' + 1);
-               }
-               parsedRow = r - 1; // convert to 0-based
-               parsedCol = colPart.isEmpty() ? 0 : Integer.parseInt(colPart) - 1;
+               int[] rowCol = MultiWellPlate.parseWellLabel(wellProp,
+                     mmRowConvention, mmColConvention);
+               parsedRow = rowCol[0];
+               parsedCol = rowCol[1];
                parsed = true;
-            } catch (NumberFormatException e) {
-               // malformed Well label — fall back to gridRow/gridCol
+            } catch (IllegalArgumentException e) {
+               // malformed Well label - fall back to gridRow/gridCol
+               ReportingUtils.logError("Could not parse well label \"" + wellProp
+                     + "\"; falling back to grid coordinates");
             }
             row = parsedRow;
             col = parsedCol;
