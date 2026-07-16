@@ -853,11 +853,13 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
-         // TODO: Figure out what this is supposed to do (I don't even know
-         // if multistageposition properties are ever used by anything
-         // It is utterly unclear how to perform this translation, but 
-         // returning null bombs saving of stage positions...
-         return JsonNull.INSTANCE;
+         // Mirror of convertFromGson: write the nested property map in PM2
+         // format, which fromGson tries first when reading back.
+         if (!pMap.containsPropertyMap(key())) {
+            return null;
+         }
+         return PropertyMapJSONSerializer.toGson(
+               pMap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
       }
    },
 
