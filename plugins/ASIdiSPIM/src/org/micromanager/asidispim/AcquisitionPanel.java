@@ -1340,11 +1340,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * Special case for different settings for single-objective light sheet (or really any time we have static sheet instead of scanned beam)
+    * Special case for different settings for static sheet instead of scanned beam (originally for SCOPE)
     * @param showWarnings true to warn user about needing to change slice period
     * @return
     */
-   private SliceTiming getTimingSingleObjective(boolean showWarnings) {
+   private SliceTiming getTimingStaticSheet(boolean showWarnings) {
       
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
 
@@ -1355,7 +1355,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               Properties.Keys.PLUGIN_SMOOTH_SLICE_SCAN, false) ) {
          return getTimingFromPeriodAndLightExposure(showWarnings);
       }
-      
+
       SliceTiming s = new SliceTiming();
       
       final float cameraResetTime = computeCameraResetTime();      // recalculate for safety, 0 for light sheet
@@ -1737,7 +1737,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updatingTiming_ = true;
       if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
               Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE)) {
-         sliceTiming_ = getTimingSingleObjective(showWarnings);
+         sliceTiming_ = getTimingStaticSheet(showWarnings);
       } else {
          sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
       }

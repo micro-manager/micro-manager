@@ -194,6 +194,5 @@ public class AcquisitionSettings {
    
    public String pluginVersion;
 
-   // true if static sheet enabled from Settings panel
    public boolean isStaticSheet;
 }
