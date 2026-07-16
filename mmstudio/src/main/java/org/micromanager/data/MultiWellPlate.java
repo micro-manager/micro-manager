@@ -24,6 +24,119 @@ public interface MultiWellPlate {
       NUMBER
    }
 
+   /**
+    * Formats a 0-based (row, column) pair as a well label, e.g. (1, 5) -&gt; "B6"
+    * when rows are named with letters and columns with numbers.
+    *
+    * <p>LETTER naming uses a bijective base-26 sequence: A-Z, then AA, AB, ...
+    * NUMBER naming is simply the 1-based index.
+    *
+    * @param row 0-based row index
+    * @param col 0-based column index
+    * @param rowConvention naming convention for the row part
+    * @param colConvention naming convention for the column part
+    * @return the well label
+    * @throws IllegalArgumentException if row or col is negative
+    */
+   static String wellLabel(int row, int col, WellNamingConvention rowConvention,
+         WellNamingConvention colConvention) {
+      if (row < 0 || col < 0) {
+         throw new IllegalArgumentException(
+               "Negative well index: row=" + row + " col=" + col);
+      }
+      return indexToLabel(row, rowConvention) + indexToLabel(col, colConvention);
+   }
+
+   /**
+    * Parses a well label such as "B6" into a 0-based (row, column) pair.
+    *
+    * <p>The label is split according to the given naming conventions: a LETTER
+    * part matches a run of letters, a NUMBER part a run of digits. This is the
+    * inverse of {@link #wellLabel}.
+    *
+    * @param label the well label, e.g. "B6"
+    * @param rowConvention naming convention for the row part
+    * @param colConvention naming convention for the column part
+    * @return a two-element array, {row, col}, both 0-based
+    * @throws IllegalArgumentException if the label does not match the conventions
+    */
+   static int[] parseWellLabel(String label, WellNamingConvention rowConvention,
+         WellNamingConvention colConvention) {
+      if (label == null || label.isEmpty()) {
+         throw new IllegalArgumentException("Empty well label");
+      }
+      // The row part is the leading run of characters valid for its convention;
+      // the column part is whatever remains.
+      int split = 0;
+      while (split < label.length() && isValidFor(label.charAt(split), rowConvention)) {
+         split++;
+      }
+      String rowPart = label.substring(0, split);
+      String colPart = label.substring(split);
+      if (rowPart.isEmpty() || colPart.isEmpty()) {
+         throw new IllegalArgumentException("Malformed well label: " + label);
+      }
+      for (int i = 0; i < colPart.length(); i++) {
+         if (!isValidFor(colPart.charAt(i), colConvention)) {
+            throw new IllegalArgumentException("Malformed well label: " + label);
+         }
+      }
+      return new int[] {labelToIndex(rowPart, rowConvention),
+            labelToIndex(colPart, colConvention)};
+   }
+
+   /**
+    * Returns true if c is a valid character for the given naming convention.
+    */
+   static boolean isValidFor(char c, WellNamingConvention convention) {
+      return convention == WellNamingConvention.LETTER
+            ? Character.isLetter(c) : Character.isDigit(c);
+   }
+
+   /**
+    * Converts a 0-based index to its label under the given convention.
+    */
+   static String indexToLabel(int index, WellNamingConvention convention) {
+      if (convention == WellNamingConvention.NUMBER) {
+         return Integer.toString(index + 1);
+      }
+      // Bijective base-26: least significant letter first, then reverse.
+      StringBuilder sb = new StringBuilder();
+      int n = index + 1;
+      while (n > 0) {
+         sb.append((char) ('A' + (n - 1) % 26));
+         n = (n - 1) / 26;
+      }
+      return sb.reverse().toString();
+   }
+
+   /**
+    * Converts a label part to its 0-based index under the given convention.
+    */
+   static int labelToIndex(String part, WellNamingConvention convention) {
+      if (convention == WellNamingConvention.NUMBER) {
+         try {
+            int n = Integer.parseInt(part);
+            if (n < 1) {
+               throw new IllegalArgumentException("Well index below 1: " + part);
+            }
+            return n - 1;
+         } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Malformed numeric well part: " + part);
+         }
+      }
+      int n = 0;
+      String upper = part.toUpperCase();
+      for (int i = 0; i < upper.length(); i++) {
+         char c = upper.charAt(i);
+         if (c < 'A' || c > 'Z') {
+            throw new IllegalArgumentException("Malformed letter well part: " + part);
+         }
+         n = n * 26 + (c - 'A' + 1);
+      }
+      return n - 1;
+   }
+
    interface FromPropertyMapBuilder {
       MultiWellPlate build(PropertyMap map);
    }
