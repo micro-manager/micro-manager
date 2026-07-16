@@ -861,21 +861,6 @@ public enum PropertyKey {
       }
    },
 
-   MULTI_STAGE_POSITION__PROPERTY_WELL("Well", MultiStagePosition.class) {
-      @Override
-      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
-         dest.putString(key(), je.getAsString());
-      }
-
-      @Override
-      protected JsonElement convertToGson(PropertyMap pMap) {
-         if (pMap.containsKey(key())) {
-            return new JsonPrimitive(pMap.getString(key(), ""));
-         }
-         return null;
-      }
-   },
-
    /** X offset of this site relative to the well centre, in microns (set by HCS plugin). */
    MULTI_STAGE_POSITION__WELL_SITE_OFFSET_X("WellSiteOffsetXUm", MultiStagePosition.class) {
       @Override

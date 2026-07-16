@@ -35,7 +35,6 @@ import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__G
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__GRID_ROW;
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__LABEL;
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__PROPERTIES;
-import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__PROPERTY_WELL;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_ASPECT;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_AFFINE;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_UM;
@@ -203,9 +202,6 @@ public abstract class NonPropertyMapJSONFormats {
                ELAPSED_TIME_MS,
                IMAGE_NUMBER,
                RECEIVED_TIME,
-               MULTI_STAGE_POSITION__GRID_COLUMN,
-               MULTI_STAGE_POSITION__GRID_ROW,
-               MULTI_STAGE_POSITION__PROPERTY_WELL,
                PIXEL_SIZE_UM,
                PIXEL_SIZE_AFFINE,
                PIXEL_ASPECT,
@@ -234,9 +230,6 @@ public abstract class NonPropertyMapJSONFormats {
                ELAPSED_TIME_MS,
                IMAGE_NUMBER,
                RECEIVED_TIME,
-               MULTI_STAGE_POSITION__GRID_COLUMN,
-               MULTI_STAGE_POSITION__GRID_ROW,
-               MULTI_STAGE_POSITION__PROPERTY_WELL,
                PIXEL_SIZE_UM,
                PIXEL_SIZE_AFFINE,
                PIXEL_ASPECT,

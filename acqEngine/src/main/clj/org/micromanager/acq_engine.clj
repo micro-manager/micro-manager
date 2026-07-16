@@ -126,12 +126,6 @@
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
        "FrameIndex" (:frame-index event)
-       "GridCol" (when-lets [pos (:position event)
-                                  msp (get-msp (state :position-list) pos)]
-                                 (.getGridColumn msp))
-       "GridRow" (when-lets [pos (:position event)
-                                  msp (get-msp (state :position-list) pos)]
-                                 (.getGridRow msp))
        "Height" (state :init-height)
        "NextFrame" (:next-frame-index event)
        "PixelSizeUm" (state :pixel-size-um)
@@ -149,9 +143,6 @@
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
        "WaitInterval" (:wait-time-ms event)
-       "Well" (when-lets [pos (:position event)
-                    msp (get-msp (state :position-list) pos)]
-                    (if (.hasProperty msp "Well") (.getProperty msp "Well") ""))
        "Width"  (state :init-width)
        "XPositionUm" x
        "YPositionUm" y

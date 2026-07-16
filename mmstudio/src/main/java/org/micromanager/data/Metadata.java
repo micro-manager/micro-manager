@@ -60,10 +60,6 @@ public interface Metadata {
       @Override
       Builder exposureMs(Double exposureMs);
 
-      Builder gridRow(Integer gridRow);
-
-      Builder gridColumn(Integer gridColumn);
-
       Builder generateUUID();
 
       @Override
@@ -126,8 +122,6 @@ public interface Metadata {
 
       @Override
       Builder uuid(UUID uuid);
-
-      Builder well(String wellName);
 
       @Override
       Builder xPositionUm(Double xPositionUm);
@@ -401,33 +395,6 @@ public interface Metadata {
    String getPositionName(String defaultPosName);
 
    boolean hasPositionName();
-
-   /**
-    * Name of the Well in which the image was taken.  These are expected to take the form of
-    * letters followed by numbers, e.g. "A1".
-    *
-    * @return Name of the well in which the image was taken
-    */
-   String getWell();
-
-
-   /**
-    * Row number of a grid of positions in which the image was taken.
-    * This is not related to the row in a well plate, as a grid can be
-    * placed in a well or anywhere else.
-    *
-    * @return Row number of the grid in which the image was taken
-    */
-   Integer getGridRow();
-
-   /**
-    * Column number of a grid of positions in which the image was taken.
-    * This is not related to the column in a well plate, as a grid can be
-    * placed in a well or anywhere else.
-    *
-    * @return Column number of the grid in which the image was taken
-    */
-   Integer getGridColumn();
 
    /**
     * The time at which the Java layer of Micro-Manager receives the image from
