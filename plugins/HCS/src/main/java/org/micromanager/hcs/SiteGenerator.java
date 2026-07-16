@@ -637,8 +637,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       mwpb.plateStatus(plateStatus_);
       mwpb.plateRowNamingConvention(MultiWellPlate.WellNamingConvention.LETTER);
       mwpb.plateColumnNamingConvention(MultiWellPlate.WellNamingConvention.NUMBER);
-      mwpb.plateWellOriginX(0.0);
-      mwpb.plateWellOriginY(0.0);
+      mwpb.plateWellOriginXUm(0.0);
+      mwpb.plateWellOriginYUm(0.0);
       platePl.setPlate(mwpb.build());
 
       for (WellPositionList wpl1 : wpl) {

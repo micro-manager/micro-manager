@@ -136,12 +136,12 @@ public final class OMEMetadata {
             ? NamingConvention.LETTER : NamingConvention.NUMBER;
       metadata_.setPlateRowNamingConvention(rowConvention, plateIdx);
       metadata_.setPlateColumnNamingConvention(colConvention, plateIdx);
-      if (plate.getPlateWellOriginX() != null) {
-         metadata_.setPlateWellOriginX(new Length(plate.getPlateWellOriginX(), UNITS.MICROMETER),
+      if (plate.getPlateWellOriginXUm() != null) {
+         metadata_.setPlateWellOriginX(new Length(plate.getPlateWellOriginXUm(), UNITS.MICROMETER),
                   plateIdx);
       }
-      if (plate.getPlateWellOriginY() != null) {
-         metadata_.setPlateWellOriginY(new Length(plate.getPlateWellOriginY(), UNITS.MICROMETER),
+      if (plate.getPlateWellOriginYUm() != null) {
+         metadata_.setPlateWellOriginY(new Length(plate.getPlateWellOriginYUm(), UNITS.MICROMETER),
                   plateIdx);
       }
 

@@ -48,9 +48,9 @@ public interface MultiWellPlate {
 
       Builder plateColumnNamingConvention(WellNamingConvention plateColumnNamingConvention);
 
-      Builder plateWellOriginX(double plateWellOriginX);
+      Builder plateWellOriginXUm(double plateWellOriginXUm);
 
-      Builder plateWellOriginY(double plateWellOriginY);
+      Builder plateWellOriginYUm(double plateWellOriginYUm);
 
       Builder plateStatus(String plateStatus);
 
@@ -152,7 +152,7 @@ public interface MultiWellPlate {
     *
     * @return the origin for the well sample positions in the well
     */
-   Double getPlateWellOriginX();
+   Double getPlateWellOriginXUm();
 
    /**
     * This defines the Y position to use for the origin of the
@@ -165,7 +165,7 @@ public interface MultiWellPlate {
     *
     * @return the origin for the well sample positions in the well
     */
-   Double getPlateWellOriginY();
+   Double getPlateWellOriginYUm();
 
    PropertyMap toPropertyMap();
 

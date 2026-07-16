@@ -140,13 +140,13 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
       }
 
       @Override
-      public MultiWellPlate.Builder plateWellOriginX(double plateWellOriginX) {
+      public MultiWellPlate.Builder plateWellOriginXUm(double plateWellOriginX) {
          plateWellOriginX_ = plateWellOriginX;
          return this;
       }
 
       @Override
-      public MultiWellPlate.Builder plateWellOriginY(double plateWellOriginY) {
+      public MultiWellPlate.Builder plateWellOriginYUm(double plateWellOriginY) {
          plateWellOriginY_ = plateWellOriginY;
          return this;
       }
@@ -291,7 +291,7 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
     * @return the origin for the well sample positions in the well
     */
    @Override
-   public Double getPlateWellOriginX() {
+   public Double getPlateWellOriginXUm() {
       return plateWellOriginX_;
    }
 
@@ -307,7 +307,7 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
     * @return the origin for the well sample positions in the well
     */
    @Override
-   public Double getPlateWellOriginY() {
+   public Double getPlateWellOriginYUm() {
       return plateWellOriginY_;
    }
 

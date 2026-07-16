@@ -35,8 +35,8 @@ public class MultiWellPlateTest {
             .plateColumns(plateColumns)
             .plateRowNamingConvention(plateRowNamingConvention)
             .plateColumnNamingConvention(plateColumnNamingConvention)
-            .plateWellOriginX(plateWellOriginX)
-            .plateWellOriginY(plateWellOriginY)
+            .plateWellOriginXUm(plateWellOriginX)
+            .plateWellOriginYUm(plateWellOriginY)
             .plateStatus(plateStatus)
             .build();
 
@@ -53,8 +53,8 @@ public class MultiWellPlateTest {
       Assert.assertEquals(plateRowNamingConvention, plateFromMap.getPlateRowNamingConvention());
       Assert.assertEquals(plateColumnNamingConvention,
             plateFromMap.getPlateColumnNamingConvention());
-      Assert.assertEquals(plateWellOriginX, plateFromMap.getPlateWellOriginX(), 0.0001);
-      Assert.assertEquals(plateWellOriginY, plateFromMap.getPlateWellOriginY(), 0.0001);
+      Assert.assertEquals(plateWellOriginX, plateFromMap.getPlateWellOriginXUm(), 0.0001);
+      Assert.assertEquals(plateWellOriginY, plateFromMap.getPlateWellOriginYUm(), 0.0001);
       Assert.assertEquals(plateStatus, plateFromMap.getPlateStatus());
    }
 }
