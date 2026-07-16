@@ -48,6 +48,7 @@ import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.autofocus.tca_af.ComputeBestFocus300nm;
 import org.micromanager.autofocus.tca_af.ComputeBestFocus460nm;
+//import org.micromanager.autofocus.tca_af.ComputeBestFocus600nm;
 import org.micromanager.autofocus.tca_af.ComputeBestFocusFAD;
 import org.micromanager.autofocus.tca_af.ComputeBestFocusNADH;
 import org.micromanager.internal.utils.AutofocusBase;
@@ -71,34 +72,22 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    
    private static final String KEY_CHANNEL = "Channel";
    private static final String NOCHANNEL = "";
-   // private static final String KEY_REL_Z_MIN300NM = "Relative Z min 300nm";
-   // private static final String KEY_REL_Z_MAX300NM = "Relative Z max 300nm";
-   // private static final String KEY_REL_Z_MIN460NM = "Relative Z min 460nm";
-   // private static final String KEY_REL_Z_MAX460NM = "Relative Z max 460nm";
-   // private static final String KEY_REL_Z_MINNADH = "Relative Z min NADH";
-   // private static final String KEY_REL_Z_MAXNADH = "Relative Z max NADH";
-   // private static final String KEY_REL_Z_MINFAD = "Relative Z min FAD";
-   // private static final String KEY_REL_Z_MAXFAD = "Relative Z max FAD";
 
    private static final String KEY_DELTA_Z = "Delta Z";
    private static final String KEY_DRYRUN = "Dry run";
    private static final String[] SHOWVALUES = {"Yes", "No"};
-   // private static final String EXPOSURE460 = "Exposure 460nm";
-   // private static final String EXPOSURE300 = "Exposure 300nm";
-   // private static final String EXPOSURENADH = "Exposure NADH";
-   // private static final String EXPOSUREFAD = "Exposure FAD";
 
-   private static final String[] CHANNEL_NAMES = {"300", "460", "NADH", "FAD"};
+   private static final String[] CHANNEL_NAMES = {"300nm", "460nm", "600nm", "NADH", "FAD"};
 
 
    private static final String SAVE_CSV = "Save CSV";
 
    private static final String KEY_FOCUS_ANALYZER = "Focus Analyzer";
-   private static final String[] FOCUS_ANALYZER_STRINGS = {"460", "300", "NADH", "FAD"};
+   private static final String[] FOCUS_ANALYZER_STRINGS = {"460nm", "300nm", "600nm", "NADH", "FAD"};
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    
    private static final String AF_DEVICE_NAME = "TCA AF 2.0";
-
+   
    private Studio app_;
    private CMMCore core_;
    private ImageProcessor ipCurrent_ = null;
@@ -113,24 +102,13 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
    public String channel_ = "";
    private double rel_z_min_ = -10.0;
    private double rel_z_max_ = 10.0;
-   // private double rel_z_min_300nm = -80.0;
-   // private double rel_z_max_300nm = 40.0;
-   // private double rel_z_min_460nm = -10.0;
-   // private double rel_z_max_460nm = 10.0;
-   // private double rel_z_min_NADH = -10.0;
-   // private double rel_z_max_NADH = 10.0;
-   // private double rel_z_min_FAD = -10.0;
-   // private double rel_z_max_FAD = 10.0;
 
    private boolean dryrun_ = false;
    private boolean verbose_ = true; // displaying debug info or not
    private String channelGroup_;
    private double curDist_;
-   private String focusAnalyzer_ = "460"; // default to 460 analyzer
-   // private double exposure460_ = 100; 
-   // private double exposure300_ = 100;
-   // private double exposureNADH_ = 100;
-   // private double exposureFAD_ = 100;
+   private String focusAnalyzer_ = "460nm"; // default to 460nm analyzer
+
    private boolean saveCSV_ = true; // default to saving CSV files for debugging
    private double exposure_ = 100;
    
@@ -155,8 +133,9 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
     *
     */
    public TCAAutofocus() {
-      channelSettings_.put("300", new ChannelSettings(-80.0, 40.0, 100));
-      channelSettings_.put("460", new ChannelSettings(-10.0, 10.0, 100));
+      channelSettings_.put("300nm", new ChannelSettings(-80.0, 40.0, 100));
+      channelSettings_.put("460nm", new ChannelSettings(-10.0, 10.0, 100));
+      channelSettings_.put("600nm", new ChannelSettings(5.0, 15.0, 100));
       channelSettings_.put("NADH",  new ChannelSettings(-10.0, 10.0, 100));
       channelSettings_.put("FAD",   new ChannelSettings(-10.0, 10.0, 100));
 
@@ -374,15 +353,21 @@ public class TCAAutofocus extends AutofocusBase implements AutofocusPlugin, SciJ
 
          FocusResults results = null;
          switch (focusAnalyzer_) {
-            case "460":
+            case "460nm":
                IJ.log("Using 460nm focus analyzer");
                results = wrapResults(ComputeBestFocus460nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
                core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
-            case "300":
+            case "300nm":
                z_ini = -61.0;
                IJ.log("Using 300nm focus analyzer");
                results = wrapResults(ComputeBestFocus300nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
+               core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
+               break;
+            case "600nm":
+               z_ini = 5.0;
+               IJ.log("Using 600nm focus analyzer");
+               //results = wrapResults(ComputeBestFocus600nm.computeBestFocus(imageProcessors, z_ini, deltaz_samp, zSampled));
                core_.logMessage("Moving to best Z-focus position: " + results.z_best_focus);
                break;
             case "NADH":
