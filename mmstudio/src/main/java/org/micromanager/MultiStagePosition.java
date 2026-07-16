@@ -104,6 +104,8 @@ public final class MultiStagePosition {
       mps.label_ = aMps.label_;
       mps.defaultXYStage_ = aMps.defaultXYStage_;
       mps.defaultZStage_ = aMps.defaultZStage_;
+      mps.gridCol_ = aMps.gridCol_;
+      mps.gridRow_ = aMps.gridRow_;
       mps.properties_.putAll(aMps.properties_);
       for (StagePosition sp : aMps.stagePosList_) {
          mps.add(StagePosition.newInstance(sp));
@@ -481,10 +483,11 @@ public final class MultiStagePosition {
             PropertyKey.MULTI_STAGE_POSITION__GRID_ROW.key(), 0);
       ret.gridCol_ = pmap.getInteger(
             PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0);
-      for (String key : pmap.getPropertyMap(
+      PropertyMap properties = pmap.getPropertyMap(
             PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key(),
-            PropertyMaps.emptyPropertyMap()).keySet()) {
-         ret.properties_.put(key, pmap.getString(key, ""));
+            PropertyMaps.emptyPropertyMap());
+      for (String key : properties.keySet()) {
+         ret.properties_.put(key, properties.getString(key, ""));
       }
       for (PropertyMap spmap : pmap.getPropertyMapList(
             PropertyKey.MULTI_STAGE_POSITION__DEVICE_POSITIONS.key())) {

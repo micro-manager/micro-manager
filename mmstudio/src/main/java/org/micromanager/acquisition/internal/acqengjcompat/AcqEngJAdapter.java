@@ -251,7 +251,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          SummaryMetadata.Builder smb = summaryMetadata.copyBuilder().sequenceSettings(
                   acquisitionSettings);
          if (posListToUse != null) {
-            smb.stagePositions(posListToUse.getPositions());
+            smb.stagePositions(posListToUse.getPositions())
+                  .multiWellPlate(posListToUse.getPlate());
          }
          summaryMetadata = smb.build();
          MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
