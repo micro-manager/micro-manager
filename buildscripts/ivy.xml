@@ -55,18 +55,6 @@
       <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.19.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-      <!-- OME-Zarr storage backend for the Explorer plugin (bridged via
-           org.micromanager.tileddataprovider.OMEZarrMultiresStorage). This is a self-contained
-           ("all") jar bundling its own dependencies (zarr-java, cdm-core, jackson, blosc, zstd),
-           vendored at 3rdpartypublic/classext/MM-OME-Zarr-Storage.jar and resolved by the
-           thirdpartypublic filesystem resolver. -->
-      <dependency org="org.micromanager" name="MM-OME-Zarr-Storage" rev="0.1.0"/>
-      <!-- OME-BigTIFF storage backend for the Explorer plugin (bridged via
-           org.micromanager.tileddataprovider.OMEBigTiffMultiresStorage). This is a self-contained
-           ("all") jar bundling its own dependencies (jackson), vendored at
-           3rdpartypublic/classext/MM-OME-BigTiff-Storage.jar and resolved by the thirdpartypublic
-           filesystem resolver. -->
-      <dependency org="org.micromanager" name="MM-OME-BigTiff-Storage" rev="0.1.0"/>
       <dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.46.19">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
@@ -162,9 +150,30 @@
       <!-- Run-time-only dependencies -->
       <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 
-      <!-- MM-OME-BigTiff-Storage and MM-OME-Zarr-Storage -->
+      <!-- MM-OME-BigTiff-Storage and MM-OME-Zarr-Storage.
+           These are now thin jars (no bundled dependencies). Until they are published to
+           Maven Central they are vendored as bare artifacts in 3rdpartypublic/classext
+           (MM-OME-BigTiff-Storage.jar, MM-OME-Zarr-Storage.jar), resolved by the
+           thirdpartypublic filesystem resolver. That resolver provides no POM, so their
+           runtime dependencies are declared explicitly below:
+             - BigTiff needs jackson-databind (already declared).
+             - Zarr needs dev.zarr:zarr-java, whose Maven Central POM transitively pulls
+               cdm-core (from the Unidata resolver), jackson, blosc-java, zstd-jni, aws, etc.
+           Once both libraries are on Maven Central, drop the classext jars and these
+           explicit transitive declarations become redundant (they resolve via each
+           library's own POM). -->
       <dependency conf="compile" org="org.micro-manager" name="MM-OME-BigTiff-Storage" rev="0.1.0"/>
       <dependency org="org.micro-manager" name="MM-OME-Zarr-Storage" rev="0.1.0"/>
+      <!-- zarr-java is the storage engine behind MM-OME-Zarr-Storage. Its transitive tree
+           (via cdm-core -> httpservices) brings guava 30.1 and protobuf 3, which collide with
+           the older versions Micro-Manager pins (guava 17.0, protobuf 2.6.1) and whose newer
+           APIs MM's own code is NOT built against (e.g. CharMatcher.JAVA_LETTER_OR_DIGIT,
+           removed after guava 20). The cdm-core classes the MM Zarr backend actually touches
+           (ucar.ma2.Array / DataType) do not reference guava, so pinning MM's versions is safe
+           at runtime. The <override> entries below force those versions regardless of which
+           transitive requests a newer one (a plain <exclude> on zarr-java does not reach the
+           deep cdm-core -> httpservices -> guava edge). -->
+      <dependency org="dev.zarr" name="zarr-java" rev="0.0.4"/>
       <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.17.1"/>
 
 
@@ -185,7 +194,14 @@
            formats-bsd becomes necessary in the future. -->
       <exclude org="ome" module="formats-bsd"/>
 
-
+      <!-- Force Micro-Manager's pinned versions to win over newer ones dragged in
+           transitively by zarr-java/cdm-core (via cdm-core -> httpservices: guava 30.1,
+           protobuf 3). MM's own code is built against these older APIs (e.g.
+           CharMatcher.JAVA_LETTER_OR_DIGIT, removed after guava 20). Overrides beat Ivy's
+           default "latest revision" conflict manager and reach deep transitive edges that a
+           per-dependency <exclude> on zarr-java cannot. -->
+      <override org="com.google.guava" module="guava" rev="17.0"/>
+      <override org="com.google.protobuf" module="protobuf-java" rev="2.6.1"/>
 
    </dependencies>
 </ivy-module>
