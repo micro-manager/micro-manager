@@ -162,6 +162,11 @@
       <!-- Run-time-only dependencies -->
       <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 
+      <!-- MM-OME-BigTiff-Storage and MM-OME-Zarr-Storage -->
+      <dependency conf="compile" org="org.micro-manager" name="MM-OME-BigTiff-Storage" rev="0.1.0"/>
+      <dependency org="org.micro-manager" name="MM-OME-Zarr-Storage" rev="0.1.0"/>
+      <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.17.1"/>
+
 
       <!-- Always exclude these -->
       <exclude org="com.googlecode.efficient-java-matrix-library"/>
@@ -179,6 +184,8 @@
            of our installer significantly). This exclusion can be removed if
            formats-bsd becomes necessary in the future. -->
       <exclude org="ome" module="formats-bsd"/>
+
+
 
    </dependencies>
 </ivy-module>
