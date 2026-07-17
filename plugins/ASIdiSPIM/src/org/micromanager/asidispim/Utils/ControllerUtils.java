@@ -858,9 +858,10 @@ public class ControllerUtils {
                " cannot be zero. Re-do calibration on Setup tab.");
          return false;
       }
-      float sliceOffset = (float)channelOffset + prefs_.getFloat(
-            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-            Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
+      float sliceOffset = (float)channelOffset
+              + prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(),
+            Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0)
+              + props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_LAG_DISTANCE);
       float sliceAmplitude = piezoAmplitude / sliceRate;
       float sliceCenter =  (piezoCenter - sliceOffset) / sliceRate;
 

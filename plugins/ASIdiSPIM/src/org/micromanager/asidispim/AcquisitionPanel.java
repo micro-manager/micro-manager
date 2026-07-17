@@ -1219,7 +1219,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.useAdvancedSliceTiming = advancedSliceTimingCB_.isSelected();
       acqSettings.saveDirectoryRoot = rootField_.getText();
       acqSettings.saveNamePrefix = prefixField_.getText();
-      acqSettings.pluginVersion = ASIdiSPIM.menuName;
+      acqSettings.pluginVersion = ASIdiSPIM.menuName + " " + ASIdiSPIM.versionString;
       acqSettings.isStaticSheet = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
               Properties.Keys.PREFS_STATIC_SHEET_GENERATOR, ASIdiSPIM.SCOPE);
       // missing from this init:
