@@ -263,17 +263,17 @@ public class SettingsPanel extends ListeningJPanel {
       // end acquisition panel
       
       
-      // start test acquisition panel
+      // start misc settings acquisition panel
       
-      final JPanel testAcqPanel = new JPanel(new MigLayout(
+      final JPanel miscSettingsPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
             "[]5[]"));
-      testAcqPanel.setBorder(PanelUtils.makeTitledBorder("Test Acquisition"));
+      miscSettingsPanel.setBorder(PanelUtils.makeTitledBorder("Miscellaneous Settings"));
       
       final JCheckBox testAcqSave = pu.makeCheckBox("Save test acquisition as raw data",
             Properties.Keys.PLUGIN_TESTACQ_SAVE, panelName_, false);
-      testAcqPanel.add(testAcqSave, "span 2, wrap");
+      miscSettingsPanel.add(testAcqSave, "span 2, wrap, left");
       
       DefaultFormatter formatter = new DefaultFormatter();
       rawPath_ = new JFormattedTextField(formatter);
@@ -288,7 +288,7 @@ public class SettingsPanel extends ListeningJPanel {
          }
       });
       rawPath_.setColumns(20);
-      testAcqPanel.add(rawPath_);
+      miscSettingsPanel.add(rawPath_);
 
       JButton browseFileButton = new JButton();
       browseFileButton.addActionListener(new ActionListener() {
@@ -309,9 +309,17 @@ public class SettingsPanel extends ListeningJPanel {
       });
       browseFileButton.setMargin(new Insets(2, 5, 2, 5));
       browseFileButton.setText("...");
-      testAcqPanel.add(browseFileButton, "wrap");
+      miscSettingsPanel.add(browseFileButton, "wrap");
+
+      final JCheckBox useToolset = pu.makeCheckBox("Load diSPIM toolset on launch",
+              Properties.Keys.PLUGIN_USE_TOOLSET, panelName_, true);
+      useToolset.setToolTipText("places icons in ImageJ toolbar for quick access of commonly-used image manipulation tasks");
+      if (useToolset.isSelected()) {
+         ImageJUtils.loadToolset();
+      }
+      miscSettingsPanel.add(useToolset, "span 2, wrap, left");
       
-      // end test acquisition panel
+      // end misc settings panel
 
       
       // start stage scan panel
@@ -423,31 +431,13 @@ public class SettingsPanel extends ListeningJPanel {
       
       // end Setup Panel settings panel
       
-      
-      // start ImageJ settings panel
-      
-      final JPanel imageJPanel = new JPanel(new MigLayout(
-            "",
-            "[right]16[center]",
-            "[]4[]"));
-      imageJPanel.setBorder(PanelUtils.makeTitledBorder("ImageJ"));
-      
-      final JCheckBox useToolset = pu.makeCheckBox("Load diSPIM toolset on launch",
-            Properties.Keys.PLUGIN_USE_TOOLSET, panelName_, true);
-      useToolset.setToolTipText("places icons in ImageJ toolbar for quick access of commonly-used image manipulation tasks");
-      if (useToolset.isSelected()) {
-         ImageJUtils.loadToolset();
-      }
-      imageJPanel.add(useToolset, "span 2, wrap");
-      
-      // end ImageJ settings panel
-      
+
       
       // construct main panel in 3 columns
       JPanel leftColumnPanel = new JPanel(new MigLayout(
             "flowy",
             "0[]0",
-            "0[]6[]6[]0"));
+            "0[]6[]0"));
       JPanel middleColumnPanel = new JPanel(new MigLayout(
             "flowy",
             "0[]0",
@@ -458,8 +448,7 @@ public class SettingsPanel extends ListeningJPanel {
             "0[]6[]0"));
     
       leftColumnPanel.add(guiPanel, "growx");
-      leftColumnPanel.add(testAcqPanel, "growx");
-      leftColumnPanel.add(imageJPanel, "growx");
+      leftColumnPanel.add(miscSettingsPanel, "growx");
       
       middleColumnPanel.add(scannerPanel, "growx");
       middleColumnPanel.add(stageScanPanel, "growx");
