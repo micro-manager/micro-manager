@@ -860,8 +860,10 @@ public class ControllerUtils {
       }
       float sliceOffset = (float)channelOffset
               + prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(),
-            Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0)
-              + props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_LAG_DISTANCE);
+            Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
+      if (settings.spimMode.equals(AcquisitionModes.Keys.PIEZO_SCAN_ONLY) || settings.spimMode.equals(AcquisitionModes.Keys.PIEZO_SLICE_SCAN)) {
+         sliceOffset -= settings.stepSizeUm * (props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_LAG_PERCENT)/100);
+      }
       float sliceAmplitude = piezoAmplitude / sliceRate;
       float sliceCenter =  (piezoCenter - sliceOffset) / sliceRate;
 

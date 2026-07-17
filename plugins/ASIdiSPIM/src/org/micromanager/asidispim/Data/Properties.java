@@ -296,7 +296,7 @@ public class Properties {
       PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL("AutofocusCorrectMovementChannel"),
       PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_MAXCHANGE("AutofcousCorrectMovementMaxChange"),
       PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_MINCHANGE("AutofcousCorrectMovementMinChange"),
-      PLUGIN_AUTOFOCUS_LAG_DISTANCE("AutofcousLagDistance"),
+      PLUGIN_AUTOFOCUS_LAG_PERCENT("AutofcousLagPercent"),
       PLUGIN_ADVANCED_CAMERA_EXPOSURE("AdvancedCameraExposure"),
       PLUGIN_DESKEW_FACTOR("DeskewFactor"),
       PLUGIN_DESKEW_INVERT("DeskewInvert"),

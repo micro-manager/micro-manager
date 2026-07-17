@@ -285,9 +285,9 @@ public class AutofocusPanel extends ListeningJPanel{
       lagCompensationPanel.add(new JLabel("Correction distance:"));
       final JSpinner lagDistance = pu.makeSpinnerFloat(-100, 100, 1,
               Devices.Keys.PLUGIN,
-              Properties.Keys.PLUGIN_AUTOFOCUS_LAG_DISTANCE, 0);
+              Properties.Keys.PLUGIN_AUTOFOCUS_LAG_PERCENT, 0);
       lagCompensationPanel.add(lagDistance);
-      lagCompensationPanel.add(new JLabel("\u00B5m"), "left, wrap");
+      lagCompensationPanel.add(new JLabel("%"), "left, wrap");
 
       
       
