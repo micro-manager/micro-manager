@@ -35,6 +35,37 @@ public class TileBlender {
    private final int tileWidth_;
    private final int tileHeight_;
 
+   // Per-thread reusable float accumulator scratch buffers. The tiled export composites
+   // thousands of same-sized output tiles across ~N worker threads (see StitchFrame's
+   // ParallelTileWriter); allocating fresh float[] accumulators on every composite call
+   // produced enough short-lived garbage to starve the JVM's GC-locker (a worker's ~16 MB
+   // float[] allocation would fail with OutOfMemoryError while the single NDTiff writer sat
+   // in a JNI critical section holding the GC locker, even with hundreds of GB free). Reusing
+   // one set of buffers per worker collapses that allocation churn. Index 0-3 hold up to four
+   // accumulators (r/g/b/w for RGB; val/w for 16- and 8-bit). Buffers grow on demand and are
+   // cleared before each use, so callers always see zeroed accumulators.
+   private final ThreadLocal<float[][]> scratchAccumulators_ =
+         ThreadLocal.withInitial(() -> new float[4][]);
+
+   /**
+    * Returns a zeroed float accumulator of at least {@code len} elements, reused across
+    * composite calls on the calling thread. {@code slot} (0-3) selects which of the up-to-four
+    * per-thread accumulators to return, so a single composite call can hold several distinct
+    * buffers at once. The returned array's length may exceed {@code len}; callers must only
+    * index {@code [0, len)}.
+    */
+   private float[] acquireAccumulator(int slot, int len) {
+      float[][] pool = scratchAccumulators_.get();
+      float[] buf = pool[slot];
+      if (buf == null || buf.length < len) {
+         buf = new float[len];
+         pool[slot] = buf;
+      } else {
+         java.util.Arrays.fill(buf, 0, len, 0f);
+      }
+      return buf;
+   }
+
    /**
     * @param storage         Source storage with multi-resolution tile data.
     * @param displaySettings Per-channel color/contrast settings from NDViewer.
@@ -147,11 +178,13 @@ public class TileBlender {
       int halfOX = Math.max(1, dsOverlapX / 2);
       int halfOY = Math.max(1, dsOverlapY / 2);
 
-      // Accumulator arrays: weighted colour sums + total weight per pixel
-      float[] rAcc = new float[dsRoiW * dsRoiH];
-      float[] gAcc = new float[dsRoiW * dsRoiH];
-      float[] bAcc = new float[dsRoiW * dsRoiH];
-      float[] wAcc = new float[dsRoiW * dsRoiH];
+      // Accumulator arrays: weighted colour sums + total weight per pixel.
+      // Reused per-thread (see acquireAccumulator) to avoid per-tile allocation churn.
+      final int accLen = dsRoiW * dsRoiH;
+      float[] rAcc = acquireAccumulator(0, accLen);
+      float[] gAcc = acquireAccumulator(1, accLen);
+      float[] bAcc = acquireAccumulator(2, accLen);
+      float[] wAcc = acquireAccumulator(3, accLen);
 
       // Get the set of tiles that actually have data at the current z position
       Set<Point> tilesWithData = getTilesWithData();
@@ -465,8 +498,10 @@ public class TileBlender {
       int halfOX = Math.max(1, dsOverlapX / 2);
       int halfOY = Math.max(1, dsOverlapY / 2);
 
-      float[] valAcc = new float[dsRoiW * dsRoiH];
-      float[] wAcc   = new float[dsRoiW * dsRoiH];
+      // Reused per-thread (see acquireAccumulator) to avoid per-tile allocation churn.
+      final int accLen = dsRoiW * dsRoiH;
+      float[] valAcc = acquireAccumulator(0, accLen);
+      float[] wAcc   = acquireAccumulator(1, accLen);
 
       Set<Point> tilesWithData = getTilesWithData();
       java.util.List<int[]> tileList = new java.util.ArrayList<>();
@@ -613,8 +648,10 @@ public class TileBlender {
       int halfOX = Math.max(1, dsOverlapX / 2);
       int halfOY = Math.max(1, dsOverlapY / 2);
 
-      float[] valAcc = new float[dsRoiW * dsRoiH];
-      float[] wAcc   = new float[dsRoiW * dsRoiH];
+      // Reused per-thread (see acquireAccumulator) to avoid per-tile allocation churn.
+      final int accLen = dsRoiW * dsRoiH;
+      float[] valAcc = acquireAccumulator(0, accLen);
+      float[] wAcc   = acquireAccumulator(1, accLen);
 
       Set<Point> tilesWithData = getTilesWithData();
       java.util.List<int[]> tileList = new java.util.ArrayList<>();

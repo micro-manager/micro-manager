@@ -574,41 +574,80 @@ public class StitchFrame extends JDialog {
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
          } catch (OutOfMemoryError oom) {
             // OutOfMemoryError is an Error, not an Exception, so it would otherwise
-            // escape the catch below and kill the export thread silently. Report it with
-            // actionable guidance: the stitch holds the output canvas plus alignment data
-            // in the heap, so a large grid needs a larger -Xmx (Edit > Options > Memory).
+            // escape the catch below and kill the export thread silently.
             // logError takes an Exception; OutOfMemoryError is an Error, so wrap it.
             studio_.logs().logError(new RuntimeException(oom),
                   "Stitch export ran out of heap memory");
-            long maxMb = Runtime.getRuntime().maxMemory() / (1024 * 1024);
-            final String oomMsg =
-                  "Out of memory while stitching.\n\n"
-                  + "The JVM heap (currently about " + maxMb + " MB) was exhausted. "
-                  + "Increase it via ImageJ: Edit > Options > Memory & Threads, set a "
-                  + "larger value (e.g. 50000 MB), then restart Micro-Manager. Reducing "
-                  + "the output region or disabling alignment also lowers memory use.";
-            SwingUtilities.invokeLater(() -> {
-               progressDialog.dispose();
-               JOptionPane.showMessageDialog(sourceWindow, oomMsg,
-                     "Export Error - Out of Memory", JOptionPane.ERROR_MESSAGE);
-            });
+            showOutOfMemoryDialog(sourceWindow, progressDialog);
          } catch (Exception ex) {
-            studio_.logs().logError(ex, "Stitch export failed");
-            String msg = ex.getMessage();
-            if (msg == null) {
-               msg = ex.getClass().getSimpleName();
+            // The tiled write path composites on worker threads (see ParallelTileWriter),
+            // which wrap any worker OutOfMemoryError in a plain Exception and rethrow. Detect
+            // that so the memory-specific guidance is shown instead of a generic failure.
+            if (hasOutOfMemoryCause(ex)) {
+               studio_.logs().logError(ex, "Stitch export ran out of heap memory");
+               showOutOfMemoryDialog(sourceWindow, progressDialog);
+            } else {
+               studio_.logs().logError(ex, "Stitch export failed");
+               String msg = ex.getMessage();
+               if (msg == null) {
+                  msg = ex.getClass().getSimpleName();
+               }
+               final String displayMsg = msg;
+               SwingUtilities.invokeLater(() -> {
+                  progressDialog.dispose();
+                  JOptionPane.showMessageDialog(sourceWindow,
+                        "Export failed: " + displayMsg,
+                        "Export Error", JOptionPane.ERROR_MESSAGE);
+               });
             }
-            final String displayMsg = msg;
-            SwingUtilities.invokeLater(() -> {
-               progressDialog.dispose();
-               JOptionPane.showMessageDialog(sourceWindow,
-                     "Export failed: " + displayMsg,
-                     "Export Error", JOptionPane.ERROR_MESSAGE);
-            });
          } finally {
             adapter.close();
          }
       }, "ExportMMTiles-Export").start();
+   }
+
+   /**
+    * True if {@code t} or any throwable in its cause chain is an {@link OutOfMemoryError}.
+    * Worker-thread OOMs from the tiled write path arrive wrapped in a plain Exception (see
+    * ParallelTileWriter), so a direct {@code instanceof} check on the caught exception misses
+    * them.
+    */
+   private static boolean hasOutOfMemoryCause(Throwable t) {
+      for (Throwable cur = t; cur != null; cur = cur.getCause()) {
+         if (cur instanceof OutOfMemoryError) {
+            return true;
+         }
+         if (cur.getCause() == cur) {
+            break; // defend against a self-referential cause chain
+         }
+      }
+      return false;
+   }
+
+   /**
+    * Show the memory-specific export-error dialog and dispose the progress dialog (both on the
+    * EDT). Note the tiled export composites one output tile at a time across a bounded number
+    * of worker threads, so an OOM here is usually GC-locker allocation starvation under heavy
+    * parallel allocation rather than true heap exhaustion -- reducing composite threads often
+    * helps more than raising -Xmx.
+    */
+   private void showOutOfMemoryDialog(java.awt.Component parent, java.awt.Window progressDialog) {
+      long maxMb = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+      final String oomMsg =
+            "Out of memory while stitching.\n\n"
+            + "The JVM heap is currently about " + maxMb + " MB. This can happen even with "
+            + "plenty of free memory when many parallel compositing threads allocate faster "
+            + "than the garbage collector can keep up.\n\n"
+            + "Things that help:\n"
+            + " - Reduce the number of compositing threads.\n"
+            + " - Increase the heap via ImageJ: Edit > Options > Memory & Threads, set a "
+            + "larger value (e.g. 50000 MB), then restart Micro-Manager.\n"
+            + " - Reduce the output region or disable alignment.";
+      SwingUtilities.invokeLater(() -> {
+         progressDialog.dispose();
+         JOptionPane.showMessageDialog(parent, oomMsg,
+               "Export Error - Out of Memory", JOptionPane.ERROR_MESSAGE);
+      });
    }
 
    /**
@@ -1348,6 +1387,15 @@ public class StitchFrame extends JDialog {
    private static final int STITCH_MAX_COMPOSITE_THREADS = 0;
 
    /**
+    * Upper bound on the auto-selected number of composite worker threads (used when
+    * {@link #STITCH_MAX_COMPOSITE_THREADS} is 0). Caps parallel-compositing allocation
+    * pressure on many-core machines so a burst of per-tile float-accumulator allocations
+    * cannot starve the JVM's GC locker while the single NDTiff writer holds it. The writer
+    * is single-threaded, so more producers than this yield little additional throughput.
+    */
+   private static final int STITCH_AUTO_MAX_COMPOSITE_THREADS = 8;
+
+   /**
     * Minimum pyramid depth for NDTiff output. The actual depth is chosen per canvas by
     * {@link #pyramidDepthForCanvas(int, int)} so the coarsest level fits in a window.
     */
@@ -1493,9 +1541,19 @@ public class StitchFrame extends JDialog {
       // StitchDataProviderAdapter serializes source reads (MultipageTiffReader is not
       // concurrent-read-safe). If a new source path bypasses that adapter, revisit this.
       // STITCH_MAX_COMPOSITE_THREADS=1 forces fully serial compositing as an escape hatch.
+      //
+      // The auto default is capped (STITCH_AUTO_MAX_COMPOSITE_THREADS): on a many-core box
+      // availableProcessors()-1 is ~40, and every one of those workers churns per-tile float
+      // accumulators (~16 MB each at the 2048 output-tile size) while the single NDTiff writer
+      // sits in a JNI critical section holding HotSpot's GC locker. Too many allocating workers
+      // starved the GC locker and threw OutOfMemoryError even with hundreds of GB free. The
+      // single-threaded writer is the real serialization point, so returns diminish quickly
+      // past a handful of producers; capping the default keeps allocation pressure bounded
+      // without measurably slowing the export.
       final int numWorkers = STITCH_MAX_COMPOSITE_THREADS > 0
             ? STITCH_MAX_COMPOSITE_THREADS
-            : Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+            : Math.max(1, Math.min(STITCH_AUTO_MAX_COMPOSITE_THREADS,
+                  Runtime.getRuntime().availableProcessors() - 1));
       final TileBlender finalCompositor = compositor;
       final Map<Point, Point2D.Float> finalTileOrigins = tileOrigins;
       final double finalPixelSizeUm = pixelSizeUm;
