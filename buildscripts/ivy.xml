@@ -173,7 +173,14 @@
            at runtime. The <override> entries below force those versions regardless of which
            transitive requests a newer one (a plain <exclude> on zarr-java does not reach the
            deep cdm-core -> httpservices -> guava edge). -->
-      <dependency org="dev.zarr" name="zarr-java" rev="0.0.4"/>
+      <!-- Exclude the AWS SDK: zarr-java pulls it in for its optional S3Store backend, which
+           MM-OME-Zarr-Storage never uses (it uses FilesystemStore only). S3Store.class remains
+           in the zarr-java jar but is never loaded, so its unresolved AWS references are inert.
+           Drops aws-java-sdk-{s3,kms,core}, jmespath-java, and ion-java. -->
+      <dependency org="dev.zarr" name="zarr-java" rev="0.0.4">
+         <exclude org="com.amazonaws"/>
+         <exclude org="software.amazon.ion" name="ion-java"/>
+      </dependency>
       <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.17.1"/>
 
 
