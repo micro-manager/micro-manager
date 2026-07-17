@@ -1387,15 +1387,6 @@ public class StitchFrame extends JDialog {
    private static final int STITCH_MAX_COMPOSITE_THREADS = 0;
 
    /**
-    * Upper bound on the auto-selected number of composite worker threads (used when
-    * {@link #STITCH_MAX_COMPOSITE_THREADS} is 0). Caps parallel-compositing allocation
-    * pressure on many-core machines so a burst of per-tile float-accumulator allocations
-    * cannot starve the JVM's GC locker while the single NDTiff writer holds it. The writer
-    * is single-threaded, so more producers than this yield little additional throughput.
-    */
-   private static final int STITCH_AUTO_MAX_COMPOSITE_THREADS = 8;
-
-   /**
     * Minimum pyramid depth for NDTiff output. The actual depth is chosen per canvas by
     * {@link #pyramidDepthForCanvas(int, int)} so the coarsest level fits in a window.
     */
@@ -1542,18 +1533,17 @@ public class StitchFrame extends JDialog {
       // concurrent-read-safe). If a new source path bypasses that adapter, revisit this.
       // STITCH_MAX_COMPOSITE_THREADS=1 forces fully serial compositing as an escape hatch.
       //
-      // The auto default is capped (STITCH_AUTO_MAX_COMPOSITE_THREADS): on a many-core box
-      // availableProcessors()-1 is ~40, and every one of those workers churns per-tile float
-      // accumulators (~16 MB each at the 2048 output-tile size) while the single NDTiff writer
-      // sits in a JNI critical section holding HotSpot's GC locker. Too many allocating workers
-      // starved the GC locker and threw OutOfMemoryError even with hundreds of GB free. The
-      // single-threaded writer is the real serialization point, so returns diminish quickly
-      // past a handful of producers; capping the default keeps allocation pressure bounded
-      // without measurably slowing the export.
+      // Full parallelism (availableProcessors()-1, ~40 on a many-core box) is intentional:
+      // compositing is the CPU-bound bottleneck, so throttling workers directly slows the
+      // export. Earlier a GCLocker OOM appeared here (workers churning per-tile ~16 MB float
+      // accumulators while the single NDTiff writer held HotSpot's GC locker in a JNI critical
+      // section, starving allocation even with hundreds of GB free). That is now prevented at
+      // the source: TileBlender reuses its accumulators per worker (see acquireAccumulator), so
+      // steady-state allocation is near zero and thread count no longer feeds the starvation.
+      // If an OOM ever recurs, STITCH_MAX_COMPOSITE_THREADS is the manual escape hatch.
       final int numWorkers = STITCH_MAX_COMPOSITE_THREADS > 0
             ? STITCH_MAX_COMPOSITE_THREADS
-            : Math.max(1, Math.min(STITCH_AUTO_MAX_COMPOSITE_THREADS,
-                  Runtime.getRuntime().availableProcessors() - 1));
+            : Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
       final TileBlender finalCompositor = compositor;
       final Map<Point, Point2D.Float> finalTileOrigins = tileOrigins;
       final double finalPixelSizeUm = pixelSizeUm;
