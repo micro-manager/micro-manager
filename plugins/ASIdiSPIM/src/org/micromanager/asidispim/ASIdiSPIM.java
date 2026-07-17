@@ -41,7 +41,7 @@ public class ASIdiSPIM implements MMPlugin {
    public static final boolean SCOPE = false;  // when true also change AcquisitionModes setting for galvo scan text
    public static final boolean singleView = (oSPIM || SCOPE);  // true for SCOPE and oSPIM (and possibly other situations?)
    public static final boolean doubleXYZ = false;
-   public final static String versionString = " 20260715";
+   public final static String versionString = " 20260717";
    
    public final static String menuName = "ASI " 
          + (SCOPE ? "SCOPE" : (oSPIM ? "oSPIM" : "diSPIM") ) 
@@ -70,7 +70,7 @@ public class ASIdiSPIM implements MMPlugin {
          // use alternate prefs location if we have special firmware timestamp of midnight for the TigerCommHub
          boolean altPrefs = false;
          try {
-            altPrefs = gui_.getMMCore().getProperty("TigerCommHub", "FirmwareDate").endsWith("00:00:00");
+            altPrefs = gui_.getMMCore().getProperty("TigerCommHub", "FirmwareDate").endsWith("00:00:00");  // debug 18:15:16
          } catch (Exception e) {
             gui_.showError("require TigerCommHub device");
          }
