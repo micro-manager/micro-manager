@@ -34,6 +34,7 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
@@ -552,10 +553,6 @@ public enum PropertyKey {
 
    GAMMA("Gamma", ComponentDisplaySettings.class),
 
-   GRID_COLUMN("GridColumn", "gridColumn"),
-
-   GRID_ROW("GridRow", "gridRow"),
-
    HEIGHT("Height") {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -797,6 +794,18 @@ public enum PropertyKey {
       }
    },
 
+   MULTI_STAGE_POSITION__DEVICE("Device", MultiStagePosition.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putString(key(), je.getAsString());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         return new JsonPrimitive(pmap.getString(key(), null));
+      }
+   },
+
    MULTI_STAGE_POSITION__GRID_ROW("GridRow", "GRID_ROW", "gridRow", "GridRowIndex",
          MultiStagePosition.class) {
       @Override
@@ -844,23 +853,45 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
-         // TODO: Figure out what this is supposed to do (I don't even know
-         // if multistageposition properties are ever used by anything
-         // It is utterly unclear how to perform this translation, but 
-         // returning null bombs saving of stage positions...
-         return JsonNull.INSTANCE;
+         // Mirror of convertFromGson: write the nested property map in PM2
+         // format, which fromGson tries first when reading back.
+         if (!pMap.containsPropertyMap(key())) {
+            return null;
+         }
+         return PropertyMapJSONSerializer.toGson(
+               pMap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
       }
    },
 
-   MULTI_STAGE_POSITION__DEVICE("Device", MultiStagePosition.class) {
+   /** X offset of this site relative to the well centre, in microns (set by HCS plugin). */
+   MULTI_STAGE_POSITION__WELL_SITE_OFFSET_X("WellSiteOffsetXUm", MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
-         dest.putString(key(), je.getAsString());
+         dest.putDouble(key(), je.getAsDouble());
       }
 
       @Override
-      protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getDouble(key(), 0.0));
+         }
+         return null;
+      }
+   },
+
+   /** Y offset of this site relative to the well centre, in microns (set by HCS plugin). */
+   MULTI_STAGE_POSITION__WELL_SITE_OFFSET_Y("WellSiteOffsetYUm", MultiStagePosition.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putDouble(key(), je.getAsDouble());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getDouble(key(), 0.0));
+         }
+         return null;
       }
    },
 
@@ -947,6 +978,8 @@ public enum PropertyKey {
          return JsonNull.INSTANCE;  // Todo: log?
       }
    },
+
+   MULTI_WELL_PLATE("MultiWellPlate", SequenceSettings.class),
 
    NEXT_FRAME("NextFrame"),
 
@@ -1100,6 +1133,9 @@ public enum PropertyKey {
 
    POSITION_LIST__ID("ID", PositionList.class),
    POSITION_LIST__VERSION("VERSION", PositionList.class),
+   // Legacy keys read from old .pos files for backward compatibility; not written by current code.
+   POSITION_LIST__IS_PLATE("IsPlate", PositionList.class),
+   POSITION_LIST__PLATE_NAME("PlateName", PositionList.class),
 
    POSITION_NAME("PositionName", "Position", Metadata.class) {
       @Override
@@ -1666,6 +1702,19 @@ public enum PropertyKey {
    },
 
    VISIBLE("Visible", ChannelDisplaySettings.class),
+
+
+   WELL_PLATE_COLUMN_NAMING_CONVENTION("WellPlateColumnNamingConvention", MultiWellPlate.class),
+   WELL_PLATE_COLUMNS("WellPlateColumns", MultiWellPlate.class),
+   WELL_PLATE_DESCRIPTION("WellPlateDescription", MultiWellPlate.class),
+   WELL_PLATE_EXTERNAL_IDENTIFIER("WellPlateExternalIdentifier", MultiWellPlate.class),
+   WELL_PLATE_ID("WellPlateID", MultiWellPlate.class),
+   WELL_PLATE_NAME("WellPlateName", MultiWellPlate.class),
+   WELL_PLATE_ROW_NAMING_CONVENTION("WellPlateRowNamingConvention", MultiWellPlate.class),
+   WELL_PLATE_ROWS("WellPlateRows", MultiWellPlate.class),
+   WELL_PLATE_STATUS("WellPlateStatus", MultiWellPlate.class),
+   WELL_PLATE_WELL_ORIGIN_X("WellPlateWellOriginX", MultiWellPlate.class),
+   WELL_PLATE_WELL_ORIGIN_Y("WellPlateWellOriginY", MultiWellPlate.class),
 
    WIDTH("Width", Image.class) {
       @Override

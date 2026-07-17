@@ -105,6 +105,8 @@ public interface SummaryMetadata {
 
       Builder sequenceSettings(SequenceSettings sequenceSettings);
 
+      Builder multiWellPlate(MultiWellPlate plate);
+
       Builder imageWidth(Integer width);
 
       Builder imageHeight(Integer height);
@@ -342,6 +344,15 @@ public interface SummaryMetadata {
     * @return stage positions that were to be visited in the acquisition
     */
    List<MultiStagePosition> getStagePositionList();
+
+
+   /**
+    * Provides information about the MultiWellPlate used in the acquisition.
+    * Can be null.
+    *
+    * @return MultiWellPlate instance.
+    */
+   MultiWellPlate getMultiWellPlate();
 
    /**
     * Deprecated.
