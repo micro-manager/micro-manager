@@ -307,7 +307,9 @@ public final class ChannelSpec {
     * Serialize to JSON encoded string.
     */
    public static String toJSONStream(ChannelSpec cs) {
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      Gson gson = new GsonBuilder().setPrettyPrinting()
+            .registerTypeAdapter(Color.class, new ColorGsonAdapter())
+            .create();
       return gson.toJson(cs);
    }
 
@@ -315,7 +317,9 @@ public final class ChannelSpec {
     * De-serialize from JSON encoded string.
     */
    public static ChannelSpec fromJSONStream(String stream) {
-      Gson gson = new Gson();
+      Gson gson = new GsonBuilder()
+            .registerTypeAdapter(Color.class, new ColorGsonAdapter())
+            .create();
       return gson.fromJson(stream, ChannelSpec.class);
    }
 
