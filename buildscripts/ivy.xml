@@ -62,6 +62,11 @@
       </dependency>
       <dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
+         <!-- Pulls in the old standalone com.miglayout:miglayout:3.7.4 artifact,
+              which defines the same classes as miglayout-core/miglayout-swing
+              (rev 5.3, used elsewhere) at an incompatible API version, causing
+              AbstractMethodError depending on classpath order. -->
+         <exclude org="com.miglayout" module="miglayout"/>
       </dependency>
       <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.19.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
