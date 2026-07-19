@@ -61,8 +61,6 @@
   <string>-Xms256m -Xmx3000m</string>
   <key>JVMOptions</key>
   <array>
-    <string>--add-opens=java.desktop/java.awt=ALL-UNNAMED</string>
-    <string>--add-opens=java.desktop/java.awt.color=ALL-UNNAMED</string>
     <string>--add-opens=java.desktop/sun.awt=ALL-UNNAMED</string>
     <string>--enable-native-access=ALL-UNNAMED</string>
   </array>

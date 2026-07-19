@@ -24,6 +24,7 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.WindowManager;
 import ij.gui.Toolbar;
+import java.awt.Font;
 import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
@@ -97,6 +98,7 @@ import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeys;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
@@ -194,7 +196,19 @@ public final class MMStudio implements Studio {
          }
       }
       try {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+         if (JavaUtils.isUnix()) {
+            // The platform system L&F on Linux is either GTKLookAndFeel,
+            // which delegates most component painting to native GTK theme
+            // rendering and largely ignores UIManager color overrides (e.g.
+            // DaytimeNighttime's dark theme), or a fallback to Metal, which
+            // has no HiDPI scaling awareness. FlatLaf honors color overrides
+            // and, via its MigLayout integration, scales MigLayout's pixel
+            // constraints to match its detected HiDPI scale factor, unlike
+            // either alternative.
+            UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatLightLaf());
+         } else {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+         }
          new MMStudio(false, profileNameAutoStart);
       } catch (ClassNotFoundException
             | IllegalAccessException

@@ -33,6 +33,14 @@ fi
 
 echo "class path = $CLASSPATH" 1>&2
 
+# Java's HiDPI auto-detection is unreliable on Linux/X11 (unlike Windows and
+# macOS, which have a reliable OS-level scale-factor channel). Set MM_UI_SCALE
+# (e.g. MM_UI_SCALE=2) to force a scale factor if the UI appears too small.
+MM_UI_SCALE_OPT=
+if test -n "$MM_UI_SCALE"; then
+   MM_UI_SCALE_OPT="-Dsun.java2d.uiScale=$MM_UI_SCALE"
+fi
+
 @JAVA@ -Xmx1024M \
    -XX:MaxDirectMemorySize=1000G \
    -classpath "$CLASSPATH" \
@@ -42,8 +50,7 @@ echo "class path = $CLASSPATH" 1>&2
    -Dorg.micromanager.autofocus.path="@mmautofocusdir@" \
    -Dorg.micromanager.default.config.file="@mmdatadir@/MMConfig_demo.cfg" \
    -Dorg.micromanager.corelog.dir=/tmp \
-   --add-opens=java.desktop/java.awt=ALL-UNNAMED \
-   --add-opens=java.desktop/java.awt.color=ALL-UNNAMED \
    --add-opens=java.desktop/sun.awt=ALL-UNNAMED \
    --enable-native-access=ALL-UNNAMED \
+   $MM_UI_SCALE_OPT \
    org.micromanager.internal.MMStudio

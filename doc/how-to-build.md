@@ -134,23 +134,34 @@ a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
 JDK 25 this emits deprecation warnings for `-source`/`-target 8`, not errors).
 Building and running with JDK 11 through JDK 25 has been verified to work.
 
-On JDK 17 and above, the launch scripts must pass `--add-opens` flags for a
-few packages that Micro-Manager accesses reflectively, or you will see errors
-like `Unable to make field int java.awt.Color.value accessible: module
-java.desktop does not "opens java.awt" to unnamed module @38a8f1a9`. The
-shipped launchers (`buildscripts/launchers/*.in`, `bindist/x64/ImageJ.cfg`,
+On JDK 17 and above, the launch scripts must pass a couple of `--add-opens`
+flags for packages that Micro-Manager accesses reflectively, or you will see
+errors like `Unable to make field ... accessible: module java.desktop does
+not "opens ..." to unnamed module`. The shipped launchers
+(`buildscripts/launchers/*.in`, `bindist/x64/ImageJ.cfg`,
 `bindist/MacOSX/ImageJ.app/Contents/Info.plist`, `docker/micromanager.sh`)
 already include the required flags:
 
 ```
---add-opens=java.desktop/java.awt=ALL-UNNAMED
---add-opens=java.desktop/java.awt.color=ALL-UNNAMED
 --add-opens=java.desktop/sun.awt=ALL-UNNAMED
 --enable-native-access=ALL-UNNAMED
 ```
 
 If you build or launch Micro-Manager outside of these scripts, add the same
-flags yourself.
+flags yourself. (Earlier versions of these scripts also carried
+`--add-opens=java.desktop/java.awt=ALL-UNNAMED` and
+`.../java.awt.color=ALL-UNNAMED`, needed because `Color` fields were
+serialized via Gson's reflective fallback; `ChannelSpec`/`SequenceSettings`
+now use a dedicated `ColorGsonAdapter` instead, so those two are no longer
+needed.)
+
+On Linux/X11, Java's HiDPI auto-detection is unreliable (unlike Windows and
+macOS). If the UI appears too small, set `MM_UI_SCALE` (e.g. `MM_UI_SCALE=2`)
+before launching one of the Unix launcher scripts or the Docker image; it's
+passed through as `-Dsun.java2d.uiScale`. The Unix launchers also switch away
+from `GTKLookAndFeel` to `NimbusLookAndFeel` automatically, since GTK's L&F
+largely ignores the color overrides Micro-Manager's night-mode theme depends
+on.
 
 On macOS, install a Temurin or Zulu JDK (11 or later; 17+ also works given
 the flags above), and set `JAVA_HOME`:
