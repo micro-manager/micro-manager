@@ -14,6 +14,8 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Date;
 import java.util.Map;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -166,6 +168,28 @@ public final class JavaUtils {
       String os = System.getProperty("os.name").toLowerCase();
       //linux or unix
       return (os.contains("nix") || os.contains("nux"));
+   }
+
+   /**
+    * Sets the Swing look-and-feel to use for the application's main window(s).
+    *
+    * <p>On Linux, the platform system L&F is either GTKLookAndFeel, which
+    * delegates most component painting to native GTK theme rendering and
+    * largely ignores UIManager color overrides (e.g. DaytimeNighttime's dark
+    * theme), or a fallback to Metal, which has no HiDPI scaling awareness.
+    * FlatLaf honors color overrides and, via its MigLayout integration,
+    * scales MigLayout's pixel constraints to match its detected HiDPI scale
+    * factor, unlike either alternative. Windows and macOS keep their native
+    * system L&F, which do not have these issues.
+    */
+   public static void setPlatformLookAndFeel()
+         throws ClassNotFoundException, IllegalAccessException, InstantiationException,
+         UnsupportedLookAndFeelException {
+      if (isUnix()) {
+         UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatLightLaf());
+      } else {
+         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      }
    }
 
    public static void sleep(int timeMs) {

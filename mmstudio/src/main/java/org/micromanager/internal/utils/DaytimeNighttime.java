@@ -72,12 +72,14 @@ public final class DaytimeNighttime implements ApplicationSkin {
    // Improve text legibility against dark backgrounds. These will have
    // ".foreground" appended to them later.
    private static final String[] ENABLED_TEXT_COLOR_KEYS = new String[] {
-         "CheckBox", "ColorChooser", "FormattedTextField",
-         "InternalFrame", "Label", "List",
-         "OptionPane", "Panel", "ProgressBar",
-         "RadioButton", "ScrollPane", "Separator", "Slider", "Spinner",
+         "Button", "CheckBox", "CheckBoxMenuItem", "ColorChooser", "ComboBox",
+         "EditorPane", "FormattedTextField",
+         "InternalFrame", "Label", "List", "Menu", "MenuBar", "MenuItem",
+         "OptionPane", "Panel", "PasswordField", "PopupMenu", "ProgressBar",
+         "RadioButton", "RadioButtonMenuItem", "ScrollBar", "ScrollPane",
+         "Separator", "Slider", "Spinner",
          "SplitPane", "Table", "TableHeader", "TextArea", "TextField",
-         "TextPane", "ToolBar", "Tree", "Viewport"
+         "TextPane", "ToggleButton", "ToolBar", "Tree", "Viewport"
    };
 
    // As above, but for disabled text; each of these keys will have
