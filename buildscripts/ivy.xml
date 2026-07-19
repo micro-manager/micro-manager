@@ -161,39 +161,20 @@
       <!-- Run-time-only dependencies -->
       <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 
-      <!-- MM-OME-BigTiff-Storage and MM-OME-Zarr-Storage.
-           These are now thin jars (no bundled dependencies). Until they are published to
-           Maven Central they are vendored as bare artifacts in 3rdpartypublic/classext
-           (MM-OME-BigTiff-Storage.jar, MM-OME-Zarr-Storage.jar), resolved by the
-           thirdpartypublic filesystem resolver. That resolver provides no POM, so their
-           runtime dependencies are declared explicitly below:
-             - BigTiff needs jackson-databind (already declared).
-             - Zarr needs dev.zarr:zarr-java, whose Maven Central POM transitively pulls
-               cdm-core (from the Unidata resolver), jackson, blosc-java, zstd-jni, aws, etc.
-           Once both libraries are on Maven Central, drop the classext jars and these
-           explicit transitive declarations become redundant (they resolve via each
-           library's own POM). -->
+      <!-- MM-OME-BigTiff-Storage and MM-OME-Zarr-Storage are published to Maven Central.
+           Their POMs declare their own transitive dependencies (jackson-databind for both;
+           dev.zarr:zarr-java - and, via its POM, cdm-core from the Unidata resolver - for
+           Zarr), including zarr-java's AWS SDK exclusion, so nothing further needs to be
+           declared here. -->
       <dependency conf="compile" org="org.micro-manager" name="MM-OME-BigTiff-Storage" rev="0.1.0"/>
       <dependency org="org.micro-manager" name="MM-OME-Zarr-Storage" rev="0.1.0"/>
-      <!-- zarr-java is the storage engine behind MM-OME-Zarr-Storage. Its transitive tree
-           (via cdm-core -> httpservices) brings guava 30.1 and protobuf 3, which collide with
-           the older versions Micro-Manager pins (guava 17.0, protobuf 2.6.1) and whose newer
-           APIs MM's own code is NOT built against (e.g. CharMatcher.JAVA_LETTER_OR_DIGIT,
-           removed after guava 20). The cdm-core classes the MM Zarr backend actually touches
-           (ucar.ma2.Array / DataType) do not reference guava, so pinning MM's versions is safe
-           at runtime. The <override> entries below force those versions regardless of which
-           transitive requests a newer one (a plain <exclude> on zarr-java does not reach the
-           deep cdm-core -> httpservices -> guava edge). -->
-      <!-- Exclude the AWS SDK: zarr-java pulls it in for its optional S3Store backend, which
-           MM-OME-Zarr-Storage never uses (it uses FilesystemStore only). S3Store.class remains
-           in the zarr-java jar but is never loaded, so its unresolved AWS references are inert.
-           Drops aws-java-sdk-{s3,kms,core}, jmespath-java, and ion-java. -->
-      <dependency org="dev.zarr" name="zarr-java" rev="0.0.4">
-         <exclude org="com.amazonaws"/>
-         <exclude org="software.amazon.ion" name="ion-java"/>
-      </dependency>
-      <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.17.1"/>
-
+      <!-- zarr-java's transitive tree (via cdm-core -> httpservices) brings guava 30.1 and
+           protobuf 3, which collide with the older versions Micro-Manager pins (guava 17.0,
+           protobuf 2.6.1) and whose newer APIs MM's own code is NOT built against (e.g.
+           CharMatcher.JAVA_LETTER_OR_DIGIT, removed after guava 20). The cdm-core classes the
+           MM Zarr backend actually touches (ucar.ma2.Array / DataType) do not reference guava,
+           so pinning MM's versions is safe at runtime. The <override> entries below (further
+           down) force those versions regardless of which transitive requests a newer one. -->
 
       <!-- Always exclude these -->
       <exclude org="com.googlecode.efficient-java-matrix-library"/>
