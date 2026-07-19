@@ -18,5 +18,9 @@ cd "@imagejdir@"
    -XX:MaxDirectMemorySize=1000G \
    -Dmmcorej.library.loading.stderr.log=yes \
    -Dorg.micromanager.corelog.dir=/tmp \
+   --add-opens=java.desktop/java.awt=ALL-UNNAMED \
+   --add-opens=java.desktop/java.awt.color=ALL-UNNAMED \
+   --add-opens=java.desktop/sun.awt=ALL-UNNAMED \
+   --enable-native-access=ALL-UNNAMED \
    -jar "@imagejjar@" \
    -eval 'run("Micro-Manager Studio");'

@@ -15,5 +15,6 @@ umask 0002 && java -Xmx1024M \
    --add-opens=java.desktop/java.awt=ALL-UNNAMED \
    --add-opens=java.desktop/java.awt.color=ALL-UNNAMED \
    --add-opens=java.desktop/sun.awt=ALL-UNNAMED \
+   --enable-native-access=ALL-UNNAMED \
    -jar "$IMAGEJ_DIR/ij.jar" \
    -eval 'run("Micro-Manager Studio");' \

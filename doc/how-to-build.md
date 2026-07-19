@@ -130,13 +130,30 @@ Ubuntu: `sudo apt install libboost-all-dev`
 
 To build MMCoreJ and the Java application (Micro-Manager Studio), you will need
 a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
-(a.k.a. Java 1.8). For running Micro-Manager, Java 11 is currently recommended.
+(a.k.a. Java 1.8), which still compiles cleanly with modern `javac` (as of
+JDK 25 this emits deprecation warnings for `-source`/`-target 8`, not errors).
+Building and running with JDK 11 through JDK 25 has been verified to work.
 
-With JDK 17 and above, error may occur like `Unable to make field int
-java.awt.Color.value accessible: module java.desktop does not "opens java.awt"
-to unnamed module @38a8f1a9`.
+On JDK 17 and above, the launch scripts must pass `--add-opens` flags for a
+few packages that Micro-Manager accesses reflectively, or you will see errors
+like `Unable to make field int java.awt.Color.value accessible: module
+java.desktop does not "opens java.awt" to unnamed module @38a8f1a9`. The
+shipped launchers (`buildscripts/launchers/*.in`, `bindist/x64/ImageJ.cfg`,
+`bindist/MacOSX/ImageJ.app/Contents/Info.plist`, `docker/micromanager.sh`)
+already include the required flags:
 
-On macOS, install Temurin or Zulu JDK 11, and set `JAVA_HOME`:
+```
+--add-opens=java.desktop/java.awt=ALL-UNNAMED
+--add-opens=java.desktop/java.awt.color=ALL-UNNAMED
+--add-opens=java.desktop/sun.awt=ALL-UNNAMED
+--enable-native-access=ALL-UNNAMED
+```
+
+If you build or launch Micro-Manager outside of these scripts, add the same
+flags yourself.
+
+On macOS, install a Temurin or Zulu JDK (11 or later; 17+ also works given
+the flags above), and set `JAVA_HOME`:
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 11 -F)

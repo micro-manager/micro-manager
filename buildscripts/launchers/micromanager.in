@@ -42,4 +42,8 @@ echo "class path = $CLASSPATH" 1>&2
    -Dorg.micromanager.autofocus.path="@mmautofocusdir@" \
    -Dorg.micromanager.default.config.file="@mmdatadir@/MMConfig_demo.cfg" \
    -Dorg.micromanager.corelog.dir=/tmp \
+   --add-opens=java.desktop/java.awt=ALL-UNNAMED \
+   --add-opens=java.desktop/java.awt.color=ALL-UNNAMED \
+   --add-opens=java.desktop/sun.awt=ALL-UNNAMED \
+   --enable-native-access=ALL-UNNAMED \
    org.micromanager.internal.MMStudio
