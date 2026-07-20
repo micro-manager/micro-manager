@@ -134,21 +134,33 @@ a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
 JDK 25 this emits deprecation warnings for `-source`/`-target 8`, not errors).
 Building and running with JDK 11 through JDK 25 has been verified to work.
 
-On JDK 17 and above, the launch scripts must pass a couple of `--add-opens`
-flags for packages that Micro-Manager accesses reflectively, or you will see
-errors like `Unable to make field ... accessible: module java.desktop does
-not "opens ..." to unnamed module`. The shipped launchers
-(`buildscripts/launchers/*.in`, `bindist/x64/ImageJ.cfg`,
-`bindist/MacOSX/ImageJ.app/Contents/Info.plist`, `docker/micromanager.sh`)
-already include the required flags:
+On JDK 17 and above, the launch scripts must pass an `--add-opens` flag for
+a package that Micro-Manager accesses reflectively, or you will see errors
+like `Unable to make field ... accessible: module java.desktop does not
+"opens ..." to unnamed module`:
 
 ```
 --add-opens=java.desktop/sun.awt=ALL-UNNAMED
---enable-native-access=ALL-UNNAMED
 ```
 
-If you build or launch Micro-Manager outside of these scripts, add the same
-flags yourself. (Earlier versions of these scripts also carried
+This flag is understood by JDK 11 too (`--add-opens` has existed since JDK 9),
+so the shipped launchers (`buildscripts/launchers/*.in`, `bindist/x64/ImageJ.cfg`,
+`bindist/MacOSX/ImageJ.app/Contents/Info.plist`, `docker/micromanager.sh`)
+include it unconditionally.
+
+They also pass `--enable-native-access=ALL-UNNAMED` where possible, a
+defensive flag against JNI native-access warnings on JDK 24+ (JEP 472). This
+one is JDK 17+ *only* — older JDKs fail to start entirely if passed an option
+they don't recognize — so the Unix shell launchers
+(`buildscripts/launchers/*.in`, `docker/micromanager.sh`) detect the selected
+JDK's version at runtime and only add it when supported. The static Windows
+(`bindist/x64/ImageJ.cfg`) and macOS (`Info.plist`) configs can't do that kind
+of conditional logic, and since their documented/bundled runtime is JDK 11,
+this flag is simply omitted from those two.
+
+If you build or launch Micro-Manager outside of these scripts on JDK 17+, add
+both flags yourself; on JDK 11-16, only the `--add-opens` one. (Earlier
+versions of these scripts also carried
 `--add-opens=java.desktop/java.awt=ALL-UNNAMED` and
 `.../java.awt.color=ALL-UNNAMED`, needed because `Color` fields were
 serialized via Gson's reflective fallback; `ChannelSpec`/`SequenceSettings`
@@ -159,9 +171,10 @@ On Linux/X11, Java's HiDPI auto-detection is unreliable (unlike Windows and
 macOS). If the UI appears too small, set `MM_UI_SCALE` (e.g. `MM_UI_SCALE=2`)
 before launching one of the Unix launcher scripts or the Docker image; it's
 passed through as `-Dsun.java2d.uiScale`. The Unix launchers also switch away
-from `GTKLookAndFeel` to `NimbusLookAndFeel` automatically, since GTK's L&F
-largely ignores the color overrides Micro-Manager's night-mode theme depends
-on.
+from `GTKLookAndFeel` to FlatLaf (`com.formdev.flatlaf.FlatLightLaf`)
+automatically, since GTK's L&F largely ignores the color overrides
+Micro-Manager's night-mode theme depends on, and FlatLaf's MigLayout
+integration scales dialog layouts to match its detected HiDPI factor.
 
 On macOS, install a Temurin or Zulu JDK (11 or later; 17+ also works given
 the flags above), and set `JAVA_HOME`:

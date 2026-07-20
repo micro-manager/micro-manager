@@ -69,8 +69,9 @@
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
          <!-- Pulls in the old standalone com.miglayout:miglayout:3.7.4 artifact,
               which defines the same classes as miglayout-core/miglayout-swing
-              (rev 5.3, used elsewhere) at an incompatible API version, causing
-              AbstractMethodError depending on classpath order. -->
+              (declared as rev 4.2 above, transitively resolved to 5.3 - see
+              dependencies/artifacts/compile/) at an incompatible API version,
+              causing AbstractMethodError depending on classpath order. -->
          <exclude org="com.miglayout" module="miglayout"/>
       </dependency>
       <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.19.3">

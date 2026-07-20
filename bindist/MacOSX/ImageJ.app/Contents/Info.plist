@@ -59,10 +59,14 @@
   <string>imagej</string>
   <key>JVMDefaultOptions</key>
   <string>-Xms256m -Xmx3000m</string>
+  <!-- The "enable native access" JVM flag (see doc/how-to-build.md) is
+       deliberately omitted here: this is a static config with no way to
+       gate it by JDK version, and the documented/recommended macOS runtime
+       is JDK 11, which fails to start entirely if passed that (JDK
+       17-plus-only) option. -->
   <key>JVMOptions</key>
   <array>
     <string>--add-opens=java.desktop/sun.awt=ALL-UNNAMED</string>
-    <string>--enable-native-access=ALL-UNNAMED</string>
   </array>
   <key>JVMUserOptions</key>
     <dict>
