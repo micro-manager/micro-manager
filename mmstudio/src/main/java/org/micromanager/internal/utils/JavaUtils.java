@@ -14,10 +14,10 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Date;
 import java.util.Map;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  * Collection of handy functions. Could probably be moved to the few places they are
