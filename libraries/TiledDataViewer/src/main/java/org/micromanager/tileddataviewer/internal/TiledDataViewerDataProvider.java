@@ -94,10 +94,27 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       if (ti == null || ti.pix == null) {
          return null;
       }
+      return convertOrNull(ti, coords);
+   }
+
+   /**
+    * Convert a TaggedImage to an Image, returning {@code null} (rather than throwing) when the
+    * tags are malformed or missing required image-format fields. A storage backend can hand back
+    * an orphan pixel array with empty tags (e.g. OME-Zarr resolving a partial-axes query to plane
+    * (0,0) with no per-image metadata under that key); that makes {@code DefaultImage} throw
+    * {@code IllegalArgumentException}. Callers such as the overlay bridge's {@code primaryImage}
+    * fetch must not be aborted by that — a null lets them fall through to their next lookup
+    * (e.g. {@link #getAnyImage()}). A genuine JSON parse failure is still surfaced as IOException.
+    */
+   private Image convertOrNull(TaggedImage ti, Coords coords) throws IOException {
       try {
          return dataManager_.convertTaggedImage(ti, coords, null);
       } catch (JSONException e) {
          throw new IOException("Failed to convert TaggedImage", e);
+      } catch (IllegalArgumentException e) {
+         System.err.println(
+               "TiledDataViewerDataProvider: skipping image with unusable tags: " + e);
+         return null;
       }
    }
 
@@ -114,11 +131,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
          return null;
       }
       Coords coords = axesBridge_.tiledDataViewerToCoords(axes);
-      try {
-         return dataManager_.convertTaggedImage(ti, coords, null);
-      } catch (JSONException e) {
-         throw new IOException("Failed to convert TaggedImage", e);
-      }
+      return convertOrNull(ti, coords);
    }
 
    @Override
@@ -133,11 +146,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
          return null;
       }
       Coords coords = axesBridge_.tiledDataViewerToCoords(firstKey);
-      try {
-         return dataManager_.convertTaggedImage(ti, coords, null);
-      } catch (JSONException e) {
-         throw new IOException("Failed to convert TaggedImage", e);
-      }
+      return convertOrNull(ti, coords);
    }
 
    @Override
@@ -166,7 +175,16 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    @Override
    public int getNextIndex(String axis) {
       if (Coords.CHANNEL.equals(axis)) {
-         return axesBridge_.getChannelNames().size();
+         // A dataset with no channel axis (grayscale or RGB) still has one implicit channel to
+         // display. Report at least 1 whenever any image exists, so the Intensity Inspector —
+         // which sizes its histogram panels to getNextIndex(CHANNEL) — creates one panel instead
+         // of none (otherwise a channel-less dataset shows NO histogram at all). Multi-channel
+         // datasets are unaffected (their channel count is already >= 1).
+         int n = axesBridge_.getChannelNames().size();
+         if (n == 0 && !storage_.getAxesSet().isEmpty()) {
+            return 1;
+         }
+         return n;
       }
       Set<HashMap<String, Object>> keys = storage_.getAxesSet();
       int max = -1;
@@ -311,11 +329,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       if (ti == null || ti.pix == null) {
          return getImage(coords);
       }
-      try {
-         return dataManager_.convertTaggedImage(ti, coords, null);
-      } catch (JSONException e) {
-         throw new IOException("Failed to convert TaggedImage", e);
-      }
+      return convertOrNull(ti, coords);
    }
 
    /**
@@ -336,11 +350,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
          return null;
       }
       Coords coords = axesBridge_.tiledDataViewerToCoords(axes);
-      try {
-         return dataManager_.convertTaggedImage(ti, coords, null);
-      } catch (JSONException e) {
-         throw new IOException("Failed to convert TaggedImage", e);
-      }
+      return convertOrNull(ti, coords);
    }
 
    /**

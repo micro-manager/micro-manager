@@ -41,6 +41,13 @@ public class ExplorerFrame extends JFrame {
    static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
    static final String EXPLORE_OVERLAP_PERCENT = "ExploreOverlapPercent";
    static final String VESSEL_TYPE = "VesselType";
+   // Deprecated: superseded by STORAGE_BACKEND. Used only as the fallback default when
+   // STORAGE_BACKEND has never been set; no value is ever written back under this key.
+   static final String USE_OME_ZARR = "UseOmeZarrStorage";
+   static final String STORAGE_BACKEND = "StorageBackend";
+   static final String BACKEND_NDTIFF = "NDTiff";
+   static final String BACKEND_OME_ZARR = "OMEZarr";
+   static final String BACKEND_OME_BIGTIFF = "OMEBigTiff";
 
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
@@ -165,6 +172,38 @@ public class ExplorerFrame extends JFrame {
       overlapSpinner.addChangeListener(e ->
             settings_.putInteger(EXPLORE_OVERLAP_PERCENT, (Integer) overlapSpinner.getValue()));
       add(overlapSpinner, "wrap");
+
+      // Storage backend selector: NDTiff (default), OME-Zarr, or OME-BigTIFF.
+      add(new JLabel("Storage:"), "split 2");
+      JComboBox<String> storageCombo = new JComboBox<>(new String[]{
+            "NDTiff", "OME-Zarr (experimental)", "OME-BigTIFF (experimental)"});
+      storageCombo.setToolTipText("<html>Storage backend for acquisitions.<br>"
+            + "OME-Zarr (OME-NGFF v0.5 / Zarr v3) and OME-BigTIFF are grayscale only; "
+            + "RGB falls back to NDTiff.</html>");
+      // Default honors a previously-saved OME-Zarr checkbox preference, without migrating it.
+      String defaultBackend = settings_.getBoolean(USE_OME_ZARR, false)
+            ? BACKEND_OME_ZARR : BACKEND_NDTIFF;
+      String backend = settings_.getString(STORAGE_BACKEND, defaultBackend);
+      if (BACKEND_OME_ZARR.equals(backend)) {
+         storageCombo.setSelectedIndex(1);
+      } else if (BACKEND_OME_BIGTIFF.equals(backend)) {
+         storageCombo.setSelectedIndex(2);
+      } else {
+         storageCombo.setSelectedIndex(0);
+      }
+      storageCombo.addActionListener(e -> {
+         switch (storageCombo.getSelectedIndex()) {
+            case 1:
+               settings_.putString(STORAGE_BACKEND, BACKEND_OME_ZARR);
+               break;
+            case 2:
+               settings_.putString(STORAGE_BACKEND, BACKEND_OME_BIGTIFF);
+               break;
+            default:
+               settings_.putString(STORAGE_BACKEND, BACKEND_NDTIFF);
+         }
+      });
+      add(storageCombo, "wrap");
 
       // Vessel type selector
       add(new JLabel("Vessel:"), "split 2");

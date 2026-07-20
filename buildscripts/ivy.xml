@@ -161,6 +161,20 @@
       <!-- Run-time-only dependencies -->
       <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 
+      <!-- MM-OME-BigTiff-Storage and MM-OME-Zarr-Storage are published to Maven Central.
+           Their POMs declare their own transitive dependencies (jackson-databind for both;
+           dev.zarr:zarr-java - and, via its POM, cdm-core from the Unidata resolver - for
+           Zarr), including zarr-java's AWS SDK exclusion, so nothing further needs to be
+           declared here. -->
+      <dependency conf="compile" org="org.micro-manager" name="MM-OME-BigTiff-Storage" rev="0.1.0"/>
+      <dependency org="org.micro-manager" name="MM-OME-Zarr-Storage" rev="0.1.0"/>
+      <!-- zarr-java's transitive tree (via cdm-core -> httpservices) brings guava 30.1 and
+           protobuf 3, which collide with the older versions Micro-Manager pins (guava 17.0,
+           protobuf 2.6.1) and whose newer APIs MM's own code is NOT built against (e.g.
+           CharMatcher.JAVA_LETTER_OR_DIGIT, removed after guava 20). The cdm-core classes the
+           MM Zarr backend actually touches (ucar.ma2.Array / DataType) do not reference guava,
+           so pinning MM's versions is safe at runtime. The <override> entries below (further
+           down) force those versions regardless of which transitive requests a newer one. -->
 
       <!-- Always exclude these -->
       <exclude org="com.googlecode.efficient-java-matrix-library"/>
@@ -178,6 +192,15 @@
            of our installer significantly). This exclusion can be removed if
            formats-bsd becomes necessary in the future. -->
       <exclude org="ome" module="formats-bsd"/>
+
+      <!-- Force Micro-Manager's pinned versions to win over newer ones dragged in
+           transitively by zarr-java/cdm-core (via cdm-core -> httpservices: guava 30.1,
+           protobuf 3). MM's own code is built against these older APIs (e.g.
+           CharMatcher.JAVA_LETTER_OR_DIGIT, removed after guava 20). Overrides beat Ivy's
+           default "latest revision" conflict manager and reach deep transitive edges that a
+           per-dependency <exclude> on zarr-java cannot. -->
+      <override org="com.google.guava" module="guava" rev="17.0"/>
+      <override org="com.google.protobuf" module="protobuf-java" rev="2.6.1"/>
 
    </dependencies>
 </ivy-module>

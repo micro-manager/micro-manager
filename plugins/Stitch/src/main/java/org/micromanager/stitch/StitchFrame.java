@@ -54,9 +54,12 @@ import org.micromanager.exporttiles.TileAligner;
 import org.micromanager.exporttiles.TileBlender;
 import org.micromanager.imageprocessing.ImageTransformUtils;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
+import org.micromanager.tileddataprovider.OMEBigTiffTiledStorage;
+import org.micromanager.tileddataprovider.OMEZarrMultiresStorage;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
@@ -82,6 +85,16 @@ public class StitchFrame extends JDialog {
    private static final String SAVE_RAM = "RAM (temporary)";
    private static final String SAVE_STACK = "Image Stack File";
    private static final String SAVE_NDTIFF = "NDTiff (TiledDataViewer)";
+   private static final String SAVE_OME_ZARR = "OME-Zarr (TiledDataViewer)";
+   private static final String SAVE_OME_BIGTIFF = "OME-BigTIFF (TiledDataViewer)";
+
+   /**
+    * Which {@link MultiresNDTiffAPI} implementation backs the tiled ("TiledDataViewer") output
+    * path. All three write a uniform zero-overlap output-tile grid through the same interface;
+    * only the on-disk container differs. OME-Zarr is grayscale-only (RGB falls back to NDTiff);
+    * NDTiff and OME-BigTIFF also support RGB. OME-BigTIFF's pyramid depth is fixed at creation.
+    */
+   private enum TiledBackend { NDTIFF, OME_ZARR, OME_BIGTIFF }
 
    // Profile keys
    private static final String PREF_BLEND = "blend";
@@ -221,7 +234,8 @@ public class StitchFrame extends JDialog {
 
       // Save format
       add(new JLabel("Save as:"));
-      saveFormatCombo_ = new JComboBox<>(new String[]{SAVE_RAM, SAVE_STACK, SAVE_NDTIFF});
+      saveFormatCombo_ = new JComboBox<>(new String[]{
+            SAVE_RAM, SAVE_STACK, SAVE_NDTIFF, SAVE_OME_ZARR, SAVE_OME_BIGTIFF});
       saveFormatCombo_.setSelectedItem(settings_.getString(PREF_SAVE_FORMAT, SAVE_RAM));
       saveFormatCombo_.addActionListener((ActionEvent e) -> updatePathControls());
       add(saveFormatCombo_, "wrap");
@@ -276,11 +290,30 @@ public class StitchFrame extends JDialog {
    // -------------------------------------------------------------------------
 
    private void updatePathControls() {
-      boolean needsPath = SAVE_STACK.equals(saveFormatCombo_.getSelectedItem())
-            || SAVE_NDTIFF.equals(saveFormatCombo_.getSelectedItem());
+      Object sel = saveFormatCombo_.getSelectedItem();
+      boolean needsPath = SAVE_STACK.equals(sel) || isTiledFormat(sel);
       outputDirField_.setEnabled(needsPath);
       browseButton_.setEnabled(needsPath);
       namePrefixField_.setEnabled(needsPath);
+   }
+
+   /** True for any of the tiled TiledDataViewer backends (NDTiff / OME-Zarr / OME-BigTIFF). */
+   private static boolean isTiledFormat(Object sel) {
+      return SAVE_NDTIFF.equals(sel) || SAVE_OME_ZARR.equals(sel) || SAVE_OME_BIGTIFF.equals(sel);
+   }
+
+   /** Map the selected save-format label to its tiled backend, or null if not a tiled format. */
+   private static TiledBackend tiledBackendFor(Object sel) {
+      if (SAVE_NDTIFF.equals(sel)) {
+         return TiledBackend.NDTIFF;
+      }
+      if (SAVE_OME_ZARR.equals(sel)) {
+         return TiledBackend.OME_ZARR;
+      }
+      if (SAVE_OME_BIGTIFF.equals(sel)) {
+         return TiledBackend.OME_BIGTIFF;
+      }
+      return null;
    }
 
    private void updateAlignControls() {
@@ -325,20 +358,22 @@ public class StitchFrame extends JDialog {
    // -------------------------------------------------------------------------
 
    private void onExport() {
-      boolean saveToStack = SAVE_STACK.equals(saveFormatCombo_.getSelectedItem());
-      boolean saveToNdtiff = SAVE_NDTIFF.equals(saveFormatCombo_.getSelectedItem());
+      Object selectedFormat = saveFormatCombo_.getSelectedItem();
+      boolean saveToStack = SAVE_STACK.equals(selectedFormat);
+      final TiledBackend tiledBackend = tiledBackendFor(selectedFormat);
+      boolean saveToTiled = tiledBackend != null;
       String outputDir = outputDirField_.getText().trim();
       String namePrefix = namePrefixField_.getText().trim();
       final String originalPrefix = namePrefix; // saved before uniquification for preferences
-      if ((saveToStack || saveToNdtiff) && outputDir.isEmpty()) {
+      if ((saveToStack || saveToTiled) && outputDir.isEmpty()) {
          studio_.logs().showError("Please select a directory root.", this);
          return;
       }
-      if ((saveToStack || saveToNdtiff) && namePrefix.isEmpty()) {
+      if ((saveToStack || saveToTiled) && namePrefix.isEmpty()) {
          studio_.logs().showError("Please enter a name prefix.", this);
          return;
       }
-      if (saveToStack || saveToNdtiff) {
+      if (saveToStack || saveToTiled) {
          String targetPath = new File(outputDir, namePrefix).getAbsolutePath();
          String uniquePath = studio_.data().getUniqueSaveDirectory(targetPath);
          if (uniquePath == null) {
@@ -385,7 +420,7 @@ public class StitchFrame extends JDialog {
          }
       }
       // Combine dir + prefix into the full save path
-      final String outputPath = (saveToStack || saveToNdtiff)
+      final String outputPath = (saveToStack || saveToTiled)
             ? outputDir + File.separator + namePrefix
             : "";
 
@@ -448,7 +483,8 @@ public class StitchFrame extends JDialog {
       final boolean doAlign = align;
       final boolean doCorrectOrientation = correctOrientation;
       final boolean toStack = saveToStack;
-      final boolean toNdtiff = saveToNdtiff;
+      final boolean toTiled = saveToTiled;
+      final TiledBackend backend = tiledBackend;
       final String destPath = outputPath;
       final int exportAlignZ = alignZ;
       final int finalMaxDisplacement = maxDisplacementPx;
@@ -534,45 +570,84 @@ public class StitchFrame extends JDialog {
 
             buildDatastore(adapter, baseAxes, alignAxes, chNames,
                   canvasW, canvasH, doBlend, doAlign, finalCorrection, finalMaxDisplacement,
-                  toStack, toNdtiff, destPath, datasetName, exportAlignZ,
+                  toStack, toTiled, backend, destPath, datasetName, exportAlignZ,
                   sourceDisplaySettings, bar, statusLabel, progressDialog);
          } catch (OutOfMemoryError oom) {
             // OutOfMemoryError is an Error, not an Exception, so it would otherwise
-            // escape the catch below and kill the export thread silently. Report it with
-            // actionable guidance: the stitch holds the output canvas plus alignment data
-            // in the heap, so a large grid needs a larger -Xmx (Edit > Options > Memory).
+            // escape the catch below and kill the export thread silently.
             // logError takes an Exception; OutOfMemoryError is an Error, so wrap it.
             studio_.logs().logError(new RuntimeException(oom),
                   "Stitch export ran out of heap memory");
-            long maxMb = Runtime.getRuntime().maxMemory() / (1024 * 1024);
-            final String oomMsg =
-                  "Out of memory while stitching.\n\n"
-                  + "The JVM heap (currently about " + maxMb + " MB) was exhausted. "
-                  + "Increase it via ImageJ: Edit > Options > Memory & Threads, set a "
-                  + "larger value (e.g. 50000 MB), then restart Micro-Manager. Reducing "
-                  + "the output region or disabling alignment also lowers memory use.";
-            SwingUtilities.invokeLater(() -> {
-               progressDialog.dispose();
-               JOptionPane.showMessageDialog(sourceWindow, oomMsg,
-                     "Export Error - Out of Memory", JOptionPane.ERROR_MESSAGE);
-            });
+            showOutOfMemoryDialog(sourceWindow, progressDialog);
          } catch (Exception ex) {
-            studio_.logs().logError(ex, "Stitch export failed");
-            String msg = ex.getMessage();
-            if (msg == null) {
-               msg = ex.getClass().getSimpleName();
+            // The tiled write path composites on worker threads (see ParallelTileWriter),
+            // which wrap any worker OutOfMemoryError in a plain Exception and rethrow. Detect
+            // that so the memory-specific guidance is shown instead of a generic failure.
+            if (hasOutOfMemoryCause(ex)) {
+               studio_.logs().logError(ex, "Stitch export ran out of heap memory");
+               showOutOfMemoryDialog(sourceWindow, progressDialog);
+            } else {
+               studio_.logs().logError(ex, "Stitch export failed");
+               String msg = ex.getMessage();
+               if (msg == null) {
+                  msg = ex.getClass().getSimpleName();
+               }
+               final String displayMsg = msg;
+               SwingUtilities.invokeLater(() -> {
+                  progressDialog.dispose();
+                  JOptionPane.showMessageDialog(sourceWindow,
+                        "Export failed: " + displayMsg,
+                        "Export Error", JOptionPane.ERROR_MESSAGE);
+               });
             }
-            final String displayMsg = msg;
-            SwingUtilities.invokeLater(() -> {
-               progressDialog.dispose();
-               JOptionPane.showMessageDialog(sourceWindow,
-                     "Export failed: " + displayMsg,
-                     "Export Error", JOptionPane.ERROR_MESSAGE);
-            });
          } finally {
             adapter.close();
          }
       }, "ExportMMTiles-Export").start();
+   }
+
+   /**
+    * True if {@code t} or any throwable in its cause chain is an {@link OutOfMemoryError}.
+    * Worker-thread OOMs from the tiled write path arrive wrapped in a plain Exception (see
+    * ParallelTileWriter), so a direct {@code instanceof} check on the caught exception misses
+    * them.
+    */
+   private static boolean hasOutOfMemoryCause(Throwable t) {
+      for (Throwable cur = t; cur != null; cur = cur.getCause()) {
+         if (cur instanceof OutOfMemoryError) {
+            return true;
+         }
+         if (cur.getCause() == cur) {
+            break; // defend against a self-referential cause chain
+         }
+      }
+      return false;
+   }
+
+   /**
+    * Show the memory-specific export-error dialog and dispose the progress dialog (both on the
+    * EDT). Note the tiled export composites one output tile at a time across a bounded number
+    * of worker threads, so an OOM here is usually GC-locker allocation starvation under heavy
+    * parallel allocation rather than true heap exhaustion -- reducing composite threads often
+    * helps more than raising -Xmx.
+    */
+   private void showOutOfMemoryDialog(java.awt.Component parent, java.awt.Window progressDialog) {
+      long maxMb = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+      final String oomMsg =
+            "Out of memory while stitching.\n\n"
+            + "The JVM heap is currently about " + maxMb + " MB. This can happen even with "
+            + "plenty of free memory when many parallel compositing threads allocate faster "
+            + "than the garbage collector can keep up.\n\n"
+            + "Things that help:\n"
+            + " - Reduce the number of compositing threads.\n"
+            + " - Increase the heap via ImageJ: Edit > Options > Memory & Threads, set a "
+            + "larger value (e.g. 50000 MB), then restart Micro-Manager.\n"
+            + " - Reduce the output region or disable alignment.";
+      SwingUtilities.invokeLater(() -> {
+         progressDialog.dispose();
+         JOptionPane.showMessageDialog(parent, oomMsg,
+               "Export Error - Out of Memory", JOptionPane.ERROR_MESSAGE);
+      });
    }
 
    /**
@@ -619,24 +694,25 @@ public class StitchFrame extends JDialog {
                                boolean doBlend, boolean doAlign,
                                int[] correction,
                                int maxDisplacementPx,
-                               boolean toStack, boolean toNdtiff, String destPath,
+                               boolean toStack, boolean toTiled, TiledBackend backend,
+                               String destPath,
                                String datasetName, int alignZ,
                                DisplaySettings sourceDisplaySettings,
                                JProgressBar bar, JLabel statusLabel,
                                JDialog progressDialog) throws Exception {
 
-      // Step 1: create the output Datastore (not used for NDTiff path).
+      // Step 1: create the output Datastore (not used for the tiled path).
       // ndtiffStorage is initialized later once canvas size and pixel type are known;
       // both are declared here so the catch block can close them on error.
       final Datastore ds;
       if (toStack) {
          ds = studio_.data().createMultipageTIFFDatastore(destPath, true, false);
-      } else if (toNdtiff) {
+      } else if (toTiled) {
          ds = null;
       } else {
          ds = studio_.data().createRAMDatastore();
       }
-      NDTiffStorage ndtiffStorage = null;
+      MultiresNDTiffAPI ndtiffStorage = null;
 
       // Derive correction components (null correction = no-op)
       boolean doMirror = correction != null && correction[1] != 0;
@@ -669,9 +745,9 @@ public class StitchFrame extends JDialog {
       // pixel array per channel. A Java array is indexed by int, so a canvas with more than
       // Integer.MAX_VALUE pixels cannot be represented and would throw a cryptic
       // NegativeArraySizeException deep in TileBlender. Reject it up front with an
-      // actionable message. The NDTiff path has no such limit (it writes uniform output
+      // actionable message. The tiled path has no such limit (it writes uniform output
       // tiles), so steer the user there.
-      if (!toNdtiff) {
+      if (!toTiled) {
          long canvasPixels = (long) outCanvasW * (long) outCanvasH;
          if (canvasPixels > Integer.MAX_VALUE) {
             final String msg = "The stitched canvas is " + outCanvasW + " x " + outCanvasH
@@ -875,13 +951,16 @@ public class StitchFrame extends JDialog {
             }
          }
 
-         // For NDTiff output, create NDTiff storage with a uniform output tile grid.
-         // The canvas is composited into outTileSize×outTileSize tiles with zero overlap.
-         if (toNdtiff) {
-            ndtiffStorage = buildNdtiffSummaryMetadata(
-                  destPath, datasetName,
+         // For a tiled output, create the selected MultiresNDTiffAPI storage with a uniform
+         // output tile grid. The canvas is composited into outTileSize×outTileSize tiles with
+         // zero overlap.
+         if (toTiled) {
+            ndtiffStorage = buildTiledStorage(
+                  backend, destPath, datasetName,
                   NDTIFF_OUTPUT_TILE_SIZE,
-                  isRgb, is16bit, chNames);
+                  isRgb, is16bit, chNames,
+                  outCanvasW, outCanvasH, numZ, numT,
+                  pyramidDepthForCanvas(outCanvasW, outCanvasH));
          } else {
             ndtiffStorage = null;
             ds.setSummaryMetadata(smBuilder.build());
@@ -1063,8 +1142,8 @@ public class StitchFrame extends JDialog {
                   tzAxes.put(Coords.TIME_POINT, t);
                }
 
-               if (toNdtiff) {
-                  // NDTiff path: composite the full canvas into a uniform output tile grid.
+               if (toTiled) {
+                  // Tiled path: composite the full canvas into a uniform output tile grid.
                   // tOrigins=null → nominal tile positions; non-null → alignment-corrected.
                   // doBlend controls feathering at overlap seams (not tile placement).
                   // For grayscale, tileTransform16/8 applies the per-tile orientation
@@ -1201,12 +1280,12 @@ public class StitchFrame extends JDialog {
 
          SwingUtilities.invokeLater(() -> bar.setValue(100));
 
-         if (toNdtiff) {
-            // The pyramid was built incrementally during writing (NDTIFF_MAX_RES_LEVEL set
-            // after the first tile). This call backstops the already-built levels and is a
-            // no-op when they exist; guard it so a pyramid hiccup can never prevent
-            // finishedWriting(), which MUST always run -- an unfinalized NDTiff throws
-            // NegativeArraySizeException when a viewer opens it.
+         if (toTiled) {
+            // The pyramid was built incrementally during writing (max res level set after the
+            // first tile). This call backstops the already-built levels and is a no-op when they
+            // exist (OME-BigTIFF, whose depth is fixed at creation, ignores it); guard it so a
+            // pyramid hiccup can never prevent finishedWriting(), which MUST always run -- an
+            // unfinalized NDTiff throws NegativeArraySizeException when a viewer opens it.
             // Finalizing has no measurable sub-progress, so show an animated (indeterminate)
             // bar rather than freezing the user at a fixed value.
             setIndeterminate(bar, statusLabel, "Finalizing...");
@@ -1226,8 +1305,11 @@ public class StitchFrame extends JDialog {
             ndtiffStorage.finishedWriting();
             setPhaseProgress(bar, 100);
             final boolean wasCancelled = exportCancelled_.get();
-            final NDTiffStorage finalStorage = ndtiffStorage;
-            final String ndtiffPath = destPath;
+            final MultiresNDTiffAPI finalStorage = ndtiffStorage;
+            // Report the storage's actual on-disk directory (e.g. <root>/stitched_3.ome.tiff),
+            // which now lives directly under the chosen root, rather than the pre-join destPath.
+            final String ndtiffPath = finalStorage.getDiskLocation() != null
+                  ? finalStorage.getDiskLocation() : destPath;
             final DisplaySettings dispSettings = sourceDisplaySettings;
             final boolean finalIsRgb = isRgb;
             final int finalCanvasW = outCanvasW;
@@ -1355,7 +1437,7 @@ public class StitchFrame extends JDialog {
     */
    private int writeCanvasTiledNdtiff(
          StitchDataProviderAdapter adapter,
-         NDTiffStorage ndtiffStorage,
+         MultiresNDTiffAPI ndtiffStorage,
          HashMap<String, Object> tzAxes,
          List<String> effectiveChNames,
          Map<Point, Point2D.Float> alignedOrigins,
@@ -1450,6 +1532,15 @@ public class StitchFrame extends JDialog {
       // StitchDataProviderAdapter serializes source reads (MultipageTiffReader is not
       // concurrent-read-safe). If a new source path bypasses that adapter, revisit this.
       // STITCH_MAX_COMPOSITE_THREADS=1 forces fully serial compositing as an escape hatch.
+      //
+      // Full parallelism (availableProcessors()-1, ~40 on a many-core box) is intentional:
+      // compositing is the CPU-bound bottleneck, so throttling workers directly slows the
+      // export. Earlier a GCLocker OOM appeared here (workers churning per-tile ~16 MB float
+      // accumulators while the single NDTiff writer held HotSpot's GC locker in a JNI critical
+      // section, starving allocation even with hundreds of GB free). That is now prevented at
+      // the source: TileBlender reuses its accumulators per worker (see acquireAccumulator), so
+      // steady-state allocation is near zero and thread count no longer feeds the starvation.
+      // If an OOM ever recurs, STITCH_MAX_COMPOSITE_THREADS is the manual escape hatch.
       final int numWorkers = STITCH_MAX_COMPOSITE_THREADS > 0
             ? STITCH_MAX_COMPOSITE_THREADS
             : Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
@@ -1631,7 +1722,7 @@ public class StitchFrame extends JDialog {
     *
     * <p>Best-effort: any failure is logged and ignored so it can never block finalization.</p>
     */
-   private void writeNdtiffDisplaySettings(NDTiffStorage storage, List<String> channelNames,
+   private void writeNdtiffDisplaySettings(MultiresNDTiffAPI storage, List<String> channelNames,
                                            DisplaySettings sourceSettings) {
       if (storage == null || sourceSettings == null || channelNames == null) {
          return;
@@ -1673,22 +1764,34 @@ public class StitchFrame extends JDialog {
    }
 
    /**
-    * Creates an NDTiff storage for the stitched output and writes its summary metadata.
+    * Creates the tiled output storage (NDTiff / OME-Zarr / OME-BigTIFF) for the stitched output
+    * and writes its summary metadata.
     *
-    * <p>The output uses a uniform grid of {@code outTileSize × outTileSize} tiles with
-    * zero overlap. TiledDataViewer's built-in pyramid generation works correctly at all
-    * zoom levels for a uniform zero-overlap grid.</p>
+    * <p>The output uses a uniform grid of {@code outTileSize × outTileSize} tiles with zero
+    * overlap. All three backends implement {@link MultiresNDTiffAPI}, so the write/read code is
+    * identical; only the on-disk container differs. TiledDataViewer's built-in pyramid generation
+    * works correctly at all zoom levels for a uniform zero-overlap grid.</p>
+    *
+    * <p>OME-Zarr is grayscale-only, so an RGB export to it silently falls back to NDTiff; NDTiff
+    * and OME-BigTIFF both support RGB. OME-BigTIFF uses the library's tiled mode: the whole canvas
+    * is one tiled OME-BigTIFF plane per (channel, z, time), written tile-by-tile — a single file,
+    * and no frame ever exceeds a Java array. Its pyramid depth is fixed at creation, so it is
+    * created with {@code maxResLevel + 1} levels covering the coarsest view; NDTiff and OME-Zarr
+    * grow the pyramid on demand.</p>
     */
-   private NDTiffStorage buildNdtiffSummaryMetadata(
+   private MultiresNDTiffAPI buildTiledStorage(
+         TiledBackend backend,
          String path, String name,
          int outTileSize,
          boolean isRgb, boolean is16bit,
-         List<String> chNames)
+         List<String> chNames,
+         int canvasWidth, int canvasHeight, int numZ, int numT,
+         int maxResLevel)
          throws JSONException {
       JSONObject json = new JSONObject();
       json.put("Width", outTileSize);
       json.put("Height", outTileSize);
-      // Zero overlap — tiles are placed on a uniform grid. NDTiffStorage computes
+      // Zero overlap — tiles are placed on a uniform grid. The storage computes
       // tileWidth_ = outTileSize - 0 = outTileSize, so the grid step = outTileSize exactly.
       json.put("GridPixelOverlapX", 0);
       json.put("GridPixelOverlapY", 0);
@@ -1707,8 +1810,49 @@ public class StitchFrame extends JDialog {
          json.put("ChNames", arr);
          json.put("Channels", chNames.size());
       }
-      return new NDTiffStorage(
-            path, name, json, 0, 0, true, null, 30, null, true);
+
+      // OME-Zarr does not support RGB; fall back to NDTiff for an RGB export. OME-BigTIFF now
+      // supports 8-bit RGB (stored as 3-sample chunky RGB), so it honours the user's choice.
+      TiledBackend effective = backend;
+      if (isRgb && effective == TiledBackend.OME_ZARR) {
+         studio_.logs().showMessage("The OME-Zarr backend does not support RGB; "
+               + "saving this stitch as NDTiff instead.");
+         effective = TiledBackend.NDTIFF;
+      }
+
+      // Write the dataset directly into the chosen directory root, not nested inside an extra
+      // wrapper folder of the same name: {@code path} is {@code <root>/<name>}, so the storage's
+      // parent directory is its parent ({@code <root>}) and {@code name} becomes the dataset
+      // itself (e.g. {@code <root>/stitched_3.ome.tiff}), not
+      // {@code <root>/stitched_3/stitched_3.ome.tiff}.
+      String parentDir = new File(path).getParent();
+      if (parentDir == null) {
+         parentDir = path;
+      }
+
+      switch (effective) {
+         case OME_ZARR: {
+            OMEZarrMultiresStorage storage =
+                  new OMEZarrMultiresStorage(parentDir, name, json, 0, 0, 30);
+            // Grow the pyramid to the full depth up front so every tile (including the first)
+            // is downsampled to all levels as it is written.
+            storage.increaseMaxResolutionLevel(maxResLevel);
+            return storage;
+         }
+         case OME_BIGTIFF:
+            // Tiled mode: the whole canvas is one tiled OME-BigTIFF plane per (channel,z,time),
+            // written tile-by-tile. Pyramid depth is fixed at creation; size it for the coarsest
+            // view. Tile size = the stitch output-tile size (a multiple of 16).
+            return new OMEBigTiffTiledStorage(
+                  parentDir, name, json,
+                  canvasWidth, canvasHeight, outTileSize, outTileSize,
+                  Math.max(1, chNames.size()), Math.max(1, numZ), Math.max(1, numT),
+                  maxResLevel + 1, 30);
+         case NDTIFF:
+         default:
+            return new NDTiffStorage(
+                  parentDir, name, json, 0, 0, true, null, 30, null, true);
+      }
    }
 
    /**
@@ -1716,7 +1860,7 @@ public class StitchFrame extends JDialog {
     * Must be called on the EDT.
     */
    private void openInTiledDataViewer(
-         NDTiffStorage storage,
+         MultiresNDTiffAPI storage,
          String path, String name,
          DisplaySettings displaySettings,
          boolean isRgb,
@@ -2416,14 +2560,14 @@ public class StitchFrame extends JDialog {
    private static class StitchNdtiffDataSource
          implements TiledDataViewerDataSource {
 
-      private final NDTiffStorage storage_;
+      private final MultiresNDTiffAPI storage_;
       private final boolean rgb_;
       private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
       private final int canvasW_;
       private final int canvasH_;
 
       StitchNdtiffDataSource(
-            NDTiffStorage storage, boolean rgb,
+            MultiresNDTiffAPI storage, boolean rgb,
             int canvasW, int canvasH) {
          storage_ = storage;
          rgb_ = rgb;
