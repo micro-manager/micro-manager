@@ -41,7 +41,8 @@ public class ExplorerFrame extends JFrame {
    static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
    static final String EXPLORE_OVERLAP_PERCENT = "ExploreOverlapPercent";
    static final String VESSEL_TYPE = "VesselType";
-   // Deprecated: superseded by STORAGE_BACKEND. Still read once to migrate an existing preference.
+   // Deprecated: superseded by STORAGE_BACKEND. Used only as the fallback default when
+   // STORAGE_BACKEND has never been set; no value is ever written back under this key.
    static final String USE_OME_ZARR = "UseOmeZarrStorage";
    static final String STORAGE_BACKEND = "StorageBackend";
    static final String BACKEND_NDTIFF = "NDTiff";
@@ -179,7 +180,7 @@ public class ExplorerFrame extends JFrame {
       storageCombo.setToolTipText("<html>Storage backend for acquisitions.<br>"
             + "OME-Zarr (OME-NGFF v0.5 / Zarr v3) and OME-BigTIFF are grayscale only; "
             + "RGB falls back to NDTiff.</html>");
-      // Default honors a previously-saved OME-Zarr checkbox preference (now migrated).
+      // Default honors a previously-saved OME-Zarr checkbox preference, without migrating it.
       String defaultBackend = settings_.getBoolean(USE_OME_ZARR, false)
             ? BACKEND_OME_ZARR : BACKEND_NDTIFF;
       String backend = settings_.getString(STORAGE_BACKEND, defaultBackend);

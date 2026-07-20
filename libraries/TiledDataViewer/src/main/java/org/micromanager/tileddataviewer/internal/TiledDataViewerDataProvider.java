@@ -111,7 +111,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
          return dataManager_.convertTaggedImage(ti, coords, null);
       } catch (JSONException e) {
          throw new IOException("Failed to convert TaggedImage", e);
-      } catch (RuntimeException e) {
+      } catch (IllegalArgumentException e) {
          System.err.println(
                "TiledDataViewerDataProvider: skipping image with unusable tags: " + e);
          return null;
@@ -329,11 +329,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
       if (ti == null || ti.pix == null) {
          return getImage(coords);
       }
-      try {
-         return dataManager_.convertTaggedImage(ti, coords, null);
-      } catch (JSONException e) {
-         throw new IOException("Failed to convert TaggedImage", e);
-      }
+      return convertOrNull(ti, coords);
    }
 
    /**
@@ -354,11 +350,7 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
          return null;
       }
       Coords coords = axesBridge_.tiledDataViewerToCoords(axes);
-      try {
-         return dataManager_.convertTaggedImage(ti, coords, null);
-      } catch (JSONException e) {
-         throw new IOException("Failed to convert TaggedImage", e);
-      }
+      return convertOrNull(ti, coords);
    }
 
    /**
