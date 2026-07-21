@@ -14,9 +14,21 @@
 # assumption it makes.
 cd "@imagejdir@"
 
+# --enable-native-access is only understood by JDK 17+; older but still
+# supported JDKs (e.g. 11) fail to start entirely if passed an option they
+# don't recognize, so only pass it when the selected JDK accepts it.
+JAVA_VER=$(@JAVA@ -version 2>&1 | awk -F'"' '/version/ {print $2}')
+JAVA_MAJOR=$(echo "$JAVA_VER" | awk -F. '{ if ($1 == 1) print $2; else print $1 }')
+NATIVE_ACCESS_OPT=
+if [ "$JAVA_MAJOR" -ge 17 ] 2>/dev/null; then
+   NATIVE_ACCESS_OPT="--enable-native-access=ALL-UNNAMED"
+fi
+
 @JAVA@ -Xmx1024M \
    -XX:MaxDirectMemorySize=1000G \
    -Dmmcorej.library.loading.stderr.log=yes \
    -Dorg.micromanager.corelog.dir=/tmp \
+   --add-opens=java.desktop/sun.awt=ALL-UNNAMED \
+   $NATIVE_ACCESS_OPT \
    -jar "@imagejjar@" \
    -eval 'run("Micro-Manager Studio");'
