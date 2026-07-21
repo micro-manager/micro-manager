@@ -26,6 +26,7 @@ package org.micromanager.acquisition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import java.awt.Color;
 import java.util.ArrayList;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -881,13 +882,17 @@ public final class SequenceSettings {
    }
 
    public static String toJSONStream(SequenceSettings settings) {
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      Gson gson = new GsonBuilder().setPrettyPrinting()
+            .registerTypeAdapter(Color.class, new ColorGsonAdapter())
+            .create();
       return gson.toJson(settings);
    }
 
    public static SequenceSettings fromJSONStream(String stream) {
       try {
-         Gson gson = new Gson();
+         Gson gson = new GsonBuilder()
+               .registerTypeAdapter(Color.class, new ColorGsonAdapter())
+               .create();
          SequenceSettings result = gson.fromJson(stream, SequenceSettings.class);
          if (result == null) {
             return null;
