@@ -23,7 +23,7 @@
       <dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
       <dependency org="com.google.guava" name="guava" rev="17.0"/>
       <dependency org="com.google.protobuf" name="protobuf-java" rev="2.6.1"/><!-- transitive dep of TSFProto -->
-      <dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
+      <dependency org="com.miglayout" name="miglayout-swing" rev="5.3"/>
       <dependency org="net.imglib2" name="imglib2" rev="5.10.0"/>
       <!-- OME / Bio-Formats stack. Must be a single, internally consistent
            version line. scifio (below) transitively pulls the 2016-06 schema
@@ -62,6 +62,11 @@
       </dependency>
       <dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
+	 <!-- Pulls in the old standalone com.miglayout:miglayout:3.7.4 artifact,
+              which defines the same classes as miglayout-core/miglayout-swing
+              at an incompatible API version, causing AbstractMethodError 
+	      depending on classpath order. -->
+         <exclude org="com.miglayout" module="miglayout"/>
       </dependency>
       <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.19.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
