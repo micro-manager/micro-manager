@@ -12,6 +12,12 @@ export LD_LIBRARY_PATH="$IMAGEJ_DIR/drivers:$LD_LIBRARY_PATH"
 # when X11-forwarding to a HiDPI host display.
 MM_UI_SCALE_OPT=
 if [ -n "$MM_UI_SCALE" ]; then
+   case "$MM_UI_SCALE" in
+      ''|*[!0-9.]*)
+         echo "Invalid MM_UI_SCALE: '$MM_UI_SCALE' (expected a positive number, e.g. 2 or 1.5)" >&2
+         exit 1
+         ;;
+   esac
    MM_UI_SCALE_OPT="-Dsun.java2d.uiScale=$MM_UI_SCALE"
 fi
 
