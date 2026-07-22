@@ -426,9 +426,18 @@ public final class StageControlFrame extends JFrame {
 
    /**
     * Loads an icon from the classpath.
+    *
+    * <p>If the resource is missing (e.g. a renamed or mistyped path), logs an
+    * error and returns an empty icon rather than silently producing a blank
+    * one, so the problem is diagnosable.
     */
    private ImageIcon getNativeIcon(String path) {
-      return new ImageIcon(getClass().getResource(path));
+      java.net.URL url = getClass().getResource(path);
+      if (url == null) {
+         studio_.logs().logError("Stage Control: icon resource not found: " + path);
+         return new ImageIcon();
+      }
+      return new ImageIcon(url);
    }
 
    /**
@@ -907,8 +916,11 @@ public final class StageControlFrame extends JFrame {
 
    private void getXYPosLabelFromCore() throws Exception {
       String xyStageDevice = core_.getXYStageDevice();
-      // Check if XY stage device is valid and initialized before querying position
+      // Check if XY stage device is valid and initialized before querying
+      // position. Clear the label when skipping so a previously shown position
+      // is not left stale (e.g. after the device is unset or a config reload).
       if (!isDeviceInitialized(xyStageDevice)) {
+         xyPositionLabel_.setText("");
          return;
       }
       Point2D.Double pos = core_.getXYStagePosition(xyStageDevice);
@@ -925,8 +937,11 @@ public final class StageControlFrame extends JFrame {
 
    private void getZPosLabelFromCore(int idx) throws Exception {
       String zStageDevice = (String) zDriveSelect_[idx].getSelectedItem();
-      // Check if Z stage device is valid and initialized before querying position
+      // Check if Z stage device is valid and initialized before querying
+      // position. Clear the label when skipping so a previously shown position
+      // is not left stale (e.g. after the device is unset or a config reload).
       if (!isDeviceInitialized(zStageDevice)) {
+         zPositionLabel_[idx].setText("");
          return;
       }
       double zPos = core_.getPosition(zStageDevice);
