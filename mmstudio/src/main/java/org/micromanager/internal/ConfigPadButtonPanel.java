@@ -21,11 +21,18 @@
 
 package org.micromanager.internal;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.RGBImageFilter;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -33,9 +40,12 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
+import org.micromanager.events.ApplicationSkinEvent;
 import org.micromanager.internal.dialogs.GroupEditor;
 import org.micromanager.internal.dialogs.PresetEditor;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -55,6 +65,11 @@ public final class ConfigPadButtonPanel extends JPanel {
 
    private final ConfigGroupPad configPad_;
    private final Studio studio_;
+
+   // On Linux, the dark ("night") skin does not lighten these buttons' fixed
+   // black icons, so they need an inverted (light) variant to stay readable.
+   // Maps each icon button to its {normal, inverted} icons.
+   private final Map<JButton, ImageIcon[]> iconsByButton_ = new HashMap<>();
 
 
    ConfigPadButtonPanel(Studio studio, ConfigGroupPad configPad) {
@@ -91,6 +106,42 @@ public final class ConfigPadButtonPanel extends JPanel {
 
       GridLayout layout = new GridLayout(1, 8, 2, 1);
       setLayout(layout);
+
+      if (JavaUtils.isUnix()) {
+         studio_.events().registerForEvents(this);
+      }
+   }
+
+   /**
+    * Keeps the plus/minus icons legible when the user toggles the day/night skin
+    * at runtime. Only relevant on Linux; see {@link #createButton(String, String)}.
+    *
+    * @param event Reports the newly applied skin mode.
+    */
+   @Subscribe
+   public void onApplicationSkinChanged(ApplicationSkinEvent event) {
+      boolean night = event.getSkinMode() == ApplicationSkin.SkinMode.NIGHT;
+      for (Map.Entry<JButton, ImageIcon[]> entry : iconsByButton_.entrySet()) {
+         entry.getKey().setIcon(night ? entry.getValue()[1] : entry.getValue()[0]);
+      }
+   }
+
+   /**
+    * Returns a copy of the given icon with its RGB channels inverted (alpha
+    * untouched), used to keep fixed-black icons visible against a dark background.
+    *
+    * @param icon Icon to invert.
+    * @return Inverted copy of the icon.
+    */
+   private static ImageIcon invertIcon(ImageIcon icon) {
+      Image inverted = Toolkit.getDefaultToolkit().createImage(
+            new FilteredImageSource(icon.getImage().getSource(), new RGBImageFilter() {
+               @Override
+               public int filterRGB(int x, int y, int rgb) {
+                  return (rgb & 0xFF000000) | (~rgb & 0x00FFFFFF);
+               }
+            }));
+      return new ImageIcon(inverted);
    }
 
    public void format(JComponent theComp) {
@@ -139,7 +190,15 @@ public final class ConfigPadButtonPanel extends JPanel {
       if (iconPath.length() > 0) {
          URL resource = getClass().getResource(iconPath);
          if (resource != null) {
-            theButton.setIcon(new ImageIcon(resource));
+            ImageIcon normalIcon = new ImageIcon(resource);
+            if (JavaUtils.isUnix()) {
+               ImageIcon invertedIcon = invertIcon(normalIcon);
+               iconsByButton_.put(theButton, new ImageIcon[] {normalIcon, invertedIcon});
+               boolean night = studio_.app().skin().getSkin() == ApplicationSkin.SkinMode.NIGHT;
+               theButton.setIcon(night ? invertedIcon : normalIcon);
+            } else {
+               theButton.setIcon(normalIcon);
+            }
          }
       }
       return theButton;
