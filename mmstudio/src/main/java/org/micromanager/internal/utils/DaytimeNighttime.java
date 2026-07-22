@@ -192,6 +192,12 @@ public final class DaytimeNighttime implements ApplicationSkin {
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background", background_.get(mode));
+         if (JavaUtils.isUnix()) {
+            // FlatLaf (Linux only) sources non-editable text component backgrounds
+            // from these keys instead of ".background", ignoring the skin color set above.
+            UIManager.put(key + ".inactiveBackground", background_.get(mode));
+            UIManager.put(key + ".disabledBackground", background_.get(mode));
+         }
       }
       for (String key : LIGHTER_BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background", lightBackground_.get(mode));
