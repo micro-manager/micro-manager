@@ -47,6 +47,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
+import mmcorej.DeviceInitializationState;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
@@ -830,10 +831,30 @@ public final class StageControlFrame extends JFrame {
       }
    }
 
+   /**
+    * Returns true only if the device is loaded and has finished initializing
+    * successfully. Querying a position (or any hardware operation) on an
+    * uninitialized device is not permitted by the Core and, with some device
+    * adapters, causes a native crash. This guard prevents position polling
+    * (e.g. during config load) from touching devices that are not yet ready.
+    */
+   private boolean isDeviceInitialized(String device) {
+      if (device == null || device.isEmpty()) {
+         return false;
+      }
+      try {
+         return core_.getDeviceInitializationState(device)
+               == DeviceInitializationState.InitializedSuccessfully;
+      } catch (Exception ex) {
+         // Device unknown or not loaded; treat as not ready.
+         return false;
+      }
+   }
+
    private void getXYPosLabelFromCore() throws Exception {
       String xyStageDevice = core_.getXYStageDevice();
-      // Check if XY stage device is valid before querying position
-      if (xyStageDevice == null || xyStageDevice.isEmpty()) {
+      // Check if XY stage device is valid and initialized before querying position
+      if (!isDeviceInitialized(xyStageDevice)) {
          return;
       }
       Point2D.Double pos = core_.getXYStagePosition(xyStageDevice);
@@ -850,8 +871,8 @@ public final class StageControlFrame extends JFrame {
 
    private void getZPosLabelFromCore(int idx) throws Exception {
       String zStageDevice = (String) zDriveSelect_[idx].getSelectedItem();
-      // Check if Z stage device is valid before querying position
-      if (zStageDevice == null || zStageDevice.isEmpty()) {
+      // Check if Z stage device is valid and initialized before querying position
+      if (!isDeviceInitialized(zStageDevice)) {
          return;
       }
       double zPos = core_.getPosition(zStageDevice);
