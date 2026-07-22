@@ -18,9 +18,9 @@
 
 package org.micromanager.internal.dialogs;
 
-import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -36,6 +36,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -88,6 +89,17 @@ public final class StageControlFrame extends JFrame {
    private static final int MAX_NUM_Z_PANELS = 8;
    private static final int FRAME_X_DEFAULT_POS = 100;
    private static final int FRAME_Y_DEFAULT_POS = 100;
+
+   // Layout row heights, in px. The XY and Z panels share this vertical rhythm
+   // so that their arrows and step-size fields line up without hand-tuned
+   // spacer heights. ARROW_ROW_H is the height of one chevron-arrow row (and
+   // the XY horizontal row, the Z drive combo, and the Z position label);
+   // FIELD_ROW_H is the height of one step-size field row.
+   private static final int ARROW_ROW_H = 30;
+   private static final int FIELD_ROW_H = 20;
+   // Width of the step-size text fields, and of the icon column to their left.
+   private static final int FIELD_W = 55;
+   private static final int ICON_COL_W = 30;
 
    private static final String STAGE_CONTROL_FRAME_OPEN = "STAGE_CONTROL_FRAME_OPEN";
 
@@ -306,7 +318,7 @@ public final class StageControlFrame extends JFrame {
       settingsPanel_.setVisible(haveXY || haveZ);
       if (xyPanel_.isVisible()) {
          // put the polling checkbox in XY panel if possible, below 1st Z panel if not
-         xyPanel_.add(settingsPanel_, "pos 140 20");
+         xyPanel_.add(settingsPanel_, "pos 160 8");
       } else {
          add(settingsPanel_, "cell 1 2, center");
       }
@@ -413,6 +425,34 @@ public final class StageControlFrame extends JFrame {
    }
 
    /**
+    * Loads an icon from the classpath.
+    */
+   private ImageIcon getNativeIcon(String path) {
+      return new ImageIcon(getClass().getResource(path));
+   }
+
+   /**
+    * Creates a borderless button that hugs its icon.
+    *
+    * <p>The arrowhead icons are 30x30. A default Swing/L&amp;F button adds a
+    * margin around its content, and that margin is scaled by the display's UI
+    * scale factor (e.g. 1.25x at 125% OS scaling), so a bare icon button ends
+    * up ~63px wide instead of ~30px. Six of those in the horizontal arrow row
+    * made the whole XY panel (and frame) far wider than intended, and spread
+    * the arrows apart. Zeroing the margin (and border/fill) makes the button
+    * size follow the icon at any UI scale.
+    */
+   private JButton makeIconButton(ImageIcon icon) {
+      JButton button = new JButton(icon);
+      button.setBorder(null);
+      button.setBorderPainted(false);
+      button.setContentAreaFilled(false);
+      button.setMargin(new Insets(0, 0, 0, 0));
+      button.setIconTextGap(0);
+      return button;
+   }
+
+   /**
     * Called during constructor and never again.  Creates GUI components and adds
     * them to JPanel, but they may be turned visible/invisible during operation.
     */
@@ -475,13 +515,10 @@ public final class StageControlFrame extends JFrame {
          final int stepIndex = (i <= 5) ? (2 - (i % 3)) : (i % 3);
          String path = "/org/micromanager/icons/stagecontrol/arrowhead-"
                + stepSizes[stepIndex] + directions[i / 3];
-         final JButton button = new JButton(IconLoader.getIcon(path + ".png"));
+         final JButton button = makeIconButton(getNativeIcon(path + ".png"));
          // This copy can be referred to in the action listener.
          final int index = i;
-         button.setBorder(null);
-         button.setBorderPainted(false);
-         button.setContentAreaFilled(false);
-         button.setPressedIcon(IconLoader.getIcon(path + "p.png"));
+         button.setPressedIcon(getNativeIcon(path + "p.png"));
          button.addActionListener((ActionEvent e) -> {
             int dx = 0;
             int dy = 0;
@@ -513,21 +550,22 @@ public final class StageControlFrame extends JFrame {
                JOptionPane.showMessageDialog(theWindow, "XY Step size is not a number");
             }
          });
-         // Add the button to the panel.
-         String constraint = "";
+         // Add the button to the panel. Every arrow row is pinned to
+         // ARROW_ROW_H so the XY and Z panels share the same vertical rhythm.
+         String constraint = "height " + ARROW_ROW_H + "!, ";
          if (i < 3 || i > 8) {
             // Up or down button.
-            constraint = "span, alignx center, wrap";
+            constraint += "span, alignx center, wrap";
          } else if (i == 3) {
             // First horizontal button
-            constraint = "split, span";
+            constraint += "split, span";
          } else if (i == 6) {
             // Fourth horizontal button (start of the "right" buttons); add
             // a gap to the left.
-            constraint = "gapleft 30";
+            constraint += "gapleft 30";
          } else if (i == 8) {
             // Last horizontal button.
-            constraint = "wrap";
+            constraint += "wrap";
          }
          result.add(button, constraint);
       }
@@ -536,26 +574,33 @@ public final class StageControlFrame extends JFrame {
       result.add(xyPositionLabel_,
             "pos 5 20, width 120!, alignx left");
 
-      // Gap between the chevrons and the step size controls.
-      result.add(new JLabel(), "height 20!, wrap");
+      // Gap between the chevrons and the step size controls (one field row's
+      // worth of vertical space).
+      result.add(new JLabel(), "height " + FIELD_ROW_H + "!, wrap");
 
       // Now the controls for setting the step size.
-      result.add(new JLabel("X"), "height 20!, pos 55 230, alignx center");
-      result.add(new JLabel("Y"), "height 20!, pos 95 230, alignx center, wrap");
+      // Header row aligned to the same columns as the field rows below (an
+      // icon-width spacer, then "X" and "Y" centered over their fields).
+      // Using a real layout row here instead of absolute "pos" coordinates
+      // keeps the headers aligned regardless of UI scale.
+      result.add(new JLabel(), "width " + ICON_COL_W + "!, split, span");
+      result.add(new JLabel("X", JLabel.CENTER),
+            "height " + FIELD_ROW_H + "!, width " + FIELD_W + "!");
+      result.add(new JLabel("Y", JLabel.CENTER),
+            "height " + FIELD_ROW_H + "!, width " + FIELD_W + "!, wrap");
 
       String[] labels = new String[] {"1 pixel", "0.1 field", "1 field"};
       for (int i = 0; i < 3; ++i) {
-         JLabel indicator = new JLabel(IconLoader.getIcon(
+         JLabel indicator = new JLabel(getNativeIcon(
                "/org/micromanager/icons/stagecontrol/arrowhead-"
                      + stepSizes[i] + "r.png"));
-         // HACK: make it smaller so the gap between rows is smaller.
-         result.add(indicator, "height 20!, split, span");
+         result.add(indicator,
+               "height " + FIELD_ROW_H + "!, width " + ICON_COL_W + "!, split, span");
          // This copy can be referred to in the action listener.
          final int index = i;
 
-         // See above HACK note.
-         result.add(xStepTexts_[i], "height 20!, width 55");
-         result.add(yStepTexts_[i], "height 20!, width 55");
+         result.add(xStepTexts_[i], "height " + FIELD_ROW_H + "!, width " + FIELD_W + "!");
+         result.add(yStepTexts_[i], "height " + FIELD_ROW_H + "!, width " + FIELD_W + "!");
 
          result.add(new JLabel("\u00b5m")); //micro-m, i.e. micron
 
@@ -570,17 +615,20 @@ public final class StageControlFrame extends JFrame {
             xStepTexts_[index].setText(NumberUtils.doubleToDisplayString(xSizes[index]));
             yStepTexts_[index].setText(NumberUtils.doubleToDisplayString(ySizes[index]));
          });
-         result.add(presetButton, "width 80!, height 20!, wrap");
+         result.add(presetButton, "width 80!, height " + FIELD_ROW_H + "!, wrap");
       } // End creating set-step-size text fields/buttons.
 
       return result;
    }
 
    /**
-    * NOTE: this method makes assumptions about the layout of the XY panel.
-    * In particular, it is assumed that each chevron button is 30px tall,
-    * that the step size controls are 20px tall, and that there is a 20px gap
-    * between the chevrons and the step size controls.
+    * Builds a Z-drive panel that vertically aligns with the XY panel.
+    *
+    * <p>Both panels share the same vertical rhythm, expressed via the
+    * {@code ARROW_ROW_H} and {@code FIELD_ROW_H} constants, rather than
+    * hand-tuned spacer heights: equal-height header rows, equal-height arrow
+    * rows (with blank slots standing in for the XY panel's extra outer arrows),
+    * and equal-height step-size rows. Change a constant and both panels follow.
     */
    private JPanel createZPanel(final int idx) {
       final JFrame theWindow = this;
@@ -602,25 +650,31 @@ public final class StageControlFrame extends JFrame {
          }
       });
 
-      // HACK: this defined height for the buttons matches the height of one
-      // of the chevron buttons, and helps to align components between the XY
-      // and Z panels.
+      // Header row, same height as the XY panel's "XY Stage" header row, so the
+      // arrow rows below start at the same y in both panels.
       result.add(zDriveSelect_[idx],
-            "height 22!, gaptop 4, gapbottom 4, hidemode 0, growx");
+            "height " + ARROW_ROW_H + "!, hidemode 0, growx");
 
       // Create buttons for stepping up/down.
+      //
+      // The XY panel has three up- and three down-arrows around its center
+      // (the horizontal row); the Z panel has only two up- and two down-arrows
+      // around its center (the position label). To make the Z double/single
+      // arrows line up with the XY double/single arrows -- and both centers
+      // coincide -- we reserve an empty arrow-height row where the XY panel's
+      // outermost (triple) arrows are.
+      //
       // Icon name prefix: double, single, single, double
       String[] prefixes = new String[] {"d", "s", "s", "d"};
       // Icon name component: up, up, down, down
       String[] directions = new String[] {"u", "u", "d", "d"};
+      // Blank slot aligning with the XY triple-up arrow.
+      result.add(new JLabel(), "height " + ARROW_ROW_H + "!, alignx center");
       for (int i = 0; i < 4; ++i) {
          String path = "/org/micromanager/icons/stagecontrol/arrowhead-"
                + prefixes[i] + directions[i];
-         JButton button = new JButton(IconLoader.getIcon(path + ".png"));
-         button.setBorder(null);
-         button.setBorderPainted(false);
-         button.setContentAreaFilled(false);
-         button.setPressedIcon(IconLoader.getIcon(path + "p.png"));
+         JButton button = makeIconButton(getNativeIcon(path + ".png"));
+         button.setPressedIcon(getNativeIcon(path + "p.png"));
          // This copy can be referred to in the action listener.
          final int index = i;
          button.addActionListener((ActionEvent e) -> {
@@ -636,40 +690,40 @@ public final class StageControlFrame extends JFrame {
             }
             setRelativeStagePosition(dz * stepSize, idx);
          });
-         result.add(button, "alignx center, growx");
+         result.add(button, "height " + ARROW_ROW_H + "!, alignx center, growx");
          if (i == 1) {
-            // Stick the Z position text in the middle.
-            // HACK: As above HACK, this height matches the height of the
-            // chevron buttons in the XY panel.
+            // Z position text, in the center row (aligns with the XY panel's
+            // horizontal arrow row).
             zPositionLabel_[idx] = new JLabel("", JLabel.CENTER);
             result.add(zPositionLabel_[idx],
-                  "height 30!, width 100:, alignx center, growx");
+                  "height " + ARROW_ROW_H + "!, width 100:, alignx center, growx");
          }
       }
+      // Blank slot aligning with the XY triple-down arrow.
+      result.add(new JLabel(), "height " + ARROW_ROW_H + "!, alignx center");
 
-      // Spacer to vertically align stepsize controls with the XY panel.
-      // Encompasses one chevron (height 30) and the gap the XY panel has
-      // (height 20).
-      result.add(new JLabel(), "height 50!");
+      // Gap between the arrows and the step-size controls, matching the XY
+      // panel: one field-row gap plus its "X"/"Y" header row.
+      result.add(new JLabel(), "height " + (2 * FIELD_ROW_H) + "!");
 
-      // Create the controls for setting the step size.
-      // These heights again must match those of the corresponding stepsize
-      // controls in the XY panel.
+      // Create the controls for setting the step size. Each row is pinned to
+      // FIELD_ROW_H (and the field to FIELD_W) so these rows line up with the
+      // XY panel's step-size rows, and with each other.
       zStepTextsSmall_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(
             settings_, zDriveSelect_[idx], SMALL_MOVEMENT_Z, 1.1);
-      result.add(new JLabel(IconLoader.getIcon(
+      result.add(new JLabel(getNativeIcon(
             "/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
-            "height 20!, span, split 3, flowx");
-      result.add(zStepTextsSmall_[idx], "height 20!, width 55");
-      result.add(new JLabel("\u00b5m"), "height 20!"); //micro-m, i.e. micron
+            "height " + FIELD_ROW_H + "!, width " + ICON_COL_W + "!, span, split 3, flowx");
+      result.add(zStepTextsSmall_[idx], "height " + FIELD_ROW_H + "!, width " + FIELD_W + "!");
+      result.add(new JLabel("\u00b5m"), "height " + FIELD_ROW_H + "!"); //micro-m, i.e. micron
 
       zStepTextsMedium_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(
             settings_, zDriveSelect_[idx], MEDIUM_MOVEMENT_Z, 11.1);
-      result.add(new JLabel(IconLoader.getIcon(
+      result.add(new JLabel(getNativeIcon(
             "/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
-            "span, split 3, flowx");
-      result.add(zStepTextsMedium_[idx], "height 20!, width 55");
-      result.add(new JLabel("\u00b5m"), "height 20!"); // micro-m, i.e micron
+            "height " + FIELD_ROW_H + "!, width " + ICON_COL_W + "!, span, split 3, flowx");
+      result.add(zStepTextsMedium_[idx], "height " + FIELD_ROW_H + "!, width " + FIELD_W + "!");
+      result.add(new JLabel("\u00b5m"), "height " + FIELD_ROW_H + "!"); // micro-m, i.e micron
 
       minusButtons_[idx] = new JButton("-");
       minusButtons_[idx].addActionListener((ActionEvent arg0) -> {
