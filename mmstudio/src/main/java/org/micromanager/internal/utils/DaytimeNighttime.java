@@ -72,12 +72,14 @@ public final class DaytimeNighttime implements ApplicationSkin {
    // Improve text legibility against dark backgrounds. These will have
    // ".foreground" appended to them later.
    private static final String[] ENABLED_TEXT_COLOR_KEYS = new String[] {
-         "CheckBox", "ColorChooser", "FormattedTextField",
-         "InternalFrame", "Label", "List",
-         "OptionPane", "Panel", "ProgressBar",
-         "RadioButton", "ScrollPane", "Separator", "Slider", "Spinner",
+         "Button", "CheckBox", "CheckBoxMenuItem", "ColorChooser", "ComboBox",
+         "EditorPane", "FormattedTextField",
+         "InternalFrame", "Label", "List", "Menu", "MenuBar", "MenuItem",
+         "OptionPane", "Panel", "PasswordField", "PopupMenu", "ProgressBar",
+         "RadioButton", "RadioButtonMenuItem", "ScrollBar", "ScrollPane",
+         "Separator", "Slider", "Spinner",
          "SplitPane", "Table", "TableHeader", "TextArea", "TextField",
-         "TextPane", "ToolBar", "Tree", "Viewport"
+         "TextPane", "ToggleButton", "ToolBar", "Tree", "Viewport"
    };
 
    // As above, but for disabled text; each of these keys will have
@@ -190,6 +192,12 @@ public final class DaytimeNighttime implements ApplicationSkin {
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background", background_.get(mode));
+         if (JavaUtils.isUnix()) {
+            // FlatLaf (Linux only) sources non-editable text component backgrounds
+            // from these keys instead of ".background", ignoring the skin color set above.
+            UIManager.put(key + ".inactiveBackground", background_.get(mode));
+            UIManager.put(key + ".disabledBackground", background_.get(mode));
+         }
       }
       for (String key : LIGHTER_BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background", lightBackground_.get(mode));
