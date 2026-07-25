@@ -532,16 +532,32 @@ public class TestAcqAdapter extends DataViewerListener implements
                  null,
                  chSpecs,
                  null);
-      } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
-         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
-         if (hasZOffsets) {
-            zStack = MDAAcqEventModules.zStack(
-                     acquisitionSettings,
-                     studio_.core().getPosition(),
-                     null,
-                     chSpecs,
-                     null);
-         }
+      } else if (((acquisitionSettings.useChannels() && !chSpecs.isEmpty())
+              || acquisitionSettings.useAutofocus())
+              && !studio_.core().getFocusDevice().isEmpty()) {
+         // Mirror the single-MDA path (AcqEngJAdapter.createAcqEventIterator): when there
+         // is no Z stack but channels and/or autofocus are used, add a "fake" single-slice
+         // Z stack anchored at the CURRENT focus position (relative slice at 0.0). Without
+         // this, MDAAcqEventModules.channels sets the event's Z coordinate to the absolute
+         // zOffset (0.0 when there are no offsets), which drives the focus drive to 0.
+         // Test Acquisitions never use a position list (usePositionList is forced false in
+         // runAcquisition), so no PositionList is passed here.
+         ArrayList<Double> slices = new ArrayList<>();
+         slices.add(0.0);
+         acquisitionSettings = acquisitionSettings.copyBuilder()
+                 .useSlices(true)
+                 .slices(slices)
+                 .relativeZSlice(true)
+                 .sliceZBottomUm(0.0)
+                 .sliceZTopUm(0.0)
+                 .sliceZStepUm(0.0)
+                 .zReference(0.0).build();
+         zStack = MDAAcqEventModules.zStack(
+                 acquisitionSettings,
+                 studio_.core().getPosition(),
+                 null,
+                 chSpecs,
+                 null);
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
