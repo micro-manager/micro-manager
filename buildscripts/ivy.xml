@@ -20,6 +20,11 @@
       <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
       <dependency org="com.fifesoft" name="rsyntaxtextarea" rev="3.1.1"/>
+      <!-- Used on Linux only (see MMStudio.main): unlike GTKLookAndFeel, honors
+           UIManager color overrides (DaytimeNighttime dark theme), and unlike
+           Nimbus, MigLayout scales its pixel constraints to match FlatLaf's
+           detected HiDPI scale factor instead of ignoring it. -->
+      <dependency org="com.formdev" name="flatlaf" rev="3.7.1"/>
       <dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
       <dependency org="com.google.guava" name="guava" rev="17.0"/>
       <dependency org="com.google.protobuf" name="protobuf-java" rev="2.6.1"/><!-- transitive dep of TSFProto -->

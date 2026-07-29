@@ -30,7 +30,6 @@ import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.micromanager.display.internal.displaywindow.imagej.MMVirtualStack;
 import org.micromanager.internal.MMStudio;
@@ -67,7 +66,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                      System.setProperty("apple.laf.useScreenMenuBar", "true");
                   }
                   try {
-                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                     JavaUtils.setPlatformLookAndFeel();
                   } catch (ClassNotFoundException | IllegalAccessException
                         | InstantiationException | UnsupportedLookAndFeelException e) {
                      ReportingUtils.logError(e, "Failed to set look-and-feel");

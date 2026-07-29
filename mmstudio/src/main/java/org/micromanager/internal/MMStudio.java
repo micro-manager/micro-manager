@@ -40,7 +40,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
@@ -97,6 +96,7 @@ import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeys;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
@@ -194,7 +194,7 @@ public final class MMStudio implements Studio {
          }
       }
       try {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+         JavaUtils.setPlatformLookAndFeel();
          new MMStudio(false, profileNameAutoStart);
       } catch (ClassNotFoundException
             | IllegalAccessException
