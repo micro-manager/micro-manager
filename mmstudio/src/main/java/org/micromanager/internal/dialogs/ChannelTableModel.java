@@ -364,6 +364,12 @@ public final class ChannelTableModel extends AbstractTableModel {
    /**
     * Updates the exposure time in the given preset.
     *
+    * <p>The new exposure time is also written through to the profile and to the
+    * acquisition engine's SequenceSettings (by storeChannels()).  Without that,
+    * the table would show the new exposure while the engine still held the old
+    * one, and the next refresh of this dialog from the engine's settings would
+    * silently revert the displayed value.
+    *
     * @param channelGroup - if it does not match current channelGroup,
     *                     no action will be taken
     * @param channel      - preset for which to change exposure time
@@ -378,8 +384,15 @@ public final class ChannelTableModel extends AbstractTableModel {
       for (int row = 0; row < channels_.size(); row++) {
          ChannelSpec cs = channels_.get(row);
          if (cs.config().equals(channel)) {
+            if (Double.compare(cs.exposure(), exposure) == 0) {
+               // Nothing changed.  Returning early avoids a needless profile
+               // write, and avoids feeding the same value back to the Core
+               // through onGUIRefresh().
+               return;
+            }
             channels_.set(row, cs.copyBuilder().exposure(exposure).build());
             this.fireTableCellUpdated(row, 2);
+            storeChannels();
             return;
          }
       }
