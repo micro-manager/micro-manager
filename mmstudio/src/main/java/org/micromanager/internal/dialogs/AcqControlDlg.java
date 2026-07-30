@@ -2080,6 +2080,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     */
    @Subscribe
    public void onSettingsChanged(AcquisitionSettingsChangedEvent event) {
+      if (!event.isPrimaryEngine()) {
+         // A secondary engine (e.g. a Test Acquisition) derived its own settings
+         // from this window.  Redrawing this window from those settings would
+         // show the user something they did not ask for.
+         return;
+      }
       if (this.isDisplayable()) {
          updateGUIFromSequenceSettings(event.getNewSettings());
       }

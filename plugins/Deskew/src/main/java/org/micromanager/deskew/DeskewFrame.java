@@ -513,6 +513,12 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
     */
    @Subscribe
    public void onAcquisitionSettingsChanged(AcquisitionSettingsChangedEvent event) {
+      if (!event.isPrimaryEngine()) {
+         // Settings from a secondary engine such as a Test Acquisition, which
+         // switches off saving.  Applying those here would clobber the user's
+         // output settings.
+         return;
+      }
       updateUIBasedOnAcquisitionSettings(event.getNewSettings());
    }
 

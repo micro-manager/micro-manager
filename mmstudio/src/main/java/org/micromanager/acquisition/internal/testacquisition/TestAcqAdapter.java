@@ -1066,9 +1066,14 @@ public class TestAcqAdapter extends DataViewerListener implements
 
    /**
     * Will notify registered AcqSettingsListeners that the settings have changed.
+    *
+    * <p>These are the settings of a Test Acquisition, which are derived from the
+    * MDA window but not identical to it, so the event is marked as not coming
+    * from the primary engine.  That keeps the MDA window (and anything else
+    * mirroring it) from redrawing itself with our modified settings.
     */
    private void settingsChanged(SequenceSettings sequenceSettings) {
-      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(sequenceSettings));
+      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(sequenceSettings, false));
    }
 
 
