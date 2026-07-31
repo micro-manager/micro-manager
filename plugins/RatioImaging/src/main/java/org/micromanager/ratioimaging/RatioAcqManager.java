@@ -23,6 +23,9 @@ package org.micromanager.ratioimaging;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -49,7 +52,11 @@ public class RatioAcqManager {
    public static final String RATIO_DISPLAYSETTINGS = "Ratio_Display";
 
    private final Studio studio_;
-   private DisplayWindow window_;
+   // One entry per ratio datastore created by this plugin instance.  A single
+   // field would not do: createStoreAndDisplay is called once per acquisition,
+   // and the windows of earlier acquisitions may still be open.
+   private final Map<DataProvider, DisplayWindow> windows_ =
+            new HashMap<DataProvider, DisplayWindow>();
 
    public RatioAcqManager(Studio studio) {
       studio_ = studio;
@@ -114,23 +121,45 @@ public class RatioAcqManager {
                                  ? displaySettings.getChannelColor(0)
                                  : Color.WHITE));
 
-      window_ = studio_.displays().createDisplay(store, null, displaySettingsBuilder.build());
-      window_.setWindowPositionKey(RATIO_DISPLAYSETTINGS);
-      window_.setDisplaySettingsProfileKey(RATIO_DISPLAYSETTINGS);
-      window_.show();
+      DisplayWindow window =
+               studio_.displays().createDisplay(store, null, displaySettingsBuilder.build());
+      window.setWindowPositionKey(RATIO_DISPLAYSETTINGS);
+      window.setDisplaySettingsProfileKey(RATIO_DISPLAYSETTINGS);
+      forgetClosedWindows();
+      windows_.put(store, window);
+      window.show();
 
       return store;
    }
 
    /**
+    * Drops entries whose window the user has already closed.
+    *
+    * <p>closeViewerFor() only runs for datastores that ended up empty, so
+    * without this the map would retain an entry for every ratio window ever
+    * opened.
+    */
+   private void forgetClosedWindows() {
+      Iterator<Map.Entry<DataProvider, DisplayWindow>> it = windows_.entrySet().iterator();
+      while (it.hasNext()) {
+         if (it.next().getValue().isClosed()) {
+            it.remove();
+         }
+      }
+   }
+
+   /**
     * Closes the display window belonging to the given data provider, if any.
+    *
+    * <p>The entry is removed whether or not a window was found, so that this
+    * map does not keep growing as acquisitions come and go.
     *
     * @param provider DataProvider whose viewer should be closed.
     */
    public void closeViewerFor(DataProvider provider) {
-      if (window_ != null && window_.getDataProvider() == provider) {
-         window_.close();
-         window_ = null;
+      DisplayWindow window = windows_.remove(provider);
+      if (window != null) {
+         window.close();
       }
    }
 }
