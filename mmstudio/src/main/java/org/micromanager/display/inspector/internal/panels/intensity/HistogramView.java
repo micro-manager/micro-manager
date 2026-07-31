@@ -671,7 +671,9 @@ public final class HistogramView extends JPanel {
 
       Graphics2D g2d = (Graphics2D) g.create();
       g2d.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
-      FontMetrics metrics = g.getFontMetrics();
+      // Measure with the derived font actually used to draw, so that the
+      // position and the hit rectangle match what is on screen.
+      FontMetrics metrics = g2d.getFontMetrics();
       int x = graphBottomRight.x - metrics.stringWidth(text);
       if (x <= getScalingHandlePos(selectedComponent_, false)) {
          return; // Hide when scaling lower limit handle overlaps
@@ -704,7 +706,9 @@ public final class HistogramView extends JPanel {
 
       Graphics2D g2d = (Graphics2D) g.create();
       g2d.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
-      FontMetrics metrics = g.getFontMetrics();
+      // Measure with the derived font actually used to draw, so that the
+      // overlap checks and the hit rectangle match what is on screen.
+      FontMetrics metrics = g2d.getFontMetrics();
       int x = rect.x;
       // Keep clear of the low scaling handle and of the range-max label.
       if (x + metrics.stringWidth(text) >= getScalingHandlePos(selectedComponent_, false)) {

@@ -120,7 +120,11 @@ public final class DefaultComponentDisplaySettings
 
    @Override
    public boolean hasFloatScaling() {
-      return !Double.isNaN(scalingMinDouble_) && !Double.isNaN(scalingMaxDouble_);
+      // An inverted range is treated as unset: callers use this as the
+      // authority on whether the stored bounds are usable, and applying
+      // max < min would produce a nonsensical display range.
+      return !Double.isNaN(scalingMinDouble_) && !Double.isNaN(scalingMaxDouble_)
+            && scalingMaxDouble_ > scalingMinDouble_;
    }
 
    public void hackScalingMinimumDouble(double min) {

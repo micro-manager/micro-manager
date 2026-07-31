@@ -65,6 +65,38 @@ public class DefaultComponentDisplaySettingsFloatTest {
       assertFalse(s.hasFloatScaling());
    }
 
+   /**
+    * Callers treat hasFloatScaling() as the authority on whether the stored bounds are
+    * usable, so an inverted range must read as unset rather than being applied.
+    */
+   @Test
+   public void testInvertedFloatRangeIsNotFloatScaling() {
+      ComponentDisplaySettings s = ComponentDisplaySettings.builder()
+            .scalingRangeDouble(5.0, 1.0)
+            .build();
+      assertFalse(s.hasFloatScaling());
+   }
+
+   /** An empty range would give ImageJ a zero-width display range. */
+   @Test
+   public void testEmptyFloatRangeIsNotFloatScaling() {
+      ComponentDisplaySettings s = ComponentDisplaySettings.builder()
+            .scalingRangeDouble(2.0, 2.0)
+            .build();
+      assertFalse(s.hasFloatScaling());
+   }
+
+   /** An inverted range must not be persisted either, so it cannot survive a reload. */
+   @Test
+   public void testInvertedFloatRangeIsNotWritten() {
+      ComponentDisplaySettings orig = ComponentDisplaySettings.builder()
+            .scalingRangeDouble(5.0, 1.0)
+            .build();
+      PropertyMap pmap = ((DefaultComponentDisplaySettings) orig).toPropertyMap();
+      assertFalse(pmap.containsKey(PropertyKey.SCALING_MIN_FLOAT.key()));
+      assertFalse(pmap.containsKey(PropertyKey.SCALING_MAX_FLOAT.key()));
+   }
+
    @Test
    public void testCopyBuilderPreservesFloatRange() {
       ComponentDisplaySettings s = ComponentDisplaySettings.builder()
