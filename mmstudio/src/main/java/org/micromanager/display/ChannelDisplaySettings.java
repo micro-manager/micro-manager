@@ -40,6 +40,29 @@ public interface ChannelDisplaySettings {
 
       Builder useCameraHistoRange(boolean use);
 
+      /**
+       * Sets the histogram axis range for floating point images, as pixel values.
+       *
+       * <p>Only meaningful for float images, whose axis is a real value range rather than
+       * a bit depth. Pass {@code Double.NaN} for both to clear it.
+       *
+       * @param min low end of the axis
+       * @param max high end of the axis
+       * @return this builder
+       */
+      Builder floatHistoRange(double min, double max);
+
+      /**
+       * Marks the float histogram axis as chosen by the user.
+       *
+       * <p>When set, the axis is left exactly as given instead of being widened to take in
+       * each newly displayed image.
+       *
+       * @param pinned true to stop the axis adapting to the data
+       * @return this builder
+       */
+      Builder floatHistoRangePinned(boolean pinned);
+
       Builder name(String name);
 
       Builder groupName(String groupName);
@@ -99,6 +122,38 @@ public interface ChannelDisplaySettings {
     * @return True when historangebits is equal to the maximum intensity coming from the camera
     */
    boolean useCameraRange();
+
+   /**
+    * Low end of the histogram axis for floating point images.
+    *
+    * @return pixel value, or {@code Double.NaN} if not set
+    * @see #hasFloatHistoRange()
+    */
+   double getFloatHistoRangeMin();
+
+   /**
+    * High end of the histogram axis for floating point images.
+    *
+    * @return pixel value, or {@code Double.NaN} if not set
+    * @see #hasFloatHistoRange()
+    */
+   double getFloatHistoRangeMax();
+
+   /**
+    * Returns whether a float histogram axis range has been recorded.
+    *
+    * @return true if both ends are set
+    */
+   boolean hasFloatHistoRange();
+
+   /**
+    * Returns whether the float histogram axis was chosen by the user.
+    *
+    * <p>A pinned axis is not widened to include newly displayed images.
+    *
+    * @return true if the axis should be left as-is
+    */
+   boolean isFloatHistoRangePinned();
 
    /**
     * Indicates whether this is visible.

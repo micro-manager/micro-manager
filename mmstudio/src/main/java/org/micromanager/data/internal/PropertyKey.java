@@ -566,6 +566,12 @@ public enum PropertyKey {
       }
    },
 
+   FLOAT_HISTO_RANGE_MIN("FloatHistoRangeMin", ChannelDisplaySettings.class),
+
+   FLOAT_HISTO_RANGE_MAX("FloatHistoRangeMax", ChannelDisplaySettings.class),
+
+   FLOAT_HISTO_RANGE_PINNED("FloatHistoRangePinned", ChannelDisplaySettings.class),
+
    HISTOGRAM_BIT_DEPTH("HistogramBitDepth", ChannelDisplaySettings.class),
 
    HISTOGRAM_IS_LOGARITHMIC("HistogramIsLogarithmic", DisplaySettings.class),

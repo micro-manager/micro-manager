@@ -73,6 +73,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    // Set once the user edits an axis end by hand: the axis then stays exactly where they
    // put it and no longer widens to take in new images.
    private boolean floatRangePinned_ = false;
+   // Guards the one-time adoption of a range recorded in the display settings.
+   private boolean floatRangeRestored_ = false;
    private boolean pickingWhiteBalancePoint_ = false;
    private long[] lastPickedValues_ = null; // pixel values tracked while in pick mode
 
@@ -527,6 +529,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       int numComponents = stats_.getNumberOfComponents();
       setRGBMode(numComponents > 1);
 
+      restoreFloatRangeFromSettings(displaySettings);
       accumulateFloatRange();
       seedFloatScalingIfUnset(displaySettings);
 
@@ -867,6 +870,63 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    void setRgbAutostretchEnabled(boolean enabled) {
       rgbAutostretchEnabled_ = enabled;
+   }
+
+   /**
+    * Adopts a float histogram axis range recorded in the display settings.
+    *
+    * <p>Called before accumulating, so that a range restored from a saved dataset (or set
+    * in an earlier session) takes precedence over one derived from the images.
+    *
+    * @param settings current display settings
+    */
+   @MustCallOnEDT
+   private void restoreFloatRangeFromSettings(DisplaySettings settings) {
+      if (floatRangeRestored_) {
+         return;
+      }
+      ChannelDisplaySettings channelSettings = settings.getChannelSettings(channelIndex_);
+      if (!channelSettings.hasFloatHistoRange()) {
+         return;
+      }
+      floatRangeRestored_ = true;
+      floatRangeMin_ = channelSettings.getFloatHistoRangeMin();
+      floatRangeMax_ = channelSettings.getFloatHistoRangeMax();
+      floatRangePinned_ = channelSettings.isFloatHistoRangePinned();
+   }
+
+   /**
+    * Records the current float histogram axis in the display settings so that it survives
+    * closing and reopening the dataset.
+    *
+    * @param pinned whether the axis was chosen by the user
+    */
+   @MustCallOnEDT
+   private void storeFloatRangeInSettings(boolean pinned) {
+      if (Double.isNaN(floatRangeMin_) || Double.isNaN(floatRangeMax_)
+            || floatRangeMax_ <= floatRangeMin_) {
+         return;
+      }
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
+      do {
+         oldDisplaySettings = viewer_.getDisplaySettings();
+         ChannelDisplaySettings channelSettings =
+               oldDisplaySettings.getChannelSettings(channelIndex_);
+         if (channelSettings.hasFloatHistoRange()
+               && channelSettings.getFloatHistoRangeMin() == floatRangeMin_
+               && channelSettings.getFloatHistoRangeMax() == floatRangeMax_
+               && channelSettings.isFloatHistoRangePinned() == pinned) {
+            return;
+         }
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithChannelSettings(channelIndex_,
+                     channelSettings.copyBuilder()
+                           .floatHistoRange(floatRangeMin_, floatRangeMax_)
+                           .floatHistoRangePinned(pinned)
+                           .build())
+               .build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
    /**
@@ -1512,8 +1572,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
       // The user has chosen the axis explicitly: stop widening it to fit new images.
       floatRangePinned_ = true;
+      floatRangeRestored_ = true;
       floatRangeMin_ = newRangeMin;
       floatRangeMax_ = newRangeMax;
+      // Record it so the choice survives closing and reopening the dataset.
+      storeFloatRangeInSettings(true);
       // Keep the scaling range inside the new axis, otherwise the handles would sit off
       // the end and the image would be scaled to something the user cannot see or reach.
       DisplaySettings oldDisplaySettings;
