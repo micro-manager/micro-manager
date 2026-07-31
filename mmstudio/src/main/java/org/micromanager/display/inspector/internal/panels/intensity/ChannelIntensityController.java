@@ -167,8 +167,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          super.setOpaque(true);
          FontMetrics keyFontMetrics = super.getFontMetrics(keyFont_);
 
-         maxMinMaxWidth_ = valueFontMetrics_.stringWidth("99999") + 2;
-         maxAvgStdWidth_ = valueFontMetrics_.stringWidth("9.99e+99") + 2;
+         // Wide enough for a signed float in scientific notation: float images show real
+         // values such as "-2.238" or "-1.62e-01", which do not fit an integer-sized slot
+         // and would otherwise be replaced by "..." in formatString().
+         maxMinMaxWidth_ = valueFontMetrics_.stringWidth("-9.999e+99") + 2;
+         maxAvgStdWidth_ = valueFontMetrics_.stringWidth("-9.999e+99") + 2;
 
          valueX1 = keyX1 + Math.max(keyFontMetrics.stringWidth("MAX"),
                keyFontMetrics.stringWidth("MIN"))
@@ -484,6 +487,26 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       return histoPanel_;
    }
 
+   /**
+    * Formats a floating point intensity for the stats readout.
+    *
+    * <p>Switches to scientific notation for magnitudes that would otherwise be shown as
+    * mostly zeros or as an unreadably long integer.
+    *
+    * @param v value to format
+    * @return the formatted value, or null if it is not a number
+    */
+   static String formatStatValue(double v) {
+      if (Double.isNaN(v)) {
+         return null;
+      }
+      double m = Math.abs(v);
+      if (m != 0.0 && (m < 1e-3 || m >= 1e5)) {
+         return String.format("%.2e", v);
+      }
+      return String.format("%.4g", v);
+   }
+
    @MustCallOnEDT
    private void statsOrRangeChanged() {
       if (stats_ == null) {
@@ -501,18 +524,34 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       final DisplaySettings displaySettings = viewer_.getDisplaySettings();
       boolean ignoreZeros = displaySettings.isAutoscaleIgnoringZeros();
 
-      long min = ignoreZeros ? selectedStats.getMinIntensityExcludingZeros()
-                             : selectedStats.getMinIntensity();
-      intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
-      long max = selectedStats.getMaxIntensity();
-      intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
-      long mean = ignoreZeros ? selectedStats.getMeanIntensityExcludingZeros()
-                              : selectedStats.getMeanIntensity();
-      intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
-      double stdev = ignoreZeros ? selectedStats.getStandardDeviationExcludingZeros()
-                                 : selectedStats.getStandardDeviation();
-      intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
-            String.format("%1.2e", stdev));
+      if (selectedStats.isFloat()) {
+         // Float values are genuinely fractional and often negative, so show them as such
+         // rather than rounding (which collapses a mean of -0.16 to 0) or hiding them.
+         double min = ignoreZeros ? selectedStats.getMinIntensityExcludingZerosDouble()
+                                  : selectedStats.getMinIntensityDouble();
+         intensityStatsPanel_.setMin(formatStatValue(min));
+         intensityStatsPanel_.setMax(formatStatValue(selectedStats.getMaxIntensityDouble()));
+         double mean = ignoreZeros ? selectedStats.getMeanIntensityExcludingZerosDouble()
+                                   : selectedStats.getMeanIntensityDouble();
+         intensityStatsPanel_.setMean(formatStatValue(mean));
+         double stdev = ignoreZeros ? selectedStats.getStandardDeviationExcludingZerosDouble()
+                                    : selectedStats.getStandardDeviationDouble();
+         intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
+               String.format("%1.2e", stdev));
+      } else {
+         long min = ignoreZeros ? selectedStats.getMinIntensityExcludingZeros()
+                                : selectedStats.getMinIntensity();
+         intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
+         long max = selectedStats.getMaxIntensity();
+         intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
+         long mean = ignoreZeros ? selectedStats.getMeanIntensityExcludingZeros()
+                                 : selectedStats.getMeanIntensity();
+         intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
+         double stdev = ignoreZeros ? selectedStats.getStandardDeviationExcludingZeros()
+                                    : selectedStats.getStandardDeviation();
+         intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
+               String.format("%1.2e", stdev));
+      }
 
       cameraBits_ = stats_.getComponentStats(0).getBitDepth();
       updateHistoRangeControlsEnabled();

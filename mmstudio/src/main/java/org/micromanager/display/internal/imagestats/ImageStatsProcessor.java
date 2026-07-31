@@ -305,10 +305,10 @@ public final class ImageStatsProcessor {
          }
       }
 
-      // sum and sumOfSquares are stored as long in IntegerComponentStats.
-      // Round to the nearest integer so that getMeanIntensity() and
-      // getStandardDeviation() return values that are correct to integer precision,
-      // matching the display which shows mean and stdev rounded to integers.
+      // The long-valued minimum/maximum/sum/sumOfSquares are kept because the bin and
+      // quantile machinery is integer based. They cannot represent float statistics, so
+      // the true values are also stored as doubles and are what the intensity readout
+      // uses; see ComponentStats.getMinIntensityDouble() and friends.
       ComponentStats stats = ComponentStats.builder()
             .histogram(hist, 0)
             .isFloat(true)
@@ -322,6 +322,11 @@ public final class ImageStatsProcessor {
             .maximum((long) Math.ceil(fMax))
             .sum(Math.round(sum))
             .sumOfSquares(Math.round(sumOfSquares))
+            .minimumDouble(fMin)
+            .minimumExcludingZerosDouble(fMinNonZero)
+            .maximumDouble(fMax)
+            .sumDouble(sum)
+            .sumOfSquaresDouble(sumOfSquares)
             .build();
       return ImageStats.create(index, stats);
    }
