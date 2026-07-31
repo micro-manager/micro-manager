@@ -26,16 +26,18 @@ package org.micromanager.ratioimaging;
 import ij.ImagePlus;
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.SwingUtilities;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
@@ -48,7 +50,13 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**
- * DataProcessor that creates a ration image as instructed in the UI.
+ * DataProcessor that creates a ratio image as instructed in the UI.
+ *
+ * <p>The ratio is computed and emitted as 32-bit float.  Since Micro-Manager
+ * datastores can not hold images of differing pixel type, the float ratio
+ * images can not be added as an extra channel to the (usually 8 or 16-bit
+ * integer) acquisition datastore.  They are therefore written to a datastore of
+ * their own, created and managed by the RatioAcqManager.
  *
  * @author nico
  */
@@ -56,7 +64,7 @@ public class RatioImagingProcessor implements Processor {
 
    private final Studio studio_;
    private final PropertyMap settings_;
-   private final int factor_;
+   private final RatioAcqManager ratioAcqManager_;
    private final int bc1Constant_;
    private final int bc2Constant_;
    private final String bc1Path_;
@@ -67,29 +75,25 @@ public class RatioImagingProcessor implements Processor {
    private boolean process_;
    private int ch1Index_;
    private int ch2Index_;
-   private int ratioIndex_;
+   private String ratioChannelName_;
+   private SummaryMetadata inputSummaryMetadata_;
+   private Datastore ratioStore_;
 
    /**
     * Constructor of the Processor doing the heavy lifting.
     *
     * @param studio Studio object gives access to all we need.
     * @param settings Plugin Settings
+    * @param ratioAcqManager Creates and tracks the ratio datastore and display.
     */
-   public RatioImagingProcessor(Studio studio, PropertyMap settings) {
+   public RatioImagingProcessor(Studio studio, PropertyMap settings,
+                                RatioAcqManager ratioAcqManager) {
       studio_ = studio;
       settings_ = settings;
+      ratioAcqManager_ = ratioAcqManager;
       images_ = new ArrayList<Image>();
-      int factor = 1;
       int bc1Constant = 0;
       int bc2Constant = 0;
-      try {
-         if (settings_.containsString(RatioImagingFrame.FACTOR)) {
-            factor = NumberUtils.displayStringToInt(
-                    settings_.getString(RatioImagingFrame.FACTOR, "1"));
-         }
-      } catch (ParseException pe) {
-         studio_.logs().logError(pe);
-      }
       try {
          if (settings_.containsString(RatioImagingFrame.BACKGROUND1CONSTANT)) {
             bc1Constant = NumberUtils.displayStringToInt(
@@ -108,15 +112,18 @@ public class RatioImagingProcessor implements Processor {
       }
       bc1Path_ = settings_.getString(RatioImagingFrame.BACKGROUND1, "");
       bc2Path_ = settings_.getString(RatioImagingFrame.BACKGROUND2, "");
-      factor_ = factor;
       bc1Constant_ = bc1Constant;
       bc2Constant_ = bc2Constant;
    }
 
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
-      
-      // Update channel names in summary metadata.
+
+      // The ratio images go into a datastore of their own, so the incoming
+      // SummaryMetadata is passed through unchanged.  Keep a copy of it as the
+      // basis for the ratio datastore's SummaryMetadata.
+      inputSummaryMetadata_ = summary;
+
       List<String> chNames = summary.getChannelNameList();
       if (chNames == null || chNames.isEmpty() || chNames.size() < 2) {
          // Can't do anything as we don't know how many names there'll be.
@@ -124,9 +131,9 @@ public class RatioImagingProcessor implements Processor {
       }
       final String ch1Name = settings_.getString(RatioImagingFrame.CHANNEL1, "");
       final String ch2Name = settings_.getString(RatioImagingFrame.CHANNEL2, "");
-      
+
       process_ = true;
-      
+
       ch1Index_ = -1;
       ch2Index_ = -1;
       for (int i = 0; i < chNames.size(); i++) {
@@ -141,18 +148,10 @@ public class RatioImagingProcessor implements Processor {
          process_ = false;
          return summary;
       }
-      
-      String[] newNames = new String[chNames.size() + 1];
-      for (int i = 0; i < chNames.size(); i++) {
-         newNames[i] = chNames.get(i);
-      }
-      newNames[chNames.size() ] = "ratio " + ch1Name + "-" + ch2Name;
-      ratioIndex_ = chNames.size();
-      Coords newDimensions = summary.getIntendedDimensions().copyBuilder()
-                  .c(newNames.length).build();
-      
-      return summary.copyBuilder().channelNames(newNames)
-                  .intendedDimensions(newDimensions).build();
+
+      ratioChannelName_ = "ratio " + ch1Name + "-" + ch2Name;
+
+      return summary;
    }
 
 
@@ -255,13 +254,13 @@ public class RatioImagingProcessor implements Processor {
          Coords oldCoords = oldImage.getCoords();
          if (newCoords.copyRemovingAxes(Coords.C).equals(oldCoords.copyRemovingAxes(Coords.C))) {
             if (newCoords.getC() == ch1Index_ && oldCoords.getC() == ch2Index_) {
-               process(newImage, oldImage, context);
+               process(newImage, oldImage);
                images_.remove(oldImage);
                return;
             }
-         
+
             if (oldCoords.getC() == ch1Index_ && newCoords.getC() == ch2Index_) {
-               process(oldImage, newImage, context);
+               process(oldImage, newImage);
                images_.remove(oldImage);
                return;
             }
@@ -273,10 +272,23 @@ public class RatioImagingProcessor implements Processor {
 
    }
       
-   private void process(Image ch1Image, Image ch2Image, ProcessorContext context) {
-      
-      final Coords ratioCoords = ch1Image.getCoords().copyBuilder().c(ratioIndex_).build();
-      
+   /**
+    * Computes the float ratio of the two images and writes it to the ratio
+    * datastore, creating that datastore (and its display) on first use.
+    *
+    * <p>The result is not handed to the ProcessorContext: it is 32-bit float
+    * and so can not be added to the acquisition datastore alongside the
+    * integer source channels.
+    *
+    * @param ch1Image Numerator image.
+    * @param ch2Image Denominator image.
+    */
+   private void process(Image ch1Image, Image ch2Image) {
+
+      // The ratio datastore holds a single channel, so the ratio image always
+      // lives at channel index 0 there.
+      final Coords ratioCoords = ch1Image.getCoords().copyBuilder().c(0).build();
+
       ImageProcessor ch1Proc = studio_.data().ij().createProcessor(ch1Image);
       ImageProcessor ch2Proc = studio_.data().ij().createProcessor(ch2Image);
       if (bc1_ != null) {
@@ -289,57 +301,73 @@ public class RatioImagingProcessor implements Processor {
       ch2Proc = ch2Proc.convertToFloat();
       ch1Proc.subtract(bc1Constant_);
       ch2Proc.subtract(bc2Constant_);
-      ImageProcessor ch3Proc = ch1Proc.createProcessor(ch1Proc.getWidth(), 
+      ImageProcessor ch3Proc = ch1Proc.createProcessor(ch1Proc.getWidth(),
               ch1Proc.getHeight());
       ch3Proc.insert(ch1Proc, 0, 0);
       ch3Proc.copyBits(ch2Proc, 0, 0, Blitter.DIVIDE);
-      ch3Proc.multiply(factor_);
-      
-      if (ch1Image.getBytesPerPixel() == 1) {
-         // check this actually works....
-         ch3Proc = ch3Proc.convertToByteProcessor();
-      } else if (ch1Image.getBytesPerPixel() == 2) {
-         // ImageJ method seems to be broken. Copied code from ImageJ1 here
-         ch3Proc = convertFloatToShort((FloatProcessor) ch3Proc);
-      }
-      int max = (int) ch3Proc.getMax();
-      int bitDepth = 1;
-      while ((1 << bitDepth) < max && bitDepth <= ch1Image.getBytesPerPixel() * 8) {
-         bitDepth += 1;
-      }
-      
-      Image ratioImage = studio_.data().ij().createImage(ch3Proc, ratioCoords, 
-              ch1Image.getMetadata().copyBuilderWithNewUUID().bitDepth(bitDepth)
+
+      // ch3Proc is a FloatProcessor, and is deliberately left as such: the
+      // ratio is output as 32-bit float rather than being scaled and rounded
+      // into an integer range.  Where ch2 is zero the division yields NaN or
+      // Infinity; these are left alone.  They mark "undefined" and are excluded
+      // from the histogram and statistics by ImageStatsProcessor.
+      Image ratioImage = studio_.data().ij().createImage(ch3Proc, ratioCoords,
+              ch1Image.getMetadata().copyBuilderWithNewUUID().bitDepth(32)
                           .build());
-      
-      context.outputImage(ratioImage);
-   }
-   
-   /**
-    * Copied from https://github.com/imagej/imagej1/blob/master/ij/process/TypeConverter.java.
-    *
-    * <p>The call to chrProc.convertToShortProcess results in pixel values of -1
-    * Not sure why (but in included ImageJ version?) 
-    * Copying the relevant code from the ImageJ1 source fixes it
-    *
-    * @param ip FloatProcessor to be converted
-    * @return Shortprocessor
-    */
-   ShortProcessor convertFloatToShort(FloatProcessor ip) {
-      float[] pixels32 = (float[]) ip.getPixels();
-      short[] pixels16 = new short[ip.getWidth() * ip.getHeight()];
-      double value;
-      for (int i = 0, j = 0; i < (ip.getWidth() * ip.getHeight()); i++) {
-         value = pixels32[i];
-         if (value < 0.0) {
-            value = 0.0;
+
+      if (ratioStore_ == null) {
+         String prefix = (inputSummaryMetadata_ == null
+                 || inputSummaryMetadata_.getPrefix() == null
+                 || inputSummaryMetadata_.getPrefix().isEmpty())
+                 ? "Untitled" : inputSummaryMetadata_.getPrefix();
+         try {
+            ratioStore_ = ratioAcqManager_.createStoreAndDisplay(inputSummaryMetadata_,
+                    ratioChannelName_, prefix + "-Ratio",
+                    ratioImage.getWidth(), ratioImage.getHeight());
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe);
+            process_ = false;
+            return;
          }
-         if (value > 65535.0) {
-            value = 65535.0;
+         if (ratioStore_ == null) {
+            process_ = false;
+            return;
          }
-         pixels16[i] = (short) (value + 0.5);
       }
-      return new ShortProcessor(ip.getWidth(), ip.getHeight(), pixels16, ip.getColorModel());
+
+      try {
+         ratioStore_.putImage(ratioImage);
+      } catch (IOException ioe) {
+         studio_.logs().logError(ioe);
+      }
+   }
+
+   @Override
+   public void cleanup(ProcessorContext context) {
+      images_.clear();
+      if (ratioStore_ != null) {
+         final Datastore store = ratioStore_;
+         try {
+            store.freeze();
+            if (store.getNumImages() == 0) {
+               // Nothing was produced; close the empty window rather than
+               // leaving it behind.  Window work is deferred to the EDT since
+               // cleanup() blocks Pipeline.halt() and may run on a Processor
+               // thread.
+               SwingUtilities.invokeLater(() -> {
+                  ratioAcqManager_.closeViewerFor(store);
+                  try {
+                     store.close();
+                  } catch (IOException ioe) {
+                     studio_.logs().logError(ioe);
+                  }
+               });
+            }
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe);
+         }
+         ratioStore_ = null;
+      }
    }
    
    private static ByteProcessor subtractByteProcessors(ByteProcessor proc1, ByteProcessor proc2) {

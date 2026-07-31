@@ -38,7 +38,6 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -70,11 +69,9 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
    static final String BACKGROUND2 = "Background2";
    static final String BACKGROUND1CONSTANT = "Background1Constant";
    static final String BACKGROUND2CONSTANT = "Background2Constant";
-   static final String FACTOR = "Factor";
    private static final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
 
    private final Studio studio_;
-   private final CMMCore core_;
    private final JComboBox<String> ch1Combo_;
    private final JComboBox<String> ch2Combo_;
    private final MutablePropertyMapView settings_;
@@ -92,7 +89,6 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
     */
    public RatioImagingFrame(PropertyMap configuratorSettings, Studio studio) {
       studio_ = studio;
-      core_ = studio_.getCMMCore();
       settings_ = studio_.profile().getSettings(this.getClass());
       copySettings(settings_, configuratorSettings);
       pluginUtilities_ = new PluginUtilities(studio_);
@@ -127,14 +123,6 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
               new TextFieldUpdater(bc2TextField, BACKGROUND2CONSTANT, settings_));
       settings_.putString(BACKGROUND2CONSTANT, bc2TextField.getText());
       
-      final int maxValue = 2 << core_.getImageBitDepth();
-      final JTextField factorTextField = new JTextField(5);
-      factorTextField.setText(settings_.getString(FACTOR, 
-              NumberUtils.intToDisplayString((maxValue))));
-      factorTextField.getDocument().addDocumentListener(
-              new TextFieldUpdater(factorTextField, FACTOR, settings_));
-      settings_.putString(FACTOR, factorTextField.getText());
-
       super.add(darkImageLabel, "skip 2, center");
       super.add(new JLabel("constant"), "skip 1, center, gap 20:push, wrap");
       
@@ -150,10 +138,12 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       super.add(background2Button_);
       super.add(bc2TextField, "gap 20:push, wrap");
       
-      super.add(new JLabel("(Ch1 - (background + constant)) / (Ch2 - (background + constant) *"), 
-              "gapy 20:push, span 5, split 2");
-      super.add(factorTextField, "wrap");
-      
+      super.add(new JLabel(
+              "(Ch1 - background1 - constant1) / (Ch2 - background2 - constant2)"),
+              "gapy 20:push, span 5, wrap");
+      super.add(new JLabel("Output is 32-bit float, in a separate window."),
+              "span 5, wrap");
+
       super.pack();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
@@ -188,9 +178,8 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       settings.putString(BACKGROUND2, configuratorSettings.getString(BACKGROUND2, ""));
       settings.putString(BACKGROUND1CONSTANT, 
               configuratorSettings.getString(BACKGROUND1CONSTANT, ""));
-      settings.putString(BACKGROUND2CONSTANT, 
+      settings.putString(BACKGROUND2CONSTANT,
               configuratorSettings.getString(BACKGROUND2CONSTANT, ""));
-      settings.putString(FACTOR, configuratorSettings.getString(FACTOR, ""));
    }
 
 
