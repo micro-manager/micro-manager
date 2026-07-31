@@ -69,6 +69,7 @@ public class RatioImagingProcessor implements Processor {
    private final int bc2Constant_;
    private final String bc1Path_;
    private final String bc2Path_;
+   private final boolean copySourceChannels_;
    private ImagePlus bc1_;
    private ImagePlus bc2_;
    private final List<Image> images_;
@@ -112,6 +113,8 @@ public class RatioImagingProcessor implements Processor {
       }
       bc1Path_ = settings_.getString(RatioImagingFrame.BACKGROUND1, "");
       bc2Path_ = settings_.getString(RatioImagingFrame.BACKGROUND2, "");
+      copySourceChannels_ = settings_.getBoolean(
+              RatioImagingFrame.COPY_SOURCE_CHANNELS, true);
       bc1Constant_ = bc1Constant;
       bc2Constant_ = bc2Constant;
    }
@@ -220,9 +223,14 @@ public class RatioImagingProcessor implements Processor {
 
    @Override
    public void processImage(Image newImage, ProcessorContext context) {
-      
-      context.outputImage(newImage);
-      
+
+      // The ratio image goes to its own datastore, so passing the source
+      // channels on is optional.  When processing existing data it only
+      // duplicates the input dataset, so the user can switch it off.
+      if (copySourceChannels_) {
+         context.outputImage(newImage);
+      }
+
       if (newImage.getNumComponents() > 1) {
          return;
       }

@@ -32,6 +32,7 @@ import java.awt.event.FocusListener;
 import java.io.File;
 import java.text.ParseException;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -69,6 +70,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
    static final String BACKGROUND2 = "Background2";
    static final String BACKGROUND1CONSTANT = "Background1Constant";
    static final String BACKGROUND2CONSTANT = "Background2Constant";
+   static final String COPY_SOURCE_CHANNELS = "CopySourceChannels";
    private static final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
 
    private final Studio studio_;
@@ -138,11 +140,28 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       super.add(background2Button_);
       super.add(bc2TextField, "gap 20:push, wrap");
       
+      final JCheckBox copySourceChannelsCheckBox =
+              new JCheckBox("Copy source channels to output");
+      copySourceChannelsCheckBox.setSelected(
+              settings_.getBoolean(COPY_SOURCE_CHANNELS, true));
+      copySourceChannelsCheckBox.setToolTipText(
+              "<html>When checked, the source channels are passed on to the output "
+              + "datastore<br>in addition to the ratio image.<br><br>"
+              + "Uncheck when processing existing data, to avoid duplicating the "
+              + "source dataset.<br>Note that with this unchecked the ratio window "
+              + "is the only output, and the<br>pipeline's own output datastore will "
+              + "remain empty.</html>");
+      copySourceChannelsCheckBox.addActionListener(e ->
+              settings_.putBoolean(COPY_SOURCE_CHANNELS,
+                      copySourceChannelsCheckBox.isSelected()));
+      settings_.putBoolean(COPY_SOURCE_CHANNELS, copySourceChannelsCheckBox.isSelected());
+
       super.add(new JLabel(
               "(Ch1 - background1 - constant1) / (Ch2 - background2 - constant2)"),
               "gapy 20:push, span 5, wrap");
       super.add(new JLabel("Output is 32-bit float, in a separate window."),
               "span 5, wrap");
+      super.add(copySourceChannelsCheckBox, "span 5, wrap");
 
       super.pack();
 
@@ -180,6 +199,8 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
               configuratorSettings.getString(BACKGROUND1CONSTANT, ""));
       settings.putString(BACKGROUND2CONSTANT,
               configuratorSettings.getString(BACKGROUND2CONSTANT, ""));
+      settings.putBoolean(COPY_SOURCE_CHANNELS,
+              configuratorSettings.getBoolean(COPY_SOURCE_CHANNELS, true));
    }
 
 
