@@ -552,20 +552,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                }
                floatMappers_[c] = mapper;
                long binCount = Math.max(1L, mapper.getBinCount());
-               // This image's bins cover only the part of the axis between its own min and
-               // max, so tell the view where the graph starts and how much it spans.
-               long graphSpan = binCount;
-               long graphOffset = 0L;
-               double axisSpan = floatRangeMax_ - floatRangeMin_;
-               if (axisSpan > 0.0) {
-                  double imageSpan = cStats.getBinWidthDouble() * cStats.getHistogramBinCount();
-                  double imageMin = cStats.getHistogramRangeMinDouble();
-                  graphSpan = Math.max(1L, Math.round(binCount * (imageSpan / axisSpan)));
-                  graphOffset = Math.max(0L,
-                        Math.round(binCount * ((imageMin - floatRangeMin_) / axisSpan)));
-               }
-               histogram_.setComponentGraph(c, data, data.length, 0L, binCount,
-                     graphSpan, graphOffset);
+               // The image's bins span its own min..max, which need not coincide with the
+               // axis; resample them onto the axis so every bin lands at its true pixel
+               // value and anything outside the axis is dropped rather than displaced.
+               long[] axisData = resampleOntoAxis(cStats, mapper, (int) binCount);
+               histogram_.setComponentGraph(c, axisData, axisData.length, 0L, binCount);
                histogram_.setComponentFloatMapper(c, mapper);
                histogram_.setComponentRangeMaxLabel(c, mapper.formatBinIndex(binCount));
                histogram_.setComponentRangeMinLabel(c, mapper.formatBinIndex(0L));
@@ -998,6 +989,77 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                .copyBuilderWithChannelSettings(channelIndex_, builder.build())
                .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+   }
+
+   /**
+    * Rebins a float image's histogram from the image's own value range onto the axis.
+    *
+    * <p>The statistics are computed with bins spanning the image's own min..max, which is
+    * generally not the range the axis shows. Each source bin is distributed over the axis
+    * bins it overlaps, so that a count always appears at the pixel value it came from.
+    * Counts falling outside the axis are dropped, which is what makes data beyond the
+    * chosen range read as clipped rather than piling up at an end.
+    *
+    * @param cStats statistics of the image
+    * @param mapper mapper describing the axis
+    * @param axisBins number of bins on the axis
+    * @return counts per axis bin
+    */
+   private static long[] resampleOntoAxis(ComponentStats cStats,
+                                          FloatCoordinateMapper mapper, int axisBins) {
+      long[] src = cStats.getInRangeHistogram();
+      long[] out = new long[Math.max(1, axisBins)];
+      if (src == null || src.length == 0) {
+         return out;
+      }
+      double srcBinWidth = cStats.getBinWidthDouble();
+      double srcMin = cStats.getHistogramRangeMinDouble();
+      double axisMin = mapper.getRangeMin();
+      double axisBinWidth = mapper.getBinWidth();
+      if (axisBinWidth <= 0.0) {
+         return out;
+      }
+      if (srcBinWidth <= 0.0) {
+         // Degenerate source (all pixels identical): put every count in one axis bin.
+         int idx = (int) Math.floor((srcMin - axisMin) / axisBinWidth);
+         if (idx >= 0 && idx < out.length) {
+            long total = 0;
+            for (int i = 0; i < src.length; ++i) {
+               total += src[i];
+            }
+            out[idx] += total;
+         }
+         return out;
+      }
+      for (int i = 0; i < src.length; ++i) {
+         if (src[i] == 0) {
+            continue;
+         }
+         // Value range covered by this source bin, in axis-bin coordinates.
+         double lo = ((srcMin + i * srcBinWidth) - axisMin) / axisBinWidth;
+         double hi = lo + srcBinWidth / axisBinWidth;
+         if (hi <= 0.0 || lo >= out.length) {
+            continue; // Entirely outside the axis
+         }
+         int firstBin = (int) Math.floor(Math.max(0.0, lo));
+         int lastBin = (int) Math.ceil(Math.min((double) out.length, hi)) - 1;
+         if (lastBin < firstBin) {
+            lastBin = firstBin;
+         }
+         double width = hi - lo;
+         for (int b = firstBin; b <= lastBin && b < out.length; ++b) {
+            if (b < 0) {
+               continue;
+            }
+            // Fraction of this source bin that falls inside axis bin b.
+            double overlap = Math.min(hi, b + 1.0) - Math.max(lo, (double) b);
+            if (overlap <= 0.0) {
+               continue;
+            }
+            out[b] += Math.round(src[i] * (overlap / width));
+         }
+      }
+      return out;
    }
 
    /**

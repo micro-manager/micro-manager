@@ -79,14 +79,6 @@ public final class HistogramView extends JPanel {
       long[] graph_ = new long[0];
       long rangeMin_ = 0;
       long rangeMax_ = 0;
-      // Extent of the axis actually covered by graph_, in the same units as
-      // rangeMin_/rangeMax_. Equal to (rangeMax_ - rangeMin_) unless the bins span only
-      // part of the axis, as happens when the axis covers a range accumulated over several
-      // images while the bins come from just one of them.
-      long graphSpan_ = 0;
-      // Where on the axis the first bin starts, in the same units. Non-zero when the bins
-      // cover only an interior part of the axis.
-      long graphOffset_ = 0;
       Color color_ = Color.GRAY;
       Color highlightColor_ = Color.YELLOW;
       long highlightIntensity_ = -1; // Negative = off
@@ -226,36 +218,15 @@ public final class HistogramView extends JPanel {
 
    public void setComponentGraph(int component, long[] graph, int graphLen,
                                   long rangeMin, long rangeMax) {
-      setComponentGraph(component, graph, graphLen, rangeMin, rangeMax,
-            rangeMax - rangeMin, 0L);
-   }
-
-   /**
-    * Sets the graph for one component, with the bins covering only part of the axis.
-    *
-    * @param component component index
-    * @param graph bin counts
-    * @param graphLen number of bins to use from {@code graph}
-    * @param rangeMin lowest value on the axis
-    * @param rangeMax highest value on the axis
-    * @param graphSpan extent of the axis covered by the bins, in axis units
-    * @param graphOffset where on the axis the first bin starts, in axis units
-    */
-   public void setComponentGraph(int component, long[] graph, int graphLen,
-                                  long rangeMin, long rangeMax, long graphSpan,
-                                  long graphOffset) {
       Preconditions.checkArgument(component >= 0);
       Preconditions.checkArgument(graphLen <= graph.length);
       Preconditions.checkArgument(rangeMax > rangeMin);
       addComponentIfNecessary(component);
       ComponentState state = componentStates_.get(component);
-      final boolean rangeChanged = (rangeMin != state.rangeMin_ || rangeMax != state.rangeMax_
-            || graphSpan != state.graphSpan_ || graphOffset != state.graphOffset_);
+      final boolean rangeChanged = (rangeMin != state.rangeMin_ || rangeMax != state.rangeMax_);
       state.graph_ = Arrays.copyOf(graph, graphLen);
       state.rangeMin_ = rangeMin;
       state.rangeMax_ = rangeMax;
-      state.graphSpan_ = graphSpan;
-      state.graphOffset_ = graphOffset;
 
       if (component == selectedComponent_ && rangeChanged) {
          nullRectsAndMappingPath();
@@ -288,8 +259,6 @@ public final class HistogramView extends JPanel {
       state.graph_ = null;
       state.rangeMin_ = 0;
       state.rangeMax_ = 0;
-      state.graphSpan_ = 0;
-      state.graphOffset_ = 0;
       state.scalingMin_ = 0;
       state.scalingMax_ = 0;
       state.floatMapper_ = null;
@@ -991,18 +960,9 @@ public final class HistogramView extends JPanel {
          float[] data = getComponentInterpolatedLogScaledData(component);
          float dataMax = getComponentInterpolatedLogScaledDataMax(component);
          final float dataScaling = (float) rect.height / dataMax;
-         // The bins cover graphSpan_ of the rangeMin_..rangeMax_ axis. Usually that is the
-         // whole axis and this reduces to rect.width / data.length; when the axis is wider
-         // than the bins, the graph occupies only the corresponding fraction of it, keeping
-         // bars aligned with the value-positioned scaling handles.
-         final long axisSpan = state.rangeMax_ - state.rangeMin_;
-         float pixelsPerBin = (float) rect.width / data.length;
-         float graphStartX = 0.0f;
-         if (axisSpan > 0 && state.graphSpan_ > 0 && state.graphSpan_ != axisSpan) {
-            pixelsPerBin = (float) (rect.width * ((double) state.graphSpan_ / axisSpan)
-                  / data.length);
-            graphStartX = (float) (rect.width * ((double) state.graphOffset_ / axisSpan));
-         }
+         // The bins always span the full axis: callers rebin their data onto the axis
+         // before handing it over.
+         final float pixelsPerBin = (float) rect.width / data.length;
 
          if (dataMax == 0.0) {
             // A zero-area path can cause rendering artifacts (seen with Apple
@@ -1023,16 +983,15 @@ public final class HistogramView extends JPanel {
 
          state.cachedPath_ =
                new Path2D.Float(Path2D.WIND_EVEN_ODD, 2 * data.length + 2);
-         float startX = graphStartX + firstNonZero * pixelsPerBin;
+         float startX = firstNonZero * pixelsPerBin;
          state.cachedPath_.moveTo(startX, (float) rect.height);
          for (int i = firstNonZero; i <= lastNonZero; ++i) {
-            float x = graphStartX + i * pixelsPerBin;
+            float x = i * pixelsPerBin;
             float y = rect.height - dataScaling * data[i];
             state.cachedPath_.lineTo(x, y);                // Vertical
             state.cachedPath_.lineTo(x + pixelsPerBin, y); // Horizontal
          }
-         state.cachedPath_.lineTo(graphStartX + (lastNonZero + 1) * pixelsPerBin,
-               (float) rect.height);
+         state.cachedPath_.lineTo((lastNonZero + 1) * pixelsPerBin, (float) rect.height);
          if (fillHistograms_) {
             state.cachedPath_.closePath();
          }
@@ -1111,7 +1070,9 @@ public final class HistogramView extends JPanel {
          for (int k = startFloor + 1; k < endFloor; ++k) {
             result[i] += data[k];
          }
-         if (endFloor < width - 1) {
+         // Bound against the source length, not the output length: the two differ
+         // whenever the histogram is being resampled.
+         if (endFloor + 1 < data.length) {
             result[i] += data[endFloor + 1] * (endFloor + 1 - endBin);
          }
       }
