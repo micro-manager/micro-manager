@@ -51,6 +51,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private final JLabel channelNameLabel_ = new JLabel();
    private final JToggleButton channelVisibleButton_ = new JToggleButton();
    private static final int COMPONENT_WHITE = 3;
+   // Number of bins the accumulated float axis is divided into for display.
+   private static final int FLOAT_AXIS_BINS = 256;
    private double[] whiteRatios_ = null; // non-null when white mode is active
    private long whiteMainMax_ = 0;  // main max shown by white handle; = max(R,G,B)
    private long whiteMainMin_ = -1; // min shown by black handle; = min(R,G,B); -1 = not set
@@ -62,6 +64,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private boolean suppressAutostretchDetection_ = false;
    // Non-null for float images: one mapper per component, rebuilt on each statsOrRangeChanged().
    private FloatCoordinateMapper[] floatMappers_ = null;
+   // For float images: the pixel-value range of the histogram axis, accumulated over the
+   // images seen so far. Each image only tells us its own min/max, so using that directly
+   // would rescale the display on every frame. Widening a remembered range instead lets it
+   // settle as the user browses. NaN until the first float image arrives.
+   private double floatRangeMin_ = Double.NaN;
+   private double floatRangeMax_ = Double.NaN;
+   // Set once the user edits an axis end by hand: the axis then stays exactly where they
+   // put it and no longer widens to take in new images.
+   private boolean floatRangePinned_ = false;
    private boolean pickingWhiteBalancePoint_ = false;
    private long[] lastPickedValues_ = null; // pixel values tracked while in pick mode
 
@@ -516,6 +527,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       int numComponents = stats_.getNumberOfComponents();
       setRGBMode(numComponents > 1);
 
+      accumulateFloatRange();
+      seedFloatScalingIfUnset(displaySettings);
+
       boolean whiteMode = getSelectedComponent() == COMPONENT_WHITE;
       for (int c = 0; c < numComponents; c++) {
          ComponentStats cStats = stats_.getComponentStats(c);
@@ -528,22 +542,40 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             if (cStats.isFloat()) {
                // Use bin-index coordinate space: rangeMin=0, rangeMax=binCount (~256).
                // The X axis shows bin indices; labels are formatted as pixel values via
-               // the FloatCoordinateMapper wired into HistogramView.
-               FloatCoordinateMapper mapper = new FloatCoordinateMapper(cStats);
+               // the FloatCoordinateMapper wired into HistogramView. The mapper spans the
+               // accumulated range rather than this image's own range, so the axis stays
+               // put as one steps through images.
+               FloatCoordinateMapper mapper = new FloatCoordinateMapper(
+                     floatRangeMin_, floatRangeMax_, FLOAT_AXIS_BINS);
                if (floatMappers_ == null || floatMappers_.length != numComponents) {
                   floatMappers_ = new FloatCoordinateMapper[numComponents];
                }
                floatMappers_[c] = mapper;
                long binCount = Math.max(1L, mapper.getBinCount());
-               histogram_.setComponentGraph(c, data, data.length, 0L, binCount);
+               // This image's bins cover only the part of the axis between its own min and
+               // max, so tell the view where the graph starts and how much it spans.
+               long graphSpan = binCount;
+               long graphOffset = 0L;
+               double axisSpan = floatRangeMax_ - floatRangeMin_;
+               if (axisSpan > 0.0) {
+                  double imageSpan = cStats.getBinWidthDouble() * cStats.getHistogramBinCount();
+                  double imageMin = cStats.getHistogramRangeMinDouble();
+                  graphSpan = Math.max(1L, Math.round(binCount * (imageSpan / axisSpan)));
+                  graphOffset = Math.max(0L,
+                        Math.round(binCount * ((imageMin - floatRangeMin_) / axisSpan)));
+               }
+               histogram_.setComponentGraph(c, data, data.length, 0L, binCount,
+                     graphSpan, graphOffset);
                histogram_.setComponentFloatMapper(c, mapper);
                histogram_.setComponentRangeMaxLabel(c, mapper.formatBinIndex(binCount));
+               histogram_.setComponentRangeMinLabel(c, mapper.formatBinIndex(0L));
             } else {
                if (c == 0) {
                   floatMappers_ = null; // integer image: clear all mappers
                }
                histogram_.setComponentFloatMapper(c, null);
                histogram_.setComponentRangeMaxLabel(c, null);
+               histogram_.setComponentRangeMinLabel(c, null);
                int clampedRangeBits = Math.min(rangeBits, 30);
                int lengthToUse = Math.min(data.length, (1 << clampedRangeBits) - 1);
                if (lengthToUse <= 0) {
@@ -558,6 +590,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       if (whiteMode) {
          updateWhiteScalingIndicator(displaySettings, stats_.getComponentStats(0));
       }
+      // Only float images have a meaningful, user-choosable axis range; for integer data
+      // the axis is determined by the bit depth.
+      histogram_.setAxisRangeEditable(
+            numComponents > 0 && stats_.getComponentStats(0).isFloat());
    }
 
    @MustCallOnEDT
@@ -590,11 +626,23 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                && component < floatMappers_.length && floatMappers_[component] != null) {
             FloatCoordinateMapper mapper = floatMappers_[component];
             int binCount = mapper.getBinCount();
-            long storedMax = componentSettings.getScalingMaximum();
-            long storedMin = componentSettings.getScalingMinimum();
-            long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
-                              : Math.min(binCount, storedMax);
-            long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
+            long clampedMin;
+            long clampedMax;
+            if (componentSettings.hasFloatScaling()) {
+               // Stored as pixel values; convert to bin positions for drawing only.
+               clampedMax = mapper.pixelValueToBinIndex(
+                     componentSettings.getScalingMaximumDouble());
+               clampedMin = mapper.pixelValueToBinIndex(
+                     componentSettings.getScalingMinimumDouble());
+               clampedMax = Math.max(1, Math.min(binCount, clampedMax));
+               clampedMin = Math.max(0, Math.min(clampedMax - 1, clampedMin));
+            } else {
+               long storedMax = componentSettings.getScalingMaximum();
+               long storedMin = componentSettings.getScalingMinimum();
+               clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
+                                 : Math.min(binCount, storedMax);
+               clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
+            }
             histogram_.setComponentScaling(component, clampedMin, clampedMax);
             return;
          }
@@ -830,6 +878,173 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       rgbAutostretchEnabled_ = enabled;
    }
 
+   /**
+    * Widens the remembered float axis range to include the current image.
+    *
+    * <p>Only ever widens: a range that tracked each image exactly would rescale the display
+    * on every frame, which is what this exists to avoid. Browsing therefore makes the axis
+    * settle rather than oscillate.
+    */
+   @MustCallOnEDT
+   private void accumulateFloatRange() {
+      if (stats_ == null || floatRangePinned_) {
+         return;
+      }
+      for (int c = 0; c < stats_.getNumberOfComponents(); ++c) {
+         ComponentStats cStats = stats_.getComponentStats(c);
+         if (!cStats.isFloat()) {
+            return; // Integer image: nothing to accumulate.
+         }
+         double frameMin = cStats.getHistogramRangeMinDouble();
+         double frameMax = frameMin
+               + cStats.getBinWidthDouble() * cStats.getHistogramBinCount();
+         if (Double.isNaN(frameMin) || Double.isNaN(frameMax)) {
+            continue;
+         }
+         if (Double.isNaN(floatRangeMin_) || frameMin < floatRangeMin_) {
+            floatRangeMin_ = frameMin;
+         }
+         if (Double.isNaN(floatRangeMax_) || frameMax > floatRangeMax_) {
+            floatRangeMax_ = frameMax;
+         }
+      }
+      // A single-valued image gives a zero-width range; widen it so the axis is drawable.
+      if (!Double.isNaN(floatRangeMin_) && floatRangeMax_ <= floatRangeMin_) {
+         floatRangeMax_ = floatRangeMin_ + 1.0;
+      }
+   }
+
+   /**
+    * Gives a float channel an explicit scaling range the first time it is displayed.
+    *
+    * <p>Without this, the settings still hold the integer defaults (0 and Long.MAX_VALUE).
+    * Those are bin indices in the legacy interpretation, so they get resolved against
+    * whichever image happens to be on screen -- the display keeps rescaling itself, and the
+    * numbers shown next to the handles do not match what the image is actually scaled to.
+    * Seeding from this image's autoscale range makes the two agree from the start and gives
+    * a sensible first view.
+    *
+    * <p>Only ever fills in a missing range; a range the user or a saved settings file
+    * provided is left alone.
+    *
+    * @param settings current display settings
+    */
+   @MustCallOnEDT
+   private void seedFloatScalingIfUnset(DisplaySettings settings) {
+      if (stats_ == null || settings.isAutostretchEnabled()) {
+         return;
+      }
+      int numComponents = stats_.getNumberOfComponents();
+      if (numComponents < 1 || !stats_.getComponentStats(0).isFloat()) {
+         return;
+      }
+      ChannelDisplaySettings channelSettings = settings.getChannelSettings(channelIndex_);
+      boolean anyUnset = false;
+      for (int c = 0; c < numComponents; ++c) {
+         if (!channelSettings.getComponentSettings(c).hasFloatScaling()) {
+            anyUnset = true;
+            break;
+         }
+      }
+      if (!anyUnset) {
+         return;
+      }
+
+      double q = settings.getAutoscaleIgnoredQuantile();
+      boolean ignoreZeros = settings.isAutoscaleIgnoringZeros();
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
+      do {
+         oldDisplaySettings = viewer_.getDisplaySettings();
+         ChannelDisplaySettings chSettings =
+               oldDisplaySettings.getChannelSettings(channelIndex_);
+         ChannelDisplaySettings.Builder builder = chSettings.copyBuilder();
+         boolean changed = false;
+         for (int c = 0; c < numComponents; ++c) {
+            if (chSettings.getComponentSettings(c).hasFloatScaling()) {
+               continue;
+            }
+            ComponentStats cStats = stats_.getComponentStats(c);
+            long seedMin;
+            long seedMax;
+            if (ignoreZeros) {
+               seedMin = 0L;
+               seedMax = cStats.getAutoscaleMaxForQuantileIgnoringZeros(q);
+            } else {
+               long[] minMax = new long[2];
+               cStats.getAutoscaleMinMaxForQuantile(q, minMax);
+               seedMin = minMax[0];
+               seedMax = minMax[1];
+            }
+            double seedMinValue = (double) seedMin;
+            double seedMaxValue = (double) seedMax;
+            if (seedMaxValue <= seedMinValue) {
+               // Degenerate (e.g. constant image); fall back to the accumulated axis.
+               seedMinValue = floatRangeMin_;
+               seedMaxValue = floatRangeMax_;
+            }
+            if (Double.isNaN(seedMinValue) || Double.isNaN(seedMaxValue)
+                  || seedMaxValue <= seedMinValue) {
+               continue;
+            }
+            builder.component(c, chSettings.getComponentSettings(c).copyBuilder()
+                  .scalingRangeDouble(seedMinValue, seedMaxValue).build());
+            changed = true;
+         }
+         if (!changed) {
+            return;
+         }
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithChannelSettings(channelIndex_, builder.build())
+               .build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+   }
+
+   /**
+    * Returns the float mapper for a component, or null if this is not a float image.
+    *
+    * @param component component index
+    * @return the mapper, or null
+    */
+   private FloatCoordinateMapper getFloatMapper(int component) {
+      if (floatMappers_ == null || component < 0 || component >= floatMappers_.length) {
+         return null;
+      }
+      return floatMappers_[component];
+   }
+
+   /**
+    * Returns the float scaling minimum to preserve when only the maximum is being changed.
+    *
+    * @param settings current component settings
+    * @param mapper mapper for converting a legacy bin index
+    * @return pixel value
+    */
+   private double currentFloatMin(ComponentDisplaySettings settings,
+                                  FloatCoordinateMapper mapper) {
+      if (settings.hasFloatScaling()) {
+         return settings.getScalingMinimumDouble();
+      }
+      return mapper.binIndexToPixelValue(settings.getScalingMinimum());
+   }
+
+   /**
+    * Returns the float scaling maximum to preserve when only the minimum is being changed.
+    *
+    * @param settings current component settings
+    * @param mapper mapper for converting a legacy bin index
+    * @return pixel value
+    */
+   private double currentFloatMax(ComponentDisplaySettings settings,
+                                  FloatCoordinateMapper mapper) {
+      if (settings.hasFloatScaling()) {
+         return settings.getScalingMaximumDouble();
+      }
+      long storedMax = settings.getScalingMaximum();
+      long binIndex = (storedMax == Long.MAX_VALUE) ? mapper.getBinCount() : storedMax;
+      return mapper.binIndexToPixelValue(binIndex);
+   }
+
    private long toStoredScalingValue(int component, long pixelValue) {
       if (floatMappers_ != null && component < floatMappers_.length
             && floatMappers_[component] != null) {
@@ -996,6 +1211,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                            .scalingRange(0L, scaledMax).build());
             }
 
+         } else if (getFloatMapper(sel) != null) {
+            // Float: full scale is the whole accumulated axis, as pixel values.
+            FloatCoordinateMapper mapper = getFloatMapper(sel);
+            builder.component(sel,
+                  channelSettings.getComponentSettings(sel).copyBuilder()
+                        .scalingRangeDouble(mapper.getRangeMin(),
+                              mapper.binIndexToPixelValue(mapper.getBinCount()))
+                        .build());
          } else {
             builder.component(sel,
                   channelSettings.getComponentSettings(sel).copyBuilder()
@@ -1053,11 +1276,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                min = minMax[0];
                max = minMax[1];
             }
-            min = toStoredScalingValue(sel, min);
-            max = toStoredScalingValue(sel, max);
-            builder.component(sel,
-                  channelSettings.getComponentSettings(sel).copyBuilder()
-                        .scalingRange(min, max).build());
+            if (getFloatMapper(sel) != null) {
+               // min/max are already pixel values; store them as such rather than as bin
+               // indices, which would be reinterpreted against the next image's binning.
+               builder.component(sel,
+                     channelSettings.getComponentSettings(sel).copyBuilder()
+                           .scalingRangeDouble((double) min, (double) max).build());
+            } else {
+               builder.component(sel,
+                     channelSettings.getComponentSettings(sel).copyBuilder()
+                           .scalingRange(min, max).build());
+            }
          }
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithChannelSettings(channelIndex_, builder.build())
@@ -1080,13 +1309,29 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                oldDisplaySettings.getChannelSettings(channelIndex_);
          ComponentDisplaySettings componentSettings =
                channelSettings.getComponentSettings(component);
-         if (componentSettings.getScalingMinimum() == newMin) {
-            return;
+         FloatCoordinateMapper mapper = getFloatMapper(component);
+         if (mapper != null) {
+            // The handle position is a bin index; store the pixel value it denotes so the
+            // range keeps its meaning when the next image has a different distribution.
+            double newMinValue = mapper.binIndexToPixelValue(newMin);
+            if (componentSettings.hasFloatScaling()
+                  && componentSettings.getScalingMinimumDouble() == newMinValue) {
+               return;
+            }
+            componentSettings = componentSettings
+                  .copyBuilder()
+                  .scalingMinimumDouble(newMinValue)
+                  .scalingMaximumDouble(currentFloatMax(componentSettings, mapper))
+                  .build();
+         } else {
+            if (componentSettings.getScalingMinimum() == newMin) {
+               return;
+            }
+            componentSettings = componentSettings
+                  .copyBuilder()
+                  .scalingMinimum(newMin)
+                  .build();
          }
-         componentSettings = componentSettings
-               .copyBuilder()
-               .scalingMinimum(newMin)
-               .build();
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithComponentSettings(channelIndex_, component, componentSettings)
                .autostretch(false)
@@ -1109,12 +1354,25 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                oldDisplaySettings.getChannelSettings(channelIndex_);
          ComponentDisplaySettings componentSettings =
                channelSettings.getComponentSettings(component);
-         if (componentSettings.getScalingMaximum() == newMax) {
-            return;
+         FloatCoordinateMapper mapper = getFloatMapper(component);
+         if (mapper != null) {
+            double newMaxValue = mapper.binIndexToPixelValue(newMax);
+            if (componentSettings.hasFloatScaling()
+                  && componentSettings.getScalingMaximumDouble() == newMaxValue) {
+               return;
+            }
+            componentSettings = componentSettings.copyBuilder()
+                  .scalingMinimumDouble(currentFloatMin(componentSettings, mapper))
+                  .scalingMaximumDouble(newMaxValue)
+                  .build();
+         } else {
+            if (componentSettings.getScalingMaximum() == newMax) {
+               return;
+            }
+            componentSettings = componentSettings.copyBuilder()
+                  .scalingMaximum(newMax)
+                  .build();
          }
-         componentSettings = componentSettings.copyBuilder()
-               .scalingMaximum(newMax)
-               .build();
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithComponentSettings(channelIndex_, component, componentSettings)
                .autostretch(false)
@@ -1182,6 +1440,50 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                .autostretch(false)
                .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+   }
+
+   @Override
+   public void histogramAxisRangeChanged(int component, double newRangeMin,
+                                         double newRangeMax) {
+      if (newRangeMax <= newRangeMin) {
+         return;
+      }
+      // The user has chosen the axis explicitly: stop widening it to fit new images.
+      floatRangePinned_ = true;
+      floatRangeMin_ = newRangeMin;
+      floatRangeMax_ = newRangeMax;
+      // Keep the scaling range inside the new axis, otherwise the handles would sit off
+      // the end and the image would be scaled to something the user cannot see or reach.
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
+      do {
+         oldDisplaySettings = viewer_.getDisplaySettings();
+         ChannelDisplaySettings channelSettings =
+               oldDisplaySettings.getChannelSettings(channelIndex_);
+         ComponentDisplaySettings componentSettings =
+               channelSettings.getComponentSettings(component);
+         if (!componentSettings.hasFloatScaling()) {
+            break;
+         }
+         double clampedMin = Math.max(newRangeMin,
+               Math.min(componentSettings.getScalingMinimumDouble(), newRangeMax));
+         double clampedMax = Math.max(clampedMin,
+               Math.min(componentSettings.getScalingMaximumDouble(), newRangeMax));
+         if (clampedMax <= clampedMin) {
+            clampedMin = newRangeMin;
+            clampedMax = newRangeMax;
+         }
+         if (clampedMin == componentSettings.getScalingMinimumDouble()
+               && clampedMax == componentSettings.getScalingMaximumDouble()) {
+            break;
+         }
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithComponentSettings(channelIndex_, component,
+                     componentSettings.copyBuilder()
+                           .scalingRangeDouble(clampedMin, clampedMax).build())
+               .build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+      statsOrRangeChanged();
    }
 
    @Override

@@ -1281,6 +1281,10 @@ public enum PropertyKey {
 
    SCALING_MAX("ScalingMax", ComponentDisplaySettings.class),
 
+   SCALING_MIN_FLOAT("ScalingMinFloat", ComponentDisplaySettings.class),
+
+   SCALING_MAX_FLOAT("ScalingMaxFloat", ComponentDisplaySettings.class),
+
    SCOPE_DATA("ScopeData", "scopeData", Metadata.class) {
       @Override
       public String getDescription() {
