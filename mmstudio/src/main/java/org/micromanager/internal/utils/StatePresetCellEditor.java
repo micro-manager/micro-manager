@@ -184,10 +184,6 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
    public Component getTableCellEditorComponent(JTable table, Object value,
                                                 boolean isSelected, int rowIndex, int vColIndex) {
 
-      if (isSelected) {
-         // cell (and perhaps other cells) are selected
-      }
-
       StateTableData data = (StateTableData) table.getModel();
       item_ = data.getPropertyItem(rowIndex);
       // Configure the component with the specified value
