@@ -1,7 +1,6 @@
 package org.micromanager.internal.dialogs;
 
 import java.awt.Component;
-import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,6 +13,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.internal.utils.NumberUtils;
@@ -36,8 +37,48 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
 
    private final CheckBoxChangeListener checkBoxChangeListener_;
 
+   // True only after the user picks an item from the open dropdown.
+   // getCellEditorValue() returns the original value when false, making any
+   // external stopCellEditing() call a no-op.
+   private boolean selectionMade_ = false;
+
    public ChannelCellEditor() {
       checkBoxChangeListener_ = new CheckBoxChangeListener(this);
+
+      channelSelect_.addPopupMenuListener(new PopupMenuListener() {
+         @Override
+         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            channelSelect_.putClientProperty("popupOpen", Boolean.TRUE);
+         }
+
+         @Override
+         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            boolean wasOpen = Boolean.TRUE.equals(channelSelect_.getClientProperty("popupOpen"));
+            channelSelect_.putClientProperty("popupOpen", null);
+            // JComboBox only fires an ActionEvent when the selection actually
+            // changes. If the user reopens the popup and clicks the item that
+            // was already selected, the popup closes normally here but no
+            // ActionEvent ever fires, leaving the cell editor stuck open.
+            // Treat that case as an implicit re-confirmation.
+            if (wasOpen && !selectionMade_) {
+               selectionMade_ = true;
+               fireEditingStopped();
+            }
+         }
+
+         @Override
+         public void popupMenuCanceled(PopupMenuEvent e) {
+            channelSelect_.putClientProperty("popupOpen", null);
+            fireEditingCanceled();
+         }
+      });
+
+      channelSelect_.addActionListener(e -> {
+         if (Boolean.TRUE.equals(channelSelect_.getClientProperty("popupOpen"))) {
+            selectionMade_ = true;
+            fireEditingStopped();
+         }
+      });
    }
 
    // This method is called when a cell value is edited by the user.
@@ -73,11 +114,8 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          text_.setText(NumberUtils.intToDisplayString((Integer) value));
          return text_;
       } else if (colIndex == 1) {
-         // remove old listeners
-         ActionListener[] listeners = channelSelect_.getActionListeners();
-         for (ActionListener listener : listeners) {
-            channelSelect_.removeActionListener(listener);
-         }
+         selectionMade_ = false;
+         channelSelect_.putClientProperty("popupOpen", null);
          channelSelect_.removeAllItems();
 
          // Only allow channels that aren't already selected in a different
@@ -95,13 +133,9 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
             }
          }
          channelSelect_.setSelectedItem(channel_.config());
-
-         // end editing on selection change
-         channelSelect_.addPropertyChangeListener(e -> {
-            if (!Objects.equals(channelSelect_.getSelectedItem(), channel_.config())) {
-               fireEditingStopped();
-            }
-         });
+         if (!Objects.equals(channel_.config(), channelSelect_.getSelectedItem())) {
+            channelSelect_.setSelectedIndex(-1);
+         }
 
          // Return the configured component
          return channelSelect_;
@@ -122,7 +156,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          if (editCol_ == 0) {
             return checkBox_.isSelected();
          } else if (editCol_ == 1) {
-            return channelSelect_.getSelectedItem();
+            return selectionMade_ ? channelSelect_.getSelectedItem() : channel_.config();
          } else if (editCol_ == 2 || editCol_ == 3) {
             return NumberUtils.displayStringToDouble(text_.getText());
          } else if (editCol_ == 4) {
