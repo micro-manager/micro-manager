@@ -72,14 +72,24 @@ public final class DaytimeNighttime implements ApplicationSkin {
    // Improve text legibility against dark backgrounds. These will have
    // ".foreground" appended to them later.
    private static final String[] ENABLED_TEXT_COLOR_KEYS = new String[] {
-         "Button", "CheckBox", "CheckBoxMenuItem", "ColorChooser", "ComboBox",
-         "EditorPane", "FormattedTextField",
-         "InternalFrame", "Label", "List", "Menu", "MenuBar", "MenuItem",
-         "OptionPane", "Panel", "PasswordField", "PopupMenu", "ProgressBar",
-         "RadioButton", "RadioButtonMenuItem", "ScrollBar", "ScrollPane",
-         "Separator", "Slider", "Spinner",
+         "CheckBox", "ColorChooser", "FormattedTextField",
+         "InternalFrame", "Label", "List",
+         "OptionPane", "Panel", "ProgressBar",
+         "RadioButton", "ScrollPane", "Separator", "Slider", "Spinner",
          "SplitPane", "Table", "TableHeader", "TextArea", "TextField",
-         "TextPane", "ToggleButton", "ToolBar", "Tree", "Viewport"
+         "TextPane", "ToolBar", "Tree", "Viewport"
+   };
+
+   // Additional text color keys, applied on Linux only. FlatLaf paints these
+   // components itself and honors both the ".background" keys we set above and
+   // these ".foreground" keys, so light-on-dark stays consistent. The native
+   // Windows and macOS L&Fs paint menus, popups and combo box drop-down lists
+   // with their own (light) background while still honoring ".foreground",
+   // which would leave light grey text on a light background.
+   private static final String[] UNIX_ONLY_TEXT_COLOR_KEYS = new String[] {
+         "Button", "CheckBoxMenuItem", "ComboBox", "EditorPane", "Menu",
+         "MenuBar", "MenuItem", "PasswordField", "PopupMenu",
+         "RadioButtonMenuItem", "ScrollBar", "ToggleButton"
    };
 
    // As above, but for disabled text; each of these keys will have
@@ -211,6 +221,12 @@ public final class DaytimeNighttime implements ApplicationSkin {
       for (String key : ENABLED_TEXT_COLOR_KEYS) {
          UIManager.put(key + ".foreground", enabledTextColor_.get(mode));
          UIManager.put(key + ".caretForeground", enabledTextColor_.get(mode));
+      }
+      if (JavaUtils.isUnix()) {
+         for (String key : UNIX_ONLY_TEXT_COLOR_KEYS) {
+            UIManager.put(key + ".foreground", enabledTextColor_.get(mode));
+            UIManager.put(key + ".caretForeground", enabledTextColor_.get(mode));
+         }
       }
       // Improve contrast of disabled text against backgrounds.
       for (String key : DISABLED_TEXT_COLOR_KEYS) {
