@@ -11,6 +11,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
@@ -28,7 +29,35 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
 
    private static final long serialVersionUID = -8374637422965302637L;
    private final JTextField text_ = new JTextField();
-   private final JComboBox<String> channelSelect_ = new JComboBox<>();
+   // Set for the remainder of the current AWT event right after we close the
+   // popup via setPopupVisible(false), then cleared on the next EDT cycle.
+   // See setPopupVisible() below for why this exists.
+   private boolean justClosedPopup_ = false;
+
+   private final JComboBox<String> channelSelect_ = new JComboBox<String>() {
+      @Override
+      public void setPopupVisible(boolean visible) {
+         if (visible) {
+            // Clicking the combo box's own arrow/button while its popup is
+            // already open can trigger a same-click close-then-reopen race:
+            // MenuSelectionManager sees that click as landing outside the
+            // popup and closes it, then the arrow button's own toggle
+            // handler (processing the same click right after) sees the
+            // now-closed state and calls setPopupVisible(true) again,
+            // reopening it. The popup ends up glitched/stuck instead of
+            // cleanly closed. Ignore "become visible" requests while
+            // already visible, or immediately after we just closed it
+            // ourselves within this same event, to break that race.
+            if (isPopupVisible() || justClosedPopup_) {
+               return;
+            }
+         } else if (isPopupVisible()) {
+            justClosedPopup_ = true;
+            SwingUtilities.invokeLater(() -> justClosedPopup_ = false);
+         }
+         super.setPopupVisible(visible);
+      }
+   };
    private final JCheckBox checkBox_ = new JCheckBox();
    boolean checkBoxValue_ = false;
    private final JLabel colorLabel_ = new JLabel();
@@ -44,6 +73,12 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
 
    public ChannelCellEditor() {
       checkBoxChangeListener_ = new CheckBoxChangeListener(this);
+
+      // Tells the combo box's UI delegate it is being used as a table cell
+      // editor, so its built-in Enter/Escape key handling (e.g. confirming
+      // the highlighted item and handing off to the table) behaves as
+      // javax.swing.DefaultCellEditor's JComboBox constructor sets it up.
+      channelSelect_.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
 
       channelSelect_.addPopupMenuListener(new PopupMenuListener() {
          @Override
@@ -62,23 +97,90 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
             // Treat that case as an implicit re-confirmation.
             if (wasOpen && !selectionMade_) {
                selectionMade_ = true;
-               fireEditingStopped();
+               // This listener fires *during* the popup's own hide()
+               // teardown (unlike the ActionListener above, which fires
+               // before hide() begins). Committing synchronously here runs
+               // our table-mutating code interleaved with that teardown,
+               // which can leave the popup visually stuck mid-collapse.
+               // Defer to the next EDT cycle so hide() finishes first, and
+               // go through stopCellEditing() (not fireEditingStopped()
+               // directly) so a popup that got spuriously reopened by the
+               // race above is forced closed before the editor is removed.
+               SwingUtilities.invokeLater(() -> stopCellEditing());
             }
          }
 
          @Override
          public void popupMenuCanceled(PopupMenuEvent e) {
             channelSelect_.putClientProperty("popupOpen", null);
-            fireEditingCanceled();
+            cancelCellEditing();
          }
       });
 
       channelSelect_.addActionListener(e -> {
-         if (Boolean.TRUE.equals(channelSelect_.getClientProperty("popupOpen"))) {
+         // Remember any real value change (mouse or arrow keys) so a later
+         // commit reflects it, but only commit *now* when the popup is open:
+         // clicking an item there is itself the confirm gesture. Arrow-key
+         // browsing with the popup closed should not commit on every
+         // keystroke; JTable's own Enter/Tab/focus-loss handling will call
+         // stopCellEditing() when the user actually confirms.
+         if (!Objects.equals(channelSelect_.getSelectedItem(), channel_.config())) {
             selectionMade_ = true;
-            fireEditingStopped();
+         }
+         if (Boolean.TRUE.equals(channelSelect_.getClientProperty("popupOpen"))) {
+            stopCellEditing();
          }
       });
+   }
+
+   /**
+    * Closes the Configuration dropdown's popup, if open, before actually
+    * stopping or canceling the edit.
+    *
+    * <p>Callers such as {@code applySettingsFromGUI()} may call
+    * {@code stopCellEditing()} on the active editor programmatically (e.g.
+    * right before the Up/Down/Remove buttons reorder the underlying rows).
+    * If the combo box's popup is still open at that point, removing the
+    * editor out from under it leaves the popup as a visual orphan, and the
+    * table can end up attaching a leftover editing state to the wrong row
+    * after the reorder — the same symptom as the original stuck-dropdown
+    * bug. Hiding the popup first ensures it closes through the normal
+    * PopupMenuListener path before the row data underneath it changes.
+    */
+   @Override
+   public boolean stopCellEditing() {
+      if (channelSelect_.isPopupVisible()) {
+         channelSelect_.hidePopup();
+      }
+      return super.stopCellEditing();
+   }
+
+   @Override
+   public void cancelCellEditing() {
+      if (channelSelect_.isPopupVisible()) {
+         channelSelect_.hidePopup();
+      }
+      super.cancelCellEditing();
+   }
+
+   /**
+    * Selects {@code value} in {@code combo} if it is actually present among
+    * the combo's items, otherwise clears the selection.
+    *
+    * <p>{@code JComboBox.setSelectedItem()}/{@code getSelectedItem()} is not
+    * a reliable presence check: {@code DefaultComboBoxModel} stores whatever
+    * object is passed in as the selected item regardless of whether it is
+    * one of the combo's actual items, so a value absent from the list would
+    * otherwise appear to "stick" instead of falling back to no selection.
+    */
+   private static void selectItemOrClear(JComboBox<String> combo, String value) {
+      for (int i = 0; i < combo.getItemCount(); i++) {
+         if (Objects.equals(combo.getItemAt(i), value)) {
+            combo.setSelectedItem(value);
+            return;
+         }
+      }
+      combo.setSelectedIndex(-1);
    }
 
    // This method is called when a cell value is edited by the user.
@@ -114,7 +216,6 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          text_.setText(NumberUtils.intToDisplayString((Integer) value));
          return text_;
       } else if (colIndex == 1) {
-         selectionMade_ = false;
          channelSelect_.putClientProperty("popupOpen", null);
          channelSelect_.removeAllItems();
 
@@ -132,10 +233,16 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
                channelSelect_.addItem(config);
             }
          }
-         channelSelect_.setSelectedItem(channel_.config());
-         if (!Objects.equals(channel_.config(), channelSelect_.getSelectedItem())) {
-            channelSelect_.setSelectedIndex(-1);
-         }
+         selectItemOrClear(channelSelect_, channel_.config());
+         // Reset only now, after the item-list rebuild above has settled:
+         // removeAllItems() drops the selection to null and can fire a
+         // spurious ActionEvent (selectedItem=null) that our own
+         // ActionListener would otherwise misread as a real user change,
+         // incorrectly marking selectionMade_ true before any real
+         // interaction happens. That poisoned flag then silently defeats
+         // the popupMenuWillBecomeInvisible reselect-same-item commit further
+         // down, leaving the cell editor stuck open indefinitely.
+         selectionMade_ = false;
 
          // Return the configured component
          return channelSelect_;
