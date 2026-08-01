@@ -48,7 +48,18 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
 
          @Override
          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            boolean wasOpen = Boolean.TRUE.equals(combo_.getClientProperty("popupOpen"));
             combo_.putClientProperty("popupOpen", null);
+            // JComboBox only fires an ActionEvent when the selection actually
+            // changes. If the user reopens the popup and clicks the item that
+            // was already selected, the popup closes normally here but no
+            // ActionEvent ever fires, leaving the cell editor stuck open
+            // (shown with the "editing" look) until something else forces a
+            // table event. Treat that case as an implicit re-confirmation.
+            if (wasOpen && !selectionMade_) {
+               selectionMade_ = true;
+               fireEditingStopped();
+            }
          }
 
          @Override
