@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
@@ -176,7 +175,15 @@ public final class ChannelTableModel extends AbstractTableModel {
       channels_.set(row, channel);
       storeChannels();
 
-      this.fireTableChanged(new TableModelEvent(this));
+      // A row-scoped update, not fireTableChanged(new TableModelEvent(this))
+      // (which claims the whole table changed): storeChannels() -> ...
+      // -> AcquisitionSettingsChangedEvent already triggers a full
+      // fireTableStructureChanged() rebuild via
+      // AcqControlDlg.updateGUIFromSequenceSettings() when applicable, so a
+      // second "everything changed" event here is redundant - and empirically
+      // (unlike this narrower one) it clears the table's row selection with
+      // nothing to restore it afterward.
+      this.fireTableRowsUpdated(row, row);
    }
 
    @Override

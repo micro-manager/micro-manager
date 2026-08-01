@@ -192,6 +192,15 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
       ArrayList<ChannelSpec> channels = model.getChannels();
       channel_ = channels.get(rowIndex);
 
+      // Once an editor component is showing in a cell, further clicks in
+      // that area (the combo box, then its popup) land on those components
+      // directly rather than on the JTable, so JTable's own mouse handling
+      // (which normally updates row selection on click) never sees them.
+      // Select the row explicitly here so it doesn't depend on that.
+      if (!table.isRowSelected(rowIndex)) {
+         table.setRowSelectionInterval(rowIndex, rowIndex);
+      }
+
       colIndex = table.convertColumnIndexToModel(colIndex);
 
       // Configure the component with the specified value
