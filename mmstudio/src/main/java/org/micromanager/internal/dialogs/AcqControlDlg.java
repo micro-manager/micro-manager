@@ -1509,8 +1509,19 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          for (ActionListener cgsal : cgsals) {
             channelGroupCombo_.addActionListener(cgsal);
          }
+         // Editing a cell (e.g. picking a Configuration) ends up here too, via
+         // ChannelTableModel.setValueAt() -> storeChannels() -> setSequenceSettings()
+         // -> this AcquisitionSettingsChangedEvent handler. fireTableStructureChanged()
+         // below is a full rebuild that clears row selection with nothing to restore
+         // it, unlike the New/Remove/Up/Down button handlers, which explicitly
+         // restore selection after their own structural changes. Do the same here so
+         // committing a dropdown edit doesn't lose the row selection.
+         int selectedRow = channelTable_.getSelectedRow();
          model_.setChannels(sequenceSettings.channels());
          model_.fireTableStructureChanged();
+         if (selectedRow > -1 && selectedRow < channelTable_.getRowCount()) {
+            channelTable_.setRowSelectionInterval(selectedRow, selectedRow);
+         }
          chanKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenChannels());
          channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
          boolean selected = channelsPanel_.isSelected();
