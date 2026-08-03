@@ -1286,9 +1286,16 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
    /**
     * Will notify registered AcqSettingsListeners that the settings have changed.
+    *
+    * <p>Test acquisitions (e.g. the tiles acquired by the Explorer plugin) derive their
+    * settings from the MDA window and switch off whatever they do not need, such as frames,
+    * the position list, or channels. Those derived settings are not the MDA window's own, so
+    * they are posted as non-primary: redrawing the MDA window from them would silently
+    * uncheck the user's Time/Positions/Channels boxes.
     */
    private void settingsChanged(SequenceSettings sequenceSettings) {
-      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(sequenceSettings));
+      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(
+            sequenceSettings, !sequenceSettings.isTestAcquisition()));
    }
 
 

@@ -1,10 +1,12 @@
 package org.micromanager.explorer;
 
 import java.awt.Toolkit;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -13,6 +15,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -37,10 +40,16 @@ public class ExplorerFrame extends JFrame {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
    private static final String DIALOG_TITLE = "Explorer";
+   // Shared width (px) for the Open Existing / Start / Interrupt / Help buttons, so the two
+   // bottom rows line up. Sized to fit the widest label, "Open Existing".
+   private static final int BUTTON_WIDTH = 114;
 
    static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
    static final String EXPLORE_OVERLAP_PERCENT = "ExploreOverlapPercent";
    static final String VESSEL_TYPE = "VesselType";
+   // When true, the MDA Z-stack and channel settings are ignored and every tile is
+   // acquired with the microscope's current focus position and channel preset.
+   static final String USE_CURRENT_SETTINGS = "UseCurrentSettings";
    // Deprecated: superseded by STORAGE_BACKEND. Used only as the fallback default when
    // STORAGE_BACKEND has never been set; no value is ever written back under this key.
    static final String USE_OME_ZARR = "UseOmeZarrStorage";
@@ -59,6 +68,11 @@ public class ExplorerFrame extends JFrame {
 
    private JButton stopButton_;
    private JComboBox<VesselType> vesselCombo_;
+
+   // Source of the Z-stack and channel settings. Read once at session start; the radios
+   // are disabled while a session runs (see updateAnchorPanels()).
+   private JRadioButton mdaSettingsRadio_;
+   private JRadioButton currentSettingsRadio_;
 
    // Create-Positions controls (live session only).
    private JButton createPositionsButton_;
@@ -79,7 +93,6 @@ public class ExplorerFrame extends JFrame {
    // Multi-well anchor panel: HCS calibration status + optional well selector.
    private JPanel wellAnchorPanel_;
    private JLabel hcsStatusLabel_;
-   private JButton refreshHcsButton_;
    private JComboBox<String> wellRowCombo_;
    private JSpinner wellColSpinner_;
    private JButton setWellAnchorButton_;
@@ -95,6 +108,11 @@ public class ExplorerFrame extends JFrame {
 
       initComponents();
 
+      // The vessel combo is restored from the profile before its listener is attached, so
+      // push the restored value through the manager here. Otherwise a remembered multi-well
+      // plate would show a stale "Not found" HCS status until the selection was changed.
+      explorerManager_.setVesselType(getSelectedVessel());
+
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
@@ -107,6 +125,26 @@ public class ExplorerFrame extends JFrame {
       }
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("fillx", "[grow, fill][]"));
+
+      // Source of the Z-stack and channel settings for each tile. Locked at session start.
+      add(new JLabel("Settings:"), "split 3");
+      boolean useCurrent = settings_.getBoolean(USE_CURRENT_SETTINGS, false);
+      mdaSettingsRadio_ = new JRadioButton("From MDA", !useCurrent);
+      currentSettingsRadio_ = new JRadioButton("Current", useCurrent);
+      ButtonGroup settingsGroup = new ButtonGroup();
+      settingsGroup.add(mdaSettingsRadio_);
+      settingsGroup.add(currentSettingsRadio_);
+      mdaSettingsRadio_.setToolTipText(
+            "Use the Z-stack and channel settings from the MDA window.");
+      currentSettingsRadio_.setToolTipText(
+            "<html>Ignore the MDA Z-stack and channel settings; acquire each tile at the<br>"
+            + "current focus position with the current channel preset.</html>");
+      ActionListener settingsSourceListener = e ->
+            settings_.putBoolean(USE_CURRENT_SETTINGS, currentSettingsRadio_.isSelected());
+      mdaSettingsRadio_.addActionListener(settingsSourceListener);
+      currentSettingsRadio_.addActionListener(settingsSourceListener);
+      add(mdaSettingsRadio_);
+      add(currentSettingsRadio_, "wrap");
 
       add(new JLabel("Tmp Path:"), "split 4");
       JTextField tmpPathField = new JTextField(25);
@@ -244,13 +282,7 @@ public class ExplorerFrame extends JFrame {
       wellAnchorPanel_ = new JPanel(new MigLayout("insets 0, fillx"));
       wellAnchorPanel_.add(new JLabel("HCS cal:"));
       hcsStatusLabel_ = new JLabel("Not found");
-      wellAnchorPanel_.add(hcsStatusLabel_);
-      refreshHcsButton_ = new JButton("Refresh");
-      refreshHcsButton_.setToolTipText(
-            "Re-read HCS plugin calibration from the profile and apply it");
-      refreshHcsButton_.setEnabled(false);
-      refreshHcsButton_.addActionListener(e -> explorerManager_.refreshHcsCalibration());
-      wellAnchorPanel_.add(refreshHcsButton_, "wrap");
+      wellAnchorPanel_.add(hcsStatusLabel_, "wrap");
 
       wellAnchorPanel_.add(new JLabel("Anchor well:"));
       wellRowCombo_ = new JComboBox<>();
@@ -326,7 +358,10 @@ public class ExplorerFrame extends JFrame {
       // A read-only, word-wrapping JTextArea styled as a label: long status/Note text wraps to
       // multiple lines (reporting its true height to the layout, so nothing is clipped) instead
       // of widening the window.
-      positionStatusLabel_ = new JTextArea(" ");
+      positionStatusLabel_ = new JTextArea("");
+      // Hidden while empty so it takes up no vertical space; setPositionStatus() shows it
+      // again when there is something to report.
+      positionStatusLabel_.setVisible(false);
       positionStatusLabel_.setEditable(false);
       positionStatusLabel_.setFocusable(false);
       positionStatusLabel_.setLineWrap(true);
@@ -338,22 +373,32 @@ public class ExplorerFrame extends JFrame {
       positionPanel.add(positionStatusLabel_, "span, growx, wmin 0, wmax 400, wrap");
       add(positionPanel, "growx, wrap");
 
+      // "Open Existing" gets its own centered row; Start/Interrupt/Help share the one below.
+      // Both rows span the frame's two columns and are centered, so the buttons keep their
+      // preferred width instead of being stretched by the growing first column.
       JButton openButton = new JButton("Open Existing");
       openButton.setToolTipText("Open a previously saved Explorer dataset.");
       openButton.addActionListener(e -> openExplore());
-      add(openButton, "split 4");
+      // All four buttons share one fixed width so the two rows line up. BUTTON_WIDTH is the
+      // preferred width of the widest label ("Open Existing"); an explicit width is needed
+      // because the layout's first column is "[grow, fill]" and would otherwise stretch them.
+      add(openButton, "span, align center, w " + BUTTON_WIDTH + "!, wrap");
+
+      // The three buttons live in their own panel so they stay grouped with even gaps: a
+      // "split 3" row in the outer layout spreads them across the frame's full width instead.
+      final JPanel buttonRow = new JPanel(new MigLayout("insets 0"));
 
       JButton startButton = new JButton("Start");
       startButton.setToolTipText(
             "Start explore mode. Right-click to select tiles, left-click to acquire.");
       startButton.addActionListener(e -> explorerManager_.startExplore());
-      add(startButton);
+      buttonRow.add(startButton, "w " + BUTTON_WIDTH + "!");
 
       stopButton_ = new JButton("Interrupt");
       stopButton_.setToolTipText("Interrupt tile acquisition after the current tile finishes.");
       stopButton_.setEnabled(false);
       stopButton_.addActionListener(e -> explorerManager_.interruptAcquisition());
-      add(stopButton_);
+      buttonRow.add(stopButton_, "w " + BUTTON_WIDTH + "!");
 
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(e -> JOptionPane.showMessageDialog(
@@ -363,7 +408,10 @@ public class ExplorerFrame extends JFrame {
                   + "Images pass through the active Data Processing Pipeline.\n"
                   + "Configure the pipeline in MM's Data Processing Pipeline window.",
             "Explorer Help", JOptionPane.PLAIN_MESSAGE));
-      add(helpButton, "wrap");
+      buttonRow.add(helpButton, "w " + BUTTON_WIDTH + "!");
+      // "w pref!" keeps the panel at its own width: the outer layout is "fillx", which would
+      // otherwise stretch it across the frame and leave its buttons bunched on the left.
+      add(buttonRow, "span, align center, w pref!, wrap");
 
       pack();
    }
@@ -427,6 +475,16 @@ public class ExplorerFrame extends JFrame {
       return withinVesselCheck_ != null && withinVesselCheck_.isSelected();
    }
 
+   /**
+    * Returns whether the microscope's current Z and channel settings should be used
+    * instead of the MDA window's settings.
+    *
+    * @return true when the "Current" settings radio is selected
+    */
+   public boolean isUseCurrentSettingsSelected() {
+      return currentSettingsRadio_ != null && currentSettingsRadio_.isSelected();
+   }
+
    /** Returns the vessel currently selected in the combo box. */
    public VesselType getSelectedVessel() {
       VesselType v = (VesselType) vesselCombo_.getSelectedItem();
@@ -444,9 +502,14 @@ public class ExplorerFrame extends JFrame {
       simpleAnchorPanel_.setVisible(isSimple);
       wellAnchorPanel_.setVisible(isMultiWell);
 
-      simpleAnchorButtons_.forEach(b -> b.setEnabled(sessionActive_ && isSimple));
+      // The settings source is locked for the duration of a session: switching it mid-session
+      // would change the dataset's axes shape and make already-acquired tiles disappear.
+      if (mdaSettingsRadio_ != null) {
+         mdaSettingsRadio_.setEnabled(!sessionActive_);
+         currentSettingsRadio_.setEnabled(!sessionActive_);
+      }
 
-      refreshHcsButton_.setEnabled(sessionActive_ && isMultiWell);
+      simpleAnchorButtons_.forEach(b -> b.setEnabled(sessionActive_ && isSimple));
 
       boolean hcsFound = hcsStatusLabel_.getText().startsWith("Found");
       boolean wellAnchorEnabled = sessionActive_ && isMultiWell && !hcsFound;
@@ -529,9 +592,11 @@ public class ExplorerFrame extends JFrame {
     * multiple lines rather than widening the window. Called from ExplorerManager; switches to EDT.
     */
    public void setPositionStatus(String text) {
-      final String shown = (text == null || text.isEmpty()) ? " " : text;
+      final String shown = (text == null) ? "" : text.trim();
       SwingUtilities.invokeLater(() -> {
          positionStatusLabel_.setText(shown);
+         // Hide the (empty) status rather than leaving a blank line above the buttons.
+         positionStatusLabel_.setVisible(!shown.isEmpty());
          // Re-pack so the window grows taller for a wrapped (multi-line) status, never wider.
          pack();
       });

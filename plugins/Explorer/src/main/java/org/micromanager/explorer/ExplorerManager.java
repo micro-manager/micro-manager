@@ -188,6 +188,10 @@ public class ExplorerManager {
    // Set to true after the first time we notify the user that MDA slice settings were
    // overridden; prevents showing the same dialog on every subsequent tile.
    private volatile boolean mdaSliceOverrideWarningShown_ = false;
+   // When true, the MDA z-stack and channel settings are ignored for this session and every
+   // tile is acquired with the microscope's current focus position and channel preset. Chosen
+   // in ExplorerFrame and locked at session start, along with the z-axis decision above.
+   private boolean sessionUseCurrentSettings_ = false;
 
    // Vessel outline: type selected in ExplorerFrame, anchor set at runtime.
    // Vessel axes are assumed parallel to stage X/Y (standard setup).
@@ -285,8 +289,13 @@ public class ExplorerManager {
          // Lock the z-axis decision for the whole session (see field comment). Editing
          // the MDA slice settings after this point will not change the dataset's axes
          // shape, so previously acquired tiles never disappear.
+         // When the user pinned this session to the microscope's current settings, the MDA
+         // slice and channel settings are ignored entirely (see sessionUseCurrentSettings_).
+         sessionUseCurrentSettings_ = frame_.getSettings()
+                 .getBoolean(ExplorerFrame.USE_CURRENT_SETTINGS, false);
          SequenceSettings startSettings = studio_.acquisitions().getAcquisitionSettings();
-         sessionUseSlices_ = startSettings.useSlices() && startSettings.slices().size() > 0;
+         sessionUseSlices_ = !sessionUseCurrentSettings_
+                 && startSettings.useSlices() && startSettings.slices().size() > 0;
          sessionIsZStack_ = sessionUseSlices_ && startSettings.slices().size() > 1;
          sessionSlices_ = sessionUseSlices_
                  ? new java.util.ArrayList<>(startSettings.slices())
@@ -1395,8 +1404,10 @@ public class ExplorerManager {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
 
-         // Detect if the user changed MDA slice settings mid-session and warn once.
-         if (!mdaSliceOverrideWarningShown_) {
+         // Detect if the user changed MDA slice settings mid-session and warn once. Skipped
+         // when this session ignores the MDA settings anyway (sessionUseCurrentSettings_):
+         // the comparison against the session snapshot would be meaningless there.
+         if (!mdaSliceOverrideWarningShown_ && !sessionUseCurrentSettings_) {
             boolean currentUseSlices = settings.useSlices() && !settings.slices().isEmpty();
             boolean slicesDiffer = (currentUseSlices != sessionUseSlices_)
                     || (sessionUseSlices_ && !settings.slices().equals(sessionSlices_));
@@ -1435,11 +1446,12 @@ public class ExplorerManager {
                  .shouldDisplayImages(false)
                  .isTestAcquisition(true);
 
-         // Preserve channel settings from MDA
-         if (settings.useChannels()) {
-            sb.useChannels(true);
-         }
-         if (!settings.useChannels() && !useSlices) {
+         // Preserve channel settings from MDA, unless this session is pinned to the
+         // microscope's current settings. Set explicitly: the settings copied from the MDA
+         // carry useChannels == true, so the engine would switch presets without this.
+         boolean useChannels = !sessionUseCurrentSettings_ && settings.useChannels();
+         sb.useChannels(useChannels);
+         if (!useChannels && !useSlices) {
             // AcquisitionEventIterator requires at least one acquisition function;
             // when no channels/slices/positions are used, enable a single frame.
             sb.useFrames(true).numFrames(1).intervalMs(0);
@@ -1556,6 +1568,15 @@ public class ExplorerManager {
          // the MDA slice settings are edited mid-session (see sessionIsZStack_).
          boolean isZStack = sessionIsZStack_;
 
+         // In current-settings mode the acquisition returns a single plane at channel index 0
+         // whatever the scope is set to, so the summary metadata cannot say which preset it
+         // came from. Read the live preset once per tile instead: switching presets between
+         // tiles then yields a correctly named channel. A preset first acquired mid-session
+         // is registered from the image itself (AxesBridge.registerChannel), which is also
+         // what grows the Inspector's histogram panels, so no panel appears until its
+         // channel actually has data.
+         String currentModeChannel = sessionUseCurrentSettings_ ? currentChannelName() : null;
+
          for (Coords c : allCoords) {
             Image img = testStore.getImage(c);
             if (img == null) {
@@ -1579,7 +1600,8 @@ public class ExplorerManager {
                }
             }
             int channelIndex = c.getChannel();
-            String channelName = summaryMeta.getSafeChannelName(channelIndex);
+            String channelName = currentModeChannel != null
+                    ? currentModeChannel : summaryMeta.getSafeChannelName(channelIndex);
             // Pass the z-slice index only for z-stacks (-1 means "no z axis").
             int zIndex = isZStack ? c.getZSlice() : -1;
             HashMap<String, Object> axes = storeImage(img, row, col, channelName, zIndex);
@@ -1604,11 +1626,18 @@ public class ExplorerManager {
             final int tileRow = row;
             final int tileCol = col;
             displayExecutor_.submit(() -> {
+               // Snapshot every field this task touches: stopExplore() nulls them from
+               // another thread, and its shutdownNow() only interrupts this task, it does
+               // not wait for it to finish. Re-reading a field mid-task can therefore see
+               // it change from non-null to null between the guard and the call.
+               final TiledDataViewerDataViewerAPI viewerRef = mm2Viewer_;
+               final TiledDataViewerDataProviderAPI providerRef = mm2DataProvider_;
+               final ExplorerDataSource dataSourceRef = dataSource_;
                for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
-                  if (mm2DataProvider_ != null) {
+                  if (providerRef != null) {
                      // Use axes-only overload so the image is re-read from storage,
                      // ensuring per-image metadata tags are included.
-                     mm2DataProvider_.newImageArrived(fullAxesList.get(i));
+                     providerRef.newImageArrived(fullAxesList.get(i));
                   }
                   try {
                      viewer_.newImageArrived(displayAxesList.get(i));
@@ -1616,15 +1645,29 @@ public class ExplorerManager {
                      // NDViewer histogram not yet initialized
                   }
                }
-               if (mm2Viewer_ != null) {
-                  mm2Viewer_.newTileArrived(tileImages, displayAxesList);
+               if (viewerRef != null) {
+                  viewerRef.newTileArrived(tileImages, displayAxesList);
+                  // newTileArrived has now assigned an MM channel index to any channel this
+                  // tile introduced; give it its name so the Inspector does not label it
+                  // "channel <n>" (only the session's first channel is in the metadata).
+                  if (providerRef != null) {
+                     for (HashMap<String, Object> axes : displayAxesList) {
+                        Object ch = axes.get("channel");
+                        if (ch instanceof String) {
+                           nameChannelInDisplaySettings((String) ch,
+                                   providerRef.getChannelIndex((String) ch));
+                        }
+                     }
+                  }
                }
                try {
                   viewer_.update();
                } catch (NullPointerException e) {
                   // NDViewer histogram not yet initialized
                }
-               dataSource_.removePendingTile(tileRow, tileCol);
+               if (dataSourceRef != null) {
+                  dataSourceRef.removePendingTile(tileRow, tileCol);
+               }
                redrawOverlay();
             });
          } else {
@@ -3389,12 +3432,103 @@ public class ExplorerManager {
 
    // ===================== Private helpers =====================
 
+   /**
+    * Returns the channel group the microscope is currently set to, or "" if none is set.
+    * Used in current-settings mode, where the MDA channel group does not apply.
+    */
+   private String currentChannelGroup() {
+      try {
+         String group = studio_.core().getChannelGroup();
+         return group != null ? group : "";
+      } catch (Exception e) {
+         return "";
+      }
+   }
+
+   /**
+    * Returns the name of the preset the current channel group is set to, falling back to
+    * "Default" when no channel group is configured or no preset matches the current state.
+    *
+    * <p>This mirrors what Snap and Live do (see SnapLiveManager.makeChannelName()), so an
+    * Explorer tile acquired in current-settings mode is labelled with the same channel name
+    * -- and therefore picks up the same remembered display settings -- as a snapped image.
+    * Explorer stores one image per channel, so only the single-camera-channel branch of
+    * that method applies here.
+    *
+    * @return the current preset name, or "Default"
+    */
+   private String currentChannelName() {
+      String group = currentChannelGroup();
+      String preset = "";
+      if (!group.isEmpty()) {
+         try {
+            // From the cache: this runs per tile, and the state cache is what Snap reads too.
+            preset = studio_.core().getCurrentConfigFromCache(group);
+         } catch (Exception e) {
+            // An unset or invalid group throws rather than returning "": fall back below.
+            preset = "";
+         }
+      }
+      return (preset == null || preset.isEmpty()) ? "Default" : preset;
+   }
+
+   /**
+    * Gives a channel that appeared after session start a display-settings name, so the
+    * Inspector labels it with the preset name instead of a generic "channel &lt;n&gt;".
+    *
+    * <p>Only the channel present at session start is listed in the summary metadata, so
+    * ChannelIntensityController's fallback to getSafeChannelName() cannot name a channel
+    * discovered later. It prefers ChannelDisplaySettings.getName() when that is non-empty,
+    * which is what this sets. The remembered color for the preset is applied too, matching
+    * what initDisplaySettings() does for the first channel.
+    *
+    * @param channelName the preset name the tile was acquired under
+    * @param index       the MM channel index the viewer assigned to it
+    */
+   private void nameChannelInDisplaySettings(String channelName, int index) {
+      // Snapshot the viewer: this runs on the display executor, and stopExplore() can null
+      // the field between the guard below and the calls that follow.
+      final TiledDataViewerDataViewerAPI viewer = mm2Viewer_;
+      if (viewer == null || channelName == null || channelName.isEmpty() || index < 0) {
+         return;
+      }
+      try {
+         DisplaySettings current = viewer.getDisplaySettings();
+         if (current == null) {
+            return;
+         }
+         org.micromanager.display.ChannelDisplaySettings existing =
+                 current.getChannelSettings(index);
+         if (existing != null && channelName.equals(existing.getName())) {
+            return;
+         }
+         String group = currentChannelGroup();
+         org.micromanager.display.ChannelDisplaySettings.Builder chBuilder =
+                 existing != null ? existing.copyBuilder()
+                         : studio_.displays().channelDisplaySettingsBuilder();
+         chBuilder.groupName(group).name(channelName);
+         org.micromanager.display.ChannelDisplaySettings remembered =
+                 RememberedDisplaySettings.loadChannel(studio_, group, channelName, null);
+         if (remembered != null && !remembered.getColor().equals(Color.WHITE)) {
+            chBuilder.color(remembered.getColor());
+         }
+         viewer.setDisplaySettings(
+                 current.copyBuilderWithChannelSettings(index, chBuilder.build()).build());
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: could not name channel " + channelName);
+      }
+   }
+
    private SummaryMetadata buildSummaryMetadata(int width, int height) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
 
          List<String> chNames = new ArrayList<>();
-         if (settings.useChannels() && settings.channels().size() > 0) {
+         // In current-settings mode the MDA channels are not acquired, so their names must
+         // not be recorded here: getSafeChannelName() would then mislabel every tile. The
+         // current preset is used instead (see the chNames.isEmpty() fallback below).
+         if (!sessionUseCurrentSettings_ && settings.useChannels()
+               && settings.channels().size() > 0) {
             for (int i = 0; i < settings.channels().size(); i++) {
                if (settings.channels().get(i).useChannel()) {
                   chNames.add(settings.channels().get(i).config());
@@ -3402,13 +3536,25 @@ public class ExplorerManager {
             }
          }
          if (chNames.isEmpty()) {
-            chNames.add("Default");
+            // In current-settings mode, name the channel after the preset the scope is set to,
+            // as Snap does. Outside that mode keep the plain "Default" fallback: the rest of
+            // the code (initDisplaySettings() and the per-tile naming in
+            // acquireSingleTileBlocking()) uses "Default" there, and the names must agree.
+            // Only this one name is declared: TiledDataViewerDataProvider seeds its AxesBridge
+            // from every name listed here and the Intensity Inspector sizes its histogram
+            // panels to that count, so listing more would open a panel per unacquired preset.
+            // Presets acquired later are registered from the images themselves.
+            chNames.add(sessionUseCurrentSettings_ ? currentChannelName() : "Default");
          }
+         // In current-settings mode the channels come from the hardware, not the MDA, so the
+         // group must match: it is half of the RememberedDisplaySettings key "<group>:<name>".
+         String channelGroup = sessionUseCurrentSettings_
+                 ? currentChannelGroup() : settings.channelGroup();
 
          SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder()
                .sequenceSettings(settings)
                .channelNames(chNames)
-               .channelGroup(settings.channelGroup())
+               .channelGroup(channelGroup)
                .userName(System.getProperty("user.name"))
                .profileName(studio_.profile().getProfileName())
                .startDate(LocalDateTime.now().toString())
@@ -3416,7 +3562,7 @@ public class ExplorerManager {
                .imageHeight(height)
                .initialScopeData(studio_.acquisitions().scopeData()
                      .configurationToPropertyMap(studio_.core().getSystemStateCache()));
-         if (settings.useSlices()) {
+         if (settings.useSlices() && !sessionUseCurrentSettings_) {
             smb.zStepUm(settings.sliceZStepUm());
          }
          DefaultSummaryMetadata sm = (DefaultSummaryMetadata) smb.build();
@@ -3457,7 +3603,10 @@ public class ExplorerManager {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
          DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
          int displayChannelIndex = 0;
-         if (settings.useChannels() && settings.channels().size() > 0) {
+         // As in buildSummaryMetadata(): in current-settings mode the channels come from the
+         // channel group, not the MDA, so fall through to the branch below.
+         if (!sessionUseCurrentSettings_ && settings.useChannels()
+               && settings.channels().size() > 0) {
             for (int i = 0; i < settings.channels().size(); i++) {
                if (settings.channels().get(i).useChannel()) {
                   String channelGroup = settings.channelGroup();
@@ -3486,9 +3635,13 @@ public class ExplorerManager {
                dsBuilder.colorModeComposite();
             }
          } else {
-            // Single-channel (including RGB) — load remembered settings for "Default"
-            String channelGroup = settings.channelGroup();
-            String channelName = "Default";
+            // Single channel (including RGB). In current-settings mode name it after the
+            // preset the scope is set to, as Snap does, so it shares the remembered display
+            // settings keyed on "<group>:<name>"; otherwise keep the "Default" fallback.
+            String channelGroup = sessionUseCurrentSettings_
+                    ? currentChannelGroup() : settings.channelGroup();
+            String channelName = sessionUseCurrentSettings_
+                    ? currentChannelName() : "Default";
             org.micromanager.display.ChannelDisplaySettings remembered =
                   RememberedDisplaySettings.loadChannel(
                         studio_, channelGroup, channelName, null);
@@ -3642,10 +3795,13 @@ public class ExplorerManager {
          dataSource_.clearVesselOutline();
          redrawOverlay();
       }
-      if (exploring_ && vesselType_.isMultiWell()) {
+      if (vesselType_.isMultiWell()) {
+         // Report the calibration status even before a session starts: it is read from the
+         // HCS plugin's profile, which does not depend on an active session. Only applying
+         // it does, since that needs the pixel/stage transforms set up by startExplore().
          Point2D.Double hcsOffset = tryReadHcsCalibration();
          frame_.setHcsCalibrationStatus(hcsOffset != null);
-         if (hcsOffset != null) {
+         if (hcsOffset != null && exploring_) {
             applyHcsCalibration(hcsOffset);
          }
       } else {
@@ -3760,21 +3916,6 @@ public class ExplorerManager {
          viewer_.setViewOffset(offsetX, offsetY);
          viewer_.setFullResSourceDataSizeAspectCorrected(displayW, displayH);
       });
-   }
-
-   /**
-    * Re-reads the HCS calibration from the profile and applies it if found.
-    * Called from ExplorerFrame when the operator clicks "Refresh".
-    */
-   public void refreshHcsCalibration() {
-      if (!exploring_ || !vesselType_.isMultiWell()) {
-         return;
-      }
-      Point2D.Double hcsOffset = tryReadHcsCalibration();
-      frame_.setHcsCalibrationStatus(hcsOffset != null);
-      if (hcsOffset != null) {
-         applyHcsCalibration(hcsOffset);
-      }
    }
 
    private void applyHcsCalibration(Point2D.Double offset) {
