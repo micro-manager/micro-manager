@@ -188,6 +188,10 @@ public class ExplorerManager {
    // Set to true after the first time we notify the user that MDA slice settings were
    // overridden; prevents showing the same dialog on every subsequent tile.
    private volatile boolean mdaSliceOverrideWarningShown_ = false;
+   // When true, the MDA z-stack and channel settings are ignored for this session and every
+   // tile is acquired with the microscope's current focus position and channel preset. Chosen
+   // in ExplorerFrame and locked at session start, along with the z-axis decision above.
+   private boolean sessionUseCurrentSettings_ = false;
 
    // Vessel outline: type selected in ExplorerFrame, anchor set at runtime.
    // Vessel axes are assumed parallel to stage X/Y (standard setup).
@@ -285,8 +289,13 @@ public class ExplorerManager {
          // Lock the z-axis decision for the whole session (see field comment). Editing
          // the MDA slice settings after this point will not change the dataset's axes
          // shape, so previously acquired tiles never disappear.
+         // When the user pinned this session to the microscope's current settings, the MDA
+         // slice and channel settings are ignored entirely (see sessionUseCurrentSettings_).
+         sessionUseCurrentSettings_ = frame_.getSettings()
+                 .getBoolean(ExplorerFrame.USE_CURRENT_SETTINGS, false);
          SequenceSettings startSettings = studio_.acquisitions().getAcquisitionSettings();
-         sessionUseSlices_ = startSettings.useSlices() && startSettings.slices().size() > 0;
+         sessionUseSlices_ = !sessionUseCurrentSettings_
+                 && startSettings.useSlices() && startSettings.slices().size() > 0;
          sessionIsZStack_ = sessionUseSlices_ && startSettings.slices().size() > 1;
          sessionSlices_ = sessionUseSlices_
                  ? new java.util.ArrayList<>(startSettings.slices())
@@ -1395,8 +1404,10 @@ public class ExplorerManager {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
 
-         // Detect if the user changed MDA slice settings mid-session and warn once.
-         if (!mdaSliceOverrideWarningShown_) {
+         // Detect if the user changed MDA slice settings mid-session and warn once. Skipped
+         // when this session ignores the MDA settings anyway (sessionUseCurrentSettings_):
+         // the comparison against the session snapshot would be meaningless there.
+         if (!mdaSliceOverrideWarningShown_ && !sessionUseCurrentSettings_) {
             boolean currentUseSlices = settings.useSlices() && !settings.slices().isEmpty();
             boolean slicesDiffer = (currentUseSlices != sessionUseSlices_)
                     || (sessionUseSlices_ && !settings.slices().equals(sessionSlices_));
@@ -1435,11 +1446,12 @@ public class ExplorerManager {
                  .shouldDisplayImages(false)
                  .isTestAcquisition(true);
 
-         // Preserve channel settings from MDA
-         if (settings.useChannels()) {
-            sb.useChannels(true);
-         }
-         if (!settings.useChannels() && !useSlices) {
+         // Preserve channel settings from MDA, unless this session is pinned to the
+         // microscope's current settings. Set explicitly: the settings copied from the MDA
+         // carry useChannels == true, so the engine would switch presets without this.
+         boolean useChannels = !sessionUseCurrentSettings_ && settings.useChannels();
+         sb.useChannels(useChannels);
+         if (!useChannels && !useSlices) {
             // AcquisitionEventIterator requires at least one acquisition function;
             // when no channels/slices/positions are used, enable a single frame.
             sb.useFrames(true).numFrames(1).intervalMs(0);
@@ -3389,12 +3401,56 @@ public class ExplorerManager {
 
    // ===================== Private helpers =====================
 
+   /**
+    * Returns the channel group the microscope is currently set to, or "" if none is set.
+    * Used in current-settings mode, where the MDA channel group does not apply.
+    */
+   private String currentChannelGroup() {
+      try {
+         String group = studio_.core().getChannelGroup();
+         return group != null ? group : "";
+      } catch (Exception e) {
+         return "";
+      }
+   }
+
+   /**
+    * Returns the name of the preset the current channel group is set to, falling back to
+    * "Default" when no channel group is configured or no preset matches the current state.
+    *
+    * <p>This mirrors what Snap and Live do (see SnapLiveManager.makeChannelName()), so an
+    * Explorer tile acquired in current-settings mode is labelled with the same channel name
+    * -- and therefore picks up the same remembered display settings -- as a snapped image.
+    * Explorer stores one image per channel, so only the single-camera-channel branch of
+    * that method applies here.
+    *
+    * @return the current preset name, or "Default"
+    */
+   private String currentChannelName() {
+      String group = currentChannelGroup();
+      String preset = "";
+      if (!group.isEmpty()) {
+         try {
+            // From the cache: this runs per tile, and the state cache is what Snap reads too.
+            preset = studio_.core().getCurrentConfigFromCache(group);
+         } catch (Exception e) {
+            // An unset or invalid group throws rather than returning "": fall back below.
+            preset = "";
+         }
+      }
+      return (preset == null || preset.isEmpty()) ? "Default" : preset;
+   }
+
    private SummaryMetadata buildSummaryMetadata(int width, int height) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
 
          List<String> chNames = new ArrayList<>();
-         if (settings.useChannels() && settings.channels().size() > 0) {
+         // In current-settings mode the MDA channels are not acquired, so their names must
+         // not be recorded here: getSafeChannelName() would then mislabel every tile. The
+         // current preset is used instead (see the chNames.isEmpty() fallback below).
+         if (!sessionUseCurrentSettings_ && settings.useChannels()
+               && settings.channels().size() > 0) {
             for (int i = 0; i < settings.channels().size(); i++) {
                if (settings.channels().get(i).useChannel()) {
                   chNames.add(settings.channels().get(i).config());
@@ -3402,13 +3458,18 @@ public class ExplorerManager {
             }
          }
          if (chNames.isEmpty()) {
-            chNames.add("Default");
+            // Name the channel after the preset the scope is currently set to, as Snap does.
+            chNames.add(currentChannelName());
          }
+         // In current-settings mode the channels come from the hardware, not the MDA, so the
+         // group must match: it is half of the RememberedDisplaySettings key "<group>:<name>".
+         String channelGroup = sessionUseCurrentSettings_
+                 ? currentChannelGroup() : settings.channelGroup();
 
          SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder()
                .sequenceSettings(settings)
                .channelNames(chNames)
-               .channelGroup(settings.channelGroup())
+               .channelGroup(channelGroup)
                .userName(System.getProperty("user.name"))
                .profileName(studio_.profile().getProfileName())
                .startDate(LocalDateTime.now().toString())
@@ -3416,7 +3477,7 @@ public class ExplorerManager {
                .imageHeight(height)
                .initialScopeData(studio_.acquisitions().scopeData()
                      .configurationToPropertyMap(studio_.core().getSystemStateCache()));
-         if (settings.useSlices()) {
+         if (settings.useSlices() && !sessionUseCurrentSettings_) {
             smb.zStepUm(settings.sliceZStepUm());
          }
          DefaultSummaryMetadata sm = (DefaultSummaryMetadata) smb.build();
@@ -3457,7 +3518,10 @@ public class ExplorerManager {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
          DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
          int displayChannelIndex = 0;
-         if (settings.useChannels() && settings.channels().size() > 0) {
+         // As in buildSummaryMetadata(): in current-settings mode the dataset has a single
+         // channel named after the current preset, so fall through to the branch below.
+         if (!sessionUseCurrentSettings_ && settings.useChannels()
+               && settings.channels().size() > 0) {
             for (int i = 0; i < settings.channels().size(); i++) {
                if (settings.channels().get(i).useChannel()) {
                   String channelGroup = settings.channelGroup();
@@ -3486,9 +3550,13 @@ public class ExplorerManager {
                dsBuilder.colorModeComposite();
             }
          } else {
-            // Single-channel (including RGB) — load remembered settings for "Default"
-            String channelGroup = settings.channelGroup();
-            String channelName = "Default";
+            // Single channel (including RGB). In current-settings mode name it after the
+            // preset the scope is set to, as Snap does, so it shares the remembered display
+            // settings keyed on "<group>:<name>"; otherwise keep the "Default" fallback.
+            String channelGroup = sessionUseCurrentSettings_
+                    ? currentChannelGroup() : settings.channelGroup();
+            String channelName = sessionUseCurrentSettings_
+                    ? currentChannelName() : "Default";
             org.micromanager.display.ChannelDisplaySettings remembered =
                   RememberedDisplaySettings.loadChannel(
                         studio_, channelGroup, channelName, null);

@@ -1,10 +1,12 @@
 package org.micromanager.explorer;
 
 import java.awt.Toolkit;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -13,6 +15,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -41,6 +44,9 @@ public class ExplorerFrame extends JFrame {
    static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
    static final String EXPLORE_OVERLAP_PERCENT = "ExploreOverlapPercent";
    static final String VESSEL_TYPE = "VesselType";
+   // When true, the MDA Z-stack and channel settings are ignored and every tile is
+   // acquired with the microscope's current focus position and channel preset.
+   static final String USE_CURRENT_SETTINGS = "UseCurrentSettings";
    // Deprecated: superseded by STORAGE_BACKEND. Used only as the fallback default when
    // STORAGE_BACKEND has never been set; no value is ever written back under this key.
    static final String USE_OME_ZARR = "UseOmeZarrStorage";
@@ -59,6 +65,11 @@ public class ExplorerFrame extends JFrame {
 
    private JButton stopButton_;
    private JComboBox<VesselType> vesselCombo_;
+
+   // Source of the Z-stack and channel settings. Read once at session start; the radios
+   // are disabled while a session runs (see updateAnchorPanels()).
+   private JRadioButton mdaSettingsRadio_;
+   private JRadioButton currentSettingsRadio_;
 
    // Create-Positions controls (live session only).
    private JButton createPositionsButton_;
@@ -107,6 +118,26 @@ public class ExplorerFrame extends JFrame {
       }
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("fillx", "[grow, fill][]"));
+
+      // Source of the Z-stack and channel settings for each tile. Locked at session start.
+      add(new JLabel("Settings:"), "split 3");
+      boolean useCurrent = settings_.getBoolean(USE_CURRENT_SETTINGS, false);
+      mdaSettingsRadio_ = new JRadioButton("From MDA", !useCurrent);
+      currentSettingsRadio_ = new JRadioButton("Current", useCurrent);
+      ButtonGroup settingsGroup = new ButtonGroup();
+      settingsGroup.add(mdaSettingsRadio_);
+      settingsGroup.add(currentSettingsRadio_);
+      mdaSettingsRadio_.setToolTipText(
+            "Use the Z-stack and channel settings from the MDA window.");
+      currentSettingsRadio_.setToolTipText(
+            "<html>Ignore the MDA Z-stack and channel settings; acquire each tile at the<br>"
+            + "current focus position with the current channel preset.</html>");
+      ActionListener settingsSourceListener = e ->
+            settings_.putBoolean(USE_CURRENT_SETTINGS, currentSettingsRadio_.isSelected());
+      mdaSettingsRadio_.addActionListener(settingsSourceListener);
+      currentSettingsRadio_.addActionListener(settingsSourceListener);
+      add(mdaSettingsRadio_);
+      add(currentSettingsRadio_, "wrap");
 
       add(new JLabel("Tmp Path:"), "split 4");
       JTextField tmpPathField = new JTextField(25);
@@ -427,6 +458,16 @@ public class ExplorerFrame extends JFrame {
       return withinVesselCheck_ != null && withinVesselCheck_.isSelected();
    }
 
+   /**
+    * Returns whether the microscope's current Z and channel settings should be used
+    * instead of the MDA window's settings.
+    *
+    * @return true when the "Current" settings radio is selected
+    */
+   public boolean isUseCurrentSettingsSelected() {
+      return currentSettingsRadio_ != null && currentSettingsRadio_.isSelected();
+   }
+
    /** Returns the vessel currently selected in the combo box. */
    public VesselType getSelectedVessel() {
       VesselType v = (VesselType) vesselCombo_.getSelectedItem();
@@ -443,6 +484,13 @@ public class ExplorerFrame extends JFrame {
 
       simpleAnchorPanel_.setVisible(isSimple);
       wellAnchorPanel_.setVisible(isMultiWell);
+
+      // The settings source is locked for the duration of a session: switching it mid-session
+      // would change the dataset's axes shape and make already-acquired tiles disappear.
+      if (mdaSettingsRadio_ != null) {
+         mdaSettingsRadio_.setEnabled(!sessionActive_);
+         currentSettingsRadio_.setEnabled(!sessionActive_);
+      }
 
       simpleAnchorButtons_.forEach(b -> b.setEnabled(sessionActive_ && isSimple));
 
