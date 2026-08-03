@@ -3522,13 +3522,15 @@ public class ExplorerManager {
             }
          }
          if (chNames.isEmpty()) {
-            // Name the channel after the preset the scope is currently set to, as Snap does.
-            // Only the current preset is declared: TiledDataViewerDataProvider seeds its
-            // AxesBridge from every name listed here, and the Intensity Inspector sizes its
-            // histogram panels to that count, so declaring the group's other presets would
-            // open a histogram panel per preset before any of them had been acquired.
+            // In current-settings mode, name the channel after the preset the scope is set to,
+            // as Snap does. Outside that mode keep the plain "Default" fallback: the rest of
+            // the code (initDisplaySettings() and the per-tile naming in
+            // acquireSingleTileBlocking()) uses "Default" there, and the names must agree.
+            // Only this one name is declared: TiledDataViewerDataProvider seeds its AxesBridge
+            // from every name listed here and the Intensity Inspector sizes its histogram
+            // panels to that count, so listing more would open a panel per unacquired preset.
             // Presets acquired later are registered from the images themselves.
-            chNames.add(currentChannelName());
+            chNames.add(sessionUseCurrentSettings_ ? currentChannelName() : "Default");
          }
          // In current-settings mode the channels come from the hardware, not the MDA, so the
          // group must match: it is half of the RememberedDisplaySettings key "<group>:<name>".
