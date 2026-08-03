@@ -40,6 +40,9 @@ public class ExplorerFrame extends JFrame {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
    private static final String DIALOG_TITLE = "Explorer";
+   // Shared width (px) for the Open Existing / Start / Interrupt / Help buttons, so the two
+   // bottom rows line up. Sized to fit the widest label, "Open Existing".
+   private static final int BUTTON_WIDTH = 114;
 
    static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
    static final String EXPLORE_OVERLAP_PERCENT = "ExploreOverlapPercent";
@@ -355,7 +358,10 @@ public class ExplorerFrame extends JFrame {
       // A read-only, word-wrapping JTextArea styled as a label: long status/Note text wraps to
       // multiple lines (reporting its true height to the layout, so nothing is clipped) instead
       // of widening the window.
-      positionStatusLabel_ = new JTextArea(" ");
+      positionStatusLabel_ = new JTextArea("");
+      // Hidden while empty so it takes up no vertical space; setPositionStatus() shows it
+      // again when there is something to report.
+      positionStatusLabel_.setVisible(false);
       positionStatusLabel_.setEditable(false);
       positionStatusLabel_.setFocusable(false);
       positionStatusLabel_.setLineWrap(true);
@@ -367,22 +373,32 @@ public class ExplorerFrame extends JFrame {
       positionPanel.add(positionStatusLabel_, "span, growx, wmin 0, wmax 400, wrap");
       add(positionPanel, "growx, wrap");
 
+      // "Open Existing" gets its own centered row; Start/Interrupt/Help share the one below.
+      // Both rows span the frame's two columns and are centered, so the buttons keep their
+      // preferred width instead of being stretched by the growing first column.
       JButton openButton = new JButton("Open Existing");
       openButton.setToolTipText("Open a previously saved Explorer dataset.");
       openButton.addActionListener(e -> openExplore());
-      add(openButton, "split 4");
+      // All four buttons share one fixed width so the two rows line up. BUTTON_WIDTH is the
+      // preferred width of the widest label ("Open Existing"); an explicit width is needed
+      // because the layout's first column is "[grow, fill]" and would otherwise stretch them.
+      add(openButton, "span, align center, w " + BUTTON_WIDTH + "!, wrap");
+
+      // The three buttons live in their own panel so they stay grouped with even gaps: a
+      // "split 3" row in the outer layout spreads them across the frame's full width instead.
+      final JPanel buttonRow = new JPanel(new MigLayout("insets 0"));
 
       JButton startButton = new JButton("Start");
       startButton.setToolTipText(
             "Start explore mode. Right-click to select tiles, left-click to acquire.");
       startButton.addActionListener(e -> explorerManager_.startExplore());
-      add(startButton);
+      buttonRow.add(startButton, "w " + BUTTON_WIDTH + "!");
 
       stopButton_ = new JButton("Interrupt");
       stopButton_.setToolTipText("Interrupt tile acquisition after the current tile finishes.");
       stopButton_.setEnabled(false);
       stopButton_.addActionListener(e -> explorerManager_.interruptAcquisition());
-      add(stopButton_);
+      buttonRow.add(stopButton_, "w " + BUTTON_WIDTH + "!");
 
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(e -> JOptionPane.showMessageDialog(
@@ -392,7 +408,10 @@ public class ExplorerFrame extends JFrame {
                   + "Images pass through the active Data Processing Pipeline.\n"
                   + "Configure the pipeline in MM's Data Processing Pipeline window.",
             "Explorer Help", JOptionPane.PLAIN_MESSAGE));
-      add(helpButton, "wrap");
+      buttonRow.add(helpButton, "w " + BUTTON_WIDTH + "!");
+      // "w pref!" keeps the panel at its own width: the outer layout is "fillx", which would
+      // otherwise stretch it across the frame and leave its buttons bunched on the left.
+      add(buttonRow, "span, align center, w pref!, wrap");
 
       pack();
    }
@@ -573,9 +592,11 @@ public class ExplorerFrame extends JFrame {
     * multiple lines rather than widening the window. Called from ExplorerManager; switches to EDT.
     */
    public void setPositionStatus(String text) {
-      final String shown = (text == null || text.isEmpty()) ? " " : text;
+      final String shown = (text == null) ? "" : text.trim();
       SwingUtilities.invokeLater(() -> {
          positionStatusLabel_.setText(shown);
+         // Hide the (empty) status rather than leaving a blank line above the buttons.
+         positionStatusLabel_.setVisible(!shown.isEmpty());
          // Re-pack so the window grows taller for a wrapped (multi-line) status, never wider.
          pack();
       });
