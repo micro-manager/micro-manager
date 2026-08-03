@@ -320,13 +320,18 @@ public class StitchFrame extends JDialog {
     * Returns a leaf dataset name that does not collide with anything already in {@code outputDir},
     * appending {@code _N} if needed.
     *
-    * <p>A bare-name check alone is not enough, because the backends do not all create a directory
-    * literally named {@code name}: OME-Zarr creates {@code name.ome.zarr}, OME-BigTIFF creates
-    * {@code name.ome.tiff}, and NDTiff creates {@code name_N}. Probing only the bare name would
-    * therefore never see an existing dataset, silently leaving the collision to be resolved a
-    * second time inside the storage layer. Every form is checked here so the name shown in the
-    * viewer title and stored in the profile matches what actually lands on disk. Mirrors
+    * <p>A bare-name check alone is not enough, because the OME backends do not create a directory
+    * literally named {@code name}: OME-Zarr creates {@code name.ome.zarr} and OME-BigTIFF creates
+    * {@code name.ome.tiff}. Probing only the bare name would therefore never see an existing OME
+    * dataset, silently leaving the collision to be resolved a second time inside the storage
+    * layer. All three forms are checked here so the name shown in the viewer title and stored in
+    * the profile matches what actually lands on disk. Mirrors
     * {@code ExplorerManager.uniqueAcqName}.
+    *
+    * <p>The bare-name check still matters: it covers the image-stack format, and NDTiff when
+    * written without unique-naming. Stitch's own NDTiff export passes
+    * {@code createUniqueName=true}, so that backend appends a further {@code _N} of its own on
+    * top of whatever this returns (see the note at the {@code datasetName} assignment).
     *
     * @param outputDir directory the dataset will be created in
     * @param candidate desired leaf name
@@ -451,8 +456,8 @@ public class StitchFrame extends JDialog {
       final DisplaySettings sourceDisplaySettings = displayWindow_.getDisplaySettings();
       // Use the (already-uniquified) namePrefix as the dataset name so repeated
       // exports get distinct viewer titles (e.g. "stitched", "stitched_1").
-      // Note NDTiff additionally appends its own "_N" internally (createUniqueName=true in
-      // buildTiledStorage), so for that backend the on-disk folder can carry one more suffix
+      // Note NDTiff always appends its own "_N" internally (buildTiledStorage passes
+      // createUniqueName=true), so for that backend the on-disk folder carries one more suffix
       // than this name; the viewer follows storage.getDiskLocation(), so it still opens the
       // directory that was actually written.
       final String datasetName = namePrefix.isEmpty()
