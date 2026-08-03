@@ -90,7 +90,6 @@ public class ExplorerFrame extends JFrame {
    // Multi-well anchor panel: HCS calibration status + optional well selector.
    private JPanel wellAnchorPanel_;
    private JLabel hcsStatusLabel_;
-   private JButton refreshHcsButton_;
    private JComboBox<String> wellRowCombo_;
    private JSpinner wellColSpinner_;
    private JButton setWellAnchorButton_;
@@ -105,6 +104,11 @@ public class ExplorerFrame extends JFrame {
       explorerManager_ = new ExplorerManager(studio, this);
 
       initComponents();
+
+      // The vessel combo is restored from the profile before its listener is attached, so
+      // push the restored value through the manager here. Otherwise a remembered multi-well
+      // plate would show a stale "Not found" HCS status until the selection was changed.
+      explorerManager_.setVesselType(getSelectedVessel());
 
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
@@ -275,13 +279,7 @@ public class ExplorerFrame extends JFrame {
       wellAnchorPanel_ = new JPanel(new MigLayout("insets 0, fillx"));
       wellAnchorPanel_.add(new JLabel("HCS cal:"));
       hcsStatusLabel_ = new JLabel("Not found");
-      wellAnchorPanel_.add(hcsStatusLabel_);
-      refreshHcsButton_ = new JButton("Refresh");
-      refreshHcsButton_.setToolTipText(
-            "Re-read HCS plugin calibration from the profile and apply it");
-      refreshHcsButton_.setEnabled(false);
-      refreshHcsButton_.addActionListener(e -> explorerManager_.refreshHcsCalibration());
-      wellAnchorPanel_.add(refreshHcsButton_, "wrap");
+      wellAnchorPanel_.add(hcsStatusLabel_, "wrap");
 
       wellAnchorPanel_.add(new JLabel("Anchor well:"));
       wellRowCombo_ = new JComboBox<>();
@@ -493,8 +491,6 @@ public class ExplorerFrame extends JFrame {
       }
 
       simpleAnchorButtons_.forEach(b -> b.setEnabled(sessionActive_ && isSimple));
-
-      refreshHcsButton_.setEnabled(sessionActive_ && isMultiWell);
 
       boolean hcsFound = hcsStatusLabel_.getText().startsWith("Found");
       boolean wellAnchorEnabled = sessionActive_ && isMultiWell && !hcsFound;

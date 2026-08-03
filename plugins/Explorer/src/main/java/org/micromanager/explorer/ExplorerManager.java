@@ -3779,10 +3779,13 @@ public class ExplorerManager {
          dataSource_.clearVesselOutline();
          redrawOverlay();
       }
-      if (exploring_ && vesselType_.isMultiWell()) {
+      if (vesselType_.isMultiWell()) {
+         // Report the calibration status even before a session starts: it is read from the
+         // HCS plugin's profile, which does not depend on an active session. Only applying
+         // it does, since that needs the pixel/stage transforms set up by startExplore().
          Point2D.Double hcsOffset = tryReadHcsCalibration();
          frame_.setHcsCalibrationStatus(hcsOffset != null);
-         if (hcsOffset != null) {
+         if (hcsOffset != null && exploring_) {
             applyHcsCalibration(hcsOffset);
          }
       } else {
@@ -3897,21 +3900,6 @@ public class ExplorerManager {
          viewer_.setViewOffset(offsetX, offsetY);
          viewer_.setFullResSourceDataSizeAspectCorrected(displayW, displayH);
       });
-   }
-
-   /**
-    * Re-reads the HCS calibration from the profile and applies it if found.
-    * Called from ExplorerFrame when the operator clicks "Refresh".
-    */
-   public void refreshHcsCalibration() {
-      if (!exploring_ || !vesselType_.isMultiWell()) {
-         return;
-      }
-      Point2D.Double hcsOffset = tryReadHcsCalibration();
-      frame_.setHcsCalibrationStatus(hcsOffset != null);
-      if (hcsOffset != null) {
-         applyHcsCalibration(hcsOffset);
-      }
    }
 
    private void applyHcsCalibration(Point2D.Double offset) {

@@ -1058,6 +1058,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       regenerate();
       moveStage_.setEnabled(true);
       setA1Button_.setEnabled(usesA1Center((String) plateIDCombo_.getSelectedItem()));
+      // Persist right away rather than waiting for this window to close. Other plugins read
+      // the calibration from the profile (the Explorer reads "site_offset"), and without this
+      // a freshly calibrated plate stays invisible to them until the HCS window is closed.
+      saveSettings();
    }
    
    private void regenerate() {
