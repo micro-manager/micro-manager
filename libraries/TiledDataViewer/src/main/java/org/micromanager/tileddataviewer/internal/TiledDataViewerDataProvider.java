@@ -204,6 +204,11 @@ public final class TiledDataViewerDataProvider implements TiledDataViewerDataPro
    }
 
    @Override
+   public int getChannelIndex(String channelName) {
+      return axesBridge_.getChannelIndex(channelName);
+   }
+
+   @Override
    public SummaryMetadata getSummaryMetadata() {
       if (summaryMetadata_ != null) {
          return summaryMetadata_;

@@ -1568,6 +1568,15 @@ public class ExplorerManager {
          // the MDA slice settings are edited mid-session (see sessionIsZStack_).
          boolean isZStack = sessionIsZStack_;
 
+         // In current-settings mode the acquisition returns a single plane at channel index 0
+         // whatever the scope is set to, so the summary metadata cannot say which preset it
+         // came from. Read the live preset once per tile instead: switching presets between
+         // tiles then yields a correctly named channel. A preset first acquired mid-session
+         // is registered from the image itself (AxesBridge.registerChannel), which is also
+         // what grows the Inspector's histogram panels, so no panel appears until its
+         // channel actually has data.
+         String currentModeChannel = sessionUseCurrentSettings_ ? currentChannelName() : null;
+
          for (Coords c : allCoords) {
             Image img = testStore.getImage(c);
             if (img == null) {
@@ -1591,7 +1600,8 @@ public class ExplorerManager {
                }
             }
             int channelIndex = c.getChannel();
-            String channelName = summaryMeta.getSafeChannelName(channelIndex);
+            String channelName = currentModeChannel != null
+                    ? currentModeChannel : summaryMeta.getSafeChannelName(channelIndex);
             // Pass the z-slice index only for z-stacks (-1 means "no z axis").
             int zIndex = isZStack ? c.getZSlice() : -1;
             HashMap<String, Object> axes = storeImage(img, row, col, channelName, zIndex);
@@ -1630,6 +1640,16 @@ public class ExplorerManager {
                }
                if (mm2Viewer_ != null) {
                   mm2Viewer_.newTileArrived(tileImages, displayAxesList);
+                  // newTileArrived has now assigned an MM channel index to any channel this
+                  // tile introduced; give it its name so the Inspector does not label it
+                  // "channel <n>" (only the session's first channel is in the metadata).
+                  for (HashMap<String, Object> axes : displayAxesList) {
+                     Object ch = axes.get("channel");
+                     if (ch instanceof String) {
+                        nameChannelInDisplaySettings((String) ch,
+                                mm2DataProvider_.getChannelIndex((String) ch));
+                     }
+                  }
                }
                try {
                   viewer_.update();
@@ -3441,6 +3461,50 @@ public class ExplorerManager {
       return (preset == null || preset.isEmpty()) ? "Default" : preset;
    }
 
+   /**
+    * Gives a channel that appeared after session start a display-settings name, so the
+    * Inspector labels it with the preset name instead of a generic "channel &lt;n&gt;".
+    *
+    * <p>Only the channel present at session start is listed in the summary metadata, so
+    * ChannelIntensityController's fallback to getSafeChannelName() cannot name a channel
+    * discovered later. It prefers ChannelDisplaySettings.getName() when that is non-empty,
+    * which is what this sets. The remembered color for the preset is applied too, matching
+    * what initDisplaySettings() does for the first channel.
+    *
+    * @param channelName the preset name the tile was acquired under
+    * @param index       the MM channel index the viewer assigned to it
+    */
+   private void nameChannelInDisplaySettings(String channelName, int index) {
+      if (mm2Viewer_ == null || channelName == null || channelName.isEmpty() || index < 0) {
+         return;
+      }
+      try {
+         DisplaySettings current = mm2Viewer_.getDisplaySettings();
+         if (current == null) {
+            return;
+         }
+         org.micromanager.display.ChannelDisplaySettings existing =
+                 current.getChannelSettings(index);
+         if (existing != null && channelName.equals(existing.getName())) {
+            return;
+         }
+         String group = currentChannelGroup();
+         org.micromanager.display.ChannelDisplaySettings.Builder chBuilder =
+                 existing != null ? existing.copyBuilder()
+                         : studio_.displays().channelDisplaySettingsBuilder();
+         chBuilder.groupName(group).name(channelName);
+         org.micromanager.display.ChannelDisplaySettings remembered =
+                 RememberedDisplaySettings.loadChannel(studio_, group, channelName, null);
+         if (remembered != null && !remembered.getColor().equals(Color.WHITE)) {
+            chBuilder.color(remembered.getColor());
+         }
+         mm2Viewer_.setDisplaySettings(
+                 current.copyBuilderWithChannelSettings(index, chBuilder.build()).build());
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Explorer: could not name channel " + channelName);
+      }
+   }
+
    private SummaryMetadata buildSummaryMetadata(int width, int height) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
@@ -3459,6 +3523,11 @@ public class ExplorerManager {
          }
          if (chNames.isEmpty()) {
             // Name the channel after the preset the scope is currently set to, as Snap does.
+            // Only the current preset is declared: TiledDataViewerDataProvider seeds its
+            // AxesBridge from every name listed here, and the Intensity Inspector sizes its
+            // histogram panels to that count, so declaring the group's other presets would
+            // open a histogram panel per preset before any of them had been acquired.
+            // Presets acquired later are registered from the images themselves.
             chNames.add(currentChannelName());
          }
          // In current-settings mode the channels come from the hardware, not the MDA, so the
@@ -3518,8 +3587,8 @@ public class ExplorerManager {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
          DisplaySettings.Builder dsBuilder = studio_.displays().displaySettingsBuilder();
          int displayChannelIndex = 0;
-         // As in buildSummaryMetadata(): in current-settings mode the dataset has a single
-         // channel named after the current preset, so fall through to the branch below.
+         // As in buildSummaryMetadata(): in current-settings mode the channels come from the
+         // channel group, not the MDA, so fall through to the branch below.
          if (!sessionUseCurrentSettings_ && settings.useChannels()
                && settings.channels().size() > 0) {
             for (int i = 0; i < settings.channels().size(); i++) {

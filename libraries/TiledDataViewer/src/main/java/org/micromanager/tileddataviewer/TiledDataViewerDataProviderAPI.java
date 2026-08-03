@@ -41,6 +41,18 @@ public interface TiledDataViewerDataProviderAPI extends DataProvider {
    Image getDownsampledImageByAxes(HashMap<String, Object> axes) throws IOException;
 
    /**
+    * Return the MM channel index this provider assigned to a channel name.
+    *
+    * <p>Channels are registered as images arrive, so a channel that appeared after the
+    * dataset was created still has an index here even though it is absent from the summary
+    * metadata. Callers use this to address the channel in DisplaySettings.</p>
+    *
+    * @param channelName the channel name as it appears in the axes map
+    * @return the MM channel index, or -1 if the name is not known
+    */
+   int getChannelIndex(String channelName);
+
+   /**
     * Return the storage backend for read-only access (e.g. for export).
     */
    TiledDataProviderAPI getStorage();
