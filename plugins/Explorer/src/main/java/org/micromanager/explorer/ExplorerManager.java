@@ -1626,11 +1626,18 @@ public class ExplorerManager {
             final int tileRow = row;
             final int tileCol = col;
             displayExecutor_.submit(() -> {
+               // Snapshot every field this task touches: stopExplore() nulls them from
+               // another thread, and its shutdownNow() only interrupts this task, it does
+               // not wait for it to finish. Re-reading a field mid-task can therefore see
+               // it change from non-null to null between the guard and the call.
+               final TiledDataViewerDataViewerAPI viewerRef = mm2Viewer_;
+               final TiledDataViewerDataProviderAPI providerRef = mm2DataProvider_;
+               final ExplorerDataSource dataSourceRef = dataSource_;
                for (int i = 0; i < tileImages.size() && i < displayAxesList.size(); i++) {
-                  if (mm2DataProvider_ != null) {
+                  if (providerRef != null) {
                      // Use axes-only overload so the image is re-read from storage,
                      // ensuring per-image metadata tags are included.
-                     mm2DataProvider_.newImageArrived(fullAxesList.get(i));
+                     providerRef.newImageArrived(fullAxesList.get(i));
                   }
                   try {
                      viewer_.newImageArrived(displayAxesList.get(i));
@@ -1638,16 +1645,18 @@ public class ExplorerManager {
                      // NDViewer histogram not yet initialized
                   }
                }
-               if (mm2Viewer_ != null) {
-                  mm2Viewer_.newTileArrived(tileImages, displayAxesList);
+               if (viewerRef != null) {
+                  viewerRef.newTileArrived(tileImages, displayAxesList);
                   // newTileArrived has now assigned an MM channel index to any channel this
                   // tile introduced; give it its name so the Inspector does not label it
                   // "channel <n>" (only the session's first channel is in the metadata).
-                  for (HashMap<String, Object> axes : displayAxesList) {
-                     Object ch = axes.get("channel");
-                     if (ch instanceof String) {
-                        nameChannelInDisplaySettings((String) ch,
-                                mm2DataProvider_.getChannelIndex((String) ch));
+                  if (providerRef != null) {
+                     for (HashMap<String, Object> axes : displayAxesList) {
+                        Object ch = axes.get("channel");
+                        if (ch instanceof String) {
+                           nameChannelInDisplaySettings((String) ch,
+                                   providerRef.getChannelIndex((String) ch));
+                        }
                      }
                   }
                }
@@ -1656,7 +1665,9 @@ public class ExplorerManager {
                } catch (NullPointerException e) {
                   // NDViewer histogram not yet initialized
                }
-               dataSource_.removePendingTile(tileRow, tileCol);
+               if (dataSourceRef != null) {
+                  dataSourceRef.removePendingTile(tileRow, tileCol);
+               }
                redrawOverlay();
             });
          } else {
@@ -3475,11 +3486,14 @@ public class ExplorerManager {
     * @param index       the MM channel index the viewer assigned to it
     */
    private void nameChannelInDisplaySettings(String channelName, int index) {
-      if (mm2Viewer_ == null || channelName == null || channelName.isEmpty() || index < 0) {
+      // Snapshot the viewer: this runs on the display executor, and stopExplore() can null
+      // the field between the guard below and the calls that follow.
+      final TiledDataViewerDataViewerAPI viewer = mm2Viewer_;
+      if (viewer == null || channelName == null || channelName.isEmpty() || index < 0) {
          return;
       }
       try {
-         DisplaySettings current = mm2Viewer_.getDisplaySettings();
+         DisplaySettings current = viewer.getDisplaySettings();
          if (current == null) {
             return;
          }
@@ -3498,7 +3512,7 @@ public class ExplorerManager {
          if (remembered != null && !remembered.getColor().equals(Color.WHITE)) {
             chBuilder.color(remembered.getColor());
          }
-         mm2Viewer_.setDisplaySettings(
+         viewer.setDisplaySettings(
                  current.copyBuilderWithChannelSettings(index, chBuilder.build()).build());
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: could not name channel " + channelName);
