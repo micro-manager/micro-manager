@@ -328,6 +328,13 @@ public class DeskewExploreManager {
          studio_.logs().showMessage("Not a recognized Micro-Manager dataset: " + selectedPath);
          return;
       }
+      // normalizeDatasetPath also accepts OME-Zarr and OME-BigTIFF, but Deskew Explore only
+      // reads NDTiff. Reject those here rather than letting NDTiffStorage fail obscurely.
+      if (!DatasetPathUtils.isNDTiffDataset(dir)) {
+         studio_.logs().showMessage(
+               "Deskew Explore can only open NDTiff datasets. Not an NDTiff dataset: " + dir);
+         return;
+      }
 
       try {
          exploring_ = true;
