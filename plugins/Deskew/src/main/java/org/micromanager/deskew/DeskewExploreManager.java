@@ -47,6 +47,7 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
+import org.micromanager.tileddataprovider.DatasetPathUtils;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
@@ -310,11 +311,21 @@ public class DeskewExploreManager {
     * The viewer shows the previously acquired tiles and allows acquiring new ones
     * (which requires the stage to be at the same position as the original acquisition).
     *
-    * @param dir Path to the NDTiff dataset directory
+    * @param selectedPath Path to the NDTiff dataset directory, or to any file inside it: the file
+    *                     chooser lets the user pick either, so the path is normalized first
     */
-   public void openExplore(String dir) {
+   public void openExplore(String selectedPath) {
       if (exploring_) {
          studio_.logs().showMessage("Explore session already running.");
+         return;
+      }
+
+      // The chooser (FileDialogs.openDir) allows picking a file inside the dataset, but
+      // NDTiffStorage expects the dataset root. Resolve before touching any state, so an
+      // unrecognized selection leaves the manager idle rather than half-started.
+      final String dir = DatasetPathUtils.normalizeDatasetPath(selectedPath);
+      if (dir == null) {
+         studio_.logs().showMessage("Not a recognized Micro-Manager dataset: " + selectedPath);
          return;
       }
 
