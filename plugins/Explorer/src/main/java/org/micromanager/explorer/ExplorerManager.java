@@ -71,6 +71,7 @@ import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.propertymap.MutablePropertyMapView;
+import org.micromanager.tileddataprovider.DatasetPathUtils;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 import org.micromanager.tileddataprovider.OMEBigTiffMultiresStorage;
 import org.micromanager.tileddataprovider.OMEBigTiffTiledStorage;
@@ -432,11 +433,23 @@ public class ExplorerManager {
    }
 
    /**
-    * Opens an existing NDTiff explorer dataset for viewing.
+    * Opens an existing explorer dataset (NDTiff, OME-BigTIFF or OME-Zarr) for viewing.
+    *
+    * @param selectedPath dataset directory, or any file inside it: the file chooser lets the user
+    *                     pick either, so the path is normalized to the dataset root first
     */
-   public void openExplore(String dir) {
+   public void openExplore(String selectedPath) {
       if (exploring_) {
          studio_.logs().showMessage("Explorer session already running.");
+         return;
+      }
+
+      // The chooser (FileDialogs.openDir) allows picking a file inside the dataset, but the
+      // storage backends all expect the dataset root. Resolve before touching any state, so an
+      // unrecognized selection leaves the manager idle rather than half-started.
+      final String dir = DatasetPathUtils.normalizeDatasetPath(selectedPath);
+      if (dir == null) {
+         studio_.logs().showMessage("Not a recognized Micro-Manager dataset: " + selectedPath);
          return;
       }
 
@@ -464,6 +477,8 @@ public class ExplorerManager {
                   ? new OMEBigTiffTiledStorage(dir)
                   : new OMEBigTiffMultiresStorage(dir);
          } else {
+            // normalizeDatasetPath already established this is one of the three known formats,
+            // so reaching here means NDTiff.
             storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
          }
          storageDir_ = new File(dir).getParent();

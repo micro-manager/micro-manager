@@ -316,6 +316,39 @@ public class StitchFrame extends JDialog {
       return null;
    }
 
+   /**
+    * Returns a leaf dataset name that does not collide with anything already in {@code outputDir},
+    * appending {@code _N} if needed.
+    *
+    * <p>A bare-name check alone is not enough, because the OME backends do not create a directory
+    * literally named {@code name}: OME-Zarr creates {@code name.ome.zarr} and OME-BigTIFF creates
+    * {@code name.ome.tiff}. Probing only the bare name would therefore never see an existing OME
+    * dataset, silently leaving the collision to be resolved a second time inside the storage
+    * layer. All three forms are checked here so the name shown in the viewer title and stored in
+    * the profile matches what actually lands on disk. Mirrors
+    * {@code ExplorerManager.uniqueAcqName}.
+    *
+    * <p>The bare-name check still matters: it covers the image-stack format, and NDTiff when
+    * written without unique-naming. Stitch's own NDTiff export passes
+    * {@code createUniqueName=true}, so that backend appends a further {@code _N} of its own on
+    * top of whatever this returns (see the note at the {@code datasetName} assignment).
+    *
+    * @param outputDir directory the dataset will be created in
+    * @param candidate desired leaf name
+    * @return {@code candidate}, or {@code candidate_N} for the first free N
+    */
+   private static String uniqueDatasetName(String outputDir, String candidate) {
+      File base = new File(outputDir);
+      String name = candidate;
+      int suffix = 1;
+      while (new File(base, name).exists()
+            || new File(base, name + ".ome.zarr").exists()
+            || new File(base, name + ".ome.tiff").exists()) {
+         name = candidate + "_" + suffix++;
+      }
+      return name;
+   }
+
    private void updateAlignControls() {
       boolean align = alignCheck_.isSelected();
       SummaryMetadata summary = dataProvider_.getSummaryMetadata();
@@ -374,14 +407,9 @@ public class StitchFrame extends JDialog {
          return;
       }
       if (saveToStack || saveToTiled) {
-         String targetPath = new File(outputDir, namePrefix).getAbsolutePath();
-         String uniquePath = studio_.data().getUniqueSaveDirectory(targetPath);
-         if (uniquePath == null) {
-            studio_.logs().showError("Could not find a unique output directory name.", this);
-            return;
-         }
-         // Strip the parent dir back out — we only want the (possibly suffixed) leaf name.
-         namePrefix = new File(uniquePath).getName();
+         // Checks the bare name and each backend's actual dataset-folder form; see
+         // uniqueDatasetName. Yields the leaf name only, which is what the rest of onExport wants.
+         namePrefix = uniqueDatasetName(outputDir, namePrefix);
       }
 
       // Refuse to stitch a live (still-acquiring) dataset — write-mode readers cannot be
@@ -427,7 +455,11 @@ public class StitchFrame extends JDialog {
       // Capture display state before dispose() closes the window.
       final DisplaySettings sourceDisplaySettings = displayWindow_.getDisplaySettings();
       // Use the (already-uniquified) namePrefix as the dataset name so repeated
-      // exports get distinct viewer titles (e.g. "stitched", "stitched_1", …).
+      // exports get distinct viewer titles (e.g. "stitched", "stitched_1").
+      // Note NDTiff always appends its own "_N" internally (buildTiledStorage passes
+      // createUniqueName=true), so for that backend the on-disk folder carries one more suffix
+      // than this name; the viewer follows storage.getDiskLocation(), so it still opens the
+      // directory that was actually written.
       final String datasetName = namePrefix.isEmpty()
             ? dataProvider_.getName() + "_stitched" : namePrefix;
 
