@@ -639,6 +639,30 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    }
 
    @Override
+   public int[] getFullResolutionSize() {
+      // getBounds() returns null here so the viewer leaves panning and zooming unclamped,
+      // but the viewer still needs to know how big the data is to bound zoom-out. NDTiff
+      // tracks the real extent; getImageBounds() is on the concrete storage class rather
+      // than MultiresNDTiffAPI, hence the instanceof.
+      if (!(storage_ instanceof NDTiffStorage)) {
+         return null;
+      }
+      int[] b = ((NDTiffStorage) storage_).getImageBounds();
+      // NDTiffStorage.getImageBounds() returns {xMin, yMin, xMax, yMax} (verified against its
+      // source). Note the TiledDataProviderAPI javadoc documents {xMin, xMax, yMin, yMax},
+      // which does not match the implementation.
+      if (b == null || b.length < 4) {
+         return null;
+      }
+      int width = b[2] - b[0];
+      int height = b[3] - b[1];
+      if (width <= 0 || height <= 0) {
+         return null;
+      }
+      return new int[]{width, height};
+   }
+
+   @Override
    public int getMaxResolutionIndex() {
       if (storage_ == null) {
          return 0;
