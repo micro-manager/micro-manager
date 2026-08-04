@@ -21,9 +21,32 @@ public interface TiledDataViewerDataSource {
    /**
     * The minimal and maximal pixel coordinates of the image to be viewed.
     *
+    * <p>Returning {@code null} means "unbounded": the viewer will not clamp panning or
+    * zooming to the data. Sources that want free navigation return null here, but should
+    * still implement {@link #getFullResolutionSize()} so the viewer knows how large the data
+    * actually is.</p>
+    *
     * @return 4 element array x_min, y_min, x_max, y_max
     */
    int[] getBounds();
+
+   /**
+    * Size of the whole dataset in full-resolution pixels, independent of any view bounds.
+    *
+    * <p>Unlike {@link #getBounds()} this is purely informational -- reporting it does not
+    * make the viewer clamp navigation to the data. The viewer uses it to keep zoom-out
+    * within a sensible multiple of the data size; without it, it has no idea whether the
+    * dataset is a thousand pixels across or a million, and has to guess.</p>
+    *
+    * <p>The default returns null ("unknown"), which is correct for sources that cannot
+    * determine their extent. Implementations backed by a tiled storage should return the
+    * real value, typically derived from the storage's image bounds.</p>
+    *
+    * @return 2 element array {width, height} in full-resolution pixels, or null if unknown
+    */
+   default int[] getFullResolutionSize() {
+      return null;
+   }
 
    /**
     * Retrieve image with the given parameters so it can be displayed.

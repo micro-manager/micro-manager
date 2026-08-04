@@ -247,11 +247,15 @@ public class ImageMaker {
                //recompute 8 bit image
                channelProcessors_.get(c).recompute();
                   {
-                     TiledDataViewerImageProcessor proc = channelProcessors_.get(c);
-                     boolean noPixels = (proc instanceof TiledDataViewerImageProcessorRGB)
-                           ? ((TiledDataViewerImageProcessorRGB) proc).rProcessor_.reds == null
-                           : proc.reds == null;
-                     if (noPixels) {
+                     // Check the eightBitImage buffers as well as the LUT tables: both are
+                     // dereferenced below, but they become null independently. changePixels()
+                     // clears eightBitImage while leaving reds populated from an earlier
+                     // render, and recompute() returns early (without calling create8BitImage)
+                     // when no pixels have arrived yet -- so a "reds != null" test alone lets a
+                     // null eightBitImage through and NPEs in the pixel loop. Seen when zooming
+                     // during a live explore acquisition. The RGB subclass overrides
+                     // isRenderable() to check all three component processors.
+                     if (!channelProcessors_.get(c).isRenderable(imageWidth_ * imageHeight_)) {
                         continue; // No pixels yet
                      }
                   }
@@ -459,6 +463,18 @@ public class ImageMaker {
          }
       }
 
+      /**
+       * All three component processors are dereferenced when rendering, so all three must be
+       * ready. Note this deliberately ignores the inherited fields, which the RGB path never
+       * populates.
+       */
+      @Override
+      boolean isRenderable(int displayPixelCount) {
+         return rProcessor_.isRenderable(displayPixelCount)
+                  && gProcessor_.isRenderable(displayPixelCount)
+                  && bProcessor_.isRenderable(displayPixelCount);
+      }
+
       /** Returns [R, G, B] raw histograms, or null if no pixels yet. */
       public int[][] getComponentHistograms() {
          if (rProcessor_.rawHistogram == null) {
@@ -611,6 +627,22 @@ public class ImageMaker {
          eightBitImage = null;
       }
 
+      /**
+       * Whether this channel can be drawn into a display image of the given pixel count.
+       *
+       * <p>Requires both the 8 bit buffer and the LUT lookup tables, which can be null
+       * independently of each other, and requires the buffer to be at least as large as the
+       * display image -- a zoom or canvas resize changes the display size, and a buffer
+       * allocated for a previous, smaller size would be read out of bounds.</p>
+       *
+       * @param displayPixelCount number of pixels the caller intends to read
+       * @return true if it is safe to read this channel's buffers
+       */
+      boolean isRenderable(int displayPixelCount) {
+         return eightBitImage != null && eightBitImage.length >= displayPixelCount
+                  && reds != null && greens != null && blues != null;
+      }
+
       public void recompute() {
          // No pixels have been supplied for this channel yet (changePixels not called),
          // so rawHistogram is null. This happens when a channel processor has been created
@@ -722,7 +754,10 @@ public class ImageMaker {
       //Also compute histogram in the process
       private void create8BitImage() {
          int size = width * height;
-         if (eightBitImage == null) {
+         //Reallocate when the size changes, not just when the buffer is absent: a zoom or
+         //canvas resize changes width/height, and keeping a buffer allocated for a smaller
+         //previous size would be read out of bounds by the render loop.
+         if (eightBitImage == null || eightBitImage.length != size) {
             eightBitImage = new byte[size];
          }
          if (pixels == null) {

@@ -39,7 +39,7 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
          TiledDataViewerOverlayerPlugin,
          TiledDataViewerExploreControls {
 
-   private static final double ZOOM_FACTOR = 1.4;
+   private volatile long lastMouseWheelZoomTime_ = 0;
 
    private final DeskewExploreManager manager_;
    private final CopyOnWriteArrayList<AcquisitionStateListener> acqStateListeners_ =
@@ -530,11 +530,14 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
 
    @Override
    public void mouseWheelMoved(MouseWheelEvent e) {
-      Point mouseLoc = e.getPoint();
-      if (e.getWheelRotation() < 0) {
-         manager_.zoom(1.0 / ZOOM_FACTOR, mouseLoc);
-      } else if (e.getWheelRotation() > 0) {
-         manager_.zoom(ZOOM_FACTOR, mouseLoc);
+      long currentTime = System.currentTimeMillis();
+      if (currentTime - lastMouseWheelZoomTime_ > MOUSE_WHEEL_ZOOM_INTERVAL_MS) {
+         double factor = TiledDataViewerCanvasMouseListenerInterface
+                  .zoomFactorForWheelEvent(e);
+         if (factor != 0) {
+            lastMouseWheelZoomTime_ = currentTime;
+            manager_.zoom(factor, e.getPoint());
+         }
       }
    }
 

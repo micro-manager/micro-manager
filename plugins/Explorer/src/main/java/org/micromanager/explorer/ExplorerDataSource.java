@@ -52,7 +52,7 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          TiledDataViewerCanvasMouseListenerInterface, TiledDataViewerOverlayerPlugin,
          TiledDataViewerExploreControls {
 
-   private static final double ZOOM_FACTOR = 1.4;
+   private volatile long lastMouseWheelZoomTime_ = 0;
 
    private final ExplorerManager manager_;
    private final CopyOnWriteArrayList<AcquisitionStateListener> acqStateListeners_ =
@@ -639,6 +639,33 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
    }
 
    @Override
+   public int[] getFullResolutionSize() {
+      // getBounds() returns null for datasets whose tiles carry no XPositionPix/YPositionPix
+      // tags -- a stitched dataset, for instance -- which leaves the viewer's panning and
+      // zooming unclamped. That is the intended behaviour, but the viewer still needs to know
+      // how big the data is in order to bound zoom-out, and this reports it without
+      // re-enabling those clamps. NDTiff tracks the real extent regardless of position tags;
+      // getImageBounds() is on the concrete storage class rather than MultiresNDTiffAPI,
+      // hence the instanceof.
+      if (!(storage_ instanceof NDTiffStorage)) {
+         return null;
+      }
+      int[] b = ((NDTiffStorage) storage_).getImageBounds();
+      // NDTiffStorage.getImageBounds() returns {xMin, yMin, xMax, yMax} (verified against its
+      // source). Note the TiledDataProviderAPI javadoc documents {xMin, xMax, yMin, yMax},
+      // which does not match the implementation.
+      if (b == null || b.length < 4) {
+         return null;
+      }
+      int width = b[2] - b[0];
+      int height = b[3] - b[1];
+      if (width <= 0 || height <= 0) {
+         return null;
+      }
+      return new int[]{width, height};
+   }
+
+   @Override
    public int getMaxResolutionIndex() {
       if (storage_ == null) {
          return 0;
@@ -947,11 +974,14 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public void mouseWheelMoved(MouseWheelEvent e) {
-      Point mouseLoc = e.getPoint();
-      if (e.getWheelRotation() < 0) {
-         manager_.zoom(1.0 / ZOOM_FACTOR, mouseLoc);
-      } else if (e.getWheelRotation() > 0) {
-         manager_.zoom(ZOOM_FACTOR, mouseLoc);
+      long currentTime = System.currentTimeMillis();
+      if (currentTime - lastMouseWheelZoomTime_ > MOUSE_WHEEL_ZOOM_INTERVAL_MS) {
+         double factor = TiledDataViewerCanvasMouseListenerInterface
+                  .zoomFactorForWheelEvent(e);
+         if (factor != 0) {
+            lastMouseWheelZoomTime_ = currentTime;
+            manager_.zoom(factor, e.getPoint());
+         }
       }
    }
 

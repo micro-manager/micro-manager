@@ -13,10 +13,6 @@ import org.micromanager.tileddataviewer.internal.TiledDataViewer;
  */
 public class CanvasMouseListener implements TiledDataViewerCanvasMouseListenerInterface {
 
-   private static final int MOUSE_WHEEL_ZOOM_INTERVAL_MS = 100;
-
-   private static final double ZOOM_FACTOR_MOUSE = 1.4;
-
    //all these are volatile because they are accessed by overlayer
    private volatile Point mouseDragStartPointLeft_;
    private volatile Point mouseDragStartPointRight_;
@@ -34,11 +30,11 @@ public class CanvasMouseListener implements TiledDataViewerCanvasMouseListenerIn
    public void mouseWheelMoved(MouseWheelEvent mwe) {
       long currentTime = System.currentTimeMillis();
       if (currentTime - lastMouseWheelZoomTime_ > MOUSE_WHEEL_ZOOM_INTERVAL_MS) {
-         lastMouseWheelZoomTime_ = currentTime;
-         if (mwe.getWheelRotation() < 0) {
-            display_.zoom(1 / ZOOM_FACTOR_MOUSE, currentMouseLocation_); // zoom in?
-         } else if (mwe.getWheelRotation() > 0) {
-            display_.zoom(ZOOM_FACTOR_MOUSE, currentMouseLocation_); //zoom out
+         double factor = TiledDataViewerCanvasMouseListenerInterface
+                  .zoomFactorForWheelEvent(mwe);
+         if (factor != 0) {
+            lastMouseWheelZoomTime_ = currentTime;
+            display_.zoom(factor, currentMouseLocation_);
          }
       }
    }
