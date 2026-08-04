@@ -289,6 +289,24 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       guiManager_.onAnimationToggle(scoller, animate);
    }
 
+   /**
+    * Sets the rate, in frames per second, at which axes are played back.
+    *
+    * @param fps desired playback rate in frames per second
+    */
+   public void setAnimateFPS(double fps) {
+      guiManager_.setAnimateFPS(fps);
+   }
+
+   /**
+    * Returns the rate, in frames per second, at which axes are played back.
+    *
+    * @return playback rate in frames per second
+    */
+   public double getAnimateFPS() {
+      return guiManager_.getAnimateFPS();
+   }
+
    public void update() {
       if (displayCalculationExecutor_ == null) {
          return; // Not yet initialized

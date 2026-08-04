@@ -61,7 +61,7 @@ public class GuiManager {
          animationTimer_.stop();
       }
       if (animate) {
-         animationTimer_ = new Timer((int) (1000 / animationFPS_), new ActionListener() {
+         animationTimer_ = new Timer(delayFromFPS(animationFPS_), new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                int min = scoller.getMinimum();
@@ -90,14 +90,29 @@ public class GuiManager {
       displayWindow_.unlockAllScrollers();
    }
 
-   public void setAnimateFPS(double doubleValue) {
-      animationFPS_ = doubleValue;
-      if (animationTimer_ != null) {
-         ActionListener action = animationTimer_.getActionListeners()[0];
-         animationTimer_.stop();
-         animationTimer_ = new Timer((int) (1000 / animationFPS_), action);
-         animationTimer_.start();
+   /**
+    * Sets the playback rate.  If an animation is currently running, its rate is
+    * changed on the fly; otherwise the new rate applies to the next animation.
+    *
+    * @param fps desired playback rate in frames per second
+    */
+   public void setAnimateFPS(double fps) {
+      animationFPS_ = fps;
+      if (animationTimer_ != null && animationTimer_.isRunning()) {
+         animationTimer_.setDelay(delayFromFPS(animationFPS_));
       }
+   }
+
+   public double getAnimateFPS() {
+      return animationFPS_;
+   }
+
+   /**
+    * Converts a playback rate into a Swing Timer delay, never returning 0
+    * (which would make the timer fire as fast as the EDT allows).
+    */
+   private static int delayFromFPS(double fps) {
+      return Math.max(1, (int) Math.round(1000.0 / fps));
    }
 
    public void displayOverlay(Overlay overlay) {
