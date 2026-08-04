@@ -250,14 +250,17 @@ public class DisplayModel {
    }
 
    public void pan(int dx, int dy) {
-      growMaxKnownDataSizeFromBounds(data_.getBounds());
+      //Fetch once and reuse: getBounds() can be O(tiles) and allocating (ExplorerDataSource
+      //scans every tile position), and this runs on the EDT for every mouse-drag event.
+      int[] bounds = data_.getBounds();
+      growMaxKnownDataSizeFromBounds(bounds);
       Point2D.Double offset = viewCoords_.getViewOffset();
       double newX = offset.x + (dx / viewCoords_.getMagnificationFromResLevel())
               * viewCoords_.getDownsampleFactor();
       double newY = offset.y + (dy / viewCoords_.getMagnificationFromResLevel())
               * viewCoords_.getDownsampleFactor();
 
-      if (data_.getBounds() != null) {
+      if (bounds != null) {
          viewCoords_.setViewOffset(
                  Math.max(viewCoords_.xMin_, Math.min(newX, viewCoords_.xMax_
                          - viewCoords_.getFullResSourceDataSize().x)),
@@ -331,9 +334,12 @@ public class DisplayModel {
       }
       //Pick up the data extent if it has become available since the last zoom. For a saved
       //dataset newImageArrived() never fires, so updateDisplayBounds() never runs and the
-      //seeding hooks alone would leave the limit unarmed.
+      //seeding hooks alone would leave the limit unarmed. Fetch the bounds once and reuse
+      //them below: getBounds() can be O(tiles) and allocating (ExplorerDataSource scans every
+      //tile position), and this runs on the EDT for every wheel event.
       growMaxKnownDataSizeFromFullResolutionSize();
-      growMaxKnownDataSizeFromBounds(data_.getBounds());
+      int[] bounds = data_.getBounds();
+      growMaxKnownDataSizeFromBounds(bounds);
       //constrain maximum zoom out. Unlike the bounds-based clamp below this applies even when
       //the data source reports null bounds, which is the case for the large tiled datasets.
       //One isotropic limit from the larger dimension, so aspect-ratio inflation of the
@@ -350,7 +356,7 @@ public class DisplayModel {
             newSourceDataHeight = newSourceDataHeight / excess;
          }
       }
-      if (data_.getBounds() != null) {
+      if (bounds != null) {
          //Don't zoom out past the point where the whole dataset is visible. Compare against
          //the source size that just frames the data at the current canvas aspect ratio, NOT
          //against the raw data extent: the source is inflated along one axis to match the
@@ -386,7 +392,7 @@ public class DisplayModel {
       double yOffset = (zoomCenter.y - (zoomCenter.y - viewOffset.y)
               * newSourceDataHeight / sourceDataSize.y);
       //make sure view doesn't go outside image bounds
-      if (data_.getBounds() != null) {
+      if (bounds != null) {
          viewCoords_.setViewOffset(
                  Math.max(viewCoords_.xMin_, Math.min(xOffset,
                          viewCoords_.xMax_ - viewCoords_.getFullResSourceDataSize().x)),

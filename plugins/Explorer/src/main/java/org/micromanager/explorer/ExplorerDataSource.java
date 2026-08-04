@@ -640,10 +640,13 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
 
    @Override
    public int[] getFullResolutionSize() {
-      // getBounds() returns null here so the viewer leaves panning and zooming unclamped,
-      // but the viewer still needs to know how big the data is to bound zoom-out. NDTiff
-      // tracks the real extent; getImageBounds() is on the concrete storage class rather
-      // than MultiresNDTiffAPI, hence the instanceof.
+      // getBounds() returns null for datasets whose tiles carry no XPositionPix/YPositionPix
+      // tags -- a stitched dataset, for instance -- which leaves the viewer's panning and
+      // zooming unclamped. That is the intended behaviour, but the viewer still needs to know
+      // how big the data is in order to bound zoom-out, and this reports it without
+      // re-enabling those clamps. NDTiff tracks the real extent regardless of position tags;
+      // getImageBounds() is on the concrete storage class rather than MultiresNDTiffAPI,
+      // hence the instanceof.
       if (!(storage_ instanceof NDTiffStorage)) {
          return null;
       }
