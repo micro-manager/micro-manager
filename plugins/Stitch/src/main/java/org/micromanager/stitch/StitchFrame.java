@@ -1857,8 +1857,15 @@ public class StitchFrame extends JDialog {
    private static JSONObject findRepresentativeSourceTags(
          StitchDataProviderAdapter adapter, HashMap<String, Object> tzAxes, String chName) {
       try {
-         JSONObject fallback = null;
+         // Pick the key by axes alone before touching the data. Reading an image is a
+         // full tile read from disk, serialized against the compositing workers by the
+         // adapter's source lock, so doing it per candidate stalls the whole export.
+         HashMap<String, Object> match = null;
+         HashMap<String, Object> fallbackKey = null;
          for (HashMap<String, Object> stored : adapter.getAxesSet()) {
+            if (chName != null && !chName.equals(stored.get("channel"))) {
+               continue;
+            }
             // Must be the same z/time plane.  Only compare axes the source actually has:
             // tzAxes always carries "z", but a single-plane source has no "z" key at all,
             // and requiring it would match nothing.
@@ -1870,23 +1877,22 @@ public class StitchFrame extends JDialog {
                   break;
                }
             }
-            if (chName != null && !chName.equals(stored.get("channel"))) {
-               continue;
-            }
-            TaggedImage ti = adapter.getImage(stored, 0);
-            if (ti == null || ti.tags == null) {
-               continue;
-            }
             if (planeMatches) {
-               return ti.tags;
+               match = stored;
+               break;
             }
             // Right channel but a different plane: keep as a last resort so the export
             // still carries acquisition metadata rather than none at all.
-            if (fallback == null) {
-               fallback = ti.tags;
+            if (fallbackKey == null) {
+               fallbackKey = stored;
             }
          }
-         return fallback;
+         HashMap<String, Object> chosen = match != null ? match : fallbackKey;
+         if (chosen == null) {
+            return null;
+         }
+         TaggedImage ti = adapter.getImage(chosen, 0);
+         return ti != null ? ti.tags : null;
       } catch (Exception e) {
          // Best effort only; fall through to null.
       }
