@@ -82,6 +82,20 @@ import org.micromanager.tileddataviewer.TiledDataViewerFactory;
  */
 public class StitchFrame extends JDialog {
 
+   // Acquisition metadata copied from a representative source tile onto each exported
+   // stitched tile, so the result keeps its timestamps and stage position.  Geometry tags
+   // are deliberately excluded: the stitched image has its own dimensions.
+   private static final String[] METADATA_TAGS_TO_PROPAGATE = {
+      "ElapsedTime-ms",
+      "ZPositionUm",
+      "XPositionUm",
+      "YPositionUm",
+      "PositionName",
+      "Channel",
+      "AcqTime",
+      "Time",
+   };
+
    private static final String SAVE_RAM = "RAM (temporary)";
    private static final String SAVE_STACK = "Image Stack File";
    private static final String SAVE_NDTIFF = "NDTiff (TiledDataViewer)";
@@ -1579,6 +1593,18 @@ public class StitchFrame extends JDialog {
       final TileBlender finalCompositor = compositor;
       final Map<Point, Point2D.Float> finalTileOrigins = tileOrigins;
       final double finalPixelSizeUm = pixelSizeUm;
+      // Acquisition metadata for this (z, t) plane, taken from one representative source
+      // tile.  A stitched tile is a composite of many source tiles whose timestamps differ
+      // slightly; the first one for this plane is the best single answer, and it is what
+      // makes elapsed time show up when the export is reopened.  Looked up once per call
+      // rather than per output tile, since every tile of a plane shares it.
+      final Map<String, JSONObject> sourceTagsByChannel = new HashMap<>();
+      for (String chName : effectiveChNames) {
+         JSONObject found = findRepresentativeSourceTags(adapter, tzAxes, isRgb ? null : chName);
+         if (found != null) {
+            sourceTagsByChannel.put(chName, found);
+         }
+      }
       // Tracks whether the pyramid depth has been set (once, on the first write).
       final boolean[] pyramidSet = {false};
 
@@ -1600,7 +1626,8 @@ public class StitchFrame extends JDialog {
          HashMap<String, Object> axes = buildNdtiffAxes(canvasRow, canvasCol, z, t,
                isRgb ? null : chName, numZ, numT);
          JSONObject tags = buildNdtiffTags(
-               outTileSize, outTileSize, isRgb, is16bit, finalPixelSizeUm, axes);
+               outTileSize, outTileSize, isRgb, is16bit, finalPixelSizeUm, axes,
+               sourceTagsByChannel.get(chName));
          return new Object[]{pixelData, tags, axes};
       };
 
@@ -1713,13 +1740,75 @@ public class StitchFrame extends JDialog {
    }
 
    /**
+    * Finds the tags of one source tile belonging to the given plane, to act as the
+    * representative acquisition metadata for every stitched tile of that plane.
+    *
+    * <p>Returns the first matching tile's tags, or null when the plane has no readable
+    * source tile.  Metadata propagation is best effort: a failure here only means the
+    * export lacks timestamps, so it must never abort the export.
+    *
+    * @param adapter source data, wrapped with grid knowledge
+    * @param tzAxes  axes identifying the z/time plane being written
+    * @param chName  channel to match, or null to accept any channel (RGB)
+    * @return tags of a representative source tile, or null if none could be read
+    */
+   private static JSONObject findRepresentativeSourceTags(
+         StitchDataProviderAdapter adapter, HashMap<String, Object> tzAxes, String chName) {
+      try {
+         JSONObject fallback = null;
+         for (HashMap<String, Object> stored : adapter.getAxesSet()) {
+            // Must be the same z/time plane.  Only compare axes the source actually has:
+            // tzAxes always carries "z", but a single-plane source has no "z" key at all,
+            // and requiring it would match nothing.
+            boolean planeMatches = true;
+            for (Map.Entry<String, Object> e : tzAxes.entrySet()) {
+               Object v = stored.get(e.getKey());
+               if (v != null && !v.equals(e.getValue())) {
+                  planeMatches = false;
+                  break;
+               }
+            }
+            if (chName != null && !chName.equals(stored.get("channel"))) {
+               continue;
+            }
+            TaggedImage ti = adapter.getImage(stored, 0);
+            if (ti == null || ti.tags == null) {
+               continue;
+            }
+            if (planeMatches) {
+               return ti.tags;
+            }
+            // Right channel but a different plane: keep as a last resort so the export
+            // still carries acquisition metadata rather than none at all.
+            if (fallback == null) {
+               fallback = ti.tags;
+            }
+         }
+         return fallback;
+      } catch (Exception e) {
+         // Best effort only; fall through to null.
+      }
+      return null;
+   }
+
+   /**
     * Builds the per-image tags JSONObject for NDTiff, embedding axes under "Axes".
     */
    private static JSONObject buildNdtiffTags(
          int imgW, int imgH, boolean isRgb, boolean is16bit,
-         double pixelSizeUm, HashMap<String, Object> axes)
+         double pixelSizeUm, HashMap<String, Object> axes, JSONObject sourceTags)
          throws JSONException {
       JSONObject tags = new JSONObject();
+      // Carry acquisition metadata over from a representative source tile so the exported
+      // dataset keeps its timestamps and Z position.  Geometry tags are NOT copied: the
+      // stitched image has its own dimensions, set below.
+      if (sourceTags != null) {
+         for (String key : METADATA_TAGS_TO_PROPAGATE) {
+            if (sourceTags.has(key)) {
+               tags.put(key, sourceTags.get(key));
+            }
+         }
+      }
       tags.put("Width", imgW);
       tags.put("Height", imgH);
       tags.put("BytesPerPixel", isRgb ? 4 : (is16bit ? 2 : 1));
