@@ -21,6 +21,23 @@ final class FloatCoordinateMapper {
       binCount_ = stats.getHistogramBinCount();
    }
 
+   /**
+    * Creates a mapper spanning an explicit pixel-value range.
+    *
+    * <p>Used to map the histogram onto a range accumulated over several images, rather than
+    * the range of the single image the statistics came from.
+    *
+    * @param rangeMin lowest pixel value on the axis
+    * @param rangeMax highest pixel value on the axis
+    * @param binCount number of bins to divide the range into
+    */
+   FloatCoordinateMapper(double rangeMin, double rangeMax, int binCount) {
+      rangeMin_ = rangeMin;
+      binCount_ = Math.max(1, binCount);
+      double span = rangeMax - rangeMin;
+      binWidth_ = span > 0.0 ? span / binCount_ : 0.0;
+   }
+
    long pixelValueToBinIndex(double pixelValue) {
       if (binWidth_ == 0.0) {
          return 0;

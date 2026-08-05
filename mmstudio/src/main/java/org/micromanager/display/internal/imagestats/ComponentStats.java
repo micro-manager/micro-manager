@@ -39,6 +39,15 @@ public final class ComponentStats {
    private final long maximum_;
    private final long sum_;
    private final long sumOfSquares_;
+   // Untruncated counterparts of the fields above, for float images. NaN when unset, in
+   // which case the long values apply. The longs cannot represent float statistics (a mean
+   // of -0.16 rounds to 0), so the real values are carried alongside rather than replacing
+   // them, leaving the integer bin/quantile machinery untouched.
+   private final double minimumDouble_;
+   private final double minimumExcludingZerosDouble_;
+   private final double maximumDouble_;
+   private final double sumDouble_;
+   private final double sumOfSquaresDouble_;
    private final transient long[] cumulativeDistrib_;
 
    public static class Builder {
@@ -56,6 +65,11 @@ public final class ComponentStats {
       private long maximum_;
       private long sum_;
       private long sumOfSquares_;
+      private double minimumDouble_ = Double.NaN;
+      private double minimumExcludingZerosDouble_ = Double.NaN;
+      private double maximumDouble_ = Double.NaN;
+      private double sumDouble_ = Double.NaN;
+      private double sumOfSquaresDouble_ = Double.NaN;
 
       private Builder() {
       }
@@ -132,6 +146,61 @@ public final class ComponentStats {
          return this;
       }
 
+      /**
+       * Sets the untruncated minimum, for float images.
+       *
+       * @param min minimum pixel value, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder minimumDouble(double min) {
+         minimumDouble_ = min;
+         return this;
+      }
+
+      /**
+       * Sets the untruncated minimum of the non-zero pixels, for float images.
+       *
+       * @param min minimum non-zero pixel value, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder minimumExcludingZerosDouble(double min) {
+         minimumExcludingZerosDouble_ = min;
+         return this;
+      }
+
+      /**
+       * Sets the untruncated maximum, for float images.
+       *
+       * @param max maximum pixel value, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder maximumDouble(double max) {
+         maximumDouble_ = max;
+         return this;
+      }
+
+      /**
+       * Sets the untruncated sum of pixel values, for float images.
+       *
+       * @param sum sum of pixel values, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder sumDouble(double sum) {
+         sumDouble_ = sum;
+         return this;
+      }
+
+      /**
+       * Sets the untruncated sum of squared pixel values, for float images.
+       *
+       * @param ssq sum of squares, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder sumOfSquaresDouble(double ssq) {
+         sumOfSquaresDouble_ = ssq;
+         return this;
+      }
+
       public ComponentStats build() {
          return new ComponentStats(this);
       }
@@ -202,6 +271,11 @@ public final class ComponentStats {
       maximum_ = b.maximum_;
       sum_ = b.sum_;
       sumOfSquares_ = b.sumOfSquares_;
+      minimumDouble_ = b.minimumDouble_;
+      minimumExcludingZerosDouble_ = b.minimumExcludingZerosDouble_;
+      maximumDouble_ = b.maximumDouble_;
+      sumDouble_ = b.sumDouble_;
+      sumOfSquaresDouble_ = b.sumOfSquaresDouble_;
       cumulativeDistrib_ = computeCumulativeDistribution();
    }
 
@@ -321,6 +395,100 @@ public final class ComponentStats {
 
    public long getMaxIntensity() {
       return maximum_;
+   }
+
+   /**
+    * Minimum pixel value, without the truncation applied to {@link #getMinIntensity()}.
+    *
+    * @return the minimum; equal to the long value for integer images
+    */
+   public double getMinIntensityDouble() {
+      return Double.isNaN(minimumDouble_) ? (double) minimum_ : minimumDouble_;
+   }
+
+   /**
+    * Minimum non-zero pixel value, without truncation.
+    *
+    * @return the minimum excluding zeros; equal to the long value for integer images
+    */
+   public double getMinIntensityExcludingZerosDouble() {
+      return Double.isNaN(minimumExcludingZerosDouble_)
+            ? (double) minimumExcludingZeros_ : minimumExcludingZerosDouble_;
+   }
+
+   /**
+    * Maximum pixel value, without the truncation applied to {@link #getMaxIntensity()}.
+    *
+    * @return the maximum; equal to the long value for integer images
+    */
+   public double getMaxIntensityDouble() {
+      return Double.isNaN(maximumDouble_) ? (double) maximum_ : maximumDouble_;
+   }
+
+   /**
+    * Mean pixel value, computed without truncation.
+    *
+    * <p>{@link #getMeanIntensity()} rounds to a whole number, which discards the entire
+    * value for float data whose mean lies between -1 and 1.
+    *
+    * @return the mean, or 0 when there are no pixels
+    */
+   public double getMeanIntensityDouble() {
+      if (pixelCount_ == 0) {
+         return 0.0;
+      }
+      double sum = Double.isNaN(sumDouble_) ? (double) sum_ : sumDouble_;
+      return sum / pixelCount_;
+   }
+
+   /**
+    * Mean of the non-zero pixel values, computed without truncation.
+    *
+    * @return the mean excluding zeros, or 0 when there are no such pixels
+    */
+   public double getMeanIntensityExcludingZerosDouble() {
+      if (pixelCountExcludingZeros_ == 0) {
+         return 0.0;
+      }
+      double sum = Double.isNaN(sumDouble_) ? (double) sum_ : sumDouble_;
+      return sum / pixelCountExcludingZeros_;
+   }
+
+   /**
+    * Standard deviation, computed without truncation.
+    *
+    * <p>Unlike {@link #getStandardDeviation()}, this uses the unrounded sum and mean. That
+    * matters for float data: the rounded mean both inflates the result and can make the
+    * variance come out negative, yielding NaN. The variance is clamped at zero so rounding
+    * noise cannot produce NaN here.
+    *
+    * @return the standard deviation, or NaN when there are no pixels
+    */
+   public double getStandardDeviationDouble() {
+      if (pixelCount_ == 0) {
+         return Double.NaN;
+      }
+      double ssq = Double.isNaN(sumOfSquaresDouble_)
+            ? (double) sumOfSquares_ : sumOfSquaresDouble_;
+      double meanSq = ssq / pixelCount_;
+      double mean = getMeanIntensityDouble();
+      return Math.sqrt(Math.max(0.0, meanSq - (mean * mean)));
+   }
+
+   /**
+    * Standard deviation of the non-zero pixel values, computed without truncation.
+    *
+    * @return the standard deviation excluding zeros, or NaN when there are no such pixels
+    */
+   public double getStandardDeviationExcludingZerosDouble() {
+      if (pixelCountExcludingZeros_ == 0) {
+         return Double.NaN;
+      }
+      double ssq = Double.isNaN(sumOfSquaresDouble_)
+            ? (double) sumOfSquares_ : sumOfSquaresDouble_;
+      double meanSq = ssq / pixelCountExcludingZeros_;
+      double mean = getMeanIntensityExcludingZerosDouble();
+      return Math.sqrt(Math.max(0.0, meanSq - (mean * mean)));
    }
 
    public long getAutoscaleMinForQuantile(double q) {
