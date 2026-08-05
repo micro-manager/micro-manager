@@ -30,6 +30,8 @@ public class GuiManager {
    // Written by shutdown() on the closing thread, read by ticks on the EDT.
    private volatile Timer animationTimer_;
    private double animationFPS_ = 7;
+   // Set once the stored playback rate has been read; see getAnimateFPS().
+   private boolean animationFpsLoaded_ = false;
    // Playback state, accessed on the EDT only.
    private long lastTickNs_;
    private double cumulativeFrameCountError_;
@@ -189,6 +191,10 @@ public class GuiManager {
     */
    public void setAnimateFPS(double fps) {
       animationFPS_ = fps;
+      animationFpsLoaded_ = true; // Do not let a later read overwrite this choice.
+      if (display_ != null && display_.getDisplayModel() != null) {
+         display_.getDisplayModel().setPlaybackFPS(fps);
+      }
       Timer timer = animationTimer_;
       if (timer != null && timer.isRunning()) {
          // Drop any accumulated fractional-frame remainder: it was accrued at the old
@@ -199,8 +205,36 @@ public class GuiManager {
       }
    }
 
+   /**
+    * Returns the playback rate.  The stored display setting wins until the rate is set
+    * in this session, so a reopened dataset starts at the rate it was last played at.
+    */
    public double getAnimateFPS() {
+      if (!animationFpsLoaded_ && display_ != null && display_.getDisplayModel() != null) {
+         animationFPS_ = display_.getDisplayModel().getPlaybackFPS();
+         animationFpsLoaded_ = true;
+      }
       return animationFPS_;
+   }
+
+   /**
+    * Re-reads the playback rate from the display settings and updates the control.
+    * Called once the settings have been loaded from disk, which happens after the
+    * playback control was first built.
+    */
+   public void reloadPlaybackFPS() {
+      if (display_ == null || display_.getDisplayModel() == null) {
+         return;
+      }
+      animationFPS_ = display_.getDisplayModel().getPlaybackFPS();
+      animationFpsLoaded_ = true;
+      if (displayWindow_ != null) {
+         displayWindow_.setPlaybackFPSControl(animationFPS_);
+      }
+      Timer timer = animationTimer_;
+      if (timer != null && timer.isRunning()) {
+         timer.setDelay(tickIntervalFromFPS(animationFPS_));
+      }
    }
 
    /**

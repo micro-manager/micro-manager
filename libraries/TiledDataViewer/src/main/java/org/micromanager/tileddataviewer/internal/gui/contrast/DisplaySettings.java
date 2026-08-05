@@ -30,6 +30,7 @@ public class DisplaySettings {
 
    private static final String PREF_KEY_COLOR = "Preferred_color_";
    private static final String PREF_KEY_BIT_DEPTH = "Channel_Bit_depth_";
+   private static final String PREF_KEY_PLAYBACK_FPS = "Playback_fps";
 
    public static final int NUM_DISPLAY_HIST_BINS = 256;
 
@@ -40,6 +41,8 @@ public class DisplaySettings {
    private static final String SYNC_CHANNELS = "Sync all channels";
    private static final String IGNORE_OUTLIERS = "Ignore outliers";
    private static final String IGNORE_PERCENTAGE = "Ignore outlier percentage";
+   private static final String PLAYBACK_FPS = "Playback fps";
+   private static final double DEFAULT_PLAYBACK_FPS = 7.0;
 
    private final JSONObject json_;
    private final Preferences preferences_;
@@ -89,6 +92,8 @@ public class DisplaySettings {
          allChannelSettings.put(SYNC_CHANNELS, false);
          allChannelSettings.put(IGNORE_OUTLIERS, false);
          allChannelSettings.put(IGNORE_PERCENTAGE, 0.1);
+         allChannelSettings.put(PLAYBACK_FPS,
+                 preferences_.getDouble(PREF_KEY_PLAYBACK_FPS, DEFAULT_PLAYBACK_FPS));
          json_.put(ALL_CHANNELS_SETTINGS_KEY, allChannelSettings);
       } catch (JSONException ex) {
          System.err.println();
@@ -451,6 +456,39 @@ public class DisplaySettings {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(COMPOSITE, b);
          } catch (JSONException ex) {
             System.err.println("Couldnt set autoscale");
+         }
+      }
+   }
+
+   /**
+    * Returns the playback rate, in frames per second, for animating along an axis.
+    *
+    * @return stored playback rate, or a default when none has been stored
+    */
+   public double getPlaybackFPS() {
+      synchronized (this) {
+         try {
+            return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY)
+                    .optDouble(PLAYBACK_FPS, DEFAULT_PLAYBACK_FPS);
+         } catch (JSONException ex) {
+            return DEFAULT_PLAYBACK_FPS;
+         }
+      }
+   }
+
+   /**
+    * Stores the playback rate both in these settings (so it is saved with the dataset)
+    * and in the preferences (so it carries over to newly opened viewers).
+    *
+    * @param fps playback rate in frames per second
+    */
+   public void setPlaybackFPS(double fps) {
+      synchronized (this) {
+         try {
+            json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(PLAYBACK_FPS, fps);
+            preferences_.putDouble(PREF_KEY_PLAYBACK_FPS, fps);
+         } catch (JSONException ex) {
+            System.err.println("Couldnt set playback fps");
          }
       }
    }

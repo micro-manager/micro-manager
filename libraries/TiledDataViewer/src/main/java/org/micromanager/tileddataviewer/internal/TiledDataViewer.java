@@ -58,6 +58,9 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    public static String NO_CHANNEL = "NO_CHANNEL_PRESENT";
    public static String CHANNEL_AXIS = "channel";
+   // Key written by AcqEngMetadata.setElapsedTimeMs and read by the plugins' time
+   // metadata reader functions.  Not every writer emits it (the Stitch plugin does not).
+   private static final String ELAPSED_TIME_TAG = "ElapsedTime-ms";
    private final GuiManager guiManager_;
 
    private DisplayCoalescentEDTRunnablePool edtRunnablePool_ =
@@ -164,6 +167,9 @@ public class TiledDataViewer implements TiledDataViewerAPI {
    public void initializeViewerToLoaded(JSONObject dispSettings) {
 
       displayModel_.setDisplaySettings(new DisplaySettings(dispSettings, getPreferences()));
+      // The playback control was seeded during construction, before these settings were
+      // read from disk; refresh it so a dataset's saved rate takes effect.
+      guiManager_.reloadPlaybackFPS();
       Set<HashMap<String, Object>> axesList = dataSource_.getImageKeys();
       //      //Hide row and column axes form the viewer
       //      if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
@@ -581,6 +587,52 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
          return label;
       }
+   }
+
+   /**
+    * Returns the elapsed time of the image currently displayed, formatted for the
+    * status line the way the main Micro-Manager viewer formats it: hours and minutes
+    * for long acquisitions, down to milliseconds for short ones.
+    *
+    * <p>Distinct from {@link #getCurrentT()}, which returns a fixed H:M:S form used by
+    * the on-image time overlay.
+    *
+    * @return formatted elapsed time, or an empty string when it is not available
+    */
+   public String getElapsedTimeLabel() {
+      if (readTimeFunction_ == null || currentMetadata_ == null) {
+         return "";
+      }
+      // The reader functions installed by the various plugins return 0 when the tag is
+      // missing rather than null, so a 0 result is ambiguous.  Datasets written by the
+      // Stitch plugin carry no ElapsedTime-ms tag at all.  Check for the tag directly so
+      // "no timestamp" can be distinguished from "zero elapsed time"; the caller then
+      // falls back to showing the time index.
+      if (!currentMetadata_.has(ELAPSED_TIME_TAG)) {
+         return "";
+      }
+      Long elapsed;
+      try {
+         elapsed = readTimeFunction_.apply(currentMetadata_);
+      } catch (Exception e) {
+         return ""; // Metadata for this image has no usable time stamp.
+      }
+      if (elapsed == null || elapsed < 0) {
+         return "";
+      }
+      double elapsedTimeMs = elapsed;
+      if (elapsedTimeMs > 3600000) {
+         int hrs = (int) (elapsedTimeMs / 3600000);
+         double mins = (elapsedTimeMs % (hrs * 3600000L)) / 60000.0;
+         return hrs + ":" + Math.round(mins) + "hr";
+      } else if (elapsedTimeMs > 60000) {
+         int mins = (int) (elapsedTimeMs / 60000);
+         double secs = (elapsedTimeMs % (mins * 60000L)) / 1000.0;
+         return mins + ":" + Math.round(secs) + "min";
+      } else if (elapsedTimeMs > 10000) {
+         return String.format("%.1fs", elapsedTimeMs / 1000);
+      }
+      return String.format("%.0fms", elapsedTimeMs);
    }
 
    public String getCurrentZPosition() {

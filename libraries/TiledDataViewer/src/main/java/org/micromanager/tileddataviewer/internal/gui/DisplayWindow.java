@@ -91,6 +91,18 @@ public class DisplayWindow implements WindowListener {
 
    }
 
+   /**
+    * Updates the playback speed control to show the given rate, without firing the
+    * control's change listener.
+    *
+    * @param fps playback rate in frames per second
+    */
+   public void setPlaybackFPSControl(double fps) {
+      if (subImageControls_ != null) {
+         subImageControls_.setPlaybackFPSControl(fps);
+      }
+   }
+
    public void onScrollersAdded() {
       subImageControls_.onScrollersAdded();
 

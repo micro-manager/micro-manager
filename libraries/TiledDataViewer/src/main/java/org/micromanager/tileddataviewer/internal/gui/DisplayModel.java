@@ -697,6 +697,14 @@ public class DisplayModel {
       return displaySettings_.isCompositeMode();
    }
 
+   public double getPlaybackFPS() {
+      return displaySettings_.getPlaybackFPS();
+   }
+
+   public void setPlaybackFPS(double fps) {
+      displaySettings_.setPlaybackFPS(fps);
+   }
+
    public boolean isIntegerAxis(String axis) {
       return !stringAxes_.containsKey(axis);
    }
