@@ -21,6 +21,8 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -33,6 +35,7 @@ import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
@@ -179,7 +182,13 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       //         axesNames.remove(MagellanMD.AXES_GRID_COL);
       //      }
 
-      for (HashMap<String, Object> axesPositions : axesList) {
+      // Walk the keys in summary-metadata channel order. getImageKeys() is a Set with no
+      // iteration-order guarantee, so discovering channels straight from it registers them
+      // in arbitrary order, which shows up as the viewer's channel scrollbar and overlays
+      // disagreeing with the Inspector (the data provider already orders its own channel
+      // list from ChNames for this reason). Only the traversal order changes here: each key
+      // is still registered exactly as before, so the scrollbars are still created.
+      for (HashMap<String, Object> axesPositions : sortByChannelOrder(axesList)) {
          if (axesPositions.keySet().contains(TiledDataViewer.CHANNEL_AXIS)) {
             String channel = (String) axesPositions.get(TiledDataViewer.CHANNEL_AXIS);
             if (!displayModel_.getDisplayedChannels().contains(channel)) {
@@ -216,6 +225,51 @@ public class TiledDataViewer implements TiledDataViewerAPI {
               new TiledDataViewer.ExpandDisplayRangeCoalescentRunnable(axisMaxs));
       edtRunnablePool_.invokeLaterWithCoalescence(
               new TiledDataViewer.ExpandDisplayRangeCoalescentRunnable(axisMins));
+   }
+
+   /**
+    * Orders image keys so that channels are first seen in summary-metadata order.
+    *
+    * <p>Keys whose channel is not listed in the metadata (or that have no channel axis)
+    * sort after the listed ones, preserving the previous behaviour of discovering them
+    * from the data. Only ordering changes; no key is added or dropped.
+    *
+    * @param axesList image keys, in arbitrary order
+    * @return the same keys, ordered by channel
+    */
+   private List<HashMap<String, Object>> sortByChannelOrder(
+           Set<HashMap<String, Object>> axesList) {
+      List<HashMap<String, Object>> ordered = new ArrayList<>(axesList);
+      final List<String> chOrder = new ArrayList<>();
+      if (summaryMetadata_ != null && summaryMetadata_.has("ChNames")) {
+         try {
+            JSONArray chNames = summaryMetadata_.getJSONArray("ChNames");
+            for (int i = 0; i < chNames.length(); i++) {
+               String name = chNames.optString(i, null);
+               if (name != null && !name.isEmpty()) {
+                  chOrder.add(name);
+               }
+            }
+         } catch (JSONException e) {
+            return ordered; // No usable channel names; leave the order alone.
+         }
+      }
+      if (chOrder.isEmpty()) {
+         return ordered;
+      }
+      Collections.sort(ordered, new Comparator<HashMap<String, Object>>() {
+         @Override
+         public int compare(HashMap<String, Object> a, HashMap<String, Object> b) {
+            return Integer.compare(rank(a), rank(b));
+         }
+
+         private int rank(HashMap<String, Object> axes) {
+            Object ch = axes.get(CHANNEL_AXIS);
+            int idx = (ch instanceof String) ? chOrder.indexOf(ch) : -1;
+            return idx < 0 ? Integer.MAX_VALUE : idx;
+         }
+      });
+      return ordered;
    }
 
    public void channelSetActiveByCheckbox(String channelName, boolean selected) {

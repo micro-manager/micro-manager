@@ -48,6 +48,7 @@ import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.exporttiles.ChannelUtils;
 import org.micromanager.exporttiles.TileAligner;
@@ -95,6 +96,13 @@ public class StitchFrame extends JDialog {
       "AcqTime",
       "Time",
    };
+
+   // How often the pending-write queue is sampled during the Finalizing phase.
+   private static final long FINALIZE_POLL_MS = 200;
+
+   // Must match ExplorerManager.MM_DISPLAY_SETTINGS_FILE: the Explorer plugin reads this
+   // file in preference to its colour heuristics when reopening a dataset.
+   private static final String MM_DISPLAY_SETTINGS_FILE = "mm_display_settings.json";
 
    private static final String SAVE_RAM = "RAM (temporary)";
    private static final String SAVE_STACK = "Image Stack File";
@@ -714,6 +722,74 @@ public class StitchFrame extends JDialog {
    }
 
    /**
+    * Reports finalization progress by sampling the storage's pending-write queue while the
+    * given finalizer thread runs.
+    *
+    * <p>Finalization is a blocking call with no progress callback, but every backend
+    * exposes its pending write count via {@code NDTiffAPI.getWritingQueueTaskSize()}
+    * (NDTiff, OME-BigTIFF and OME-Zarr all implement it). That queue only drains during
+    * this phase, so progress is the fraction of the peak depth that has been written. The
+    * peak is tracked rather than assumed because the pyramid step enqueues additional
+    * tasks after sampling begins, which would otherwise make progress jump backwards.
+    *
+    * <p>The OME-BigTIFF and OME-Zarr backends do not route this phase through that queue:
+    * their {@code finishedWriting()} is a single blocking call inside the storage library
+    * with no progress signal (measured at ~29 s of a 29.4 s phase for OME-BigTIFF, against
+    * 1 ms for the pyramid step). For those the bar stays animated and the status label
+    * shows elapsed time, so the user can see the export is alive and how long it has run
+    * rather than being shown a fabricated percentage. Giving them a real bar needs a
+    * progress callback added to the storage library.
+    *
+    * @param storage     storage being finalized
+    * @param finalizer   thread running the finalization; polling stops when it dies
+    * @param bar         progress bar to update
+    * @param statusLabel label showing the phase name, updated with elapsed time
+    */
+   private static void reportFinalizeProgress(MultiresNDTiffAPI storage, Thread finalizer,
+                                              JProgressBar bar, JLabel statusLabel) {
+      final long startMs = System.currentTimeMillis();
+      int peak = 0;
+      int lastPct = 0;
+      while (finalizer.isAlive()) {
+         int pending = 0;
+         try {
+            pending = storage.getWritingQueueTaskSize();
+         } catch (RuntimeException e) {
+            pending = 0; // Backend cannot report a depth.
+         }
+         peak = Math.max(peak, pending);
+         if (peak > 0) {
+            // NDTiff: the queue drains during this phase, so report real progress.
+            int pct = (int) Math.round(100.0 * (peak - pending) / peak);
+            lastPct = Math.max(lastPct, Math.min(99, pct)); // Monotonic; 100 set on completion.
+            setPhaseProgress(bar, lastPct);
+         } else {
+            // No measurable signal: animate, and show how long it has been running.
+            final String elapsed = formatElapsed(System.currentTimeMillis() - startMs);
+            SwingUtilities.invokeLater(() -> {
+               if (!bar.isIndeterminate()) {
+                  bar.setStringPainted(false);
+                  bar.setIndeterminate(true);
+               }
+               statusLabel.setText("Finalizing... (" + elapsed + ")");
+            });
+         }
+         try {
+            Thread.sleep(FINALIZE_POLL_MS);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+         }
+      }
+   }
+
+   /** Formats a duration as m:ss, for the Finalizing status label. */
+   private static String formatElapsed(long millis) {
+      long totalSeconds = Math.max(0L, millis / 1000L);
+      return (totalSeconds / 60) + ":" + String.format("%02d", totalSeconds % 60);
+   }
+
+   /**
     * Put the progress bar into indeterminate (animated) mode with a status label, for
     * phases that have no measurable sub-progress (e.g. NDTiff finalization) so the bar
     * keeps moving and the user knows the process is still alive.
@@ -925,7 +1001,9 @@ public class StitchFrame extends JDialog {
                SwingUtilities.invokeLater(() -> statusLabel.setText(msg));
             } else {
                String stats = t0Aligner.getLastAlignmentStats();
-               studio_.logs().logMessage("Stitch alignment t=0: " + stats);
+               // Labelled t=1 to match the 1-based numbering used for the other time
+               // points below; this is the first one, precomputed before the loop.
+               studio_.logs().logMessage("Stitch alignment t=1: " + stats);
             }
             // Adjust canvas size and origins for alignment shifts.
             // tOrigins are always in pre-rotation tile space, so use raw tile dims here.
@@ -1332,23 +1410,47 @@ public class StitchFrame extends JDialog {
             // exist (OME-BigTIFF, whose depth is fixed at creation, ignores it); guard it so a
             // pyramid hiccup can never prevent finishedWriting(), which MUST always run -- an
             // unfinalized NDTiff throws NegativeArraySizeException when a viewer opens it.
-            // Finalizing has no measurable sub-progress, so show an animated (indeterminate)
-            // bar rather than freezing the user at a fixed value.
-            setIndeterminate(bar, statusLabel, "Finalizing...");
-            try {
-               ndtiffStorage.increaseMaxResolutionLevel(
-                     pyramidDepthForCanvas(outCanvasW, outCanvasH));
-            } catch (Throwable pyramidError) {
-               studio_.logs().logError(new RuntimeException(pyramidError),
-                     "Stitch: pyramid (low-res) generation issue; full-resolution data is "
-                     + "still valid. Zoomed-out display may be limited.");
+            // Finalizing drains the storage's queued write tasks, which on a large canvas
+            // can take minutes. Run it off the export thread so the queue depth can be
+            // sampled and reported as real 0-100 progress instead of an animated bar.
+            SwingUtilities.invokeLater(() -> statusLabel.setText("Finalizing..."));
+            final MultiresNDTiffAPI finalizingStorage = ndtiffStorage;
+            final int pyramidDepth = pyramidDepthForCanvas(outCanvasW, outCanvasH);
+            // finishedWriting() used to run on this thread, so a failure propagated to the
+            // caller. Capture anything thrown on the finalizer and rethrow it after the
+            // join, so moving the work off-thread cannot silently swallow an error that
+            // would leave an unfinalized (unopenable) dataset.
+            final Throwable[] finalizeError = new Throwable[1];
+            Thread finalizer = new Thread(() -> {
+               try {
+                  finalizingStorage.increaseMaxResolutionLevel(pyramidDepth);
+               } catch (Throwable pyramidError) {
+                  studio_.logs().logError(new RuntimeException(pyramidError),
+                        "Stitch: pyramid (low-res) generation issue; full-resolution data is "
+                        + "still valid. Zoomed-out display may be limited.");
+               }
+               try {
+                  // Persist the source channel colors/contrast into the NDTiff (written to
+                  // display_settings.txt by finishedWriting()) so that reopening the dataset
+                  // (e.g. in the Explorer plugin) restores the colors set here rather than
+                  // falling back to guessed palette colors.
+                  writeNdtiffDisplaySettings(finalizingStorage, effectiveChNames,
+                        sourceDisplaySettings);
+                  finalizingStorage.finishedWriting();
+                  // Written after finishedWriting() so the dataset directory exists and its
+                  // final on-disk location is known.
+                  writeMmDisplaySettings(finalizingStorage, sourceDisplaySettings);
+               } catch (Throwable t) {
+                  finalizeError[0] = t;
+               }
+            }, "Stitch-Finalize");
+            finalizer.start();
+            reportFinalizeProgress(ndtiffStorage, finalizer, bar, statusLabel);
+            finalizer.join();
+            if (finalizeError[0] != null) {
+               throw new RuntimeException("Stitch: finalizing the dataset failed",
+                     finalizeError[0]);
             }
-            // Persist the source channel colors/contrast into the NDTiff (written to
-            // display_settings.txt by finishedWriting()) so that reopening the dataset
-            // (e.g. in the Explorer plugin) restores the colors set here rather than
-            // falling back to guessed palette colors.
-            writeNdtiffDisplaySettings(ndtiffStorage, effectiveChNames, sourceDisplaySettings);
-            ndtiffStorage.finishedWriting();
             setPhaseProgress(bar, 100);
             final boolean wasCancelled = exportCancelled_.get();
             final MultiresNDTiffAPI finalStorage = ndtiffStorage;
@@ -1885,6 +1987,49 @@ public class StitchFrame extends JDialog {
    }
 
    /**
+    * Writes the source viewer's display settings into the exported dataset as
+    * {@code mm_display_settings.json}.
+    *
+    * <p>The per-channel color/contrast written by
+    * {@link #writeNdtiffDisplaySettings} is not enough on its own: when reopening,
+    * the Explorer plugin only consults those stored values from inside its
+    * heuristics, which discard any color equal to white and fall back to remembered
+    * or guessed colors. It prefers this file when it exists, and it round-trips the
+    * complete settings (color mode, per-channel visibility, gamma, contrast) rather
+    * than just color plus min/max.
+    *
+    * <p>Best effort: a failure here only means the export opens with guessed colors,
+    * so it must never fail the export.</p>
+    *
+    * @param storage        finalized storage, used for its on-disk location
+    * @param sourceSettings display settings captured from the source viewer
+    */
+   private void writeMmDisplaySettings(MultiresNDTiffAPI storage,
+                                       DisplaySettings sourceSettings) {
+      if (storage == null || sourceSettings == null) {
+         return;
+      }
+      try {
+         String diskLocation = storage.getDiskLocation();
+         if (diskLocation == null || diskLocation.isEmpty()) {
+            return;
+         }
+         File dataDir = new File(diskLocation);
+         if (!dataDir.isDirectory()) {
+            // OME-BigTIFF writes a single file; its settings belong beside it.
+            dataDir = dataDir.getParentFile();
+         }
+         if (dataDir == null || !dataDir.isDirectory()) {
+            return;
+         }
+         ((DefaultDisplaySettings) sourceSettings)
+               .save(new File(dataDir, MM_DISPLAY_SETTINGS_FILE));
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Stitch: could not write " + MM_DISPLAY_SETTINGS_FILE);
+      }
+   }
+
+   /**
     * Creates the tiled output storage (NDTiff / OME-Zarr / OME-BigTIFF) for the stitched output
     * and writes its summary metadata.
     *
@@ -2025,6 +2170,23 @@ public class StitchFrame extends JDialog {
 
       // Set the window title bar text.
       viewer.getTiledDataViewer().setWindowTitle(name);
+
+      // Metadata readers for the status line and the time/Z overlays. Without these the
+      // viewer opened right after a stitch shows no elapsed time (it falls back to the
+      // time index) even though the timestamps were written correctly -- reopening the
+      // same dataset through the Explorer plugin, which installs these, shows them fine.
+      viewer.getTiledDataViewer().setReadTimeMetadataFunction(tags -> {
+         try {
+            if (tags != null && tags.has("ElapsedTime-ms")) {
+               return tags.getLong("ElapsedTime-ms");
+            }
+         } catch (Exception e) {
+            // No usable timestamp on this image.
+         }
+         return 0L;
+      });
+      viewer.getTiledDataViewer().setReadZMetadataFunction(
+            tags -> tags == null ? 0.0 : tags.optDouble("ZPositionUm", 0.0));
 
       // Initialize the viewer for a loaded (already-written) dataset.
       // This reads getImageKeys() from the data source, registers all channels in the

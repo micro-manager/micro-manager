@@ -141,6 +141,7 @@ public class GuiManager {
 
       int min = scroller.getMinimum();
       int max = scroller.getMaximum();
+      // Inclusive bounds, so the number of positions is the span plus one.
       int range = max - min + 1;
       if (range <= 1) {
          cumulativeFrameCountError_ = 0.0;

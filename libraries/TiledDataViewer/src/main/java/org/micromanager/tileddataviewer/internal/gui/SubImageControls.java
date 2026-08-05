@@ -266,7 +266,9 @@ class SubImageControls extends JPanel {
    private boolean hasMultiplePositions(String axis) {
       for (AxisScroller a : scrollerPanel_.scrollers_) {
          if (a.getAxis().equals(axis)) {
-            return a.getMaximum() - a.getMinimum() > 1;
+            // getMinimum()/getMaximum() are an inclusive range, so two or more positions
+            // means the span is at least 1.
+            return a.getMaximum() - a.getMinimum() > 0;
          }
       }
       return false;
