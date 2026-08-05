@@ -250,7 +250,14 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    public void setAxisPosition(String axis, int position) {
       HashMap<String, Object> axes = new HashMap<>();
-      axes.put(axis, position);
+      // Scroller and animation coordinates are always integers, but a string-valued
+      // axis (e.g. channel) must be stored as its String value: scrollbarsMoved()
+      // casts the channel entry to String.
+      if (displayModel_ != null && !displayModel_.isIntegerAxis(axis)) {
+         axes.put(axis, displayModel_.getStringPositionFromIntegerPosition(axis, position));
+      } else {
+         axes.put(axis, position);
+      }
       setImageEvent(axes, true);
    }
 
