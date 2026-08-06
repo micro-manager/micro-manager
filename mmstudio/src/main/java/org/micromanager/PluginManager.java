@@ -115,9 +115,14 @@ public interface PluginManager {
     * viewers that are DataViewers but not DisplayWindows, such as the
     * TiledDataViewer.
     *
+    * <p>Defaults to reporting no such plugins, so that implementations written
+    * before this plugin type existed keep working.
+    *
     * @return HashMap that maps plugin class names to DataViewerGearMenuPlugin
     *     instances
     */
-   HashMap<String, DataViewerGearMenuPlugin> getDataViewerGearMenuPlugins();
+   default HashMap<String, DataViewerGearMenuPlugin> getDataViewerGearMenuPlugins() {
+      return new HashMap<>();
+   }
 
 }

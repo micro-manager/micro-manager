@@ -313,6 +313,7 @@ public final class DefaultPluginManager implements PluginManager {
     *
     * @return the discovered DataViewerGearMenuPlugin instances
     */
+   @Override
    public HashMap<String, DataViewerGearMenuPlugin> getDataViewerGearMenuPlugins() {
       HashMap<String, DataViewerGearMenuPlugin> result = new HashMap<>();
       for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(DataViewerGearMenuPlugin.class)) {
