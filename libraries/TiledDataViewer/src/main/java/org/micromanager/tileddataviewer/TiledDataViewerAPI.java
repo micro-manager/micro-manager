@@ -122,25 +122,37 @@ public interface TiledDataViewerAPI {
     * <p>This is the rate shown in the viewer's playback speed control, and is
     * the natural frame rate for an exported movie.
     *
+    * <p>Defaults to a nominal 10 fps so that implementations written before this
+    * method existed keep working.
+    *
     * @return playback rate in frames per second
     */
-   double getAnimateFPS();
+   default double getAnimateFPS() {
+      return 10.0;
+   }
 
    /**
     * Registers a listener notified whenever the playback rate changes, so UI
     * that displays the rate can follow it.
     *
+    * <p>Defaults to doing nothing, in which case a listener is simply never
+    * called and the rate is read whenever it is needed.
+    *
     * @param listener receives the new rate in frames per second
     */
-   void addAnimateFpsListener(java.util.function.DoubleConsumer listener);
+   default void addAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+   }
 
    /**
     * Unregisters a playback rate listener. Callers must do this when they go
     * away, or they are retained for the life of the viewer.
     *
+    * <p>Defaults to doing nothing, matching the default registration.
+    *
     * @param listener the listener to remove
     */
-   void removeAnimateFpsListener(java.util.function.DoubleConsumer listener);
+   default void removeAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+   }
 
    /**
     * Registers a listener run each time the canvas finishes painting a frame.
@@ -157,17 +169,25 @@ public interface TiledDataViewerAPI {
     * <p>Listeners run on the EDT from within the paint, so they must be cheap
     * and must not trigger another repaint.
     *
+    * <p>Defaults to doing nothing. Callers that wait for this signal must cope
+    * with never receiving it -- see the timeout in
+    * {@code CanvasCapture.captureAfter}.
+    *
     * @param listener run once a frame is on screen
     */
-   void addRenderCompleteListener(Runnable listener);
+   default void addRenderCompleteListener(Runnable listener) {
+   }
 
    /**
     * Unregisters a render-complete listener. Callers must do this when they go
     * away, or they are retained for the life of the viewer.
     *
+    * <p>Defaults to doing nothing, matching the default registration.
+    *
     * @param listener the listener to remove
     */
-   void removeRenderCompleteListener(Runnable listener);
+   default void removeRenderCompleteListener(Runnable listener) {
+   }
 
    /**
     * get the offset of the top left displayed pixel to relative to top left of
