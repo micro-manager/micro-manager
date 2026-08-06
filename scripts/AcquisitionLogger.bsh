@@ -1,0 +1,63 @@
+// AcquisitionLogger.bsh
+//
+// Starts acquisition logging. Add the contents of this script to your
+// MMStartup.bsh (or set it as your startup script in
+// Tools > Options > "Startup script"), and every Micro-Manager session will
+// append to a log file recording:
+//
+//   - the date/time the application started, the configuration file that was
+//     loaded, and the user profile in use;
+//   - for every acquisition: the directory the data is saved in, the name of
+//     the data set, the date/time, and the properties selected below;
+//   - the date/time the application exited, and how long the session lasted.
+//
+// The log file is created if it does not exist, and appended to if it does,
+// so a single file accumulates the history across sessions.
+//
+// The actual logging is done by the AcquisitionLogger plugin. That part has to
+// be compiled Java rather than Beanshell: Micro-Manager delivers the
+// "acquisition started" notification over a Guava EventBus, which finds
+// handler methods by looking for the @Subscribe annotation, and Beanshell
+// objects cannot carry annotations.
+//
+// The plugin does not appear in the Plugins menu; this script is the only way
+// it is started.
+//
+// Nico Stuurman / Claude, 2026
+
+
+import org.micromanager.acqlogger.AcquisitionLoggerPlugin;
+
+// ---------------------------------------------------------------- settings --
+
+// Full path of the log file. Edit this to taste. Parent directories are
+// created automatically if they do not exist.
+// Note the doubled backslashes: "\\" means a single backslash in a string.
+String logFile = "C:\\Users\\nstuurman\\Documents\\MMAcquisitionLog.txt";
+
+// Alternatively, put the log next to the user's home directory in a way that
+// works on any machine, by uncommenting the next line:
+// String logFile = System.getProperty("user.home") + "/MMAcquisitionLog.txt";
+
+// Properties to record with every acquisition, as {device, property} pairs.
+// The device name is the label as it appears in your hardware configuration.
+// Add or remove rows as needed; an entry that does not exist on the current
+// configuration is logged as "(no such property)" rather than causing an error.
+String[][] properties = {
+   {"Objective", "Label"},
+   // {"NikonTi-FilterBlock", "Label"},
+   // {"Core", "Camera"},
+};
+
+// ------------------------------------------------------------------- start --
+
+logger = AcquisitionLoggerPlugin.startLogging(mm, logFile);
+
+for (int i = 0; i < properties.length; i++) {
+   logger.addProperty(properties[i][0], properties[i][1]);
+}
+
+// Writes the startup entry and begins listening for acquisitions.
+logger.start();
+
+mm.scripter().message("Acquisition logging to: " + logger.getLogFilePath());
