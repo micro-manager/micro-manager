@@ -117,6 +117,32 @@ public interface TiledDataViewerAPI {
    void update();
 
    /**
+    * Returns the rate, in frames per second, at which axes are played back.
+    *
+    * <p>This is the rate shown in the viewer's playback speed control, and is
+    * the natural frame rate for an exported movie.
+    *
+    * @return playback rate in frames per second
+    */
+   double getAnimateFPS();
+
+   /**
+    * Registers a listener notified whenever the playback rate changes, so UI
+    * that displays the rate can follow it.
+    *
+    * @param listener receives the new rate in frames per second
+    */
+   void addAnimateFpsListener(java.util.function.DoubleConsumer listener);
+
+   /**
+    * Unregisters a playback rate listener. Callers must do this when they go
+    * away, or they are retained for the life of the viewer.
+    *
+    * @param listener the listener to remove
+    */
+   void removeAnimateFpsListener(java.util.function.DoubleConsumer listener);
+
+   /**
     * get the offset of the top left displayed pixel to relative to top left of
     * the full image (in full resolution coordinates).
     *

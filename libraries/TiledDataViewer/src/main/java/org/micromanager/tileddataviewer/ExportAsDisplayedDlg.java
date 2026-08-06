@@ -31,8 +31,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleConsumer;
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -55,6 +58,7 @@ import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Saves what the TiledDataViewer is currently showing, as a single image or as a
@@ -78,12 +82,19 @@ public final class ExportAsDisplayedDlg extends JDialog {
    private static final String NO_AXIS = "(single image)";
    /** Give a frame this long to appear before accepting it as unchanged. */
    private static final long FRAME_TIMEOUT_MS = 5000;
+   /** Used when the viewer cannot report a playback rate. */
+   private static final double DEFAULT_FPS = 10.0;
+
+   private static final String PREF_FORMAT = "format";
+   private static final String PREF_AXIS = "axis";
+   private static final String PREF_FIRST_FRAME = "firstFrame";
+   private static final String PREF_LAST_FRAME = "lastFrame";
 
    private final Studio studio_;
    private final TiledDataViewerDataViewerAPI viewer_;
    private final JComboBox<String> formatCombo_;
    private final JComboBox<String> axisCombo_;
-   private final JSpinner fpsSpinner_;
+   private final JLabel fpsLabel_;
    private final JSpinner firstFrameSpinner_;
    private final JSpinner lastFrameSpinner_;
    private final SpinnerNumberModel firstFrameModel_;
@@ -91,6 +102,8 @@ public final class ExportAsDisplayedDlg extends JDialog {
    private final JProgressBar progress_;
    private final JButton saveButton_;
    private final JButton copyButton_;
+   // Registered on the viewer while this dialog is open; null once detached.
+   private DoubleConsumer fpsListener_;
 
    /**
     * Builds the export dialog for the given viewer.
@@ -142,9 +155,11 @@ public final class ExportAsDisplayedDlg extends JDialog {
       rangePanel.add(lastFrameSpinner_, "growx");
       panel.add(rangePanel, "growx, wrap");
 
+      // The movie is written at the viewer's own playback rate, so there is one
+      // speed setting rather than two that could disagree.
       panel.add(new JLabel("Frame rate:"));
-      fpsSpinner_ = new JSpinner(new SpinnerNumberModel(10.0, 0.1, 120.0, 1.0));
-      panel.add(fpsSpinner_, "growx, wrap unrelated");
+      fpsLabel_ = new JLabel();
+      panel.add(fpsLabel_, "growx, wrap unrelated");
 
       progress_ = new JProgressBar(0, 100);
       progress_.setStringPainted(true);
@@ -160,7 +175,21 @@ public final class ExportAsDisplayedDlg extends JDialog {
       panel.add(saveButton_, "growx, wrap");
 
       add(panel);
+      // Restore format and axis first, then let updateEnabledState() bound the
+      // spinners to the restored axis, then apply the stored range on top.
+      loadFormatAndAxis();
       updateEnabledState();
+      loadFrameRange();
+
+      // Follow the viewer's playback control while this dialog is open, so the
+      // rate shown here cannot drift from the rate a movie is written at.
+      fpsListener_ = fps -> SwingUtilities.invokeLater(this::updateFpsLabel);
+      try {
+         viewer_.getTiledDataViewer().addAnimateFpsListener(fpsListener_);
+      } catch (RuntimeException e) {
+         fpsListener_ = null; // Viewer closing; the static label is still correct.
+      }
+
       pack();
       setLocationRelativeTo(getOwner());
    }
@@ -200,7 +229,8 @@ public final class ExportAsDisplayedDlg extends JDialog {
       // Stepping along an axis only applies to a movie: a still image is always
       // a capture of the position currently displayed.
       axisCombo_.setEnabled(movie);
-      fpsSpinner_.setEnabled(movie);
+      updateFpsLabel();
+      fpsLabel_.setEnabled(movie);
       firstFrameSpinner_.setEnabled(movie);
       lastFrameSpinner_.setEnabled(movie);
       copyButton_.setEnabled(!movie);
@@ -249,6 +279,106 @@ public final class ExportAsDisplayedDlg extends JDialog {
       return ((Number) model.getValue()).intValue();
    }
 
+   /** Shows the viewer's current playback rate, which movies are written at. */
+   private void updateFpsLabel() {
+      if (fpsLabel_ != null) {
+         fpsLabel_.setText(String.format("%.1f fps (viewer playback speed)", playbackFps()));
+      }
+   }
+
+   /**
+    * The viewer's playback rate, which is the rate exported movies are written at.
+    *
+    * @return frames per second, falling back to 10 if the viewer reports nothing usable
+    */
+   private double playbackFps() {
+      try {
+         double fps = viewer_.getTiledDataViewer().getAnimateFPS();
+         if (fps > 0) {
+            return fps;
+         }
+      } catch (RuntimeException e) {
+         // Viewer closing or not ready; use the default below.
+      }
+      return DEFAULT_FPS;
+   }
+
+   /**
+    * Restores the last used format and axis, ignoring either if it does not
+    * apply here (an axis this dataset lacks, or a format no longer offered).
+    */
+   private void loadFormatAndAxis() {
+      MutablePropertyMapView settings = studio_.profile().getSettings(getClass());
+
+      String format = settings.getString(PREF_FORMAT, null);
+      for (String candidate : FORMATS) {
+         if (candidate.equals(format)) {
+            formatCombo_.setSelectedItem(candidate);
+            break;
+         }
+      }
+
+      String axis = settings.getString(PREF_AXIS, null);
+      if (axis != null) {
+         for (int i = 0; i < axisCombo_.getItemCount(); i++) {
+            if (axis.equals(axisCombo_.getItemAt(i))) {
+               axisCombo_.setSelectedIndex(i);
+               break;
+            }
+         }
+      }
+   }
+
+   /**
+    * Restores the last used frame range, clamped to the selected axis.
+    *
+    * <p>Must run after the spinners have been bounded to that axis, otherwise
+    * the stored values would be clipped against a stale maximum.
+    */
+   private void loadFrameRange() {
+      MutablePropertyMapView settings = studio_.profile().getSettings(getClass());
+      int max = ((Number) lastFrameModel_.getMaximum()).intValue();
+      if (max <= 0) {
+         return; // No axis selected, or it has a single position.
+      }
+      int storedFirst = settings.getInteger(PREF_FIRST_FRAME, -1);
+      int storedLast = settings.getInteger(PREF_LAST_FRAME, -1);
+      if (storedFirst < 0 || storedLast < 0) {
+         return; // Nothing stored yet; keep the full range.
+      }
+      int first = Math.max(0, Math.min(storedFirst, max));
+      int last = Math.max(first, Math.min(storedLast, max));
+      firstFrameModel_.setValue(first);
+      lastFrameModel_.setValue(last);
+   }
+
+   /**
+    * Remembers the current choices before the dialog goes away, so they are kept
+    * whether the export succeeded or the user simply closed the dialog.
+    */
+   @Override
+   public void dispose() {
+      saveSettings();
+      if (fpsListener_ != null) {
+         try {
+            viewer_.getTiledDataViewer().removeAnimateFpsListener(fpsListener_);
+         } catch (RuntimeException e) {
+            // Viewer already gone; nothing to detach from.
+         }
+         fpsListener_ = null;
+      }
+      super.dispose();
+   }
+
+   /** Remembers the current choices for the next export. */
+   private void saveSettings() {
+      MutablePropertyMapView settings = studio_.profile().getSettings(getClass());
+      settings.putString(PREF_FORMAT, (String) formatCombo_.getSelectedItem());
+      settings.putString(PREF_AXIS, (String) axisCombo_.getSelectedItem());
+      settings.putInteger(PREF_FIRST_FRAME, intValue(firstFrameModel_));
+      settings.putInteger(PREF_LAST_FRAME, intValue(lastFrameModel_));
+   }
+
    /**
     * Makes a spinner clamp typed input to its range instead of rejecting it.
     *
@@ -270,24 +400,11 @@ public final class ExportAsDisplayedDlg extends JDialog {
          return;
       }
       final NumberFormatter base = (NumberFormatter) delegate;
-      NumberFormatter clamping = new NumberFormatter(base.getFormat()) {
-         @Override
-         public Object stringToValue(String text) throws java.text.ParseException {
-            Object value = super.stringToValue(text);
-            if (!(value instanceof Number)) {
-               return value;
-            }
-            long typed = ((Number) value).longValue();
-            long min = ((Number) model.getMinimum()).longValue();
-            long max = ((Number) model.getMaximum()).longValue();
-            return (int) Math.max(min, Math.min(max, typed));
-         }
-      };
-      // Deliberately no setMinimum/setMaximum on the formatter: those are what
-      // reject the input before stringToValue() can clamp it.
-      clamping.setValueClass(Integer.class);
-      clamping.setAllowsInvalid(true);
-      clamping.setCommitsOnValidEdit(false);
+      if (!(base.getFormat() instanceof NumberFormat)) {
+         return;
+      }
+      final NumberFormat numberFormat = (NumberFormat) base.getFormat();
+      NumberFormatter clamping = new ClampingFormatter(numberFormat, model);
       field.setFormatterFactory(new DefaultFormatterFactory(clamping));
    }
 
@@ -450,7 +567,7 @@ public final class ExportAsDisplayedDlg extends JDialog {
             SwingUtilities.invokeLater(() -> progress_.setValue(pct));
          }
 
-         double fps = ((Number) fpsSpinner_.getValue()).doubleValue();
+         double fps = playbackFps();
          if (tempDir != null) {
             runFfmpeg(ffmpegPath, tempDir, file, fps);
          } else {
@@ -572,7 +689,7 @@ public final class ExportAsDisplayedDlg extends JDialog {
       } else {
          copyButton_.setEnabled(false);
          axisCombo_.setEnabled(false);
-         fpsSpinner_.setEnabled(false);
+         fpsLabel_.setEnabled(false);
          firstFrameSpinner_.setEnabled(false);
          lastFrameSpinner_.setEnabled(false);
       }
@@ -631,6 +748,37 @@ public final class ExportAsDisplayedDlg extends JDialog {
          }
       }
       return sb.toString().replaceAll("[\\\\/:*?\"<>|]", "_");
+   }
+
+   /**
+    * Formatter that clamps typed values into the spinner model's range rather
+    * than rejecting them.
+    *
+    * <p>Note it deliberately does not set its own minimum/maximum: those are
+    * what reject the input before {@link #stringToValue} can clamp it.
+    */
+   private static final class ClampingFormatter extends NumberFormatter {
+      private final SpinnerNumberModel model_;
+
+      ClampingFormatter(NumberFormat format, SpinnerNumberModel model) {
+         super(format);
+         model_ = model;
+         setValueClass(Integer.class);
+         setAllowsInvalid(true);
+         setCommitsOnValidEdit(false);
+      }
+
+      @Override
+      public Object stringToValue(String text) throws ParseException {
+         Object value = super.stringToValue(text);
+         if (!(value instanceof Number)) {
+            return value;
+         }
+         long typed = ((Number) value).longValue();
+         long min = ((Number) model_.getMinimum()).longValue();
+         long max = ((Number) model_.getMaximum()).longValue();
+         return (int) Math.max(min, Math.min(max, typed));
+      }
    }
 
    /** Wraps an image so it can be put on the system clipboard. */

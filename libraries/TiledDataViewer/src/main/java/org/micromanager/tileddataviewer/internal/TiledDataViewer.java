@@ -370,8 +370,19 @@ public class TiledDataViewer implements TiledDataViewerAPI {
     *
     * @return playback rate in frames per second
     */
+   @Override
    public double getAnimateFPS() {
       return guiManager_.getAnimateFPS();
+   }
+
+   @Override
+   public void addAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+      guiManager_.addAnimateFpsListener(listener);
+   }
+
+   @Override
+   public void removeAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+      guiManager_.removeAnimateFpsListener(listener);
    }
 
    public void update() {

@@ -4,7 +4,10 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.DoubleConsumer;
 import javax.swing.Timer;
 import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
@@ -32,6 +35,8 @@ public class GuiManager {
    private double animationFPS_ = 7;
    // Set once the stored playback rate has been read; see getAnimateFPS().
    private boolean animationFpsLoaded_ = false;
+   // Notified when the playback rate changes, so UI showing it can follow.
+   private final List<DoubleConsumer> animateFpsListeners_ = new CopyOnWriteArrayList<>();
    // Playback state, accessed on the EDT only.
    private long lastTickNs_;
    private double cumulativeFrameCountError_;
@@ -204,6 +209,30 @@ public class GuiManager {
          lastTickNs_ = System.nanoTime();
          timer.setDelay(tickIntervalFromFPS(fps));
       }
+      for (DoubleConsumer listener : animateFpsListeners_) {
+         listener.accept(fps);
+      }
+   }
+
+   /**
+    * Registers a listener notified whenever the playback rate changes.
+    *
+    * @param listener receives the new rate in frames per second
+    */
+   public void addAnimateFpsListener(DoubleConsumer listener) {
+      if (listener != null) {
+         animateFpsListeners_.add(listener);
+      }
+   }
+
+   /**
+    * Unregisters a playback rate listener. Callers must do this when they go
+    * away, or they will be retained for the life of the viewer.
+    *
+    * @param listener the listener to remove
+    */
+   public void removeAnimateFpsListener(DoubleConsumer listener) {
+      animateFpsListeners_.remove(listener);
    }
 
    /**
