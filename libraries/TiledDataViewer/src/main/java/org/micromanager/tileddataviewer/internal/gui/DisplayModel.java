@@ -85,6 +85,9 @@ public class DisplayModel {
    // uses which ones do this here, and which string values map to which
    // Integer positions (because these are needed for display)
    private ConcurrentHashMap<String, LinkedList<String>> stringAxes_ = new ConcurrentHashMap<>();
+   // Active channel last applied by scrollbarsMoved(), used to skip redundant display
+   // settings writes during playback.  Null means "unknown; apply on next call".
+   private String lastActiveChannel_ = null;
    private final boolean rgb_;
 
 
@@ -520,6 +523,9 @@ public class DisplayModel {
 
    public void setCompositeMode(boolean selected) {
       displaySettings_.setCompositeMode(selected);
+      // Forget the memoized active channel: leaving composite mode must re-apply the
+      // active flags even if the channel position itself has not changed.
+      lastActiveChannel_ = null;
       //select all channels if composite mode is being turned on
       if (selected) {
          for (String channel : getDisplayedChannels()) {
@@ -646,8 +652,16 @@ public class DisplayModel {
          if (viewCoords_.getAxesPositions().containsKey(TiledDataViewer.CHANNEL_AXIS)) {
             String activeChannel = (String) viewCoords_.getAxesPositions()
                      .get(TiledDataViewer.CHANNEL_AXIS);
-            for (String c : getDisplayedChannels()) {
-               displaySettings_.setActive(c, activeChannel.equals(c));
+            // Only rewrite the active flags when the active channel actually changed.
+            // This runs on every image event, including every frame of playback along
+            // an unrelated axis, and each write drives a GUI refresh: doing it
+            // unconditionally makes the display flash during fast playback.
+            if (activeChannel != null && !activeChannel.equals(lastActiveChannel_)) {
+               lastActiveChannel_ = activeChannel;
+               for (String c : getDisplayedChannels()) {
+                  displaySettings_.setActive(c, activeChannel.equals(c));
+               }
+               // Refresh once, not once per channel.
                display_.getGUIManager().updateGUIFromDisplaySettings();
             }
          }
@@ -681,6 +695,14 @@ public class DisplayModel {
 
    public boolean isCompositeMode() {
       return displaySettings_.isCompositeMode();
+   }
+
+   public double getPlaybackFPS() {
+      return displaySettings_.getPlaybackFPS();
+   }
+
+   public void setPlaybackFPS(double fps) {
+      displaySettings_.setPlaybackFPS(fps);
    }
 
    public boolean isIntegerAxis(String axis) {

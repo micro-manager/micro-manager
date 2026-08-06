@@ -179,12 +179,25 @@ public class AxisScroller extends JPanel {
     */
    public void setPosition(int position) {
       scrollbar_.removeAdjustmentListener(adjustmentListener_);
-      scrollbar_.setValue(position - minIndex_);
+      // Re-assert the extent along with the value: setValue() alone lets
+      // BoundedRangeModel shrink the extent to keep value + extent <= maximum, and an
+      // extent of 0 makes the scrollbar one position longer than the data.
+      scrollbar_.setValues(position - minIndex_, 1,
+              scrollbar_.getMinimum(), scrollbar_.getMaximum());
       scrollbar_.addAdjustmentListener(adjustmentListener_);
    }
 
+   /**
+    * Returns the highest position that can actually be displayed on this axis.
+    *
+    * <p>The underlying scrollbar's maximum is an exclusive bound (its extent is 1, so the
+    * highest attainable value is maximum - 1), and it is expressed in scrollbar
+    * coordinates. This converts to the same inclusive, image-position coordinates that
+    * {@link #getMinimum()} and {@link #getPosition()} use, so callers can treat the pair
+    * as an inclusive range.
+    */
    public int getMaximum() {
-      return scrollbar_.getMaximum();
+      return scrollbar_.getMaximum() - 1 + minIndex_;
    }
 
    public int getMinimum() {
@@ -201,8 +214,15 @@ public class AxisScroller extends JPanel {
       minIndex_ = Math.min(imagePosition, minIndex_);
       maxIndex_ = Math.max(imagePosition, maxIndex_);
 
-      scrollbar_.setMaximum(Math.max(maxIndex_ - minIndex_ + 1, scrollbar_.getMaximum()));
-      scrollbar_.setMinimum(Math.max(0, Math.min(imagePosition, minIndex_)));
+      // Set value, extent, min and max together. The extent must stay 1 for the highest
+      // reachable value to be (maximum - 1), i.e. maxIndex_: BoundedRangeModel adjusts
+      // the extent to preserve its own invariants when max/min/value are set separately,
+      // and an extent of 0 leaves the scrollbar one position longer than the data, which
+      // shows up as a trailing blank frame.
+      int newMax = Math.max(maxIndex_ - minIndex_ + 1, scrollbar_.getMaximum());
+      int newMin = Math.max(0, Math.min(imagePosition, minIndex_));
+      int value = Math.max(newMin, Math.min(scrollbar_.getValue(), newMax - 1));
+      scrollbar_.setValues(value, 1, newMin, newMax);
 
       scrollbar_.addAdjustmentListener(adjustmentListener_);
    }

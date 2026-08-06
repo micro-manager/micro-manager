@@ -35,6 +35,7 @@ import org.micromanager.PluginManager;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.display.DataViewerGearMenuPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
 import org.micromanager.display.overlay.OverlayPlugin;
@@ -56,6 +57,7 @@ public final class DefaultPluginManager implements PluginManager {
    static {
       VALID_CLASSES.add(AcquisitionDialogPlugin.class);
       VALID_CLASSES.add(AutofocusPlugin.class);
+      VALID_CLASSES.add(DataViewerGearMenuPlugin.class);
       VALID_CLASSES.add(DisplayGearMenuPlugin.class);
       VALID_CLASSES.add(InspectorPanelPlugin.class);
       VALID_CLASSES.add(IntroPlugin.class);
@@ -301,6 +303,21 @@ public final class DefaultPluginManager implements PluginManager {
       HashMap<String, DisplayGearMenuPlugin> result = new HashMap<>();
       for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(DisplayGearMenuPlugin.class)) {
          result.put(plugin.getClass().getName(), (DisplayGearMenuPlugin) plugin);
+      }
+      return result;
+   }
+
+   /**
+    * Returns the gear-menu plugins that operate on a DataViewer rather than on a
+    * DisplayWindow, keyed by class name.
+    *
+    * @return the discovered DataViewerGearMenuPlugin instances
+    */
+   @Override
+   public HashMap<String, DataViewerGearMenuPlugin> getDataViewerGearMenuPlugins() {
+      HashMap<String, DataViewerGearMenuPlugin> result = new HashMap<>();
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(DataViewerGearMenuPlugin.class)) {
+         result.put(plugin.getClass().getName(), (DataViewerGearMenuPlugin) plugin);
       }
       return result;
    }

@@ -21,6 +21,8 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -33,6 +35,7 @@ import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
@@ -58,6 +61,9 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    public static String NO_CHANNEL = "NO_CHANNEL_PRESENT";
    public static String CHANNEL_AXIS = "channel";
+   // Key written by AcqEngMetadata.setElapsedTimeMs and read by the plugins' time
+   // metadata reader functions.  Not every writer emits it (the Stitch plugin does not).
+   private static final String ELAPSED_TIME_TAG = "ElapsedTime-ms";
    private final GuiManager guiManager_;
 
    private DisplayCoalescentEDTRunnablePool edtRunnablePool_ =
@@ -164,6 +170,9 @@ public class TiledDataViewer implements TiledDataViewerAPI {
    public void initializeViewerToLoaded(JSONObject dispSettings) {
 
       displayModel_.setDisplaySettings(new DisplaySettings(dispSettings, getPreferences()));
+      // The playback control was seeded during construction, before these settings were
+      // read from disk; refresh it so a dataset's saved rate takes effect.
+      guiManager_.reloadPlaybackFPS();
       Set<HashMap<String, Object>> axesList = dataSource_.getImageKeys();
       //      //Hide row and column axes form the viewer
       //      if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
@@ -173,7 +182,13 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       //         axesNames.remove(MagellanMD.AXES_GRID_COL);
       //      }
 
-      for (HashMap<String, Object> axesPositions : axesList) {
+      // Walk the keys in summary-metadata channel order. getImageKeys() is a Set with no
+      // iteration-order guarantee, so discovering channels straight from it registers them
+      // in arbitrary order, which shows up as the viewer's channel scrollbar and overlays
+      // disagreeing with the Inspector (the data provider already orders its own channel
+      // list from ChNames for this reason). Only the traversal order changes here: each key
+      // is still registered exactly as before, so the scrollbars are still created.
+      for (HashMap<String, Object> axesPositions : sortByChannelOrder(axesList)) {
          if (axesPositions.keySet().contains(TiledDataViewer.CHANNEL_AXIS)) {
             String channel = (String) axesPositions.get(TiledDataViewer.CHANNEL_AXIS);
             if (!displayModel_.getDisplayedChannels().contains(channel)) {
@@ -210,6 +225,51 @@ public class TiledDataViewer implements TiledDataViewerAPI {
               new TiledDataViewer.ExpandDisplayRangeCoalescentRunnable(axisMaxs));
       edtRunnablePool_.invokeLaterWithCoalescence(
               new TiledDataViewer.ExpandDisplayRangeCoalescentRunnable(axisMins));
+   }
+
+   /**
+    * Orders image keys so that channels are first seen in summary-metadata order.
+    *
+    * <p>Keys whose channel is not listed in the metadata (or that have no channel axis)
+    * sort after the listed ones, preserving the previous behaviour of discovering them
+    * from the data. Only ordering changes; no key is added or dropped.
+    *
+    * @param axesList image keys, in arbitrary order
+    * @return the same keys, ordered by channel
+    */
+   private List<HashMap<String, Object>> sortByChannelOrder(
+           Set<HashMap<String, Object>> axesList) {
+      List<HashMap<String, Object>> ordered = new ArrayList<>(axesList);
+      final List<String> chOrder = new ArrayList<>();
+      if (summaryMetadata_ != null && summaryMetadata_.has("ChNames")) {
+         try {
+            JSONArray chNames = summaryMetadata_.getJSONArray("ChNames");
+            for (int i = 0; i < chNames.length(); i++) {
+               String name = chNames.optString(i, null);
+               if (name != null && !name.isEmpty()) {
+                  chOrder.add(name);
+               }
+            }
+         } catch (JSONException e) {
+            return ordered; // No usable channel names; leave the order alone.
+         }
+      }
+      if (chOrder.isEmpty()) {
+         return ordered;
+      }
+      Collections.sort(ordered, new Comparator<HashMap<String, Object>>() {
+         @Override
+         public int compare(HashMap<String, Object> a, HashMap<String, Object> b) {
+            return Integer.compare(rank(a), rank(b));
+         }
+
+         private int rank(HashMap<String, Object> axes) {
+            Object ch = axes.get(CHANNEL_AXIS);
+            int idx = (ch instanceof String) ? chOrder.indexOf(ch) : -1;
+            return idx < 0 ? Integer.MAX_VALUE : idx;
+         }
+      });
+      return ordered;
    }
 
    public void channelSetActiveByCheckbox(String channelName, boolean selected) {
@@ -250,7 +310,14 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    public void setAxisPosition(String axis, int position) {
       HashMap<String, Object> axes = new HashMap<>();
-      axes.put(axis, position);
+      // Scroller and animation coordinates are always integers, but a string-valued
+      // axis (e.g. channel) must be stored as its String value: scrollbarsMoved()
+      // casts the channel entry to String.
+      if (displayModel_ != null && !displayModel_.isIntegerAxis(axis)) {
+         axes.put(axis, displayModel_.getStringPositionFromIntegerPosition(axis, position));
+      } else {
+         axes.put(axis, position);
+      }
       setImageEvent(axes, true);
    }
 
@@ -287,6 +354,51 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    public void onAnimationToggle(AxisScroller scoller, boolean animate) {
       guiManager_.onAnimationToggle(scoller, animate);
+   }
+
+   /**
+    * Sets the rate, in frames per second, at which axes are played back.
+    *
+    * @param fps desired playback rate in frames per second
+    */
+   public void setAnimateFPS(double fps) {
+      guiManager_.setAnimateFPS(fps);
+   }
+
+   /**
+    * Returns the rate, in frames per second, at which axes are played back.
+    *
+    * @return playback rate in frames per second
+    */
+   @Override
+   public double getAnimateFPS() {
+      return guiManager_.getAnimateFPS();
+   }
+
+   @Override
+   public void addAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+      guiManager_.addAnimateFpsListener(listener);
+   }
+
+   @Override
+   public void removeAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+      guiManager_.removeAnimateFpsListener(listener);
+   }
+
+   @Override
+   public void addRenderCompleteListener(Runnable listener) {
+      ViewerCanvas canvas = guiManager_.getCanvas();
+      if (canvas != null) {
+         canvas.addRenderCompleteListener(listener);
+      }
+   }
+
+   @Override
+   public void removeRenderCompleteListener(Runnable listener) {
+      ViewerCanvas canvas = guiManager_.getCanvas();
+      if (canvas != null) {
+         canvas.removeRenderCompleteListener(listener);
+      }
    }
 
    public void update() {
@@ -355,6 +467,27 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
    public void setOverlay(Overlay overlay) {
       guiManager_.displayOverlay(overlay);
+   }
+
+   /**
+    * Installs the overlay belonging to a particular render generation.
+    *
+    * @param overlay    the overlay to draw
+    * @param generation render generation this overlay was computed for
+    */
+   public void setOverlay(Overlay overlay, long generation) {
+      guiManager_.displayOverlay(overlay, generation);
+   }
+
+   /**
+    * Declares which render generation an overlayer plugin is about to draw for,
+    * since such plugins install their overlay themselves and cannot pass it
+    * through. Applied when that overlay is installed.
+    *
+    * @param generation render generation the next plugin overlay belongs to
+    */
+   public void setPendingOverlayGeneration(long generation) {
+      guiManager_.setPendingOverlayGeneration(generation);
    }
 
    public void redrawOverlay() {
@@ -556,6 +689,52 @@ public class TiledDataViewer implements TiledDataViewerAPI {
 
          return label;
       }
+   }
+
+   /**
+    * Returns the elapsed time of the image currently displayed, formatted for the
+    * status line the way the main Micro-Manager viewer formats it: hours and minutes
+    * for long acquisitions, down to milliseconds for short ones.
+    *
+    * <p>Distinct from {@link #getCurrentT()}, which returns a fixed H:M:S form used by
+    * the on-image time overlay.
+    *
+    * @return formatted elapsed time, or an empty string when it is not available
+    */
+   public String getElapsedTimeLabel() {
+      if (readTimeFunction_ == null || currentMetadata_ == null) {
+         return "";
+      }
+      // The reader functions installed by the various plugins return 0 when the tag is
+      // missing rather than null, so a 0 result is ambiguous.  Datasets written by the
+      // Stitch plugin carry no ElapsedTime-ms tag at all.  Check for the tag directly so
+      // "no timestamp" can be distinguished from "zero elapsed time"; the caller then
+      // falls back to showing the time index.
+      if (!currentMetadata_.has(ELAPSED_TIME_TAG)) {
+         return "";
+      }
+      Long elapsed;
+      try {
+         elapsed = readTimeFunction_.apply(currentMetadata_);
+      } catch (Exception e) {
+         return ""; // Metadata for this image has no usable time stamp.
+      }
+      if (elapsed == null || elapsed < 0) {
+         return "";
+      }
+      double elapsedTimeMs = elapsed;
+      if (elapsedTimeMs > 3600000) {
+         int hrs = (int) (elapsedTimeMs / 3600000);
+         double mins = (elapsedTimeMs % (hrs * 3600000L)) / 60000.0;
+         return hrs + ":" + Math.round(mins) + "hr";
+      } else if (elapsedTimeMs > 60000) {
+         int mins = (int) (elapsedTimeMs / 60000);
+         double secs = (elapsedTimeMs % (mins * 60000L)) / 1000.0;
+         return mins + ":" + Math.round(secs) + "min";
+      } else if (elapsedTimeMs > 10000) {
+         return String.format("%.1fs", elapsedTimeMs / 1000);
+      }
+      return String.format("%.0fms", elapsedTimeMs);
    }
 
    public String getCurrentZPosition() {

@@ -117,6 +117,79 @@ public interface TiledDataViewerAPI {
    void update();
 
    /**
+    * Returns the rate, in frames per second, at which axes are played back.
+    *
+    * <p>This is the rate shown in the viewer's playback speed control, and is
+    * the natural frame rate for an exported movie.
+    *
+    * <p>Defaults to a nominal 10 fps so that implementations written before this
+    * method existed keep working.
+    *
+    * @return playback rate in frames per second
+    */
+   default double getAnimateFPS() {
+      return 10.0;
+   }
+
+   /**
+    * Registers a listener notified whenever the playback rate changes, so UI
+    * that displays the rate can follow it.
+    *
+    * <p>Defaults to doing nothing, in which case a listener is simply never
+    * called and the rate is read whenever it is needed.
+    *
+    * @param listener receives the new rate in frames per second
+    */
+   default void addAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+   }
+
+   /**
+    * Unregisters a playback rate listener. Callers must do this when they go
+    * away, or they are retained for the life of the viewer.
+    *
+    * <p>Defaults to doing nothing, matching the default registration.
+    *
+    * @param listener the listener to remove
+    */
+   default void removeAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+   }
+
+   /**
+    * Registers a listener run each time the canvas finishes painting a frame.
+    *
+    * <p>Fires once per rendered frame, when that frame has been painted together
+    * with the overlay computed for it. The image and overlay are produced by
+    * different threads and painted separately, so intermediate paints carrying
+    * the previous frame's overlay do not signal completion.
+    *
+    * <p>This is distinct from setting the display position, which only requests
+    * a render: rendering is asynchronous and superseded frames are coalesced
+    * away, so a position change may never produce a frame of its own.
+    *
+    * <p>Listeners run on the EDT from within the paint, so they must be cheap
+    * and must not trigger another repaint.
+    *
+    * <p>Defaults to doing nothing. Callers that wait for this signal must cope
+    * with never receiving it -- see the timeout in
+    * {@code CanvasCapture.captureAfter}.
+    *
+    * @param listener run once a frame is on screen
+    */
+   default void addRenderCompleteListener(Runnable listener) {
+   }
+
+   /**
+    * Unregisters a render-complete listener. Callers must do this when they go
+    * away, or they are retained for the life of the viewer.
+    *
+    * <p>Defaults to doing nothing, matching the default registration.
+    *
+    * @param listener the listener to remove
+    */
+   default void removeRenderCompleteListener(Runnable listener) {
+   }
+
+   /**
     * get the offset of the top left displayed pixel to relative to top left of
     * the full image (in full resolution coordinates).
     *

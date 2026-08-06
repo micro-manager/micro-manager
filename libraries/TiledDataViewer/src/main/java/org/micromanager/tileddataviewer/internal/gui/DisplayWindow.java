@@ -91,6 +91,18 @@ public class DisplayWindow implements WindowListener {
 
    }
 
+   /**
+    * Updates the playback speed control to show the given rate, without firing the
+    * control's change listener.
+    *
+    * @param fps playback rate in frames per second
+    */
+   public void setPlaybackFPSControl(double fps) {
+      if (subImageControls_ != null) {
+         subImageControls_.setPlaybackFPSControl(fps);
+      }
+   }
+
    public void onScrollersAdded() {
       subImageControls_.onScrollersAdded();
 
@@ -123,18 +135,44 @@ public class DisplayWindow implements WindowListener {
    }
 
    /**
-    * Called on EDT. Update image and make sure scrollers are in correct positions
+    * Called on EDT. Update image and make sure scrollers are in correct positions.
     *
+    * @return the render generation this frame opened; the overlay computed for
+    *         it must be passed back to {@link #displayOverlay(Overlay, long)}
     */
-   public void displayImage(Image image, HashMap<String, int[]> hists, DataViewCoords view) {
+   public long displayImage(Image image, HashMap<String, int[]> hists, DataViewCoords view) {
       //Make scrollbars reflect image
       subImageControls_.updateScrollerPositions(view);
-      imageCanvas_.updateDisplayImage(image, view.getMagnificationFromResLevel());
+      return imageCanvas_.updateDisplayImage(image, view.getMagnificationFromResLevel());
    }
 
    public void displayOverlay(Overlay overlay) {
       imageCanvas_.updateOverlay(overlay);
       imageCanvas_.getCanvas().repaint();
+   }
+
+   /**
+    * Shows the overlay belonging to a particular render generation.
+    *
+    * @param overlay    the overlay to draw
+    * @param generation the generation returned by displayImage()
+    */
+   public void displayOverlay(Overlay overlay, long generation) {
+      imageCanvas_.updateOverlay(overlay, generation);
+      imageCanvas_.getCanvas().repaint();
+   }
+
+   /**
+    * Records that the overlay for the given generation is in place, without
+    * replacing it: used by overlayer plugins that install their own overlay.
+    *
+    * @param generation render generation whose overlay is now current
+    */
+   public void setPendingOverlayGeneration(long generation) {
+      // No repaint here: the plugin's own setOverlay() schedules one once it has
+      // drawn, and that is the paint which reports completion. Repainting here
+      // as well would double every frame's paint rate, which flickers.
+      imageCanvas_.setPendingOverlayGeneration(generation);
    }
 
    public void repaintCanvas() {
@@ -160,6 +198,19 @@ public class DisplayWindow implements WindowListener {
 
    public void setWindowActivatedCallback(Runnable callback) {
       windowActivatedCallback_ = callback;
+   }
+
+   /**
+    * Installs the gear button in the controls panel.
+    *
+    * @param viewer viewer whose gear menu this is
+    * @param studio the Studio, used to discover gear menu plugins
+    */
+   public void installGearButton(org.micromanager.display.DataViewer viewer,
+                                 org.micromanager.Studio studio) {
+      if (subImageControls_ != null) {
+         subImageControls_.installGearButton(viewer, studio);
+      }
    }
 
    @Override

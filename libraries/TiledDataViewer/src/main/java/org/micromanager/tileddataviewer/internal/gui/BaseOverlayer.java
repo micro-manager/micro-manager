@@ -66,9 +66,24 @@ public class BaseOverlayer {
    }
    
 
-   //always try to cancel the previous task, assuming it is being replaced with a more current one
    public synchronized void createOverlay(DataViewCoords viewCoords,
                                           TiledDataViewerOverlayerPlugin overlayerPlugin) {
+      createOverlay(viewCoords, overlayerPlugin, -1);
+   }
+
+   /**
+    * Computes and installs the overlay for a frame.
+    *
+    * @param viewCoords      the view the overlay is drawn for
+    * @param overlayerPlugin optional plugin that draws its own overlay
+    * @param generation      render generation of the frame this overlay belongs
+    *                        to, so the canvas can tell when the two agree; -1
+    *                        when it is not tied to a particular frame
+    */
+   //always try to cancel the previous task, assuming it is being replaced with a more current one
+   public synchronized void createOverlay(DataViewCoords viewCoords,
+                                          TiledDataViewerOverlayerPlugin overlayerPlugin,
+                                          long generation) {
       if (currentTask_ != null && !currentTask_.isDone()) {
          //Supersede the previous overlay calculation, but do NOT interrupt it
          //(cancel(false)). The overlay task reads NDTiff tiles via an interruptible
@@ -85,6 +100,12 @@ public class BaseOverlayer {
             Overlay defaultOverlay = createDefaultOverlay(viewCoords);
 
             if (overlayerPlugin != null) {
+               // The plugin installs its overlay with its own setOverlay(), so
+               // it cannot pass the generation through. Announce which frame is
+               // being drawn for; the canvas applies it when that overlay
+               // arrives, so the repaint the plugin schedules is the one that
+               // reports completion -- no extra repaint, and no race with it.
+               display_.setPendingOverlayGeneration(generation);
                try {
                   overlayerPlugin.drawOverlay(defaultOverlay,
                            viewCoords.getDisplayImageSize(),
@@ -97,7 +118,7 @@ public class BaseOverlayer {
                   return; // Interrupted to start a new one
                }
             } else {
-               display_.setOverlay(defaultOverlay);
+               display_.setOverlay(defaultOverlay, generation);
             }
          }
       });

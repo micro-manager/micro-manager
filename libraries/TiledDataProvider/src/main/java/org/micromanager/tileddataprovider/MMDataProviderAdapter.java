@@ -17,6 +17,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 
 /**
@@ -46,6 +47,10 @@ import org.micromanager.data.SummaryMetadata;
  * Call {@link #close()} to unsubscribe when done.</p>
  */
 public class MMDataProviderAdapter implements TiledDataProviderAPI {
+
+   // Key written by AcqEngMetadata.setElapsedTimeMs and read by the viewers' time
+   // metadata reader functions.
+   private static final String ELAPSED_TIME_TAG = "ElapsedTime-ms";
 
    /**
     * Callback interface for new-image notifications forwarded from the source DataProvider.
@@ -350,6 +355,31 @@ public class MMDataProviderAdapter implements TiledDataProviderAPI {
          tags.put("Height", image.getHeight());
          tags.put("BytesPerPixel", image.getBytesPerPixel());
          tags.put("NumComponents", image.getNumComponents());
+         // Carry through the acquisition metadata that consumers look for by tag name.
+         // Without this, anything downstream that re-writes these images (e.g. the Stitch
+         // plugin's NDTiff export) loses the timestamps and stage position entirely.
+         Metadata md = image.getMetadata();
+         if (md != null) {
+            if (md.hasElapsedTimeMs()) {
+               tags.put(ELAPSED_TIME_TAG, md.getElapsedTimeMs(0.0));
+            }
+            Double zPositionUm = md.getZPositionUm();
+            if (zPositionUm != null) {
+               tags.put("ZPositionUm", zPositionUm);
+            }
+            Double xPositionUm = md.getXPositionUm();
+            if (xPositionUm != null) {
+               tags.put("XPositionUm", xPositionUm);
+            }
+            Double yPositionUm = md.getYPositionUm();
+            if (yPositionUm != null) {
+               tags.put("YPositionUm", yPositionUm);
+            }
+            String positionName = md.getPositionName(null);
+            if (positionName != null) {
+               tags.put("PositionName", positionName);
+            }
+         }
          return new TaggedImage(rawPix, tags);
       } catch (JSONException e) {
          return null;
