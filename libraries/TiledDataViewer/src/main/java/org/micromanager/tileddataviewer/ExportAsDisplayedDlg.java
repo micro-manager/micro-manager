@@ -34,7 +34,10 @@ import java.io.InputStreamReader;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.DoubleConsumer;
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
@@ -79,7 +82,13 @@ public final class ExportAsDisplayedDlg extends JDialog {
       FMT_PNG, FMT_JPEG, FMT_AVI, FMT_GIF, FMT_MP4,
    };
 
-   private static final String NO_AXIS = "(single image)";
+   /**
+    * Tile grid coordinates. These position a tile within the stitched canvas
+    * rather than selecting between displayed frames, so they are never offered
+    * as something to step a movie along.
+    */
+   private static final Set<String> SPATIAL_AXES =
+         new HashSet<>(Arrays.asList("row", "column"));
    /** Give a frame this long to appear before accepting it as unchanged. */
    private static final long FRAME_TIMEOUT_MS = 5000;
    /** Used when the viewer cannot report a playback rate. */
@@ -122,12 +131,12 @@ public final class ExportAsDisplayedDlg extends JDialog {
             "span 2, wrap unrelated");
 
       panel.add(new JLabel("Format:"));
-      formatCombo_ = new JComboBox<>(FORMATS);
+      formatCombo_ = new JComboBox<>(availableFormats());
       formatCombo_.addActionListener(e -> updateEnabledState());
       panel.add(formatCombo_, "growx, wrap");
 
       panel.add(new JLabel("Step along:"));
-      axisCombo_ = new JComboBox<>(loopableAxes());
+      axisCombo_ = new JComboBox<>(loopableAxes().toArray(new String[0]));
       axisCombo_.addActionListener(e -> updateFrameRange());
       panel.add(axisCombo_, "growx, wrap");
 
@@ -202,21 +211,43 @@ public final class ExportAsDisplayedDlg extends JDialog {
       return canvas == null ? null : SwingUtilities.getWindowAncestor(canvas);
    }
 
-   /** Axes with more than one position, which are the ones worth stepping along. */
-   private String[] loopableAxes() {
+   /**
+    * Axes worth stepping a movie along: those with more than one position, minus
+    * the tile grid coordinates.
+    *
+    * <p>"row" and "column" locate a tile within the stitched canvas rather than
+    * selecting between displayed frames, so stepping along them does not produce
+    * a movie -- the viewer composites the whole canvas regardless.
+    */
+   private List<String> loopableAxes() {
       List<String> axes = new ArrayList<>();
-      axes.add(NO_AXIS);
       try {
          DataProvider dp = viewer_.getDataProvider();
          for (String axis : dp.getAxes()) {
+            if (SPATIAL_AXES.contains(axis)) {
+               continue;
+            }
             if (dp.getNextIndex(axis) > 1) {
                axes.add(axis);
             }
          }
       } catch (RuntimeException e) {
-         // Leave just the single-image option.
+         // Leave the list empty: only a still image can be exported.
       }
-      return axes.toArray(new String[0]);
+      return axes;
+   }
+
+   /** True when this dataset has an axis a movie could step along. */
+   private boolean canExportMovie() {
+      return !loopableAxes().isEmpty();
+   }
+
+   /** The formats offered, which excludes movies when there is no axis to step. */
+   private String[] availableFormats() {
+      if (canExportMovie()) {
+         return FORMATS;
+      }
+      return new String[] {FMT_PNG, FMT_JPEG};
    }
 
    private boolean isMovieFormat() {
@@ -234,10 +265,6 @@ public final class ExportAsDisplayedDlg extends JDialog {
       firstFrameSpinner_.setEnabled(movie);
       lastFrameSpinner_.setEnabled(movie);
       copyButton_.setEnabled(!movie);
-      if (movie && NO_AXIS.equals(axisCombo_.getSelectedItem())
-            && axisCombo_.getItemCount() > 1) {
-         axisCombo_.setSelectedIndex(1);
-      }
       updateFrameRange();
    }
 
@@ -248,7 +275,7 @@ public final class ExportAsDisplayedDlg extends JDialog {
    private void updateFrameRange() {
       String axis = (String) axisCombo_.getSelectedItem();
       int count = 0;
-      if (axis != null && !NO_AXIS.equals(axis)) {
+      if (axis != null) {
          try {
             count = viewer_.getDataProvider().getNextIndex(axis);
          } catch (RuntimeException e) {
@@ -310,8 +337,11 @@ public final class ExportAsDisplayedDlg extends JDialog {
    private void loadFormatAndAxis() {
       MutablePropertyMapView settings = studio_.profile().getSettings(getClass());
 
+      // Match against the formats actually offered, not every format that
+      // exists: a stored movie format must not be restored onto a dataset that
+      // has no axis to step along.
       String format = settings.getString(PREF_FORMAT, null);
-      for (String candidate : FORMATS) {
+      for (String candidate : availableFormats()) {
          if (candidate.equals(format)) {
             formatCombo_.setSelectedItem(candidate);
             break;
@@ -484,10 +514,8 @@ public final class ExportAsDisplayedDlg extends JDialog {
 
    private void saveMovie() {
       final String axis = (String) axisCombo_.getSelectedItem();
-      if (axis == null || NO_AXIS.equals(axis)) {
-         JOptionPane.showMessageDialog(this,
-               "Choose an axis to step along for a movie.",
-               "Export As Displayed", JOptionPane.WARNING_MESSAGE);
+      if (axis == null) {
+         // Cannot happen: movie formats are only offered when an axis exists.
          return;
       }
       final String format = (String) formatCombo_.getSelectedItem();
