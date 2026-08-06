@@ -385,6 +385,22 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       guiManager_.removeAnimateFpsListener(listener);
    }
 
+   @Override
+   public void addRenderCompleteListener(Runnable listener) {
+      ViewerCanvas canvas = guiManager_.getCanvas();
+      if (canvas != null) {
+         canvas.addRenderCompleteListener(listener);
+      }
+   }
+
+   @Override
+   public void removeRenderCompleteListener(Runnable listener) {
+      ViewerCanvas canvas = guiManager_.getCanvas();
+      if (canvas != null) {
+         canvas.removeRenderCompleteListener(listener);
+      }
+   }
+
    public void update() {
       if (displayCalculationExecutor_ == null) {
          return; // Not yet initialized

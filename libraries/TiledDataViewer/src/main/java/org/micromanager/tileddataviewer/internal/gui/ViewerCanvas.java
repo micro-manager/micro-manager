@@ -13,6 +13,8 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.JPanel;
 import org.micromanager.tileddataviewer.internal.TiledDataViewer;
 import org.micromanager.tileddataviewer.overlay.Overlay;
@@ -27,6 +29,8 @@ public class ViewerCanvas {
    private JPanel canvas_;
    // Cached BufferedImage version of the last rendered frame, for pixel lookups.
    private volatile BufferedImage renderedBuffer_;
+   // Notified after each paint completes; see notifyRenderComplete().
+   private final List<Runnable> renderCompleteListeners_ = new CopyOnWriteArrayList<>();
 
    public ViewerCanvas(TiledDataViewer display) {
       canvas_ = createCanvas();
@@ -135,6 +139,40 @@ public class ViewerCanvas {
       return canvas_;
    }
 
+   /**
+    * Registers a listener run after every canvas paint completes.
+    *
+    * <p>Listeners are called on the EDT from within paint(), so they must be
+    * cheap and must not trigger another repaint.
+    *
+    * @param listener run once the frame is on screen
+    */
+   public void addRenderCompleteListener(Runnable listener) {
+      if (listener != null) {
+         renderCompleteListeners_.add(listener);
+      }
+   }
+
+   /**
+    * Unregisters a render-complete listener.
+    *
+    * @param listener the listener to remove
+    */
+   public void removeRenderCompleteListener(Runnable listener) {
+      renderCompleteListeners_.remove(listener);
+   }
+
+   private void notifyRenderComplete() {
+      for (Runnable listener : renderCompleteListeners_) {
+         try {
+            listener.run();
+         } catch (RuntimeException e) {
+            // A misbehaving listener must not break painting.
+            System.err.println("TiledDataViewer: render complete listener threw: " + e);
+         }
+      }
+   }
+
    private JPanel createCanvas() {
       return new JPanel() {
          @Override
@@ -150,7 +188,11 @@ public class ViewerCanvas {
                   }
                }
             }
-
+            // The frame, including its overlay, is now on the Graphics. This is
+            // the only point at which "the display shows this image" is true:
+            // repaint() merely schedules a paint, and the overlay is computed on
+            // its own thread and arrives after the image.
+            notifyRenderComplete();
          }
 
          public void update(Graphics g) {

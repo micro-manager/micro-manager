@@ -143,6 +143,29 @@ public interface TiledDataViewerAPI {
    void removeAnimateFpsListener(java.util.function.DoubleConsumer listener);
 
    /**
+    * Registers a listener run each time the canvas finishes painting a frame.
+    *
+    * <p>This is the signal that the display actually shows the current image,
+    * including its overlay. It is distinct from setting the display position,
+    * which only requests a render: rendering is asynchronous, superseded frames
+    * are coalesced away, and the overlay is computed on its own thread.
+    *
+    * <p>Listeners run on the EDT from within the paint, so they must be cheap
+    * and must not trigger another repaint.
+    *
+    * @param listener run once a frame is on screen
+    */
+   void addRenderCompleteListener(Runnable listener);
+
+   /**
+    * Unregisters a render-complete listener. Callers must do this when they go
+    * away, or they are retained for the life of the viewer.
+    *
+    * @param listener the listener to remove
+    */
+   void removeRenderCompleteListener(Runnable listener);
+
+   /**
     * get the offset of the top left displayed pixel to relative to top left of
     * the full image (in full resolution coordinates).
     *

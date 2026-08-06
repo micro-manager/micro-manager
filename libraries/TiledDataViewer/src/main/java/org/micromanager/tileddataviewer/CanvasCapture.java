@@ -19,6 +19,8 @@ package org.micromanager.tileddataviewer;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
@@ -36,9 +38,6 @@ import javax.swing.SwingUtilities;
  * the Inspector's Export button, which re-composites from storage instead.
  */
 public final class CanvasCapture {
-
-   /** How often to re-capture while waiting for the display to change. */
-   private static final long POLL_INTERVAL_MS = 20;
 
    private CanvasCapture() {
    }
@@ -76,57 +75,49 @@ public final class CanvasCapture {
    }
 
    /**
-    * Captures the canvas once it differs from the given previous capture.
+    * Runs an action that changes what the viewer shows, then captures the frame
+    * the viewer painted in response.
     *
-    * <p>TiledDataViewer renders asynchronously and coalesces superseded frames,
-    * and neither the display position nor DisplayDidShowImageEvent tells us that
-    * the new pixels have actually reached the canvas: the position updates
-    * before the render, and the event is posted from the statistics pipeline.
-    * So the frame itself is the signal -- capture until it changes.
+    * <p>Setting the display position only *requests* a render: rendering is
+    * asynchronous and superseded frames are coalesced away, so capturing
+    * immediately afterwards can catch the previous frame. This waits for the
+    * viewer's render-complete signal, which fires once the frame and its overlay
+    * are actually on the canvas.
     *
-    * <p>A frame identical to the previous one is indistinguishable from one that
-    * has not been drawn yet, so on timeout the latest capture is returned. That
-    * only mislabels genuinely identical frames, which are visually the same
-    * anyway.
+    * <p>On timeout the current canvas contents are returned rather than nothing,
+    * so a frame that genuinely did not change still yields a usable image.
     *
-    * @param viewer    viewer to capture
-    * @param previous  the previous frame, or null to capture immediately
-    * @param timeoutMs how long to wait for the display to change
+    * @param viewer         viewer to capture
+    * @param changeDisplay  action that moves the viewer to the desired frame
+    * @param timeoutMs      how long to wait for the paint
     * @return the captured image, or null if the canvas has no size
     * @throws InterruptedException if interrupted while waiting
     */
-   public static BufferedImage captureWhenChanged(TiledDataViewerAPI viewer,
-                                                  BufferedImage previous,
-                                                  long timeoutMs)
+   public static BufferedImage captureAfter(TiledDataViewerAPI viewer,
+                                            Runnable changeDisplay,
+                                            long timeoutMs)
          throws InterruptedException {
-      long deadline = System.currentTimeMillis() + timeoutMs;
-      BufferedImage img = capture(viewer);
-      if (previous == null) {
-         return img;
+      if (viewer == null) {
+         return null;
       }
-      while (sameImage(previous, img) && System.currentTimeMillis() < deadline) {
-         Thread.sleep(POLL_INTERVAL_MS);
-         img = capture(viewer);
+      if (SwingUtilities.isEventDispatchThread()) {
+         // Waiting for a paint from the EDT would block the very thread that
+         // performs it. Callers must drive this from a worker thread.
+         throw new IllegalStateException(
+               "captureAfter() must not be called on the EDT");
       }
-      return img;
-   }
-
-   /** Compares two captures pixel-for-pixel. */
-   private static boolean sameImage(BufferedImage a, BufferedImage b) {
-      if (a == null || b == null) {
-         return a == b;
+      final CountDownLatch painted = new CountDownLatch(1);
+      Runnable listener = painted::countDown;
+      viewer.addRenderCompleteListener(listener);
+      try {
+         changeDisplay.run();
+         // A false wake-up is harmless: the capture below reflects whatever the
+         // canvas last painted either way.
+         painted.await(timeoutMs, TimeUnit.MILLISECONDS);
+      } finally {
+         viewer.removeRenderCompleteListener(listener);
       }
-      if (a.getWidth() != b.getWidth() || a.getHeight() != b.getHeight()) {
-         return false;
-      }
-      for (int y = 0; y < a.getHeight(); y++) {
-         for (int x = 0; x < a.getWidth(); x++) {
-            if (a.getRGB(x, y) != b.getRGB(x, y)) {
-               return false;
-            }
-         }
-      }
-      return true;
+      return capture(viewer);
    }
 
    private static BufferedImage paintOnEdt(JPanel canvas) {

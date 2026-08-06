@@ -535,21 +535,19 @@ public final class ExportAsDisplayedDlg extends JDialog {
       final int count = lastFrame - firstFrame + 1;
       try {
          ImageStack stack = null;
-         BufferedImage previous = null;
          if (FMT_MP4.equals(format)) {
             tempDir = createTempDir();
          }
          for (int i = firstFrame; i <= lastFrame; i++) {
-            Coords target = viewer_.getDisplayPosition().copyBuilder()
+            final Coords target = viewer_.getDisplayPosition().copyBuilder()
                   .index(axis, i).build();
-            viewer_.setDisplayPosition(target, true);
             BufferedImage frame =
-                  CanvasCapture.captureWhenChanged(viewer_.getTiledDataViewer(),
-                        previous, FRAME_TIMEOUT_MS);
+                  CanvasCapture.captureAfter(viewer_.getTiledDataViewer(),
+                        () -> viewer_.setDisplayPosition(target, true),
+                        FRAME_TIMEOUT_MS);
             if (frame == null) {
                throw new IOException("The viewer canvas has no size.");
             }
-            previous = frame;
             // ffmpeg needs a gap-free sequence starting at 0, so number the temp
             // frames from the start of the exported range, not the axis origin.
             final int frameNumber = i - firstFrame;
