@@ -84,14 +84,23 @@ import org.micromanager.tileddataviewer.TiledDataViewerFactory;
 public class StitchFrame extends JDialog {
 
    // Acquisition metadata copied from a representative source tile onto each exported
-   // stitched tile, so the result keeps its timestamps and stage position.  Geometry tags
-   // are deliberately excluded: the stitched image has its own dimensions.
+   // stitched tile, so the result keeps its timestamps.
+   //
+   // Only plane-wide values belong here. The representative tile is looked up once per
+   // (z, t) plane and its tags are written to every output tile of that plane, so a tag
+   // that varies between source tiles would be wrong on all but one of them.
+   //
+   // Deliberately excluded for that reason:
+   //   XPositionUm / YPositionUm / PositionName - per-tile stage coordinates. Copying
+   //      one tile's values onto the whole canvas would tell downstream consumers that
+   //      every output tile sits at the same physical location. Correct values would
+   //      have to be derived from each output tile's canvas position and the pixel
+   //      size, which is a separate piece of work.
+   //   Geometry tags (Width/Height/...) - the stitched image has its own dimensions,
+   //      set explicitly below.
    private static final String[] METADATA_TAGS_TO_PROPAGATE = {
       "ElapsedTime-ms",
       "ZPositionUm",
-      "XPositionUm",
-      "YPositionUm",
-      "PositionName",
       "Channel",
       "AcqTime",
       "Time",
