@@ -135,18 +135,44 @@ public class DisplayWindow implements WindowListener {
    }
 
    /**
-    * Called on EDT. Update image and make sure scrollers are in correct positions
+    * Called on EDT. Update image and make sure scrollers are in correct positions.
     *
+    * @return the render generation this frame opened; the overlay computed for
+    *         it must be passed back to {@link #displayOverlay(Overlay, long)}
     */
-   public void displayImage(Image image, HashMap<String, int[]> hists, DataViewCoords view) {
+   public long displayImage(Image image, HashMap<String, int[]> hists, DataViewCoords view) {
       //Make scrollbars reflect image
       subImageControls_.updateScrollerPositions(view);
-      imageCanvas_.updateDisplayImage(image, view.getMagnificationFromResLevel());
+      return imageCanvas_.updateDisplayImage(image, view.getMagnificationFromResLevel());
    }
 
    public void displayOverlay(Overlay overlay) {
       imageCanvas_.updateOverlay(overlay);
       imageCanvas_.getCanvas().repaint();
+   }
+
+   /**
+    * Shows the overlay belonging to a particular render generation.
+    *
+    * @param overlay    the overlay to draw
+    * @param generation the generation returned by displayImage()
+    */
+   public void displayOverlay(Overlay overlay, long generation) {
+      imageCanvas_.updateOverlay(overlay, generation);
+      imageCanvas_.getCanvas().repaint();
+   }
+
+   /**
+    * Records that the overlay for the given generation is in place, without
+    * replacing it: used by overlayer plugins that install their own overlay.
+    *
+    * @param generation render generation whose overlay is now current
+    */
+   public void setPendingOverlayGeneration(long generation) {
+      // No repaint here: the plugin's own setOverlay() schedules one once it has
+      // drawn, and that is the paint which reports completion. Repainting here
+      // as well would double every frame's paint rate, which flickers.
+      imageCanvas_.setPendingOverlayGeneration(generation);
    }
 
    public void repaintCanvas() {

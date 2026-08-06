@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.function.DoubleConsumer;
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
@@ -83,12 +84,24 @@ public final class ExportAsDisplayedDlg extends JDialog {
    };
 
    /**
-    * Tile grid coordinates. These position a tile within the stitched canvas
-    * rather than selecting between displayed frames, so they are never offered
-    * as something to step a movie along.
+    * Axes that cannot be stepped to produce distinct frames, so are never
+    * offered as something to play a movie along.
+    *
+    * <p>"row" and "column" are tile grid coordinates: they position a tile
+    * within the stitched canvas rather than selecting between displayed frames,
+    * and the viewer composites the whole canvas regardless.
+    *
+    * <p>"channel" is excluded because stepping it has no effect on what is
+    * rendered. TiledDataViewerDataViewer.handleDisplayPosition() deliberately
+    * skips the channel coordinate, so setDisplayPosition() -- which is how this
+    * export walks an axis -- never changes the displayed channel; every frame
+    * would be identical. In composite mode the same composite is rendered for
+    * every channel anyway. Offering it would need the export to drive the
+    * channel through the viewer's own axis API and to handle composite mode
+    * separately.
     */
-   private static final Set<String> SPATIAL_AXES =
-         new HashSet<>(Arrays.asList("row", "column"));
+   private static final Set<String> NON_STEPPABLE_AXES =
+         new HashSet<>(Arrays.asList("row", "column", Coords.CHANNEL));
    /** Give a frame this long to appear before accepting it as unchanged. */
    private static final long FRAME_TIMEOUT_MS = 5000;
    /** Used when the viewer cannot report a playback rate. */
@@ -212,19 +225,16 @@ public final class ExportAsDisplayedDlg extends JDialog {
    }
 
    /**
-    * Axes worth stepping a movie along: those with more than one position, minus
-    * the tile grid coordinates.
-    *
-    * <p>"row" and "column" locate a tile within the stitched canvas rather than
-    * selecting between displayed frames, so stepping along them does not produce
-    * a movie -- the viewer composites the whole canvas regardless.
+    * Axes worth stepping a movie along: those with more than one position that
+    * the export can actually walk. See {@link #NON_STEPPABLE_AXES} for what is
+    * excluded and why.
     */
    private List<String> loopableAxes() {
       List<String> axes = new ArrayList<>();
       try {
          DataProvider dp = viewer_.getDataProvider();
          for (String axis : dp.getAxes()) {
-            if (SPATIAL_AXES.contains(axis)) {
+            if (NON_STEPPABLE_AXES.contains(axis)) {
                continue;
             }
             if (dp.getNextIndex(axis) > 1) {
@@ -567,12 +577,32 @@ public final class ExportAsDisplayedDlg extends JDialog {
             tempDir = createTempDir();
          }
          for (int i = firstFrame; i <= lastFrame; i++) {
-            final Coords target = viewer_.getDisplayPosition().copyBuilder()
-                  .index(axis, i).build();
-            BufferedImage frame =
-                  CanvasCapture.captureAfter(viewer_.getTiledDataViewer(),
+            final Coords current = viewer_.getDisplayPosition();
+            final Coords target = current.copyBuilder().index(axis, i).build();
+            BufferedImage frame;
+            // Compare the axis being stepped rather than the whole Coords: only
+            // this axis changes, and getIndex() reports 0 for an absent axis,
+            // which is how index 0 is stored.
+            if (current.getIndex(axis) == i) {
+               // Already showing this frame -- typically the first one, since the
+               // export usually starts where the viewer happens to be. Asking for
+               // a position it already holds renders nothing, so waiting for a
+               // completion signal would time out. What is on the canvas is the
+               // frame we want.
+               frame = CanvasCapture.capture(viewer_.getTiledDataViewer());
+            } else {
+               try {
+                  frame = CanvasCapture.captureAfter(viewer_.getTiledDataViewer(),
                         () -> viewer_.setDisplayPosition(target, true),
                         FRAME_TIMEOUT_MS);
+               } catch (TimeoutException e) {
+                  // Abort rather than write the canvas as it stands: that is the
+                  // previous frame, and using it would duplicate one frame and
+                  // shift every later one.
+                  throw new IOException("Gave up waiting for " + axis + " = " + i
+                        + " to render. The movie was not written.", e);
+               }
+            }
             if (frame == null) {
                throw new IOException("The viewer canvas has no size.");
             }

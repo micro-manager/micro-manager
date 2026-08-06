@@ -110,7 +110,9 @@ public class GuiManager {
       // render rate, which is what capped the rate before.
       currentAnimationPosition_ = (scroller != null && scroller.isInitialized())
               ? scroller.getPosition() : 0;
-      animationTimer_ = new Timer(tickIntervalFromFPS(animationFPS_), new ActionListener() {
+      // Via the getter, so a viewer whose stored rate has not been read yet
+      // starts the timer at that rate rather than the hard-coded default.
+      animationTimer_ = new Timer(tickIntervalFromFPS(getAnimateFPS()), new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             onAnimationTick(scroller);
@@ -155,7 +157,7 @@ public class GuiManager {
 
       // Carry the fractional remainder across ticks so that rates slower than the tick
       // rate still average out to exactly the requested rate.
-      double frames = animationFPS_ * elapsedMs / 1000.0;
+      double frames = getAnimateFPS() * elapsedMs / 1000.0;
       frames -= cumulativeFrameCountError_;
       int framesToAdvance = Math.max(0, (int) Math.round(frames));
       if (framesToAdvance > range) {
@@ -238,6 +240,11 @@ public class GuiManager {
    /**
     * Returns the playback rate.  The stored display setting wins until the rate is set
     * in this session, so a reopened dataset starts at the rate it was last played at.
+    *
+    * <p>Every read of the rate must go through here rather than touching
+    * animationFPS_ directly: the stored setting is loaded lazily, so a direct
+    * field read before the first call would see the hard-coded default and, for
+    * a newly created viewer, run playback at a rate the control does not show.
     */
    public double getAnimateFPS() {
       if (!animationFpsLoaded_ && display_ != null && display_.getDisplayModel() != null) {
@@ -283,6 +290,30 @@ public class GuiManager {
       displayWindow_.displayOverlay(overlay);
    }
 
+   /**
+    * Shows the overlay belonging to a particular render generation.
+    *
+    * @param overlay    the overlay to draw
+    * @param generation render generation this overlay was computed for
+    */
+   public void displayOverlay(Overlay overlay, long generation) {
+      if (displayWindow_ != null) {
+         displayWindow_.displayOverlay(overlay, generation);
+      }
+   }
+
+   /**
+    * Records that the overlay for the given generation is in place, without
+    * replacing it: used by overlayer plugins that install their own overlay.
+    *
+    * @param generation render generation whose overlay is now current
+    */
+   public void setPendingOverlayGeneration(long generation) {
+      if (displayWindow_ != null) {
+         displayWindow_.setPendingOverlayGeneration(generation);
+      }
+   }
+
    public void showScaleBar(boolean selected) {
       overlayer_.setShowScaleBar(selected);
    }
@@ -312,8 +343,11 @@ public class GuiManager {
       if (displayWindow_ == null || overlayer_ == null) {
          return; // shutdown() already ran; discard stale repaint
       }
-      displayWindow_.displayImage(img, hists, view);
-      overlayer_.createOverlay(view, overlayerPlugin);
+      // The overlay is computed on its own thread and installed later; tag it
+      // with this frame's generation so a render is only reported complete once
+      // the two match.
+      long generation = displayWindow_.displayImage(img, hists, view);
+      overlayer_.createOverlay(view, overlayerPlugin, generation);
       displayWindow_.repaintCanvas();
    }
 

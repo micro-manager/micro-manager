@@ -15,6 +15,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.JPanel;
 import org.micromanager.tileddataviewer.internal.TiledDataViewer;
 import org.micromanager.tileddataviewer.overlay.Overlay;
@@ -31,6 +32,16 @@ public class ViewerCanvas {
    private volatile BufferedImage renderedBuffer_;
    // Notified after each paint completes; see notifyRenderComplete().
    private final List<Runnable> renderCompleteListeners_ = new CopyOnWriteArrayList<>();
+   // Render generation bookkeeping. A frame is only "complete" once the overlay
+   // computed for that same generation has been installed and painted: the image
+   // and its overlay are produced by different threads and painted separately,
+   // so a paint carrying an older overlay is not yet the finished frame.
+   private final AtomicLong imageGeneration_ = new AtomicLong();
+   private final AtomicLong overlayGeneration_ = new AtomicLong(-1);
+   // Generation an overlayer plugin is currently drawing for, applied when that
+   // plugin installs its overlay; -1 when none is pending.
+   private final AtomicLong pendingOverlayGeneration_ = new AtomicLong(-1);
+   private volatile long signalledGeneration_ = -1;
 
    public ViewerCanvas(TiledDataViewer display) {
       canvas_ = createCanvas();
@@ -76,12 +87,21 @@ public class ViewerCanvas {
    public void onCanvasResize(int w, int h) {
    }
 
-   void updateDisplayImage(Image img, double scale) {
+   /**
+    * Installs a new frame and opens a new render generation.
+    *
+    * @param img   the rendered image
+    * @param scale factor the image is drawn at
+    * @return the generation this frame belongs to; the overlay computed for it
+    *         must be installed with {@link #updateOverlay(Overlay, long)}
+    */
+   long updateDisplayImage(Image img, double scale) {
       currentImage_ = img;
       scale_ = scale;
       // Invalidate the cached buffer whenever a new frame arrives.
       // The BufferedImage copy is created lazily in getRenderedPixelRGB() only when needed.
       renderedBuffer_ = null;
+      return imageGeneration_.incrementAndGet();
    }
 
    /**
@@ -127,11 +147,71 @@ public class ViewerCanvas {
    }
 
    void updateOverlay(Overlay overlay) {
+      // An overlayer plugin installing its own result, or a refresh not tied to a
+      // new frame. Applying the generation here -- when the overlay pixels
+      // actually land -- is what makes the repaint the caller schedules next the
+      // one that reports completion.
+      updateOverlayPixels(overlay);
+      // Read without clearing: a plugin may call setOverlay() more than once
+      // while drawing a frame (the bridge plugin has several early-return
+      // paths), and consuming the value on the first call would leave the later
+      // ones -- and any frame whose plugin takes a different path -- unreported.
+      // setOverlayGeneration() only ever moves forwards, so repeats are benign.
+      long pending = pendingOverlayGeneration_.get();
+      if (pending >= 0) {
+         setOverlayGeneration(pending);
+      }
+   }
+
+   /**
+    * Installs the overlay computed for a particular render generation.
+    *
+    * @param overlay    the overlay to draw
+    * @param generation the generation returned by {@link #updateDisplayImage}
+    *                   when the matching frame was installed
+    */
+   void updateOverlay(Overlay overlay, long generation) {
+      updateOverlayPixels(overlay);
+      setOverlayGeneration(generation);
+   }
+
+   /**
+    * Declares which render generation the overlay about to be installed by an
+    * overlayer plugin belongs to.
+    *
+    * <p>Such plugins call setOverlay() themselves and cannot pass the generation
+    * through, so it is announced here and applied by {@link #updateOverlay} when
+    * that overlay arrives.
+    *
+    * @param generation the generation the next plugin overlay belongs to
+    */
+   void setPendingOverlayGeneration(long generation) {
+      pendingOverlayGeneration_.set(generation);
+   }
+
+   /** Replaces the drawn overlay without touching generation bookkeeping. */
+   private void updateOverlayPixels(Overlay overlay) {
       synchronized (currentOverlay_) {
          currentOverlay_.clear();
          for (int i = 0; i < overlay.size(); i++) {
             currentOverlay_.add(overlay.get(i));
          }
+      }
+   }
+
+   /**
+    * Records that the overlay for the given generation is in place, without
+    * replacing it: used by overlayer plugins that install their own overlay.
+    *
+    * @param generation render generation whose overlay is now current
+    */
+   void setOverlayGeneration(long generation) {
+      // Only ever move forwards: a superseded overlay task may finish after a
+      // newer one has already installed its result.
+      long current = overlayGeneration_.get();
+      while (generation > current
+            && !overlayGeneration_.compareAndSet(current, generation)) {
+         current = overlayGeneration_.get();
       }
    }
 
@@ -162,7 +242,27 @@ public class ViewerCanvas {
       renderCompleteListeners_.remove(listener);
    }
 
+   /**
+    * Signals completion if this paint drew a frame together with the overlay
+    * belonging to it.
+    *
+    * <p>The image and its overlay are produced by different threads and each
+    * triggers its own repaint, so the first paint after a new frame usually
+    * still carries the previous frame's overlay. Signalling then would hand a
+    * capture the wrong scale bar or time stamp. Waiting for the overlay
+    * generation to catch up is what makes the "including its overlay" contract
+    * true. Each generation is signalled at most once, so ordinary repaints
+    * (resize, expose) do not produce spurious completions.
+    */
    private void notifyRenderComplete() {
+      if (renderCompleteListeners_.isEmpty()) {
+         return;
+      }
+      long generation = imageGeneration_.get();
+      if (overlayGeneration_.get() < generation || signalledGeneration_ == generation) {
+         return;
+      }
+      signalledGeneration_ = generation;
       for (Runnable listener : renderCompleteListeners_) {
          try {
             listener.run();
@@ -188,10 +288,8 @@ public class ViewerCanvas {
                   }
                }
             }
-            // The frame, including its overlay, is now on the Graphics. This is
-            // the only point at which "the display shows this image" is true:
-            // repaint() merely schedules a paint, and the overlay is computed on
-            // its own thread and arrives after the image.
+            // Report completion only when this paint drew a frame together with
+            // the overlay computed for it; see notifyRenderComplete().
             notifyRenderComplete();
          }
 

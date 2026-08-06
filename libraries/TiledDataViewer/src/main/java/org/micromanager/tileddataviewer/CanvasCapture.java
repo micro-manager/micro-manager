@@ -21,6 +21,7 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
@@ -84,19 +85,22 @@ public final class CanvasCapture {
     * viewer's render-complete signal, which fires once the frame and its overlay
     * are actually on the canvas.
     *
-    * <p>On timeout the current canvas contents are returned rather than nothing,
-    * so a frame that genuinely did not change still yields a usable image.
+    * <p>If the render does not complete within the timeout this throws rather
+    * than returning whatever the canvas happens to hold: that would be the
+    * previous frame, and writing it would silently duplicate a frame and shift
+    * every later one, corrupting the movie in a way that is hard to spot.
     *
     * @param viewer         viewer to capture
     * @param changeDisplay  action that moves the viewer to the desired frame
     * @param timeoutMs      how long to wait for the paint
     * @return the captured image, or null if the canvas has no size
     * @throws InterruptedException if interrupted while waiting
+    * @throws TimeoutException     if the viewer did not finish rendering in time
     */
    public static BufferedImage captureAfter(TiledDataViewerAPI viewer,
                                             Runnable changeDisplay,
                                             long timeoutMs)
-         throws InterruptedException {
+         throws InterruptedException, TimeoutException {
       if (viewer == null) {
          return null;
       }
@@ -109,13 +113,16 @@ public final class CanvasCapture {
       final CountDownLatch painted = new CountDownLatch(1);
       Runnable listener = painted::countDown;
       viewer.addRenderCompleteListener(listener);
+      boolean completed;
       try {
          changeDisplay.run();
-         // A false wake-up is harmless: the capture below reflects whatever the
-         // canvas last painted either way.
-         painted.await(timeoutMs, TimeUnit.MILLISECONDS);
+         completed = painted.await(timeoutMs, TimeUnit.MILLISECONDS);
       } finally {
          viewer.removeRenderCompleteListener(listener);
+      }
+      if (!completed) {
+         throw new TimeoutException(
+               "The viewer did not finish rendering within " + timeoutMs + " ms");
       }
       return capture(viewer);
    }

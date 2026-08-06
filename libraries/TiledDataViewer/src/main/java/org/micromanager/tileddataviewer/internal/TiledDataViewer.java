@@ -469,6 +469,27 @@ public class TiledDataViewer implements TiledDataViewerAPI {
       guiManager_.displayOverlay(overlay);
    }
 
+   /**
+    * Installs the overlay belonging to a particular render generation.
+    *
+    * @param overlay    the overlay to draw
+    * @param generation render generation this overlay was computed for
+    */
+   public void setOverlay(Overlay overlay, long generation) {
+      guiManager_.displayOverlay(overlay, generation);
+   }
+
+   /**
+    * Declares which render generation an overlayer plugin is about to draw for,
+    * since such plugins install their overlay themselves and cannot pass it
+    * through. Applied when that overlay is installed.
+    *
+    * @param generation render generation the next plugin overlay belongs to
+    */
+   public void setPendingOverlayGeneration(long generation) {
+      guiManager_.setPendingOverlayGeneration(generation);
+   }
+
    public void redrawOverlay() {
       // Guard against use after shutdown: displayCalculationExecutor_ is set to null when
       // the viewer closes (shutdownMM2Resources), but overlay add/remove/activate events

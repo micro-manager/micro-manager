@@ -145,10 +145,14 @@ public interface TiledDataViewerAPI {
    /**
     * Registers a listener run each time the canvas finishes painting a frame.
     *
-    * <p>This is the signal that the display actually shows the current image,
-    * including its overlay. It is distinct from setting the display position,
-    * which only requests a render: rendering is asynchronous, superseded frames
-    * are coalesced away, and the overlay is computed on its own thread.
+    * <p>Fires once per rendered frame, when that frame has been painted together
+    * with the overlay computed for it. The image and overlay are produced by
+    * different threads and painted separately, so intermediate paints carrying
+    * the previous frame's overlay do not signal completion.
+    *
+    * <p>This is distinct from setting the display position, which only requests
+    * a render: rendering is asynchronous and superseded frames are coalesced
+    * away, so a position change may never produce a frame of its own.
     *
     * <p>Listeners run on the EDT from within the paint, so they must be cheap
     * and must not trigger another repaint.
