@@ -264,6 +264,11 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
       // Register with Studio so Inspector discovers us
       studio_.displays().addViewer(this);
 
+      // Add the gear menu now that this viewer exists and is registered: the
+      // controls panel was built by TiledDataViewer's constructor above, before
+      // there was a DataViewer for the menu items to act on.
+      tiledDataViewer_.getGUIManager().installGearButton(this, studio_);
+
       // Post active event whenever the TiledDataViewer window gains OS focus,
       // so the Inspector "Frontmost Window" mode follows this viewer.
       tiledDataViewer_.getGUIManager().setWindowActivatedCallback(

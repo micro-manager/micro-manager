@@ -21,6 +21,7 @@ package org.micromanager;
 
 import java.util.HashMap;
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.display.DataViewerGearMenuPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
 import org.micromanager.display.overlay.OverlayPlugin;
@@ -108,5 +109,15 @@ public interface PluginManager {
     */
    HashMap<String, DisplayGearMenuPlugin> getDisplayGearMenuPlugins();
 
+   /**
+    * Return a HashMap that maps plugin class names to DataViewerGearMenuPlugin
+    * instances. DataViewerGearMenuPlugins add entries to the gear menus of
+    * viewers that are DataViewers but not DisplayWindows, such as the
+    * TiledDataViewer.
+    *
+    * @return HashMap that maps plugin class names to DataViewerGearMenuPlugin
+    *     instances
+    */
+   HashMap<String, DataViewerGearMenuPlugin> getDataViewerGearMenuPlugins();
 
 }

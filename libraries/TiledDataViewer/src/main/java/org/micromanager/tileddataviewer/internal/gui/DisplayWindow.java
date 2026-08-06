@@ -174,6 +174,19 @@ public class DisplayWindow implements WindowListener {
       windowActivatedCallback_ = callback;
    }
 
+   /**
+    * Installs the gear button in the controls panel.
+    *
+    * @param viewer viewer whose gear menu this is
+    * @param studio the Studio, used to discover gear menu plugins
+    */
+   public void installGearButton(org.micromanager.display.DataViewer viewer,
+                                 org.micromanager.Studio studio) {
+      if (subImageControls_ != null) {
+         subImageControls_.installGearButton(viewer, studio);
+      }
+   }
+
    @Override
    public void windowActivated(WindowEvent e) {
       if (windowActivatedCallback_ != null) {

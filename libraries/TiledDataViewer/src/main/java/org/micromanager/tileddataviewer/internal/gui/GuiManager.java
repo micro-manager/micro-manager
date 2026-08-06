@@ -333,6 +333,19 @@ public class GuiManager {
       }
    }
 
+   /**
+    * Installs the gear button in the controls panel.
+    *
+    * @param viewer viewer whose gear menu this is
+    * @param studio the Studio, used to discover gear menu plugins
+    */
+   public void installGearButton(org.micromanager.display.DataViewer viewer,
+                                 org.micromanager.Studio studio) {
+      if (displayWindow_ != null) {
+         displayWindow_.installGearButton(viewer, studio);
+      }
+   }
+
    public void setPersistentMouseAdapter(java.awt.event.MouseAdapter adapter) {
       if (displayWindow_ != null) {
          displayWindow_.setPersistentMouseAdapter(adapter);

@@ -30,6 +30,8 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.display.DataViewer;
 import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.tileddataviewer.internal.TiledDataViewer;
 
@@ -54,6 +56,8 @@ class SubImageControls extends JPanel {
    private PopupButton playbackFpsButton_;
    private JSpinner playbackFpsSpinner_;
    private JLabel imageInfoLabel_;
+   private JPanel gearButtonPanel_;
+   private TiledDataViewerGearButton gearButton_;
    // Last text applied, to avoid pointless setText() during fast playback.
    private String lastImageInfoText_ = "";
    // True while the playback control is being updated programmatically.
@@ -82,6 +86,11 @@ class SubImageControls extends JPanel {
       playbackFpsButton_ = null;
       playbackFpsSpinner_ = null;
       imageInfoLabel_ = null;
+      if (gearButton_ != null) {
+         gearButton_.cleanup();
+         gearButton_ = null;
+      }
+      gearButtonPanel_ = null;
       controlsPanel_.removeAll();
       this.remove(controlsPanel_);
       scrollerPanel_.onDisplayClose();
@@ -121,7 +130,7 @@ class SubImageControls extends JPanel {
       imageInfoLabel_.setMinimumSize(new Dimension(0, 10));
       // Indent to clear the window edge; roughly lines the text up with the scrollbars
       // below, which are preceded by their fixed-width animate icon.
-      controlsPanel_.add(imageInfoLabel_, "split 2, growx, gapleft 6");
+      controlsPanel_.add(imageInfoLabel_, "split 3, growx, gapleft 6");
 
       // Playback speed control, matching the one in the main Micro-Manager viewer.
       // Start from the stored rate so a reopened dataset plays back as it did before.
@@ -153,7 +162,13 @@ class SubImageControls extends JPanel {
       // Only useful once there is an axis to play back along; shown by
       // onScrollersAdded() when the first scroller appears.
       playbackFpsButton_.setVisible(false);
-      controlsPanel_.add(playbackFpsButton_, "hidemode 2, align right, wrap");
+      controlsPanel_.add(playbackFpsButton_, "hidemode 2, align right");
+      // Placeholder cell for the gear button, installed later by
+      // installGearButton(): the DataViewer and Studio it needs do not exist yet
+      // when this panel is built (TiledDataViewer's constructor builds the UI
+      // before TiledDataViewerDataViewer finishes constructing).
+      gearButtonPanel_ = new JPanel(new MigLayout("insets 0"));
+      controlsPanel_.add(gearButtonPanel_, "align right, wrap");
 
       scrollerPanel_ = new ScrollerPanel(display_, DEFAULT_FPS);
       controlsPanel_.add(scrollerPanel_, "span, growx, wrap");
@@ -179,6 +194,38 @@ class SubImageControls extends JPanel {
       } finally {
          updatingPlaybackFps_ = false;
       }
+   }
+
+   /**
+    * Installs the gear button once the owning DataViewer exists.
+    *
+    * <p>Deferred because this panel is built from TiledDataViewer's constructor,
+    * before TiledDataViewerDataViewer (the DataViewer the plugins act on) has
+    * finished constructing.
+    *
+    * @param viewer viewer whose gear menu this is
+    * @param studio the Studio, used to discover gear menu plugins
+    */
+   void installGearButton(DataViewer viewer, Studio studio) {
+      if (gearButtonPanel_ == null || gearButton_ != null) {
+         return; // Closing, or already installed.
+      }
+      gearButton_ = new TiledDataViewerGearButton(viewer, studio);
+      gearButton_.setMargin(buttonInsets_);
+      // Pin the button to the height the row already has. Left to size itself it
+      // is taller than the status label and playback button, which grows the
+      // controls panel; onScrollersAdded() then resizes this panel to match, the
+      // canvas is resized in turn, and the re-render that follows shows up as a
+      // flickering display.
+      int rowHeight = playbackFpsButton_ != null
+            ? playbackFpsButton_.getPreferredSize().height
+            : new JLabel(" ").getPreferredSize().height + 12;
+      Dimension gearSize = new Dimension(rowHeight, rowHeight);
+      gearButton_.setMinimumSize(gearSize);
+      gearButton_.setMaximumSize(gearSize);
+      gearButton_.setPreferredSize(gearSize);
+      gearButtonPanel_.add(gearButton_);
+      gearButtonPanel_.revalidate();
    }
 
    private void handlePlaybackFpsSpinner() {
