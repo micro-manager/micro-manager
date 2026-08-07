@@ -11,6 +11,13 @@
 //     the data set, the date/time, and the properties selected below;
 //   - the date/time the application exited, and how long the session lasted.
 //
+// The exit entry is written when Micro-Manager quits normally, and also when
+// the JVM shuts down in an orderly way (for instance when quitting through
+// ImageJ). It cannot be written if the process is force-killed (Task Manager
+// "End task", SIGKILL, a crash, or loss of power): a startup entry with no
+// matching exit entry means the session ended abnormally, not that logging
+// failed.
+//
 // The log file is created if it does not exist, and appended to if it does,
 // so a single file accumulates the history across sessions.
 //

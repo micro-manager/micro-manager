@@ -46,23 +46,41 @@ public class AcquisitionLoggerPlugin implements SciJavaPlugin, MMPlugin {
    private static AcquisitionLogger currentLogger_ = null;
 
    /**
-    * Creates a logger writing to the given file and remembers it as the
-    * current logger. Intended to be called from a startup script.
-    * If a logger was already running it is stopped first, so that calling
-    * this twice does not produce duplicate log entries.
+    * Returns the logger to use for this application session, creating it on
+    * the first call. Intended to be called from a startup script.
     *
-    * <p>The returned logger is not yet started: call addProperty() as needed
-    * and then start() on it, so that the properties are known before the
-    * first entry is written.
+    * <p>Re-running the startup script must not make it look as though the
+    * application restarted. If a logger is already running for this session
+    * and writes to the same file, that same instance is returned with its
+    * property list cleared, ready to be configured again; its start() is then
+    * a no-op, so exactly one APPLICATION STARTED entry is written per
+    * application session no matter how often the script is run.
+    *
+    * <p>If the requested path differs from the running logger's, that is a
+    * genuine change of destination rather than a re-run: the old logger is
+    * shut down (writing its exit entry, so the old file is not left with an
+    * unterminated session) and a new one is created for the new path.
+    *
+    * <p>The returned logger may not be started yet: call addProperty() as
+    * needed and then start() on it, so that the properties are known before
+    * the first entry is written.
     *
     * @param studio      the Studio instance
     * @param logFilePath full path of the log file
-    * @return the new logger, ready to be configured and started
+    * @return the logger for this session, ready to be configured and started
     */
    public static synchronized AcquisitionLogger startLogging(Studio studio,
          String logFilePath) {
       if (currentLogger_ != null) {
-         currentLogger_.stop();
+         if (currentLogger_.writesTo(logFilePath)) {
+            // Same destination: keep the running session. Properties are
+            // cleared so the script's list replaces the previous one rather
+            // than being appended to it.
+            currentLogger_.clearProperties();
+            return currentLogger_;
+         }
+         // Different destination: close out the old log properly.
+         currentLogger_.shutdown();
       }
       currentLogger_ = new AcquisitionLogger(studio, logFilePath);
       return currentLogger_;
