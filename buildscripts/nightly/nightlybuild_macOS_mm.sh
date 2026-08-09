@@ -9,7 +9,6 @@ usage() {
    echo "   -I         -- do not create disk image" 1>&2
    echo "   -c         -- print the ./configure command line and exit" 1>&2
    echo "   -D PATH    -- use dependencies at prefix PATH" 1>&2
-   echo "   -R         -- use release version string (no date)" 1>&2
    echo "   -v VERSION -- set version string" 1>&2
    echo "   -s         -- sign the binaries and (if applicable) DMG" 1>&2
    echo "   -n         -- notarize and staple the DMG (requires -s)" 1>&2
@@ -22,7 +21,6 @@ skip_autogen=no
 skip_config=no
 make_disk_image=yes
 print_config_only=no
-use_release_version=no
 do_codesign=no
 do_notarize=no
 while getopts ":rIcCD:Rv:sn" o; do
@@ -32,7 +30,6 @@ while getopts ":rIcCD:Rv:sn" o; do
       I) make_disk_image=no ;;
       c) print_config_only=yes ;;
       D) MM_DEPS_PREFIX="$OPTARG" ;;
-      R) use_release_version=yes ;;
       v) MM_VERSION="$OPTARG" ;;
       s) do_codesign=yes ;;
       n) do_notarize=yes ;;
@@ -76,10 +73,9 @@ export SDKROOT=$MM_MACOSX_SDKROOT
 cd $MM_SRCDIR
 
 if [ -z "$MM_VERSION" ]; then
-   MM_VERSION="$(cat version.txt | tr -d '[\r\n]')"
-   # Include date unless release build; use US Pacific _Standard_ Time.
-   # Note that POSIX TZ has the sign inverted comapred to the usual GMT-8.
-   [ "$use_release_version" = yes ] || MM_VERSION="$MM_VERSION-$(TZ=Etc/GMT+8 date +%Y%m%d)"
+   # Nightly and other official builds set the version externally (-v);
+   # otherwise default to indicating an unofficial build.
+   MM_VERSION=adhoc$(date +%Y%m%d)
 fi
 sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/main/java/org/micromanager/internal/MMVersion.java || exit
 
