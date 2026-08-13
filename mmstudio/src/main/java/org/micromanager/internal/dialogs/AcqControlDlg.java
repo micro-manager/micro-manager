@@ -1348,8 +1348,16 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     */
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
-      getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings()
-            .copyBuilder().channelGroup(event.getNewChannelGroup()).build());
+      // Track the Core, which owns the channel group. Only rewrite the settings when the
+      // group really changed: setSequenceSettings() synchronously posts an
+      // AcquisitionSettingsChangedEvent that redraws this dialog, and there is no point
+      // doing that for a no-op change.
+      SequenceSettings sequenceSettings = getAcquisitionEngine().getSequenceSettings();
+      if (!sequenceSettings.channelGroup().equals(event.getNewChannelGroup())) {
+         getAcquisitionEngine().setSequenceSettings(sequenceSettings
+               .copyBuilder().channelGroup(event.getNewChannelGroup()).build());
+      }
+      // The list of groups may need refreshing even when the selection did not change.
       updateChannelAndGroupCombo();
    }
 
@@ -1362,6 +1370,31 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return false;
    }
 
+   /**
+    * Returns true when the given name is a config group currently defined in the Core.
+    *
+    * <p>This deliberately consults the complete list of defined config groups rather than
+    * AcquisitionEngine.getAvailableGroups(), which filters out groups that are deemed
+    * unsuitable as a channel group. That filter performs live Core queries and can
+    * transiently reject a perfectly well defined group (for instance while a preset is
+    * being edited). Using it to decide whether the current channel group is still valid
+    * caused the channel group to be reassigned spuriously (issue #2439).
+    *
+    * @param group name of the config group to look for
+    * @return true if the Core has a config group with this name
+    */
+   private boolean isConfigGroupDefined(String group) {
+      if (group == null || group.isEmpty()) {
+         return false;
+      }
+      StrVector groups = mmStudio_.core().getAvailableConfigGroups();
+      for (String candidate : groups) {
+         if (group.equals(candidate)) {
+            return true;
+         }
+      }
+      return false;
+   }
 
    /**
     * Closes a(and disposes) the MDA window.
@@ -1396,12 +1429,24 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          channelGroupCombo_.removeActionListener(al);
       }
       if (groups.length != 0) {
-         channelGroupCombo_.setModel(new DefaultComboBoxModel<>(groups));
-         if (!inArray(getAcquisitionEngine().getChannelGroup(), groups)) {
+         String currentGroup = getAcquisitionEngine().getChannelGroup();
+         // Judge validity against the groups the Core actually defines, not against the
+         // filtered list above: that filter can transiently drop a valid group, and
+         // reassigning the channel group because of it caused an endless loop with
+         // updateGUIFromSequenceSettings() (issue #2439).
+         if (!isConfigGroupDefined(currentGroup)) {
+            // The fallback choice does use the filtered list, since we want to land on a
+            // group that is actually usable as a channel group.
             getAcquisitionEngine().setChannelGroup(getAcquisitionEngine().getFirstConfigGroup());
+            currentGroup = getAcquisitionEngine().getChannelGroup();
          }
-
-         channelGroupCombo_.setSelectedItem(getAcquisitionEngine().getChannelGroup());
+         // A group can be valid yet missing from the filtered list. Rebuilding the model
+         // then would leave it unable to represent the current selection, so leave the
+         // model alone for this pass.
+         if (inArray(currentGroup, groups)) {
+            channelGroupCombo_.setModel(new DefaultComboBoxModel<>(groups));
+            channelGroupCombo_.setSelectedItem(currentGroup);
+         }
       }
       for (ActionListener al : als) {
          channelGroupCombo_.addActionListener(al);
@@ -1505,7 +1550,14 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             channelGroupCombo_.removeActionListener(cgsal);
          }
          channelGroupCombo_.setSelectedItem(sequenceSettings.channelGroup());
-         getAcquisitionEngine().setChannelGroup(sequenceSettings.channelGroup());
+         // Deliberately no setChannelGroup() here: this method only reflects state in the
+         // UI, it must not write hardware state. It runs synchronously from
+         // setSequenceSettings() -> AcquisitionSettingsChangedEvent, at which point the
+         // Core has not been updated yet, so writing the settings value back here undid
+         // the change that the Core had just reported and the two ping-ponged forever
+         // (issue #2439). The Core is the source of truth for the channel group; the
+         // settings follow it via onChannelGroupChanged(), and the group remembered in
+         // the profile is pushed into the Core once, from onConfigurationLoaded().
          for (ActionListener cgsal : cgsals) {
             channelGroupCombo_.addActionListener(cgsal);
          }
@@ -1620,6 +1672,35 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     */
    @Subscribe
    public void onConfigurationLoaded(SystemConfigurationLoadedEvent sle) {
+      // Push the channel group restored from the profile into the Core. This has to wait
+      // until a configuration is loaded, since there are no config groups before that:
+      // this dialog is constructed before the system configuration is read. It used to
+      // happen as a side effect of updateGUIFromSequenceSettings(), which caused an
+      // endless loop with the Core's change callback (issue #2439).
+      //
+      // Only fill in a group when the Core does not have one. The Core leaves the channel
+      // group empty unless it is set explicitly (it never picks a group by itself), so a
+      // non-empty value here means the configuration asked for it -- typically through
+      // "Core,ChannelGroup,..." in the System-Startup preset, which is applied while the
+      // configuration is loaded, just before this event. That is a deliberate choice by
+      // whoever wrote the configuration and must win over the group we remembered.
+      String coreChannelGroup = mmStudio_.core().getChannelGroup();
+      if (coreChannelGroup.isEmpty()) {
+         String settingsChannelGroup = getAcquisitionEngine().getSequenceSettings().channelGroup();
+         if (isConfigGroupDefined(settingsChannelGroup)) {
+            getAcquisitionEngine().setChannelGroup(settingsChannelGroup);
+         }
+      } else {
+         // The configuration chose the group. Adopt it into our settings: the Core set it
+         // before this dialog was listening for events, so onChannelGroupChanged() did not
+         // see it and the remembered group would otherwise be shown here instead.
+         SequenceSettings sequenceSettings = getAcquisitionEngine().getSequenceSettings();
+         if (!coreChannelGroup.equals(sequenceSettings.channelGroup())) {
+            getAcquisitionEngine().setSequenceSettings(sequenceSettings
+                  .copyBuilder().channelGroup(coreChannelGroup).build());
+         }
+      }
+
       final StrVector zDrives = mmStudio_.core().getLoadedDevicesOfType(DeviceType.StageDevice);
       if (!zDrives.isEmpty()) {
          slicesPanel_.setEnabled(true);
