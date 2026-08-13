@@ -23,19 +23,24 @@ package org.micromanager.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.html.HtmlEscapers;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -50,7 +55,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -73,6 +81,7 @@ import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
+import org.micromanager.internal.dialogs.SpecifyCropDialog;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
@@ -507,9 +516,23 @@ public final class MainFrame extends JFrame {
             });
       roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
       centerQuadButton_ = createButton(null, "center_quad.png",
-            "Set Region Of Interest to center quad of camera", () -> {
-               mmStudio_.roiManager().setCenterQuad();
-            });
+            "Halve the width and height of the current Region of Interest "
+                  + "(right-click to crop to a region of the camera chip)", () -> {
+                     mmStudio_.roiManager().setCenterQuad();
+                  });
+      centerQuadButton_.addMouseListener(new MouseAdapter() {
+         // The popup trigger arrives on press under Windows but on release
+         // elsewhere, so check for it in both.
+         @Override
+         public void mousePressed(MouseEvent e) {
+            maybeShowCropMenu(e);
+         }
+
+         @Override
+         public void mouseReleased(MouseEvent e) {
+            maybeShowCropMenu(e);
+         }
+      });
       roiPanel.add(centerQuadButton_, SMALLBUTTON_SIZE);
 
       clearRoiButton_ = createButton(null, "arrow_out.png",
@@ -593,6 +616,127 @@ public final class MainFrame extends JFrame {
 
       subPanel.add(autoPanel, "gapleft 16");
       return subPanel;
+   }
+
+   /**
+    * Shows the crop menu when the given event is the platform's popup trigger.
+    *
+    * <p>The menu is rebuilt on every showing so that edits to the crop presets file take
+    * effect without restarting Micro-Manager.
+    *
+    * @param event the mouse event received by the crop button
+    */
+   private void maybeShowCropMenu(MouseEvent event) {
+      if (!event.isPopupTrigger()) {
+         return;
+      }
+
+      // Every item in this menu sets an absolute region on the camera chip.  The
+      // center-quad crop is deliberately absent: it shrinks whatever ROI is currently
+      // in force rather than addressing the chip, and mixing the two meanings in one
+      // menu is confusing.  It remains on a plain click of the button.
+      JPopupMenu menu = new JPopupMenu();
+
+      List<CropPreset> presets = CropPreset.loadPresets();
+      if (!presets.isEmpty()) {
+         for (final CropPreset preset : presets) {
+            final Rectangle rect = preset.toRectangle();
+            JMenuItem item = new JMenuItem(preset.getName());
+            item.setToolTipText("x: " + rect.x + ", y: " + rect.y
+                  + ", width: " + rect.width + ", height: " + rect.height);
+            item.addActionListener(e -> mmStudio_.roiManager().setAbsoluteROI(rect));
+            menu.add(item);
+         }
+         menu.addSeparator();
+      }
+
+      JMenuItem specifyItem = new JMenuItem("Specify...");
+      specifyItem.setToolTipText(
+            "Type an exact Region of Interest, in camera chip coordinates");
+      specifyItem.addActionListener(e ->
+            new SpecifyCropDialog(mmStudio_, MainFrame.this).setVisible(true));
+      menu.add(specifyItem);
+
+      JMenuItem aboutPresetsItem = new JMenuItem("About Crop Presets...");
+      aboutPresetsItem.setToolTipText(
+            "Explain the crop presets file and where it lives");
+      aboutPresetsItem.addActionListener(e -> showCropPresetsHelp());
+      menu.add(aboutPresetsItem);
+
+      menu.show(event.getComponent(), event.getX(), event.getY());
+   }
+
+   /**
+    * Explains the crop presets file format, and offers to create a commented starter
+    * file when the user does not have one yet.
+    */
+   private void showCropPresetsHelp() {
+      File presetsFile = CropPreset.getPresetsFile();
+      if (presetsFile == null) {
+         mmStudio_.logs().showError(
+               "Unable to determine the Micro-Manager application directory, "
+                     + "so crop presets cannot be used.");
+         return;
+      }
+      final boolean exists = presetsFile.isFile();
+      // The path is the only part of this message that is not a literal, and it can
+      // easily contain an ampersand, which would otherwise break the rendering.
+      String escapedPath = HtmlEscapers.htmlEscaper().escape(presetsFile.getPath());
+
+      String message = "<html><body width='460'>"
+            + "<p>Crop presets are named regions of interest that you can apply from "
+            + "this menu. They are read from a plain text file in the Micro-Manager "
+            + "application directory:</p>"
+            + "<p><tt>" + escapedPath + "</tt><br>"
+            + "<i>(" + (exists ? "this file exists" : "you do not have this file yet")
+            + ")</i></p>"
+            + "<p>Each line describes one preset:</p>"
+            + "<p><tt>&nbsp;&nbsp;name, x, y, width, height</tt></p>"
+            + "<p><tt>x</tt> and <tt>y</tt> give the top left corner and may not be "
+            + "negative; <tt>width</tt> and <tt>height</tt> must be positive. All four "
+            + "are whole numbers of pixels measured on the <b>full sensor</b>, not on "
+            + "the current ROI, so a preset always selects the same area no matter what "
+            + "ROI is in force. This differs from a plain click of the crop button, "
+            + "which halves whatever ROI is currently set.</p>"
+            + "<p>For example:</p>"
+            + "<p><tt>&nbsp;&nbsp;Center half, 128, 128, 256, 256</tt><br>"
+            + "<tt>&nbsp;&nbsp;Line scan, 0, 240, 512, 32</tt></p>"
+            + "<p>Blank lines and lines starting with <tt>#</tt> are ignored. A line "
+            + "that cannot be read is skipped and noted in the CoreLog; the rest of the "
+            + "file is still used. Preset names cannot contain a comma.</p>"
+            + "<p>A preset that runs off the edge of the chip is trimmed to fit; one "
+            + "that misses the chip entirely is not applied. Either way a message "
+            + "appears in the Messages window.</p>"
+            + "<p>The file is re-read every time this menu opens, so you do not need to "
+            + "restart Micro-Manager after editing it.</p>"
+            + "</body></html>";
+
+      if (exists) {
+         JOptionPane.showMessageDialog(this, new JLabel(message),
+               "About Crop Presets", JOptionPane.INFORMATION_MESSAGE);
+         return;
+      }
+
+      String[] options = new String[] {"Create Example File", "Close"};
+      int answer = JOptionPane.showOptionDialog(this, new JLabel(message),
+            "About Crop Presets", JOptionPane.DEFAULT_OPTION,
+            JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+      if (answer != 0) {
+         return;
+      }
+      try {
+         File created = CropPreset.createTemplateFile();
+         JOptionPane.showMessageDialog(this,
+               "Created " + created.getPath() + "\n\n"
+                     + "It contains commented-out examples. Edit it in a text editor, "
+                     + "then re-open this menu.",
+               "Crop Presets", JOptionPane.INFORMATION_MESSAGE);
+      } catch (IOException ex) {
+         // The application directory is often not writable, e.g. under Program Files.
+         mmStudio_.logs().showError(ex, "Unable to create " + presetsFile.getPath()
+               + ".\nYou may need to create this file by hand, or run Micro-Manager "
+               + "from a directory you can write to.");
+      }
    }
 
    /**
