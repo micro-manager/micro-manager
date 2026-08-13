@@ -42,6 +42,14 @@ import org.micromanager.internal.utils.ReportingUtils;
  * declaring the user's desire for an ROI to be send to the camera.
  */
 public class MMROIManager {
+   // Standard device-adapter properties reporting the full sensor size.
+   private static final String ON_CAMERA_X_SIZE = "OnCameraCCDXSize";
+   private static final String ON_CAMERA_Y_SIZE = "OnCameraCCDYSize";
+
+   // Grouping all ROI complaints under one title and group keeps the Messages window
+   // from filling up when the same out-of-range preset is clicked repeatedly.
+   private static final String ROI_ALERT_TITLE = "Region of Interest";
+
    private final MMStudio studio_;
 
    public MMROIManager(MMStudio studio) {
@@ -236,7 +244,14 @@ public class MMROIManager {
       int yOffset = r.y + height / 2;
 
       curImage.setRoi(xOffset, yOffset, width, height);
-      Roi roi = curImage.getRoi();
+      applyRoiToCameras(curImage.getRoi());
+   }
+
+   /**
+    * Sends the given ImageJ ROI to the camera(s), correcting it for the current camera
+    * ROI and for any Image Flipper transformation.
+    */
+   private void applyRoiToCameras(Roi roi) {
       try {
          if (studio_.core().getNumberOfCameraChannels() < 2) {
             studio_.app().setROI(updateROI(studio_.core().getCameraDevice(), roi));
@@ -251,6 +266,117 @@ public class MMROIManager {
       } catch (Exception e) {
          // Core failed to set new ROI.
          studio_.logs().logError(e, "Unable to set new ROI");
+      }
+   }
+
+   /**
+    * Sets the camera ROI to a rectangle given in absolute, full-chip coordinates.
+    *
+    * <p>Unlike {@link #setROI()} and {@link #setCenterQuad()}, which interpret a
+    * selection relative to whatever ROI is currently in force, the rectangle passed here
+    * is taken to be relative to the full sensor.  Applying the same rectangle twice
+    * therefore leaves the camera in the same state, which is what makes stored crop
+    * presets reproducible.  The rectangle is clamped to the sensor bounds.
+    *
+    * @param r the desired ROI, in full-chip coordinates
+    */
+   public void setAbsoluteROI(Rectangle r) {
+      if (r == null) {
+         return;
+      }
+
+      Rectangle target = new Rectangle(r);
+      // A null chip size means we could not work out how big the sensor is; send the
+      // rectangle as given and let the device adapter reject it if it is unreasonable.
+      Rectangle chip = getFullChipBounds();
+      if (chip != null) {
+         String chipSize = chip.width + " x " + chip.height;
+         target = target.intersection(chip);
+         if (target.isEmpty()) {
+            // Nothing happened, so say so where the user cannot miss it.
+            studio_.alerts().postAlert(ROI_ALERT_TITLE, MMROIManager.class,
+                  "ROI not applied. The requested ROI (" + describe(r)
+                        + ") lies entirely outside the " + chipSize + " sensor.");
+            return;
+         }
+         if (!target.equals(r)) {
+            // Partly off the chip.  Applying the overlap is more useful than refusing,
+            // but say so: otherwise the camera quietly ends up with an ROI that is not
+            // the one that was asked for.
+            studio_.alerts().postAlert(ROI_ALERT_TITLE, MMROIManager.class,
+                  "ROI too large. The requested ROI (" + describe(r)
+                        + ") extends beyond the " + chipSize + " sensor; using "
+                        + describe(target) + " instead.");
+         }
+      }
+
+      try {
+         if (studio_.core().getNumberOfCameraChannels() < 2) {
+            studio_.app().setROI(target);
+         } else {
+            studio_.live().setSuspended(true);
+            try {
+               for (int c = 0; c < studio_.core().getNumberOfCameraChannels(); c++) {
+                  studio_.core().setROI(studio_.core().getCameraChannelName(c),
+                        target.x, target.y, target.width, target.height);
+               }
+            } finally {
+               studio_.cache().refreshValues();
+               studio_.live().setSuspended(false);
+            }
+         }
+         if (!studio_.live().isLiveModeOn() && studio_.settings().getSnapAfterRoiButton()) {
+            studio_.live().snap(true);
+         }
+      } catch (Exception e) {
+         // Core failed to set new ROI.
+         studio_.logs().showError(e, "Unable to set new ROI");
+      }
+   }
+
+   /**
+    * Formats a rectangle the same way the crop presets file spells one out, so that
+    * messages about a bad preset can be compared with the file at a glance.
+    */
+   private static String describe(Rectangle r) {
+      return "x: " + r.x + ", y: " + r.y + ", width: " + r.width + ", height: " + r.height;
+   }
+
+   /**
+    * Returns the full sensor area of the current camera, i.e. the ROI that would be in
+    * force after clearing it.  The origin is always (0, 0).
+    *
+    * @return the full chip bounds, or null if they could not be determined
+    */
+   public Rectangle getFullChipBounds() {
+      try {
+         String camera = studio_.core().getCameraDevice();
+         if (camera == null || camera.isEmpty()) {
+            return null;
+         }
+         if (studio_.core().hasProperty(camera, ON_CAMERA_X_SIZE)
+               && studio_.core().hasProperty(camera, ON_CAMERA_Y_SIZE)) {
+            try {
+               int width = Integer.parseInt(
+                     studio_.core().getProperty(camera, ON_CAMERA_X_SIZE).trim());
+               int height = Integer.parseInt(
+                     studio_.core().getProperty(camera, ON_CAMERA_Y_SIZE).trim());
+               if (width > 0 && height > 0) {
+                  return new Rectangle(0, 0, width, height);
+               }
+            } catch (NumberFormatException e) {
+               // Device reported a chip size we cannot read; fall through to the ROI.
+               studio_.logs().logError(e, "Unreadable chip size reported by " + camera);
+            }
+         }
+         // No chip-size property, so fall back on the current ROI.  That is the full
+         // frame only when no ROI is set, so widen it by the offset we can see; this is
+         // the best guess available without disturbing the camera.
+         Rectangle roi = studio_.core().getROI();
+         return new Rectangle(0, 0, roi.x + roi.width, roi.y + roi.height);
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Unable to determine the full chip size");
+         return null;
       }
    }
 
