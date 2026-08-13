@@ -23,6 +23,7 @@ package org.micromanager.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.html.HtmlEscapers;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -678,12 +679,15 @@ public final class MainFrame extends JFrame {
          return;
       }
       final boolean exists = presetsFile.isFile();
+      // The path is the only part of this message that is not a literal, and it can
+      // easily contain an ampersand, which would otherwise break the rendering.
+      String escapedPath = HtmlEscapers.htmlEscaper().escape(presetsFile.getPath());
 
       String message = "<html><body width='460'>"
             + "<p>Crop presets are named regions of interest that you can apply from "
             + "this menu. They are read from a plain text file in the Micro-Manager "
             + "application directory:</p>"
-            + "<p><tt>" + presetsFile.getPath() + "</tt><br>"
+            + "<p><tt>" + escapedPath + "</tt><br>"
             + "<i>(" + (exists ? "this file exists" : "you do not have this file yet")
             + ")</i></p>"
             + "<p>Each line describes one preset:</p>"

@@ -95,14 +95,22 @@ public final class SpecifyCropDialog extends JDialog {
       add(heightField_, "wrap");
 
       centeredBox_ = new JCheckBox("Centered");
-      centeredBox_.setToolTipText(
-            "Center the given width and height on the camera chip, "
-                  + "filling in X and Y for you");
       centeredBox_.addActionListener(e -> {
          updateCenteredFields();
          xField_.setEditable(!centeredBox_.isSelected());
          yField_.setEditable(!centeredBox_.isSelected());
       });
+      // Centering needs to know how big the chip is.  When the camera does not say,
+      // withhold the option rather than let it be ticked to no effect.
+      if (studio_.roiManager().getFullChipBounds() == null) {
+         centeredBox_.setEnabled(false);
+         centeredBox_.setToolTipText(
+               "Unavailable: this camera does not report its chip size");
+      } else {
+         centeredBox_.setToolTipText(
+               "Center the given width and height on the camera chip, "
+                     + "filling in X and Y for you");
+      }
       add(centeredBox_, "span 2, wrap");
 
       DocumentListener sizeListener = new DocumentListener() {
@@ -133,9 +141,12 @@ public final class SpecifyCropDialog extends JDialog {
       cancelButton.addActionListener(e -> dispose());
       add(cancelButton, "tag cancel, wrap");
 
-      // Restore the checkbox last, so that its listener sees fully built fields.
-      centeredBox_.setSelected(studio_.profile().getSettings(SpecifyCropDialog.class)
-            .getBoolean(CENTERED, false));
+      // Restore the checkbox last, so that its listener sees fully built fields.  Never
+      // restore it into the selected state while it is disabled: that would lock X and
+      // Y with nothing able to fill them in.
+      centeredBox_.setSelected(centeredBox_.isEnabled()
+            && studio_.profile().getSettings(SpecifyCropDialog.class)
+                  .getBoolean(CENTERED, false));
       xField_.setEditable(!centeredBox_.isSelected());
       yField_.setEditable(!centeredBox_.isSelected());
       updateCenteredFields();

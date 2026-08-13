@@ -259,8 +259,30 @@ public class MMROIManager {
                studio_.live().snap(true);
             }
          } else {
-            for (int c = 0; c < studio_.core().getNumberOfCameraChannels(); c++) {
-               studio_.app().setROI(updateROI(studio_.core().getCameraChannelName(c), roi));
+            // Address each camera by name.  Application.setROI() sets the ROI on the
+            // current camera only, so using it in this loop would set every rectangle
+            // on the same camera in turn and leave only the last one in force.
+            studio_.live().setSuspended(true);
+            try {
+               for (int c = 0; c < studio_.core().getNumberOfCameraChannels(); c++) {
+                  String cameraChannel = studio_.core().getCameraChannelName(c);
+                  Rectangle r = updateROI(cameraChannel, roi);
+                  if (r == null) {
+                     // updateROI() could not work out this camera's current ROI and has
+                     // logged why; leave it alone rather than abandoning the others.
+                     continue;
+                  }
+                  studio_.core().setROI(cameraChannel, r.x, r.y, r.width, r.height);
+               }
+            } catch (Exception e) {
+               studio_.logs().showError(e);
+            } finally {
+               studio_.cache().refreshValues();
+               studio_.live().setSuspended(false);
+               if (!studio_.live().isLiveModeOn()
+                     && studio_.settings().getSnapAfterRoiButton()) {
+                  studio_.live().snap(true);
+               }
             }
          }
       } catch (Exception e) {
@@ -346,6 +368,11 @@ public class MMROIManager {
     * Returns the full sensor area of the current camera, i.e. the ROI that would be in
     * force after clearing it.  The origin is always (0, 0).
     *
+    * <p>Returns null rather than a guess when the camera does not report its chip size
+    * and an ROI is already set: the current ROI is only a lower bound in that case, and
+    * callers are better off not clamping at all than clamping to a size that is too
+    * small.
+    *
     * @return the full chip bounds, or null if they could not be determined
     */
    public Rectangle getFullChipBounds() {
@@ -369,11 +396,16 @@ public class MMROIManager {
                studio_.logs().logError(e, "Unreadable chip size reported by " + camera);
             }
          }
-         // No chip-size property, so fall back on the current ROI.  That is the full
-         // frame only when no ROI is set, so widen it by the offset we can see; this is
-         // the best guess available without disturbing the camera.
+         // No usable chip-size property.  The current ROI tells us the chip size only
+         // when it is the full frame; once an ROI is set it is a lower bound that can
+         // be far smaller than the sensor.  Guessing from it would clamp valid
+         // rectangles down to the current ROI, and each crop would shrink the guess
+         // again, so report "unknown" instead and let the caller skip clamping.
          Rectangle roi = studio_.core().getROI();
-         return new Rectangle(0, 0, roi.x + roi.width, roi.y + roi.height);
+         if (roi != null && roi.x == 0 && roi.y == 0) {
+            return new Rectangle(0, 0, roi.width, roi.height);
+         }
+         return null;
       } catch (Exception e) {
          studio_.logs().logError(e, "Unable to determine the full chip size");
          return null;
