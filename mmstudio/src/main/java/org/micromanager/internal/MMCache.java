@@ -225,8 +225,8 @@ public class MMCache {
       // Build the string on the calling thread: it is assembled from fields that the
       // stage polling thread writes, so deferring the whole method could format values
       // read at some arbitrary later time and show a mix of old and new state. Only the
-      // Swing call below is moved to the EDT, since this can be called off the EDT (the
-      // stage position events are posted from the polling timer thread).
+      // Swing call below needs the EDT, and it is deferred only when we are not already
+      // on it (the stage position events are posted from the polling timer thread).
       String text = String.format(
             "Image info (from camera): %s X %s X %s bytes, Intensity range: %s bits, %s nm/px",
             width_, height_, bytesPerPixel_, imageBitDepth_,
@@ -240,8 +240,12 @@ public class MMCache {
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(x_)),
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(y_)));
       }
-      final String infoText = text;
-      SwingUtilities.invokeLater(() -> frame_.updateInfoDisplay(infoText));
+      if (SwingUtilities.isEventDispatchThread()) {
+         frame_.updateInfoDisplay(text);
+      } else {
+         final String infoText = text;
+         SwingUtilities.invokeLater(() -> frame_.updateInfoDisplay(infoText));
+      }
    }
 
    public double getStageX() {

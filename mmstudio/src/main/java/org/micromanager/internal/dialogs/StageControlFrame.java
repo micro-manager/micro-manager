@@ -34,6 +34,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -140,11 +141,19 @@ public final class StageControlFrame extends JFrame {
    // Last positions posted to the event bus, so that polling does not dispatch an event
    // every second while the stage sits still. The device name is part of the key: when
    // the selected stage changes we must post again rather than compare against the
-   // previous device's coordinates. Written and read only from the polling timer thread.
-   private String lastXyDevice_ = null;
+   // previous device's coordinates.
+   //
+   // The positions are only ever read and written by the polling timer thread, but the
+   // device names are also cleared from other threads (clearLastPostedPositions(), called
+   // from startTimer() on the EDT and from onSystemConfigurationLoaded()), so those are
+   // volatile to make the invalidation visible to the timer. A clear that raced with a
+   // poll would at worst cost one redundant event, never a missed one: the device names
+   // are always compared first and a null there forces a post.
+   private volatile String lastXyDevice_ = null;
    private double lastX_;
    private double lastY_;
-   private final String[] lastZDevice_ = new String[MAX_NUM_Z_PANELS];
+   private final AtomicReferenceArray<String> lastZDevice_ =
+         new AtomicReferenceArray<>(MAX_NUM_Z_PANELS);
    private final double[] lastZ_ = new double[MAX_NUM_Z_PANELS];
    // Ordered small, medium, large.
    private final JFormattedTextField[] xStepTexts_;
@@ -819,7 +828,7 @@ public final class StageControlFrame extends JFrame {
    private void clearLastPostedPositions() {
       lastXyDevice_ = null;
       for (int idx = 0; idx < MAX_NUM_Z_PANELS; ++idx) {
-         lastZDevice_[idx] = null;
+         lastZDevice_.set(idx, null);
       }
    }
 
@@ -976,15 +985,15 @@ public final class StageControlFrame extends JFrame {
       if (!isDeviceInitialized(zStageDevice)) {
          // Runs on the polling timer thread, so touch Swing on the EDT.
          SwingUtilities.invokeLater(() -> zPositionLabel_[idx].setText(""));
-         lastZDevice_[idx] = null;
+         lastZDevice_.set(idx, null);
          return;
       }
       double zPos = core_.getPosition(zStageDevice);
       // Skip the post when nothing moved; see getXYPosLabelFromCore().
-      if (zStageDevice.equals(lastZDevice_[idx]) && zPos == lastZ_[idx]) {
+      if (zStageDevice.equals(lastZDevice_.get(idx)) && zPos == lastZ_[idx]) {
          return;
       }
-      lastZDevice_[idx] = zStageDevice;
+      lastZDevice_.set(idx, zStageDevice);
       lastZ_[idx] = zPos;
       studio_.events().post(new DefaultStagePositionChangedEvent(zStageDevice, zPos));
    }
