@@ -35,6 +35,7 @@ import org.micromanager.PluginManager;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.data.TiledDataOpenerPlugin;
 import org.micromanager.display.DataViewerGearMenuPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
@@ -65,6 +66,7 @@ public final class DefaultPluginManager implements PluginManager {
       VALID_CLASSES.add(OverlayPlugin.class);
       VALID_CLASSES.add(ProcessorPlugin.class);
       VALID_CLASSES.add(QuickAccessPlugin.class);
+      VALID_CLASSES.add(TiledDataOpenerPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
@@ -318,6 +320,20 @@ public final class DefaultPluginManager implements PluginManager {
       HashMap<String, DataViewerGearMenuPlugin> result = new HashMap<>();
       for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(DataViewerGearMenuPlugin.class)) {
          result.put(plugin.getClass().getName(), (DataViewerGearMenuPlugin) plugin);
+      }
+      return result;
+   }
+
+   /**
+    * Returns the plugins that can open tiled (pyramidal) datasets, keyed by class name.
+    *
+    * @return the discovered TiledDataOpenerPlugin instances
+    */
+   @Override
+   public HashMap<String, TiledDataOpenerPlugin> getTiledDataOpenerPlugins() {
+      HashMap<String, TiledDataOpenerPlugin> result = new HashMap<>();
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(TiledDataOpenerPlugin.class)) {
+         result.put(plugin.getClass().getName(), (TiledDataOpenerPlugin) plugin);
       }
       return result;
    }
