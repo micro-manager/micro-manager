@@ -59,6 +59,15 @@ public final class HistogramView extends JPanel {
 
       void histogramScalingMaxChanged(int component, long newMax);
 
+      /**
+       * Called when the user edits one end of the histogram axis.
+       *
+       * @param component component index
+       * @param newRangeMin low end of the axis, as a pixel value
+       * @param newRangeMax high end of the axis, as a pixel value
+       */
+      void histogramAxisRangeChanged(int component, double newRangeMin, double newRangeMax);
+
       void histogramGammaChanged(double newGamma);
    }
 
@@ -79,6 +88,8 @@ public final class HistogramView extends JPanel {
       FloatCoordinateMapper floatMapper_ = null;
       // Optional label override for the range-max tick (e.g. "1.000" for bin-index 256).
       String rangeMaxLabel_ = null;
+      // Optional label override for the range-min tick, drawn at the left of the axis.
+      String rangeMinLabel_ = null;
 
       float[] cachedInterpolatedLogScaledGraph_;
       Path2D.Float cachedPath_;
@@ -117,6 +128,10 @@ public final class HistogramView extends JPanel {
    private Handle handleBeingDragged_ = Handle.NONE;
    private long scalingHandleDragOriginalValue_;
    private double gammaHandleDragOriginalValue_;
+   // Hit rectangles for the two axis end labels; null until laid out during painting.
+   private Rectangle rangeMinLabelRect_;
+   private Rectangle rangeMaxLabelRect_;
+   private boolean axisRangeEditable_ = false;
 
 
    private static final int HORIZONTAL_MARGIN = 12;
@@ -130,6 +145,8 @@ public final class HistogramView extends JPanel {
    private static final float OVERLAY_FONT_SIZE = 12.0f;
    private static final int OVERLAY_FONT_STYLE = Font.BOLD;
    private static final Color OVERLAY_COLOR = Color.GRAY;
+   // Axis end labels are tinted when they can be double-clicked to edit the range.
+   private static final Color EDITABLE_AXIS_LABEL_COLOR = new Color(0, 90, 180);
    private static final double GAMMA_MIN = 1e-1;
    private static final double GAMMA_MAX = 1e+1;
 
@@ -246,6 +263,7 @@ public final class HistogramView extends JPanel {
       state.scalingMax_ = 0;
       state.floatMapper_ = null;
       state.rangeMaxLabel_ = null;
+      state.rangeMinLabel_ = null;
       state.cachedInterpolatedLogScaledGraph_ = null;
       state.cachedPath_ = null;
    }
@@ -319,6 +337,36 @@ public final class HistogramView extends JPanel {
       Preconditions.checkArgument(component >= 0);
       addComponentIfNecessary(component);
       componentStates_.get(component).rangeMaxLabel_ = label;
+      rangeMinLabelRect_ = null;
+      rangeMaxLabelRect_ = null;
+      repaint();
+   }
+
+   /**
+    * Sets the text drawn at the low end of the axis.
+    *
+    * @param component component index
+    * @param label text to draw, or null to draw nothing
+    */
+   public void setComponentRangeMinLabel(int component, String label) {
+      Preconditions.checkArgument(component >= 0);
+      addComponentIfNecessary(component);
+      componentStates_.get(component).rangeMinLabel_ = label;
+      rangeMinLabelRect_ = null;
+      rangeMaxLabelRect_ = null;
+      repaint();
+   }
+
+   /**
+    * Enables double-click editing of the two axis end labels.
+    *
+    * <p>Only meaningful for float images, where the axis is a real pixel-value range that
+    * the user may want to choose; for integer images the axis is fixed by the bit depth.
+    *
+    * @param editable whether the axis ends can be edited
+    */
+   public void setAxisRangeEditable(boolean editable) {
+      axisRangeEditable_ = editable;
       repaint();
    }
 
@@ -556,6 +604,7 @@ public final class HistogramView extends JPanel {
       drawGraphBackground(g);
       if (numComponents > 0) {
          drawRangeMaxLabel(g);
+         drawRangeMinLabel(g);
       }
 
       for (int i = 0; i < componentStates_.size(); ++i) {
@@ -603,6 +652,7 @@ public final class HistogramView extends JPanel {
    }
 
    private void drawRangeMaxLabel(Graphics2D g) {
+      rangeMaxLabelRect_ = null;
       if (componentStates_.isEmpty()) {
          return;
       }
@@ -621,12 +671,59 @@ public final class HistogramView extends JPanel {
 
       Graphics2D g2d = (Graphics2D) g.create();
       g2d.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
-      FontMetrics metrics = g.getFontMetrics();
+      // Measure with the derived font actually used to draw, so that the
+      // position and the hit rectangle match what is on screen.
+      FontMetrics metrics = g2d.getFontMetrics();
       int x = graphBottomRight.x - metrics.stringWidth(text);
       if (x <= getScalingHandlePos(selectedComponent_, false)) {
          return; // Hide when scaling lower limit handle overlaps
       }
+      if (axisRangeEditable_) {
+         g2d.setColor(EDITABLE_AXIS_LABEL_COLOR);
+      }
       g2d.drawString(text, x, graphBottomRight.y + metrics.getAscent());
+      rangeMaxLabelRect_ = new Rectangle(x, graphBottomRight.y,
+            metrics.stringWidth(text), VERTICAL_MARGIN);
+   }
+
+   private void drawRangeMinLabel(Graphics2D g) {
+      rangeMinLabelRect_ = null;
+      if (componentStates_.isEmpty()) {
+         return;
+      }
+      ComponentState first = componentStates_.get(0);
+      if (first.rangeMinLabel_ == null) {
+         return; // Only float images label the low end of the axis
+      }
+      final long rangeMin = first.rangeMin_;
+      for (ComponentState state : componentStates_) {
+         if (state.rangeMin_ != rangeMin) {
+            return; // Only draw if all components have the same min
+         }
+      }
+      String text = first.rangeMinLabel_;
+      Rectangle rect = getGraphRect();
+
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
+      // Measure with the derived font actually used to draw, so that the
+      // overlap checks and the hit rectangle match what is on screen.
+      FontMetrics metrics = g2d.getFontMetrics();
+      int x = rect.x;
+      // Keep clear of the low scaling handle and of the range-max label.
+      if (x + metrics.stringWidth(text) >= getScalingHandlePos(selectedComponent_, false)) {
+         return;
+      }
+      if (rangeMaxLabelRect_ != null
+            && x + metrics.stringWidth(text) >= rangeMaxLabelRect_.x) {
+         return;
+      }
+      if (axisRangeEditable_) {
+         g2d.setColor(EDITABLE_AXIS_LABEL_COLOR);
+      }
+      g2d.drawString(text, x, rect.y + rect.height + metrics.getAscent());
+      rangeMinLabelRect_ = new Rectangle(x, rect.y + rect.height,
+            metrics.stringWidth(text), VERTICAL_MARGIN);
    }
 
    private void drawComponentGraph(int component, Graphics2D g) {
@@ -867,6 +964,8 @@ public final class HistogramView extends JPanel {
          float[] data = getComponentInterpolatedLogScaledData(component);
          float dataMax = getComponentInterpolatedLogScaledDataMax(component);
          final float dataScaling = (float) rect.height / dataMax;
+         // The bins always span the full axis: callers rebin their data onto the axis
+         // before handing it over.
          final float pixelsPerBin = (float) rect.width / data.length;
 
          if (dataMax == 0.0) {
@@ -975,7 +1074,9 @@ public final class HistogramView extends JPanel {
          for (int k = startFloor + 1; k < endFloor; ++k) {
             result[i] += data[k];
          }
-         if (endFloor < width - 1) {
+         // Bound against the source length, not the output length: the two differ
+         // whenever the histogram is being resampled.
+         if (endFloor + 1 < data.length) {
             result[i] += data[endFloor + 1] * (endFloor + 1 - endBin);
          }
       }
@@ -1012,7 +1113,11 @@ public final class HistogramView extends JPanel {
 
    private void mouseClicked(MouseEvent e) {
       if (e.getClickCount() == 2) {
-         if (isPointInScalingLabel(e.getPoint(), true)) {
+         if (axisRangeEditable_ && isPointInAxisRangeLabel(e.getPoint(), false)) {
+            startAxisRangeEdit(false);
+         } else if (axisRangeEditable_ && isPointInAxisRangeLabel(e.getPoint(), true)) {
+            startAxisRangeEdit(true);
+         } else if (isPointInScalingLabel(e.getPoint(), true)) {
             startScalingEdit(true);
          } else if (isPointInScalingLabel(e.getPoint(), false)) {
             startScalingEdit(false);
@@ -1097,6 +1202,61 @@ public final class HistogramView extends JPanel {
          return false;
       }
       return getGammaHandleRect().contains(p);
+   }
+
+   private boolean isPointInAxisRangeLabel(Point p, boolean top) {
+      Rectangle rect = top ? rangeMaxLabelRect_ : rangeMinLabelRect_;
+      return rect != null && rect.contains(p);
+   }
+
+   /**
+    * Opens a spinner for editing one end of the axis.
+    *
+    * <p>Both ends are reported together, since the listener stores them as a pair.
+    *
+    * @param top true to edit the high end, false for the low end
+    */
+   private void startAxisRangeEdit(final boolean top) {
+      final ComponentState state = componentStates_.get(selectedComponent_);
+      final FloatCoordinateMapper mapper = state.floatMapper_;
+      if (mapper == null) {
+         return;
+      }
+      final double axisMin = mapper.getRangeMin();
+      final double axisMax = mapper.binIndexToPixelValue(mapper.getBinCount());
+      final double current = top ? axisMax : axisMin;
+      final double span = Math.abs(axisMax - axisMin);
+      // Allow a generous range around the current axis, and a step that is fine enough to
+      // be useful but not so fine that reaching a nearby value takes many clicks.
+      final double limit = Math.max(1.0, span) * 1000.0;
+      double step = span > 0.0 ? span / 100.0 : 1.0;
+      final JSpinner spinner = new JSpinner(
+            new SpinnerNumberModel(current, current - limit, current + limit, step));
+      spinner.setPreferredSize(new Dimension(110, spinner.getPreferredSize().height));
+      spinner.addChangeListener((ChangeEvent e) -> {
+         double val = ((Number) spinner.getValue()).doubleValue();
+         // Re-read the opposite end each time: it may have been updated by an earlier
+         // change from this same spinner.
+         FloatCoordinateMapper cur = componentStates_.get(selectedComponent_).floatMapper_;
+         if (cur == null) {
+            return;
+         }
+         double otherMin = cur.getRangeMin();
+         double otherMax = cur.binIndexToPixelValue(cur.getBinCount());
+         double newMin = top ? otherMin : val;
+         double newMax = top ? val : otherMax;
+         if (newMax <= newMin) {
+            return; // Ignore inverted ranges rather than fighting the user mid-edit
+         }
+         listeners_.fire().histogramAxisRangeChanged(selectedComponent_, newMin, newMax);
+      });
+      JPopupMenu popup = new JPopupMenu();
+      popup.add(spinner);
+      popup.validate();
+      Rectangle labelRect = top ? rangeMaxLabelRect_ : rangeMinLabelRect_;
+      int x = (labelRect != null ? labelRect.x : getGraphRect().x)
+            - popup.getPreferredSize().width / 2;
+      popup.show(this, x, getBounds().height);
    }
 
    private void startScalingEdit(final boolean top) {

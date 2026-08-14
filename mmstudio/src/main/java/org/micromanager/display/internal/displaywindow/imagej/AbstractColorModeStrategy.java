@@ -135,7 +135,31 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
       LUT lut = getCachedLUT(0);
       lut.min = getMinDouble(0);
       lut.max = getMaxDouble(0);
-      imagePlus_.getProcessor().setLut(lut);
+      ImageProcessor proc = imagePlus_.getProcessor();
+      proc.setLut(lut);
+      applyDisplayRangeToFloatProcessor(proc, getMinDouble(0), getMaxDouble(0));
+   }
+
+   /**
+    * Pushes the display range onto a FloatProcessor.
+    *
+    * <p>A FloatProcessor renders from its own min/max rather than from the LUT, and it
+    * recomputes those from the pixel data whenever the pixels are replaced -- which happens
+    * on every frame change. Without this, a float image silently reverts to autoscaling
+    * itself per frame no matter what range was requested.
+    *
+    * @param proc processor to update; ignored unless it is a FloatProcessor
+    * @param min low end of the display range
+    * @param max high end of the display range
+    */
+   private static void applyDisplayRangeToFloatProcessor(ImageProcessor proc,
+                                                         double min, double max) {
+      if (!(proc instanceof FloatProcessor)) {
+         return;
+      }
+      if (max > min) {
+         proc.setMinAndMax(min, max);
+      }
    }
 
    private void applyToCompositeImage() {
@@ -167,7 +191,11 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
       LUT lut = getCachedLUT(channel);
       lut.min = getMinDouble(channel);
       lut.max = getMaxDouble(channel);
-      compositeImage.getProcessor().setLut(lut);
+      ImageProcessor curProc = compositeImage.getProcessor();
+      curProc.setLut(lut);
+      // Also needed in GRAYSCALE mode, where the loop above does not reach this processor.
+      applyDisplayRangeToFloatProcessor(curProc,
+            getMinDouble(channel), getMaxDouble(channel));
    }
 
    protected final void apply() {
