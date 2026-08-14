@@ -480,8 +480,11 @@ public class DefaultDatastore implements Datastore {
       } else {
          chooser.setFileFilter(SINGLEPLANEFILTER);
       }
-      chooser.setSelectedFile(
-            new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
+      File suggested = FileDialogs.safeStartFile(
+            FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET));
+      if (suggested != null) {
+         chooser.setSelectedFile(suggested);
+      }
       int option = chooser.showSaveDialog(parent);
       if (option != JFileChooser.APPROVE_OPTION) {
          // User cancelled.

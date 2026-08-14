@@ -20,6 +20,7 @@ import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Window;
 import java.io.File;
+import java.nio.file.Paths;
 import javax.swing.JFileChooser;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
@@ -163,28 +164,49 @@ public final class FileDialogs {
          // the "night" UI. So we temporarily force the "Daytime" look and
          // feel, without redrawing the entire program UI, just for as long as
          // it takes us to create this chooser.
-         skin.suspendToMode(SkinMode.DAY);
-         JFileChooser fc = new JFileChooser();
-         if (selectDirectories) {
-            fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-         }
-         if (startFile != null) {
-            if (startFile.isDirectory()) {
-               fc.setCurrentDirectory(startFile);
-            } else {
-               fc.setSelectedFile(startFile);
+         JFileChooser fc;
+         try {
+            skin.suspendToMode(SkinMode.DAY);
+            fc = new JFileChooser();
+            if (selectDirectories) {
+               fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             }
+            if (startFile != null) {
+               try {
+                  if (startFile.isDirectory()) {
+                     fc.setCurrentDirectory(startFile);
+                  } else {
+                     fc.setSelectedFile(startFile);
+                  }
+               } catch (RuntimeException e) {
+                  // Some paths blow up inside the chooser's own machinery.
+                  // Its state is no longer trustworthy at this point, so start
+                  // over with no location rather than failing the whole action.
+                  ReportingUtils.logError(e, "Could not use " + startFile
+                        + " as file chooser start location");
+                  fc = new JFileChooser();
+                  if (selectDirectories) {
+                     fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+                  }
+               }
+            }
+         } finally {
+            skin.resume();
          }
-         skin.resume();
          fc.setDialogTitle(title);
          if (fileSuffixes != null) {
             fc.setFileFilter(filter);
          }
          int returnVal;
-         if (load) {
-            returnVal = fc.showOpenDialog(parent);
-         } else {
-            returnVal = fc.showSaveDialog(parent);
+         try {
+            if (load) {
+               returnVal = fc.showOpenDialog(parent);
+            } else {
+               returnVal = fc.showSaveDialog(parent);
+            }
+         } catch (RuntimeException e) {
+            ReportingUtils.showError(e, "Error displaying the file chooser");
+            return null;
          }
          if (returnVal == JFileChooser.APPROVE_OPTION) {
             selectedFile = fc.getSelectedFile();
@@ -197,9 +219,12 @@ public final class FileDialogs {
                                      FileType type, boolean selectDirectories, boolean load,
                                      ApplicationSkin skin) {
       String startFile = getSuggestedFile(type);
-      File startDir = null;
-      if (startFile != null) {
-         startDir = new File(startFile.trim());
+      File startDir = safeStartFile(startFile);
+      if (startFile != null && startDir != null
+            && !startFile.equals(startDir.getPath())) {
+         // Repair a bad remembered path now, so that the user recovers without
+         // having to delete their profile directory (issue #2232).
+         storePath(type, startDir);
       }
       File result = promptForFile(parent, title, startDir, selectDirectories,
             load, type.description, type.suffixes, type.suggestFileOnSave, skin);
@@ -209,9 +234,108 @@ public final class FileDialogs {
       return result;
    }
 
+   /**
+    * Returns true if the given string can be used as a path on this platform.
+    *
+    * <p>Some strings are accepted by the File constructor but rejected by
+    * java.nio.file.  On Windows a trailing space is the common case.  Such a
+    * path throws InvalidPathException from deep inside JFileChooser, where it
+    * escapes as an unchecked exception (issue #2232).
+    *
+    * @param path path to check, may be null
+    * @return true if the path is usable
+    */
+   static boolean isUsablePath(String path) {
+      if (path == null || path.trim().isEmpty()) {
+         return false;
+      }
+      try {
+         Paths.get(path);
+         // File -> Path is the round trip that JFileChooser and ShellFolder
+         // perform internally.  Exercise it here so that we fail now, where
+         // we can recover, rather than inside the chooser, where we cannot.
+         new File(path).getAbsoluteFile().toPath();
+         return true;
+      } catch (RuntimeException e) {
+         return false;
+      }
+   }
+
+   /**
+    * Converts a remembered path into a File usable as a chooser start location.
+    *
+    * <p>If the path is malformed or no longer reachable, walks up to the nearest
+    * existing ancestor, and otherwise falls back to the user's home directory.
+    * A path that still exists is returned verbatim, so remembered locations
+    * behave exactly as before.
+    *
+    * @param path remembered path, may be null or malformed
+    * @return a usable start location, or null to let the chooser choose
+    */
+   public static File safeStartFile(String path) {
+      File candidate = null;
+      if (isUsablePath(path)) {
+         // Deliberately not trimmed: on Unix-like systems leading and trailing
+         // spaces are legal parts of a file name, so trimming would silently
+         // point at a different file.  Paths that Windows cannot use have
+         // already been rejected by isUsablePath().
+         candidate = new File(path);
+      }
+      // Walk up to the nearest ancestor that both parses and exists.  The
+      // parse check has to be repeated on every hop, since getParentFile() of
+      // a malformed path can itself be malformed.
+      File walker = candidate;
+      while (walker != null) {
+         if (walker.exists()) {
+            return walker;
+         }
+         File parent = walker.getParentFile();
+         if (parent == null || !isUsablePath(parent.getPath())) {
+            break;
+         }
+         walker = parent;
+      }
+      if (candidate != null) {
+         // Parses, but nothing along the chain exists.  Most often this is an
+         // offline network share, which can stall the chooser for a long time,
+         // so prefer somewhere known to be reachable.
+         ReportingUtils.logMessage("FileDialogs: remembered path is not "
+               + "reachable, falling back to home directory: " + path);
+      }
+      String home = System.getProperty("user.home");
+      if (isUsablePath(home)) {
+         return new File(home);
+      }
+      return null;
+   }
+
+   /**
+    * Remembers the given path as the starting location for this file type.
+    *
+    * <p>Paths that cannot be used on this platform are rejected rather than
+    * stored, since a stored bad path would break every later use of the
+    * chooser for this file type (issue #2232).
+    *
+    * @param type file type whose location should be remembered
+    * @param path location to remember
+    */
    public static void storePath(FileType type, File path) {
+      if (path == null) {
+         return;
+      }
+      String absPath;
+      try {
+         absPath = path.getAbsolutePath();
+      } catch (RuntimeException e) {
+         ReportingUtils.logError(e, "Unable to store path for " + type.name);
+         return;
+      }
+      if (!isUsablePath(absPath)) {
+         ReportingUtils.logError("Refusing to remember unusable path: " + absPath);
+         return;
+      }
       UserProfile profile = MMStudio.getInstance().profile();
-      type.defaultFileName = path.getAbsolutePath();
+      type.defaultFileName = absPath;
       profile.getSettings(FileDialogs.class).putString(type.name,
             type.defaultFileName);
    }

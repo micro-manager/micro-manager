@@ -1008,9 +1008,9 @@ public class ExplorerManager {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Move Explorer Data To");
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            String suggestedPath = FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET);
-            if (suggestedPath != null) {
-               File suggested = new File(suggestedPath);
+            File suggested = FileDialogs.safeStartFile(
+                  FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET));
+            if (suggested != null) {
                File dir = suggested.isDirectory() ? suggested : suggested.getParentFile();
                if (dir != null) {
                   chooser.setCurrentDirectory(dir);

@@ -29,6 +29,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public final class FileMenu {
    private static final String FILE_HISTORY = "list of recently-viewed files";
    private static final int MAX_HISTORY_SIZE = 15;
+   // Ugly overloading of IOException to indicate that the user cancelled.
+   private static final String USER_CANCELED = "User Canceled";
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
    private boolean enableCloseAll_ = false;
@@ -98,6 +100,16 @@ public final class FileMenu {
       );
    }
 
+   /**
+    * Returns true if the exception signals that the user cancelled.
+    *
+    * <p>Note that getMessage() can be null, so the comparison has to be made
+    * in this order.
+    */
+   private static boolean isUserCancel(Exception e) {
+      return USER_CANCELED.equals(e.getMessage());
+   }
+
    private void promptToOpenFile(final boolean isVirtual) {
       new Thread(() -> {
          try {
@@ -117,10 +129,13 @@ public final class FileMenu {
             studio_.displays().loadDisplays(store);
             updateFileHistory(store.getSavePath());
          } catch (IOException ex) {
-            // ugly overloading of IOException to indicate user cancelling.
-            if (!ex.getMessage().equals("User Canceled")) {
+            if (!isUserCancel(ex)) {
                ReportingUtils.showError(ex, "There was an error when opening data");
             }
+         } catch (RuntimeException ex) {
+            // Never let an unchecked exception die silently on this bare
+            // thread; that turns a bug into a menu item that does nothing.
+            ReportingUtils.showError(ex, "There was an error when opening data");
          }
       }).start();
    }
@@ -139,10 +154,11 @@ public final class FileMenu {
                DisplayWindow display = studio_.displays().createDisplay(sdp);
                studio_.displays().addViewer(display);
             } catch (IOException ioe) {
-               // ugly overloading of IOException to indicate user cancelling.
-               if (!ioe.getMessage().equals("User Canceled")) {
+               if (!isUserCancel(ioe)) {
                   studio_.logs().showError(ioe, "There was an error while opening data");
                }
+            } catch (RuntimeException ioe) {
+               studio_.logs().showError(ioe, "There was an error while opening data");
             }
          }).start();
       }
@@ -174,10 +190,11 @@ public final class FileMenu {
                }
                updateFileHistory(path);
             } catch (IOException ioe) {
-               // ugly overloading of IOException to indicate user cancelling.
-               if (!ioe.getMessage().equals("User Canceled")) {
+               if (!isUserCancel(ioe)) {
                   ReportingUtils.showError(ioe, "There was an error while opening data");
                }
+            } catch (RuntimeException ioe) {
+               ReportingUtils.showError(ioe, "There was an error while opening data");
             }
          }).start());
          result.add(item);
