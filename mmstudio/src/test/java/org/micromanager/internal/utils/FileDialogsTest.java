@@ -49,6 +49,26 @@ public class FileDialogsTest {
       Assert.assertEquals(new File(home), result);
    }
 
+   /**
+    * An existing path has to come back verbatim.  Trimming it would point at a
+    * different file on systems where a trailing space is part of the name.
+    */
+   @Test
+   public void testExistingPathIsNotTrimmed() {
+      if (isWindows()) {
+         // Windows cannot represent such a directory in the first place.
+         return;
+      }
+      File dir = new File(System.getProperty("java.io.tmpdir"), "mm2232 test ");
+      Assert.assertTrue("could not create " + dir, dir.mkdirs() || dir.isDirectory());
+      try {
+         File result = FileDialogs.safeStartFile(dir.getPath());
+         Assert.assertEquals(dir.getPath(), result.getPath());
+      } finally {
+         dir.delete();
+      }
+   }
+
    @Test
    public void testMissingPathWalksUpToExistingAncestor() {
       File home = new File(System.getProperty("user.home"));

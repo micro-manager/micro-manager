@@ -221,7 +221,7 @@ public final class FileDialogs {
       String startFile = getSuggestedFile(type);
       File startDir = safeStartFile(startFile);
       if (startFile != null && startDir != null
-            && !startFile.trim().equals(startDir.getPath())) {
+            && !startFile.equals(startDir.getPath())) {
          // Repair a bad remembered path now, so that the user recovers without
          // having to delete their profile directory (issue #2232).
          storePath(type, startDir);
@@ -266,7 +266,7 @@ public final class FileDialogs {
     *
     * <p>If the path is malformed or no longer reachable, walks up to the nearest
     * existing ancestor, and otherwise falls back to the user's home directory.
-    * A path that still exists is returned unchanged, so remembered locations
+    * A path that still exists is returned verbatim, so remembered locations
     * behave exactly as before.
     *
     * @param path remembered path, may be null or malformed
@@ -275,7 +275,11 @@ public final class FileDialogs {
    public static File safeStartFile(String path) {
       File candidate = null;
       if (isUsablePath(path)) {
-         candidate = new File(path.trim());
+         // Deliberately not trimmed: on Unix-like systems leading and trailing
+         // spaces are legal parts of a file name, so trimming would silently
+         // point at a different file.  Paths that Windows cannot use have
+         // already been rejected by isUsablePath().
+         candidate = new File(path);
       }
       // Walk up to the nearest ancestor that both parses and exists.  The
       // parse check has to be repeated on every hop, since getParentFile() of

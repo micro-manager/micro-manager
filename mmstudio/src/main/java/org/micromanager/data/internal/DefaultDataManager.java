@@ -214,8 +214,11 @@ public final class DefaultDataManager implements DataManager {
       // If the user selected a TIFF file, select the directory the file is in
       File dirFile = new File(directory);
       if (!dirFile.isDirectory()) {
-         String parentDir = dirFile.getParent();
+         // Resolve against the absolute path, so that a relative file name
+         // such as "data.tif" still yields the directory containing it.
+         String parentDir = dirFile.getAbsoluteFile().getParent();
          if (parentDir == null) {
+            // Only a filesystem root has no parent at all.
             throw new IOException("Cannot determine directory for " + directory);
          }
          directory = parentDir;
