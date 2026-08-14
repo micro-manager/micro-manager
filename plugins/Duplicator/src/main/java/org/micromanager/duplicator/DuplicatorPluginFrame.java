@@ -377,7 +377,11 @@ public class DuplicatorPluginFrame extends JDialog {
       } else {
          chooser.setFileFilter(SINGLEPLANEFILTER);
       }
-      chooser.setSelectedFile(new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
+      File suggested = FileDialogs.safeStartFile(
+            FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET));
+      if (suggested != null) {
+         chooser.setSelectedFile(suggested);
+      }
       int option = chooser.showDialog(this, "Select");
       if (option != JFileChooser.APPROVE_OPTION) {
          // User cancelled.

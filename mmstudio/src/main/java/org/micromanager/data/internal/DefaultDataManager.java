@@ -214,7 +214,11 @@ public final class DefaultDataManager implements DataManager {
       // If the user selected a TIFF file, select the directory the file is in
       File dirFile = new File(directory);
       if (!dirFile.isDirectory()) {
-         directory = dirFile.getParent();
+         String parentDir = dirFile.getParent();
+         if (parentDir == null) {
+            throw new IOException("Cannot determine directory for " + directory);
+         }
+         directory = parentDir;
       }
 
       DefaultDatastore result = new DefaultDatastore(studio_);

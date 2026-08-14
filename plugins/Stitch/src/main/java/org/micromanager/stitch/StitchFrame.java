@@ -405,9 +405,13 @@ public class StitchFrame extends JDialog {
          File cur = new File(current);
          chooser.setCurrentDirectory(cur.isDirectory() ? cur : cur.getParentFile());
       } else {
-         File suggested = new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET));
-         if (suggested.getParentFile() != null) {
-            chooser.setCurrentDirectory(suggested.getParentFile());
+         File suggested = FileDialogs.safeStartFile(
+               FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET));
+         if (suggested != null) {
+            File dir = suggested.isDirectory() ? suggested : suggested.getParentFile();
+            if (dir != null) {
+               chooser.setCurrentDirectory(dir);
+            }
          }
       }
       if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
