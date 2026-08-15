@@ -126,7 +126,10 @@ public final class TiledDataOpenerImpl implements TiledDataOpenerPlugin {
                studio_, dataSource, createAcqInterface(), dataProvider,
                summaryMetadata, pixelSizeUm, isRgb);
          viewerHolder[0] = mm2Viewer;
-         mm2Viewer.setAccumulateStats(true);
+         // Deliberately NOT setAccumulateStats(true): that merges histograms across tiles as
+         // they stream in during an acquisition. Nothing streams into an already-written
+         // dataset, and leaving it on makes every stats recompute re-derive contrast from the
+         // accumulator, which the user sees as the display flickering between settings.
 
          // Read before the viewer is populated, so the background task below can apply them.
          File mmSettingsFile = new File(dir, MM_DISPLAY_SETTINGS_FILE);
@@ -212,16 +215,18 @@ public final class TiledDataOpenerImpl implements TiledDataOpenerPlugin {
                seedAxesList.add(channelAxes);
             }
          } catch (Exception e) {
-            studio_.logs().logMessage("Exception fetching seed image: " + e);
+            studio_.logs().logError(e, "Exception fetching seed image");
          }
       }
       if (!seedImages.isEmpty()) {
          mm2Viewer.newTileArrived(seedImages, seedAxesList);
       }
 
-      // Register the channels first; only then attach settings to them. The cast picks the
-      // JSONObject overload, matching what Explorer does.
-      viewer.initializeViewerToLoaded((JSONObject) null);
+      // Register the channels first; only then attach settings to them.
+      // Empty JSON, not null: DisplaySettings then falls back to its preference-based
+      // defaults. The NDTiff summary metadata does not carry the "All channel settings"
+      // structure it expects, so feeding that in raises a JSONException per setting read.
+      viewer.initializeViewerToLoaded(new JSONObject());
       try {
          if (savedMMSettings != null) {
             mm2Viewer.setDisplaySettings(savedMMSettings);
@@ -341,20 +346,45 @@ public final class TiledDataOpenerImpl implements TiledDataOpenerPlugin {
          }
       }
 
+      // Release the MM-side viewer. Without this the viewer is never marked closed, so it stays
+      // registered with the Inspector and keeps handling display-settings changes against
+      // storage that is about to be shut down - which shows up as an endless stream of
+      // "NPE in handleDisplaySettings" in the log. closeWithoutTiledDataViewer() is the right
+      // call here because this runs from the data source's close(), i.e. the viewer is already
+      // tearing itself down; close() would re-enter that teardown.
+      if (mm2Viewer != null) {
+         try {
+            mm2Viewer.closeWithoutTiledDataViewer();
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Error closing viewer for " + dir);
+         }
+      }
+
       final DisplaySettings settingsToSave = capturedSettings;
       final JSONObject viewStateToSave = capturedViewState;
       new Thread(() -> {
+         // Saved independently: a failure to write one should not cost the user the other.
          try {
-            if (settingsToSave != null) {
+            // save() is only on the concrete class. Anything else is some other DisplaySettings
+            // implementation that this code has no way to persist, so skip it rather than
+            // failing the whole cleanup with a ClassCastException.
+            if (settingsToSave instanceof DefaultDisplaySettings) {
                ((DefaultDisplaySettings) settingsToSave)
                      .save(new File(dir, MM_DISPLAY_SETTINGS_FILE));
+            } else if (settingsToSave != null) {
+               studio_.logs().logMessage("Not saving display settings for " + dir
+                     + ": unexpected implementation " + settingsToSave.getClass().getName());
             }
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Error saving display settings for " + dir);
+         }
+         try {
             if (viewStateToSave != null) {
                Files.write(new File(dir, VIEW_STATE_FILE).toPath(),
                      viewStateToSave.toString(2).getBytes(StandardCharsets.UTF_8));
             }
          } catch (Exception e) {
-            studio_.logs().logError(e, "Error saving display settings for " + dir);
+            studio_.logs().logError(e, "Error saving view state for " + dir);
          }
          try {
             storage.close();

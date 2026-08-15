@@ -17,6 +17,8 @@
 
 package org.micromanager.data.internal;
 
+import java.util.Map;
+import java.util.TreeMap;
 import org.micromanager.Studio;
 import org.micromanager.data.TiledDataOpenerPlugin;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -97,7 +99,12 @@ public final class TiledDataOpener {
       if (studio == null || path == null) {
          return NOT_HANDLED;
       }
-      for (TiledDataOpenerPlugin opener : studio.plugins().getTiledDataOpenerPlugins().values()) {
+      // getTiledDataOpenerPlugins() returns a HashMap, whose iteration order is unspecified.
+      // Sorting by class name means that when more than one opener recognizes a path, the same
+      // one wins every time, rather than varying between runs.
+      Map<String, TiledDataOpenerPlugin> openers =
+            new TreeMap<>(studio.plugins().getTiledDataOpenerPlugins());
+      for (TiledDataOpenerPlugin opener : openers.values()) {
          try {
             if (!opener.canOpen(path)) {
                continue;

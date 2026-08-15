@@ -129,7 +129,10 @@ public final class DragDropUtil implements DropTargetListener {
          studio_.displays().loadDisplays(store);
          updateFileHistory(store.getSavePath());
       } catch (IOException e) {
-         ReportingUtils.showError(e, "There was an error while opening the file at " + dir);
+         // Report what the user actually dropped: for a file inside a dataset, dir is a
+         // computed parent directory they never named.
+         ReportingUtils.showError(e,
+               "There was an error while opening the file at " + droppedPath);
       }
    }
 

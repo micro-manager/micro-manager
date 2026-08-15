@@ -33,6 +33,9 @@ public final class DatasetPathUtils {
    /** Prefix of NDTiff's downsampled resolution-level directories ({@code Downsampled_x2} etc). */
    private static final String DOWNSAMPLED_DIR_PREFIX = "Downsampled_x";
 
+   /** Subdirectory holding the full-resolution level of a multi-resolution NDTiff dataset. */
+   private static final String FULL_RESOLUTION_DIR = "Full resolution";
+
    private DatasetPathUtils() {
    }
 
@@ -49,7 +52,7 @@ public final class DatasetPathUtils {
       }
       return OMEZarrMultiresStorage.isOMEZarrDataset(dir)
             || OMEBigTiffMultiresStorage.isOMEBigTiffDataset(dir)
-            || isNDTiffDataset(dir);
+            || isAnyNDTiffLayout(dir);
    }
 
    /**
@@ -62,6 +65,27 @@ public final class DatasetPathUtils {
     */
    public static boolean isNDTiffDataset(String dir) {
       return new File(dir, NDTIFF_INDEX_FILE).exists();
+   }
+
+   /**
+    * Returns true if {@code dir} is the root of an NDTiff dataset in either of its two layouts.
+    *
+    * <p>A flat NDTiff dataset keeps its index at the root, but a multi-resolution one puts the
+    * index inside a {@code Full resolution} subdirectory instead. {@link #isNDTiffDataset} only
+    * looks at the root - matching {@code NDTiffAdapter.isNDTiffDataSet} in mmstudio, which is
+    * what decides whether the standard loading path claims a dataset - so it returns false for
+    * exactly the multi-resolution datasets this class needs to recognize.
+    *
+    * @param dir directory to probe
+    * @return true if an NDTiff index is present at the root or one level down
+    */
+   private static boolean isAnyNDTiffLayout(String dir) {
+      if (new File(new File(dir, FULL_RESOLUTION_DIR), NDTIFF_INDEX_FILE).exists()) {
+         return true;
+      }
+      // "Full resolution" itself holds an index, but it is a resolution level, not the dataset
+      // root. Rejecting it here keeps normalizeDatasetPath walking up to the real root.
+      return isNDTiffDataset(dir) && !FULL_RESOLUTION_DIR.equals(new File(dir).getName());
    }
 
    /**
@@ -100,7 +124,7 @@ public final class DatasetPathUtils {
     * @return true if the dataset has tile axes or more than one resolution level
     */
    public static boolean isTiledNDTiffDataset(String dir) {
-      if (!isNDTiffDataset(dir)) {
+      if (dir == null || !isAnyNDTiffLayout(dir)) {
          return false;
       }
       // A downsampled level on disk means the dataset is tiled, and is far cheaper to spot than

@@ -1,7 +1,7 @@
 package org.micromanager.tileddataviewer;
 
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
@@ -84,7 +84,7 @@ public class LoadedDataSource implements TiledDataViewerDataSource {
    @Override
    public Set<HashMap<String, Object>> getImageKeys() {
       if (storage_ == null) {
-         return new HashSet<>();
+         return Collections.emptySet();
       }
       Set<HashMap<String, Object>> cached = imageKeysCache_;
       if (cached != null) {
@@ -100,8 +100,11 @@ public class LoadedDataSource implements TiledDataViewerDataSource {
                return copy;
             })
             .collect(Collectors.toSet());
-      imageKeysCache_ = fresh;
-      return fresh;
+      // Wrapped because this instance is cached and handed to every caller: an accidental
+      // mutation downstream would corrupt the shared cache rather than a local copy.
+      Set<HashMap<String, Object>> result = Collections.unmodifiableSet(fresh);
+      imageKeysCache_ = result;
+      return result;
    }
 
    @Override
