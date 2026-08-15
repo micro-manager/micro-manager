@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.List;
 import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.internal.TiledDataOpener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.menus.FileMenu;
 
@@ -95,9 +96,13 @@ public final class DragDropUtil implements DropTargetListener {
                      dirtmp = f.getParent();
                   }
                   final String dir = dirtmp;
+                  // Kept unmodified for the tiled formats: an NDTiff plane lives in a
+                  // "Full resolution" subdirectory, so the dataset root is two levels above the
+                  // dropped file, not one. The openers resolve that themselves.
+                  final String dropped = f.getPath();
 
-                  // to not block the UI of the OS, open in a separate thread          
-                  new Thread(() -> loadData(dir)).start();
+                  // to not block the UI of the OS, open in a separate thread
+                  new Thread(() -> loadData(dir, dropped)).start();
 
                }
                dropTargetDropEvent.dropComplete(true);
@@ -109,17 +114,32 @@ public final class DragDropUtil implements DropTargetListener {
       }
    }
 
-   private void loadData(String dir) {
+   private void loadData(String dir, String droppedPath) {
       try {
+         TiledDataOpener.Result tiled = TiledDataOpener.tryOpen(studio_, droppedPath);
+         if (tiled.wasHandled()) {
+            if (tiled.getDatasetRoot() != null) {
+               updateFileHistory(tiled.getDatasetRoot());
+            }
+            return;
+         }
+
          Datastore store = studio_.data().loadData(dir, false);
          studio_.displays().manage(store);
          studio_.displays().loadDisplays(store);
-         FileMenu fm = ((MMStudio) studio_).uiManager().menubar().getFileMenu();
-         if (fm != null) {
-            fm.updateFileHistory(store.getSavePath());
-         }
+         updateFileHistory(store.getSavePath());
       } catch (IOException e) {
-         ReportingUtils.showError(e, "There was an error while opening the file at " + dir);
+         // Report what the user actually dropped: for a file inside a dataset, dir is a
+         // computed parent directory they never named.
+         ReportingUtils.showError(e,
+               "There was an error while opening the file at " + droppedPath);
+      }
+   }
+
+   private void updateFileHistory(String path) {
+      FileMenu fm = ((MMStudio) studio_).uiManager().menubar().getFileMenu();
+      if (fm != null) {
+         fm.updateFileHistory(path);
       }
    }
 }
