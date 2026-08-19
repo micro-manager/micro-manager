@@ -86,54 +86,71 @@ public final class NumberUtils {
    }
 
    public static int displayStringToInt(Object numberString) throws ParseException {
-      return parseStrict((String) numberString).intValue();
+      return parseStrict((String) numberString, FORMAT).intValue();
    }
 
    public static long displayStringToLong(Object numberString) throws ParseException {
-      return parseStrict((String) numberString).longValue();
+      return parseStrict((String) numberString, FORMAT).longValue();
    }
 
    public static double displayStringToDouble(Object numberString) throws ParseException {
-      return parseStrict((String) numberString).doubleValue();
+      return parseStrict((String) numberString, FORMAT).doubleValue();
    }
 
    /**
-    * Parses a number using the locale-dependent FORMAT, but rejects input that
+    * Parses a number using the given locale-dependent format, but rejects input that
     * NumberFormat's normal lenient parsing would silently misread.
     *
     * <p>{@code NumberFormat.parse()} discards grouping-separator characters wherever
     * they occur in the input, instead of requiring them to appear at valid grouping
-    * positions (i.e. every three digits). On systems where the locale used for number
-    * formatting is not what the user expects -- e.g. Windows installations with
-    * mismatched system/region settings, see issue #2437 -- this lets a mistyped decimal
-    * separator be silently read as a grouping separator instead. For example, if "."
-    * is the grouping separator and "," is the decimal separator, "1.30" would silently
-    * parse as 130 rather than raising an error, while a validly grouped "1.234" must
-    * still parse as 1234. To catch the former without breaking the latter, any input
-    * that contains a grouping separator must have it in a valid grouping position, or
-    * parsing fails.
+    * positions (i.e. every {@link DecimalFormat#getGroupingSize()} digits, a value
+    * that is usually but not necessarily 3). On systems where the locale used for
+    * number formatting is not what the user expects -- e.g. Windows installations
+    * with mismatched system/region settings, see issue #2437 -- this lets a mistyped
+    * decimal separator be silently read as a grouping separator instead. For example,
+    * if "." is the grouping separator and "," is the decimal separator, "1.30" would
+    * silently parse as 130 rather than raising an error, while a validly grouped
+    * "1.234" must still parse as 1234. To catch the former without breaking the
+    * latter, any input that contains a grouping separator must have it in a valid
+    * grouping position for the given format, or parsing fails. (Note that
+    * {@code java.text.DecimalFormat} itself only ever uses a single, uniform grouping
+    * size -- it does not support locale conventions with irregular grouping, such as
+    * the Indian numbering system -- so deriving the size from the format covers every
+    * grouping this parser could actually be asked to accept.)
+    *
+    * <p>Package-private (rather than taking no format argument) so that tests can
+    * exercise specific, known-problematic locale configurations deterministically,
+    * independent of the default locale of the JVM running the test.
     *
     * @param numberString String to be parsed
+    * @param format Locale-dependent format to parse with
     * @return Parsed Number
     * @throws ParseException if the string cannot be parsed, or uses a grouping
     *     separator in an invalid position
     */
-   private static Number parseStrict(String numberString) throws ParseException {
-      if (FORMAT instanceof DecimalFormat) {
-         DecimalFormatSymbols symbols = ((DecimalFormat) FORMAT).getDecimalFormatSymbols();
+   static Number parseStrict(String numberString, NumberFormat format) throws ParseException {
+      if (format instanceof DecimalFormat) {
+         DecimalFormat decimalFormat = (DecimalFormat) format;
+         DecimalFormatSymbols symbols = decimalFormat.getDecimalFormatSymbols();
          char groupingSep = symbols.getGroupingSeparator();
          char decimalSep = symbols.getDecimalSeparator();
+         int groupingSize = decimalFormat.getGroupingSize();
          if (groupingSep != decimalSep && numberString.indexOf(groupingSep) >= 0) {
+            if (!decimalFormat.isGroupingUsed() || groupingSize <= 0) {
+               throw new ParseException(
+                     "\"" + numberString + "\" is not a valid number", 0);
+            }
             String group = Pattern.quote(String.valueOf(groupingSep));
             String decimal = Pattern.quote(String.valueOf(decimalSep));
-            String validNumber = "[+-]?\\d{1,3}(" + group + "\\d{3})*(" + decimal + "\\d+)?";
+            String validNumber = "[+-]?\\d{1," + groupingSize + "}("
+                  + group + "\\d{" + groupingSize + "})*(" + decimal + "\\d+)?";
             if (!numberString.matches(validNumber)) {
                throw new ParseException(
                      "\"" + numberString + "\" is not a valid number", 0);
             }
          }
       }
-      return FORMAT.parse(numberString);
+      return format.parse(numberString);
    }
 
 
