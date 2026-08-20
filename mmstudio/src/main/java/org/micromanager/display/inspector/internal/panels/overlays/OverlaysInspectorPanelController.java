@@ -30,6 +30,7 @@ import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.display.overlay.OverlaySupport;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.utils.PopupButton;
+import org.micromanager.propertymap.MutablePropertyMapView;
 import org.scijava.plugin.Plugin;
 
 /**
@@ -47,6 +48,10 @@ public final class OverlaysInspectorPanelController
    private static final String VISIBLEPMAPKEY = "OverlayVisible";
    private static final String TITLEPMAPKEY = "OverlayTitle";
    private static final String OVERLAYDEFAULT = "OverlayDefault";
+   // Backstops against runaway growth of the profile.  A display realistically has a handful of
+   // overlays and a user a few dozen datasets; these caps only ever bite when something is wrong.
+   private static final int MAXOVERLAYSPERKEY = 20;
+   private static final int MAXPERDISPLAYKEYS = 50;
 
 
    private static boolean expanded_ = false;
@@ -135,6 +140,12 @@ public final class OverlaysInspectorPanelController
    }
 
    private void loadSettings(DataViewer viewer) {
+      // Loading appends to overlays_ (by way of the events fired by addOverlay), so refuse to
+      // load on top of a non-empty list.  Doing so would duplicate every overlay on each
+      // attach/detach cycle, which is how profiles grew to hundreds of megabytes.
+      if (!overlays_.isEmpty()) {
+         return;
+      }
       //Load the overlays from the profile.
       String providerName = viewer.getDataProvider().getName();
       // first look for settings for this display, if not found, revert to DEFAULT settings
@@ -177,11 +188,46 @@ public final class OverlaysInspectorPanelController
                .putBoolean(VISIBLEPMAPKEY, o.isVisible())
                .putString(TITLEPMAPKEY, o.getTitle())
                .build();
+         // Never store the same overlay twice.  PropertyMap.equals() compares by value.
+         if (configList.contains(map)) {
+            continue;
+         }
          configList.add(map);
+         if (configList.size() >= MAXOVERLAYSPERKEY) {
+            break;
+         }
       }
+      MutablePropertyMapView settings = profile_.getSettings(this.getClass());
       String providerName = viewer.getDataProvider().getName();
-      profile_.getSettings(this.getClass()).putPropertyMapList(providerName, configList);
-      profile_.getSettings(this.getClass()).putPropertyMapList(OVERLAYDEFAULT, configList);
+      // The per-display entry is only worth storing when it differs from the default that
+      // loadSettings() already falls back to.  Otherwise every dataset ever opened would
+      // leave a redundant key behind forever.
+      List<PropertyMap> defaultList =
+            settings.getPropertyMapList(OVERLAYDEFAULT, (PropertyMap[]) null);
+      if (configList.isEmpty() || configList.equals(defaultList)) {
+         settings.remove(providerName);
+      } else {
+         settings.putPropertyMapList(providerName, configList);
+      }
+      settings.putPropertyMapList(OVERLAYDEFAULT, configList);
+      prunePerDisplayKeys(settings);
+   }
+
+   /**
+    * Caps the number of per-display keys stored in the profile.  Keys accumulate one per dataset
+    * ever opened; without a bound the profile grows without limit.  The profile is backed by a
+    * LinkedHashMap, so keys come out in the order they were first added and the oldest datasets
+    * are the ones evicted here.
+    *
+    * @param settings the profile settings for this class
+    */
+   private void prunePerDisplayKeys(MutablePropertyMapView settings) {
+      List<String> perDisplayKeys = new ArrayList<>(settings.keySet());
+      perDisplayKeys.remove(OVERLAYDEFAULT);
+      int excess = perDisplayKeys.size() - MAXPERDISPLAYKEYS;
+      for (int i = 0; i < excess; i++) {
+         settings.remove(perDisplayKeys.get(i));
+      }
    }
 
    private void handleAddOverlay(OverlayPlugin plugin) {
@@ -224,6 +270,23 @@ public final class OverlaysInspectorPanelController
       fireInspectorPanelDidChangeHeight();
    }
 
+   /**
+    * Drops any overlay UI left over from a previous viewer.  Unlike removeConfigPanel() this does
+    * not go through the viewer, since the viewer that owned these overlays may already be gone.
+    */
+   private void clearConfigPanels() {
+      if (overlays_.isEmpty() && configPanelControllers_.isEmpty()) {
+         return;
+      }
+      fireInspectorPanelWillChangeHeight();
+      overlays_.clear();
+      configPanelControllers_.clear();
+      configsPanel_.removeAll();
+      configsPanel_.revalidate();
+      configsPanel_.repaint();
+      fireInspectorPanelDidChangeHeight();
+   }
+
    private void removeConfigPanel(Overlay overlay) {
       int i = overlays_.indexOf(overlay);
       if (i < 0) {
@@ -260,6 +323,11 @@ public final class OverlaysInspectorPanelController
             "OverlaysInspectorPanelController: attachDataViewer "
             + viewer.getClass().getSimpleName()
             + " isOverlaySupport=" + (viewer instanceof OverlaySupport));
+      // detachDataViewer() normally empties these, but it relies on the previous viewer firing
+      // removal events.  If that did not happen we must not carry overlays over into the new
+      // viewer, or loadSettings() would refuse to load and saveSettings() would persist
+      // overlays belonging to a display that is no longer shown.
+      clearConfigPanels();
       viewer_.registerForEvents(this);
       loadSettings(viewer_);
    }
