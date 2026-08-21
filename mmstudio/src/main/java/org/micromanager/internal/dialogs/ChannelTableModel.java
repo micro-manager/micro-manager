@@ -10,6 +10,7 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.internal.ChannelColorEvent;
+import org.micromanager.internal.DefaultApplication;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -138,7 +139,9 @@ public final class ChannelTableModel extends AbstractTableModel {
                         value.toString(), new Color(
                               ColorPalettes.getFromDefaultPalette(row).getRGB()));
             cb.color(cds.getColor());
-            cb.exposure(10.0);
+            cb.exposure(mmStudio_.app().getChannelExposureTime(
+                  mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup(),
+                  value.toString(), 10.0));
          } else {
             cb.color(cs.color());
             cb.exposure(cs.exposure());
@@ -148,14 +151,19 @@ public final class ChannelTableModel extends AbstractTableModel {
          this.fireTableCellUpdated(row, 6);
       } else if (col == 2) {
          cb.exposure(((Double) value));
+         final String group =
+               mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup();
+         // Always remember the exposure for this preset, so that the config pad
+         // restores the right value later.  The sync option only controls whether
+         // the Core and the main window follow along.  The row itself, and this
+         // model's own copy in the profile, are updated by storeChannels() below.
          if (AcqControlDlg.getShouldSyncExposure()) {
-            mmStudio_.app().setChannelExposureTime(mmStudio_.getAcquisitionEngine()
-                        .getSequenceSettings().channelGroup(),
-                  channel.config(), (Double) value);
+            mmStudio_.app().setChannelExposureTime(group, channel.config(), (Double) value);
          } else {
-            this.setChannelExposureTime(mmStudio_.getAcquisitionEngine()
-                        .getSequenceSettings().channelGroup(),
-                  channel.config(), (Double) value);
+            // Not a public API method: storeChannelExposureTime() only records the
+            // value, without pushing it to the Core or the main window.
+            ((DefaultApplication) mmStudio_.app())
+                  .storeChannelExposureTime(group, channel.config(), (Double) value);
          }
       } else if (col == 3) {
          cb.zOffset((Double) value);
@@ -252,7 +260,7 @@ public final class ChannelTableModel extends AbstractTableModel {
             cb.color(RememberedDisplaySettings.loadChannel(mmStudio_,
                   mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup(),
                   config, defaultColor).getColor());
-            cb.exposure(this.getChannelExposureTime(
+            cb.exposure(rememberedExposureTime(
                   mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup(),
                   config, 10.0));
             channels_.add(cb.build());
@@ -377,6 +385,10 @@ public final class ChannelTableModel extends AbstractTableModel {
     * one, and the next refresh of this dialog from the engine's settings would
     * silently revert the displayed value.
     *
+    * <p>When the preset has no row in the table, the exposure is still written
+    * to the profile (see storeExposureForAbsentChannel), so that adding the
+    * preset as a row later shows the exposure the user last set for it.
+    *
     * @param channelGroup - if it does not match current channelGroup,
     *                     no action will be taken
     * @param channel      - preset for which to change exposure time
@@ -403,6 +415,10 @@ public final class ChannelTableModel extends AbstractTableModel {
             return;
          }
       }
+      // No row for this preset: remember the exposure anyway, so that adding
+      // the preset to the table later restores the value the user last set in
+      // the main window rather than a stale one.
+      storeExposureForAbsentChannel(channelGroup, channel, exposure);
    }
 
    /**
@@ -493,6 +509,66 @@ public final class ChannelTableModel extends AbstractTableModel {
       mmStudio_.getAcquisitionEngine().setSequenceSettings(mmStudio_.getAcquisitionEngine()
             .getSequenceSettings().copyBuilder()
             .channels(channels_).build());
+   }
+
+   /**
+    * Writes the exposure time for the given preset to the profile even when that
+    * preset currently has no row in this table.  Any other stored ChannelSpec
+    * fields (color, z-offset, skip factor) are preserved; when nothing was
+    * stored for this preset yet, a default ChannelSpec is created for it.
+    *
+    * <p>This deliberately does not touch channels_, does not call
+    * storeChannels(), and does not add the preset to the "CG:" list: the preset
+    * has no row, and adding it to that list would make it appear as a row after
+    * the next channel group switch.  The stored value simply lies dormant until
+    * the user adds the preset to the table.
+    *
+    * @param channelGroup channel group the preset belongs to
+    * @param channel      preset for which to remember the exposure time
+    * @param exposure     exposure time to remember
+    */
+   private void storeExposureForAbsentChannel(String channelGroup, String channel,
+                                              double exposure) {
+      if (channel == null || channel.isEmpty()) {
+         return;
+      }
+      ChannelSpec cs = ChannelSpec.fromJSONStream(
+            settings_.getString(channelProfileKey(channelGroup, channel), ""));
+      ChannelSpec.Builder cb;
+      if (cs == null) {
+         cb = new ChannelSpec.Builder();
+         cb.channelGroup(channelGroup);
+         cb.config(channel);
+         // Definite data about colors is in RememberedSettings.
+         cb.color(RememberedDisplaySettings.loadChannel(mmStudio_, channelGroup, channel,
+               ColorPalettes.getFromDefaultPalette(channels_.size())).getColor());
+      } else {
+         cb = cs.copyBuilder();
+      }
+      cb.exposure(exposure);
+      settings_.putString(channelProfileKey(channelGroup, channel),
+            ChannelSpec.toJSONStream(cb.build()));
+   }
+
+   /**
+    * Returns the exposure time remembered for the given preset, whether or not
+    * it currently has a row in this table.  Falls back to the exposure time the
+    * main window remembers for this preset (which is the only store written when
+    * the preset was never in the table), and finally to defaultExposure.
+    *
+    * @param channelGroup    channel group the preset belongs to
+    * @param channel         preset of interest
+    * @param defaultExposure returned when nothing was ever stored for this preset
+    * @return remembered exposure time
+    */
+   private double rememberedExposureTime(String channelGroup, String channel,
+                                         double defaultExposure) {
+      ChannelSpec cs = ChannelSpec.fromJSONStream(
+            settings_.getString(channelProfileKey(channelGroup, channel), ""));
+      if (cs != null) {
+         return cs.exposure();
+      }
+      return mmStudio_.app().getChannelExposureTime(channelGroup, channel, defaultExposure);
    }
 
    private static String channelProfileKey(String channelGroup, String config) {
