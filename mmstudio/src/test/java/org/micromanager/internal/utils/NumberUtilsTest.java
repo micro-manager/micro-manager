@@ -10,7 +10,7 @@ public class NumberUtilsTest {
    public void beforeMethod() {
       // For now, the tests in this calss are written with the assumption that
       // the decimal point is '.'. Skip if this is not true.
-      java.util.Locale loc = java.util.Locale.getDefault();
+      java.util.Locale loc = java.util.Locale.getDefault(java.util.Locale.Category.FORMAT);
       org.junit.Assume.assumeTrue(new java.text.DecimalFormatSymbols(loc).
             getDecimalSeparator() == '.');
    }
@@ -87,5 +87,36 @@ public class NumberUtilsTest {
       assertEquals(-1.00005, NumberUtils.displayStringToDouble("-1.00005"), delta);
       assertEquals(-0.99995, NumberUtils.displayStringToDouble("-0.99995"), delta);
       assertEquals(-0.99994, NumberUtils.displayStringToDouble("-0.99994"), delta);
+   }
+
+   /**
+    * Regression test for #2444: a value this class formats itself must always be
+    * parseable by its own parser. Deliberately not locale-gated (unlike the tests
+    * above): the round trip must hold no matter which decimal separator the default
+    * locale happens to use, since doubleToDisplayString() no longer emits a grouping
+    * separator and displayStringToDouble() accepts either decimal separator.
+    */
+   @Test
+   public void doubleRoundTripsThroughDisplayString() throws java.text.ParseException {
+      final double delta = 0.00001;
+      double[] values = {1.3, 999.5, 1000.0, 1234.5, 250000.0, 0.065, -42.5, 0.0};
+      for (double value : values) {
+         String displayed = NumberUtils.doubleToDisplayString(value);
+         assertEquals(value, NumberUtils.displayStringToDouble(displayed), delta);
+      }
+   }
+
+   /**
+    * Regression test for #2444: same as {@link #doubleRoundTripsThroughDisplayString},
+    * for integers. Values cross the thousands boundary where the old grouped display
+    * output would previously have failed to round-trip.
+    */
+   @Test
+   public void intRoundTripsThroughDisplayString() throws java.text.ParseException {
+      int[] values = {0, 1, 999, 1000, 65535, 250000};
+      for (int value : values) {
+         String displayed = NumberUtils.intToDisplayString(value);
+         assertEquals(value, NumberUtils.displayStringToInt(displayed));
+      }
    }
 }
