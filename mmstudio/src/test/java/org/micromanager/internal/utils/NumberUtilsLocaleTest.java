@@ -157,4 +157,17 @@ public class NumberUtilsLocaleTest {
          // expected
       }
    }
+
+   /** A leading "+" is valid for doubles, so integer fields must accept it too. */
+   @Test
+   public void acceptsLeadingPlusInIntegers() throws ParseException {
+      assertEquals(3, NumberUtils.displayStringToInt("+3"));
+      assertEquals(3.0, NumberUtils.displayStringToDouble("+3"), DELTA);
+   }
+
+   /** An overflowing exponent must be rejected, like the literal "Infinity" is. */
+   @Test
+   public void rejectsOutOfRangeExponent() {
+      assertThrowsParseException("1e400");
+   }
 }

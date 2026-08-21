@@ -10,7 +10,7 @@ public class NumberUtilsTest {
    public void beforeMethod() {
       // For now, the tests in this calss are written with the assumption that
       // the decimal point is '.'. Skip if this is not true.
-      java.util.Locale loc = java.util.Locale.getDefault();
+      java.util.Locale loc = java.util.Locale.getDefault(java.util.Locale.Category.FORMAT);
       org.junit.Assume.assumeTrue(new java.text.DecimalFormatSymbols(loc).
             getDecimalSeparator() == '.');
    }
