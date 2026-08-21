@@ -147,6 +147,11 @@ public final class NumberUtils {
          throw new ParseException("Cannot parse null as a number", 0);
       }
       String s = ((String) numberString).trim();
+      // DecimalFormat cannot parse a leading "+" in any locale, so drop it here;
+      // displayStringToDouble() accepts one, and the two should agree.
+      if (s.startsWith("+")) {
+         s = s.substring(1);
+      }
       String validNumber = "-?\\d+";
       if (format instanceof DecimalFormat) {
          DecimalFormat decimalFormat = (DecimalFormat) format;
@@ -193,7 +198,12 @@ public final class NumberUtils {
       if (!DECIMAL_NUMBER_PATTERN.matcher(s).matches()) {
          throw new ParseException("\"" + numberString + "\" is not a valid number", 0);
       }
-      return Double.parseDouble(s);
+      double value = Double.parseDouble(s);
+      if (!Double.isFinite(value)) {
+         throw new ParseException(
+               "\"" + numberString + "\" is out of range for a double", 0);
+      }
+      return value;
    }
 
 
