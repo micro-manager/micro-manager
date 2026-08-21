@@ -199,35 +199,50 @@ public final class OverlaysInspectorPanelController
       }
       MutablePropertyMapView settings = profile_.getSettings(this.getClass());
       String providerName = viewer.getDataProvider().getName();
+      // Every write copies the whole settings map and schedules a save of the entire profile,
+      // so only write when the stored value actually changes.
+      List<PropertyMap> defaultList =
+            settings.getPropertyMapList(OVERLAYDEFAULT, (PropertyMap[]) null);
       // The per-display entry is only worth storing when it differs from the default that
       // loadSettings() already falls back to.  Otherwise every dataset ever opened would
       // leave a redundant key behind forever.
-      List<PropertyMap> defaultList =
-            settings.getPropertyMapList(OVERLAYDEFAULT, (PropertyMap[]) null);
       if (configList.isEmpty() || configList.equals(defaultList)) {
-         settings.remove(providerName);
-      } else {
+         if (settings.containsKey(providerName)) {
+            settings.remove(providerName);
+         }
+      } else if (!configList.equals(
+            settings.getPropertyMapList(providerName, (PropertyMap[]) null))) {
          settings.putPropertyMapList(providerName, configList);
       }
-      settings.putPropertyMapList(OVERLAYDEFAULT, configList);
-      prunePerDisplayKeys(settings);
+      if (!configList.equals(defaultList)) {
+         settings.putPropertyMapList(OVERLAYDEFAULT, configList);
+      }
+      prunePerDisplayKeys(settings, providerName);
    }
 
    /**
     * Caps the number of per-display keys stored in the profile.  Keys accumulate one per dataset
-    * ever opened; without a bound the profile grows without limit.  The profile is backed by a
-    * LinkedHashMap, so keys come out in the order they were first added and the oldest datasets
-    * are the ones evicted here.
+    * ever opened; without a bound the profile grows without limit.
     *
-    * @param settings the profile settings for this class
+    * <p>keySet() here is a chained view over this profile and the global fallback profile, and
+    * its iteration order is neither insertion order nor otherwise meaningful, so there is no way
+    * to tell which keys are oldest.  Rather than evict at random, this drops every per-display
+    * key except the one being saved.  That is blunt, but it only triggers after 50 displays have
+    * each stored overlays differing from the default, and anything dropped simply falls back to
+    * OverlayDefault.  Removal is batched into one write because each write copies the whole map
+    * and schedules a save of the entire profile.
+    *
+    * @param settings    the profile settings for this class
+    * @param keepKey     the per-display key that must survive, or null to keep none
     */
-   private void prunePerDisplayKeys(MutablePropertyMapView settings) {
+   private void prunePerDisplayKeys(MutablePropertyMapView settings, String keepKey) {
       List<String> perDisplayKeys = new ArrayList<>(settings.keySet());
       perDisplayKeys.remove(OVERLAYDEFAULT);
-      int excess = perDisplayKeys.size() - MAXPERDISPLAYKEYS;
-      for (int i = 0; i < excess; i++) {
-         settings.remove(perDisplayKeys.get(i));
+      if (perDisplayKeys.size() <= MAXPERDISPLAYKEYS) {
+         return;
       }
+      perDisplayKeys.remove(keepKey);
+      settings.removeAll(perDisplayKeys);
    }
 
    private void handleAddOverlay(OverlayPlugin plugin) {
