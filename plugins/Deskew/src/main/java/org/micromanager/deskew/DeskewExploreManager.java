@@ -51,9 +51,13 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
+import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.tileddataprovider.DatasetPathUtils;
 import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
+import org.micromanager.tileddataprovider.OMEBigTiffMultiresStorage;
+import org.micromanager.tileddataprovider.OMEBigTiffTiledStorage;
+import org.micromanager.tileddataprovider.OMEZarrMultiresStorage;
 import org.micromanager.tileddataviewer.TiledDataViewerAPI;
 import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
 import org.micromanager.tileddataviewer.TiledDataViewerDataProviderAPI;
@@ -77,7 +81,7 @@ public class DeskewExploreManager {
    private TiledDataViewerAPI viewer_;
    private TiledDataViewerDataViewerAPI mm2Viewer_;
    private TiledDataViewerDataProviderAPI mm2DataProvider_;
-   private NDTiffStorage storage_;
+   private MultiresNDTiffAPI storage_;
    private DeskewExploreDataSource dataSource_;
    private ExecutorService displayExecutor_;
    private ExecutorService acquisitionExecutor_;
@@ -264,9 +268,21 @@ public class DeskewExploreManager {
          // Pass overlap values in Magellan order: (overlapX, overlapY)
          // Both values are based on camera width for now (height-based value unknown
          // until first tile)
-         storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
-                 overlapX, overlapY, true, null,
-                 SAVING_QUEUE_SIZE, null, true);
+         String backend = studio_.profile().getSettings(DeskewFrame.class)
+                 .getString(DeskewFrame.EXPLORE_STORAGE_BACKEND, DeskewFrame.BACKEND_NDTIFF);
+         // Neither OME backend accepts RGB or >16-bit; Deskew Explore only ever stores the
+         // GRAY8/GRAY16 projections built by StackResampler, so no fallback is needed.
+         if (DeskewFrame.BACKEND_OME_ZARR.equals(backend)) {
+            storage_ = new OMEZarrMultiresStorage(storageDir_, acqName_, summaryMetadata,
+                    overlapX, overlapY, SAVING_QUEUE_SIZE);
+         } else if (DeskewFrame.BACKEND_OME_BIGTIFF.equals(backend)) {
+            storage_ = new OMEBigTiffMultiresStorage(storageDir_, acqName_, summaryMetadata,
+                    overlapX, overlapY, SAVING_QUEUE_SIZE);
+         } else {
+            storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
+                    overlapX, overlapY, true, null,
+                    SAVING_QUEUE_SIZE, null, true);
+         }
          // The directory the backend actually created.
          datasetDir_ = storage_.getDiskLocation();
          dataSource_.setStorage(storage_);
@@ -349,11 +365,11 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Opens an existing NDTiff explore dataset for viewing.
+    * Opens an existing explore dataset (NDTiff, OME-Zarr or OME-BigTIFF) for viewing.
     * The viewer shows the previously acquired tiles and allows acquiring new ones
     * (which requires the stage to be at the same position as the original acquisition).
     *
-    * @param selectedPath Path to the NDTiff dataset directory, or to any file inside it: the file
+    * @param selectedPath Path to the dataset directory, or to any file inside it: the file
     *                     chooser lets the user pick either, so the path is normalized first
     */
    public void openExplore(String selectedPath) {
@@ -362,19 +378,12 @@ public class DeskewExploreManager {
          return;
       }
 
-      // The chooser (FileDialogs.openDir) allows picking a file inside the dataset, but
-      // NDTiffStorage expects the dataset root. Resolve before touching any state, so an
+      // The chooser (FileDialogs.openDir) allows picking a file inside the dataset, but the
+      // storage backends all expect the dataset root. Resolve before touching any state, so an
       // unrecognized selection leaves the manager idle rather than half-started.
       final String dir = DatasetPathUtils.normalizeDatasetPath(selectedPath);
       if (dir == null) {
          studio_.logs().showMessage("Not a recognized Micro-Manager dataset: " + selectedPath);
-         return;
-      }
-      // normalizeDatasetPath also accepts OME-Zarr and OME-BigTIFF, but Deskew Explore only
-      // reads NDTiff. Reject those here rather than letting NDTiffStorage fail obscurely.
-      if (!DatasetPathUtils.isNDTiffDataset(dir)) {
-         studio_.logs().showMessage(
-               "Deskew Explore can only open NDTiff datasets. Not an NDTiff dataset: " + dir);
          return;
       }
 
@@ -392,7 +401,18 @@ public class DeskewExploreManager {
          dataSource_.setReadOnly(true);
 
          // Open existing storage in write-append mode so pyramid levels can be built on demand
-         storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
+         if (OMEZarrMultiresStorage.isOMEZarrDataset(dir)) {
+            storage_ = new OMEZarrMultiresStorage(dir);
+         } else if (OMEBigTiffMultiresStorage.isOMEBigTiffDataset(dir)) {
+            // A single-plane tiled dataset (e.g. from Stitch) must use the tiled bridge; the
+            // per-tile bridge only handles the one-file-per-tile layout Explore writes.
+            storage_ = OMEBigTiffTiledStorage.isTiledDataset(dir)
+                  ? new OMEBigTiffTiledStorage(dir)
+                  : new OMEBigTiffMultiresStorage(dir);
+         } else {
+            // normalizeDatasetPath already established this is one of the three known formats.
+            storage_ = new NDTiffStorage(dir, SAVING_QUEUE_SIZE, null);
+         }
          storageDir_ = new File(dir).getParent();
          acqName_ = new File(dir).getName();
          datasetDir_ = new File(dir).getAbsolutePath();
@@ -572,7 +592,7 @@ public class DeskewExploreManager {
             displayExecutor_.submit(() -> {
                // stopExplore() nulls these from another thread and shutdownNow() does not
                // wait for us, so a field can go non-null -> null mid-task.
-               final NDTiffStorage storageRef = storage_;
+               final MultiresNDTiffAPI storageRef = storage_;
                final TiledDataViewerDataProviderAPI providerRef = mm2DataProvider_;
                final TiledDataViewerDataViewerAPI viewerApiRef = mm2Viewer_;
                final TiledDataViewerAPI tiledViewerRef = viewer_;
@@ -795,7 +815,7 @@ public class DeskewExploreManager {
       // NDViewer's close runs asynchronously on its own thread ("NDViewer closing
       // thread"), so we must wait for it to finish before closing the storage or
       // deleting files it may still be accessing.
-      final NDTiffStorage storageToClose = storage_;
+      final MultiresNDTiffAPI storageToClose = storage_;
       final boolean doDelete = deleteTempFiles;
       storage_ = null;
       if (storageToClose != null || doDelete) {
@@ -1095,7 +1115,7 @@ public class DeskewExploreManager {
          // Finish writing to storage if it's still open.
          // Null storage_ BEFORE close to prevent double-close in the cleanup thread.
          if (storage_ != null) {
-            NDTiffStorage storageRef = storage_;
+            MultiresNDTiffAPI storageRef = storage_;
             storage_ = null;
             try {
                if (!storageRef.isFinished()) {
@@ -1207,8 +1227,8 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Returns a dataset name that does not collide under {@code base}, appending {@code _N}
-    * if needed: two sessions started in the same second share a timestamp.
+    * Returns a dataset name that does not collide under {@code base}, checking the bare name
+    * and each backend's folder form ({@code .ome.zarr}, {@code .ome.tiff}).
     *
     * @param base      directory the dataset will be created in
     * @param candidate preferred dataset name
@@ -1217,7 +1237,9 @@ public class DeskewExploreManager {
    private static String uniqueAcqName(Path base, String candidate) {
       String name = candidate;
       int suffix = 1;
-      while (new File(base.toFile(), name).exists()) {
+      while (new File(base.toFile(), name).exists()
+            || new File(base.toFile(), name + ".ome.zarr").exists()
+            || new File(base.toFile(), name + ".ome.tiff").exists()) {
          name = candidate + "_" + suffix++;
       }
       return name;
@@ -1907,7 +1929,7 @@ public class DeskewExploreManager {
 
    /**
     * Converts a stage position (in microns) to full-resolution pixel coordinates
-    * in NDTiffStorage display space, where tile (0,0) occupies [0, effectiveTileWidth).
+    * in tiled-storage display space, where tile (0,0) occupies [0, effectiveTileWidth).
     * Tile (0,0) center is at (initialStageX_, initialStageY_) in stage space and
     * at pixel (effectiveTileWidth/2, effectiveTileHeight/2).
     */

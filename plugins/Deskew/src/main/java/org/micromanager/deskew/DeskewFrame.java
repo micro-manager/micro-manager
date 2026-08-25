@@ -97,6 +97,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String EXPLORE_MIRROR = "ExploreMirror";
    static final String EXPLORE_ROTATE = "ExploreRotate";
    static final String EXPLORE_OVERLAP_PERCENT = "ExploreOverlapPercent";
+   static final String EXPLORE_STORAGE_BACKEND = "ExploreStorageBackend";
+   static final String BACKEND_NDTIFF = "NDTiff";
+   static final String BACKEND_OME_ZARR = "OMEZarr";
+   static final String BACKEND_OME_BIGTIFF = "OMEBigTiff";
    private final Studio studio_;
    private final DeskewFactory deskewFactory_;
    private final MutablePropertyMapView settings_;
@@ -466,6 +470,39 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       overlapSpinner.addChangeListener(e ->
             settings_.putInteger(EXPLORE_OVERLAP_PERCENT, (Integer) overlapSpinner.getValue()));
       explorePanel.add(overlapSpinner);
+      explorePanel.add(new JLabel(" "), "");
+      explorePanel.add(new JLabel(" "), "growx, wrap");
+
+      JLabel storageLabel = new JLabel("Storage:");
+      storageLabel.setToolTipText("Storage backend used for newly acquired explore data.");
+      explorePanel.add(storageLabel, "span 2, split 4");
+
+      JComboBox<String> storageComboBox = new JComboBox<>(new String[]{
+            "NDTiff", "OME-Zarr", "OME-BigTIFF"});
+      storageComboBox.setToolTipText("<html>Storage backend for explore acquisitions.<br>"
+            + "OME-Zarr (OME-NGFF v0.5 / Zarr v3) and OME-BigTIFF are grayscale only.</html>");
+      String backend = settings_.getString(EXPLORE_STORAGE_BACKEND, BACKEND_NDTIFF);
+      if (BACKEND_OME_ZARR.equals(backend)) {
+         storageComboBox.setSelectedIndex(1);
+      } else if (BACKEND_OME_BIGTIFF.equals(backend)) {
+         storageComboBox.setSelectedIndex(2);
+      } else {
+         storageComboBox.setSelectedIndex(0);
+      }
+      // Attached after setSelectedIndex so restoring the saved value does not write it back.
+      storageComboBox.addActionListener(e -> {
+         switch (storageComboBox.getSelectedIndex()) {
+            case 1:
+               settings_.putString(EXPLORE_STORAGE_BACKEND, BACKEND_OME_ZARR);
+               break;
+            case 2:
+               settings_.putString(EXPLORE_STORAGE_BACKEND, BACKEND_OME_BIGTIFF);
+               break;
+            default:
+               settings_.putString(EXPLORE_STORAGE_BACKEND, BACKEND_NDTIFF);
+         }
+      });
+      explorePanel.add(storageComboBox);
       explorePanel.add(new JLabel(" "), "");
       explorePanel.add(new JLabel(" "), "growx, wrap");
 
