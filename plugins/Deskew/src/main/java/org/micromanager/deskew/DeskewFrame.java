@@ -93,7 +93,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String OUTPUT_PATH = "Output path";
    static final String SHOW = "Show";
    static final String SYNC_WITH_MDA = "Sync with MDA";
-   public static final String EXPLORE_MODE = "ExploreMode";
    static final String EXPLORE_TMP_PATH = "ExploreTmpPath";
    static final String EXPLORE_MIRROR = "ExploreMirror";
    static final String EXPLORE_ROTATE = "ExploreRotate";
@@ -127,6 +126,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       studio_ = studio;
       deskewFactory_ = deskewFactory;
       settings_ = studio_.profile().getSettings(this.getClass());
+      // Older versions stored explore mode as a profile setting.  A crash mid-acquisition could
+      // leave it set, which silently disabled deskewing; it is now a transient flag on
+      // DeskewFactory.  Drop any stale value so affected profiles heal themselves.
+      settings_.remove("ExploreMode");
       clij2_ = CLIJ2.getInstance();
       studio_.logs().logMessage(CLIJ2.clinfo());
       studio_.logs().logMessage(clij2_.getGPUName());
@@ -147,7 +150,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    @Override
    public void cleanup() {
-
+      // A live Explore session owns executors, storage, a viewer, and an event subscription.
+      // Leaving it running when this window goes away leaks all of them, so end it here --
+      // asking first, so acquired tiles are never discarded without the user's say-so.
+      exploreManager_.shutdownSession();
    }
 
    @Override
