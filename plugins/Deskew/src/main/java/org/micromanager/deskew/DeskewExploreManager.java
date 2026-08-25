@@ -102,8 +102,8 @@ public class DeskewExploreManager {
    private JSONObject pendingViewState_ = null;
    private String storageDir_;
    private String acqName_;
-   // Absolute path of the actual dataset directory (<storageDir_>/<acqName_>). This is what is
-   // kept, moved, or deleted -- storageDir_ is only its (possibly shared) parent.
+   // The dataset directory itself: what gets kept, moved, or deleted.  storageDir_ is only
+   // its (possibly shared) parent.
    private String datasetDir_;
    // Set by promptForUnsavedData() when the user chooses "Keep": leave the data on disk.
    private volatile boolean keepTempDataOnClose_ = false;
@@ -117,22 +117,19 @@ public class DeskewExploreManager {
    // Counts tile-batch tasks currently queued or running in acquisitionExecutor_
    private final AtomicInteger pendingBatches_ = new AtomicInteger(0);
 
-   // Hardware state captured at session start.  Every already-acquired tile was placed using
-   // these values, so they must not follow the live hardware.
+   // Session-start hardware: already-acquired tiles were placed with these, so they must
+   // not follow the live values.
    private double initialPixelSizeUm_ = 1.0;
    private int initialCameraWidth_ = 0;
    private int initialCameraHeight_ = 0;
    private int cameraWidth_ = 0;
    private int cameraHeight_ = 0;
-   // True when pixel size or camera ROI drifted from the session-start values.  New tiles cannot
-   // be placed consistently while this holds, so acquisition is blocked.
+   // Set while the live hardware differs from the session-start state; blocks acquisition.
    private volatile boolean settingsMismatch_ = false;
    private Alert mismatchAlert_ = null;
 
-   // Acquisition-shape decisions locked at session start.  The MDA slice settings can be toggled
-   // mid-session, but the dataset's axes shape must stay consistent: TiledDataViewer treats
-   // "z axis absent" as different from "z axis present at index 0", so mixing tiles with and
-   // without a "z" axis makes earlier tiles disappear.
+   // Locked at session start: TiledDataViewer treats "z absent" and "z at index 0" as
+   // different axes shapes, so mixing them makes earlier tiles disappear.
    private boolean sessionUseSlices_ = false;
    private ArrayList<Double> sessionSlices_ = new ArrayList<>();
    private volatile boolean mdaSliceOverrideWarningShown_ = false;
@@ -156,8 +153,7 @@ public class DeskewExploreManager {
       try {
          exploring_ = true;
          viewerClosing_ = false;
-         // Reset per-session close state: a "Keep" from a previous session must not decide
-         // what happens to this one's data.
+         // A "Keep" from a previous session must not decide this one's fate.
          keepTempDataOnClose_ = false;
          shutdownInProgress_ = false;
 
@@ -190,9 +186,8 @@ public class DeskewExploreManager {
             pixelSizeUm_ = 1.0;
          }
 
-         // Remember the hardware state this session's tile grid is based on.  Every tile
-         // already on the canvas was placed using these values, so they must not follow the
-         // live hardware; updateSettingsMismatch() compares against them.
+         // Tiles on the canvas were placed with these, so they must not follow the live
+         // hardware; updateSettingsMismatch() compares against them.
          initialPixelSizeUm_ = pixelSizeUm_;
          initialCameraWidth_ = imageWidth;
          initialCameraHeight_ = imageHeight;
@@ -244,10 +239,8 @@ public class DeskewExploreManager {
          // Add channel metadata from MDA settings for Inspector display
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
 
-         // Lock the z-axis decision for the whole session.  The MDA slice settings can be
-         // toggled mid-session, but the dataset's axes shape must stay consistent:
-         // TiledDataViewer treats "z axis absent" as different from "z axis present at index
-         // 0", so mixing tiles with and without a "z" axis makes earlier tiles disappear.
+         // TiledDataViewer treats "z absent" and "z at index 0" as different axes shapes,
+         // so every tile in the session must use the same slice settings.
          sessionUseSlices_ = settings.useSlices() && !settings.slices().isEmpty();
          sessionSlices_ = new ArrayList<>(settings.slices());
          mdaSliceOverrideWarningShown_ = false;
@@ -274,8 +267,7 @@ public class DeskewExploreManager {
          storage_ = new NDTiffStorage(storageDir_, acqName_, summaryMetadata,
                  overlapX, overlapY, true, null,
                  SAVING_QUEUE_SIZE, null, true);
-         // Record the directory the storage actually created.  Keep/move/delete all act on
-         // this, never on storageDir_, which is only its (possibly shared) parent.
+         // The directory the backend actually created.
          datasetDir_ = storage_.getDiskLocation();
          dataSource_.setStorage(storage_);
 
@@ -578,10 +570,8 @@ public class DeskewExploreManager {
          // Trigger initial display and seed the histogram for all stored images.
          if (displayExecutor_ != null && viewer_ != null) {
             displayExecutor_.submit(() -> {
-               // Snapshot every field this task touches: stopExplore() nulls them from another
-               // thread, and its shutdownNow() only interrupts this task, it does not wait for
-               // it to finish.  Re-reading a field mid-task can therefore see it change from
-               // non-null to null between the guard and the call.
+               // stopExplore() nulls these from another thread and shutdownNow() does not
+               // wait for us, so a field can go non-null -> null mid-task.
                final NDTiffStorage storageRef = storage_;
                final TiledDataViewerDataProviderAPI providerRef = mm2DataProvider_;
                final TiledDataViewerDataViewerAPI viewerApiRef = mm2Viewer_;
@@ -672,9 +662,8 @@ public class DeskewExploreManager {
          }
 
          /**
-          * Called on the EDT when the user clicks the viewer's X button.  Asks what should
-          * happen to the acquired data BEFORE the viewer tears itself down, so that Cancel
-          * can simply leave the window open.
+          * Called on the EDT when the user clicks the viewer's X button, before any
+          * teardown, so a Cancel can simply leave the window open.
           *
           * @return false to veto the close
           */
@@ -685,9 +674,8 @@ public class DeskewExploreManager {
 
          @Override
          public void abort() {
-            // Don't call stopExplore() here - NDViewer calls abort() before
-            // dataSource.close(), which triggers onViewerClosed().  If we stopped the
-            // session here, onViewerClosed() would see exploring_ == false and skip cleanup.
+            // NDViewer calls abort() before dataSource.close(); stopping the session here
+            // would leave onViewerClosed() with exploring_ == false and skip cleanup.
          }
 
          @Override
@@ -858,11 +846,8 @@ public class DeskewExploreManager {
                deleteTempStorage();
             }
          };
-         // When called during app shutdown, addShutdownHook throws IllegalStateException,
-         // so we cannot use a hook.  Instead run the cleanup synchronously here - the caller
-         // (onShutdownCommencing) holds the shutdown event and the JVM will not exit until
-         // this method returns.  This matters whether or not we delete: the settings files
-         // are written by the same task, and a background thread would be killed mid-write.
+         // addShutdownHook throws once shutdown starts, and a background thread would be
+         // killed mid-write; the caller holds the event, so the JVM waits for us here.
          if (shutdownInProgress_) {
             cleanupTask.run();
          } else {
@@ -886,8 +871,7 @@ public class DeskewExploreManager {
          event.cancelShutdown();
          return;
       }
-      // Only now is the session definitely ending; setting this earlier would leave it stuck
-      // true when the user cancels, changing how a later close cleans up.
+      // Set only once the session is definitely ending, or a cancel leaves it stuck true.
       shutdownInProgress_ = true;
       onViewerClosed();
    }
@@ -936,10 +920,8 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Blocks acquisition while the pixel size or camera ROI differs from the values this
-    * session's tile grid was built on.  New tiles acquired at a different size could not be
-    * placed consistently with the ones already on the canvas, so rather than writing data that
-    * silently does not line up, the Explorer refuses and says why.
+    * Blocks acquisition while the live pixel size or camera ROI differs from the values this
+    * session's tile grid was built on, since new tiles could not be placed consistently.
     */
    private void updateSettingsMismatch() {
       boolean mismatch = Math.abs(pixelSizeUm_ - initialPixelSizeUm_) > 0.001 * initialPixelSizeUm_
@@ -963,9 +945,8 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Called when the viewer has closed (from DeskewExploreDataSource.close()).  By this point
-    * the user has already decided what happens to the data, either through requestToClose() or
-    * through onShutdownCommencing(), so this only tears the session down.
+    * Called when the viewer has closed.  The data's fate is already decided by
+    * requestToClose() or onShutdownCommencing(), so this only tears the session down.
     */
    public void onViewerClosed() {
       // Guard against re-entrant calls:
@@ -998,8 +979,8 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Asks what should happen to unsaved Explore data.  Performs no teardown, so a Cancel can
-    * simply leave the session running.  Must be called on the EDT.
+    * Asks what should happen to unsaved Explore data.  Performs no teardown, so a Cancel
+    * can simply leave the session running.  Must be called on the EDT.
     *
     * @return true if the caller should proceed (data kept, moved, or to be deleted),
     *         false if the user cancelled
@@ -1021,8 +1002,7 @@ public class DeskewExploreManager {
          return true;
       }
 
-      // Loop until the user makes a definitive choice: if they pick "Move" but then cancel the
-      // file chooser, re-show this dialog rather than guessing what they meant.
+      // Re-show rather than guess if they pick "Move" then cancel the file chooser.
       while (true) {
          int choice = JOptionPane.showOptionDialog(
                  null,
@@ -1079,12 +1059,11 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Shuts down the MM-side viewer wrapper without closing the TiledDataViewer itself (it is
-    * already closing) and drops the references so stopExplore() does not close them again.
+    * Shuts down the MM-side wrapper without closing the TiledDataViewer (already closing)
+    * and drops the references so stopExplore() does not close them again.
     */
    private void closeViewerReferences() {
-      // A second close would queue EDT runnables that NPE on the viewer's partially
-      // torn-down internal state.
+      // A second close queues EDT runnables that NPE on half-torn-down viewer state.
       if (mm2Viewer_ != null) {
          mm2Viewer_.closeWithoutTiledDataViewer();
       }
@@ -1184,9 +1163,8 @@ public class DeskewExploreManager {
     * by memory-mapped buffers (common on Windows).
     */
    private void deleteTempStorage() {
-      // Delete only this dataset, never the (possibly shared) parent base directory:
-      // openExplore() sets storageDir_ to the PARENT of the dataset the user picked, so
-      // deleting storageDir_ would take the user's sibling datasets with it.
+      // openExplore() sets storageDir_ to the PARENT of the opened dataset; deleting that
+      // would take the user's sibling datasets with it.
       String target = dataLocationForMessages();
       if (target == null) {
          return;
@@ -1214,8 +1192,7 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Human-readable location of the acquired dataset, for user messages and for deciding what
-    * to delete.  Prefers the directory the storage backend actually created.
+    * Location of the acquired dataset, for user messages and for deciding what to delete.
     *
     * @return absolute path of the dataset directory, or null when nothing was created yet
     */
@@ -1230,9 +1207,8 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Returns a dataset name that does not collide with an existing directory under
-    * {@code base}, appending {@code _N} if needed.  The timestamp alone is not unique: two
-    * sessions started in the same second would otherwise write into the same directory.
+    * Returns a dataset name that does not collide under {@code base}, appending {@code _N}
+    * if needed: two sessions started in the same second share a timestamp.
     *
     * @param base      directory the dataset will be created in
     * @param candidate preferred dataset name
@@ -1445,9 +1421,7 @@ public class DeskewExploreManager {
 
          SequenceSettings acqSettings = sb.build();
 
-         // Set explore mode so DeskewFactory creates a pass-through processor.  This is a
-         // transient, in-memory flag: a crash between set and reset must not leave deskewing
-         // disabled for the next session, which a profile-persisted setting would.
+         // Makes DeskewFactory hand back a pass-through processor for this acquisition.
          Datastore testStore;
          deskewFactory_.setExploreMode(true);
          try {
@@ -1464,9 +1438,6 @@ public class DeskewExploreManager {
             return;
          }
 
-         // Everything below runs in a try/finally so the test datastore is always released.
-         // Previously each early return closed it by hand, which leaked one RAM datastore per
-         // tile whenever the deskew or storage step threw instead of returning.
          try {
             if (testStore.getNumImages() == 0) {
                studio_.logs().showError("Test acquisition produced no images at row=" + row
@@ -1572,10 +1543,8 @@ public class DeskewExploreManager {
                final int tileRow = row;
                final int tileCol = col;
                displayExecutor_.submit(() -> {
-                  // Snapshot every field this task touches: stopExplore() nulls them from another
-                  // thread, and its shutdownNow() only interrupts this task, it does not wait for
-                  // it to finish.  Re-reading a field mid-task can therefore see it change from
-                  // non-null to null between the guard and the call.
+                  // stopExplore() nulls these from another thread and shutdownNow() does not
+                  // wait for us, so a field can go non-null -> null mid-task.
                   final TiledDataViewerDataProviderAPI providerRef = mm2DataProvider_;
                   final TiledDataViewerDataViewerAPI viewerApiRef = mm2Viewer_;
                   final TiledDataViewerAPI tiledViewerRef = viewer_;
@@ -1624,8 +1593,8 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Freezes and closes a test datastore, logging rather than propagating failures: this runs
-    * in a finally block, where throwing would mask the original error.
+    * Freezes and closes a test datastore, logging rather than propagating failures: this
+    * runs in a finally block, where throwing would mask the original error.
     *
     * @param store the datastore to release; may be null
     */
@@ -1992,10 +1961,8 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Overlap in pixels along one axis, for a tile that is {@code tileSize} pixels along that
-    * axis.  The overlap percentage applies to each axis separately: deriving the Y overlap from
-    * the tile width places tiles wrongly whenever the tile is not square (non-square camera ROI,
-    * or a 90/270 degree rotation).
+    * Overlap in pixels along one axis.  The percentage applies per axis: deriving the Y
+    * overlap from the tile width misplaces tiles whenever the tile is not square.
     *
     * @param tileSize tile extent along the axis of interest, in pixels
     * @return overlap along that axis, in pixels
@@ -2033,9 +2000,8 @@ public class DeskewExploreManager {
     * acquired) and swaps them for 90 deg/270 deg rotations.
     */
    public void updateTileDimensionsForRotation() {
-      // Called from the rotate combo in DeskewFrame, which stays enabled when no explore
-      // session is running -- dataSource_ is null before startExplore() and again after
-      // stopExplore(), so there is simply nothing to resize.
+      // The rotate combo stays enabled with no session running, where there is nothing
+      // to resize.
       final DeskewExploreDataSource dataSourceRef = dataSource_;
       if (dataSourceRef == null) {
          return;
@@ -2062,9 +2028,8 @@ public class DeskewExploreManager {
    }
 
    /**
-    * Ends a live session from outside the viewer (the Deskew window is closing).  Asks what
-    * should happen to any acquired data first, so tiles are never discarded silently; a Cancel
-    * leaves the session running.
+    * Ends a live session from outside the viewer, asking about any acquired data first.
+    * A Cancel leaves the session running.
     *
     * @return true if the session was ended (or none was running), false if the user cancelled
     */
@@ -2075,8 +2040,7 @@ public class DeskewExploreManager {
       if (!promptForUnsavedData()) {
          return false;
       }
-      // Closing the viewer routes back through onViewerClosed(), which tears the session down
-      // using the choice just made.
+      // Closing the viewer routes back through onViewerClosed().
       if (mm2Viewer_ != null) {
          mm2Viewer_.close();
       } else {

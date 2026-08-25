@@ -60,8 +60,7 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
    // When true, tile selection and acquisition are disabled (opened dataset, not live explore).
    private volatile boolean readOnly_ = false;
 
-   // When true, the hardware no longer matches the session-start state, so new tiles could not
-   // be placed consistently with those already acquired; acquisition is refused.
+   // Set while the live hardware differs from the session-start state; blocks acquisition.
    private volatile boolean settingsMismatch_ = false;
 
    // Cache for getImageKeys() - invalidated by DeskewExploreManager after putImageMultiRes.
@@ -149,10 +148,8 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
    }
 
    /**
-    * Records whether the pixel size or camera ROI has drifted from the session-start values.
-    * The selection is deliberately left visible: drawOverlay() swaps the acquire prompt for a
-    * "revert to original" message on it, so the user can see exactly what is blocked and get it
-    * back by restoring the settings.
+    * Records whether the hardware has drifted from the session-start values.  The selection
+    * stays visible; drawOverlay() swaps the acquire prompt for a "revert" message on it.
     *
     * @param mismatch true while the current hardware differs from the session-start state
     */
@@ -462,8 +459,7 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
    @Override
    public void mouseReleased(MouseEvent e) {
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
-         // Right-click without drag - start new selection (blocked in read-only mode, and
-         // while the hardware no longer matches the session, since it could not be acquired)
+         // Right-click without drag - start new selection.
          if (!readOnly_ && !settingsMismatch_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
             if (tile != null) {
@@ -480,8 +476,7 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
          } else if (!readOnly_ && !settingsMismatch_) {
-            // Left-click without drag - queue selected tiles for acquisition.  The retained
-            // selection cannot be acquired until the user reverts the image dimensions.
+            // Left-click without drag - queue selected tiles for acquisition.
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);

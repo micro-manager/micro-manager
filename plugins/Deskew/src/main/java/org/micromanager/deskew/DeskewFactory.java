@@ -13,9 +13,8 @@ public class DeskewFactory implements ProcessorFactory {
    private final Studio studio_;
    private final DeskewAcqManager deskewAcqManager_;
    private PropertyMap settings_;
-   // Transient: set only for the duration of a Deskew Explore tile acquisition.  Deliberately
-   // NOT a profile setting -- a crash between set and reset would otherwise persist and
-   // silently disable deskewing on the next launch.
+   // Deliberately not a profile setting: a crash between set and reset would otherwise
+   // persist and silently disable deskewing on the next launch.
    private volatile boolean exploreMode_ = false;
 
    public DeskewFactory(Studio studio) {
@@ -28,9 +27,8 @@ public class DeskewFactory implements ProcessorFactory {
    }
 
    /**
-    * Sets explore mode, in which {@link #createProcessor()} returns a pass-through processor so
-    * raw images reach the Explorer's own storage untouched.  Callers must reset this in a
-    * {@code finally} block.
+    * Sets explore mode, in which {@link #createProcessor()} returns a pass-through
+    * processor.  Callers must reset this in a {@code finally} block.
     *
     * @param exploreMode true while a Deskew Explore tile acquisition is running
     */
