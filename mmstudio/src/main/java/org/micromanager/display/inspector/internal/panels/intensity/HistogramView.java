@@ -68,6 +68,20 @@ public final class HistogramView extends JPanel {
        */
       void histogramAxisRangeChanged(int component, double newRangeMin, double newRangeMax);
 
+      /**
+       * Called when the user sets a float scaling bound to an exact pixel value.
+       *
+       * <p>The long-valued callbacks above carry a histogram bin index, which quantizes a
+       * float bound to one of ~256 positions. This one carries the value as typed.
+       *
+       * @param component component index
+       * @param newMin low end of the scaling range, as a pixel value
+       * @param newMax high end of the scaling range, as a pixel value
+       */
+      default void histogramFloatScalingChanged(int component, double newMin,
+                                                double newMax) {
+      }
+
       void histogramGammaChanged(double newGamma);
    }
 
@@ -1310,14 +1324,18 @@ public final class HistogramView extends JPanel {
       spinner.addChangeListener((ChangeEvent e) -> {
          double val = ((Number) spinner.getValue()).doubleValue();
          long binIdx = mapper.pixelValueToBinIndex(val);
+         // The handle is drawn at a bin index, but the stored range keeps the exact value
+         // the user typed: rounding it to a bin here would be visible on the image.
          if (top) {
             binIdx = Math.max(state.scalingMin_ + 1, binIdx);
             setComponentScaling(selectedComponent_, state.scalingMin_, binIdx);
-            listeners_.fire().histogramScalingMaxChanged(selectedComponent_, binIdx);
+            listeners_.fire().histogramFloatScalingChanged(selectedComponent_,
+                  mapper.binIndexToPixelValue(state.scalingMin_), val);
          } else {
             binIdx = Math.min(state.scalingMax_ - 1, binIdx);
             setComponentScaling(selectedComponent_, binIdx, state.scalingMax_);
-            listeners_.fire().histogramScalingMinChanged(selectedComponent_, binIdx);
+            listeners_.fire().histogramFloatScalingChanged(selectedComponent_,
+                  val, mapper.binIndexToPixelValue(state.scalingMax_));
          }
       });
       JPopupMenu popup = new JPopupMenu();

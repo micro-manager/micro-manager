@@ -1215,8 +1215,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       double fMin;
       double fMax;
       if (componentSettings.hasFloatScaling()) {
-         fMin = componentSettings.getScalingMinimumDouble();
-         fMax = componentSettings.getScalingMaximumDouble();
+         fMin = componentSettings.getFloatScalingMinimum();
+         fMax = componentSettings.getFloatScalingMaximum();
       } else {
          long storedMin = componentSettings.getScalingMinimum();
          long storedMax = componentSettings.getScalingMaximum();
@@ -1311,12 +1311,25 @@ public final class DisplayUIController implements Closeable, WindowListener,
             DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
                   settings.getChannelSettings(ch).getComponentSettings(compo);
             if (cStats.isFloat()) {
-               // min/max are actual pixel values from the quantile computation. Store them
-               // as such, so that switching autostretch off leaves behind a range that is
-               // meaningful on its own rather than a bin index tied to this one image.
-               dcds.hackScalingMinimumDouble((double) min);
-               dcds.hackScalingMaximumDouble((double) max);
-               ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, (double) min, (double) max, defer);
+               // Recompute the quantiles in pixel values: the long-valued autoscale above
+               // rounds them, which for data spanning less than a unit collapses the range
+               // to 0..1 and then widens it past the data. Storing pixel values also means
+               // switching autostretch off leaves behind a range that is meaningful on its
+               // own rather than a bin index tied to this one image.
+               double fMin;
+               double fMax;
+               if (ignoreZeros) {
+                  fMin = 0.0;
+                  fMax = cStats.getFloatAutoscaleMaxForQuantileIgnoringZeros(q);
+               } else {
+                  double[] fMinMax = new double[2];
+                  cStats.getFloatAutoscaleMinMaxForQuantile(q, fMinMax);
+                  fMin = fMinMax[0];
+                  fMax = fMinMax[1];
+               }
+               dcds.hackFloatScalingMinimum(fMin);
+               dcds.hackFloatScalingMaximum(fMax);
+               ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, fMin, fMax, defer);
             } else {
                dcds.hackScalingMinimum(min);
                dcds.hackScalingMaximum(max);

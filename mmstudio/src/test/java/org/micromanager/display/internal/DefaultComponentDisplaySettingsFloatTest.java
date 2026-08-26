@@ -41,17 +41,17 @@ public class DefaultComponentDisplaySettingsFloatTest {
    @Test
    public void testSetFloatRange() {
       ComponentDisplaySettings s = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(-2.5, 17.25)
+            .floatScalingRange(-2.5, 17.25)
             .build();
       assertTrue(s.hasFloatScaling());
-      assertEquals(-2.5, s.getScalingMinimumDouble(), DELTA);
-      assertEquals(17.25, s.getScalingMaximumDouble(), DELTA);
+      assertEquals(-2.5, s.getFloatScalingMinimum(), DELTA);
+      assertEquals(17.25, s.getFloatScalingMaximum(), DELTA);
    }
 
    @Test
    public void testOnlyOneBoundSetIsNotFloatScaling() {
       ComponentDisplaySettings s = ComponentDisplaySettings.builder()
-            .scalingMinimumDouble(1.0)
+            .floatScalingMinimum(1.0)
             .build();
       assertFalse(s.hasFloatScaling());
    }
@@ -59,8 +59,8 @@ public class DefaultComponentDisplaySettingsFloatTest {
    @Test
    public void testNaNClearsFloatScaling() {
       ComponentDisplaySettings s = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(1.0, 2.0)
-            .scalingMaximumDouble(Double.NaN)
+            .floatScalingRange(1.0, 2.0)
+            .floatScalingMaximum(Double.NaN)
             .build();
       assertFalse(s.hasFloatScaling());
    }
@@ -72,7 +72,7 @@ public class DefaultComponentDisplaySettingsFloatTest {
    @Test
    public void testInvertedFloatRangeIsNotFloatScaling() {
       ComponentDisplaySettings s = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(5.0, 1.0)
+            .floatScalingRange(5.0, 1.0)
             .build();
       assertFalse(s.hasFloatScaling());
    }
@@ -81,7 +81,7 @@ public class DefaultComponentDisplaySettingsFloatTest {
    @Test
    public void testEmptyFloatRangeIsNotFloatScaling() {
       ComponentDisplaySettings s = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(2.0, 2.0)
+            .floatScalingRange(2.0, 2.0)
             .build();
       assertFalse(s.hasFloatScaling());
    }
@@ -90,7 +90,7 @@ public class DefaultComponentDisplaySettingsFloatTest {
    @Test
    public void testInvertedFloatRangeIsNotWritten() {
       ComponentDisplaySettings orig = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(5.0, 1.0)
+            .floatScalingRange(5.0, 1.0)
             .build();
       PropertyMap pmap = ((DefaultComponentDisplaySettings) orig).toPropertyMap();
       assertFalse(pmap.containsKey(PropertyKey.SCALING_MIN_FLOAT.key()));
@@ -100,13 +100,13 @@ public class DefaultComponentDisplaySettingsFloatTest {
    @Test
    public void testCopyBuilderPreservesFloatRange() {
       ComponentDisplaySettings s = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(0.125, 4.5)
+            .floatScalingRange(0.125, 4.5)
             .build()
             .copyBuilder()
             .build();
       assertTrue(s.hasFloatScaling());
-      assertEquals(0.125, s.getScalingMinimumDouble(), DELTA);
-      assertEquals(4.5, s.getScalingMaximumDouble(), DELTA);
+      assertEquals(0.125, s.getFloatScalingMinimum(), DELTA);
+      assertEquals(4.5, s.getFloatScalingMaximum(), DELTA);
    }
 
    // --- equals / hashCode ---
@@ -114,9 +114,9 @@ public class DefaultComponentDisplaySettingsFloatTest {
    @Test
    public void testEqualsDistinguishesFloatRange() {
       ComponentDisplaySettings a = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(0.0, 1.0).build();
+            .floatScalingRange(0.0, 1.0).build();
       ComponentDisplaySettings b = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(0.0, 2.0).build();
+            .floatScalingRange(0.0, 2.0).build();
       assertFalse(a.equals(b));
    }
 
@@ -135,9 +135,9 @@ public class DefaultComponentDisplaySettingsFloatTest {
    @Test
    public void testEqualFloatRangesHaveEqualHashCodes() {
       ComponentDisplaySettings a = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(-1.5, 3.5).build();
+            .floatScalingRange(-1.5, 3.5).build();
       ComponentDisplaySettings b = ComponentDisplaySettings.builder()
-            .scalingRangeDouble(-1.5, 3.5).build();
+            .floatScalingRange(-1.5, 3.5).build();
       assertTrue(a.equals(b));
       assertEquals(a.hashCode(), b.hashCode());
    }
@@ -148,15 +148,15 @@ public class DefaultComponentDisplaySettingsFloatTest {
    public void testPropertyMapRoundTrip() {
       ComponentDisplaySettings orig = ComponentDisplaySettings.builder()
             .scalingRange(3L, 900L)
-            .scalingRangeDouble(-0.75, 12.5)
+            .floatScalingRange(-0.75, 12.5)
             .scalingGamma(1.5)
             .build();
       PropertyMap pmap = ((DefaultComponentDisplaySettings) orig).toPropertyMap();
       ComponentDisplaySettings read =
             DefaultComponentDisplaySettings.fromPropertyMap(pmap);
       assertTrue(read.hasFloatScaling());
-      assertEquals(-0.75, read.getScalingMinimumDouble(), DELTA);
-      assertEquals(12.5, read.getScalingMaximumDouble(), DELTA);
+      assertEquals(-0.75, read.getFloatScalingMinimum(), DELTA);
+      assertEquals(12.5, read.getFloatScalingMaximum(), DELTA);
       assertEquals(3L, read.getScalingMinimum());
       assertEquals(900L, read.getScalingMaximum());
       assertEquals(1.5, read.getScalingGamma(), DELTA);

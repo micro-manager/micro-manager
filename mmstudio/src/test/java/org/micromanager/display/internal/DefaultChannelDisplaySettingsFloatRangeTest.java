@@ -34,8 +34,8 @@ public class DefaultChannelDisplaySettingsFloatRangeTest {
             .floatHistoRangePinned(true)
             .build();
       assertTrue(s.hasFloatHistoRange());
-      assertEquals(-0.6484375, s.getFloatHistoRangeMin(), DELTA);
-      assertEquals(1.0390625, s.getFloatHistoRangeMax(), DELTA);
+      assertEquals(-0.6484375, s.getFloatHistoRangeMinimum(), DELTA);
+      assertEquals(1.0390625, s.getFloatHistoRangeMaximum(), DELTA);
       assertTrue(s.isFloatHistoRangePinned());
    }
 
@@ -56,8 +56,8 @@ public class DefaultChannelDisplaySettingsFloatRangeTest {
             .copyBuilder()
             .build();
       assertTrue(s.hasFloatHistoRange());
-      assertEquals(-2.0, s.getFloatHistoRangeMin(), DELTA);
-      assertEquals(3.0, s.getFloatHistoRangeMax(), DELTA);
+      assertEquals(-2.0, s.getFloatHistoRangeMinimum(), DELTA);
+      assertEquals(3.0, s.getFloatHistoRangeMaximum(), DELTA);
       assertTrue(s.isFloatHistoRangePinned());
    }
 
@@ -92,8 +92,8 @@ public class DefaultChannelDisplaySettingsFloatRangeTest {
       ChannelDisplaySettings read =
             DefaultChannelDisplaySettings.fromPropertyMap(pmap);
       assertTrue(read.hasFloatHistoRange());
-      assertEquals(-0.6484375, read.getFloatHistoRangeMin(), DELTA);
-      assertEquals(1.0390625, read.getFloatHistoRangeMax(), DELTA);
+      assertEquals(-0.6484375, read.getFloatHistoRangeMinimum(), DELTA);
+      assertEquals(1.0390625, read.getFloatHistoRangeMaximum(), DELTA);
       assertTrue(read.isFloatHistoRangePinned());
    }
 

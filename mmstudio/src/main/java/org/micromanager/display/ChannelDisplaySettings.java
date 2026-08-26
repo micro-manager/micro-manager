@@ -129,7 +129,7 @@ public interface ChannelDisplaySettings {
     * @return pixel value, or {@code Double.NaN} if not set
     * @see #hasFloatHistoRange()
     */
-   double getFloatHistoRangeMin();
+   double getFloatHistoRangeMinimum();
 
    /**
     * High end of the histogram axis for floating point images.
@@ -137,12 +137,13 @@ public interface ChannelDisplaySettings {
     * @return pixel value, or {@code Double.NaN} if not set
     * @see #hasFloatHistoRange()
     */
-   double getFloatHistoRangeMax();
+   double getFloatHistoRangeMaximum();
 
    /**
     * Returns whether a float histogram axis range has been recorded.
     *
-    * @return true if both ends are set
+    * @return true if both ends are set and the high end is strictly above the low end;
+    *     an empty or inverted range counts as unset, since it cannot be drawn
     */
    boolean hasFloatHistoRange();
 

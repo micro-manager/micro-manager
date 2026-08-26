@@ -63,6 +63,37 @@ public interface ComponentIntensityRange {
       Builder range(long min, long max);
 
       /**
+       * Sets the minimum as an actual pixel value, for floating point images.
+       *
+       * <p>For float images the long-valued {@link #minimum(long)} is not usable, since
+       * the interesting range is rarely integral. Pass {@code Double.NaN} to clear the
+       * float range and fall back to the long-valued setting.
+       *
+       * @param min pixel value, or NaN to unset
+       * @return this builder
+       */
+      Builder floatMinimum(double min);
+
+      /**
+       * Sets the maximum as an actual pixel value, for floating point images.
+       *
+       * @param max pixel value, or NaN to unset
+       * @return this builder
+       * @see #floatMinimum(double)
+       */
+      Builder floatMaximum(double max);
+
+      /**
+       * Sets both float bounds as actual pixel values.
+       *
+       * @param min pixel value, or NaN to unset
+       * @param max pixel value, or NaN to unset
+       * @return this builder
+       * @see #floatMinimum(double)
+       */
+      Builder floatRange(double min, double max);
+
+      /**
        * Builds and returns the {@link ComponentIntensityRange}.
        *
        * @return immutable {@link ComponentIntensityRange}
@@ -100,4 +131,28 @@ public interface ComponentIntensityRange {
     *     which means "use the full camera bit-depth range"
     */
    long getMaximum();
+
+   /**
+    * Returns the minimum as an actual pixel value, for floating point images.
+    *
+    * @return pixel value, or {@code Double.NaN} if no float range has been set
+    * @see #hasFloatRange()
+    */
+   double getFloatMinimum();
+
+   /**
+    * Returns the maximum as an actual pixel value, for floating point images.
+    *
+    * @return pixel value, or {@code Double.NaN} if no float range has been set
+    * @see #hasFloatRange()
+    */
+   double getFloatMaximum();
+
+   /**
+    * Returns whether a floating point range has been set.
+    *
+    * @return true if both bounds are set and the maximum is strictly above the minimum;
+    *     an empty or inverted range counts as unset, since it cannot be displayed
+    */
+   boolean hasFloatRange();
 }

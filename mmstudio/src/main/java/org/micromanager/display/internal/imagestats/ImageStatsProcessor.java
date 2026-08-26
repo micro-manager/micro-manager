@@ -14,6 +14,7 @@
 package org.micromanager.display.internal.imagestats;
 
 import com.google.common.base.Preconditions;
+import ij.ImagePlus;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -203,7 +204,11 @@ public final class ImageStatsProcessor {
                mask,
                nComponents, boxedBitDepth, bitDepth, binCountPowerOf2,
                useROI, index);
-      } else if (bytesPerSample == 4 && nComponents == 1) {
+      } else if (bytesPerSample == 4 && nComponents == 1
+            && image.getImageJPixelType() == ImagePlus.GRAY32) {
+         // Ask the image what it is rather than inferring float from the sample size: the
+         // float path casts the pixels to float[], which a future 4-byte integer type
+         // would not satisfy.
          result = computeFloatStats(image, statsBounds, maskBytes, maskBounds, useROI, index);
       }
 
@@ -225,7 +230,6 @@ public final class ImageStatsProcessor {
       long count = 0;
       long countNonZero = 0;
       double sum = 0.0;
-      double sumNonZero = 0.0;
       double sumOfSquares = 0.0;
 
       // First pass: find min/max, accumulate sum/sumOfSquares/counts
@@ -253,7 +257,6 @@ public final class ImageStatsProcessor {
             }
             if (v != 0.0f) {
                countNonZero++;
-               sumNonZero += v;
                if (v < fMinNonZero) {
                   fMinNonZero = v;
                }
@@ -308,7 +311,7 @@ public final class ImageStatsProcessor {
       // The long-valued minimum/maximum/sum/sumOfSquares are kept because the bin and
       // quantile machinery is integer based. They cannot represent float statistics, so
       // the true values are also stored as doubles and are what the intensity readout
-      // uses; see ComponentStats.getMinIntensityDouble() and friends.
+      // uses; see ComponentStats.getFloatMinIntensity() and friends.
       ComponentStats stats = ComponentStats.builder()
             .histogram(hist, 0)
             .isFloat(true)
@@ -322,11 +325,11 @@ public final class ImageStatsProcessor {
             .maximum((long) Math.ceil(fMax))
             .sum(Math.round(sum))
             .sumOfSquares(Math.round(sumOfSquares))
-            .minimumDouble(fMin)
-            .minimumExcludingZerosDouble(fMinNonZero)
-            .maximumDouble(fMax)
-            .sumDouble(sum)
-            .sumOfSquaresDouble(sumOfSquares)
+            .floatMinimum(fMin)
+            .floatMinimumExcludingZeros(fMinNonZero)
+            .floatMaximum(fMax)
+            .floatSum(sum)
+            .floatSumOfSquares(sumOfSquares)
             .build();
       return ImageStats.create(index, stats);
    }

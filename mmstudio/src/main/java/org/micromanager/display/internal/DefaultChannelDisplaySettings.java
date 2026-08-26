@@ -259,12 +259,12 @@ public final class DefaultChannelDisplaySettings
    }
 
    @Override
-   public double getFloatHistoRangeMin() {
+   public double getFloatHistoRangeMinimum() {
       return floatHistoRangeMin_;
    }
 
    @Override
-   public double getFloatHistoRangeMax() {
+   public double getFloatHistoRangeMaximum() {
       return floatHistoRangeMax_;
    }
 

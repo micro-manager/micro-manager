@@ -42,16 +42,16 @@ public interface ComponentDisplaySettings {
        * @param minIntensity pixel value, or NaN to unset
        * @return this builder
        */
-      Builder scalingMinimumDouble(double minIntensity);
+      Builder floatScalingMinimum(double minIntensity);
 
       /**
        * Sets the scaling maximum as an actual pixel value, for floating point images.
        *
        * @param maxIntensity pixel value, or NaN to unset
        * @return this builder
-       * @see #scalingMinimumDouble(double)
+       * @see #floatScalingMinimum(double)
        */
-      Builder scalingMaximumDouble(double maxIntensity);
+      Builder floatScalingMaximum(double maxIntensity);
 
       /**
        * Sets both float scaling bounds as actual pixel values.
@@ -59,9 +59,9 @@ public interface ComponentDisplaySettings {
        * @param minIntensity pixel value, or NaN to unset
        * @param maxIntensity pixel value, or NaN to unset
        * @return this builder
-       * @see #scalingMinimumDouble(double)
+       * @see #floatScalingMinimum(double)
        */
-      Builder scalingRangeDouble(double minIntensity, double maxIntensity);
+      Builder floatScalingRange(double minIntensity, double maxIntensity);
 
       ComponentDisplaySettings build();
    }
@@ -76,7 +76,7 @@ public interface ComponentDisplaySettings {
     * @return pixel value, or {@code Double.NaN} if no float scaling has been set
     * @see #hasFloatScaling()
     */
-   double getScalingMinimumDouble();
+   double getFloatScalingMinimum();
 
    /**
     * Returns the scaling maximum as an actual pixel value, for floating point images.
@@ -84,7 +84,7 @@ public interface ComponentDisplaySettings {
     * @return pixel value, or {@code Double.NaN} if no float scaling has been set
     * @see #hasFloatScaling()
     */
-   double getScalingMaximumDouble();
+   double getFloatScalingMaximum();
 
    /**
     * Returns whether a floating point scaling range has been set.
@@ -92,9 +92,34 @@ public interface ComponentDisplaySettings {
     * <p>When false, callers displaying float images should fall back to deriving a range
     * from the image statistics.
     *
-    * @return true if both float scaling bounds are set
+    * @return true if both bounds are set and the maximum is strictly above the minimum;
+    *     an empty or inverted range counts as unset, since it cannot be displayed
     */
    boolean hasFloatScaling();
+
+   /**
+    * Scaling minimum as a pixel value, whichever range is in effect.
+    *
+    * <p>Returns the float range when one is set, and otherwise the long-valued range
+    * widened to a double. Use this rather than {@link #getScalingMinimum()} anywhere the
+    * value feeds a renderer or a file, so that float images are handled correctly without
+    * every caller having to branch on {@link #hasFloatScaling()}.
+    *
+    * @return the scaling minimum
+    */
+   default double getEffectiveScalingMinimum() {
+      return hasFloatScaling() ? getFloatScalingMinimum() : (double) getScalingMinimum();
+   }
+
+   /**
+    * Scaling maximum as a pixel value, whichever range is in effect.
+    *
+    * @return the scaling maximum
+    * @see #getEffectiveScalingMinimum()
+    */
+   default double getEffectiveScalingMaximum() {
+      return hasFloatScaling() ? getFloatScalingMaximum() : (double) getScalingMaximum();
+   }
 
    double getScalingGamma();
 

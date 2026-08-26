@@ -18,16 +18,17 @@ public final class DefaultComponentDisplaySettings
    // case the long-valued scalingMin_/scalingMax_ apply. Storing real pixel values (rather
    // than histogram bin indices) is what allows a float range to stay fixed across frames
    // and to be persisted meaningfully.
-   private double scalingMinDouble_;
-   private double scalingMaxDouble_;
+   // Not final only because of the hackFloatScaling* setters below; treat as immutable.
+   private double floatScalingMin_;
+   private double floatScalingMax_;
    private final double gamma_;
 
    private static final class Builder
          implements ComponentDisplaySettings.Builder {
       private long scalingMin_ = 0;
       private long scalingMax_ = Long.MAX_VALUE;
-      private double scalingMinDouble_ = Double.NaN;
-      private double scalingMaxDouble_ = Double.NaN;
+      private double floatScalingMin_ = Double.NaN;
+      private double floatScalingMax_ = Double.NaN;
       private double gamma_ = 1.0;
 
       @Override
@@ -51,6 +52,9 @@ public final class DefaultComponentDisplaySettings
 
       @Override
       public Builder scalingRange(ComponentIntensityRange range) {
+         if (range.hasFloatRange()) {
+            floatScalingRange(range.getFloatMinimum(), range.getFloatMaximum());
+         }
          return scalingRange(range.getMinimum(), range.getMaximum());
       }
 
@@ -62,21 +66,21 @@ public final class DefaultComponentDisplaySettings
       }
 
       @Override
-      public Builder scalingMinimumDouble(double minIntensity) {
-         scalingMinDouble_ = minIntensity;
+      public Builder floatScalingMinimum(double minIntensity) {
+         floatScalingMin_ = minIntensity;
          return this;
       }
 
       @Override
-      public Builder scalingMaximumDouble(double maxIntensity) {
-         scalingMaxDouble_ = maxIntensity;
+      public Builder floatScalingMaximum(double maxIntensity) {
+         floatScalingMax_ = maxIntensity;
          return this;
       }
 
       @Override
-      public Builder scalingRangeDouble(double minIntensity, double maxIntensity) {
-         scalingMinDouble_ = minIntensity;
-         scalingMaxDouble_ = maxIntensity;
+      public Builder floatScalingRange(double minIntensity, double maxIntensity) {
+         floatScalingMin_ = minIntensity;
+         floatScalingMax_ = maxIntensity;
          return this;
       }
 
@@ -93,8 +97,8 @@ public final class DefaultComponentDisplaySettings
    private DefaultComponentDisplaySettings(Builder builder) {
       scalingMin_ = builder.scalingMin_;
       scalingMax_ = builder.scalingMax_;
-      scalingMinDouble_ = builder.scalingMinDouble_;
-      scalingMaxDouble_ = builder.scalingMaxDouble_;
+      floatScalingMin_ = builder.floatScalingMin_;
+      floatScalingMax_ = builder.floatScalingMax_;
       gamma_ = builder.gamma_;
    }
 
@@ -109,13 +113,13 @@ public final class DefaultComponentDisplaySettings
    }
 
    @Override
-   public double getScalingMinimumDouble() {
-      return scalingMinDouble_;
+   public double getFloatScalingMinimum() {
+      return floatScalingMin_;
    }
 
    @Override
-   public double getScalingMaximumDouble() {
-      return scalingMaxDouble_;
+   public double getFloatScalingMaximum() {
+      return floatScalingMax_;
    }
 
    @Override
@@ -123,16 +127,16 @@ public final class DefaultComponentDisplaySettings
       // An inverted range is treated as unset: callers use this as the
       // authority on whether the stored bounds are usable, and applying
       // max < min would produce a nonsensical display range.
-      return !Double.isNaN(scalingMinDouble_) && !Double.isNaN(scalingMaxDouble_)
-            && scalingMaxDouble_ > scalingMinDouble_;
+      return !Double.isNaN(floatScalingMin_) && !Double.isNaN(floatScalingMax_)
+            && floatScalingMax_ > floatScalingMin_;
    }
 
-   public void hackScalingMinimumDouble(double min) {
-      scalingMinDouble_ = min;
+   public void hackFloatScalingMinimum(double min) {
+      floatScalingMin_ = min;
    }
 
-   public void hackScalingMaximumDouble(double max) {
-      scalingMaxDouble_ = max;
+   public void hackFloatScalingMaximum(double max) {
+      floatScalingMax_ = max;
    }
 
    public void hackScalingMinimum(long min) {
@@ -153,8 +157,8 @@ public final class DefaultComponentDisplaySettings
       Builder builder = new Builder();
       builder.scalingMin_ = scalingMin_;
       builder.scalingMax_ = scalingMax_;
-      builder.scalingMinDouble_ = scalingMinDouble_;
-      builder.scalingMaxDouble_ = scalingMaxDouble_;
+      builder.floatScalingMin_ = floatScalingMin_;
+      builder.floatScalingMax_ = floatScalingMax_;
       builder.gamma_ = gamma_;
       return builder;
    }
@@ -172,8 +176,8 @@ public final class DefaultComponentDisplaySettings
       // compareAndSetDisplaySettings relies on equals() and would spin otherwise.
       return scalingMin_ == o.scalingMin_
             && scalingMax_ == o.scalingMax_
-            && Double.compare(scalingMinDouble_, o.scalingMinDouble_) == 0
-            && Double.compare(scalingMaxDouble_, o.scalingMaxDouble_) == 0
+            && Double.compare(floatScalingMin_, o.floatScalingMin_) == 0
+            && Double.compare(floatScalingMax_, o.floatScalingMax_) == 0
             && Double.compare(gamma_, o.gamma_) == 0;
    }
 
@@ -181,8 +185,8 @@ public final class DefaultComponentDisplaySettings
    public int hashCode() {
       int result = Long.hashCode(scalingMin_);
       result = 31 * result + Long.hashCode(scalingMax_);
-      result = 31 * result + Double.hashCode(scalingMinDouble_);
-      result = 31 * result + Double.hashCode(scalingMaxDouble_);
+      result = 31 * result + Double.hashCode(floatScalingMin_);
+      result = 31 * result + Double.hashCode(floatScalingMax_);
       result = 31 * result + Double.hashCode(gamma_);
       return result;
    }
@@ -200,8 +204,8 @@ public final class DefaultComponentDisplaySettings
       // Only write the float range when actually set, so that files for integer data are
       // unchanged and readers can distinguish "unset" by key absence rather than by NaN.
       if (hasFloatScaling()) {
-         b.putDouble(PropertyKey.SCALING_MIN_FLOAT.key(), scalingMinDouble_);
-         b.putDouble(PropertyKey.SCALING_MAX_FLOAT.key(), scalingMaxDouble_);
+         b.putDouble(PropertyKey.SCALING_MIN_FLOAT.key(), floatScalingMin_);
+         b.putDouble(PropertyKey.SCALING_MAX_FLOAT.key(), floatScalingMax_);
       }
       return b.build();
    }
@@ -227,12 +231,12 @@ public final class DefaultComponentDisplaySettings
       // Absent in files written before float scaling was stored as pixel values; the NaN
       // default then leaves hasFloatScaling() false and the old behavior applies.
       if (pMap.containsDouble(PropertyKey.SCALING_MIN_FLOAT.key())) {
-         b.scalingMinimumDouble(
-               pMap.getDouble(PropertyKey.SCALING_MIN_FLOAT.key(), b.scalingMinDouble_));
+         b.floatScalingMinimum(
+               pMap.getDouble(PropertyKey.SCALING_MIN_FLOAT.key(), b.floatScalingMin_));
       }
       if (pMap.containsDouble(PropertyKey.SCALING_MAX_FLOAT.key())) {
-         b.scalingMaximumDouble(
-               pMap.getDouble(PropertyKey.SCALING_MAX_FLOAT.key(), b.scalingMaxDouble_));
+         b.floatScalingMaximum(
+               pMap.getDouble(PropertyKey.SCALING_MAX_FLOAT.key(), b.floatScalingMax_));
       }
 
       return b.build();
