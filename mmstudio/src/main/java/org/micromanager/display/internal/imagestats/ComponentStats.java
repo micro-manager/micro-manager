@@ -39,6 +39,15 @@ public final class ComponentStats {
    private final long maximum_;
    private final long sum_;
    private final long sumOfSquares_;
+   // Untruncated counterparts of the fields above, for float images. NaN when unset, in
+   // which case the long values apply. The longs cannot represent float statistics (a mean
+   // of -0.16 rounds to 0), so the real values are carried alongside rather than replacing
+   // them, leaving the integer bin/quantile machinery untouched.
+   private final double floatMinimum_;
+   private final double floatMinimumExcludingZeros_;
+   private final double floatMaximum_;
+   private final double floatSum_;
+   private final double floatSumOfSquares_;
    private final transient long[] cumulativeDistrib_;
 
    public static class Builder {
@@ -56,6 +65,11 @@ public final class ComponentStats {
       private long maximum_;
       private long sum_;
       private long sumOfSquares_;
+      private double floatMinimum_ = Double.NaN;
+      private double floatMinimumExcludingZeros_ = Double.NaN;
+      private double floatMaximum_ = Double.NaN;
+      private double floatSum_ = Double.NaN;
+      private double floatSumOfSquares_ = Double.NaN;
 
       private Builder() {
       }
@@ -132,6 +146,61 @@ public final class ComponentStats {
          return this;
       }
 
+      /**
+       * Sets the untruncated minimum, for float images.
+       *
+       * @param min minimum pixel value, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder floatMinimum(double min) {
+         floatMinimum_ = min;
+         return this;
+      }
+
+      /**
+       * Sets the untruncated minimum of the non-zero pixels, for float images.
+       *
+       * @param min minimum non-zero pixel value, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder floatMinimumExcludingZeros(double min) {
+         floatMinimumExcludingZeros_ = min;
+         return this;
+      }
+
+      /**
+       * Sets the untruncated maximum, for float images.
+       *
+       * @param max maximum pixel value, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder floatMaximum(double max) {
+         floatMaximum_ = max;
+         return this;
+      }
+
+      /**
+       * Sets the untruncated sum of pixel values, for float images.
+       *
+       * @param sum sum of pixel values, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder floatSum(double sum) {
+         floatSum_ = sum;
+         return this;
+      }
+
+      /**
+       * Sets the untruncated sum of squared pixel values, for float images.
+       *
+       * @param ssq sum of squares, or NaN to leave unset
+       * @return this builder
+       */
+      public Builder floatSumOfSquares(double ssq) {
+         floatSumOfSquares_ = ssq;
+         return this;
+      }
+
       public ComponentStats build() {
          return new ComponentStats(this);
       }
@@ -158,9 +227,10 @@ public final class ComponentStats {
          merged[i] = histA[i] + histB[i];
       }
       int binWidthPow2 = Integer.numberOfTrailingZeros(a.getHistogramBinWidth());
-      return builder()
+      boolean isFloat = a.isFloat() || b.isFloat();
+      Builder builder = builder()
             .histogram(merged, binWidthPow2)
-            .isFloat(a.isFloat() || b.isFloat())
+            .isFloat(isFloat)
             .pixelCount(a.getPixelCount() + b.getPixelCount())
             .pixelCountExcludingZeros(
                   a.getPixelCountExcludingZeros()
@@ -172,8 +242,40 @@ public final class ComponentStats {
             .maximum(Math.max(a.getMaxIntensity(), b.getMaxIntensity()))
             .sum(a.getSum() + b.getSum())
             .sumOfSquares(a.getSumOfSquares() + b.getSumOfSquares())
-            .usedROI(a.isROIStats() || b.isROIStats())
-            .build();
+            .usedROI(a.isROIStats() || b.isROIStats());
+      if (isFloat) {
+         // Without these the merged stats would claim to be float while every float field
+         // was NaN, so the accessors would silently fall back to the rounded longs. The
+         // axis must be carried too: it is not recoverable from binWidthPow2, which is
+         // always 0 for float stats.
+         builder.rangeMin(Math.min(a.getHistogramRangeMinDouble(),
+                     b.getHistogramRangeMinDouble()))
+               .binWidthFloat(Math.max(a.getBinWidthDouble(), b.getBinWidthDouble()))
+               .floatMinimum(minIgnoringNaN(
+                     a.getFloatMinIntensity(), b.getFloatMinIntensity()))
+               .floatMinimumExcludingZeros(minIgnoringNaN(
+                     a.getFloatMinIntensityExcludingZeros(),
+                     b.getFloatMinIntensityExcludingZeros()))
+               .floatMaximum(maxIgnoringNaN(
+                     a.getFloatMaxIntensity(), b.getFloatMaxIntensity()))
+               .floatSum(a.getFloatSum() + b.getFloatSum())
+               .floatSumOfSquares(a.getFloatSumOfSquares() + b.getFloatSumOfSquares());
+      }
+      return builder.build();
+   }
+
+   private static double minIgnoringNaN(double x, double y) {
+      if (Double.isNaN(x)) {
+         return y;
+      }
+      return Double.isNaN(y) ? x : Math.min(x, y);
+   }
+
+   private static double maxIgnoringNaN(double x, double y) {
+      if (Double.isNaN(x)) {
+         return y;
+      }
+      return Double.isNaN(y) ? x : Math.max(x, y);
    }
 
    private static long[] getFullHistogram(ComponentStats s) {
@@ -202,6 +304,11 @@ public final class ComponentStats {
       maximum_ = b.maximum_;
       sum_ = b.sum_;
       sumOfSquares_ = b.sumOfSquares_;
+      floatMinimum_ = b.floatMinimum_;
+      floatMinimumExcludingZeros_ = b.floatMinimumExcludingZeros_;
+      floatMaximum_ = b.floatMaximum_;
+      floatSum_ = b.floatSum_;
+      floatSumOfSquares_ = b.floatSumOfSquares_;
       cumulativeDistrib_ = computeCumulativeDistribution();
    }
 
@@ -323,6 +430,98 @@ public final class ComponentStats {
       return maximum_;
    }
 
+   /**
+    * Minimum pixel value, without the truncation applied to {@link #getMinIntensity()}.
+    *
+    * @return the minimum; equal to the long value for integer images
+    */
+   public double getFloatMinIntensity() {
+      return Double.isNaN(floatMinimum_) ? (double) minimum_ : floatMinimum_;
+   }
+
+   /**
+    * Minimum non-zero pixel value, without truncation.
+    *
+    * @return the minimum excluding zeros; equal to the long value for integer images
+    */
+   public double getFloatMinIntensityExcludingZeros() {
+      return Double.isNaN(floatMinimumExcludingZeros_)
+            ? (double) minimumExcludingZeros_ : floatMinimumExcludingZeros_;
+   }
+
+   /**
+    * Maximum pixel value, without the truncation applied to {@link #getMaxIntensity()}.
+    *
+    * @return the maximum; equal to the long value for integer images
+    */
+   public double getFloatMaxIntensity() {
+      return Double.isNaN(floatMaximum_) ? (double) maximum_ : floatMaximum_;
+   }
+
+   /**
+    * Mean pixel value, computed without truncation.
+    *
+    * <p>{@link #getMeanIntensity()} rounds to a whole number, which discards the entire
+    * value for float data whose mean lies between -1 and 1.
+    *
+    * @return the mean, or 0 when there are no pixels
+    */
+   public double getFloatMeanIntensity() {
+      if (pixelCount_ == 0) {
+         return 0.0;
+      }
+      return getFloatSum() / pixelCount_;
+   }
+
+   /**
+    * Mean of the non-zero pixel values, computed without truncation.
+    *
+    * <p>The full sum is divided by the non-zero count, matching
+    * {@link #getMeanIntensityExcludingZeros()}. That is correct because zero pixels
+    * contribute nothing to the sum.
+    *
+    * @return the mean excluding zeros, or 0 when there are no such pixels
+    */
+   public double getFloatMeanIntensityExcludingZeros() {
+      if (pixelCountExcludingZeros_ == 0) {
+         return 0.0;
+      }
+      return getFloatSum() / pixelCountExcludingZeros_;
+   }
+
+   /**
+    * Standard deviation, computed without truncation.
+    *
+    * <p>Unlike {@link #getStandardDeviation()}, this uses the unrounded sum and mean. That
+    * matters for float data: the rounded mean both inflates the result and can make the
+    * variance come out negative, yielding NaN. The variance is clamped at zero so rounding
+    * noise cannot produce NaN here.
+    *
+    * @return the standard deviation, or NaN when there are no pixels
+    */
+   public double getFloatStandardDeviation() {
+      if (pixelCount_ == 0) {
+         return Double.NaN;
+      }
+      double meanSq = getFloatSumOfSquares() / pixelCount_;
+      double mean = getFloatMeanIntensity();
+      return Math.sqrt(Math.max(0.0, meanSq - (mean * mean)));
+   }
+
+   /**
+    * Standard deviation of the non-zero pixel values, computed without truncation.
+    *
+    * @return the standard deviation excluding zeros, or NaN when there are no such pixels
+    */
+   public double getFloatStandardDeviationExcludingZeros() {
+      if (pixelCountExcludingZeros_ == 0) {
+         return Double.NaN;
+      }
+      double meanSq = getFloatSumOfSquares() / pixelCountExcludingZeros_;
+      double mean = getFloatMeanIntensityExcludingZeros();
+      return Math.sqrt(Math.max(0.0, meanSq - (mean * mean)));
+   }
+
    public long getAutoscaleMinForQuantile(double q) {
       long rangeMin = getHistogramRangeMin();
       if (q >= 0.5) {
@@ -384,6 +583,110 @@ public final class ComponentStats {
    }
 
    /**
+    * Autoscale bounds as real pixel values, for float images.
+    *
+    * <p>The long-valued {@link #getAutoscaleMinMaxForQuantile(double, long[])} rounds the
+    * quantiles to whole numbers, which destroys the range of float data: values spanning
+    * -0.65 to 1.04 collapse to 0 and 1, and the integer widening below then stretches the
+    * range wider than the data. Here the quantiles are used as they come, and a degenerate
+    * range is widened by a fraction of the data rather than by whole units.
+    *
+    * @param q fraction (0-1) of pixels to leave out at each end
+    * @param minMax two-element array receiving the minimum and maximum
+    */
+   public void getFloatAutoscaleMinMaxForQuantile(double q, double[] minMax) {
+      Preconditions.checkNotNull(minMax);
+      Preconditions.checkArgument(minMax.length == 2);
+
+      double min = getQuantile(q);
+      double max = getQuantile(1.0 - q);
+      // Keep the range at least one bin wide. When one bin holds most of the pixels, both
+      // quantiles land inside it and the range collapses to near-nothing, which would
+      // render the image pure black and white.
+      double floor = binWidthFloat_ > 0.0 ? binWidthFloat_ : padFor(min);
+      if (max - min < floor) {
+         double mid = 0.5 * (min + max);
+         min = mid - 0.5 * floor;
+         max = mid + 0.5 * floor;
+      }
+      minMax[0] = min;
+      minMax[1] = max;
+   }
+
+   /**
+    * Autoscale maximum as a real pixel value, ignoring zero pixels, for float images.
+    *
+    * <p>Callers pair this with a minimum of zero, which is what "ignoring zeros" means
+    * here, so the result is kept strictly above zero rather than above the data minimum.
+    * The data minimum is the wrong floor: for float data it is routinely negative, which
+    * would let this return a maximum below the zero the caller uses and yield an inverted
+    * range.
+    *
+    * @param q fraction (0-1) of pixels to leave out at the top
+    * @return the maximum, always greater than zero
+    */
+   public double getFloatAutoscaleMaxForQuantileIgnoringZeros(double q) {
+      double max = getQuantileIgnoringZeros(q >= 0.5 ? 0.5 : 1.0 - q);
+      if (max > 0.0) {
+         return max;
+      }
+      // The quantile came out at or below zero, so it cannot be used against a floor of
+      // zero. Prefer the real maximum, which at least spans the positive data; fall back
+      // to a token width only when there is no positive data at all.
+      double dataMax = getFloatMaxIntensity();
+      return dataMax > 0.0 ? dataMax : padFor(dataMax);
+   }
+
+   /**
+    * Amount by which to widen a range that came out empty.
+    *
+    * <p>Scaled to the value so that the widening stays negligible next to the data, with
+    * an absolute floor for a value of (or near) zero, where a relative pad would underflow
+    * to something too small to give a drawable range.
+    *
+    * @param value the value the range collapsed to
+    * @return a positive, non-zero padding
+    */
+   private static double padFor(double value) {
+      double pad = Math.abs(value) * 1e-6;
+      return pad > Double.MIN_NORMAL ? pad : 1e-6;
+   }
+
+   /**
+    * Lowest pixel value, as the quantile machinery should report it.
+    *
+    * <p>For float stats this is the real minimum; {@code minimum_} is floored, so a
+    * minimum of -0.65 would otherwise be reported as -1.
+    *
+    * @return the low edge of the data
+    */
+   private double quantileLowEdge() {
+      return isFloat_ ? getFloatMinIntensity() : (double) minimum_;
+   }
+
+   /**
+    * Highest pixel value, as the quantile machinery should report it.
+    *
+    * <p>The integer convention is "one past the maximum", since integer bins are unit
+    * wide. Float bins are not, so the real maximum is the correct upper edge.
+    *
+    * @return the high edge of the data
+    */
+   private double quantileHighEdge() {
+      return isFloat_ ? getFloatMaxIntensity() : (double) (maximum_ + 1);
+   }
+
+   /**
+    * Upper edge of the histogram range, without the integer ceiling.
+    *
+    * @return the top of the axis
+    */
+   private double quantileRangeMax() {
+      return isFloat_ ? rangeMin_ + binWidthFloat_ * getHistogramBinCount()
+            : getHistogramRangeMax() + 1.0;
+   }
+
+   /**
     * Calculates the quantile, i.e. the bin value (ore more precise, the left bin edge)
     * for the bin where q * 100% of the pixel values are in lower bins.
     * Note: return value is in range 0 to (1 + range max), because it is in the
@@ -408,7 +711,7 @@ public final class ComponentStats {
       }
       if (countBelowQuantile > cumDistrib[cumDistrib.length - 2]) {
          // Quantile is above histogram range
-         return getHistogramRangeMax() + 1.0;
+         return quantileRangeMax();
       }
 
       int binIndex;
@@ -418,9 +721,9 @@ public final class ComponentStats {
       // the quantile for limiting scaling range), but when q = 0 or q = 1, we
       // need to find the exact edge of the non-zero part of the histogram.
       if (countBelowQuantile == 0) {
-         return minimum_;
+         return quantileLowEdge();
       } else if (countBelowQuantile == pixelCount_) {
-         return maximum_ + 1;
+         return quantileHighEdge();
       }
 
       binIndex = binarySearch(cumDistrib, 1, cumDistrib.length - 1,
@@ -462,7 +765,7 @@ public final class ComponentStats {
       }
       if (countBelowQuantile > cumDistrib[cumDistrib.length - 2]) {
          // Quantile is above histogram range
-         return getHistogramRangeMax() + 1.0;
+         return quantileRangeMax();
       }
 
       int binIndex;
@@ -472,9 +775,9 @@ public final class ComponentStats {
       // the quantile for limiting scaling range), but when q = 0 or q = 1, we
       // need to find the exact edge of the non-zero part of the histogram.
       if (countBelowQuantile == 0) {
-         return minimum_;
+         return quantileLowEdge();
       } else if (countBelowQuantile >= pixelCount_) {
-         return maximum_ + 1;
+         return quantileHighEdge();
       }
 
       binIndex = binarySearch(cumDistrib, 2, cumDistrib.length - 1,
@@ -522,6 +825,25 @@ public final class ComponentStats {
 
    public long getSumOfSquares() {
       return sumOfSquares_;
+   }
+
+   /**
+    * Sum of pixel values, without the rounding applied to {@link #getSum()}.
+    *
+    * @return the sum; equal to the long value for integer images
+    */
+   public double getFloatSum() {
+      return Double.isNaN(floatSum_) ? (double) sum_ : floatSum_;
+   }
+
+   /**
+    * Sum of squared pixel values, without the rounding applied to
+    * {@link #getSumOfSquares()}.
+    *
+    * @return the sum of squares; equal to the long value for integer images
+    */
+   public double getFloatSumOfSquares() {
+      return Double.isNaN(floatSumOfSquares_) ? (double) sumOfSquares_ : floatSumOfSquares_;
    }
 
    public double getStandardDeviation() {

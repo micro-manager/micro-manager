@@ -922,9 +922,11 @@ public final class MultipageTiffWriter {
             ChannelDisplaySettings cs = ds.getChannelSettings(ch);
             // Display Ranges: For each channel, write min then max
             // TODO: doesn't handle multi-component images.
-            mdBuffer.putDouble(bufferPosition, cs.getComponentSettings(0).getScalingMinimum());
+            mdBuffer.putDouble(bufferPosition,
+                  cs.getComponentSettings(0).getEffectiveScalingMinimum());
             bufferPosition += 8;
-            mdBuffer.putDouble(bufferPosition, cs.getComponentSettings(0).getScalingMaximum());
+            mdBuffer.putDouble(bufferPosition,
+                  cs.getComponentSettings(0).getEffectiveScalingMaximum());
             bufferPosition += 8;
          }
       } else if (studio != null) {
@@ -934,11 +936,11 @@ public final class MultipageTiffWriter {
                   studio, channelGroup, name, null);
             // Display Ranges: For each channel, write min then max
             // TODO: doesn't handle multi-component images.
-            mdBuffer.putDouble(bufferPosition, (double)
-                  cds.getComponentSettings(0).getScalingMinimum());
+            mdBuffer.putDouble(bufferPosition,
+                  cds.getComponentSettings(0).getEffectiveScalingMinimum());
             bufferPosition += 8;
-            mdBuffer.putDouble(bufferPosition, (double)
-                  cds.getComponentSettings(0).getScalingMaximum());
+            mdBuffer.putDouble(bufferPosition,
+                  cds.getComponentSettings(0).getEffectiveScalingMaximum());
             bufferPosition += 8;
          }
       } else {

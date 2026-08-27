@@ -938,10 +938,10 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
          double fMin;
          double fMax;
          if (settings.isAutoscaleIgnoringZeros()) {
-            // getAutoscale*IgnoringZeros return bin indices; convert to actual values
+            // The float autoscale returns actual pixel values, not bin indices; the
+            // long-valued getAutoscale* would round them first.
             fMin = 0.0;
-            fMax = cStats.getHistogramRangeMinDouble()
-                  + cStats.getAutoscaleMaxForQuantileIgnoringZeros(q) * cStats.getBinWidthDouble();
+            fMax = cStats.getFloatAutoscaleMaxForQuantileIgnoringZeros(q);
          } else {
             // getQuantile returns actual float pixel values for float images
             fMin = cStats.getQuantile(q);
@@ -951,6 +951,11 @@ public class OrthogonalViewerFrame extends AbstractDataViewer
             fMax = fMin + Math.max(cStats.getBinWidthDouble(), 1.0);
          }
          return new double[]{fMin, fMax};
+      }
+
+      if (comp.hasFloatScaling()) {
+         // A range stored as pixel values needs no conversion.
+         return new double[]{comp.getFloatScalingMinimum(), comp.getFloatScalingMaximum()};
       }
 
       if (cStats != null) {

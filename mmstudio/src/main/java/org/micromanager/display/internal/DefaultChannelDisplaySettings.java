@@ -24,6 +24,12 @@ public final class DefaultChannelDisplaySettings
    private final boolean visible_;
    private final int histoRangeBits_;
    private final boolean useCameraRange_;
+   // Histogram axis range for float images, as pixel values; NaN when unset. Float images
+   // have no bit depth to derive an axis from, so the range is recorded here instead.
+   private final double floatHistoRangeMin_;
+   private final double floatHistoRangeMax_;
+   // True once the user has chosen the axis; it then stops adapting to the data.
+   private final boolean floatHistoRangePinned_;
    private final List<ComponentDisplaySettings> componentSettings_;
 
    private static final class Builder
@@ -35,6 +41,9 @@ public final class DefaultChannelDisplaySettings
       private boolean visible_ = true;
       private int histoRangeBits_ = 8;
       private boolean useCameraRange_ = true;
+      private double floatHistoRangeMin_ = Double.NaN;
+      private double floatHistoRangeMax_ = Double.NaN;
+      private boolean floatHistoRangePinned_ = false;
       private final List<ComponentDisplaySettings> componentSettings_ =
             new ArrayList<>();
 
@@ -120,6 +129,19 @@ public final class DefaultChannelDisplaySettings
       }
 
       @Override
+      public Builder floatHistoRange(double min, double max) {
+         floatHistoRangeMin_ = min;
+         floatHistoRangeMax_ = max;
+         return this;
+      }
+
+      @Override
+      public Builder floatHistoRangePinned(boolean pinned) {
+         floatHistoRangePinned_ = pinned;
+         return this;
+      }
+
+      @Override
       public Builder visible(boolean visible) {
          visible_ = visible;
          return this;
@@ -200,6 +222,9 @@ public final class DefaultChannelDisplaySettings
       visible_ = builder.visible_;
       histoRangeBits_ = builder.histoRangeBits_;
       useCameraRange_ = builder.useCameraRange_;
+      floatHistoRangeMin_ = builder.floatHistoRangeMin_;
+      floatHistoRangeMax_ = builder.floatHistoRangeMax_;
+      floatHistoRangePinned_ = builder.floatHistoRangePinned_;
       componentSettings_ = new ArrayList<>(builder.componentSettings_);
    }
 
@@ -231,6 +256,27 @@ public final class DefaultChannelDisplaySettings
    @Override
    public boolean useCameraRange() {
       return useCameraRange_;
+   }
+
+   @Override
+   public double getFloatHistoRangeMinimum() {
+      return floatHistoRangeMin_;
+   }
+
+   @Override
+   public double getFloatHistoRangeMaximum() {
+      return floatHistoRangeMax_;
+   }
+
+   @Override
+   public boolean hasFloatHistoRange() {
+      return !Double.isNaN(floatHistoRangeMin_) && !Double.isNaN(floatHistoRangeMax_)
+            && floatHistoRangeMax_ > floatHistoRangeMin_;
+   }
+
+   @Override
+   public boolean isFloatHistoRangePinned() {
+      return floatHistoRangePinned_;
    }
 
    @Override
@@ -266,6 +312,9 @@ public final class DefaultChannelDisplaySettings
       builder.groupName_ = groupName_;
       builder.histoRangeBits_ = histoRangeBits_;
       builder.useCameraRange_ = useCameraRange_;
+      builder.floatHistoRangeMin_ = floatHistoRangeMin_;
+      builder.floatHistoRangeMax_ = floatHistoRangeMax_;
+      builder.floatHistoRangePinned_ = floatHistoRangePinned_;
       builder.componentSettings_.clear();
       builder.componentSettings_.addAll(componentSettings_);
       return builder;
@@ -286,10 +335,15 @@ public final class DefaultChannelDisplaySettings
          return false;
       }
       DefaultChannelDisplaySettings o = (DefaultChannelDisplaySettings) obj;
+      // Double.compare (not ==) so the NaN "unset" sentinel compares equal to itself;
+      // compareAndSetDisplaySettings relies on equals() and would spin otherwise.
       return visible_ == o.visible_
             && useUniformComponentScaling_ == o.useUniformComponentScaling_
             && histoRangeBits_ == o.histoRangeBits_
             && useCameraRange_ == o.useCameraRange_
+            && Double.compare(floatHistoRangeMin_, o.floatHistoRangeMin_) == 0
+            && Double.compare(floatHistoRangeMax_, o.floatHistoRangeMax_) == 0
+            && floatHistoRangePinned_ == o.floatHistoRangePinned_
             && color_.equals(o.color_)
             && name_.equals(o.name_)
             && groupName_.equals(o.groupName_)
@@ -302,6 +356,9 @@ public final class DefaultChannelDisplaySettings
       result = 31 * result + name_.hashCode();
       result = 31 * result + groupName_.hashCode();
       result = 31 * result + Boolean.hashCode(visible_);
+      result = 31 * result + Double.hashCode(floatHistoRangeMin_);
+      result = 31 * result + Double.hashCode(floatHistoRangeMax_);
+      result = 31 * result + Boolean.hashCode(floatHistoRangePinned_);
       result = 31 * result + componentSettings_.hashCode();
       return result;
    }
@@ -326,6 +383,14 @@ public final class DefaultChannelDisplaySettings
             .putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_)
             .putBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), useCameraRange_)
             .putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings);
+      // Only written for float images, so files for integer data are unchanged and
+      // readers can tell "unset" by the keys being absent.
+      if (hasFloatHistoRange()) {
+         pmBuilder.putDouble(PropertyKey.FLOAT_HISTO_RANGE_MIN.key(), floatHistoRangeMin_);
+         pmBuilder.putDouble(PropertyKey.FLOAT_HISTO_RANGE_MAX.key(), floatHistoRangeMax_);
+         pmBuilder.putBoolean(PropertyKey.FLOAT_HISTO_RANGE_PINNED.key(),
+               floatHistoRangePinned_);
+      }
       return pmBuilder.build();
    }
 
@@ -368,6 +433,18 @@ public final class DefaultChannelDisplaySettings
       if (pMap.containsBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key())) {
          b.useCameraHistoRange(pMap.getBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(),
                b.useCameraRange_));
+      }
+      // Absent in files written before the float histogram range was recorded; the NaN
+      // defaults then leave hasFloatHistoRange() false and the axis is derived from data.
+      if (pMap.containsDouble(PropertyKey.FLOAT_HISTO_RANGE_MIN.key())
+            && pMap.containsDouble(PropertyKey.FLOAT_HISTO_RANGE_MAX.key())) {
+         b.floatHistoRange(
+               pMap.getDouble(PropertyKey.FLOAT_HISTO_RANGE_MIN.key(), b.floatHistoRangeMin_),
+               pMap.getDouble(PropertyKey.FLOAT_HISTO_RANGE_MAX.key(), b.floatHistoRangeMax_));
+      }
+      if (pMap.containsBoolean(PropertyKey.FLOAT_HISTO_RANGE_PINNED.key())) {
+         b.floatHistoRangePinned(pMap.getBoolean(
+               PropertyKey.FLOAT_HISTO_RANGE_PINNED.key(), b.floatHistoRangePinned_));
       }
       return b;
    }

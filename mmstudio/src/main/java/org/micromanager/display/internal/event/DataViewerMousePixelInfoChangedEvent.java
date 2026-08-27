@@ -28,6 +28,8 @@ public class DataViewerMousePixelInfoChangedEvent {
    private final List<long[]> values_ = new ArrayList<long[]>();
    // Preformatted intensity strings; null entries mean fall back to formatting values_[i] as longs.
    private final List<String> valueStrings_ = new ArrayList<String>();
+   // Untruncated counterparts of values_; null entries for images that are not float.
+   private final List<double[]> doubleValues_ = new ArrayList<double[]>();
 
    public static DataViewerMousePixelInfoChangedEvent fromImage(int x, int y,
                                                                 Image image) {
@@ -46,6 +48,7 @@ public class DataViewerMousePixelInfoChangedEvent {
       List<Coords> coords = new ArrayList<Coords>();
       List<long[]> componentValues = new ArrayList<long[]>();
       List<String> valueStrings = new ArrayList<String>();
+      List<double[]> doubleValues = new ArrayList<double[]>();
       for (Image image : images) {
          Preconditions.checkNotNull(image);
          Coords c = image.getCoords();
@@ -55,12 +58,44 @@ public class DataViewerMousePixelInfoChangedEvent {
          }
          coords.add(cb.build());
          componentValues.add(image.getComponentIntensitiesAt(x, y));
+         doubleValues.add(floatComponentValues(image, x, y));
          valueStrings.add(image.getIntensityStringAt(x, y));
       }
       DataViewerMousePixelInfoChangedEvent event =
             create(x, y, indexingAxes, coords, componentValues);
       event.valueStrings_.addAll(valueStrings);
+      event.doubleValues_.addAll(doubleValues);
       return event;
+   }
+
+   /**
+    * Component values without the truncation of {@code getComponentIntensitiesAt}.
+    *
+    * <p>That accessor returns {@code long}, so a float pixel of 0.37 reads as 0 and the
+    * histogram highlight would land in the wrong bin. Read from the raw pixels instead,
+    * using only what {@link Image} already exposes.
+    *
+    * @param image image to read
+    * @param x X coordinate
+    * @param y Y coordinate
+    * @return the values, or null for anything that is not a 32-bit float image, whose
+    *     long-valued intensities are already exact
+    */
+   private static double[] floatComponentValues(Image image, int x, int y) {
+      // The pixel array type is the authority, and checking it keeps ImageJ out of this
+      // package; a float[] is a 32-bit float image whatever the metadata claims.
+      Object raw = image.getRawPixels();
+      if (!(raw instanceof float[])) {
+         return null;
+      }
+      float[] pixels = (float[]) raw;
+      int n = image.getNumComponents();
+      int index = (y * image.getWidth() + x) * n;
+      double[] result = new double[n];
+      for (int i = 0; i < n; ++i) {
+         result[i] = pixels[index + i];
+      }
+      return result;
    }
 
    public static DataViewerMousePixelInfoChangedEvent create(int x, int y,
@@ -158,6 +193,22 @@ public class DataViewerMousePixelInfoChangedEvent {
          throw new IllegalArgumentException();
       }
       return values_.get(i).clone();
+   }
+
+   /**
+    * Component values for these coords without float truncation.
+    *
+    * @param coords coords to look up
+    * @return the values, or null for an integer image, whose
+    *     {@link #getComponentValuesForCoords} values are already exact
+    */
+   public double[] getComponentValuesDoubleForCoords(Coords coords) {
+      int i = coords_.indexOf(coords);
+      if (i < 0 || i >= doubleValues_.size()) {
+         return null;
+      }
+      double[] values = doubleValues_.get(i);
+      return values == null ? null : values.clone();
    }
 
    public String getComponentValuesStringForCoords(Coords coords) {

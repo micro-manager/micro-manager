@@ -566,6 +566,12 @@ public enum PropertyKey {
       }
    },
 
+   FLOAT_HISTO_RANGE_MIN("FloatHistoRangeMin", ChannelDisplaySettings.class),
+
+   FLOAT_HISTO_RANGE_MAX("FloatHistoRangeMax", ChannelDisplaySettings.class),
+
+   FLOAT_HISTO_RANGE_PINNED("FloatHistoRangePinned", ChannelDisplaySettings.class),
+
    HISTOGRAM_BIT_DEPTH("HistogramBitDepth", ChannelDisplaySettings.class),
 
    HISTOGRAM_IS_LOGARITHMIC("HistogramIsLogarithmic", DisplaySettings.class),
@@ -1280,6 +1286,10 @@ public enum PropertyKey {
    SCALING_MIN("ScalingMin", ComponentDisplaySettings.class),
 
    SCALING_MAX("ScalingMax", ComponentDisplaySettings.class),
+
+   SCALING_MIN_FLOAT("ScalingMinFloat", ComponentDisplaySettings.class),
+
+   SCALING_MAX_FLOAT("ScalingMaxFloat", ComponentDisplaySettings.class),
 
    SCOPE_DATA("ScopeData", "scopeData", Metadata.class) {
       @Override

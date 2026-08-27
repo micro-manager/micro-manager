@@ -1140,18 +1140,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             if (!autostretch) {
                ComponentStats cStats = getDisplayedComponentStats(i, 0);
                if (cStats != null && cStats.isFloat()) {
-                  long storedMin = componentSettings.getScalingMinimum();
-                  long storedMax = componentSettings.getScalingMaximum();
-                  int binCount = cStats.getHistogramBinCount();
-                  double binWidth = cStats.getBinWidthDouble();
-                  double rangeMin = cStats.getHistogramRangeMinDouble();
-                  long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
-                        : Math.min(binCount, storedMax);
-                  long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
-                  double fMin = rangeMin + clampedMin * binWidth;
-                  double fMax = rangeMin + clampedMax * binWidth;
-                  fMax = Math.max(fMin + binWidth, fMax);
-                  ijBridge_.mm2ijSetFloatIntensityScaling(i, fMin, fMax, false);
+                  applyFloatIntensityScaling(i, componentSettings, cStats, false);
                } else {
                   int max = (int) Math.min(Integer.MAX_VALUE,
                         componentSettings.getScalingMaximum());
@@ -1181,18 +1170,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                boolean defer = i < nComponents - 1;
                ComponentStats cStats = getDisplayedComponentStats(chNr, i);
                if (cStats != null && cStats.isFloat()) {
-                  long storedMin = componentSettings.getScalingMinimum();
-                  long storedMax = componentSettings.getScalingMaximum();
-                  int binCount = cStats.getHistogramBinCount();
-                  double binWidth = cStats.getBinWidthDouble();
-                  double rangeMin = cStats.getHistogramRangeMinDouble();
-                  long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
-                        : Math.min(binCount, storedMax);
-                  long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
-                  double fMin = rangeMin + clampedMin * binWidth;
-                  double fMax = rangeMin + clampedMax * binWidth;
-                  fMax = Math.max(fMin + binWidth, fMax);
-                  ijBridge_.mm2ijSetFloatIntensityScaling(i, fMin, fMax, defer);
+                  applyFloatIntensityScaling(i, componentSettings, cStats, defer);
                } else {
                   int max = Math.min(Integer.MAX_VALUE,
                         (int) componentSettings.getScalingMaximum());
@@ -1209,6 +1187,54 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       displayController_.setPlaybackSpeedFps(settings.getPlaybackFPS());
 
+   }
+
+   /**
+    * Pushes the scaling range for one component of a float image to ImageJ.
+    *
+    * <p>When the settings carry a real float range (pixel values), it is used directly.
+    * That range is independent of the current image, so the display no longer rescales
+    * itself as one steps through a time lapse.
+    *
+    * <p>Otherwise we fall back to the legacy interpretation, in which the stored longs are
+    * histogram bin indices resolved against the current image's binning. That fallback is
+    * inherently image-dependent, and is kept only for settings saved before the float range
+    * existed.
+    *
+    * @param ijIndex ImageJ channel/component index to apply to
+    * @param componentSettings settings holding the range
+    * @param cStats statistics of the currently displayed image, for the legacy fallback
+    * @param defer whether to defer the ImageJ repaint
+    */
+   @MustCallOnEDT
+   private void applyFloatIntensityScaling(int ijIndex,
+                                           ComponentDisplaySettings componentSettings,
+                                           ComponentStats cStats,
+                                           boolean defer) {
+      double binWidth = cStats.getBinWidthDouble();
+      double fMin;
+      double fMax;
+      if (componentSettings.hasFloatScaling()) {
+         // Already guaranteed non-empty by hasFloatScaling(), and used exactly as stored:
+         // widening it by the current image's bin width would make the range the user set
+         // depend on which image happens to be on screen.
+         fMin = componentSettings.getFloatScalingMinimum();
+         fMax = componentSettings.getFloatScalingMaximum();
+      } else {
+         long storedMin = componentSettings.getScalingMinimum();
+         long storedMax = componentSettings.getScalingMaximum();
+         int binCount = cStats.getHistogramBinCount();
+         double rangeMin = cStats.getHistogramRangeMinDouble();
+         long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
+               : Math.min(binCount, storedMax);
+         long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
+         fMin = rangeMin + clampedMin * binWidth;
+         fMax = rangeMin + clampedMax * binWidth;
+         // The bin arithmetic can collapse the range; ImageJ misbehaves when min == max.
+         double minSpan = binWidth > 0.0 ? binWidth : Math.ulp(fMin);
+         fMax = Math.max(fMin + minSpan, fMax);
+      }
+      ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, fMin, fMax, defer);
    }
 
    @MustCallOnEDT
@@ -1288,17 +1314,25 @@ public final class DisplayUIController implements Closeable, WindowListener,
             DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
                   settings.getChannelSettings(ch).getComponentSettings(compo);
             if (cStats.isFloat()) {
-               // min/max are actual pixel values from quantile computation.
-               // Pass pixel values directly to ImageJ; store bin indices in dcds for the inspector.
-               double binWidth = cStats.getBinWidthDouble();
-               double rangeMin = cStats.getHistogramRangeMinDouble();
-               long storedMin = binWidth != 0.0
-                     ? Math.max(0L, Math.round((min - rangeMin) / binWidth)) : 0L;
-               long storedMax = binWidth != 0.0
-                     ? Math.max(0L, Math.round((max - rangeMin) / binWidth)) : 0L;
-               dcds.hackScalingMinimum(storedMin);
-               dcds.hackScalingMaximum(storedMax);
-               ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, (double) min, (double) max, defer);
+               // Recompute the quantiles in pixel values: the long-valued autoscale above
+               // rounds them, which for data spanning less than a unit collapses the range
+               // to 0..1 and then widens it past the data. Storing pixel values also means
+               // switching autostretch off leaves behind a range that is meaningful on its
+               // own rather than a bin index tied to this one image.
+               double fMin;
+               double fMax;
+               if (ignoreZeros) {
+                  fMin = 0.0;
+                  fMax = cStats.getFloatAutoscaleMaxForQuantileIgnoringZeros(q);
+               } else {
+                  double[] fMinMax = new double[2];
+                  cStats.getFloatAutoscaleMinMaxForQuantile(q, fMinMax);
+                  fMin = fMinMax[0];
+                  fMax = fMinMax[1];
+               }
+               dcds.hackFloatScalingMinimum(fMin);
+               dcds.hackFloatScalingMaximum(fMax);
+               ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, fMin, fMax, defer);
             } else {
                dcds.hackScalingMinimum(min);
                dcds.hackScalingMaximum(max);
