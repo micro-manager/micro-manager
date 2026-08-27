@@ -8,7 +8,6 @@ package org.micromanager.display.internal.event;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import ij.ImagePlus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -83,9 +82,8 @@ public class DataViewerMousePixelInfoChangedEvent {
     *     long-valued intensities are already exact
     */
    private static double[] floatComponentValues(Image image, int x, int y) {
-      if (image.getImageJPixelType() != ImagePlus.GRAY32) {
-         return null;
-      }
+      // The pixel array type is the authority, and checking it keeps ImageJ out of this
+      // package; a float[] is a 32-bit float image whatever the metadata claims.
       Object raw = image.getRawPixels();
       if (!(raw instanceof float[])) {
          return null;

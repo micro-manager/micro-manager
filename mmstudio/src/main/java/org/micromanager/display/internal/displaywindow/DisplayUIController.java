@@ -1215,6 +1215,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       double fMin;
       double fMax;
       if (componentSettings.hasFloatScaling()) {
+         // Already guaranteed non-empty by hasFloatScaling(), and used exactly as stored:
+         // widening it by the current image's bin width would make the range the user set
+         // depend on which image happens to be on screen.
          fMin = componentSettings.getFloatScalingMinimum();
          fMax = componentSettings.getFloatScalingMaximum();
       } else {
@@ -1227,10 +1230,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
          long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
          fMin = rangeMin + clampedMin * binWidth;
          fMax = rangeMin + clampedMax * binWidth;
+         // The bin arithmetic can collapse the range; ImageJ misbehaves when min == max.
+         double minSpan = binWidth > 0.0 ? binWidth : Math.ulp(fMin);
+         fMax = Math.max(fMin + minSpan, fMax);
       }
-      // Guarantee a non-empty range; ImageJ misbehaves when min == max.
-      double minSpan = binWidth > 0.0 ? binWidth : Math.ulp(fMin);
-      fMax = Math.max(fMin + minSpan, fMax);
       ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, fMin, fMax, defer);
    }
 

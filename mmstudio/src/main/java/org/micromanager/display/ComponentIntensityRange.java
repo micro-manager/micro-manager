@@ -69,10 +69,15 @@ public interface ComponentIntensityRange {
        * the interesting range is rarely integral. Pass {@code Double.NaN} to clear the
        * float range and fall back to the long-valued setting.
        *
+       * <p>The default implementation ignores the value, so that builders written before
+       * the float range existed keep compiling; they simply carry no float range.
+       *
        * @param min pixel value, or NaN to unset
        * @return this builder
        */
-      Builder floatMinimum(double min);
+      default Builder floatMinimum(double min) {
+         return this;
+      }
 
       /**
        * Sets the maximum as an actual pixel value, for floating point images.
@@ -81,7 +86,9 @@ public interface ComponentIntensityRange {
        * @return this builder
        * @see #floatMinimum(double)
        */
-      Builder floatMaximum(double max);
+      default Builder floatMaximum(double max) {
+         return this;
+      }
 
       /**
        * Sets both float bounds as actual pixel values.
@@ -91,7 +98,9 @@ public interface ComponentIntensityRange {
        * @return this builder
        * @see #floatMinimum(double)
        */
-      Builder floatRange(double min, double max);
+      default Builder floatRange(double min, double max) {
+         return floatMinimum(min).floatMaximum(max);
+      }
 
       /**
        * Builds and returns the {@link ComponentIntensityRange}.
@@ -135,10 +144,15 @@ public interface ComponentIntensityRange {
    /**
     * Returns the minimum as an actual pixel value, for floating point images.
     *
+    * <p>The default implementation reports no float range, so that implementations written
+    * before the float range existed keep compiling.
+    *
     * @return pixel value, or {@code Double.NaN} if no float range has been set
     * @see #hasFloatRange()
     */
-   double getFloatMinimum();
+   default double getFloatMinimum() {
+      return Double.NaN;
+   }
 
    /**
     * Returns the maximum as an actual pixel value, for floating point images.
@@ -146,7 +160,9 @@ public interface ComponentIntensityRange {
     * @return pixel value, or {@code Double.NaN} if no float range has been set
     * @see #hasFloatRange()
     */
-   double getFloatMaximum();
+   default double getFloatMaximum() {
+      return Double.NaN;
+   }
 
    /**
     * Returns whether a floating point range has been set.
@@ -154,5 +170,9 @@ public interface ComponentIntensityRange {
     * @return true if both bounds are set and the maximum is strictly above the minimum;
     *     an empty or inverted range counts as unset, since it cannot be displayed
     */
-   boolean hasFloatRange();
+   default boolean hasFloatRange() {
+      double min = getFloatMinimum();
+      double max = getFloatMaximum();
+      return !Double.isNaN(min) && !Double.isNaN(max) && max > min;
+   }
 }

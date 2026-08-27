@@ -75,6 +75,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private boolean floatRangePinned_ = false;
    // Guards the one-time adoption of a range recorded in the display settings.
    private boolean floatRangeRestored_ = false;
+   // Whether the stats the accumulated range was built from were ROI stats. Entering or
+   // leaving an ROI changes which pixels are measured, so the accumulation restarts;
+   // otherwise a range widened by a bright ROI would outlive the ROI itself.
+   private boolean floatRangeFromROI_ = false;
    private boolean pickingWhiteBalancePoint_ = false;
    private long[] lastPickedValues_ = null; // pixel values tracked while in pick mode
 
@@ -88,6 +92,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          new HistoRangeComboBoxModel();
    private final JComboBox<String> histoRangeComboBox_ =
          new JComboBox<>(histoRangeComboBoxModel_);
+   // Shown in place of the bit-depth combo for float images, whose histogram range comes
+   // from the data rather than from a bit depth.
+   private final JButton floatRangeResetButton_ = new JButton();
    private final StatsPanel intensityStatsPanel_ = new StatsPanel();
 
    private static final class HistoRangeComboBoxModel extends DefaultComboBoxModel<String> {
@@ -394,9 +401,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       histoPanel_.setOpaque(true);
       histoPanel_.add(histogram_, new CC().grow().push().wrap("rel"));
 
-      histoPanel_.add(histoRangeDownButton_, new CC().split(5).gapBefore("12").gapAfter("0"));
+      histoPanel_.add(histoRangeDownButton_, new CC().split(6).gapBefore("12").gapAfter("0"));
       histoPanel_.add(histoRangeComboBox_, new CC().gapAfter("0").pad(0, -4, 0, 4));
-      histoPanel_.add(histoRangeUpButton_, new CC().gapAfter("push"));
+      histoPanel_.add(histoRangeUpButton_, new CC().gapAfter("0"));
+      histoPanel_.add(floatRangeResetButton_, new CC().gapAfter("push"));
 
       histoPanel_.add(intensityStatsPanel_, new CC().gapAfter("push"));
       JToggleButton intensityLinkButton = new JToggleButton();
@@ -449,6 +457,20 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             histoRangeComboBox_.setSelectedIndex(index + 1);
          }
       });
+
+      floatRangeResetButton_.setText("Reset Range");
+      floatRangeResetButton_.setToolTipText("<html>Rebuild the histogram range from the "
+            + "image being displayed.<br>Use after editing an axis end, which pins the "
+            + "range, or after<br>an unusual image has widened it.</html>");
+      floatRangeResetButton_.setMaximumSize(new Dimension(90, 20));
+      floatRangeResetButton_.setMinimumSize(new Dimension(90, 20));
+      floatRangeResetButton_.setPreferredSize(new Dimension(90, 20));
+      floatRangeResetButton_.setFocusable(false);
+      floatRangeResetButton_.setMargin(new Insets(0, 0, 0, 0));
+      floatRangeResetButton_.setFont(
+            floatRangeResetButton_.getFont().deriveFont(10.0f));
+      floatRangeResetButton_.setVisible(false);
+      floatRangeResetButton_.addActionListener((ActionEvent e) -> resetFloatHistoRange());
 
       histoRangeComboBox_.setMaximumSize(new Dimension(128, 20));
       histoRangeComboBox_.setFocusable(false);
@@ -741,6 +763,45 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       histoRangeDownButton_.setEnabled(!isFloat && histoRangeComboBox_.getSelectedIndex() > 0);
       histoRangeUpButton_.setEnabled(!isFloat
             && histoRangeComboBox_.getSelectedIndex() < histoRangeComboBoxModel_.getSize() - 2);
+      // A float histogram has no bit depth to choose, so the bit-depth controls give way
+      // to the one range control that does apply to it.
+      histoRangeComboBox_.setVisible(!isFloat);
+      histoRangeDownButton_.setVisible(!isFloat);
+      histoRangeUpButton_.setVisible(!isFloat);
+      floatRangeResetButton_.setVisible(isFloat);
+      // Only worth pressing once the range has been pinned or widened past this image.
+      floatRangeResetButton_.setEnabled(isFloat
+            && (floatRangePinned_ || floatRangeExceedsCurrentImage()));
+   }
+
+   /**
+    * Whether the accumulated axis is wider than the image now displayed needs.
+    *
+    * <p>Used to tell whether resetting the range would actually change anything.
+    *
+    * @return true if the axis extends beyond the current image's own range
+    */
+   @MustCallOnEDT
+   private boolean floatRangeExceedsCurrentImage() {
+      if (stats_ == null || Double.isNaN(floatRangeMin_) || Double.isNaN(floatRangeMax_)) {
+         return false;
+      }
+      for (int c = 0; c < stats_.getNumberOfComponents(); ++c) {
+         ComponentStats cStats = stats_.getComponentStats(c);
+         if (!cStats.isFloat()) {
+            continue;
+         }
+         double frameMin = cStats.getHistogramRangeMinDouble();
+         double frameMax = frameMin
+               + cStats.getBinWidthDouble() * cStats.getHistogramBinCount();
+         if (Double.isNaN(frameMin) || Double.isNaN(frameMax)) {
+            continue;
+         }
+         if (floatRangeMin_ < frameMin || floatRangeMax_ > frameMax) {
+            return true;
+         }
+      }
+      return false;
    }
 
    @MustCallOnEDT
@@ -999,13 +1060,27 @@ public final class ChannelIntensityController implements HistogramView.Listener 
     */
    @MustCallOnEDT
    private void accumulateFloatRange() {
-      if (stats_ == null || floatRangePinned_) {
+      if (stats_ == null || stats_.getNumberOfComponents() < 1
+            || !stats_.getComponentStats(0).isFloat()) {
+         return; // Integer image: nothing to accumulate.
+      }
+      // Switching an ROI on or off changes which pixels are measured, so a range
+      // accumulated under the old selection no longer describes what is being shown.
+      boolean isROI = stats_.getComponentStats(0).isROIStats();
+      if (isROI != floatRangeFromROI_) {
+         floatRangeFromROI_ = isROI;
+         if (!floatRangePinned_) {
+            floatRangeMin_ = Double.NaN;
+            floatRangeMax_ = Double.NaN;
+         }
+      }
+      if (floatRangePinned_) {
          return;
       }
       for (int c = 0; c < stats_.getNumberOfComponents(); ++c) {
          ComponentStats cStats = stats_.getComponentStats(c);
          if (!cStats.isFloat()) {
-            return; // Integer image: nothing to accumulate.
+            continue;
          }
          double frameMin = cStats.getHistogramRangeMinDouble();
          double frameMax = frameMin
@@ -1122,18 +1197,21 @@ public final class ChannelIntensityController implements HistogramView.Listener 
     * Counts falling outside the axis are dropped, which is what makes data beyond the
     * chosen range read as clipped rather than piling up at an end.
     *
-    * <p>Each output bin is rounded independently, so the total count is not exactly
-    * conserved. That is fine for a display histogram, which is only ever drawn.
+    * <p>Contributions are accumulated as doubles and rounded once at the end. Rounding
+    * each contribution as it lands loses whole bins whenever a source bin spreads over
+    * three or more axis bins -- every fraction is then below a half and rounds to zero --
+    * which empties the histogram for an axis pinned much narrower than the image.
     *
     * @param cStats statistics of the image
     * @param mapper mapper describing the axis
     * @param axisBins number of bins on the axis
     * @return counts per axis bin
     */
-   private static long[] resampleOntoAxis(ComponentStats cStats,
-                                          FloatCoordinateMapper mapper, int axisBins) {
+   static long[] resampleOntoAxis(ComponentStats cStats,
+                                  FloatCoordinateMapper mapper, int axisBins) {
       long[] src = cStats.getInRangeHistogram();
-      long[] out = new long[Math.max(1, axisBins)];
+      double[] acc = new double[Math.max(1, axisBins)];
+      long[] out = new long[acc.length];
       if (src == null || src.length == 0) {
          return out;
       }
@@ -1181,8 +1259,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             if (overlap <= 0.0) {
                continue;
             }
-            out[b] += Math.round(src[i] * (overlap / width));
+            acc[b] += src[i] * (overlap / width);
          }
+      }
+      for (int b = 0; b < acc.length; ++b) {
+         // Round up anything that received a contribution at all, so that a bin holding a
+         // sliver of a count still draws; the log-scaled graph makes such bins visible and
+         // dropping them would misreport the data as absent.
+         out[b] = acc[b] > 0.0 ? Math.max(1L, Math.round(acc[b])) : 0L;
       }
       return out;
    }
@@ -1705,6 +1789,53 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       statsOrRangeChanged();
+   }
+
+   /**
+    * Makes the float histogram range follow the displayed data again.
+    *
+    * <p>Undoes both a range the user pinned by editing an axis end and one widened by
+    * images seen earlier in the session.
+    */
+   @MustCallOnEDT
+   private void resetFloatHistoRange() {
+      // Forget both the pin and the accumulated range, so the axis is rebuilt from the
+      // image currently displayed rather than from everything seen so far. Without the
+      // second part a single outlier frame would keep the axis wide forever.
+      floatRangePinned_ = false;
+      floatRangeMin_ = Double.NaN;
+      floatRangeMax_ = Double.NaN;
+      // Drop the stored axis too, otherwise restoreFloatRangeFromSettings() would put the
+      // old one straight back on the next viewer or session.
+      clearFloatRangeInSettings();
+      floatRangeRestored_ = true;
+      accumulateFloatRange();
+      statsOrRangeChanged();
+   }
+
+   /**
+    * Removes any float histogram axis recorded in the display settings.
+    */
+   @MustCallOnEDT
+   private void clearFloatRangeInSettings() {
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
+      do {
+         oldDisplaySettings = viewer_.getDisplaySettings();
+         ChannelDisplaySettings channelSettings =
+               oldDisplaySettings.getChannelSettings(channelIndex_);
+         if (!channelSettings.hasFloatHistoRange()
+               && !channelSettings.isFloatHistoRangePinned()) {
+            return;
+         }
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithChannelSettings(channelIndex_,
+                     channelSettings.copyBuilder()
+                           .floatHistoRange(Double.NaN, Double.NaN)
+                           .floatHistoRangePinned(false)
+                           .build())
+               .build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
    @Override

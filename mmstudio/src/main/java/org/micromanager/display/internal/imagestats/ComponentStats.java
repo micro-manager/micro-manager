@@ -616,27 +616,40 @@ public final class ComponentStats {
    /**
     * Autoscale maximum as a real pixel value, ignoring zero pixels, for float images.
     *
+    * <p>Callers pair this with a minimum of zero, which is what "ignoring zeros" means
+    * here, so the result is kept strictly above zero rather than above the data minimum.
+    * The data minimum is the wrong floor: for float data it is routinely negative, which
+    * would let this return a maximum below the zero the caller uses and yield an inverted
+    * range.
+    *
     * @param q fraction (0-1) of pixels to leave out at the top
-    * @return the maximum
+    * @return the maximum, always greater than zero
     */
    public double getFloatAutoscaleMaxForQuantileIgnoringZeros(double q) {
       double max = getQuantileIgnoringZeros(q >= 0.5 ? 0.5 : 1.0 - q);
-      double min = getFloatMinIntensity();
-      if (max <= min) {
-         return min + padFor(min);
+      if (max > 0.0) {
+         return max;
       }
-      return max;
+      // The quantile came out at or below zero, so it cannot be used against a floor of
+      // zero. Prefer the real maximum, which at least spans the positive data; fall back
+      // to a token width only when there is no positive data at all.
+      double dataMax = getFloatMaxIntensity();
+      return dataMax > 0.0 ? dataMax : padFor(dataMax);
    }
 
    /**
     * Amount by which to widen a range that came out empty.
+    *
+    * <p>Scaled to the value so that the widening stays negligible next to the data, with
+    * an absolute floor for a value of (or near) zero, where a relative pad would underflow
+    * to something too small to give a drawable range.
     *
     * @param value the value the range collapsed to
     * @return a positive, non-zero padding
     */
    private static double padFor(double value) {
       double pad = Math.abs(value) * 1e-6;
-      return pad > 0.0 ? pad : Math.max(Math.ulp(value), Double.MIN_NORMAL);
+      return pad > Double.MIN_NORMAL ? pad : 1e-6;
    }
 
    /**

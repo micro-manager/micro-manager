@@ -46,11 +46,16 @@ public interface ChannelDisplaySettings {
        * <p>Only meaningful for float images, whose axis is a real value range rather than
        * a bit depth. Pass {@code Double.NaN} for both to clear it.
        *
+       * <p>The default implementation ignores the values, so that builders written before
+       * the float axis existed keep compiling; they simply carry no axis range.
+       *
        * @param min low end of the axis
        * @param max high end of the axis
        * @return this builder
        */
-      Builder floatHistoRange(double min, double max);
+      default Builder floatHistoRange(double min, double max) {
+         return this;
+      }
 
       /**
        * Marks the float histogram axis as chosen by the user.
@@ -61,7 +66,9 @@ public interface ChannelDisplaySettings {
        * @param pinned true to stop the axis adapting to the data
        * @return this builder
        */
-      Builder floatHistoRangePinned(boolean pinned);
+      default Builder floatHistoRangePinned(boolean pinned) {
+         return this;
+      }
 
       Builder name(String name);
 
@@ -126,10 +133,15 @@ public interface ChannelDisplaySettings {
    /**
     * Low end of the histogram axis for floating point images.
     *
+    * <p>The default implementation reports no axis range, so that implementations written
+    * before the float axis existed keep compiling.
+    *
     * @return pixel value, or {@code Double.NaN} if not set
     * @see #hasFloatHistoRange()
     */
-   double getFloatHistoRangeMinimum();
+   default double getFloatHistoRangeMinimum() {
+      return Double.NaN;
+   }
 
    /**
     * High end of the histogram axis for floating point images.
@@ -137,7 +149,9 @@ public interface ChannelDisplaySettings {
     * @return pixel value, or {@code Double.NaN} if not set
     * @see #hasFloatHistoRange()
     */
-   double getFloatHistoRangeMaximum();
+   default double getFloatHistoRangeMaximum() {
+      return Double.NaN;
+   }
 
    /**
     * Returns whether a float histogram axis range has been recorded.
@@ -145,7 +159,11 @@ public interface ChannelDisplaySettings {
     * @return true if both ends are set and the high end is strictly above the low end;
     *     an empty or inverted range counts as unset, since it cannot be drawn
     */
-   boolean hasFloatHistoRange();
+   default boolean hasFloatHistoRange() {
+      double min = getFloatHistoRangeMinimum();
+      double max = getFloatHistoRangeMaximum();
+      return !Double.isNaN(min) && !Double.isNaN(max) && max > min;
+   }
 
    /**
     * Returns whether the float histogram axis was chosen by the user.
@@ -154,7 +172,9 @@ public interface ChannelDisplaySettings {
     *
     * @return true if the axis should be left as-is
     */
-   boolean isFloatHistoRangePinned();
+   default boolean isFloatHistoRangePinned() {
+      return false;
+   }
 
    /**
     * Indicates whether this is visible.

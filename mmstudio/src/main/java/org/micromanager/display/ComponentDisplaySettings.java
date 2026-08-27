@@ -39,10 +39,15 @@ public interface ComponentDisplaySettings {
        * since the interesting range is rarely integral. Pass {@code Double.NaN} to clear
        * the float scaling and fall back to the long-valued setting.
        *
+       * <p>The default implementation ignores the value, so that builders written before
+       * float scaling existed keep compiling; they simply carry no float range.
+       *
        * @param minIntensity pixel value, or NaN to unset
        * @return this builder
        */
-      Builder floatScalingMinimum(double minIntensity);
+      default Builder floatScalingMinimum(double minIntensity) {
+         return this;
+      }
 
       /**
        * Sets the scaling maximum as an actual pixel value, for floating point images.
@@ -51,7 +56,9 @@ public interface ComponentDisplaySettings {
        * @return this builder
        * @see #floatScalingMinimum(double)
        */
-      Builder floatScalingMaximum(double maxIntensity);
+      default Builder floatScalingMaximum(double maxIntensity) {
+         return this;
+      }
 
       /**
        * Sets both float scaling bounds as actual pixel values.
@@ -61,7 +68,9 @@ public interface ComponentDisplaySettings {
        * @return this builder
        * @see #floatScalingMinimum(double)
        */
-      Builder floatScalingRange(double minIntensity, double maxIntensity);
+      default Builder floatScalingRange(double minIntensity, double maxIntensity) {
+         return floatScalingMinimum(minIntensity).floatScalingMaximum(maxIntensity);
+      }
 
       ComponentDisplaySettings build();
    }
@@ -73,10 +82,15 @@ public interface ComponentDisplaySettings {
    /**
     * Returns the scaling minimum as an actual pixel value, for floating point images.
     *
+    * <p>The default implementation reports no float scaling, so that implementations
+    * written before float scaling existed keep compiling.
+    *
     * @return pixel value, or {@code Double.NaN} if no float scaling has been set
     * @see #hasFloatScaling()
     */
-   double getFloatScalingMinimum();
+   default double getFloatScalingMinimum() {
+      return Double.NaN;
+   }
 
    /**
     * Returns the scaling maximum as an actual pixel value, for floating point images.
@@ -84,7 +98,9 @@ public interface ComponentDisplaySettings {
     * @return pixel value, or {@code Double.NaN} if no float scaling has been set
     * @see #hasFloatScaling()
     */
-   double getFloatScalingMaximum();
+   default double getFloatScalingMaximum() {
+      return Double.NaN;
+   }
 
    /**
     * Returns whether a floating point scaling range has been set.
@@ -95,7 +111,11 @@ public interface ComponentDisplaySettings {
     * @return true if both bounds are set and the maximum is strictly above the minimum;
     *     an empty or inverted range counts as unset, since it cannot be displayed
     */
-   boolean hasFloatScaling();
+   default boolean hasFloatScaling() {
+      double min = getFloatScalingMinimum();
+      double max = getFloatScalingMaximum();
+      return !Double.isNaN(min) && !Double.isNaN(max) && max > min;
+   }
 
    /**
     * Scaling minimum as a pixel value, whichever range is in effect.

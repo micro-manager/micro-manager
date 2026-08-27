@@ -219,6 +219,33 @@ public class ComponentStatsFloatTest {
       assertTrue("degenerate range must be widened", minMax[1] > minMax[0]);
    }
 
+   /**
+    * Callers of the ignoring-zeros autoscale pair it with a minimum of zero, so its result
+    * has to stay above zero. Data with a negative minimum used to clamp against that
+    * minimum instead, which could return a maximum below the caller's floor.
+    */
+   @Test
+   public void testAutoscaleIgnoringZerosStaysAboveZeroForNegativeData() {
+      ComponentStats cs = evenlySpreadFloatStats(-2.238, -0.5);
+      assertTrue("data minimum is negative", cs.getFloatMinIntensity() < 0.0);
+      double max = cs.getFloatAutoscaleMaxForQuantileIgnoringZeros(0.001);
+      assertTrue("max " + max + " must exceed the zero floor callers use", max > 0.0);
+   }
+
+   @Test
+   public void testAutoscaleIgnoringZerosIsPositiveForAllNegativeData() {
+      ComponentStats cs = evenlySpreadFloatStats(-5.0, -1.0);
+      double max = cs.getFloatAutoscaleMaxForQuantileIgnoringZeros(0.0);
+      assertTrue("max " + max + " must be greater than zero", max > 0.0);
+   }
+
+   @Test
+   public void testAutoscaleIgnoringZerosKeepsPositiveQuantile() {
+      ComponentStats cs = evenlySpreadFloatStats(0.0, 4.0);
+      double max = cs.getFloatAutoscaleMaxForQuantileIgnoringZeros(0.001);
+      assertTrue("a usable quantile must be kept as-is", max > 1.0 && max <= 4.0);
+   }
+
    // --- merge() must carry the float fields and the axis ---
 
    @Test
