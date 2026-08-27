@@ -13,6 +13,7 @@ import javax.swing.event.MenuListener;
 import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.SciFIODataProvider;
+import org.micromanager.data.internal.TiledDataOpener;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -111,10 +112,31 @@ public final class FileMenu {
    }
 
    private void promptToOpenFile(final boolean isVirtual) {
+      // The chooser is run here rather than inside DataManager.promptForDataToLoad(), because
+      // a tiled dataset has to be recognized before any attempt is made to load it as a
+      // Datastore. promptForDataToLoad() combines the two steps and is left alone so that
+      // existing callers of that API keep working.
+      final File file = FileDialogs.openDir(studio_.app().getMainWindow(),
+            "Please select an image data set", FileDialogs.MM_DATA_SET);
+      if (file == null) {
+         // User cancelled.
+         return;
+      }
       new Thread(() -> {
          try {
-            Datastore store = studio_.data().promptForDataToLoad(
-                  studio_.app().getMainWindow(), isVirtual);
+            // Pyramidal formats open in their own viewer; RAM mode is meaningless for data
+            // that is not expected to fit in memory, so isVirtual does not apply to them.
+            TiledDataOpener.Result tiled =
+                  TiledDataOpener.tryOpen(studio_, file.getPath());
+            if (tiled.wasHandled()) {
+               if (tiled.getDatasetRoot() != null) {
+                  updateFileHistory(tiled.getDatasetRoot());
+               }
+               return;
+            }
+
+            Datastore store = studio_.data().loadData(
+                  studio_.app().getMainWindow(), file.getPath(), isVirtual);
             if (store == null) {
                // User cancelled.
                return;
@@ -176,6 +198,14 @@ public final class FileMenu {
          JMenuItem item = new JMenuItem(path);
          item.addActionListener(e -> new Thread(() -> {
             try {
+               TiledDataOpener.Result tiled = TiledDataOpener.tryOpen(studio_, path);
+               if (tiled.wasHandled()) {
+                  if (tiled.getDatasetRoot() != null) {
+                     updateFileHistory(tiled.getDatasetRoot());
+                  }
+                  return;
+               }
+
                MMStudio internalStudio = (MMStudio) studio_;
                Datastore store = studio_.data()
                      .loadData(internalStudio.getApplication().getMainWindow(),

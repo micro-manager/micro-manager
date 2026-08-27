@@ -21,6 +21,7 @@ package org.micromanager;
 
 import java.util.HashMap;
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.data.TiledDataOpenerPlugin;
 import org.micromanager.display.DataViewerGearMenuPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
@@ -122,6 +123,21 @@ public interface PluginManager {
     *     instances
     */
    default HashMap<String, DataViewerGearMenuPlugin> getDataViewerGearMenuPlugins() {
+      return new HashMap<>();
+   }
+
+   /**
+    * Return a HashMap that maps plugin class names to TiledDataOpenerPlugin
+    * instances. TiledDataOpenerPlugins open tiled (pyramidal) datasets, such as
+    * OME-Zarr or tiled NDTiff, that the standard data loading path cannot handle.
+    *
+    * <p>Defaults to reporting no such plugins, so that implementations written
+    * before this plugin type existed keep working.
+    *
+    * @return HashMap that maps plugin class names to TiledDataOpenerPlugin
+    *     instances
+    */
+   default HashMap<String, TiledDataOpenerPlugin> getTiledDataOpenerPlugins() {
       return new HashMap<>();
    }
 
