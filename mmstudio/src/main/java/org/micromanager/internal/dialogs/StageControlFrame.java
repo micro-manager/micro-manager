@@ -204,8 +204,7 @@ public final class StageControlFrame extends JFrame {
       settings_ = studio_.profile().getSettings(StageControlFrame.class);
       uiMovesStageManager_ = ((MMStudio) studio_).getUiMovesStageManager(); // TODO: add to API?
 
-      NumberFormat numberInstance = NumberFormat.getNumberInstance();
-      numberInstance.setMaximumFractionDigits(1);
+      NumberFormat numberInstance = NumberUtils.getDisplayFormat(1);
       xStepTexts_ = new JFormattedTextField[] {
             new JFormattedTextField(numberInstance),
             new JFormattedTextField(numberInstance),
@@ -1045,8 +1044,7 @@ public final class StageControlFrame extends JFrame {
          }
       }
 
-      NumberFormat numberInstance = NumberFormat.getNumberInstance();
-      numberInstance.setMaximumFractionDigits(1);
+      NumberFormat numberInstance = NumberUtils.getDisplayFormat(1);
       JFormattedTextField tf = new JFormattedTextField(numberInstance);
       tf.setHorizontalAlignment(SwingConstants.RIGHT);
       FieldListener listener = new FieldListener(tf, settings, cb, prefix);

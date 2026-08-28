@@ -451,6 +451,7 @@ public class PatternOverlay extends AbstractOverlay {
       });
 
       NumberFormat patternSizeTextFormat = NumberFormat.getInstance();
+      patternSizeTextFormat.setGroupingUsed(false);
       patternSizeTextBox_ = new JFormattedTextField(patternSizeTextFormat);
       patternSizeTextBox_.setColumns(2);
       patternSizeLabel_ = new JLabel("%");

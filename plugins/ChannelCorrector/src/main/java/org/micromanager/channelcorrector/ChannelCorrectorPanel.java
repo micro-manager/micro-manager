@@ -129,6 +129,7 @@ public class ChannelCorrectorPanel extends JPanel {
       affineTransform_.getMatrix(flatAffine);
       NumberFormat affFormat = NumberFormat.getInstance();
       affFormat.setMinimumFractionDigits(5);
+      affFormat.setGroupingUsed(false);
       for (int row = 0; row < 2; row++) {
          for (int col = 0; col < 3; col++) {
             final int r = row;

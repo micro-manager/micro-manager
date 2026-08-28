@@ -88,6 +88,7 @@ public class VolumeControlSubPanel extends JPanel {
       NumberFormat numberFormat = NumberFormat.getNumberInstance();
       numberFormat.setMaximumFractionDigits(2);
       numberFormat.setMinimumFractionDigits(0);
+      numberFormat.setGroupingUsed(false);
       NumberFormatter formatter = new NumberFormatter(numberFormat);
       formatter.setValueClass(Float.class);
       formatter.setMinimum(0);

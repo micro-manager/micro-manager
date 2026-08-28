@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.awt.Toolkit;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
@@ -48,6 +47,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.display.inspector.internal.panels.sharpnessinspector.SharpnessInspectorController;
 import org.micromanager.display.inspector.internal.panels.sharpnessinspector.SharpnessInspectorPlugin;
 import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
+import org.micromanager.internal.utils.NumberUtils;
 
 /**
  *
@@ -270,9 +270,9 @@ public class SharpnessInspectorPanel extends JPanel {
         
    private class ScanDialog extends JDialog {
       private final JFormattedTextField interval =
-              new JFormattedTextField(NumberFormat.getNumberInstance());
+              new JFormattedTextField(NumberUtils.getDisplayFormat(3));
       private final JFormattedTextField range =
-              new JFormattedTextField(NumberFormat.getNumberInstance());
+              new JFormattedTextField(NumberUtils.getDisplayFormat(3));
       private final JButton startButton = new JButton("Start");
 
       public ScanDialog() {

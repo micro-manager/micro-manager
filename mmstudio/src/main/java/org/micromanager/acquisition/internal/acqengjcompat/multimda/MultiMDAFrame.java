@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -481,7 +480,7 @@ public class MultiMDAFrame extends JFrame {
       intervalLabel.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(intervalLabel, "alignx label");
 
-      interval_ = new JFormattedTextField(NumberFormat.getInstance());
+      interval_ = new JFormattedTextField(NumberUtils.getDisplayFormat(3));
       interval_.setColumns(5);
       interval_.setFont(DEFAULT_FONT);
       interval_.setValue(1.0);
