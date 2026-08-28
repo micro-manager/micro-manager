@@ -119,4 +119,49 @@ public class NumberUtilsTest {
          assertEquals(value, NumberUtils.displayStringToInt(displayed));
       }
    }
+
+   /**
+    * Regression test for the "2000 shows as 2,000 and reads back as 2.0" bug: a format
+    * handed to a JFormattedTextField must never emit a grouping separator, because
+    * displayStringToDouble() reads "," and "." as decimal separators. Not locale-gated:
+    * the round trip has to hold under every decimal-separator convention.
+    */
+   @Test
+   public void displayFormatRoundTripsThroughDisplayString() throws java.text.ParseException {
+      final double delta = 0.00001;
+      final double[] values = {2000.0, 1234.5, 250000.0, 0.1, -42.5, 1.3, 0.0};
+      final java.util.Locale original = java.util.Locale.getDefault();
+      try {
+         for (java.util.Locale locale : new java.util.Locale[] {
+               java.util.Locale.US, java.util.Locale.GERMANY, java.util.Locale.FRANCE}) {
+            java.util.Locale.setDefault(locale);
+            java.text.NumberFormat format = NumberUtils.getDisplayFormat(1);
+            for (double value : values) {
+               String displayed = format.format(value);
+               assertEquals(locale + ": \"" + displayed + "\"",
+                     value, NumberUtils.displayStringToDouble(displayed), delta);
+            }
+         }
+      } finally {
+         java.util.Locale.setDefault(original);
+      }
+   }
+
+   /**
+    * The specific value from the bug report: 2000 must not acquire a grouping separator,
+    * which displayStringToDouble() would otherwise read as a decimal point (-> 2.0).
+    */
+   @Test
+   public void displayFormatDoesNotGroupThousands() {
+      final java.util.Locale original = java.util.Locale.getDefault();
+      try {
+         for (java.util.Locale locale : new java.util.Locale[] {
+               java.util.Locale.US, java.util.Locale.GERMANY, java.util.Locale.FRANCE}) {
+            java.util.Locale.setDefault(locale);
+            assertEquals("2000", NumberUtils.getDisplayFormat(1).format(2000.0));
+         }
+      } finally {
+         java.util.Locale.setDefault(original);
+      }
+   }
 }

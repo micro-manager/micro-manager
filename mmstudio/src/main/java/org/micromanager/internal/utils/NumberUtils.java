@@ -102,6 +102,24 @@ public final class NumberUtils {
       return result;
    }
 
+   /**
+    * Returns a NumberFormat suitable for a JFormattedTextField whose contents are read
+    * back with {@link #displayStringToDouble}. Grouping is switched off: the parser
+    * treats both "." and "," as decimal separators and has no notion of grouping, so a
+    * grouped "2,000" would come back as 2.0 (see issue #2444). A fresh instance is
+    * returned each call because a JFormattedTextField keeps a reference to it.
+    *
+    * @param maxFractionDigits Maximum number of digits after the decimal separator
+    * @return A new, non-grouping NumberFormat in the default locale
+    */
+   public static NumberFormat getDisplayFormat(int maxFractionDigits) {
+      NumberFormat format = NumberFormat.getNumberInstance();
+      format.setRoundingMode(RoundingMode.HALF_UP);
+      format.setMaximumFractionDigits(maxFractionDigits);
+      format.setGroupingUsed(false);
+      return format;
+   }
+
    public static int displayStringToInt(Object numberString) throws ParseException {
       return parseIntegerStrict(numberString, INTEGER_PARSE_FORMAT).intValue();
    }

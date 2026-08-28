@@ -237,7 +237,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-      numberFormat_ = NumberFormat.getNumberInstance();
+      numberFormat_ = NumberUtils.getDisplayFormat(3);
 
       super.addWindowListener(new WindowAdapter() {
 
