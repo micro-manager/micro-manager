@@ -30,6 +30,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
    private final String path_;
    private final DefaultDatastore duplicate_;
    private final Storage saver_;
+   private boolean closeOnSave_;
 
    /**
     * Takes care of most of the dirty work saving data to various targets.
@@ -47,6 +48,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       this.studio = studio;
       store_ = store;
       path_ = path;
+      closeOnSave_ = false;
 
       duplicate_ = new DefaultDatastore(this.studio);
 
@@ -70,6 +72,20 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       }
 
    }
+   
+   /**
+    * Same as constructor above with closeOnSave parameter
+    * 
+    * @param closeOnSave when true, will close datastore after saving.
+    */
+   public DefaultDataSaver(Studio studio,
+                           DefaultDatastore store,
+                           Datastore.SaveMode mode,
+                           String path,
+                           boolean closeOnSave) throws IOException {
+      this(studio, store, mode, path);
+      closeOnSave_ = closeOnSave;
+      }
 
    @Override
    protected Void doInBackground() throws IOException {
@@ -195,6 +211,9 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       // may trigger side-effects that "finish" the process of saving.
       store_.setSavePath(path_);
       store_.freeze();
+      if (closeOnSave_) {
+          store_.close();
+      }
       duplicate_.setSavePath(path_);
       duplicate_.freeze();
       duplicate_.close();
