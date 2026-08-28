@@ -15,24 +15,17 @@
 
 (ns org.micromanager.mm
   (:import [org.micromanager MultiStagePosition]
-           [mmcorej Configuration DoubleVector Metadata StrVector] ;; load mmcorej.DeviceType at runtime only
+           [mmcorej Configuration DoubleVector StrVector] ;; load mmcorej.DeviceType at runtime only
            [mmcorej.org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
            [org.micromanager MultiStagePosition StagePosition]
            [org.micromanager.acquisition ChannelSpec]
-           [java.util Date]
-           [ij IJ]
-           [javax.swing SwingUtilities])
+           [java.util Date])
   (:require [clojure.pprint]
             [clojure.string]))
 
 (declare gui)
 (declare mmc)
-
-(defmacro edt
-  "Run body on the Event Dispatch Thread."
-  [& body]
-  `(SwingUtilities/invokeLater (fn [] ~@body)))
 
 (defn store-mmcore
   [mmc]
@@ -189,13 +182,6 @@
     `(when (and ~@args_)
       (~f ~@args_))))
 
-(defmacro if-args
-  "Apply f to arguments only if all arguments are not nil."
-  [f & args]
-  (let [args_ args]
-    `(if (and ~@args_)
-      (~f ~@args_))))
-
 (defmacro attempt-all
   "Attempt to evaluate every form in body, regardless of exceptions,
    then afterwards throw the first exception."
@@ -208,17 +194,6 @@
        (when-let [first-err# (first @~errors)]
          (throw first-err#)))))
 
-(defn get-default-devices
-  "Get the list of default (core) devices."
-  []
-  {:camera          (core getCameraDevice)
-   :shutter         (core getShutterDevice)
-   :focus           (core getFocusDevice)
-   :xy-stage        (core getXYStageDevice)
-   :autofocus       (core getAutoFocusDevice)
-   :image-processor (core getImageProcessorDevice)
-   :galvo           (core getGalvoDevice)})
-   
 (defn config-struct
   "Creates a map of properties from a given Micro-Manager Configuration
    where keys are given as [dev-name prop-name] and values are the property
@@ -259,19 +234,6 @@
   [dev prop]
   [[dev prop] (get-property-value dev prop)])
 
-(defn get-positions
-  "Get the position list as a vector of MultiStagePositions."
-  ([position-list]
-    (vec (.getPositions (or position-list (.getPositionList gui)))))
-  ([]
-    (get-positions nil)))
-
-(defn get-allowed-property-values
-  "Returns a sequence of the allowed property values
-   for a give device and property."
-  [dev prop]
-  (seq (core getAllowedPropertyValues dev prop)))
-  
 (defn select-values-match?
   "Checks if a particular set of values in two maps
    are the same, give a vector of keys for comparison."
@@ -279,25 +241,12 @@
   (= (select-keys map1 keys)
      (select-keys map2 keys)))
      
-(defn current-tagged-image
-  "Get the current tagged image displayed frontmost in Micro-Manager."
-  []
-  (let [img (IJ/getImage)]
-    (.. img getStack (getTaggedImage (.getCurrentSlice img)))))
-
 (defn get-camera-roi
   "Returns a vector containing the [left top width height] of the roi."
   []
   (let [r (repeatedly 4 #(int-array 1))]
     (core getROI (nth r 0) (nth r 1) (nth r 2) (nth r 3))
     (vec (flatten (map seq r)))))
-
-(defn parse-core-metadata
-  "Reads the metadata from a core Metadata object into a map."
-  [^Metadata m]
-  (into {}
-    (for [k (.GetKeys m)]
-      [k (.. m (GetSingleTag k) GetValue)])))
 
 (defn json-to-data
   "Take a JSON object and convert it to a clojure data object."
@@ -314,15 +263,6 @@
         (for [i (range (.length json))]
           (json-to-data (.get json i))))
     json))
-
-(defn to-json [x]
-  (cond
-    (map? x) (JSONObject. (into {} (for [[k v] x]
-                                     [(name k) (to-json v)])))
-    (vector? x) (JSONArray. (map to-json x))
-    (list? x) (JSONArray. (map to-json x))
-    (keyword? x) (name x)
-    :else x))
 
 (def ^{:doc "the ISO8601 standard date format modified to make it
              slightly more human-readable."}
@@ -383,27 +323,6 @@
   ([idx]
     (get-msp nil idx)))
 
-
-(defn add-msp
-  "Add a MultiStagePosition object to the position list."
-  ([position-list label x y z]
-    (.addPosition position-list
-                  (doto
-                    (MultiStagePosition.
-                      (core getXYStageDevice) x y
-                      (core getFocusDevice) z)
-                      (.setDefaultXYStage (core getXYStageDevice))
-                      (.setDefaultZStage (core getFocusDevice))
-                      (.setLabel label))))
-  ([label x y z]
-    (add-msp (.getPositionList gui) label x y z)))
-
-(defn remove-msp
-  ([position-list idx]
-    (.removePosition position-list idx))
-  ([idx]
-    (remove-msp (.getPositionList gui) idx)))
-
 (defn get-msp-z-position
   "Get the z position for a given z-stage from the MultiStagePosition
    with the given index in the Position List."
@@ -423,12 +342,6 @@
       (set! (. stage-pos x) z))))
   ([idx z-stage z]
     (set-msp-z-position nil idx z-stage z)))  
-
-(defn positions-map [position-list]
-  (let [position (map MultiStagePosition-to-map (get-positions))]
-    (zipmap
-      (map :label position)
-      (map :axes position))))
 
 (defn swig-vector-contents
   "Returns a string containing all values in a swig vector
@@ -455,44 +368,4 @@
       (.add v item))
     v))
 
-(defn all-properties []
-  (for [dev (.getLoadedDevices mmc) prop (.getDevicePropertyNames mmc dev)]
-    [dev prop]))
 
-(defn property-sequence-max-lengths []
-  (into {}
-        (for [[dev prop :as property] (all-properties)]
-          [property
-           (if (.isPropertySequenceable mmc dev prop)
-             (.getPropertySequenceMaxLength mmc dev prop)
-             0)])))
-
-(defn all-cameras []
-  (seq (.getLoadedDevicesOfType mmc (eval 'mmcorej.DeviceType/CameraDevice))))
-
-(defn exposure-sequence-max-lengths []
-  (into {}
-        (for [camera (all-cameras)]
-          [camera
-           (if (.isExposureSequenceable mmc camera)
-             (.getExposureSequenceMaxLength mmc camera)
-             0)])))
-
-(defn all-z-stages []
-  (seq (.getLoadedDevicesOfType mmc (eval 'mmcorej.DeviceType/StageDevice))))
-
-(defn stage-sequence-max-lengths []
-  (into {}
-        (for [stage (all-z-stages)]
-          [stage
-           (if (.isStageSequenceable mmc stage)
-             (.getStageSequenceMaxLength mmc stage)
-             0)])))
-
-(defn sequence-max-lengths []
-  {:camera-exposures (exposure-sequence-max-lengths)
-   :stages (stage-sequence-max-lengths)
-   :properties (property-sequence-max-lengths)})
-
-
-  
