@@ -2,8 +2,10 @@
 	<property name="mm.platform" value="Windows"/>
 	<property name="mm.configuration" value="Release"/>
 
-	<!-- Use the nightly-build-style version string -->
-	<property name="mm.build.mode" value="nightly"/>
+	<!-- Nightly and other official builds set mm.versionstring externally;
+	     by default, indicate that the build is not official. -->
+	<tstamp><format property="DSTAMP" pattern="yyyyMMdd"/></tstamp>
+	<property name="mm.versionstring" value="adhoc${DSTAMP}"/>
 
 	<!-- Keep compiler command lines and other details -->
 	<property name="mm.build.msbuild.verbosity" value="normal"/>
@@ -14,11 +16,7 @@
 	<!-- Default name for XML log file -->
 	<!-- Specify -listener org.apache.tools.ant.XmlLogger on the command
 	     line to enable. -->
-	<tstamp>
-		<format property="DSTAMP" pattern="yyyyMMdd" timezone="GMT-8"/>
-	</tstamp>
 	<property name="XmlLogger.file" location="buildlog.xml"/>
-
 
 	<ant antfile="build.xml" useNativeBaseDir="true">
 		<property name="mm.architecture" value="x64"/>
