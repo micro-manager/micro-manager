@@ -108,6 +108,11 @@ public class ExplorerManager {
          java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS Z")
                .withZone(java.time.ZoneId.systemDefault());
 
+   // The most recently started/opened session, so external callers (e.g. a scripting API)
+   // can find and drive the live Explorer session without needing a reference to the
+   // ExplorerFrame that created it. Cleared when that session stops.
+   private static volatile ExplorerManager activeInstance_;
+
    private final Studio studio_;
    private final ExplorerFrame frame_;
 
@@ -188,6 +193,10 @@ public class ExplorerManager {
    // Set to true after the first time we notify the user that MDA slice settings were
    // overridden; prevents showing the same dialog on every subsequent tile.
    private volatile boolean mdaSliceOverrideWarningShown_ = false;
+   // Set to true after the first store/acquisition failure dialog is shown for this session;
+   // prevents a fast tiled acquisition from spamming a dialog per failed tile.
+   private volatile boolean storeImageErrorShown_ = false;
+   private volatile boolean tileAcquisitionErrorShown_ = false;
    // When true, the MDA z-stack and channel settings are ignored for this session and every
    // tile is acquired with the microscope's current focus position and channel preset. Chosen
    // in ExplorerFrame and locked at session start, along with the z-axis decision above.
@@ -234,6 +243,20 @@ public class ExplorerManager {
    }
 
    /**
+    * Returns the most recently started/opened Explorer session, or null if none is active.
+    * Lets external callers (e.g. a scripting API) find and drive a live session without
+    * needing a reference to the ExplorerFrame that created it.
+    */
+   public static ExplorerManager getActiveInstance() {
+      return activeInstance_;
+   }
+
+   /** Absolute path of the current session's dataset on disk, or null if none is active. */
+   public String getDatasetPath() {
+      return exploring_ ? dataLocationForMessages() : null;
+   }
+
+   /**
     * Starts the explore session.
     */
    public void startExplore() {
@@ -270,7 +293,14 @@ public class ExplorerManager {
 
          cameraWidth_ = (int) studio_.core().getImageWidth();
          cameraHeight_ = (int) studio_.core().getImageHeight();
-         bitDepth_ = (int) studio_.core().getImageBitDepth();
+         int reportedBitDepth = (int) studio_.core().getImageBitDepth();
+         int bytesPerPixel = (int) studio_.core().getBytesPerPixel();
+         // getImageBitDepth() reports "significant bits", independent of how many bytes the
+         // pixel is actually packed into (e.g. DemoCamera can report BitDepth=8 while its
+         // PixelType is 16-bit). The storage backends pick byte[] vs short[] from bitDepth_, so
+         // it must reflect the real container size whenever the two disagree.
+         bitDepth_ = (reportedBitDepth <= 8 && bytesPerPixel > 1)
+                 ? bytesPerPixel * 8 : reportedBitDepth;
          try {
             isRGB_ = studio_.core().getNumberOfComponents() > 1;
          } catch (Exception e) {
@@ -301,6 +331,8 @@ public class ExplorerManager {
                  ? new java.util.ArrayList<>(startSettings.slices())
                  : new java.util.ArrayList<>();
          mdaSliceOverrideWarningShown_ = false;
+         storeImageErrorShown_ = false;
+         tileAcquisitionErrorShown_ = false;
 
          initialStageX_ = studio_.core().getXPosition();
          initialStageY_ = studio_.core().getYPosition();
@@ -361,6 +393,14 @@ public class ExplorerManager {
                  || ExplorerFrame.BACKEND_OME_BIGTIFF.equals(backend))) {
             studio_.logs().showMessage("The " + backend + " backend does not support RGB; "
                     + "using NDTiff storage for this acquisition.");
+            backend = ExplorerFrame.BACKEND_NDTIFF;
+         }
+         // Neither OME backend supports more than 16-bit grayscale (e.g. 32-bit float);
+         // fall back to NDTiff rather than failing on the first write.
+         if (!isRGB_ && bitDepth_ > 16 && (ExplorerFrame.BACKEND_OME_ZARR.equals(backend)
+                 || ExplorerFrame.BACKEND_OME_BIGTIFF.equals(backend))) {
+            studio_.logs().showMessage("The " + backend + " backend supports 8- and 16-bit "
+                    + "grayscale only; using NDTiff storage for this acquisition.");
             backend = ExplorerFrame.BACKEND_NDTIFF;
          }
          if (ExplorerFrame.BACKEND_OME_ZARR.equals(backend)) {
@@ -434,6 +474,7 @@ public class ExplorerManager {
          } else {
             frame_.setHcsCalibrationStatus(false);
          }
+         activeInstance_ = this;
 
       } catch (Exception e) {
          studio_.logs().showError(e, "Failed to start Explorer.");
@@ -669,6 +710,7 @@ public class ExplorerManager {
 
          studio_.logs().logMessage("Explorer: opened dataset from " + dir);
          studio_.events().registerForEvents(this);
+         activeInstance_ = this;
 
       } catch (Exception e) {
          studio_.logs().logMessage("Explorer: openExplore EXCEPTION: " + e);
@@ -720,6 +762,9 @@ public class ExplorerManager {
    private void stopExplore(boolean deleteTempFiles) {
       if (!exploring_) {
          return;
+      }
+      if (activeInstance_ == this) {
+         activeInstance_ = null;
       }
       try {
          studio_.events().unregisterForEvents(this);
@@ -1340,13 +1385,6 @@ public class ExplorerManager {
 
       acquisitionExecutor_.submit(() -> {
          try {
-            // Stage step in microns: derived from camera FOV (not pipeline-output tile size).
-            // The pipeline may resize images, but the stage still moves by the camera FOV.
-            double overlapFraction = overlapPercentage_ / 100.0;
-            // Effective tile step in camera-pixel space (affine operates on camera pixels).
-            double effectivePixelStepX = cameraWidth_  * (1.0 - overlapFraction);
-            double effectivePixelStepY = cameraHeight_ * (1.0 - overlapFraction);
-
             for (Point tile : tiles) {
                if (acquisitionInterrupted_) {
                   break;
@@ -1358,30 +1396,7 @@ public class ExplorerManager {
                   acquisitionInterrupted_ = true;
                   break;
                }
-               int row = tile.x;
-               int col = tile.y;
-
-               double targetX;
-               double targetY;
-               if (pixelSizeAffine_ != null) {
-                  Point2D.Double pixelOffset = new Point2D.Double(
-                        col * effectivePixelStepX, row * effectivePixelStepY);
-                  Point2D.Double stageOffset = new Point2D.Double();
-                  pixelSizeAffine_.transform(pixelOffset, stageOffset);
-                  targetX = initialStageX_ + stageOffset.x;
-                  targetY = initialStageY_ + stageOffset.y;
-               } else {
-                  double effectiveStepWidthUm  = stageTileWidthUm_  * (1.0 - overlapFraction);
-                  double effectiveStepHeightUm = stageTileHeightUm_ * (1.0 - overlapFraction);
-                  targetX = initialStageX_ + col * effectiveStepWidthUm;
-                  targetY = initialStageY_ + row * effectiveStepHeightUm;
-               }
-
-               studio_.core().setXYPosition(targetX, targetY);
-               studio_.core().waitForDevice(studio_.core().getXYStageDevice());
-               Thread.sleep(100);
-
-               acquireSingleTileBlocking(row, col);
+               moveStageAndAcquireTile(tile.x, tile.y);
             }
 
          } catch (Exception e) {
@@ -1393,6 +1408,98 @@ public class ExplorerManager {
             }
          }
       });
+   }
+
+   /**
+    * Moves the stage to tile (row, col) on the session's tile grid and acquires it.
+    * Shared by {@link #acquireMultipleTiles} (called on {@code acquisitionExecutor_})
+    * and {@link #acquireTileBlocking} (called on the caller's own thread).
+    */
+   private void moveStageAndAcquireTile(int row, int col) throws Exception {
+      // Stage step in microns: derived from camera FOV (not pipeline-output tile size).
+      // The pipeline may resize images, but the stage still moves by the camera FOV.
+      double overlapFraction = overlapPercentage_ / 100.0;
+      // Effective tile step in camera-pixel space (affine operates on camera pixels).
+      double effectivePixelStepX = cameraWidth_  * (1.0 - overlapFraction);
+      double effectivePixelStepY = cameraHeight_ * (1.0 - overlapFraction);
+
+      double targetX;
+      double targetY;
+      if (pixelSizeAffine_ != null) {
+         Point2D.Double pixelOffset = new Point2D.Double(
+               col * effectivePixelStepX, row * effectivePixelStepY);
+         Point2D.Double stageOffset = new Point2D.Double();
+         pixelSizeAffine_.transform(pixelOffset, stageOffset);
+         targetX = initialStageX_ + stageOffset.x;
+         targetY = initialStageY_ + stageOffset.y;
+      } else {
+         double effectiveStepWidthUm  = stageTileWidthUm_  * (1.0 - overlapFraction);
+         double effectiveStepHeightUm = stageTileHeightUm_ * (1.0 - overlapFraction);
+         targetX = initialStageX_ + col * effectiveStepWidthUm;
+         targetY = initialStageY_ + row * effectiveStepHeightUm;
+      }
+
+      studio_.core().setXYPosition(targetX, targetY);
+      studio_.core().waitForDevice(studio_.core().getXYStageDevice());
+      Thread.sleep(100);
+
+      acquireSingleTileBlocking(row, col);
+   }
+
+   /**
+    * Moves the stage to tile (row, col) and acquires it synchronously on the calling
+    * thread, exactly like a single-tile acquisition triggered by clicking in the viewer.
+    * For use by external scripting/automation callers that want each tile to block until
+    * it has been stored and displayed. Safe to call from any thread, including off the
+    * EDT: the small amount of Swing state this touches is dispatched to the EDT internally.
+    *
+    * @throws IllegalStateException if no session is active, or the pixel size/camera ROI
+    *     has changed since session start (see the "settings mismatch" state)
+    */
+   public void acquireTileBlocking(int row, int col) throws Exception {
+      if (!exploring_) {
+         throw new IllegalStateException("Explorer: no active session; call startExplore() "
+               + "(or open the Explorer window) first.");
+      }
+      if (settingsMismatch_) {
+         throw new IllegalStateException("Explorer: pixel size or camera ROI has changed "
+               + "since session start; revert to original settings before acquiring.");
+      }
+
+      acquisitionInterrupted_ = false;
+      int batchCount = pendingBatches_.incrementAndGet();
+      runOnEdt(() -> {
+         if (batchCount == 1) {
+            dataSource_.setAcquisitionInProgress(true);
+            frame_.setAcquisitionInProgress(true);
+         }
+         dataSource_.addPendingTile(row, col);
+         redrawOverlay();
+      });
+
+      try {
+         moveStageAndAcquireTile(row, col);
+      } finally {
+         if (pendingBatches_.decrementAndGet() == 0) {
+            runOnEdt(() -> {
+               dataSource_.setAcquisitionInProgress(false);
+               frame_.setAcquisitionInProgress(false);
+            });
+         }
+      }
+   }
+
+   /** Runs {@code r} on the EDT, blocking the caller until it completes. */
+   private static void runOnEdt(Runnable r) {
+      if (SwingUtilities.isEventDispatchThread()) {
+         r.run();
+         return;
+      }
+      try {
+         SwingUtilities.invokeAndWait(r);
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
    /**
@@ -1680,6 +1787,11 @@ public class ExplorerManager {
       } catch (Exception e) {
          studio_.logs().logError(e,
                   "Explorer: error acquiring tile at row=" + row + ", col=" + col);
+         if (!tileAcquisitionErrorShown_) {
+            tileAcquisitionErrorShown_ = true;
+            studio_.logs().showError(e, "Explorer: error acquiring tile at row="
+                    + row + ", col=" + col);
+         }
       }
    }
 
@@ -1791,6 +1903,10 @@ public class ExplorerManager {
 
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: failed to store image");
+         if (!storeImageErrorShown_) {
+            storeImageErrorShown_ = true;
+            studio_.logs().showError(e, "Explorer: failed to store image");
+         }
          return null;
       }
    }
@@ -1913,6 +2029,11 @@ public class ExplorerManager {
 
    public double getOverlapPercentage() {
       return overlapPercentage_;
+   }
+
+   /** Pixel size (microns) recorded at session start. */
+   public double getSessionPixelSizeUm() {
+      return pixelSizeUm_;
    }
 
    /**
