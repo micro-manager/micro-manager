@@ -424,10 +424,12 @@ public final class StorageMultipageTiff implements Storage {
 
       // initialize writing executor
       if (writingExecutor_ == null) {
-         writingExecutor_ = new ThreadPoolExecutor(1, 1, 0,
-               TimeUnit.NANOSECONDS,
+         writingExecutor_ = new ThreadPoolExecutor(1, 1, 1,
+               TimeUnit.SECONDS,
                new LinkedBlockingQueue<>(),
-               ThreadFactoryFactory.createThreadFactory("StorageMultiPageTiff"));
+               ThreadFactoryFactory.createNonDaemonThreadFactory("StorageMultiPageTiff"));
+         // An idle, still-writable datastore must not keep the JVM alive forever.
+         writingExecutor_.allowCoreThreadTimeOut(true);
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
@@ -556,28 +558,12 @@ public final class StorageMultipageTiff implements Storage {
                progressBar.setProgress(count);
             }
          }
-         // shut down writing executor--pause here until all tasks have finished
-         // writing so that no attempt is made to close the dataset (and thus
-         // the FileChannel) before everything has finished writing make sure
-         // all images have finished writing if they are on separate thread
-         if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
-            writingExecutor_.shutdown();
-            try {
-               // Wait for tasks to finish.
-               int i = 0;
-               while (!writingExecutor_.awaitTermination(4, TimeUnit.SECONDS)) {
-                  ReportingUtils.logMessage(
-                        "Waiting for image stack to finish writing (" + i + ")...");
-                  i++;
-               }
-            } catch (InterruptedException e) {
-               ReportingUtils.logError("File finishing thread interrupted");
-               Thread.interrupted();
-            }
-         }
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
       } finally {
+         // Even if metadata finalization fails, queued writes must finish before
+         // close() can release the file channels.
+         finishWritingTasks();
          if (progressBar != null) {
             final ProgressBar pb = progressBar;
             SwingUtilities.invokeLater(() -> pb.setVisible(false));
@@ -587,6 +573,33 @@ public final class StorageMultipageTiff implements Storage {
          store_.unregisterForEvents(this);
       }
       finished_ = true;
+   }
+
+   private void finishWritingTasks() {
+      if (writingExecutor_ == null) {
+         return;
+      }
+      writingExecutor_.shutdown();
+      boolean interrupted = false;
+      try {
+         int i = 0;
+         while (!writingExecutor_.isTerminated()) {
+            try {
+               if (!writingExecutor_.awaitTermination(4, TimeUnit.SECONDS)) {
+                  ReportingUtils.logMessage(
+                        "Waiting for image stack to finish writing (" + i++ + ")...");
+               }
+            } catch (InterruptedException e) {
+               // Closing channels now would discard queued image data. Finish
+               // draining first, then restore the caller's interrupt status.
+               interrupted = true;
+            }
+         }
+      } finally {
+         if (interrupted) {
+            Thread.currentThread().interrupt();
+         }
+      }
    }
 
    public boolean isFinished() {
@@ -1053,7 +1066,9 @@ public final class StorageMultipageTiff implements Storage {
     * Remove open file descriptors.
     */
    @Override
-   public void close() {
+   public synchronized void close() {
+      amInWriteMode_ = false;
+      finishWritingTasks();
       // For files we wrote ourselves.
       if (positionToFileSet_ != null) {
          for (FileSet fileset : positionToFileSet_.values()) {

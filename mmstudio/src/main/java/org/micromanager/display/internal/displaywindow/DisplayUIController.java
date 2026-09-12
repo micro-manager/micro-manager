@@ -217,7 +217,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    private final ScheduledExecutorService scheduledExecutor_ =
          Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory
-               .createThreadFactory("DisplayUIController"));
+               .createDaemonThreadFactory("DisplayUIController"));
 
    final ScheduledThreadPoolExecutor skippedImageDisplayExecutor_;
    private ScheduledFuture<?> scheduledDisplayFuture_;

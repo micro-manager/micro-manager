@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.commons.lang3.event.EventListenerSupport;
@@ -76,7 +77,7 @@ public final class UserProfileAdmin {
 
    private final ScheduledExecutorService saverExecutor_ =
          Executors.newSingleThreadScheduledExecutor(
-               ThreadFactoryFactory.createThreadFactory(
+               ThreadFactoryFactory.createNonDaemonThreadFactory(
                      "User Profile Saver"));
 
    private boolean didMigrateLegacy_ = false;
@@ -191,11 +192,17 @@ public final class UserProfileAdmin {
     */
    public void shutdown() throws InterruptedException {
       synchronized (UserProfileAdmin.class) {
-         if (currentProfile_ != null) {
-            currentProfile_.close();
-            currentProfile_ = null;
+         try {
+            if (currentProfile_ != null) {
+               currentProfile_.close();
+            }
+         } finally {
+            saverExecutor_.shutdown();
          }
-         saverExecutor_.shutdown();
+         if (!saverExecutor_.awaitTermination(30, TimeUnit.SECONDS)) {
+            throw new IllegalStateException("Profile saving did not finish during shutdown");
+         }
+         currentProfile_ = null;
       }
    }
 

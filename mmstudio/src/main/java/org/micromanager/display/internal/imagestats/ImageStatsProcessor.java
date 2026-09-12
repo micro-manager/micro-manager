@@ -66,7 +66,7 @@ public final class ImageStatsProcessor {
       // than a handful of channels.
       executor_ = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
             60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
-            ThreadFactoryFactory.createThreadFactory("ImageStatsProcessor"));
+            ThreadFactoryFactory.createDaemonThreadFactory("ImageStatsProcessor"));
    }
 
    public void shutdown() {

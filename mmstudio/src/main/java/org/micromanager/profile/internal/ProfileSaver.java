@@ -20,6 +20,8 @@ final class ProfileSaver {
    // Saver is created upon the first modification made to the profile
    private final ScheduledExecutorService saver_;
    private ScheduledFuture<?> scheduledSave_;
+   private final Object writeLock_ = new Object();
+   private boolean stopped_;
 
    private long saveIntervalSeconds_ = 30;
 
@@ -32,7 +34,7 @@ final class ProfileSaver {
       return instance;
    }
 
-   private ProfileSaver(Runnable save, ScheduledExecutorService saverExecutor) {
+   ProfileSaver(Runnable save, ScheduledExecutorService saverExecutor) {
       save_ = save;
       saver_ = saverExecutor;
    }
@@ -46,12 +48,26 @@ final class ProfileSaver {
       return saveIntervalSeconds_;
    }
 
-   public synchronized void syncToDisk() {
-      if (scheduledSave_ == null) {
-         // Save not scheduled, i.e. profile hasn't been modified.
-         return;
+   public void syncToDisk() {
+      synchronized (writeLock_) {
+         synchronized (this) {
+            if (stopped_ || scheduledSave_ == null) {
+               return;
+            }
+         }
+         save_.run();
       }
-      save_.run();
+   }
+
+   private void saveScheduled() {
+      synchronized (writeLock_) {
+         synchronized (this) {
+            if (stopped_) {
+               return;
+            }
+         }
+         save_.run();
+      }
    }
 
    @Subscribe
@@ -60,22 +76,39 @@ final class ProfileSaver {
    }
 
    private synchronized void scheduleSave() {
+      if (stopped_) {
+         return;
+      }
       if (scheduledSave_ != null) {
          scheduledSave_.cancel(false);
       }
       try {
-         scheduledSave_ = saver_.schedule(save_,
+         scheduledSave_ = saver_.schedule(this::saveScheduled,
                saveIntervalSeconds_, TimeUnit.SECONDS);
       } catch (RejectedExecutionException e) {
          // Saving has been shut down; nothing to do
       }
    }
 
-   public synchronized void stop() throws InterruptedException {
-      syncToDisk();
-      if (scheduledSave_ != null) {
-         scheduledSave_.cancel(false);
-         scheduledSave_ = null;
+   public void stop() throws InterruptedException {
+      synchronized (writeLock_) {
+         boolean saveNeeded;
+         synchronized (this) {
+            if (stopped_) {
+               return;
+            }
+            stopped_ = true;
+            saveNeeded = scheduledSave_ != null;
+            if (scheduledSave_ != null) {
+               scheduledSave_.cancel(false);
+               scheduledSave_ = null;
+            }
+         }
+         // Do not hold this monitor while reading the profile: profile changes
+         // notify scheduleSave while holding the profile's own monitor.
+         if (saveNeeded) {
+            save_.run();
+         }
       }
    }
 }

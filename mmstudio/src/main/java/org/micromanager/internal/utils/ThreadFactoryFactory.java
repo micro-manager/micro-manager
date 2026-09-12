@@ -19,9 +19,10 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * A {@code ThreadFactory} that names the threads for debugging.
  *
- * <p>The threads created by the factory are set to be daemon threads. This is
- * preferable in MMStudio because we do not submit any tasks that need to
- * complete after the main program has decided to exit.
+ * <p>Choose daemon threads for background work and non-daemon threads for work
+ * that must complete before normal JVM termination. Executors using non-daemon
+ * threads must be shut down when their work is finished. Neither choice prevents
+ * explicit JVM termination with {@code System.exit}.
  *
  * @author Mark A. Tsuchida
  */
@@ -29,16 +30,33 @@ public final class ThreadFactoryFactory {
    private ThreadFactoryFactory() {
    }
 
+   /**
+    * Create a factory for background threads.
+    *
+    * @deprecated Use {@link #createDaemonThreadFactory(String)} explicitly.
+    */
+   @Deprecated
    public static ThreadFactory createThreadFactory(final String poolName) {
-      return new Factory(poolName);
+      return createDaemonThreadFactory(poolName);
+   }
+
+   public static ThreadFactory createDaemonThreadFactory(final String poolName) {
+      return new Factory(poolName, true);
+   }
+
+   public static ThreadFactory createNonDaemonThreadFactory(final String poolName) {
+      return new Factory(poolName, false);
    }
 
    private static final class Factory implements ThreadFactory {
       private final AtomicLong next_ = new AtomicLong(0);
       private final String name_;
 
-      Factory(String poolName) {
+      private final boolean daemon_;
+
+      Factory(String poolName, boolean daemon) {
          name_ = poolName;
+         daemon_ = daemon;
       }
 
       private String nextTitle() {
@@ -49,7 +67,7 @@ public final class ThreadFactoryFactory {
       @Override
       public Thread newThread(Runnable r) {
          Thread ret = new Thread(r, nextTitle());
-         ret.setDaemon(true);
+         ret.setDaemon(daemon_);
          return ret;
       }
    }
