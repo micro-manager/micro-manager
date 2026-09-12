@@ -817,10 +817,22 @@ public final class MMStudio implements Studio {
 
       boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
 
+      boolean interrupted = false;
       try {
-         userProfileAdmin_.shutdown();
-      } catch (InterruptedException notExpected) {
-         Thread.currentThread().interrupt();
+         // An interrupt must not skip the final profile save before System.exit.
+         // Complete the flush, then restore the interrupt for our caller.
+         while (true) {
+            try {
+               userProfileAdmin_.shutdown();
+               break;
+            } catch (InterruptedException e) {
+               interrupted = true;
+            }
+         }
+      } finally {
+         if (interrupted) {
+            Thread.currentThread().interrupt();
+         }
       }
 
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {

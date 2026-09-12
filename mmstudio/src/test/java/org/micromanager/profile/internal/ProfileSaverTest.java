@@ -81,4 +81,44 @@ public class ProfileSaverTest {
          executor.shutdownNow();
       }
    }
+   @Test
+   public void stoppingCanBeInterruptedWhileSaveIsRunning() throws Exception {
+      ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+      CountDownLatch started = new CountDownLatch(1);
+      CountDownLatch release = new CountDownLatch(1);
+      CountDownLatch interrupted = new CountDownLatch(1);
+      ProfileSaver saver = new ProfileSaver(() -> {
+         started.countDown();
+         try {
+            Assert.assertTrue(release.await(5, TimeUnit.SECONDS));
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError(e);
+         }
+      }, executor);
+      Thread stopping = new Thread(() -> {
+         try {
+            saver.stop();
+         } catch (InterruptedException expected) {
+            interrupted.countDown();
+         }
+      });
+      try {
+         saver.setSaveIntervalSeconds(1);
+         saver.onEvent(UserProfileChangedEvent.create());
+         Assert.assertTrue(started.await(5, TimeUnit.SECONDS));
+         stopping.start();
+         stopping.interrupt();
+         Assert.assertTrue(interrupted.await(5, TimeUnit.SECONDS));
+         release.countDown();
+         saver.stop();
+         executor.shutdown();
+         Assert.assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+      } finally {
+         release.countDown();
+         executor.shutdownNow();
+         stopping.join(5000);
+      }
+   }
+
 }

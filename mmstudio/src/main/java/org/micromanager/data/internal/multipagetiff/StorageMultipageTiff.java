@@ -61,6 +61,7 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.internal.utils.FileSavingExecutor;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -424,10 +425,10 @@ public final class StorageMultipageTiff implements Storage {
 
       // initialize writing executor
       if (writingExecutor_ == null) {
-         writingExecutor_ = new ThreadPoolExecutor(1, 1, 1,
+         writingExecutor_ = FileSavingExecutor.register(new ThreadPoolExecutor(1, 1, 1,
                TimeUnit.SECONDS,
                new LinkedBlockingQueue<>(),
-               ThreadFactoryFactory.createNonDaemonThreadFactory("StorageMultiPageTiff"));
+               ThreadFactoryFactory.createNonDaemonThreadFactory("StorageMultiPageTiff")));
          // An idle, still-writable datastore must not keep the JVM alive forever.
          writingExecutor_.allowCoreThreadTimeOut(true);
       }

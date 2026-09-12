@@ -12,6 +12,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Mark A. Tsuchida
@@ -20,7 +21,7 @@ final class ProfileSaver {
    // Saver is created upon the first modification made to the profile
    private final ScheduledExecutorService saver_;
    private ScheduledFuture<?> scheduledSave_;
-   private final Object writeLock_ = new Object();
+   private final ReentrantLock writeLock_ = new ReentrantLock();
    private boolean stopped_;
 
    private long saveIntervalSeconds_ = 30;
@@ -49,24 +50,30 @@ final class ProfileSaver {
    }
 
    public void syncToDisk() {
-      synchronized (writeLock_) {
+      writeLock_.lock();
+      try {
          synchronized (this) {
             if (stopped_ || scheduledSave_ == null) {
                return;
             }
          }
          save_.run();
+      } finally {
+         writeLock_.unlock();
       }
    }
 
    private void saveScheduled() {
-      synchronized (writeLock_) {
+      writeLock_.lock();
+      try {
          synchronized (this) {
             if (stopped_) {
                return;
             }
          }
          save_.run();
+      } finally {
+         writeLock_.unlock();
       }
    }
 
@@ -91,7 +98,8 @@ final class ProfileSaver {
    }
 
    public void stop() throws InterruptedException {
-      synchronized (writeLock_) {
+      writeLock_.lockInterruptibly();
+      try {
          boolean saveNeeded;
          synchronized (this) {
             if (stopped_) {
@@ -109,6 +117,8 @@ final class ProfileSaver {
          if (saveNeeded) {
             save_.run();
          }
+      } finally {
+         writeLock_.unlock();
       }
    }
 }

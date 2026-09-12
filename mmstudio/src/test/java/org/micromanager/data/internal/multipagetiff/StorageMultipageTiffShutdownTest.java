@@ -10,7 +10,13 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.internal.DefaultMetadata;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 /** Tests that finishing and closing cannot abandon queued TIFF writes. */
@@ -54,6 +60,8 @@ public class StorageMultipageTiffShutdownTest {
       } finally {
          release.countDown();
          finishing.join(5000);
+         executor.shutdown();
+         Assert.assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
          storage.close();
          store.close();
       }
@@ -93,9 +101,83 @@ public class StorageMultipageTiffShutdownTest {
       } finally {
          release.countDown();
          closer.join(5000);
+         executor.shutdown();
+         Assert.assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
          storage.close();
          store.close();
       }
+   }
+
+   @Test
+   public void queuedImagesSurviveFreezeCloseAndReopen() throws Exception {
+      String path = temporaryFolder.getRoot().toPath().resolve("images").toString();
+      DefaultDatastore store = new DefaultDatastore(null);
+      StorageMultipageTiff storage = new StorageMultipageTiff(
+            null, store, path, true, false, false);
+      store.setStorage(storage);
+      store.setSummaryMetadata(new DefaultSummaryMetadata.Builder()
+            .intendedDimensions(new DefaultCoords.Builder().timePoint(3).build()).build());
+      byte[][] pixels = new byte[3][256];
+      for (int frame = 0; frame < pixels.length; frame++) {
+         for (int pixel = 0; pixel < pixels[frame].length; pixel++) {
+            pixels[frame][pixel] = (byte) (pixel + frame * 37);
+         }
+      }
+      store.putImage(image(pixels[0], 0));
+      CountDownLatch writing = new CountDownLatch(1);
+      CountDownLatch release = new CountDownLatch(1);
+      AtomicBoolean daemon = new AtomicBoolean(true);
+      storage.getWritingExecutor().execute(() -> {
+         daemon.set(Thread.currentThread().isDaemon());
+         writing.countDown();
+         await(release);
+      });
+      AtomicBoolean closed = new AtomicBoolean();
+      Thread closer = new Thread(() -> {
+         try {
+            store.close(); // freezes, finalizes metadata, drains writes, then closes channels
+            closed.set(true);
+         } catch (Exception e) {
+            throw new AssertionError(e);
+         }
+      });
+      try {
+         Assert.assertTrue(writing.await(5, TimeUnit.SECONDS));
+         Assert.assertFalse("Image writes must keep the JVM alive", daemon.get());
+         store.putImage(image(pixels[1], 1));
+         store.putImage(image(pixels[2], 2));
+         closer.start();
+         awaitShutdown(storage.getWritingExecutor());
+         Assert.assertFalse("close must not return while pixels are pending", closed.get());
+         release.countDown();
+         closer.join(5000);
+         Assert.assertFalse(closer.isAlive());
+         Assert.assertTrue(closed.get());
+      } finally {
+         release.countDown();
+         closer.join(5000);
+         store.close();
+      }
+      DefaultDatastore readerStore = new DefaultDatastore(null);
+      StorageMultipageTiff reader = new StorageMultipageTiff(
+            null, readerStore, path, false, false, false);
+      readerStore.setStorage(reader);
+      try {
+         for (int frame = 0; frame < pixels.length; frame++) {
+            Coords coords = new DefaultCoords.Builder().timePoint(frame).build();
+            Image loaded = reader.getImage(coords);
+            Assert.assertNotNull("Missing frame " + frame, loaded);
+            Assert.assertArrayEquals(pixels[frame], (byte[]) loaded.getRawPixels());
+         }
+      } finally {
+         readerStore.close();
+      }
+   }
+
+   private static Image image(byte[] pixels, int frame) {
+      return new DefaultImage(pixels, 16, 16, 1, 1,
+            new DefaultCoords.Builder().timePoint(frame).build(),
+            new DefaultMetadata.Builder().build());
    }
 
    private static ThreadPoolExecutor installExecutor(StorageMultipageTiff storage)
