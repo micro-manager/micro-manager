@@ -145,6 +145,17 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    // Key: TiledDataViewer channel name. Value: long[] of length rawHist.length + 2.
    private final HashMap<String, long[]> fullHistBuffers_ = new HashMap<>();
 
+   // Last real per-image metadata bit depth seen per channel (render thread only), used as the
+   // fallback when the routing image for a render has no metadata (a synthetic placeholder --
+   // dataProvider_.getImage() is documented as unreliable for tiled/Explorer datasets, so this
+   // is hit often, not just at startup). Guessing bit depth from the raw histogram array length
+   // instead would be wrong whenever the camera's significant bits differ from its pixel
+   // container size (e.g. BitDepth=8 with a 16-bit-packed PixelType): the array is still
+   // 65536-long, so that guess would silently reintroduce the "wrong histogram range" bug this
+   // cache exists to avoid. Once a channel's real bit depth is known, it cannot legitimately
+   // change mid-session, so caching it is safe.
+   private final HashMap<String, Integer> lastKnownBitDepth_ = new HashMap<>();
+
    // Last channel axis value seen by onTiledDataViewerImageChanged, used to detect channel scrolls.
    private Object prevChannelAxisValue_ = null;
 
@@ -798,23 +809,47 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
                      new byte[1], 1, 1, 1, 1, coords,
                      studio_.data().metadataBuilder().build());
             }
+            // Prefer the real per-image metadata bit depth (the camera's significant-bit
+            // count) over guessing from the pixel array's container size: a camera can report
+            // e.g. BitDepth=8 while its pixels are physically packed as short[] (16-bit
+            // container), and using the container size here would disagree with the
+            // metadata-driven stats path (submitStatsRequest()/ImageStatsProcessor), causing
+            // the Inspector's histogram range to race between the two values. The routing image
+            // often has no metadata (the placeholder branches above), so fall back to the last
+            // real value seen for this channel rather than guessing from array length.
+            Integer realBitDepth = routingImg.getMetadata() != null
+                  ? routingImg.getMetadata().getBitDepth() : null;
+            if (realBitDepth != null) {
+               lastKnownBitDepth_.put(channelName, realBitDepth);
+            } else {
+               realBitDepth = lastKnownBitDepth_.get(channelName);
+            }
+            if (realBitDepth == null) {
+               // Bit depth for this channel isn't known yet from any real image (this render's
+               // routing image is a synthetic placeholder, and none has ever been seen for this
+               // channel). Skip this channel's stats for this render rather than guessing from
+               // the raw array's container size -- that guess is what previously let the
+               // Inspector briefly show a wrong, oversized histogram range at startup, before
+               // any real per-image metadata had arrived. The metadata-driven stats path
+               // (submitStatsRequest) or a later render will fill this in once real data exists.
+               continue;
+            }
             int[][] compHists = componentHists.get(channelName);
             if (compHists != null) {
                // RGB channel: build one ComponentStats per colour component (R, G, B)
                // so the Inspector detects numComponents=3 and shows the RGBW controls.
                ComponentStats[] compStats = new ComponentStats[3];
                for (int c = 0; c < 3; c++) {
-                  final int fc = c;
-                  long[] buf = fullHistBuffers_.computeIfAbsent(
-                        channelName + "_" + c, k -> new long[compHists[fc].length + 2]);
-                  compStats[c] = buildComponentStatsFromRawHistogram(compHists[c], buf);
+                  long[] buf = histBuffer(channelName + "_" + c,
+                        compHists[c].length, realBitDepth);
+                  compStats[c] = buildComponentStatsFromRawHistogram(
+                        compHists[c], buf, realBitDepth);
                }
                validStats.add(ImageStats.create(validImages.size(),
                      compStats[0], compStats[1], compStats[2]));
             } else {
-               long[] buf = fullHistBuffers_.computeIfAbsent(
-                     channelName, k -> new long[rawHist.length + 2]);
-               ComponentStats cs = buildComponentStatsFromRawHistogram(rawHist, buf);
+               long[] buf = histBuffer(channelName, rawHist.length, realBitDepth);
+               ComponentStats cs = buildComponentStatsFromRawHistogram(rawHist, buf, realBitDepth);
                validStats.add(ImageStats.create(validImages.size(), cs));
             }
             validImages.add(routingImg);
@@ -859,12 +894,63 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
    }
 
    /**
+    * Number of histogram bins (as a power of 2) to use for a channel: the smaller of the real
+    * bit depth (once known) and the pixel array's own container size, so the histogram is never
+    * wider than the camera's real dynamic range even though the array may be packed into a
+    * wider container (e.g. 8 significant bits packed into a 16-bit short[]). Using the
+    * container size unconditionally would disagree with the metadata-driven stats path
+    * (submitStatsRequest()/ImageStatsProcessor), which always bins by the real bit depth --
+    * that mismatch is what let the Inspector's histogram range visibly change size depending on
+    * which of the two stats sources last posted.
+    *
+    * @param realBitDepth the routing image's real metadata bit depth (the camera's
+    *                     significant-bit count), or null if unavailable (e.g. a synthetic
+    *                     placeholder image with no real metadata); falls back to the container
+    *                     size in that case.
+    */
+   private static int effectiveBinCountPowerOf2(int rawHistLength, Integer realBitDepth) {
+      int containerBitDepth = rawHistLength <= 256 ? 8 : 16;
+      if (realBitDepth == null || realBitDepth >= containerBitDepth) {
+         return containerBitDepth;
+      }
+      return realBitDepth;
+   }
+
+   /**
+    * Returns the reusable fullHist buffer for a channel, sized for its current effective bit
+    * depth -- reallocating if that has changed (e.g. once the real bit depth becomes known,
+    * replacing an earlier container-size-based guess) rather than keeping a stale buffer size
+    * forever, since a plain computeIfAbsent would never resize it.
+    */
+   private long[] histBuffer(String key, int rawHistLength, Integer realBitDepth) {
+      int neededLen = (1 << effectiveBinCountPowerOf2(rawHistLength, realBitDepth)) + 2;
+      long[] buf = fullHistBuffers_.get(key);
+      if (buf == null || buf.length != neededLen) {
+         buf = new long[neededLen];
+         fullHistBuffers_.put(key, buf);
+      }
+      return buf;
+   }
+
+   /**
     * Builds a ComponentStats from a raw pixel histogram (one entry per pixel value).
-    * binWidthPowerOf2=0 means bin width=1, so getAutoscaleMinMaxForQuantile returns
-    * actual pixel values matching ImageMaker's pixel-value space.
+    *
+    * <p>Matches {@code ImageStatsProcessor}/{@code PowerOf2BinMapper}'s convention: a camera's
+    * significant-bit count defines the real value range {@code [0, 2^bitDepth - 1]} directly --
+    * it is not a high-order-bits reinterpretation of a wider container. A camera reporting
+    * BitDepth=8 while its pixels are packed as {@code short[]} genuinely produces values 0-255,
+    * merely stored in a 2-byte container; those values must land in bins 0-255 unchanged, not
+    * be right-shifted (which would collapse them all into bin 0). Any value that does exceed
+    * the declared range clips into the overflow bin, exactly as {@code PowerOf2BinMapper} does.
+    *
+    * @param realBitDepth see {@link #effectiveBinCountPowerOf2}; determines the bin count of
+    *                     {@code fullHist} (must already be sized accordingly, e.g. via
+    *                     {@link #histBuffer}).
     */
    private static ComponentStats buildComponentStatsFromRawHistogram(
-            int[] rawHist, long[] fullHist) {
+            int[] rawHist, long[] fullHist, Integer realBitDepth) {
+      int binCountPowerOf2 = effectiveBinCountPowerOf2(rawHist.length, realBitDepth);
+      int numBins = 1 << binCountPowerOf2;
       // fullHist has out-of-range bins at indices 0 and length-1 (ComponentStats convention).
       // Zero pixel values (unacquired/black tiles) go into fullHist[1] (rawHist[0]).
       // We zero that bin out so that getQuantile() ignores them when computing the
@@ -885,7 +971,11 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             // so quantile computation ignores them (same as "ignore zeros" mode).
             continue;
          }
-         fullHist[v + 1] = count;
+         // v < numBins lands in its own bin (bin width 1, matching ImageStatsProcessor); a
+         // value at or beyond the declared range clips into the overflow bin instead of being
+         // folded/wrapped into a low bin.
+         int bin = v < numBins ? (v + 1) : (fullHist.length - 1);
+         fullHist[bin] += count;
          if (count > 0) {
             maximum = v;
             if (minimum < 0) {
@@ -917,6 +1007,7 @@ public final class TiledDataViewerDataViewer extends AbstractDataViewer
             .maximum(maximum)
             .sum(Math.round(sum))
             .sumOfSquares(Math.round(sumOfSquares))
+            .bitDepth(binCountPowerOf2)
             .build();
    }
 

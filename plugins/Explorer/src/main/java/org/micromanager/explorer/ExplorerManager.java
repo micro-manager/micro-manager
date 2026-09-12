@@ -131,7 +131,15 @@ public class ExplorerManager {
    // Display tile dimensions (from pipeline output; set after first tile)
    private int tileWidth_ = -1;
    private int tileHeight_ = -1;
+   // Pixel container size in bits (8 or 16 -- byte[] vs short[]): what the storage backends
+   // and PixelType/BytesPerPixel tags need, since they must match the real array type.
    private int bitDepth_ = 16;
+   // Camera-reported *significant* bits (e.g. 8 for a camera whose PixelType is 16-bit but whose
+   // BitDepth property is 8): what per-image "BitDepth" metadata must carry, since that is what
+   // the Inspector's histogram/"Camera Depth" range and ImageStatsProcessor use for display. This
+   // is deliberately a separate field from bitDepth_ -- conflating the two previously made the
+   // Inspector show a 0-65535 range for a camera whose real dynamic range is 0-255.
+   private int significantBitDepth_ = 16;
 
    // Stage step size in microns (camera FOV; fixed for session)
    private double stageTileWidthUm_ = 0;
@@ -295,6 +303,7 @@ public class ExplorerManager {
          cameraHeight_ = (int) studio_.core().getImageHeight();
          int reportedBitDepth = (int) studio_.core().getImageBitDepth();
          int bytesPerPixel = (int) studio_.core().getBytesPerPixel();
+         significantBitDepth_ = reportedBitDepth;
          // getImageBitDepth() reports "significant bits", independent of how many bytes the
          // pixel is actually packed into (e.g. DemoCamera can report BitDepth=8 while its
          // PixelType is 16-bit). The storage backends pick byte[] vs short[] from bitDepth_, so
@@ -540,6 +549,10 @@ public class ExplorerManager {
          final int imageWidth = summaryMetadata.optInt("Width", 512);
          final int imageHeight = summaryMetadata.optInt("Height", 512);
          bitDepth_ = summaryMetadata.optInt("BitDepth", 16);
+         // The reopened dataset's summary metadata only records the pixel container size, not
+         // the camera's original significant-bit count; fall back to matching bitDepth_ (the
+         // container size) since that is the best information available on reopen.
+         significantBitDepth_ = bitDepth_;
          isRGB_ = "RGB32".equals(summaryMetadata.optString("PixelType", ""));
          pixelSizeUm_ = summaryMetadata.optDouble("PixelSize_um", 1.0);
          if (pixelSizeUm_ <= 0) {
@@ -1825,7 +1838,10 @@ public class ExplorerManager {
          tags.put("ElapsedTime-ms", System.currentTimeMillis());
          tags.put("Width", image.getWidth());
          tags.put("Height", image.getHeight());
-         tags.put("BitDepth", bitDepth_);
+         // "BitDepth" is the camera's significant-bit count (for the Inspector's histogram/
+         // "Camera Depth" display), not the pixel container size -- see significantBitDepth_.
+         // PixelType/BytesPerPixel describe the actual stored array type, so they use bitDepth_.
+         tags.put("BitDepth", significantBitDepth_);
          tags.put("PixelType", isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"));
          tags.put("BytesPerPixel", isRGB_ ? 4 : (bitDepth_ <= 8 ? 1 : 2));
          tags.put("NumComponents", isRGB_ ? 3 : 1);
@@ -3614,27 +3630,37 @@ public class ExplorerManager {
          return;
       }
       try {
-         DisplaySettings current = viewer.getDisplaySettings();
-         if (current == null) {
-            return;
-         }
-         org.micromanager.display.ChannelDisplaySettings existing =
-                 current.getChannelSettings(index);
-         if (existing != null && channelName.equals(existing.getName())) {
-            return;
-         }
-         String group = currentChannelGroup();
-         org.micromanager.display.ChannelDisplaySettings.Builder chBuilder =
-                 existing != null ? existing.copyBuilder()
-                         : studio_.displays().channelDisplaySettingsBuilder();
-         chBuilder.groupName(group).name(channelName);
-         org.micromanager.display.ChannelDisplaySettings remembered =
-                 RememberedDisplaySettings.loadChannel(studio_, group, channelName, null);
-         if (remembered != null && !remembered.getColor().equals(Color.WHITE)) {
-            chBuilder.color(remembered.getColor());
-         }
-         viewer.setDisplaySettings(
-                 current.copyBuilderWithChannelSettings(index, chBuilder.build()).build());
+         // Use a compare-and-set retry loop, not a plain read-then-write: this runs on
+         // displayExecutor_ once per newly-seen channel per tile, concurrently with the EDT
+         // (e.g. the Inspector's histogram-range combo, ChannelIntensityController) and the
+         // render thread (ImageMaker's autostretch callback) both committing their own
+         // DisplaySettings updates via their own compare-and-set loops. A plain setDisplaySettings
+         // here would silently discard whichever of those commits happened between our read and
+         // write, reverting e.g. a user's explicit histogram bit-depth pick back to its default.
+         DisplaySettings current;
+         DisplaySettings updated;
+         do {
+            current = viewer.getDisplaySettings();
+            if (current == null) {
+               return;
+            }
+            org.micromanager.display.ChannelDisplaySettings existing =
+                    current.getChannelSettings(index);
+            if (existing != null && channelName.equals(existing.getName())) {
+               return;
+            }
+            String group = currentChannelGroup();
+            org.micromanager.display.ChannelDisplaySettings.Builder chBuilder =
+                    existing != null ? existing.copyBuilder()
+                            : studio_.displays().channelDisplaySettingsBuilder();
+            chBuilder.groupName(group).name(channelName);
+            org.micromanager.display.ChannelDisplaySettings remembered =
+                    RememberedDisplaySettings.loadChannel(studio_, group, channelName, null);
+            if (remembered != null && !remembered.getColor().equals(Color.WHITE)) {
+               chBuilder.color(remembered.getColor());
+            }
+            updated = current.copyBuilderWithChannelSettings(index, chBuilder.build()).build();
+         } while (!viewer.compareAndSetDisplaySettings(current, updated));
       } catch (Exception e) {
          studio_.logs().logError(e, "Explorer: could not name channel " + channelName);
       }
