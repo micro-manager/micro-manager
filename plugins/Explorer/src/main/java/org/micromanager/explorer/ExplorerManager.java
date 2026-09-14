@@ -25,6 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -301,21 +302,24 @@ public class ExplorerManager {
 
          cameraWidth_ = (int) studio_.core().getImageWidth();
          cameraHeight_ = (int) studio_.core().getImageHeight();
-         int reportedBitDepth = (int) studio_.core().getImageBitDepth();
-         int bytesPerPixel = (int) studio_.core().getBytesPerPixel();
-         significantBitDepth_ = reportedBitDepth;
-         // getImageBitDepth() reports "significant bits", independent of how many bytes the
-         // pixel is actually packed into (e.g. DemoCamera can report BitDepth=8 while its
-         // PixelType is 16-bit). The storage backends pick byte[] vs short[] from bitDepth_, so
-         // it must reflect the real container size whenever the two disagree.
-         bitDepth_ = (reportedBitDepth <= 8 && bytesPerPixel > 1)
-                 ? bytesPerPixel * 8 : reportedBitDepth;
          try {
             isRGB_ = studio_.core().getNumberOfComponents() > 1;
          } catch (Exception e) {
             studio_.logs().logError(e, "Explorer: could not determine camera component count");
             isRGB_ = false;
          }
+         int reportedBitDepth = (int) studio_.core().getImageBitDepth();
+         int bytesPerPixel = (int) studio_.core().getBytesPerPixel();
+         significantBitDepth_ = reportedBitDepth;
+         // getImageBitDepth() reports "significant bits", independent of how many bytes the
+         // pixel is actually packed into (e.g. DemoCamera can report BitDepth=8 while its
+         // PixelType is 16-bit). The storage backends pick byte[] vs short[] from bitDepth_, so
+         // it must reflect the real container size whenever the two disagree -- but only for
+         // grayscale: getBytesPerPixel() counts *all* components (e.g. 4 for BGRA32), so an
+         // 8-bit RGB camera would otherwise have bitDepth_ wrongly inflated to 32; RGB is
+         // always 8 bits/component regardless of container size.
+         bitDepth_ = (!isRGB_ && reportedBitDepth <= 8 && bytesPerPixel > 1)
+                 ? bytesPerPixel * 8 : reportedBitDepth;
          pixelSizeUm_ = studio_.core().getPixelSizeUm();
          if (pixelSizeUm_ <= 0) {
             pixelSizeUm_ = 1.0;
@@ -404,13 +408,15 @@ public class ExplorerManager {
                     + "using NDTiff storage for this acquisition.");
             backend = ExplorerFrame.BACKEND_NDTIFF;
          }
-         // Neither OME backend supports more than 16-bit grayscale (e.g. 32-bit float);
-         // fall back to NDTiff rather than failing on the first write.
-         if (!isRGB_ && bitDepth_ > 16 && (ExplorerFrame.BACKEND_OME_ZARR.equals(backend)
-                 || ExplorerFrame.BACKEND_OME_BIGTIFF.equals(backend))) {
-            studio_.logs().showMessage("The " + backend + " backend supports 8- and 16-bit "
-                    + "grayscale only; using NDTiff storage for this acquisition.");
-            backend = ExplorerFrame.BACKEND_NDTIFF;
+         // No backend supports more than 16-bit grayscale (e.g. 32-bit float): NDTiff has no
+         // float pixel type either, and TiledDataViewer's own rendering pipeline only handles
+         // byte[]/short[] pixels. Falling back to NDTiff here would not make the acquisition
+         // work, only move the failure (or a silent mis-render) somewhere less obvious, so
+         // reject outright -- the catch below cleans up via stopExplore() and reports this.
+         if (!isRGB_ && bitDepth_ > 16) {
+            throw new UnsupportedOperationException(
+                    "Explorer does not support this camera's pixel format (bit depth "
+                    + bitDepth_ + "); only 8- and 16-bit grayscale, and RGB, are supported.");
          }
          if (ExplorerFrame.BACKEND_OME_ZARR.equals(backend)) {
             storage_ = new OMEZarrMultiresStorage(storageDir_, acqName_, summaryMetadataJson,
@@ -1425,10 +1431,13 @@ public class ExplorerManager {
 
    /**
     * Moves the stage to tile (row, col) on the session's tile grid and acquires it.
-    * Shared by {@link #acquireMultipleTiles} (called on {@code acquisitionExecutor_})
-    * and {@link #acquireTileBlocking} (called on the caller's own thread).
+    * Shared by {@link #acquireMultipleTiles} and {@link #acquireTileBlocking}; both submit
+    * this to {@code acquisitionExecutor_} so stage moves are always serialized, whether they
+    * come from the UI's batch acquisition or an external scripting call.
+    *
+    * @return true if the tile was acquired and stored; see {@link #acquireSingleTileBlocking}.
     */
-   private void moveStageAndAcquireTile(int row, int col) throws Exception {
+   private boolean moveStageAndAcquireTile(int row, int col) throws Exception {
       // Stage step in microns: derived from camera FOV (not pipeline-output tile size).
       // The pipeline may resize images, but the stage still moves by the camera FOV.
       double overlapFraction = overlapPercentage_ / 100.0;
@@ -1456,23 +1465,35 @@ public class ExplorerManager {
       studio_.core().waitForDevice(studio_.core().getXYStageDevice());
       Thread.sleep(100);
 
-      acquireSingleTileBlocking(row, col);
+      return acquireSingleTileBlocking(row, col);
    }
 
    /**
-    * Moves the stage to tile (row, col) and acquires it synchronously on the calling
-    * thread, exactly like a single-tile acquisition triggered by clicking in the viewer.
-    * For use by external scripting/automation callers that want each tile to block until
-    * it has been stored and displayed. Safe to call from any thread, including off the
-    * EDT: the small amount of Swing state this touches is dispatched to the EDT internally.
+    * Moves the stage to tile (row, col) and acquires it, blocking the caller until it has been
+    * stored and displayed (or has definitively failed). For use by external scripting/automation
+    * callers. Safe to call from any thread, including off the EDT: the small amount of Swing
+    * state this touches is dispatched to the EDT internally.
     *
-    * @throws IllegalStateException if no session is active, or the pixel size/camera ROI
-    *     has changed since session start (see the "settings mismatch" state)
+    * <p>The actual stage move and acquisition run on {@code acquisitionExecutor_} -- the same
+    * single-threaded executor {@link #acquireMultipleTiles} uses -- so a scripting call made
+    * while a UI-driven batch acquisition is in flight is serialized after it rather than racing
+    * it for the shared stage.
+    *
+    * @throws IllegalStateException if no session is active, the open dataset is read-only, or
+    *     the pixel size/camera ROI has changed since session start (see the "settings mismatch"
+    *     state)
+    * @throws IOException if the tile's test acquisition failed or produced no data, or every
+    *     image for it failed to store
     */
    public void acquireTileBlocking(int row, int col) throws Exception {
-      if (!exploring_) {
+      if (!exploring_ || acquisitionExecutor_ == null) {
          throw new IllegalStateException("Explorer: no active session; call startExplore() "
                + "(or open the Explorer window) first.");
+      }
+      if (loadedData_) {
+         throw new IllegalStateException("Explorer: the open dataset is read-only (opened via "
+               + "openExplore()); a live session started with startExplore() is required to "
+               + "acquire new tiles.");
       }
       if (settingsMismatch_) {
          throw new IllegalStateException("Explorer: pixel size or camera ROI has changed "
@@ -1481,17 +1502,29 @@ public class ExplorerManager {
 
       acquisitionInterrupted_ = false;
       int batchCount = pendingBatches_.incrementAndGet();
-      runOnEdt(() -> {
-         if (batchCount == 1) {
-            dataSource_.setAcquisitionInProgress(true);
-            frame_.setAcquisitionInProgress(true);
-         }
-         dataSource_.addPendingTile(row, col);
-         redrawOverlay();
-      });
-
       try {
-         moveStageAndAcquireTile(row, col);
+         runOnEdt(() -> {
+            if (batchCount == 1) {
+               dataSource_.setAcquisitionInProgress(true);
+               frame_.setAcquisitionInProgress(true);
+            }
+            dataSource_.addPendingTile(row, col);
+            redrawOverlay();
+         });
+
+         Future<Boolean> future = acquisitionExecutor_.submit(
+               () -> moveStageAndAcquireTile(row, col));
+         boolean acquired;
+         try {
+            acquired = future.get();
+         } catch (ExecutionException ee) {
+            Throwable cause = ee.getCause();
+            throw cause instanceof Exception ? (Exception) cause : ee;
+         }
+         if (!acquired) {
+            throw new IOException("Explorer: failed to acquire or store tile at row="
+                    + row + ", col=" + col);
+         }
       } finally {
          if (pendingBatches_.decrementAndGet() == 0) {
             runOnEdt(() -> {
@@ -1519,8 +1552,13 @@ public class ExplorerManager {
     * Acquires a single tile synchronously via the MM acquisition engine.
     * Images pass through the active application pipeline automatically.
     * This is called from within the acquisition executor.
+    *
+    * @return true if at least one image for this tile was acquired and stored; false if the
+    *     test acquisition failed, produced no images, or every image failed to store. Callers
+    *     that need to know whether a tile genuinely has data (e.g. {@link #acquireTileBlocking})
+    *     should check this rather than assume success.
     */
-   private void acquireSingleTileBlocking(int row, int col) {
+   private boolean acquireSingleTileBlocking(int row, int col) {
       try {
          SequenceSettings settings = studio_.acquisitions().getAcquisitionSettings();
 
@@ -1583,14 +1621,14 @@ public class ExplorerManager {
          if (testStore == null) {
             studio_.logs().showError("Explorer: test acquisition failed at row="
                     + row + ", col=" + col);
-            return;
+            return false;
          }
 
          if (testStore.getNumImages() == 0) {
             studio_.logs().showError("Explorer: test acquisition produced no images at row="
                     + row + ", col=" + col);
             freezeAndClose(testStore);
-            return;
+            return false;
          }
 
          // If this is the first tile, update tile dimensions from actual pipeline output
@@ -1731,7 +1769,11 @@ public class ExplorerManager {
             }
          }
 
-         dataSource_.markTileAcquired(row, col);
+         // Only mark the tile acquired if at least one image actually made it into storage --
+         // otherwise the overlay/read path would treat a tile with no real data as complete.
+         if (!storedAxes.isEmpty()) {
+            dataSource_.markTileAcquired(row, col);
+         }
 
          if (displayExecutor_ != null && viewer_ != null && !storedAxes.isEmpty()) {
             final List<Image> tileImages = storedImages;
@@ -1796,6 +1838,7 @@ public class ExplorerManager {
          }
 
          freezeAndClose(testStore);
+         return !storedAxes.isEmpty();
 
       } catch (Exception e) {
          studio_.logs().logError(e,
@@ -1805,6 +1848,7 @@ public class ExplorerManager {
             studio_.logs().showError(e, "Explorer: error acquiring tile at row="
                     + row + ", col=" + col);
          }
+         return false;
       }
    }
 
@@ -2049,7 +2093,7 @@ public class ExplorerManager {
 
    /** Pixel size (microns) recorded at session start. */
    public double getSessionPixelSizeUm() {
-      return pixelSizeUm_;
+      return initialPixelSizeUm_;
    }
 
    /**
