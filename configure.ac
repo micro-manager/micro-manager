@@ -246,7 +246,7 @@ AC_SUBST([imagejjar])
 # (This is a bit of a hack, in part since it needs to run before fetchdeps, but
 # it will have to suffice for now.)
 build_magellan=yes
-AC_CHECK_FILE([$srcdir/../3rdparty/classext/DT1.2.jar],
+AC_CHECK_FILE([$srcdir/../3rdpartypublic/classext/DT1.2.jar],
               [],
               [build_magellan=no])
 AM_CONDITIONAL([BUILD_MAGELLAN],
