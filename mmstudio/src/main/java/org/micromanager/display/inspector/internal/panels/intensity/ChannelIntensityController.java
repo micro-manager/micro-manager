@@ -631,10 +631,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                histogram_.setComponentFloatMapper(c, null);
                histogram_.setComponentRangeMaxLabel(c, null);
                histogram_.setComponentRangeMinLabel(c, null);
-               // graphLen is a bin *count* (e.g. 256 for 8-bit data); the axis max is the
-               // highest valid bin *value*, i.e. one less (255). Passing graphLen for both
-               // (as this used to) showed "256" instead of "255" whenever the real data was
-               // narrower than the selected range and so was the value clamping to.
+               // graphLen is a bin count (256 for 8-bit); the axis max is the highest bin
+               // value, one less (255).
                int clampedRangeBits = Math.min(rangeBits, 30);
                int graphLen = Math.min(data.length, 1 << clampedRangeBits);
                if (graphLen <= 0) {

@@ -109,9 +109,8 @@ public class ExplorerManager {
          java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS Z")
                .withZone(java.time.ZoneId.systemDefault());
 
-   // The most recently started/opened session, so external callers (e.g. a scripting API)
-   // can find and drive the live Explorer session without needing a reference to the
-   // ExplorerFrame that created it. Cleared when that session stops.
+   // Most recently started/opened session, for callers with no ExplorerFrame reference.
+   // Cleared when that session stops.
    private static volatile ExplorerManager activeInstance_;
 
    private final Studio studio_;
@@ -132,14 +131,11 @@ public class ExplorerManager {
    // Display tile dimensions (from pipeline output; set after first tile)
    private int tileWidth_ = -1;
    private int tileHeight_ = -1;
-   // Pixel container size in bits (8 or 16 -- byte[] vs short[]): what the storage backends
-   // and PixelType/BytesPerPixel tags need, since they must match the real array type.
+   // Pixel container size in bits (8 or 16 -- byte[] vs short[]); used by the storage backends
+   // and the PixelType/BytesPerPixel tags, which must match the real array type.
    private int bitDepth_ = 16;
-   // Camera-reported *significant* bits (e.g. 8 for a camera whose PixelType is 16-bit but whose
-   // BitDepth property is 8): what per-image "BitDepth" metadata must carry, since that is what
-   // the Inspector's histogram/"Camera Depth" range and ImageStatsProcessor use for display. This
-   // is deliberately a separate field from bitDepth_ -- conflating the two previously made the
-   // Inspector show a 0-65535 range for a camera whose real dynamic range is 0-255.
+   // Camera-reported significant bits, which can be narrower than the container (BitDepth=8 on
+   // a 16-bit PixelType). Used for the per-image "BitDepth" tag and the Inspector's range.
    private int significantBitDepth_ = 16;
 
    // Stage step size in microns (camera FOV; fixed for session)
@@ -202,8 +198,7 @@ public class ExplorerManager {
    // Set to true after the first time we notify the user that MDA slice settings were
    // overridden; prevents showing the same dialog on every subsequent tile.
    private volatile boolean mdaSliceOverrideWarningShown_ = false;
-   // Set to true after the first store/acquisition failure dialog is shown for this session;
-   // prevents a fast tiled acquisition from spamming a dialog per failed tile.
+   // Set after the first failure dialog for this session; prevents one dialog per failed tile.
    private volatile boolean storeImageErrorShown_ = false;
    private volatile boolean tileAcquisitionErrorShown_ = false;
    // When true, the MDA z-stack and channel settings are ignored for this session and every
@@ -251,11 +246,7 @@ public class ExplorerManager {
       frame_ = frame;
    }
 
-   /**
-    * Returns the most recently started/opened Explorer session, or null if none is active.
-    * Lets external callers (e.g. a scripting API) find and drive a live session without
-    * needing a reference to the ExplorerFrame that created it.
-    */
+   /** Most recently started/opened Explorer session, or null if none is active. */
    public static ExplorerManager getActiveInstance() {
       return activeInstance_;
    }
@@ -311,13 +302,9 @@ public class ExplorerManager {
          int reportedBitDepth = (int) studio_.core().getImageBitDepth();
          int bytesPerPixel = (int) studio_.core().getBytesPerPixel();
          significantBitDepth_ = reportedBitDepth;
-         // getImageBitDepth() reports "significant bits", independent of how many bytes the
-         // pixel is actually packed into (e.g. DemoCamera can report BitDepth=8 while its
-         // PixelType is 16-bit). The storage backends pick byte[] vs short[] from bitDepth_, so
-         // it must reflect the real container size whenever the two disagree -- but only for
-         // grayscale: getBytesPerPixel() counts *all* components (e.g. 4 for BGRA32), so an
-         // 8-bit RGB camera would otherwise have bitDepth_ wrongly inflated to 32; RGB is
-         // always 8 bits/component regardless of container size.
+         // getImageBitDepth() reports significant bits, not container size, so widen from
+         // getBytesPerPixel() when they disagree. Grayscale only: getBytesPerPixel() counts all
+         // components (4 for BGRA32), and RGB is always 8 bits/component.
          bitDepth_ = (!isRGB_ && reportedBitDepth <= 8 && bytesPerPixel > 1)
                  ? bytesPerPixel * 8 : reportedBitDepth;
          pixelSizeUm_ = studio_.core().getPixelSizeUm();
@@ -408,11 +395,8 @@ public class ExplorerManager {
                     + "using NDTiff storage for this acquisition.");
             backend = ExplorerFrame.BACKEND_NDTIFF;
          }
-         // No backend supports more than 16-bit grayscale (e.g. 32-bit float): NDTiff has no
-         // float pixel type either, and TiledDataViewer's own rendering pipeline only handles
-         // byte[]/short[] pixels. Falling back to NDTiff here would not make the acquisition
-         // work, only move the failure (or a silent mis-render) somewhere less obvious, so
-         // reject outright -- the catch below cleans up via stopExplore() and reports this.
+         // No backend handles more than 16-bit grayscale, and TiledDataViewer renders only
+         // byte[]/short[], so there is no fallback. The catch below cleans up via stopExplore().
          if (!isRGB_ && bitDepth_ > 16) {
             throw new UnsupportedOperationException(
                     "Explorer does not support this camera's pixel format (bit depth "
@@ -555,9 +539,7 @@ public class ExplorerManager {
          final int imageWidth = summaryMetadata.optInt("Width", 512);
          final int imageHeight = summaryMetadata.optInt("Height", 512);
          bitDepth_ = summaryMetadata.optInt("BitDepth", 16);
-         // The reopened dataset's summary metadata only records the pixel container size, not
-         // the camera's original significant-bit count; fall back to matching bitDepth_ (the
-         // container size) since that is the best information available on reopen.
+         // Summary metadata records only the container size, not the original significant bits.
          significantBitDepth_ = bitDepth_;
          isRGB_ = "RGB32".equals(summaryMetadata.optString("PixelType", ""));
          pixelSizeUm_ = summaryMetadata.optDouble("PixelSize_um", 1.0);
@@ -1430,10 +1412,8 @@ public class ExplorerManager {
    }
 
    /**
-    * Moves the stage to tile (row, col) on the session's tile grid and acquires it.
-    * Shared by {@link #acquireMultipleTiles} and {@link #acquireTileBlocking}; both submit
-    * this to {@code acquisitionExecutor_} so stage moves are always serialized, whether they
-    * come from the UI's batch acquisition or an external scripting call.
+    * Moves the stage to tile (row, col) on the session's tile grid and acquires it. Callers must
+    * submit this to {@code acquisitionExecutor_} so stage moves stay serialized.
     *
     * @return true if the tile was acquired and stored; see {@link #acquireSingleTileBlocking}.
     */
@@ -1469,21 +1449,15 @@ public class ExplorerManager {
    }
 
    /**
-    * Moves the stage to tile (row, col) and acquires it, blocking the caller until it has been
-    * stored and displayed (or has definitively failed). For use by external scripting/automation
-    * callers. Safe to call from any thread, including off the EDT: the small amount of Swing
-    * state this touches is dispatched to the EDT internally.
+    * Moves the stage to tile (row, col) and acquires it, blocking until it is stored and
+    * displayed or has failed. Safe to call from any thread; Swing state is dispatched to the
+    * EDT internally. Runs on {@code acquisitionExecutor_}, so a call made during a UI-driven
+    * batch acquisition queues behind it rather than racing it for the stage.
     *
-    * <p>The actual stage move and acquisition run on {@code acquisitionExecutor_} -- the same
-    * single-threaded executor {@link #acquireMultipleTiles} uses -- so a scripting call made
-    * while a UI-driven batch acquisition is in flight is serialized after it rather than racing
-    * it for the shared stage.
-    *
-    * @throws IllegalStateException if no session is active, the open dataset is read-only, or
-    *     the pixel size/camera ROI has changed since session start (see the "settings mismatch"
-    *     state)
-    * @throws IOException if the tile's test acquisition failed or produced no data, or every
-    *     image for it failed to store
+    * @throws IllegalStateException if no session is active, the dataset is read-only, or the
+    *     pixel size/camera ROI has changed since session start
+    * @throws IOException if the tile's acquisition failed, produced no data, or every image
+    *     failed to store
     */
    public void acquireTileBlocking(int row, int col) throws Exception {
       if (!exploring_ || acquisitionExecutor_ == null) {
@@ -1554,9 +1528,7 @@ public class ExplorerManager {
     * This is called from within the acquisition executor.
     *
     * @return true if at least one image for this tile was acquired and stored; false if the
-    *     test acquisition failed, produced no images, or every image failed to store. Callers
-    *     that need to know whether a tile genuinely has data (e.g. {@link #acquireTileBlocking})
-    *     should check this rather than assume success.
+    *     test acquisition failed, produced no images, or every image failed to store
     */
    private boolean acquireSingleTileBlocking(int row, int col) {
       try {
@@ -1769,8 +1741,7 @@ public class ExplorerManager {
             }
          }
 
-         // Only mark the tile acquired if at least one image actually made it into storage --
-         // otherwise the overlay/read path would treat a tile with no real data as complete.
+         // Marking an empty tile acquired would make the overlay/read path treat it as complete.
          if (!storedAxes.isEmpty()) {
             dataSource_.markTileAcquired(row, col);
          }
@@ -1882,9 +1853,8 @@ public class ExplorerManager {
          tags.put("ElapsedTime-ms", System.currentTimeMillis());
          tags.put("Width", image.getWidth());
          tags.put("Height", image.getHeight());
-         // "BitDepth" is the camera's significant-bit count (for the Inspector's histogram/
-         // "Camera Depth" display), not the pixel container size -- see significantBitDepth_.
-         // PixelType/BytesPerPixel describe the actual stored array type, so they use bitDepth_.
+         // "BitDepth" is significant bits; PixelType/BytesPerPixel describe the stored array
+         // type and so use bitDepth_ instead.
          tags.put("BitDepth", significantBitDepth_);
          tags.put("PixelType", isRGB_ ? "RGB32" : (bitDepth_ <= 8 ? "GRAY8" : "GRAY16"));
          tags.put("BytesPerPixel", isRGB_ ? 4 : (bitDepth_ <= 8 ? 1 : 2));
@@ -3674,13 +3644,9 @@ public class ExplorerManager {
          return;
       }
       try {
-         // Use a compare-and-set retry loop, not a plain read-then-write: this runs on
-         // displayExecutor_ once per newly-seen channel per tile, concurrently with the EDT
-         // (e.g. the Inspector's histogram-range combo, ChannelIntensityController) and the
-         // render thread (ImageMaker's autostretch callback) both committing their own
-         // DisplaySettings updates via their own compare-and-set loops. A plain setDisplaySettings
-         // here would silently discard whichever of those commits happened between our read and
-         // write, reverting e.g. a user's explicit histogram bit-depth pick back to its default.
+         // Runs on displayExecutor_ while the EDT (Inspector controls) and the render thread
+         // (ImageMaker autostretch) commit their own DisplaySettings updates, so a plain
+         // read-then-write here would drop whichever of those landed in between.
          DisplaySettings current;
          DisplaySettings updated;
          do {
