@@ -23,8 +23,6 @@ package org.micromanager.display.inspector.internal.panels.sharpnessinspector.ui
 
 import java.awt.Color;
 import java.awt.Toolkit;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
@@ -113,8 +111,6 @@ public class SharpnessInspectorPanel extends JPanel {
            .getSeries(SERIES_NAME);
    private final XYSeries tDataSeries = ((XYSeriesCollection) tChart.getXYPlot().getDataset())
            .getSeries(SERIES_NAME);
-
-   private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     
    public SharpnessInspectorPanel() {
       super(new MigLayout("fill, nogrid"));
@@ -163,7 +159,7 @@ public class SharpnessInspectorPanel extends JPanel {
       });
 
       evaluationMode.addActionListener((evt) -> {
-         this.pcs.firePropertyChange("evalMethod", null,
+         this.firePropertyChange("evalMethod", null,
                  (ImgSharpnessAnalysis.Method) evaluationMode.getSelectedItem());
       });
         
@@ -186,16 +182,6 @@ public class SharpnessInspectorPanel extends JPanel {
       super.add(infoButton);
    }
 
-   @Override
-   public void addPropertyChangeListener(PropertyChangeListener listener) {
-      this.pcs.addPropertyChangeListener(listener);
-   }
-    
-   @Override
-   public void addPropertyChangeListener(String property, PropertyChangeListener listener) {
-      this.pcs.addPropertyChangeListener(property, listener);
-   }
-    
    public void setValue(double z, double time, double sharpness) {
       //Add an XY value to the plot. if the x value already exists the old value will be replaced.
       this.zDataSeries.addOrUpdate(z, sharpness);
@@ -265,7 +251,7 @@ public class SharpnessInspectorPanel extends JPanel {
       if (plotModeBox.getSelectedItem() != mode) {
          plotModeBox.setSelectedItem(mode);
       }
-      this.pcs.firePropertyChange("plotMode", null, mode);
+      this.firePropertyChange("plotMode", null, mode);
    }
         
    private class ScanDialog extends JDialog {
