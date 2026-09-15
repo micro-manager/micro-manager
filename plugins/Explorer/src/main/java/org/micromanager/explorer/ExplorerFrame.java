@@ -101,6 +101,11 @@ public class ExplorerFrame extends JFrame {
       return settings_.toPropertyMap();
    }
 
+   /** The ExplorerManager backing this window, for external scripting/automation callers. */
+   public ExplorerManager getExplorerManager() {
+      return explorerManager_;
+   }
+
    public ExplorerFrame(Studio studio) {
       studio_ = studio;
       settings_ = studio_.profile().getSettings(this.getClass());

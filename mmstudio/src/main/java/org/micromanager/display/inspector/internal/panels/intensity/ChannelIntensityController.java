@@ -631,12 +631,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                histogram_.setComponentFloatMapper(c, null);
                histogram_.setComponentRangeMaxLabel(c, null);
                histogram_.setComponentRangeMinLabel(c, null);
+               // graphLen is a bin count (256 for 8-bit); the axis max is the highest bin
+               // value, one less (255).
                int clampedRangeBits = Math.min(rangeBits, 30);
-               int lengthToUse = Math.min(data.length, (1 << clampedRangeBits) - 1);
-               if (lengthToUse <= 0) {
-                  lengthToUse = data.length;
+               int graphLen = Math.min(data.length, 1 << clampedRangeBits);
+               if (graphLen <= 0) {
+                  graphLen = data.length;
                }
-               histogram_.setComponentGraph(c, data, lengthToUse, lengthToUse);
+               histogram_.setComponentGraph(c, data, graphLen, graphLen - 1);
             }
             histogram_.setROIIndicator(cStats.isROIStats());
          }
