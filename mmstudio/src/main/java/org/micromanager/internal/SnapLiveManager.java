@@ -112,7 +112,7 @@ public final class SnapLiveManager extends DataViewerListener
 
    private final ScheduledExecutorService scheduler_ =
          Executors.newSingleThreadScheduledExecutor(
-               ThreadFactoryFactory.createThreadFactory("SnapLiveManager"));
+               ThreadFactoryFactory.createDaemonThreadFactory("SnapLiveManager"));
    // Guarded by monitor on this
    private ScheduledFuture<?> scheduledGrab_;
    // Counter for live acquisitions started, needed to synchronize across

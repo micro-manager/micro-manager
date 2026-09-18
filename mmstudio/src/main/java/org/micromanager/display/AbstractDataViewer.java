@@ -52,7 +52,7 @@ public abstract class AbstractDataViewer implements DataViewer {
    // TODO XXX Need to shut down
    private final ExecutorService asyncEventPoster_ =
          Executors.newSingleThreadExecutor(ThreadFactoryFactory
-               .createThreadFactory("AbstractDataViewer Pool"));
+               .createDaemonThreadFactory("AbstractDataViewer Pool"));
 
    /**
     * Construct the abstract viewer implementation.
