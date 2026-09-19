@@ -1,5 +1,7 @@
 <project name="MMAcqEngine" default="jar">
 	<property name="namespace" value="org.micromanager.acq-engine"/>
+	<property name="javasrcdir" value="src/main/java"/>
+	<property name="testdir" value="src/test/java"/>
 
 	<import file="../buildscripts/clojurebuild.xml"/>
 
@@ -13,4 +15,51 @@
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
 	</path>
+
+	<path id="pitest.path">
+		<fileset dir="${mm.ivy.lib.dir}/pitest" includes="*.jar"/>
+	</path>
+
+	<taskdef name="pitest" classname="org.pitest.ant.PitestTask"
+		classpathref="pitest.path"/>
+
+	<path id="pitest.classpath">
+		<pathelement location="${intdir}"/>
+		<path refid="project.test.classpath"/>
+	</path>
+
+	<property name="pitest.targetTests" value="org.micromanager.internal.jacque.*"/>
+	<target name="pitest" depends="jar" description="Run PIT mutation testing">
+		<mkdir dir="${test.intdir}"/>
+		<mm-javac srcdir="${testdir}" destdir="${test.intdir}">
+			<classpath refid="project.test.classpath"/>
+		</mm-javac>
+		<copy todir="${test.intdir}">
+			<fileset dir="${testrscdir}" erroronmissingdir="false"/>
+		</copy>
+		<delete dir="pit-reports" quiet="true"/>
+		<pitest
+			pitClasspath="pitest.path"
+			threads="4"
+			classPath="pitest.classpath"
+			targetClasses="org.micromanager.internal.jacque.*"
+			excludedClasses="org.micromanager.internal.jacque.*CoreOps,org.micromanager.internal.jacque.EngineState*,org.micromanager.internal.jacque.*Clock,org.micromanager.internal.jacque.*Test*,org.micromanager.internal.jacque.Helper*"
+			targetTests="${pitest.targetTests}"
+			reportDir="pit-reports"
+			sourceDir="src/main/java"
+			timestampedReports="false"
+			jvmArgs="-Dmmcorej.library.path=${mm.build.java.library.path}"/>
+	</target>
+
+	<target name="compile" depends="prepare" description="Compile Java and Clojure sources">
+		<mkdir dir="${intdir}"/>
+		<mm-cljc namespace="${namespace}" srcdir="${srcdir}" destdir="${intdir}">
+			<clj-classpath>
+				<path refid="project.classpath"/>
+			</clj-classpath>
+		</mm-cljc>
+		<mm-javac srcdir="${javasrcdir}" destdir="${intdir}">
+			<classpath refid="project.classpath"/>
+		</mm-javac>
+	</target>
 </project>
