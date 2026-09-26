@@ -129,10 +129,11 @@ $EVAL ./configure \
    "JNI_CPPFLAGS=\"-I$MM_JDK_HOME/include -I$MM_JDK_HOME/include/darwin\"" \
    "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.8 -target 1.8\"" \
    "OPENCV_LDFLAGS=\"-framework QuartzCore -framework CoreVideo -framework CoreMedia -framework CoreGraphics -framework AVFoundation -framework Accelerate -framework Cocoa\"" \
-   "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
+   "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la $MM_DEPS_PREFIX/lib/libusb-1.0.la\"" \
    PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig \
    "LIBUSB_0_1_LDFLAGS=\"-framework IOKit -framework CoreFoundation\"" \
-   LIBUSB_0_1_LIBS=$MM_DEPS_PREFIX/lib/libusb.la \
+   "LIBUSB_0_1_LIBS=\"$MM_DEPS_PREFIX/lib/libusb.la $MM_DEPS_PREFIX/lib/libusb-1.0.la\"" \
+   "LIBDC1394_LIBS=\"$MM_DEPS_PREFIX/lib/libdc1394.la $MM_DEPS_PREFIX/lib/libusb-1.0.la\"" \
    HIDAPI_LIBS=$MM_DEPS_PREFIX/lib/libhidapi.la
 if [ "$print_config_only" = yes ]; then
    printf \\n

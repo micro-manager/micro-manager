@@ -23,7 +23,7 @@ MM_CXXFLAGS="$MM_CFLAGS"
 MM_LDFLAGS="-L$MM_DEPS_PREFIX/lib -F/Library/Frameworks"
 
 MM_ARCH="x86_64"
-MM_ARCH_FLAGS="-arch x86_64"
+MM_ARCH_FLAGS="-arch $MM_ARCH"
 MM_CC="clang $MM_ARCH_FLAGS"
 MM_CXX="clang++ $MM_ARCH_FLAGS"
 MM_CPP="clang -E"
@@ -40,5 +40,5 @@ MM_PARALLELMAKEFLAG=-j$(sysctl -n hw.ncpu)
 
 # Get the appropriate JAVA_HOME, requiring exactly Java 8 (should work with
 # temurin, adoptopenjdk, zulu, etc.)
-# Would pass '-a x86_64' here, but that doesn't seem to actually work.
+# Would pass '-a $MM_ARCH' here, but that doesn't seem to actually work.
 MM_JDK_HOME=$(/usr/libexec/java_home -v 1.8 -F)
