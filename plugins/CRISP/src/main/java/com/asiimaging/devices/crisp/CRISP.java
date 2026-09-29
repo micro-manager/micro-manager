@@ -265,20 +265,21 @@ public class CRISP {
          if (deviceType == ControllerType.TIGER) {
             final String version = core.getProperty(deviceName, "FirmwareVersion");
             firmwareVersion = Double.parseDouble(version);
-            message = "Parsed Tiger firmware version: " + + firmwareVersion;
+            message = "Parsed Tiger firmware version: " + firmwareVersion;
          } else { // MS2000
             final String version = core.getProperty(deviceName, "Version");
             final char last = version.charAt(version.length() - 1);
             if (Character.isLetter(last)) {
-                // old format: "9.2p"
-                firmwareVersion = Double.parseDouble(version.substring(0, version.length() - 1));
-                firmwareVersionLetter = last;
-                message = "Parsed MS-2000 firmware version: " + firmwareVersion + firmwareVersionLetter;
+               // old format: "9.2p"
+               firmwareVersion = Double.parseDouble(version.substring(0, version.length() - 1));
+               firmwareVersionLetter = last;
+               message = "Parsed MS-2000 firmware version: "
+                     + firmwareVersion + firmwareVersionLetter;
             } else {
-                // new format: "9.61"
-                firmwareVersion = Double.parseDouble(version);
-                firmwareVersionLetter = 'z';
-                message = "Parsed MS-2000 firmware version: " + firmwareVersion;
+               // new format: "9.61"
+               firmwareVersion = Double.parseDouble(version);
+               firmwareVersionLetter = 'z';
+               message = "Parsed MS-2000 firmware version: " + firmwareVersion;
             }
          }
          studio.logs().logMessage(message);
