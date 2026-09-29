@@ -71,4 +71,34 @@ public interface Album {
     * @throws java.io.IOException these happen with disk-based stores
     */
    boolean addImages(Collection<Image> images) throws IOException;
+
+   /**
+    * Add the specified Image to the Album's datastore without passing it 
+    * through the processor pipeline. If no Datastore exists for the Album yet, 
+    * or if the current Datastore is frozen, or if the channel has changed, 
+    * then a new Datastore will be created, as well as a new DisplayWindow to 
+    * go with it, and future additions will be sent to that Datastore.
+    * The channel name used for the image will be the current channel (i.e. the
+    * config setting for the config group set as the channel group), or "" if
+    * it does not exist.
+    *
+    * @param image The Image to add to the album
+    * @return True if a new Datastore and DisplayWindow were created as a
+    *     side-effect of adding the image.
+    * @throws java.io.IOException these happen with disk-based stores
+    */
+   boolean addImageWithoutProcessing(Image image) throws IOException;
+
+   
+   /**
+    * Add the specified Images to the Album's datastore without passing them 
+    * through the processor pipeline. Equivalent to repeatedly calling 
+    * addImageWithoutProcessing().
+    *
+    * @param images The Images to add to the album
+    * @return True if a new Datastore and DisplayWindow were created as a
+    *     side-effect of adding the images.
+    * @throws java.io.IOException these happen with disk-based stores
+    */
+   boolean addImagesWithoutProcessing(Collection<Image> images) throws IOException;
 }

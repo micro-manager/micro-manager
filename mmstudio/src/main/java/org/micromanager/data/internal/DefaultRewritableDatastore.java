@@ -51,7 +51,7 @@ public final class DefaultRewritableDatastore extends DefaultDatastore
 
    @Override
    public void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
-      if (isFrozen_) {
+      if (isFrozen_.get()) {
          throw new DatastoreFrozenException();
       }
       bus_.post(new DefaultNewSummaryMetadataEvent(metadata));

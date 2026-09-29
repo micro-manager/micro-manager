@@ -82,7 +82,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    private final Prefs prefs_;
    private final JCheckBox useChannelsCB_;
    private final ChannelTableModel channelTableModel_;
-   private final JComboBox channelGroup_;
+   private final JComboBox<String> channelGroup_;
    private ChannelSpec[] usedChannels_ = new ChannelSpec[0];
    private int nextChannelIndex_ = 0;
    private final List<ListeningJPanel> panels_;
@@ -162,7 +162,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          }
       };
       
-      final JComboBox channelMode;
+      final JComboBox<MultichannelModes.Keys> channelMode;
       final JTable channelTable;
       final JScrollPane channelTablePane;
 
@@ -320,7 +320,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       Object selection = channelGroup_.getSelectedItem();
       String groups[] = getAvailableGroups();
       if (groups.length != 0) {
-         channelGroup_.setModel(new DefaultComboBoxModel(groups));
+         channelGroup_.setModel(new DefaultComboBoxModel<>(groups));
       }
       channelGroup_.setSelectedItem(selection);
    }

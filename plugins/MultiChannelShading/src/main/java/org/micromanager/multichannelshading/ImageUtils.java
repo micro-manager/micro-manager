@@ -22,6 +22,7 @@
 package org.micromanager.multichannelshading;
 
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -40,7 +41,9 @@ public class ImageUtils {
          throw new ShadingException("Error: Images are of unequal size");
       }
       try {
-         if (proc1 instanceof ByteProcessor && proc2 instanceof ByteProcessor) {
+         if (proc1 instanceof ColorProcessor && proc2 instanceof ColorProcessor) {
+            return subtractColorProcessors((ColorProcessor) proc1, (ColorProcessor) proc2);
+         } else if (proc1 instanceof ByteProcessor && proc2 instanceof ByteProcessor) {
             return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
          } else if (proc1 instanceof ShortProcessor && proc2 instanceof ShortProcessor) {
             return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
@@ -176,6 +179,23 @@ public class ImageUtils {
       return result;
    }
 
+
+   private static ColorProcessor subtractColorProcessors(ColorProcessor proc1,
+                                                         ColorProcessor proc2) {
+      int[] pixels1 = (int[]) proc1.getPixels();
+      int[] pixels2 = (int[]) proc2.getPixels();
+      int length = pixels1.length;
+      int[] result = new int[length];
+      for (int i = 0; i < length; i++) {
+         int p1 = pixels1[i];
+         int p2 = pixels2[i];
+         int r = Math.max(0, ((p1 >> 16) & 0xff) - ((p2 >> 16) & 0xff));
+         int g = Math.max(0, ((p1 >> 8) & 0xff) - ((p2 >> 8) & 0xff));
+         int b = Math.max(0, (p1 & 0xff) - (p2 & 0xff));
+         result[i] = (r << 16) | (g << 8) | b;
+      }
+      return new ColorProcessor(proc1.getWidth(), proc1.getHeight(), result);
+   }
 
    public static int unsignedValue(byte b) {
       // Sign-extend, then mask

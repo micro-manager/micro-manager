@@ -250,8 +250,7 @@ public class I2I {
       }
 
       imageSize = getX() * getY();
-      Utils u = new Utils();
-      history[0] = ("* Created on " + u.generateDate() + " by " + System.getenv("HOSTNAME"));
+      history[0] = ("* Created on " + Utils.generateDate() + " by " + System.getenv("HOSTNAME"));
    }
 
    /**

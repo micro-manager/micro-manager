@@ -80,6 +80,18 @@ public final class DaytimeNighttime implements ApplicationSkin {
          "TextPane", "ToolBar", "Tree", "Viewport"
    };
 
+   // Additional text color keys, applied on Linux only. FlatLaf paints these
+   // components itself and honors both the ".background" keys we set above and
+   // these ".foreground" keys, so light-on-dark stays consistent. The native
+   // Windows and macOS L&Fs paint menus, popups and combo box drop-down lists
+   // with their own (light) background while still honoring ".foreground",
+   // which would leave light grey text on a light background.
+   private static final String[] UNIX_ONLY_TEXT_COLOR_KEYS = new String[] {
+         "Button", "CheckBoxMenuItem", "ComboBox", "EditorPane", "Menu",
+         "MenuBar", "MenuItem", "PasswordField", "PopupMenu",
+         "RadioButtonMenuItem", "ScrollBar", "ToggleButton"
+   };
+
    // As above, but for disabled text; each of these keys will have
    // ".disabledText" appended to it later.
    private static final String[] DISABLED_TEXT_COLOR_KEYS = new String[] {
@@ -175,19 +187,27 @@ public final class DaytimeNighttime implements ApplicationSkin {
    @Override
    public void setSkin(SkinMode mode) {
       setMode(mode, true);
+      storeSkin(mode);
    }
 
    /**
-    * This version of the function allows us to specify whether or not the
-    * UI should be updated after changing modes. Not updating is only generally
-    * wanted in cases where a one-off component must be created that doesn't
-    * adhere to our custom look and feel; see suspendToMode() below.
+    * This version of the function allows us to specify whether the
+    * UI should be updated after changing modes.
+    * Not updating is only generally wanted in cases where a one-off
+    * component must be created that doesn't adhere to our custom
+    * look and feel; see suspendToMode() below.
     */
    private void setMode(SkinMode mode, boolean shouldUpdateUI) {
 
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background", background_.get(mode));
+         if (JavaUtils.isUnix()) {
+            // FlatLaf (Linux only) sources non-editable text component backgrounds
+            // from these keys instead of ".background", ignoring the skin color set above.
+            UIManager.put(key + ".inactiveBackground", background_.get(mode));
+            UIManager.put(key + ".disabledBackground", background_.get(mode));
+         }
       }
       for (String key : LIGHTER_BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background", lightBackground_.get(mode));
@@ -201,6 +221,12 @@ public final class DaytimeNighttime implements ApplicationSkin {
       for (String key : ENABLED_TEXT_COLOR_KEYS) {
          UIManager.put(key + ".foreground", enabledTextColor_.get(mode));
          UIManager.put(key + ".caretForeground", enabledTextColor_.get(mode));
+      }
+      if (JavaUtils.isUnix()) {
+         for (String key : UNIX_ONLY_TEXT_COLOR_KEYS) {
+            UIManager.put(key + ".foreground", enabledTextColor_.get(mode));
+            UIManager.put(key + ".caretForeground", enabledTextColor_.get(mode));
+         }
       }
       // Improve contrast of disabled text against backgrounds.
       for (String key : DISABLED_TEXT_COLOR_KEYS) {

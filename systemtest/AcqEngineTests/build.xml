@@ -1,0 +1,74 @@
+<project name="AcqEngineTester" basedir="." default="jar">
+	<import file="../../buildscripts/javabuild.xml"/>
+
+	<!--
+		Integration tests that drive the two high-level acquisition engines
+		(AcqEngJAdapter and the legacy AcquisitionWrapperEngine) through a
+		headless MMStudio against the SequenceTester device adapter.
+
+		These tests reuse the image-decoding helpers (TestImageDecoder,
+		TaggedImageDecoder) from the SequenceTests module rather than
+		duplicating them. We compile the SequenceTests 'testing' helper sources
+		together with our own test sources (see the test-only override below).
+		This keeps the build self-contained and works on both the Windows (Ant)
+		and Unix (Autotools) builds. Referencing SequenceTests' compiled output
+		dir would not, because that dir only exists under the Windows build
+		properties.
+	-->
+
+	<property name="seqtests.testdir"
+		location="../SequenceTests/src/test/java"/>
+
+	<path id="project.classpath">
+		<path refid="mm.compile.classpath"/>
+		<pathelement location="${mm.java.lib.acq-engine}"/>
+		<pathelement location="${mm.java.lib.mmcorej}"/>
+		<pathelement location="${mm.java.lib.mmstudio}"/>
+	</path>
+
+	<path id="project.test.classpath">
+		<path refid="mm.test.classpath"/>
+	</path>
+
+	<!--
+		Override the shared 'test-only' target. Two reasons:
+		1. Unlike the unit tests, these integration tests instantiate a full
+		   MMStudio, which builds Swing components (Background frames, etc.) and
+		   therefore CANNOT run with java.awt.headless=true. We run non-headless
+		   instead. On a headless CI host this requires a virtual display (e.g.
+		   Xvfb on Linux).
+		2. We compile the SequenceTests 'testing' helper package alongside our
+		   own test sources so the shared image decoders are available without
+		   depending on SequenceTests having been built first.
+	-->
+	<target name="test-only" if="has.tests" unless="mm.java.disable.build">
+		<mkdir dir="${test.intdir}"/>
+		<mm-javac destdir="${test.intdir}">
+			<src path="${testdir}"/>
+			<!-- Shared helpers (TestImageDecoder, TaggedImageDecoder, ...). -->
+			<src path="${seqtests.testdir}"/>
+			<classpath refid="project.test.classpath"/>
+		</mm-javac>
+		<copy todir="${test.intdir}">
+			<fileset dir="${testrscdir}" erroronmissingdir="false"/>
+		</copy>
+		<mkdir dir="${test.reportdir}"/>
+		<junit fork="true" haltonfailure="true" printsummary="true"
+			maxmemory="512m" failureproperty="mm.build.test.failed">
+			<sysproperty key="java.awt.headless" value="false"/>
+			<classpath refid="project.test.classpath"/>
+			<formatter type="plain"/>
+			<test if="test.class" name="${test.class}"
+				todir="${test.reportdir}"/>
+			<batchtest unless="test.class" todir="${test.reportdir}">
+				<fileset dir="${testdir}">
+					<include name="**/*.java"/>
+					<exclude name="**/StudioTestFixture.java"/>
+					<exclude name="**/AcqResult.java"/>
+					<exclude name="**/TestAutofocusPlugin.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+		<fail if="mm.build.test.failed"/>
+	</target>
+</project>

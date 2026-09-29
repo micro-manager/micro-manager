@@ -99,13 +99,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private CMMCore core_;
    protected Studio studio_;
    private PositionList posList_;
-   private HashMap<String, MultiStagePosition> positionMap_;
+   protected HashMap<String, MultiStagePosition> positionMap_;
    private String zStage_;
    private SequenceSettings sequenceSettings_;
    protected JSONObject summaryMetadataJSON_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
    private long nextWakeTime_ = -1;
+   private long lastFrameIndex_ = -1;
    private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
 
    private class RunnablePlusIndices {
@@ -250,7 +251,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          SummaryMetadata.Builder smb = summaryMetadata.copyBuilder().sequenceSettings(
                   acquisitionSettings);
          if (posListToUse != null) {
-            smb.stagePositions(posListToUse.getPositions());
+            smb.stagePositions(posListToUse.getPositions())
+                  .multiWellPlate(posListToUse.getPlate());
          }
          summaryMetadata = smb.build();
          MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
@@ -275,7 +277,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
 
          // Hook to move back the ZStage to its original position after a Z stack
-         if (sequenceSettings.useSlices()) {
+         List<ChannelSpec> chSpecs = new ArrayList<>();
+         for (ChannelSpec chSpec : acquisitionSettings.channels()) {
+            if (chSpec.useChannel()) {
+               chSpecs.add(chSpec);
+            }
+         }
+         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
+         if (sequenceSettings.useSlices() || (sequenceSettings.useChannels() && hasZOffsets)) {
             currentAcquisition_.addHook(zPositionHook(acquisitionSettings,
                   Acquisition.BEFORE_HARDWARE_HOOK, null),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -303,7 +312,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
             // add a hook to update the Z drive positions based on the position found in the i
             // previous round after autofocussing.
-            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
          }
 
          // Hooks to keep shutter open between channel and/or slices if desired
@@ -356,9 +365,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             currentAcquisition_.addHook(restorePositionHook(msp),
                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
-
          // This hook is used to update the time of the next wake up call
          if (sequenceSettings.useFrames()) {
+            lastFrameIndex_ = -1;
             currentAcquisition_.addHook(updateNextWakeHook(acquisitionSettings),
                   AcquisitionAPI.AFTER_HARDWARE_HOOK);
          }
@@ -581,28 +590,47 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
+      PositionList posList = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+            if (acquisitionSettings.usePositionList()
+                     && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
+               posList = posList_;
+            }
          }
-         zStack = MDAAcqEventModules.zStack(0,
-               acquisitionSettings.slices().size() - 1,
-               acquisitionSettings.sliceZStepUm(),
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
                origin,
+               posList,
                chSpecs,
                null);
-      } else if (acquisitionSettings.useChannels() && !chSpecs.isEmpty()) {
-         boolean hasZOffsets = chSpecs.stream().anyMatch(t -> t.zOffset() != 0);
-         if (hasZOffsets) {
-            // add a fake z stack so that the channel z-offsets are handles correctly
-            zStack = MDAAcqEventModules.zStack(0,
-                  0,
-                  0.1,
-                  studio_.core().getPosition(),
-                  chSpecs,
-                  null);
+      } else if (((acquisitionSettings.useChannels() && !chSpecs.isEmpty())
+               || acquisitionSettings.useAutofocus())
+               && !studio_.core().getFocusDevice().isEmpty()) {
+         // add a fake z stack so that the channel z-offsets and AF are handles correctly
+         if (acquisitionSettings.usePositionList()
+                  && AcqEngJUtils.posListHasZDrive(studio_, posList_)) {
+            posList = posList_;
          }
+         // update settings to match fake Z stack
+         ArrayList<Double> slices = new ArrayList<>();
+         slices.add(0.0);
+         acquisitionSettings = acquisitionSettings.copyBuilder()
+                                                   .useSlices(true)
+                                                   .slices(slices)
+                                                   .relativeZSlice(true)
+                                                   .sliceZBottomUm(0.0)
+                                                   .sliceZTopUm(0.0)
+                                                   .sliceZStepUm(0.0)
+                                                   .zReference(0.0).build();
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
+               studio_.core().getPosition(),
+               posList,
+               chSpecs,
+               null);
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
@@ -622,6 +650,19 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // TODO: What about Z positions in position list
          // Yes: First move all stages in the MSP to their desired location, then do
          // whatever is asked to do.
+      } else if (acquisitionSettings.useAutofocus()) {
+         // if no position list is used, add a dummy position function to make sure the
+         // acquisition event has a position axis for the metadata to work correctly
+         posList_ = new PositionList();
+         MultiStagePosition msp = new MultiStagePosition();
+         String zDevice = core_.getFocusDevice();
+         if (zDevice != null && !zDevice.isEmpty()) {
+            msp.add(StagePosition.create1D(zDevice, core_.getPosition(zDevice)));
+         }
+         posList_.addPosition(msp);
+         positions = MDAAcqEventModules.positions(posList_, null, core_);
+         // update acquisiton settings to include position
+         acquisitionSettings = acquisitionSettings.copyBuilder().usePositionList(true).build();
       }
 
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
@@ -875,20 +916,55 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       return new AcquisitionHook() {
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
-            // If we do not have previous positions, there is no point in running this code.
-            if (positionMap_.isEmpty()) {
-               return event;
-            }
             String posName = event.getTags().get(AcqEngMetadata.POS_NAME);
-            if (posName != null) {
-               MultiStagePosition msp = positionMap_.get(posName);
-               if (msp != null) {
-                  for (int i = 0; i < msp.size(); i++) {
-                     StagePosition sp = msp.get(i);
-                     if (sp != null && sp.is1DStagePosition()) {
-                        event.setStageCoordinate(sp.getStageDeviceLabel(), sp.get1DPosition());
-                     }
+            String zDevice = core_.getFocusDevice();
+            MultiStagePosition msp = posName == null ? null : positionMap_.get(posName);
+            boolean adjusted = false;
+            if (msp != null) {
+               for (int i = 0; i < msp.size(); i++) {
+                  StagePosition sp = msp.get(i);
+                  if (sp != null && sp.is1DStagePosition()
+                           && sp.getStageDeviceLabel().equals(zDevice)) {
+                     // here we adjust the Z position of the event
+                     // because at this point in code the event was already generated
+                     // and event.zPos has already been set using old (un-adjusted)
+                     // event's stage coordinate event.sp.get1DPosition()
+                     // hence, adjusting coordinate using setStageCoordinate
+                     // doesn't affect event's zPos
+                     studio_.core().logMessage("Adjusting Z position for event; current zPos = "
+                             + event.getZPosition() + ", current stage single axis position = "
+                             + event.getStageSingleAxisStagePosition(sp.getStageDeviceLabel())
+                             + ", new stage position = " + sp.get1DPosition());
+                     event.setZ(event.getZIndex(),
+                           event.getZPosition()
+                           - event.getStageSingleAxisStagePosition(sp.getStageDeviceLabel())
+                           + sp.get1DPosition()
+                        );
+                     event.setStageCoordinate(sp.getStageDeviceLabel(), sp.get1DPosition());
+                     adjusted = true;
                   }
+               }
+            }
+            // No recorded (autofocused) Z for this location - e.g. autofocus failed/timed
+            // out, or this is the first visit before any autofocus recorded a position. In
+            // that case the event may carry a raw absolute Z origin (0) that would drive the
+            // focus drive to 0 and ruin the experiment. Instead, leave Z where it is: pin the
+            // event's Z to the current focus position so no absolute Z move is issued.
+            if (!adjusted && zDevice != null && !zDevice.isEmpty()
+                     && event.getZPosition() != null) {
+               try {
+                  double currentZ = core_.getPosition(zDevice);
+                  Double eventStageZ = event.getStageSingleAxisStagePosition(zDevice);
+                  double newZPos = eventStageZ == null
+                        ? currentZ
+                        : event.getZPosition() - eventStageZ + currentZ;
+                  studio_.core().logMessage("No recorded autofocus position for event; "
+                        + "pinning Z to current position " + currentZ
+                        + " (was zPos = " + event.getZPosition() + ")");
+                  event.setZ(event.getZIndex(), newZPos);
+                  event.setStageCoordinate(zDevice, currentZ);
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex, "Failed to pin Z to current position");
                }
             }
             return event;
@@ -925,26 +1001,28 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             try {
                if (event.isAcquisitionFinishedEvent()) {
-                  if (sequenceSettings_.useSlices()) {
-                     if (sequenceSettings_.relativeZSlice()) {
-                        core_.setPosition(sequenceSettings.zReference());
-                     } else {
-                        core_.setPosition(zStagePositionBefore_);
-                     }
+                  if (sequenceSettings_.relativeZSlice()) {
+                     core_.setPosition(sequenceSettings.zReference());
+                  } else {
+                     core_.setPosition(zStagePositionBefore_);
                   }
                   return event;
                }
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
-                  if (event.getZIndex() != null && event.getZIndex() == 0) {
-                     if (!event.isZSequenced() && sequenceSettings.useChannels()
-                             && (sequenceSettings.acqOrderMode()
-                                       == AcqOrderMode.TIME_POS_SLICE_CHANNEL
-                             || sequenceSettings.acqOrderMode()
-                                       == AcqOrderMode.POS_TIME_SLICE_CHANNEL)) {
-                        if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) != 0) {
-                           return event;
+                  if (sequenceSettings.useSlices()) {
+                     if (event.getZIndex() != null && event.getZIndex() == 0) {
+                        if (!event.isZSequenced() && sequenceSettings.useChannels()
+                                 && (sequenceSettings.acqOrderMode()
+                                 == AcqOrderMode.TIME_POS_SLICE_CHANNEL
+                                 || sequenceSettings.acqOrderMode()
+                                 == AcqOrderMode.POS_TIME_SLICE_CHANNEL)) {
+                           if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) != 0) {
+                              return event;
+                           }
                         }
+                        zStagePositionBefore_ = core_.getPosition();
                      }
+                  } else {
                      zStagePositionBefore_ = core_.getPosition();
                   }
                } else if (when == AcquisitionAPI.AFTER_EXPOSURE_HOOK) {
@@ -1031,32 +1109,47 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (!event.isAcquisitionFinishedEvent()) {
                try {
+                  final int lastZIndex = sequenceSettings.slices().size() - 1;
+                  final int lastChannelIndex = sequenceSettings.channels().size() - 1;
+                  final boolean isLastZ = event.getZIndex() == lastZIndex;
+                  final boolean isLastChannel =
+                        (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
+                              == lastChannelIndex;
+                  // Channel-first modes: Z is the inner loop (CHANNEL_SLICE).
+                  // Slice-first modes: channel is the inner loop (SLICE_CHANNEL).
+                  final boolean channelFirst =
+                        sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                        || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE;
                   if (sequenceSettings.keepShutterOpenSlices()
                         && sequenceSettings.keepShutterOpenChannels()) {
-                        if (event.getZIndex() == sequenceSettings.slices().size() - 1
-                              && (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
-                                 == sequenceSettings.channels().size() - 1) {
-                           core_.setShutterOpen(false);
-                           core_.setAutoShutter(true);
-                        }
-                     } else {
+                     // Keep shutter open through the entire C×Z block; close only at the end.
+                     if (isLastZ && isLastChannel) {
+                        core_.setShutterOpen(false);
+                        core_.setAutoShutter(true);
+                     }
+                  } else {
                      if (!event.isZSequenced() && sequenceSettings.keepShutterOpenSlices()) {
-                        if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                        // Channel-first: close at end of each channel's z-stack (last Z per C).
+                        // Slice-first: Z is outer, so close only at the very end of all slices
+                        //   (last Z AND last C, since channels are the inner loop).
+                        if (isLastZ && (channelFirst || isLastChannel)) {
                            core_.setShutterOpen(false);
                            core_.setAutoShutter(true);
                         }
                      }
                      if (!event.isConfigGroupSequenced()
                            && sequenceSettings.keepShutterOpenChannels()) {
-                        if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
-                              == sequenceSettings.channels().size() - 1) {
+                        // Slice-first: close at end of each slice's channel group (last C per Z).
+                        // Channel-first: C is outer, so close only at the very end of all channels
+                        //   (last C AND last Z, since slices are the inner loop).
+                        if (isLastChannel && (!channelFirst || isLastZ)) {
                            core_.setShutterOpen(false);
                            core_.setAutoShutter(true);
                         }
                      }
                   }
                } catch (Exception ex) {
-                  studio_.logs().logError(ex, "Failed to open shutter");
+                  studio_.logs().logError(ex, "Failed to close shutter");
                }
             }
             return event;
@@ -1064,7 +1157,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public void close() {
-            // nothing to do here
+            // Safety net: ensure the shutter is closed and auto-shutter restored even if the
+            // acquisition was aborted or ended without hitting a "last index" condition.
+            try {
+               core_.setShutterOpen(false);
+               core_.setAutoShutter(true);
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Failed to close shutter on acquisition finish");
+            }
          }
       };
    }
@@ -1114,10 +1214,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (event.getMinimumStartTimeAbsolute() != null) {
-               // Note that nanoTime() and currentTimeMillis() are not guaranteed to have
-               // the same offset (0).
-               nextWakeTime_ = System.nanoTime() / 1000000L
-                       + (long) (sequenceSettings.intervalMs());
+               int frameIndex = event.getTIndex() == null ? 0 : event.getTIndex();
+               if (event.getSequence() != null && event.getSequence().get(0) != null) {
+                  frameIndex = event.getSequence().get(0).getTIndex();
+               }
+               if (frameIndex > lastFrameIndex_) {
+                  lastFrameIndex_ = frameIndex;
+                  // Note that nanoTime() and currentTimeMillis() are not guaranteed to have
+                  // the same offset (0).
+                  nextWakeTime_ = System.nanoTime() / 1000000L
+                           + (long) (sequenceSettings.intervalMs());
+               }
             }
             return event;
          }
@@ -1179,9 +1286,16 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
    /**
     * Will notify registered AcqSettingsListeners that the settings have changed.
+    *
+    * <p>Test acquisitions (e.g. the tiles acquired by the Explorer plugin) derive their
+    * settings from the MDA window and switch off whatever they do not need, such as frames,
+    * the position list, or channels. Those derived settings are not the MDA window's own, so
+    * they are posted as non-primary: redrawing the MDA window from them would silently
+    * uncheck the user's Time/Positions/Channels boxes.
     */
    private void settingsChanged(SequenceSettings sequenceSettings) {
-      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(sequenceSettings));
+      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(
+            sequenceSettings, !sequenceSettings.isTestAcquisition()));
    }
 
 
@@ -1620,22 +1734,64 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       final int numChannels = getNumChannels(sequenceSettings_);
 
       double exposurePerTimePointMs = 0.0;
+      double totalDurationSec = 0;
       if (sequenceSettings_.useChannels()) {
-         for (ChannelSpec channel : sequenceSettings_.channels()) {
-            if (channel.useChannel()) {
-               double channelExposure = channel.exposure();
-               if (channel.doZStack()) {
-                  channelExposure *= getNumSlices(sequenceSettings_);
+         for (int frame = 0; frame < numFrames; frame++) {
+            double timePerFrameMs = 0.0;
+            for (ChannelSpec channel : sequenceSettings_.channels()) {
+               if (channel.useChannel()) {
+                  // correct for skipped frames
+                  boolean skip = false;
+                  if (channel.skipFactorFrame() > 0) {
+                     if (frame % (channel.skipFactorFrame() + 1) != 0) {
+                        skip = true;
+                     }
+                  }
+                  if (!skip) {
+                     double channelExposure = channel.exposure();
+                     if (channel.doZStack()) {
+                        channelExposure *= getNumSlices(sequenceSettings_);
+                     }
+                     channelExposure *= getNumPositions(sequenceSettings_, posList_);
+                     timePerFrameMs += channelExposure;
+                  }
                }
-               channelExposure *= getNumPositions(sequenceSettings_, posList_);
-               exposurePerTimePointMs += channelExposure;
             }
+            double interval;
+            if (!sequenceSettings_.useCustomIntervals()) {
+               // Constant interval between time points: use the larger of interval and exposure.
+               interval = Math.max(sequenceSettings_.intervalMs(), timePerFrameMs);
+            } else {
+               // Custom intervals: intervals are between consecutive time points.
+               double delayMs = 0.0;
+               if (frame > 0) {
+                  List<Double> customIntervals = sequenceSettings_.customIntervalsMs();
+                  int idx = frame - 1;
+                  if (customIntervals != null && idx < customIntervals.size()) {
+                     delayMs = customIntervals.get(idx);
+                  } else {
+                     // Fallback to the regular interval if custom intervals are missing.
+                     delayMs = sequenceSettings_.intervalMs();
+                  }
+               }
+               interval = Math.max(delayMs, timePerFrameMs);
+            }
+            totalDurationSec += interval / 1000.0;
          }
       } else { // use the current settings for acquisition
          try {
             exposurePerTimePointMs = core_.getExposure()
                   * getNumSlices(sequenceSettings_)
                   * getNumPositions(sequenceSettings_, posList_);
+            double interval = Math.max(sequenceSettings_.intervalMs(), exposurePerTimePointMs);
+            if (!sequenceSettings_.useCustomIntervals()) {
+               totalDurationSec = interval * (numFrames - 1) / 1000.0;
+            } else {
+               for (Double d : sequenceSettings_.customIntervalsMs()) {
+                  totalDurationSec += d / 1000.0;
+               }
+            }
+            totalDurationSec += exposurePerTimePointMs / 1000;
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Failed to get exposure time");
          }
@@ -1644,16 +1800,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       final int totalImages = getTotalImages(sequenceSettings_);
       final long totalMB = getTotalMemory() / (1024 * 1024);
 
-      double totalDurationSec = 0;
-      double interval = Math.max(sequenceSettings_.intervalMs(), exposurePerTimePointMs);
-      if (!sequenceSettings_.useCustomIntervals()) {
-         totalDurationSec = interval * (numFrames - 1) / 1000.0;
-      } else {
-         for (Double d : sequenceSettings_.customIntervalsMs()) {
-            totalDurationSec += d / 1000.0;
-         }
-      }
-      totalDurationSec += exposurePerTimePointMs / 1000;
       int hrs = (int) (totalDurationSec / 3600);
       double remainSec = totalDurationSec - hrs * 3600;
       int mins = (int) (remainSec / 60);

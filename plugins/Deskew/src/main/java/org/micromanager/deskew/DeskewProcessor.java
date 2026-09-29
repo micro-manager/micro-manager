@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.swing.SwingUtilities;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
@@ -27,6 +28,8 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.lightsheet.StackResampler;
+
+
 
 /**
  * Deskews data using the Deskew code in PycroManager.
@@ -291,9 +294,12 @@ public class DeskewProcessor implements Processor {
             try {
                short[][] reconstructedVolume = fullVolumeResamplers_.get(coordsNoZ)
                         .getReconstructedVolumeZYX();
+               double newZStep = fullVolumeResamplers_.get(
+                        coordsNoZ).getReconstructionVoxelSizeUm();
                for (int z = 0; z < reconstructedVolume.length; z++) {
                   Image img = new DefaultImage(reconstructedVolume[z], format, cb.z(z).build(),
-                           image.getMetadata().copyBuilderWithNewUUID().build());
+                           image.getMetadata().copyBuilderWithNewUUID()
+                                    .zPositionUm(z * newZStep).build());
                   fullVolumeStore_.putImage(img);
                }
             } catch (IOException e) {
@@ -399,30 +405,66 @@ public class DeskewProcessor implements Processor {
    @Override
    public void cleanup(ProcessorContext context) {
       // TODO: shutdown processing executor?
-      if (fullVolumeStore_ != null && fullVolumeStore_.getNumImages() == 0) {
-         deskewAcqManager_.closeViewerFor(fullVolumeStore_);
+      if (fullVolumeStore_ != null) {
          try {
-            fullVolumeStore_.close();
+            fullVolumeStore_.freeze();
+            fullVolumeFutures_.clear();
+            fullVolumeResamplers_.clear();
+            freeFullVolumeResamplers_.clear();
+            if (fullVolumeStore_.getNumImages() == 0) {
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(fullVolumeStore_);
+                  try {
+                     fullVolumeStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
+            }
          } catch (IOException e) {
             studio_.logs().logError(e);
          }
       }
-      if (xyProjectionStore_ != null && xyProjectionStore_.getNumImages() == 0) {
-         deskewAcqManager_.closeViewerFor(xyProjectionStore_);
+      if (xyProjectionStore_ != null) {
          try {
-            xyProjectionStore_.close();
+            xyProjectionStore_.freeze();
+            xyProjectionFutures_.clear();
+            xyProjectionResamplers_.clear();
+            freeXYProjectionResamplers_.clear();
+            if (xyProjectionStore_.getNumImages() == 0) {
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(xyProjectionStore_);
+                  try {
+                     xyProjectionStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
+            }
          } catch (IOException e) {
             studio_.logs().logError(e);
          }
       }
-      if (orthogonalStore_ != null && orthogonalStore_.getNumImages() == 0) {
-         deskewAcqManager_.closeViewerFor(orthogonalStore_);
+      if (orthogonalStore_ != null) {
          try {
-            orthogonalStore_.close();
+            orthogonalStore_.freeze();
+            orthogonalFutures_.clear();
+            orthogonalProjectionResamplers_.clear();
+            freeOrthogonalProjectionResamplers_.clear();
+            if (orthogonalStore_.getNumImages() == 0) {
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(orthogonalStore_);
+                  try {
+                     orthogonalStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
+            }
          } catch (IOException e) {
             studio_.logs().logError(e);
          }
       }
-
    }
+
 }

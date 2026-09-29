@@ -35,6 +35,8 @@ import org.micromanager.PluginManager;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.data.TiledDataOpenerPlugin;
+import org.micromanager.display.DataViewerGearMenuPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
 import org.micromanager.display.overlay.OverlayPlugin;
@@ -56,6 +58,7 @@ public final class DefaultPluginManager implements PluginManager {
    static {
       VALID_CLASSES.add(AcquisitionDialogPlugin.class);
       VALID_CLASSES.add(AutofocusPlugin.class);
+      VALID_CLASSES.add(DataViewerGearMenuPlugin.class);
       VALID_CLASSES.add(DisplayGearMenuPlugin.class);
       VALID_CLASSES.add(InspectorPanelPlugin.class);
       VALID_CLASSES.add(IntroPlugin.class);
@@ -63,23 +66,46 @@ public final class DefaultPluginManager implements PluginManager {
       VALID_CLASSES.add(OverlayPlugin.class);
       VALID_CLASSES.add(ProcessorPlugin.class);
       VALID_CLASSES.add(QuickAccessPlugin.class);
+      VALID_CLASSES.add(TiledDataOpenerPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
 
    private final Studio studio_;
    private final Thread loadingThread_;
-   private final Map<Class, List<MMGenericPlugin>> pluginTypeToPlugins_ =
+   private final SharedPluginClassLoader pluginClassLoader_;
+   private final Map<Class<?>, List<MMGenericPlugin>> pluginTypeToPlugins_ =
          new HashMap<>();
 
    public DefaultPluginManager(Studio studio) {
       studio_ = studio;
+
+      // All plugins are loaded through a single class loader (with Micro-Manager's class loader as
+      // its parent) so that plugins are visible to each other and to Micro-Manager's own code,
+      // including the Pycro-Manager / ZMQ bridge.
+      pluginClassLoader_ = new SharedPluginClassLoader(
+            studio_.getClass().getClassLoader());
 
       for (Class<?> classType : VALID_CLASSES) {
          pluginTypeToPlugins_.put(classType, new ArrayList<>());
       }
       loadingThread_ = new Thread(this::loadPlugins, "Plugin loading thread");
       loadingThread_.start();
+   }
+
+   /**
+    * Return the class loader through which all plugins are loaded.
+    *
+    * <p>All plugins share this single class loader, whose parent is
+    * Micro-Manager's own class loader. It can therefore resolve both plugin
+    * classes and Micro-Manager / core classes. This is useful for code that
+    * needs to see plugin classes, such as scripting engines (so that BeanShell
+    * scripts can import plugin classes) and the Pycro-Manager / ZMQ bridge.
+    *
+    * @return the shared class loader used to load all plugins
+    */
+   public ClassLoader getPluginClassLoader() {
+      return pluginClassLoader_;
    }
 
    /**
@@ -109,22 +135,31 @@ public final class DefaultPluginManager implements PluginManager {
     */
    private void loadPlugins() {
       final long startTime = System.currentTimeMillis();
+
+      // Discover all plugin classes from every directory first, adding every directory's JARs to
+      // the shared class loader, and only then instantiate any plugin. This way all plugin JARs
+      // are on the shared loader before any plugin constructor runs, so plugins can reference each
+      // other regardless of which directory they live in or the order in which they are found.
+      List<Class<?>> pluginClasses = new ArrayList<>();
+
       String dir = System.getProperty("org.micromanager.plugin.path",
             System.getProperty("user.dir") + "/mmplugins");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
-      loadPlugins(PluginFinder.findPlugins(dir));
+      pluginClasses.addAll(PluginFinder.findPlugins(pluginClassLoader_, dir));
 
       dir = System.getProperty("org.micromanager.autofocus.path",
             System.getProperty("user.dir") + "/mmautofocus");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
-      loadPlugins(PluginFinder.findPlugins(dir));
+      pluginClasses.addAll(PluginFinder.findPlugins(pluginClassLoader_, dir));
 
       ReportingUtils.logMessage("Searching for plugins in MMStudio's class loader");
       // We need to use our normal class loader to load stuff from the MMJ_.jar
       // file, since otherwise we won't be able to cast the new plugin to
       // MMPlugin in loadPlugins(), below.
-      loadPlugins(PluginFinder.findPluginsWithLoader(
-            ((MMStudio) studio_).getClass().getClassLoader()));
+      pluginClasses.addAll(PluginFinder.findPluginsWithLoader(
+            studio_.getClass().getClassLoader()));
+
+      loadPlugins(pluginClasses);
 
       ReportingUtils.logMessage("Plugin loading took "
             + (System.currentTimeMillis() - startTime) + "ms");
@@ -187,33 +222,11 @@ public final class DefaultPluginManager implements PluginManager {
          if (!subMenus.containsKey(subMenu)) {
             // Create a new menu.
             SortedMenu menu = new SortedMenu(subMenu);
-            // HACK: if this is the processor menu, add a couple of items
-            // to it first.
-            if (subMenu.equals(PROCESSOR_MENU)) {
-               JMenuItem configure = new JMenuItem("Configure Processors...");
-               configure.addActionListener(
-                     e -> ((MMStudio) studio_).uiManager().showPipelineFrame());
-               menu.addUnsorted(configure);
-               menu.addSeparator();
-            }
             rootMenu.add(menu);
             subMenus.put(subMenu, menu);
          }
          subMenus.get(subMenu).add(item);
       }
-   }
-
-   /**
-    * Add a new ProcessorPlugin entry in the Plugins menu. ProcessorPlugins,
-    * when selected, will bring up the Pipeline window and add the processor
-    * to the current pipeline.
-    */
-   private void addProcessorPluginToMenu(JMenu menu,
-                                         HashMap<String, JMenu> subMenus,
-                                         final ProcessorPlugin plugin) {
-      addSubMenuItem(menu, subMenus, PROCESSOR_MENU, plugin.getName(),
-            () -> studio_.data().addAndConfigureProcessor(plugin)
-      );
    }
 
    @Override
@@ -296,6 +309,35 @@ public final class DefaultPluginManager implements PluginManager {
       return result;
    }
 
+   /**
+    * Returns the gear-menu plugins that operate on a DataViewer rather than on a
+    * DisplayWindow, keyed by class name.
+    *
+    * @return the discovered DataViewerGearMenuPlugin instances
+    */
+   @Override
+   public HashMap<String, DataViewerGearMenuPlugin> getDataViewerGearMenuPlugins() {
+      HashMap<String, DataViewerGearMenuPlugin> result = new HashMap<>();
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(DataViewerGearMenuPlugin.class)) {
+         result.put(plugin.getClass().getName(), (DataViewerGearMenuPlugin) plugin);
+      }
+      return result;
+   }
+
+   /**
+    * Returns the plugins that can open tiled (pyramidal) datasets, keyed by class name.
+    *
+    * @return the discovered TiledDataOpenerPlugin instances
+    */
+   @Override
+   public HashMap<String, TiledDataOpenerPlugin> getTiledDataOpenerPlugins() {
+      HashMap<String, TiledDataOpenerPlugin> result = new HashMap<>();
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(TiledDataOpenerPlugin.class)) {
+         result.put(plugin.getClass().getName(), (TiledDataOpenerPlugin) plugin);
+      }
+      return result;
+   }
+
    public void createPluginMenu(JMenuBar menuBar) {
       JMenu menu = new SortedMenu("Plugins");
       menuBar.add(menu);
@@ -306,9 +348,10 @@ public final class DefaultPluginManager implements PluginManager {
                plugin::onPluginSelected
          );
       }
-      for (ProcessorPlugin plugin : getProcessorPlugins().values()) {
-         // Add it to the "On-the-fly image processing" sub-menu.
-         addProcessorPluginToMenu(menu, subMenus, plugin);
-      }
+      // Add a single menu item for On-The-Fly Image Processing that opens the Pipeline Frame
+      JMenuItem processorItem = new JMenuItem(PROCESSOR_MENU);
+      processorItem.addActionListener(
+            e -> ((MMStudio) studio_).uiManager().showPipelineFrame());
+      menu.add(processorItem);
    }
 }

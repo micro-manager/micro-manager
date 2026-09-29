@@ -20,6 +20,7 @@ class ComboBoxCellRenderer extends BasicComboBoxRenderer {
    }
 
    @Override
+   @SuppressWarnings("rawtypes")
    public Component getListCellRendererComponent(JList list,
                                                  Object value,
                                                  int index,

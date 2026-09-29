@@ -1,0 +1,3 @@
+<project name="TiledDataProvider" default="jar">
+    <import file="../javalibrarybuild.xml"/>
+</project>

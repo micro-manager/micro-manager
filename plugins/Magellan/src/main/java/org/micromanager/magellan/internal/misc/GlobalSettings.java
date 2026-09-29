@@ -29,6 +29,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class GlobalSettings {
 
    private static final String SAVING_DIR = "SAVING DIRECTORY";
+   private static final String OPEN_DATASET_DIR = "OPEN DATASET DIRECTORY";
    private static final String CHANNEL_OFFSET_PREFIX = "CHANNEL_OFFSET_";
    
    MutablePropertyMapView prefs_;
@@ -62,6 +63,14 @@ public class GlobalSettings {
    public String getStoredSavingDirectory() {
       return prefs_.getString(SAVING_DIR, FileSystemView.getFileSystemView()
             .getHomeDirectory().getAbsolutePath());
+   }
+
+   public void storeOpenDatasetDirectory(String dir) {
+      prefs_.putString(OPEN_DATASET_DIR, dir);
+   }
+
+   public String getStoredOpenDatasetDirectory() {
+      return prefs_.getString(OPEN_DATASET_DIR, getStoredSavingDirectory());
    }
 
 }

@@ -1,0 +1,395 @@
+package org.micromanager.tileddataviewer.internal.gui;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.WindowConstants;
+import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterface;
+import org.micromanager.tileddataviewer.internal.TiledDataViewer;
+import org.micromanager.tileddataviewer.overlay.Overlay;
+
+/**
+ *
+ * @author henrypinkard
+ */
+public class DisplayWindow implements WindowListener {
+
+   //from other window
+   private static final double ZOOM_FACTOR_KEYS = 2.0;
+
+   private ViewerCanvas imageCanvas_;
+   private SubImageControls subImageControls_;
+   private JPanel leftPanel_;
+
+   private TiledDataViewer display_;
+   JFrame window_;
+   private TiledDataViewerCanvasMouseListenerInterface listener_;
+   private TiledDataViewerCanvasMouseListenerInterface previousCustomListener_;
+   private Runnable windowActivatedCallback_;
+   // Persistent adapter always added alongside the switchable listener (e.g. for pixel-info events)
+   private MouseAdapter persistentMouseAdapter_;
+
+   public DisplayWindow(TiledDataViewer display, boolean nullAcq) {
+      window_ = new JFrame();
+      // Closing controlled by dialog
+      window_.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      display_ = display;
+      URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         window_.setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
+      window_.setSize(1500, 800);
+      WindowPositioning.setUpBoundsMemory(window_, display.getPreferences());
+      window_.setVisible(true);
+      window_.addWindowListener(this);
+      buildInitialUI();
+      setupMouseListeners();
+      setupKeyListeners();
+   }
+
+   public void onDisplayClose() {
+      removeKeyListenersRecursively(window_); //remove added key listeners
+
+      // For some reason these two lines appear to be essential for preventing memory leaks
+      // after closing the display
+      for (Component c : leftPanel_.getComponents()) {
+         leftPanel_.remove(c);
+      }
+      for (FocusListener l : window_.getFocusListeners()) {
+         window_.removeFocusListener(l);
+      }
+
+      listener_ = null;
+
+      subImageControls_.onDisplayClose();
+
+      window_.removeWindowListener(this);
+      display_ = null;
+      imageCanvas_ = null;
+      subImageControls_ = null;
+      window_.dispose();
+      window_.repaint();
+      window_ = null;
+      System.gc();
+
+   }
+
+   /**
+    * Updates the playback speed control to show the given rate, without firing the
+    * control's change listener.
+    *
+    * @param fps playback rate in frames per second
+    */
+   public void setPlaybackFPSControl(double fps) {
+      if (subImageControls_ != null) {
+         subImageControls_.setPlaybackFPSControl(fps);
+      }
+   }
+
+   public void onScrollersAdded() {
+      subImageControls_.onScrollersAdded();
+
+      //New scrollbars have been made visible
+      window_.revalidate();
+   }
+
+   public void onCanvasResized(int w, int h) {
+      imageCanvas_.onCanvasResize(w, h);
+   }
+
+   public void setTitle(String title) {
+      if (window_ != null) {
+         window_.setTitle(title);
+      }
+   }
+
+   private void buildInitialUI() {
+      window_.setLayout(new BorderLayout());
+
+      imageCanvas_ = new ViewerCanvas(display_);
+      subImageControls_ = new SubImageControls(display_);
+
+      leftPanel_ = new JPanel(new BorderLayout());
+      leftPanel_.add(imageCanvas_.getCanvas(), BorderLayout.CENTER);
+      leftPanel_.add(subImageControls_, BorderLayout.PAGE_END);
+      window_.add(leftPanel_, BorderLayout.CENTER);
+
+      window_.revalidate();
+   }
+
+   /**
+    * Called on EDT. Update image and make sure scrollers are in correct positions.
+    *
+    * @return the render generation this frame opened; the overlay computed for
+    *         it must be passed back to {@link #displayOverlay(Overlay, long)}
+    */
+   public long displayImage(Image image, HashMap<String, int[]> hists, DataViewCoords view) {
+      //Make scrollbars reflect image
+      subImageControls_.updateScrollerPositions(view);
+      return imageCanvas_.updateDisplayImage(image, view.getMagnificationFromResLevel());
+   }
+
+   public void displayOverlay(Overlay overlay) {
+      imageCanvas_.updateOverlay(overlay);
+      imageCanvas_.getCanvas().repaint();
+   }
+
+   /**
+    * Shows the overlay belonging to a particular render generation.
+    *
+    * @param overlay    the overlay to draw
+    * @param generation the generation returned by displayImage()
+    */
+   public void displayOverlay(Overlay overlay, long generation) {
+      imageCanvas_.updateOverlay(overlay, generation);
+      imageCanvas_.getCanvas().repaint();
+   }
+
+   /**
+    * Records that the overlay for the given generation is in place, without
+    * replacing it: used by overlayer plugins that install their own overlay.
+    *
+    * @param generation render generation whose overlay is now current
+    */
+   public void setPendingOverlayGeneration(long generation) {
+      // No repaint here: the plugin's own setOverlay() schedules one once it has
+      // drawn, and that is the paint which reports completion. Repainting here
+      // as well would double every frame's paint rate, which flickers.
+      imageCanvas_.setPendingOverlayGeneration(generation);
+   }
+
+   public void repaintCanvas() {
+      imageCanvas_.getCanvas().repaint();
+   }
+
+   public void expandDisplayedRangeToInclude(List<HashMap<String, Object>> newIamgeEvents,
+                                             List<String> channels) {
+      subImageControls_.expandDisplayedRangeToInclude(newIamgeEvents, channels);
+   }
+
+   @Override
+   public void windowOpened(WindowEvent e) {
+   }
+
+   @Override
+   public void windowIconified(WindowEvent e) {
+   }
+
+   @Override
+   public void windowDeiconified(WindowEvent e) {
+   }
+
+   public void setWindowActivatedCallback(Runnable callback) {
+      windowActivatedCallback_ = callback;
+   }
+
+   /**
+    * Installs the gear button in the controls panel.
+    *
+    * @param viewer viewer whose gear menu this is
+    * @param studio the Studio, used to discover gear menu plugins
+    */
+   public void installGearButton(org.micromanager.display.DataViewer viewer,
+                                 org.micromanager.Studio studio) {
+      if (subImageControls_ != null) {
+         subImageControls_.installGearButton(viewer, studio);
+      }
+   }
+
+   @Override
+   public void windowActivated(WindowEvent e) {
+      if (windowActivatedCallback_ != null) {
+         windowActivatedCallback_.run();
+      }
+   }
+
+   @Override
+   public void windowDeactivated(WindowEvent e) {
+   }
+
+   @Override
+   //Invoked when the user attempts to close the window from the window's system menu.
+   public void windowClosing(WindowEvent e) {
+      display_.requestToClose();
+   }
+
+   @Override
+   public void windowClosed(WindowEvent e) {
+   }
+
+   private void setupKeyListeners() {
+      window_.addFocusListener(new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent e) {
+            imageCanvas_.getCanvas().requestFocus(); //give focus to canvas so keylistener active
+         }
+
+         @Override
+         public void focusLost(FocusEvent e) {
+         }
+      });
+      KeyListener kl = new KeyListener() {
+
+         @Override
+         public void keyTyped(KeyEvent ke) {
+            if (ke.getKeyChar() == '=') {
+               display_.zoom(1 / ZOOM_FACTOR_KEYS, null);
+            } else if (ke.getKeyChar() == '-') {
+               display_.zoom(ZOOM_FACTOR_KEYS, null);
+            }
+         }
+
+         @Override
+         public void keyPressed(KeyEvent ke) {
+         }
+
+         @Override
+         public void keyReleased(KeyEvent ke) {
+         }
+      };
+
+      // add keylistener to window and all subscomponenets so it will fire whenever
+      // focus in anywhere in the window
+      window_.addKeyListener(kl);
+      addRecursively(window_, kl);
+
+   }
+
+   private void addRecursively(Component c, KeyListener kl) {
+      c.addKeyListener(kl);
+      if (c instanceof Container) {
+         for (Component subC : ((Container) c).getComponents()) {
+            addRecursively(subC, kl);
+         }
+      }
+   }
+
+   private static void removeKeyListenersRecursively(Component c) {
+      for (KeyListener kl : c.getKeyListeners()) {
+         c.removeKeyListener(kl);
+      }
+      if (c instanceof Container) {
+         for (Component subC : ((Container) c).getComponents()) {
+            removeKeyListenersRecursively(subC);
+         }
+      }
+   }
+
+   private void setupMouseListeners() {
+      listener_ = new CanvasMouseListener(display_);
+      imageCanvas_.getCanvas().addMouseWheelListener(listener_);
+      imageCanvas_.getCanvas().addMouseMotionListener(listener_);
+      imageCanvas_.getCanvas().addMouseListener(listener_);
+   }
+
+   public ViewerCanvas getCanvas() {
+      return imageCanvas_;
+   }
+
+   public void superlockAllScrollers() {
+      subImageControls_.superLockAllScroller();
+   }
+
+   public void unlockAllScrollers() {
+      subImageControls_.unlockAllScrollers();
+   }
+
+   public boolean isScrollerAxisLocked(String axis) {
+      return subImageControls_.isScrollerLocked(axis);
+   }
+
+   /**
+    * Set a persistent mouse adapter that is always re-added alongside the
+    * switchable canvas listener.  Used by TiledDataViewerDataViewer to post
+    * pixel-info and DisplayMouseEvents for the Inspector white-balance feature.
+    */
+   public void setPersistentMouseAdapter(MouseAdapter adapter) {
+      if (imageCanvas_ == null) {
+         return;
+      }
+      // Remove any previously registered persistent adapter.
+      if (persistentMouseAdapter_ != null) {
+         imageCanvas_.getCanvas().removeMouseListener(persistentMouseAdapter_);
+         imageCanvas_.getCanvas().removeMouseMotionListener(persistentMouseAdapter_);
+      }
+      persistentMouseAdapter_ = adapter;
+      if (adapter != null) {
+         imageCanvas_.getCanvas().addMouseListener(adapter);
+         imageCanvas_.getCanvas().addMouseMotionListener(adapter);
+      }
+   }
+
+   public void setCustomCanvasMouseListener(TiledDataViewerCanvasMouseListenerInterface m) {
+      // Track the outgoing listener so resetCanvasMouseListener can restore it.
+      // Only consider listeners that implement TiledDataViewerCanvasMouseListenerInterface
+      // (ignores the persistent MouseAdapter which is not a full canvas listener).
+      previousCustomListener_ = null;
+      for (java.awt.event.MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
+         if (l instanceof TiledDataViewerCanvasMouseListenerInterface && l != listener_) {
+            previousCustomListener_ = (TiledDataViewerCanvasMouseListenerInterface) l;
+            break;
+         }
+      }
+      // Remove all currently registered listeners.
+      for (MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
+         imageCanvas_.getCanvas().removeMouseListener(l);
+      }
+      for (MouseMotionListener l : imageCanvas_.getCanvas().getMouseMotionListeners()) {
+         imageCanvas_.getCanvas().removeMouseMotionListener(l);
+      }
+      for (MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
+         imageCanvas_.getCanvas().removeMouseWheelListener(l);
+      }
+      imageCanvas_.getCanvas().addMouseWheelListener(m);
+      imageCanvas_.getCanvas().addMouseMotionListener(m);
+      imageCanvas_.getCanvas().addMouseListener(m);
+      // Re-add the persistent adapter so pixel-info events always fire.
+      if (persistentMouseAdapter_ != null) {
+         imageCanvas_.getCanvas().addMouseListener(persistentMouseAdapter_);
+         imageCanvas_.getCanvas().addMouseMotionListener(persistentMouseAdapter_);
+      }
+   }
+
+   public void resetCanvasMouseListener() {
+      // Restore the listener that was active before the last setCustomCanvasMouseListener call.
+      // If there was a custom listener before that, restore it; otherwise restore the default.
+      final TiledDataViewerCanvasMouseListenerInterface restore =
+              previousCustomListener_ != null ? previousCustomListener_ : listener_;
+      previousCustomListener_ = null;
+      for (MouseListener l : imageCanvas_.getCanvas().getMouseListeners()) {
+         imageCanvas_.getCanvas().removeMouseListener(l);
+      }
+      for (MouseMotionListener l : imageCanvas_.getCanvas().getMouseMotionListeners()) {
+         imageCanvas_.getCanvas().removeMouseMotionListener(l);
+      }
+      for (MouseWheelListener l : imageCanvas_.getCanvas().getMouseWheelListeners()) {
+         imageCanvas_.getCanvas().removeMouseWheelListener(l);
+      }
+      imageCanvas_.getCanvas().addMouseWheelListener(restore);
+      imageCanvas_.getCanvas().addMouseMotionListener(restore);
+      imageCanvas_.getCanvas().addMouseListener(restore);
+      // Re-add the persistent adapter so pixel-info events always fire.
+      if (persistentMouseAdapter_ != null) {
+         imageCanvas_.getCanvas().addMouseListener(persistentMouseAdapter_);
+         imageCanvas_.getCanvas().addMouseMotionListener(persistentMouseAdapter_);
+      }
+   }
+
+}

@@ -121,7 +121,7 @@ public class PixelCalibratorDialog extends JFrame {
       methodComboBox_.setModel(new DefaultComboBoxModel<>(
             new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE}));
       final String mKey = "methodComboxSelection";
-      final Class ourClass = this.getClass();
+      final Class<?> ourClass = this.getClass();
       methodComboBox_.setSelectedItem(studio_.profile().getSettings(ourClass)
             .getString(mKey, METHOD_MANUAL_SIMPLE));
       methodComboBox_.addActionListener(

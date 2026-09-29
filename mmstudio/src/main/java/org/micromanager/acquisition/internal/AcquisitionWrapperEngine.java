@@ -219,8 +219,13 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
          SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
                            NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                                     summaryMetadataJSON_.toString()));
-         summaryMetadata = summaryMetadata.copyBuilder().sequenceSettings(
-                  acquisitionSettings).stagePositions(posListToUse.getPositions()).build();
+         SummaryMetadata.Builder smb = summaryMetadata.copyBuilder().sequenceSettings(
+                         acquisitionSettings);
+         if (sequenceSettings.usePositionList()) {
+            smb.stagePositions(posListToUse.getPositions())
+                    .multiWellPlate(posListToUse.getPlate());
+         }
+         summaryMetadata = smb.build();
          MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata,
                   this, acquisitionSettings);
          curStore_ = acq.getDatastore();

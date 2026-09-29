@@ -129,6 +129,7 @@ public class ChannelCorrectorPanel extends JPanel {
       affineTransform_.getMatrix(flatAffine);
       NumberFormat affFormat = NumberFormat.getInstance();
       affFormat.setMinimumFractionDigits(5);
+      affFormat.setGroupingUsed(false);
       for (int row = 0; row < 2; row++) {
          for (int col = 0; col < 3; col++) {
             final int r = row;
@@ -262,13 +263,11 @@ public class ChannelCorrectorPanel extends JPanel {
    }
 
 
-   private static class SpotSortComparator implements Comparator {
+   private static class SpotSortComparator implements Comparator<int[]> {
 
       // Return the result of comparing the two row arrays
       @Override
-      public int compare(Object o1, Object o2) {
-         int[] p1 = (int[]) o1;
-         int[] p2 = (int[]) o2;
+      public int compare(int[] p1, int[] p2) {
          if (p1[0] < p2[0]) {
             return -1;
          }

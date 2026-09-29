@@ -13,6 +13,7 @@ import javax.swing.event.MenuListener;
 import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.SciFIODataProvider;
+import org.micromanager.data.internal.TiledDataOpener;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -29,6 +30,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public final class FileMenu {
    private static final String FILE_HISTORY = "list of recently-viewed files";
    private static final int MAX_HISTORY_SIZE = 15;
+   // Ugly overloading of IOException to indicate that the user cancelled.
+   private static final String USER_CANCELED = "User Canceled";
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
    private boolean enableCloseAll_ = false;
@@ -98,11 +101,42 @@ public final class FileMenu {
       );
    }
 
+   /**
+    * Returns true if the exception signals that the user cancelled.
+    *
+    * <p>Note that getMessage() can be null, so the comparison has to be made
+    * in this order.
+    */
+   private static boolean isUserCancel(Exception e) {
+      return USER_CANCELED.equals(e.getMessage());
+   }
+
    private void promptToOpenFile(final boolean isVirtual) {
+      // The chooser is run here rather than inside DataManager.promptForDataToLoad(), because
+      // a tiled dataset has to be recognized before any attempt is made to load it as a
+      // Datastore. promptForDataToLoad() combines the two steps and is left alone so that
+      // existing callers of that API keep working.
+      final File file = FileDialogs.openDir(studio_.app().getMainWindow(),
+            "Please select an image data set", FileDialogs.MM_DATA_SET);
+      if (file == null) {
+         // User cancelled.
+         return;
+      }
       new Thread(() -> {
          try {
-            Datastore store = studio_.data().promptForDataToLoad(
-                  studio_.app().getMainWindow(), isVirtual);
+            // Pyramidal formats open in their own viewer; RAM mode is meaningless for data
+            // that is not expected to fit in memory, so isVirtual does not apply to them.
+            TiledDataOpener.Result tiled =
+                  TiledDataOpener.tryOpen(studio_, file.getPath());
+            if (tiled.wasHandled()) {
+               if (tiled.getDatasetRoot() != null) {
+                  updateFileHistory(tiled.getDatasetRoot());
+               }
+               return;
+            }
+
+            Datastore store = studio_.data().loadData(
+                  studio_.app().getMainWindow(), file.getPath(), isVirtual);
             if (store == null) {
                // User cancelled.
                return;
@@ -117,10 +151,13 @@ public final class FileMenu {
             studio_.displays().loadDisplays(store);
             updateFileHistory(store.getSavePath());
          } catch (IOException ex) {
-            // ugly overloading of IOException to indicate user cancelling.
-            if (!ex.getMessage().equals("User Canceled")) {
+            if (!isUserCancel(ex)) {
                ReportingUtils.showError(ex, "There was an error when opening data");
             }
+         } catch (RuntimeException ex) {
+            // Never let an unchecked exception die silently on this bare
+            // thread; that turns a bug into a menu item that does nothing.
+            ReportingUtils.showError(ex, "There was an error when opening data");
          }
       }).start();
    }
@@ -139,10 +176,11 @@ public final class FileMenu {
                DisplayWindow display = studio_.displays().createDisplay(sdp);
                studio_.displays().addViewer(display);
             } catch (IOException ioe) {
-               // ugly overloading of IOException to indicate user cancelling.
-               if (!ioe.getMessage().equals("User Canceled")) {
+               if (!isUserCancel(ioe)) {
                   studio_.logs().showError(ioe, "There was an error while opening data");
                }
+            } catch (RuntimeException ioe) {
+               studio_.logs().showError(ioe, "There was an error while opening data");
             }
          }).start();
       }
@@ -160,6 +198,14 @@ public final class FileMenu {
          JMenuItem item = new JMenuItem(path);
          item.addActionListener(e -> new Thread(() -> {
             try {
+               TiledDataOpener.Result tiled = TiledDataOpener.tryOpen(studio_, path);
+               if (tiled.wasHandled()) {
+                  if (tiled.getDatasetRoot() != null) {
+                     updateFileHistory(tiled.getDatasetRoot());
+                  }
+                  return;
+               }
+
                MMStudio internalStudio = (MMStudio) studio_;
                Datastore store = studio_.data()
                      .loadData(internalStudio.getApplication().getMainWindow(),
@@ -174,10 +220,11 @@ public final class FileMenu {
                }
                updateFileHistory(path);
             } catch (IOException ioe) {
-               // ugly overloading of IOException to indicate user cancelling.
-               if (!ioe.getMessage().equals("User Canceled")) {
+               if (!isUserCancel(ioe)) {
                   ReportingUtils.showError(ioe, "There was an error while opening data");
                }
+            } catch (RuntimeException ioe) {
+               ReportingUtils.showError(ioe, "There was an error while opening data");
             }
          }).start());
          result.add(item);

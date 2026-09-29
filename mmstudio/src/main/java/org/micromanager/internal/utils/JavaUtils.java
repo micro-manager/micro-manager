@@ -16,6 +16,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  * Collection of handy functions. Could probably be moved to the few places they are
@@ -35,7 +37,7 @@ public final class JavaUtils {
     * @throws IllegalArgumentException  if arguments were incorrect
     * @throws InvocationTargetException can happen
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName)
+   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
          InvocationTargetException {
       return invokeRestrictedMethod(obj, theClass, methodName, (Object) null);
@@ -55,6 +57,7 @@ public final class JavaUtils {
     * @throws java.lang.IllegalAccessException     if we still failed to call this method
     * @throws java.lang.reflect.InvocationTargetException  if the method throws an exception
     */
+   @SuppressWarnings({"rawtypes", "unchecked"})
    public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName,
                                                Object... paramsAndTypes)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
@@ -83,6 +86,7 @@ public final class JavaUtils {
     * Invoked a method of a private or protected field.
     * Pass a null first argument for static methods.
     */
+   @SuppressWarnings("rawtypes")
    public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName,
                                                Object[] params, Class[] paramTypes)
          throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
@@ -105,7 +109,7 @@ public final class JavaUtils {
     * Returns a value of a private or protected field. Method of last resort!
     * Pass a null first argument for static fields.
     */
-   public static Object getRestrictedFieldValue(Object obj, Class theClass, String fieldName)
+   public static Object getRestrictedFieldValue(Object obj, Class<?> theClass, String fieldName)
          throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
@@ -122,7 +126,7 @@ public final class JavaUtils {
     * last resort!
     * Pass a null first argument for static fields.
     */
-   public static void setRestrictedFieldValue(Object obj, Class theClass, String fieldName,
+   public static void setRestrictedFieldValue(Object obj, Class<?> theClass, String fieldName,
                                               Object value) throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
@@ -164,6 +168,28 @@ public final class JavaUtils {
       String os = System.getProperty("os.name").toLowerCase();
       //linux or unix
       return (os.contains("nix") || os.contains("nux"));
+   }
+
+   /**
+    * Sets the Swing look-and-feel to use for the application's main window(s).
+    *
+    * <p>On Linux, the platform system L&F is either GTKLookAndFeel, which
+    * delegates most component painting to native GTK theme rendering and
+    * largely ignores UIManager color overrides (e.g. DaytimeNighttime's dark
+    * theme), or a fallback to Metal, which has no HiDPI scaling awareness.
+    * FlatLaf honors color overrides and, via its MigLayout integration,
+    * scales MigLayout's pixel constraints to match its detected HiDPI scale
+    * factor, unlike either alternative. Windows and macOS keep their native
+    * system L&F, which do not have these issues.
+    */
+   public static void setPlatformLookAndFeel()
+         throws ClassNotFoundException, IllegalAccessException, InstantiationException,
+         UnsupportedLookAndFeelException {
+      if (isUnix()) {
+         UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatLightLaf());
+      } else {
+         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      }
    }
 
    public static void sleep(int timeMs) {

@@ -25,6 +25,7 @@ import static org.micromanager.data.internal.DefaultDatastore.getPreferredSaveMo
 import static org.micromanager.data.internal.DefaultDatastore.setPreferredSaveMode;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -120,6 +121,10 @@ public class DuplicatorPluginFrame extends JDialog {
     * @param window Viewer on the data we would like to duplicate
     */
    public DuplicatorPluginFrame(Studio studio, DisplayWindow window) {
+      java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+      if (iconUrl != null) {
+         setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+      }
       studio_ = studio;
       final DuplicatorPluginFrame ourFrame = this;
       final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
@@ -150,13 +155,11 @@ public class DuplicatorPluginFrame extends JDialog {
          }
       }
       int nrNoChannelAxes = axes.size();
-      ;
       if (usesChannels) {
          nrNoChannelAxes = nrNoChannelAxes - 1;
          List<String> channelNameList = ourProvider_.getSummaryMetadata().getChannelNameList();
          if (channelNameList.size() > 0) {
             super.add(new JLabel(Coords.C));
-            ;
          }
          for (int i = 0; i < channelNameList.size(); i++) {
             String channelName = channelNameList.get(i);
@@ -179,6 +182,8 @@ public class DuplicatorPluginFrame extends JDialog {
          }
       }
 
+      final Map<String, JSpinner> minSpinners = new HashMap<>();
+      final Map<String, JSpinner> maxSpinners = new HashMap<>();
 
       if (nrNoChannelAxes > 0) {
          super.add(new JLabel(" "));
@@ -195,51 +200,53 @@ public class DuplicatorPluginFrame extends JDialog {
 
                super.add(new JLabel(axis));
                SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
-                     (int) ourProvider_.getNextIndex(axis), 1);
+                     ourProvider_.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
+               minSpinners.put(axis, minSpinner);
                JFormattedTextField field =
                      (JFormattedTextField) minSpinner.getEditor().getComponent(0);
                DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
                formatter.setCommitsOnValidEdit(true);
                minSpinner.addChangeListener((ChangeEvent ce) -> {
-                  // check to stay below max, this could be annoying at times
-                  if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
-                     minSpinner.setValue(maxes.get(axis) + 1);
-                  }
-                  mins.put(axis, (Integer) minSpinner.getValue() - 1);
-                  try {
-                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                     coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
-                     ourWindow_.setDisplayPosition(coord);
-                  } catch (IOException ioe) {
-                     studio_.logs().logError(ioe, "IOException in DuplicatorPlugin");
+                  // Update image if we are below max, otherwise do not change value
+                  // as we used to, since it is annoying
+                  if ((Integer) minSpinner.getValue() < maxes.get(axis)) {
+                     mins.put(axis, (Integer) minSpinner.getValue() - 1);
+                     try {
+                        Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                        coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
+                        ourWindow_.setDisplayPosition(coord);
+                     } catch (IOException ioe) {
+                        studio_.logs().logError(ioe, "IOException in DuplicatorPlugin");
+                     }
                   }
                });
                super.add(minSpinner, "wmin 60");
 
-               model = new SpinnerNumberModel((int) ourProvider_.getNextIndex(axis),
-                     1, (int) ourProvider_.getNextIndex(axis), 1);
+               model = new SpinnerNumberModel(ourProvider_.getNextIndex(axis),
+                     1, ourProvider_.getNextIndex(axis), 1);
                maxes.put(axis, ourProvider_.getNextIndex(axis) - 1);
                final JSpinner maxSpinner = new JSpinner(model);
+               maxSpinners.put(axis, maxSpinner);
                field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
                formatter = (DefaultFormatter) field.getFormatter();
                formatter.setCommitsOnValidEdit(true);
                maxSpinner.addChangeListener((ChangeEvent ce) -> {
-                  // check to stay above min
-                  if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
-                     maxSpinner.setValue(mins.get(axis) + 1);
-                  }
-                  maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
-                  try {
-                     if (ourWindow_.getDisplayedImages().isEmpty()) {
-                        return;
+                  // Update image when above min, otherwise do not change value as we
+                  // used to, since it is annoying
+                  if ((Integer) maxSpinner.getValue() > mins.get(axis)) {
+                     maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
+                     try {
+                        if (ourWindow_.getDisplayedImages().isEmpty()) {
+                           return;
+                        }
+                        Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                        coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
+                        ourWindow_.setDisplayPosition(coord);
+                     } catch (IOException ioe) {
+                        studio_.logs().logError(ioe, "IOException in DuplicatorPlugin");
                      }
-                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                     coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
-                     ourWindow_.setDisplayPosition(coord);
-                  } catch (IOException ioe) {
-                     studio_.logs().logError(ioe, "IOException in DuplicatorPlugin");
                   }
                });
                super.add(maxSpinner, "wmin 60, wrap");
@@ -283,6 +290,14 @@ public class DuplicatorPluginFrame extends JDialog {
                studio_.logs().showError("Asked to save, but no file path selected", ourFrame);
                return;
             }
+            for (String axis : minSpinners.keySet()) {
+               if ((Integer) minSpinners.get(axis).getValue()
+                        > (Integer) maxSpinners.get(axis).getValue()) {
+                  studio_.logs().showError(
+                        "For axis \"" + axis + "\", max must be >= min.", ourFrame);
+                  return;
+               }
+            }
             LinkedHashMap<String, Boolean> channels = new LinkedHashMap<>();
             List<String> unselectedChannels = new ArrayList<>();
             for (JCheckBox channelCheckBox : channelCheckBoxes) {
@@ -307,6 +322,7 @@ public class DuplicatorPluginFrame extends JDialog {
             cpFrame.dispose();
             final ProgressBar pb = new ProgressBar(ourWindow_.getWindow(),
                   "Duplicating..", 0, 100);
+            de.setProgressBar(pb);
             de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                if ("progress".equals(evt.getPropertyName())) {
                   pb.setProgress((Integer) evt.getNewValue());
@@ -361,7 +377,11 @@ public class DuplicatorPluginFrame extends JDialog {
       } else {
          chooser.setFileFilter(SINGLEPLANEFILTER);
       }
-      chooser.setSelectedFile(new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
+      File suggested = FileDialogs.safeStartFile(
+            FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET));
+      if (suggested != null) {
+         chooser.setSelectedFile(suggested);
+      }
       int option = chooser.showDialog(this, "Select");
       if (option != JFileChooser.APPROVE_OPTION) {
          // User cancelled.

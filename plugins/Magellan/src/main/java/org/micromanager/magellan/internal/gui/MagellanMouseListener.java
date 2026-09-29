@@ -158,6 +158,9 @@ public class MagellanMouseListener  implements
    }
 
    protected void recordTilesForConfirmation(Point p2) {
+      if (mouseDragStartPointLeft_ == null) {
+         return;
+      }
       //find top left row and column and number of columns spanned by drage event
       exploreStartTile_ = pixelStageTranslator_.getTileIndicesFromDisplayedPixel(
               viewer_.getMagnification(),

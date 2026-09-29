@@ -98,8 +98,8 @@ public class MultichannelModes {
    }
    
    
-   public JComboBox getComboBox() {
-      JComboBox jcb = new JComboBox();
+   public JComboBox<Keys> getComboBox() {
+      JComboBox<Keys> jcb = new JComboBox<>();
       ActionListener l = new ComboBoxListener(jcb);
       jcb.addActionListener(l);
       // when devices are changed we want to regenerate the list
@@ -109,9 +109,9 @@ public class MultichannelModes {
    
    private class ComboBoxListener implements ActionListener, DevicesListenerInterface {
       
-      private final JComboBox jcb_;
-      
-      public ComboBoxListener(JComboBox jcb) {
+      private final JComboBox<Keys> jcb_;
+
+      public ComboBoxListener(JComboBox<Keys> jcb) {
          jcb_ = jcb;
          updateSelections();  // do initial rendering
       }
@@ -139,7 +139,7 @@ public class MultichannelModes {
          // save the existing selection if it exists
          int origCode = props_.getPropValueInteger(devKey_, propKey_);
          
-         DefaultComboBoxModel cbModel = new DefaultComboBoxModel();
+         DefaultComboBoxModel<Keys> cbModel = new DefaultComboBoxModel<>();
          
          List<Keys> validModeKeys = getValidModeKeys();
          Keys origItem = null;

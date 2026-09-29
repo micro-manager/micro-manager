@@ -457,9 +457,23 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       updatePositionData();
    }
 
+   /**
+    * Prompts user for a file location and saves the current position list to
+    * that location.
+    *
+    * @return true if the save was successful, false otherwise
+    */
    protected boolean savePositionListAs() {
       File f = FileDialogs.save(this, "Save the position list", POSITION_LIST_FILE);
       if (f != null) {
+         if (f.exists()) {
+            int ret = JOptionPane.showConfirmDialog(this,
+                  "File already exists. Overwrite?", "Overwrite?",
+                  JOptionPane.YES_NO_OPTION);
+            if (ret != JOptionPane.YES_OPTION) {
+               return false;
+            }
+         }
          curFile_ = f;
 
          String fileName = curFile_.getAbsolutePath();

@@ -1,0 +1,221 @@
+// CompactProfile.bsh
+// Shrinks a bloated Micro-Manager user profile.
+//
+// Some profiles grow to hundreds of megabytes, which slows MM startup badly because the whole
+// file is parsed before the GUI appears.  The usual culprit is the Overlays inspector panel,
+// which used to append its saved overlay list to itself on every attach/detach cycle: one
+// observed profile held 133,479 overlay entries that deduplicated to 1,401, and one key per
+// dataset ever opened (1,390 of them).
+//
+// This script reports where the space goes, then writes a compacted copy.  It NEVER overwrites
+// the input; swap the result in yourself once you are happy with it.
+//
+// Usage: set INPUT below to the profile you want to compact, then run.
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
+
+// ---------------------------------------------------------------- configure me
+String INPUT = "Z:/Micro-Manager/Default_User-00000000-0000-0000-0000-000000000000.json";
+// Drop every per-dataset overlay key and keep only the "OverlayDefault" fallback.
+// Set to false to keep the per-dataset keys (deduplicated only).
+boolean DROP_PER_DATASET_OVERLAY_KEYS = true;
+// When dropping, still keep a per-dataset key whose overlays differ from the default, so a
+// display configured with an extra overlay - a Scale Bar, say - does not silently lose it.
+// Very few keys differ in practice, so this costs almost nothing.  Set to false to drop them
+// all unconditionally.
+boolean KEEP_PER_DATASET_KEYS_THAT_DIFFER = true;
+// ------------------------------------------------------------------------------
+
+String OVERLAYS_KEY =
+      "org.micromanager.display.inspector.internal.panels.overlays.OverlaysInspectorPanelController";
+String OVERLAY_DEFAULT = "OverlayDefault";
+String KEY_PREFS = "Preferences";
+
+log(s) { mm.scripter().message(s); }
+
+// Deduplicates a list of PropertyMaps, preserving first-seen order.
+// PropertyMap.equals() compares by value, so List.contains() is the right test.
+dedup(List in) {
+   List out = new ArrayList();
+   for (Object o : in) {
+      if (!out.contains(o)) {
+         out.add(o);
+      }
+   }
+   return out;
+}
+
+File inFile = new File(INPUT);
+if (!inFile.exists()) {
+   log("No such file: " + INPUT);
+   return;
+}
+
+long beforeBytes = inFile.length();
+log("Reading " + INPUT);
+log("  size on disk: " + beforeBytes + " bytes ("
+      + (beforeBytes / (1024L * 1024L)) + " MB)");
+log("  this may take a while and needs plenty of heap...");
+
+PropertyMap filePmap;
+try {
+   filePmap = PropertyMaps.loadJSON(inFile);
+} catch (OutOfMemoryError e) {
+   log("Ran out of memory reading the profile.  Increase the memory allocated to");
+   log("Micro-Manager (Tools > Options > Memory) and try again.");
+   return;
+}
+
+PropertyMap prefs = filePmap.getPropertyMap(KEY_PREFS, null);
+if (prefs == null) {
+   log("This file has no '" + KEY_PREFS + "' section; is it really a user profile?");
+   return;
+}
+
+// ---- before report: which settings sections are actually big
+log("");
+log("Largest settings sections before compacting:");
+Map sizes = new LinkedHashMap();
+long totalChars = 0;
+for (Object keyObj : prefs.keySet()) {
+   String key = (String) keyObj;
+   PropertyMap section = prefs.getPropertyMap(key, null);
+   int len = (section == null) ? 0 : section.toJSON().length();
+   sizes.put(key, Integer.valueOf(len));
+   totalChars += len;
+}
+// print the sections in descending size order (simple selection sort; there are only a few dozen)
+List remaining = new ArrayList(sizes.keySet());
+int shown = 0;
+while (!remaining.isEmpty() && shown < 10) {
+   String best = null;
+   int bestLen = -1;
+   for (Object k : remaining) {
+      int len = ((Integer) sizes.get(k)).intValue();
+      if (len > bestLen) {
+         bestLen = len;
+         best = (String) k;
+      }
+   }
+   double pct = (totalChars == 0) ? 0.0 : (100.0 * bestLen / totalChars);
+   log("  " + Math.round(pct) + "%  " + bestLen + " chars  " + best);
+   remaining.remove(best);
+   shown++;
+}
+
+// The deduplicated default, needed up front so we can tell which per-dataset keys actually
+// carry something different.  Absent means every per-dataset key differs by definition.
+List defaultOverlays = null;
+PropertyMap overlaySection = prefs.getPropertyMap(OVERLAYS_KEY, null);
+if (overlaySection != null && overlaySection.containsKey(OVERLAY_DEFAULT)
+      && PropertyMap[].class.equals(overlaySection.getValueTypeForKey(OVERLAY_DEFAULT))) {
+   defaultOverlays = dedup(
+         overlaySection.getPropertyMapList(OVERLAY_DEFAULT, (PropertyMap[]) null));
+}
+
+// ---- compact
+PropertyMap.Builder prefsBuilder = PropertyMaps.builder();
+int totalEntriesBefore = 0;
+int totalEntriesAfter = 0;
+int droppedKeys = 0;
+int keptDifferingKeys = 0;
+
+for (Object keyObj : prefs.keySet()) {
+   String sectionKey = (String) keyObj;
+   PropertyMap section = prefs.getPropertyMap(sectionKey, null);
+   if (section == null) {
+      continue;
+   }
+   boolean isOverlays = OVERLAYS_KEY.equals(sectionKey);
+   PropertyMap.Builder sectionBuilder = PropertyMaps.builder();
+
+   for (Object subKeyObj : section.keySet()) {
+      String subKey = (String) subKeyObj;
+
+      // Only property-map-lists can carry the duplicated entries we are after.  Asking for the
+      // wrong type throws, so check the stored type first rather than guessing.
+      if (!PropertyMap[].class.equals(section.getValueTypeForKey(subKey))) {
+         // Not a list of property maps: copy the value through untouched, whatever its type.
+         sectionBuilder.putOpaqueValue(subKey, section.getAsOpaqueValue(subKey));
+         continue;
+      }
+      List entries = section.getPropertyMapList(subKey, (PropertyMap[]) null);
+      if (entries == null) {
+         continue;
+      }
+
+      totalEntriesBefore += entries.size();
+
+      List deduped = dedup(entries);
+
+      if (isOverlays && DROP_PER_DATASET_OVERLAY_KEYS
+            && !OVERLAY_DEFAULT.equals(subKey)) {
+         // Keys that say the same thing as the default are pure redundancy: loadSettings()
+         // falls back to the default anyway.  Only a key with genuinely different overlays
+         // is worth the space.
+         // An empty list is not a meaningful difference, just a display that had no overlays.
+         boolean differs = KEEP_PER_DATASET_KEYS_THAT_DIFFER
+               && !deduped.isEmpty()
+               && defaultOverlays != null
+               && !deduped.equals(defaultOverlays);
+         if (!differs) {
+            droppedKeys++;
+            continue;
+         }
+         keptDifferingKeys++;
+      }
+
+      totalEntriesAfter += deduped.size();
+      sectionBuilder.putPropertyMapList(subKey, deduped);
+   }
+   prefsBuilder.putPropertyMap(sectionKey, sectionBuilder.build());
+}
+
+PropertyMap newPrefs = prefsBuilder.build();
+
+// Rebuild the file-level wrapper, preserving everything except the Preferences section.
+PropertyMap.Builder fileBuilder = PropertyMaps.builder();
+for (Object keyObj : filePmap.keySet()) {
+   String key = (String) keyObj;
+   if (KEY_PREFS.equals(key)) {
+      continue;
+   }
+   fileBuilder.putOpaqueValue(key, filePmap.getAsOpaqueValue(key));
+}
+fileBuilder.putPropertyMap(KEY_PREFS, newPrefs);
+PropertyMap outPmap = fileBuilder.build();
+
+// ---- write
+String outPath = INPUT;
+if (outPath.toLowerCase().endsWith(".json")) {
+   outPath = outPath.substring(0, outPath.length() - 5);
+}
+outPath = outPath + "-compacted.json";
+File outFile = new File(outPath);
+outPmap.saveJSON(outFile, true, false);
+
+long afterBytes = outFile.length();
+log("");
+log("Wrote " + outPath);
+log("  overlay/list entries: " + totalEntriesBefore + " -> " + totalEntriesAfter);
+if (droppedKeys > 0) {
+   log("  per-dataset overlay keys dropped: " + droppedKeys
+         + " (kept '" + OVERLAY_DEFAULT + "')");
+}
+if (keptDifferingKeys > 0) {
+   log("  per-dataset overlay keys kept because they differ from the default: "
+         + keptDifferingKeys);
+}
+log("  size: " + beforeBytes + " -> " + afterBytes + " bytes");
+if (afterBytes > 0) {
+   log("  reduction: " + Math.round((double) beforeBytes / (double) afterBytes) + "x");
+}
+log("");
+log("The original was NOT modified.  To use the compacted profile, quit Micro-Manager,");
+log("then replace the original with the -compacted copy (keep a backup).");

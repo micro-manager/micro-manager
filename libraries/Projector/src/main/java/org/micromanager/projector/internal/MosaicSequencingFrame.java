@@ -165,7 +165,7 @@ public class MosaicSequencingFrame extends JFrame {
    }
 
    // Update the ROI table so it reflects what is in the roiListModel.
-   private void updateRoiTable(ListModel roiListModel) {
+   private void updateRoiTable(ListModel<?> roiListModel) {
       ArrayList<String> roiNames = new ArrayList<String>();
       for (int i = 0; i < roiListModel.getSize(); ++i) {
          roiNames.add(roiListModel.getElementAt(i).toString());
@@ -187,7 +187,7 @@ public class MosaicSequencingFrame extends JFrame {
 
    // Bind the Roi List table to Roi Manager list.
    private void mirrorRoiManager() {
-      final ListModel roiListModel = ((JList) ((JScrollPane) RoiManager.getInstance()
+      final ListModel<?> roiListModel = ((JList<?>) ((JScrollPane) RoiManager.getInstance()
             .getComponent(0)).getViewport().getComponent(0)).getModel();
       updateRoiTable(roiListModel);
       roiListModel.addListDataListener(new ListDataListener() {
@@ -212,7 +212,7 @@ public class MosaicSequencingFrame extends JFrame {
    // options given by the items array.
    private void setComboBoxColumn(JTable table, int columnIndex, String[] items) {
       table.getColumnModel().getColumn(columnIndex)
-            .setCellEditor(new DefaultCellEditor(new JComboBox(items)));
+            .setCellEditor(new DefaultCellEditor(new JComboBox<String>(items)));
    }
 
    // Generates a list of intensity percentages, that correspond to 4-bits
@@ -883,7 +883,7 @@ public class MosaicSequencingFrame extends JFrame {
       onDurationTextField_ = new JTextField();
       offDurationTextField_ = new JTextField();
       loopCountTextField_ = new JTextField();
-      sequenceTypeComboBox = new JComboBox();
+      sequenceTypeComboBox = new JComboBox<String>();
       generateSequenceButton = new JButton();
       jLabel1 = new JLabel();
       jPanel2 = new JPanel();
@@ -899,7 +899,7 @@ public class MosaicSequencingFrame extends JFrame {
       loadButton_ = new JButton();
       uploadButton_ = new JButton();
       jLabel7 = new JLabel();
-      sequenceTriggerComboBox = new JComboBox();
+      sequenceTriggerComboBox = new JComboBox<String>();
       runButton_ = new JButton();
       stopButton_ = new JButton();
       jLabel6 = new JLabel();
@@ -945,7 +945,7 @@ public class MosaicSequencingFrame extends JFrame {
 
       loopCountTextField_.setText("1");
 
-      sequenceTypeComboBox.setModel(new DefaultComboBoxModel(
+      sequenceTypeComboBox.setModel(new DefaultComboBoxModel<String>(
             new String[]{"Sequential", "Cumulative", "Simultaneous"}));
 
       generateSequenceButton.setText("Generate Sequence");
@@ -1053,7 +1053,7 @@ public class MosaicSequencingFrame extends JFrame {
                   "Time Slot", "ROIs", "On Duration (ms)", "Off Duration (ms)", "Loops"
             }
       ) {
-         Class[] types = new Class[]{
+         Class<?>[] types = new Class<?>[]{
                java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class,
                java.lang.Integer.class, java.lang.Integer.class
          };
@@ -1061,7 +1061,7 @@ public class MosaicSequencingFrame extends JFrame {
                false, true, true, true, true
          };
 
-         public Class getColumnClass(int columnIndex) {
+         public Class<?> getColumnClass(int columnIndex) {
             return types[columnIndex];
          }
 
@@ -1118,7 +1118,7 @@ public class MosaicSequencingFrame extends JFrame {
 
       jLabel7.setText("Sequence Trigger:");
 
-      sequenceTriggerComboBox.setModel(new DefaultComboBoxModel(
+      sequenceTriggerComboBox.setModel(new DefaultComboBoxModel<String>(
             new String[]{"Sequence Start", "External Start", "External Advance",
                   "External Frame Bulb"}));
       sequenceTriggerComboBox.addActionListener(new java.awt.event.ActionListener() {
@@ -1616,8 +1616,8 @@ public class MosaicSequencingFrame extends JFrame {
    private JButton saveButton_;
    private JTextField sequenceLoopCountTextField_;
    private JTable sequenceTable_;
-   private JComboBox sequenceTriggerComboBox;
-   private JComboBox sequenceTypeComboBox;
+   private JComboBox<String> sequenceTriggerComboBox;
+   private JComboBox<String> sequenceTypeComboBox;
    private JButton stopButton_;
    private JButton upButton;
    private JButton uploadButton_;

@@ -152,9 +152,9 @@ public class ExploreAcquisition extends XYTiledAcquisition
     * @return
     */
    @Override
-   public Future submitEventIterator(Iterator<AcquisitionEvent> iter) {
+   public Future<?> submitEventIterator(Iterator<AcquisitionEvent> iter) {
       return submittedSequenceMonitorExecutor_.submit(() -> {
-         Future iteratorFuture = null;
+         Future<?> iteratorFuture = null;
          try {
             iteratorFuture = super.submitEventIterator(iter);
             iteratorFuture.get();

@@ -90,3 +90,7 @@ bin
 # macOS packaging (with the nightly script)
 /*.dmg
 /*.sparseimage
+.Xauthority/Xauthority
+
+# User profiles generated at runtime
+profiles/UserProfiles/

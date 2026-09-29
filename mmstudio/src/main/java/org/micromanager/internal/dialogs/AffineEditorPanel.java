@@ -243,7 +243,7 @@ public class AffineEditorPanel extends JPanel {
       }
 
       @Override
-      public Class getColumnClass(int c) {
+      public Class<?> getColumnClass(int c) {
          return Double.class;
       }
 

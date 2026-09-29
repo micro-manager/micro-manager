@@ -45,7 +45,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getSubMenu() {
-      return "";
+      return "Navigation Tools";
    }
 
    @Override

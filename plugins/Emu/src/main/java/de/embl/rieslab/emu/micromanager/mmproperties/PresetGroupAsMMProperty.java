@@ -24,8 +24,7 @@ public class PresetGroupAsMMProperty extends MMProperty<String> {
     */
    public static final String KEY_MMCONFDEVICE = "Preset groups";
 
-   @SuppressWarnings("rawtypes")
-   private final ArrayList<MMProperty> affectedmmprops_;
+   private final ArrayList<MMProperty<?>> affectedmmprops_;
    private final Application app_;
 
    /**
@@ -39,10 +38,9 @@ public class PresetGroupAsMMProperty extends MMProperty<String> {
     * @param groupChannelNames Array of the channel names
     * @param affectedMMProps   MMProperties affected by the group
     */
-   @SuppressWarnings("rawtypes")
    public PresetGroupAsMMProperty(Application app, CMMCore core, Logger logger, String groupName,
                                   String[] groupChannelNames,
-                                  ArrayList<MMProperty> affectedMMProps) {
+                                  ArrayList<MMProperty<?>> affectedMMProps) {
       super(core, logger, MMProperty.MMPropertyType.CONFIG, KEY_MMCONFDEVICE, groupName,
             groupChannelNames);
       app_ = app;

@@ -33,14 +33,18 @@ import org.micromanager.data.ProcessorFactory;
 public class RatioImagingFactory implements ProcessorFactory {
    private final Studio studio_;
    private final PropertyMap settings_;
-   
+   private final RatioAcqManager ratioAcqManager_;
+
    public RatioImagingFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
+      // Owned by the Factory rather than the Processor, since a new Processor
+      // is created for each acquisition.
+      ratioAcqManager_ = new RatioAcqManager(studio);
    }
 
    @Override
    public Processor createProcessor() {
-      return new RatioImagingProcessor(studio_, settings_);
+      return new RatioImagingProcessor(studio_, settings_, ratioAcqManager_);
    }
 }

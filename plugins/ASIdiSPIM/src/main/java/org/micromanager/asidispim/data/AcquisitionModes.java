@@ -103,8 +103,8 @@ public class AcquisitionModes {
       return null;
    }
    
-   public JComboBox getComboBox() {
-      JComboBox jcb = new JComboBox();
+   public JComboBox<Keys> getComboBox() {
+      JComboBox<Keys> jcb = new JComboBox<>();
       ActionListener l = new ComboBoxListener(jcb);
       jcb.addActionListener(l);
       // when devices are changed we want to regenerate the list
@@ -114,9 +114,9 @@ public class AcquisitionModes {
    
    private class ComboBoxListener implements ActionListener, DevicesListenerInterface {
       
-      private final JComboBox jcb_;
-      
-      public ComboBoxListener(JComboBox jcb) {
+      private final JComboBox<Keys> jcb_;
+
+      public ComboBoxListener(JComboBox<Keys> jcb) {
          jcb_ = jcb;
          updateSelections();  // do initial rendering
       }
@@ -146,7 +146,7 @@ public class AcquisitionModes {
          int origCode = prefs_.getInt(MyStrings.PanelNames.ACQUSITION.toString(),
                Properties.Keys.PLUGIN_ACQUSITION_MODE, 0);
          
-         DefaultComboBoxModel cbModel = new DefaultComboBoxModel();
+         DefaultComboBoxModel<Keys> cbModel = new DefaultComboBoxModel<>();
          
          List<Keys> validModeKeys = getValidModeKeys();
          Keys origItem = null;

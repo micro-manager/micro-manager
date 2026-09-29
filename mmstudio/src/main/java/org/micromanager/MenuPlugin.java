@@ -23,9 +23,8 @@ package org.micromanager;
  * A MenuPlugin is a plugin that should appear under the "Plugins" menu.
  * Note that certain types of plugins automatically appear in certain contexts,
  * and do not need to implement this interface:
- * - All ProcessorPlugins appear under the "On-The-Fly Image Processing"
- * submenu of the Plugins menu (and, when selected, will bring up the
- * Image Processing Pipeline window).
+ * - ProcessorPlugins are managed via the "On-The-Fly Image Processing" menu
+ * item in the Plugins menu, which opens the Image Processing Pipeline window.
  * - All OverlayPlugins appear in the Inspector frame's "Overlays" section.
  * Currently, adding plugins to menus other than the Plugins menu is not
  * supported.

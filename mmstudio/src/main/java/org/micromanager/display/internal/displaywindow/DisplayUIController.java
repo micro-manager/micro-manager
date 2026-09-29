@@ -25,6 +25,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.Point;
@@ -77,6 +78,7 @@ import javax.swing.event.ChangeEvent;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
@@ -97,6 +99,7 @@ import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ComponentStats;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.overlay.Overlay;
@@ -199,6 +202,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    // controller's notion of what's current)
    private final List<String> displayedAxes_ = new ArrayList<>();
    private final List<Integer> displayedAxisLengths_ = new ArrayList<>();
+   // O(1) lookup for axis indices
+   private final Map<String, Integer> displayedAxesIndexMap_ = new HashMap<>();
    private ImagesAndStats displayedImages_;
    private Double cachedPixelSize_ = -1.0;
    private boolean isPreview_ = false;
@@ -317,8 +322,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
          frame = new JFrame();
          frame.setUndecorated(true);
          frame.setResizable(false);
-         frame.setBounds(
-               GUIUtils.getFullScreenBounds(frame_.getGraphicsConfiguration()));
+         GraphicsConfiguration gc = frame_.getGraphicsConfiguration();
+         if (gc == null) {
+            gc = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                  .getDefaultScreenDevice().getDefaultConfiguration();
+         }
+         frame.setBounds(GUIUtils.getFullScreenBounds(gc));
          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
       }
       setTitle(frame);
@@ -644,6 +653,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setPreferredSize(size);
          animateButton.setHorizontalAlignment(SwingConstants.LEFT);
          animateButton.setHorizontalTextPosition(SwingConstants.RIGHT);
+         // At least on Windows, the night skin foreground color is ignored by the look and feel
+         // set explicitly to white if we are on Windows in night mode, non-standard colors
+         // appear to be ignored.
+         if (JavaUtils.isWindows() && studio_.app().skin().getSkin().equals(
+               ApplicationSkin.SkinMode.NIGHT)) {
+            animateButton.setForeground(Color.WHITE);
+         }
          animateButton.setIcon(PLAY_ICON);
          animateButton.setSelectedIcon(PAUSE_ICON);
          animateButton.setMargin(buttonInsets_);
@@ -682,7 +698,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
          sb.append('/');
          // Not sure why, but we need more space on the right
-         for (int i = 0; i < digitsInLongestAxis_ + 2; i++) {
+         for (int i = 0; i < digitsInLongestAxis_ + 4; i++) {
             sb.append('9');
          }
          int width = offset + positionButton.getFontMetrics(positionButton.getFont())
@@ -693,6 +709,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
          positionButton.setMaximumSize(size);
          positionButton.setPreferredSize(size);
          positionButton.setMargin(buttonInsets_);
+         // at least on Windows, the night skin foreground color is ignored by the look and feel
+         // Set explicitly to white if we are on Windows in night mode
+         if (JavaUtils.isWindows() && studio_.app().skin().getSkin().equals(
+               ApplicationSkin.SkinMode.NIGHT)) {
+            positionButton.setForeground(Color.WHITE);
+         }
          axisPositionButtons_.add(new AbstractMap.SimpleEntry<>(
                axis, positionButton));
       }
@@ -772,18 +794,28 @@ public final class DisplayUIController implements Closeable, WindowListener,
          noImagesMessageLabel_.setText("Preparing to Display...");
       }
 
+      boolean axesChanged = false;
+
       for (Coords c : coords) {
          for (String axis : c.getAxes()) {
             if (axis != null) {
                int index = c.getIndex(axis);
-               int axisIndex = displayedAxes_.indexOf(axis);
-               if (axisIndex == -1) {
+               // Use O(1) HashMap lookup instead of O(N) ArrayList.indexOf()
+               Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+               if (axisIndexObj == null) {
+                  int newAxisIndex = displayedAxes_.size();
                   displayedAxes_.add(axis);
                   displayedAxisLengths_.add(index + 1);
+                  displayedAxesIndexMap_.put(axis, newAxisIndex);
+                  axesChanged = true;
                } else {
+                  int axisIndex = axisIndexObj;
                   int oldLength = displayedAxisLengths_.get(axisIndex);
                   int newLength = Math.max(oldLength, index + 1);
-                  displayedAxisLengths_.set(axisIndex, newLength);
+                  if (newLength != oldLength) {
+                     displayedAxisLengths_.set(axisIndex, newLength);
+                     axesChanged = true;
+                  }
                }
             } else {
                studio_.logs().logError("Null axis in Coords: " + c);
@@ -791,6 +823,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
 
+      // Skip expensive UI rebuilding if axes haven't changed
+      // But always ensure ImageJ knows about axis extents (critical for display updates)
+      if (!axesChanged) {
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("expandDisplayedRange early exit - no change");
+         }
+         // Still need to ensure ImageJ is informed about axis extents
+         if (ijBridge_ != null) {
+            ijBridge_.mm2ijEnsureDisplayAxisExtents();
+         }
+         return;
+      }
+
+      // Axes changed - rebuild scrollbar panel and update UI
       List<String> scrollableAxes = new ArrayList<>();
       Map<String, Integer> scrollableLengths = new HashMap<>();
       for (int i = 0; i < displayedAxes_.size(); ++i) {
@@ -800,20 +846,23 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       // Reorder scrollable axes to match axis order of data provider
+      // Cache ordered axes lookup outside the comparator to avoid O(N²) HashMap creation
+      final List<String> orderedAxes = displayController_.getOrderedAxes();
+      final Map<String, Integer> axisOrderMap = new HashMap<>(orderedAxes.size());
+      for (int i = 0; i < orderedAxes.size(); i++) {
+         axisOrderMap.put(orderedAxes.get(i), i);
+      }
+
       scrollableAxes.sort((String o1, String o2) -> {
          if (o1.equals(o2)) {
             return 0;
          }
-         List<String> ordered = displayController_.getOrderedAxes();
-         Map<String, Integer> axisMap = new HashMap<>(ordered.size());
-         for (int i = 0; i < ordered.size(); i++) {
-            axisMap.put(ordered.get(i), i);
-         }
-         if (axisMap.containsKey(o1) && axisMap.containsKey(o2)) {
-            return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
+         if (axisOrderMap.containsKey(o1) && axisOrderMap.containsKey(o2)) {
+            return axisOrderMap.get(o1) > axisOrderMap.get(o2) ? 1 : -1;
          }
          return 0; // Ugly, TODO: Report?
       });
+
       scrollBarPanel_.setAxes(scrollableAxes);
       for (int i = 0; i < scrollableAxes.size(); ++i) {
          final String currentAxis = scrollableAxes.get(i);
@@ -1089,11 +1138,19 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // TODO: Remember changes in component display settings?
             ijBridge_.mm2ijSetChannelColor(i, channelSettings.getColor());
             if (!autostretch) {
-               int max = Math.max(1, (int) Math.min(Integer.MAX_VALUE,
-                     componentSettings.getScalingMaximum()));
-               int min = (int) Math.min(max - 1,
-                     componentSettings.getScalingMinimum());
-               ijBridge_.mm2ijSetIntensityScaling(i, min, max);
+               ComponentStats cStats = getDisplayedComponentStats(i, 0);
+               if (cStats != null && cStats.isFloat()) {
+                  applyFloatIntensityScaling(i, componentSettings, cStats, false);
+               } else {
+                  int max = (int) Math.min(Integer.MAX_VALUE,
+                        componentSettings.getScalingMaximum());
+                  if (max < 1) {
+                     max = 1;
+                  }
+                  int min = (int) componentSettings.getScalingMinimum();
+                  min = Math.min(max - 1, min);
+                  ijBridge_.mm2ijSetIntensityScaling(i, min, max, false);
+               }
             }
             double gamma = componentSettings.getScalingGamma();
             ijBridge_.mm2ijSetIntensityGamma(i, gamma);
@@ -1106,23 +1163,23 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       } else {
          for (int chNr = 0; chNr < nChannels; chNr++) {
-            // Note: Since the UI currently manipulates all components
-            // identically, and setting a component results in many calculations
-            // and redrawing the image, for performance reasons we only set one
-            // component. Setting components differently in a performant way
-            //  will need a bit of re-architecting.
-            // int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
-            // for (int i = 0; i < nComponents; ++i) {
-            int i = 0;
-            ComponentDisplaySettings componentSettings
-                  = settings.getChannelSettings(0).getComponentSettings(i);
-            int max = Math.min(Integer.MAX_VALUE,
-                  (int) componentSettings.getScalingMaximum());
-            int min = Math.max(1, (Math.min(max - 1,
-                  (int) componentSettings.getScalingMinimum())));
-            max = Math.max(min + 1, max);
-            ijBridge_.mm2ijSetIntensityScaling(i, min, max);
-            //}
+            int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
+            for (int i = 0; i < nComponents; ++i) {
+               ComponentDisplaySettings componentSettings
+                     = settings.getChannelSettings(0).getComponentSettings(i);
+               boolean defer = i < nComponents - 1;
+               ComponentStats cStats = getDisplayedComponentStats(chNr, i);
+               if (cStats != null && cStats.isFloat()) {
+                  applyFloatIntensityScaling(i, componentSettings, cStats, defer);
+               } else {
+                  int max = Math.min(Integer.MAX_VALUE,
+                        (int) componentSettings.getScalingMaximum());
+                  int min = Math.max(1, (Math.min(max - 1,
+                        (int) componentSettings.getScalingMinimum())));
+                  max = Math.max(min + 1, max);
+                  ijBridge_.mm2ijSetIntensityScaling(i, min, max, defer);
+               }
+            }
          }
       }
 
@@ -1132,48 +1189,99 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    }
 
+   /**
+    * Pushes the scaling range for one component of a float image to ImageJ.
+    *
+    * <p>When the settings carry a real float range (pixel values), it is used directly.
+    * That range is independent of the current image, so the display no longer rescales
+    * itself as one steps through a time lapse.
+    *
+    * <p>Otherwise we fall back to the legacy interpretation, in which the stored longs are
+    * histogram bin indices resolved against the current image's binning. That fallback is
+    * inherently image-dependent, and is kept only for settings saved before the float range
+    * existed.
+    *
+    * @param ijIndex ImageJ channel/component index to apply to
+    * @param componentSettings settings holding the range
+    * @param cStats statistics of the currently displayed image, for the legacy fallback
+    * @param defer whether to defer the ImageJ repaint
+    */
+   @MustCallOnEDT
+   private void applyFloatIntensityScaling(int ijIndex,
+                                           ComponentDisplaySettings componentSettings,
+                                           ComponentStats cStats,
+                                           boolean defer) {
+      double binWidth = cStats.getBinWidthDouble();
+      double fMin;
+      double fMax;
+      if (componentSettings.hasFloatScaling()) {
+         // Already guaranteed non-empty by hasFloatScaling(), and used exactly as stored:
+         // widening it by the current image's bin width would make the range the user set
+         // depend on which image happens to be on screen.
+         fMin = componentSettings.getFloatScalingMinimum();
+         fMax = componentSettings.getFloatScalingMaximum();
+      } else {
+         long storedMin = componentSettings.getScalingMinimum();
+         long storedMax = componentSettings.getScalingMaximum();
+         int binCount = cStats.getHistogramBinCount();
+         double rangeMin = cStats.getHistogramRangeMinDouble();
+         long clampedMax = (storedMax == Long.MAX_VALUE) ? binCount
+               : Math.min(binCount, storedMax);
+         long clampedMin = Math.max(0, Math.min(clampedMax - 1, storedMin));
+         fMin = rangeMin + clampedMin * binWidth;
+         fMax = rangeMin + clampedMax * binWidth;
+         // The bin arithmetic can collapse the range; ImageJ misbehaves when min == max.
+         double minSpan = binWidth > 0.0 ? binWidth : Math.ulp(fMin);
+         fMax = Math.max(fMin + minSpan, fMax);
+      }
+      ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, fMin, fMax, defer);
+   }
+
    @MustCallOnEDT
    private void applyAutostretch(ImagesAndStats images, DisplaySettings settings) {
       if (images == null || !settings.isAutostretchEnabled()) {
          return;
       }
 
-      // TODO RGB
       // TODO "uniform" scaling
 
       int nChannels = ijBridge_.getIJNumberOfChannels();
       double q = settings.getAutoscaleIgnoredQuantile();
-      for (int i = 0; i < nChannels; ++i) {
+      for (int ch = 0; ch < nChannels; ++ch) {
          int statsIndex = 0;
-         for (int j = 0; j < images.getRequest().getNumberOfImages(); ++j) {
-            Coords c = images.getRequest().getImage(j).getCoords();
+         for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
+            Coords c = images.getRequest().getImage(i).getCoords();
             if (c.hasAxis(Coords.CHANNEL)) {
-               if (c.getChannel() == i) {
-                  statsIndex = j;
+               if (c.getChannel() == ch) {
+                  statsIndex = i;
+                  break;
                }
             }
          }
 
-         if (images.getResult().size() > statsIndex) {
-            ImageStats stats = images.getResult().get(statsIndex);
-            long min = 0;
-            long max = 0;
-            if (settings.isAutoscaleIgnoringZeros()) {
-               min = stats.getComponentStats(0).getAutoscaleMinForQuantileIgnoringZeros(q);
-               max = Math.min(Integer.MAX_VALUE,
-                     stats.getComponentStats(0).getAutoscaleMaxForQuantileIgnoringZeros(q));
+         ImageStats stats;
+         try {
+            stats = images.getResult().get(statsIndex);
+         } catch (IndexOutOfBoundsException e) {
+            continue;
+         }
+
+         int nComponents = stats.getNumberOfComponents();
+         boolean ignoreZeros = settings.isAutoscaleIgnoringZeros();
+         for (int compo = 0; compo < nComponents; compo++) {
+            long min;
+            long max;
+            if (ignoreZeros) {
+               min = 0L;
+               max = stats.getComponentStats(compo).getAutoscaleMaxForQuantileIgnoringZeros(q);
             } else {
-               min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
-               max = Math.min(Integer.MAX_VALUE,
-                     stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
+               long[] minMax = new long[2];
+               stats.getComponentStats(compo).getAutoscaleMinMaxForQuantile(q, minMax);
+               min = minMax[0];
+               max = minMax[1];
             }
-            // NS 2019-05-29: This should not be done here, but in IntegerComponentsStats
-            // however, I do not understand that code enough to touch it....
-            // This at least fixes the display somewhat (showing black for
-            // a saturated image is really, really bad!)
-            if (min >= max) {
-               max = min + 1;
-            }
+
+
             // NS 2019-08-15: We really do need to write the min and max to
             // the DisplaySettings (there already is a work-around in the
             // IntensityInspectorPanelController handleAutostretch function, but
@@ -1184,15 +1292,72 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // object with completely new ComnponentDisplaySettings, but it seems
             // more than a little bit excessive to do that on every autostrech update
             // so we take the shortcut here
+            //
+            // Mark T. 2022-05-19: It is not stated above _why_ it is
+            // that the autostretched min/max in the DisplaySettings need to
+            // be always up to date. The intended semantics were that the
+            // scaling min/max should be considered invalid when autostretch
+            // is enabled, so any code that relies on those values is
+            // incorrect. However, one could say that thanks to those
+            // semantics, "correct" components should not have a problem even
+            // if the scaling min/max is mutated, as long as this is only done
+            // when autostretch is enabled. So I'm leaving this as is for now.
+            // Fortunately, we don't have to worry about autostretch having
+            // been switched off before we reach here, since we are only
+            // modifying the DisplaySettings instance passed to us, which had
+            // autostretch enabled (see, immutability is really nice!).
+            // It will still be nice to remove this if we ever can.
+            int ijIndex = nComponents > 1 ? compo : ch;
+            boolean defer = nComponents > 1 && compo < nComponents - 1;
+
+            ComponentStats cStats = stats.getComponentStats(compo);
             DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
-                  settings.getChannelSettings(i).getComponentSettings(0);
-            dcds.setScalingMinimum(min);
-            dcds.setScalingMaximum(max);
-            ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
-         } else {
-            ReportingUtils.logMessage("DisplayUICOntroller: Received request to "
-                  + "autostretch image for which no statistics are available");
+                  settings.getChannelSettings(ch).getComponentSettings(compo);
+            if (cStats.isFloat()) {
+               // Recompute the quantiles in pixel values: the long-valued autoscale above
+               // rounds them, which for data spanning less than a unit collapses the range
+               // to 0..1 and then widens it past the data. Storing pixel values also means
+               // switching autostretch off leaves behind a range that is meaningful on its
+               // own rather than a bin index tied to this one image.
+               double fMin;
+               double fMax;
+               if (ignoreZeros) {
+                  fMin = 0.0;
+                  fMax = cStats.getFloatAutoscaleMaxForQuantileIgnoringZeros(q);
+               } else {
+                  double[] fMinMax = new double[2];
+                  cStats.getFloatAutoscaleMinMaxForQuantile(q, fMinMax);
+                  fMin = fMinMax[0];
+                  fMax = fMinMax[1];
+               }
+               dcds.hackFloatScalingMinimum(fMin);
+               dcds.hackFloatScalingMaximum(fMax);
+               ijBridge_.mm2ijSetFloatIntensityScaling(ijIndex, fMin, fMax, defer);
+            } else {
+               dcds.hackScalingMinimum(min);
+               dcds.hackScalingMaximum(max);
+               ijBridge_.mm2ijSetIntensityScaling(ijIndex, (int) min, (int) max, defer);
+            }
          }
+      }
+   }
+
+   private ComponentStats getDisplayedComponentStats(int channel, int component) {
+      if (displayedImages_ == null) {
+         return null;
+      }
+      try {
+         int statsIndex = 0;
+         for (int i = 0; i < displayedImages_.getRequest().getNumberOfImages(); ++i) {
+            Coords c = displayedImages_.getRequest().getImage(i).getCoords();
+            if (c.hasAxis(Coords.CHANNEL) && c.getChannel() == channel) {
+               statsIndex = i;
+               break;
+            }
+         }
+         return displayedImages_.getResult().get(statsIndex).getComponentStats(component);
+      } catch (IndexOutOfBoundsException e) {
+         return null;
       }
    }
 
@@ -1237,11 +1402,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       int checkedLength = length;
       if (checkedLength < 0) {
-         int axisIndex = displayedAxes_.indexOf(axis);
-         if (axisIndex < 0) {
+         // Use O(1) HashMap lookup instead of O(N) ArrayList.indexOf()
+         Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+         if (axisIndexObj == null) {
             return;
          }
-         checkedLength = displayedAxisLengths_.get(axisIndex);
+         checkedLength = displayedAxisLengths_.get(axisIndexObj);
       }
       if (checkedLength <= 1) {
          return; // Not displayed
@@ -1870,15 +2036,15 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    public boolean isAxisDisplayed(String axis) {
-      return displayedAxes_.contains(axis);
+      return displayedAxesIndexMap_.containsKey(axis);
    }
 
    public int getDisplayedAxisLength(String axis) {
-      int axisIndex = displayedAxes_.indexOf(axis);
-      if (axisIndex == -1) {
+      Integer axisIndexObj = displayedAxesIndexMap_.get(axis);
+      if (axisIndexObj == null) {
          return 0;
       }
-      return displayedAxisLengths_.get(axisIndex);
+      return displayedAxisLengths_.get(axisIndexObj);
    }
 
    public List<Coords> getAllDisplayedCoords() {

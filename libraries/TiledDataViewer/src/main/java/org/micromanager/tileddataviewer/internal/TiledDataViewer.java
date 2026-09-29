@@ -1,0 +1,1017 @@
+// Copyright (C) 2015-2017 Open Imaging, Inc.
+//           (C) 2015 Regents of the University of California
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
+package org.micromanager.tileddataviewer.internal;
+
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.event.MouseAdapter;
+import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.prefs.Preferences;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
+import mmcorej.org.json.JSONObject;
+import org.micromanager.tileddataviewer.TiledDataViewerAPI;
+import org.micromanager.tileddataviewer.TiledDataViewerAcqInterface;
+import org.micromanager.tileddataviewer.TiledDataViewerCanvasMouseListenerInterface;
+import org.micromanager.tileddataviewer.TiledDataViewerDataSource;
+import org.micromanager.tileddataviewer.TiledDataViewerOverlayerPlugin;
+import org.micromanager.tileddataviewer.internal.gui.AxisScroller;
+import org.micromanager.tileddataviewer.internal.gui.ChannelRenderSettings;
+import org.micromanager.tileddataviewer.internal.gui.CoalescentExecutor;
+import org.micromanager.tileddataviewer.internal.gui.CoalescentRunnable;
+import org.micromanager.tileddataviewer.internal.gui.ContrastUpdateCallback;
+import org.micromanager.tileddataviewer.internal.gui.DataViewCoords;
+import org.micromanager.tileddataviewer.internal.gui.DisplayCoalescentEDTRunnablePool;
+import org.micromanager.tileddataviewer.internal.gui.DisplayModel;
+import org.micromanager.tileddataviewer.internal.gui.GlobalRenderSettings;
+import org.micromanager.tileddataviewer.internal.gui.GuiManager;
+import org.micromanager.tileddataviewer.internal.gui.ViewerCanvas;
+import org.micromanager.tileddataviewer.internal.gui.contrast.DisplaySettings;
+import org.micromanager.tileddataviewer.overlay.Overlay;
+
+public class TiledDataViewer implements TiledDataViewerAPI {
+
+   public static String NO_CHANNEL = "NO_CHANNEL_PRESENT";
+   public static String CHANNEL_AXIS = "channel";
+   // Key written by AcqEngMetadata.setElapsedTimeMs and read by the plugins' time
+   // metadata reader functions.  Not every writer emits it (the Stitch plugin does not).
+   private static final String ELAPSED_TIME_TAG = "ElapsedTime-ms";
+   private final GuiManager guiManager_;
+
+   private DisplayCoalescentEDTRunnablePool edtRunnablePool_ =
+         DisplayCoalescentEDTRunnablePool.create();
+
+   private CoalescentExecutor displayCalculationExecutor_ =
+         new CoalescentExecutor("Display calculation executor");
+   private CoalescentExecutor overlayCalculationExecutor_ =
+         new CoalescentExecutor("Overlay calculation executor");
+
+
+
+   private volatile TiledDataViewerAcqInterface acq_;
+   private JSONObject summaryMetadata_;
+   private volatile boolean closed_ = false;
+
+   private Function<JSONObject, Long> readTimeFunction_ = null;
+   private Function<JSONObject, Double> readZFunction_ = null;
+
+   private double pixelSizeUm_;
+   private volatile JSONObject currentMetadata_;
+   private LinkedList<Consumer<HashMap<String, Object>>> setImageHooks_ = new LinkedList<>();
+
+   private TiledDataViewerOverlayerPlugin overlayerPlugin_;
+   private String preferencesKey_ = "";
+   private TiledDataViewerDataSource dataSource_;
+   private DisplayModel displayModel_;
+
+   public TiledDataViewer(TiledDataViewerDataSource cache,
+                          TiledDataViewerAcqInterface acq,
+                          JSONObject summaryMD,
+                          double pixelSize,
+                          boolean rgb) {
+      this(cache, acq, summaryMD, pixelSize, rgb, null);
+   }
+
+   public TiledDataViewer(TiledDataViewerDataSource dataSource,
+                          TiledDataViewerAcqInterface acq,
+                          JSONObject summaryMD,
+                          double pixelSize,
+                          boolean rgb,
+                          String preferencesKey) {
+      dataSource_ = dataSource;
+      pixelSizeUm_ = pixelSize; //TODO: Could be replaced later with per image pixel size
+      summaryMetadata_ = summaryMD;
+      acq_ = acq;
+      preferencesKey_ = preferencesKey;
+      if (preferencesKey_ == null || preferencesKey_.equals("")) {
+         preferencesKey_ = "Default";
+      }
+      displayModel_ = new DisplayModel(this, dataSource_, getPreferences(), rgb);
+      guiManager_ = new GuiManager(this, acq_ != null);
+   }
+
+   public void setReadTimeMetadataFunction(Function<JSONObject, Long> fn) {
+      readTimeFunction_ = fn;
+   }
+
+   public void setReadZMetadataFunction(Function<JSONObject, Double> fn) {
+      readZFunction_ = fn;
+   }
+
+   public JSONObject getDisplaySettingsJSON() {
+      return displayModel_.getDisplaySettingsJSON();
+   }
+
+   public Preferences getPreferences() {
+      return Preferences.userNodeForPackage(TiledDataViewer.class).node(preferencesKey_);
+   }
+
+   public void pan(int dx, int dy) {
+      displayModel_.pan(dx, dy);
+      update();
+   }
+
+   public void onScollersAdded() {
+      guiManager_.onScrollersAdded();
+   }
+
+   public void zoom(double factor, Point mouseLocation) {
+      displayModel_.zoom(factor, mouseLocation);
+
+      update();
+   }
+
+   public void onCanvasResize(int w, int h) {
+      if (guiManager_ == null) {
+         return; //Initializing
+      }
+      guiManager_.onCanvasResize(w, h);
+      displayModel_.onCanvasResize(w, h);
+      update();
+   }
+
+   @Deprecated
+   @Override
+   public void initializeViewerToLoaded(List<String> channelNames,
+                                        JSONObject displaySettings,
+                                        HashMap<String, Object> axisMins,
+                                        HashMap<String, Object> axisMaxs) {
+      throw new UnsupportedOperationException("This method is deprecated");
+   }
+
+   public void initializeViewerToLoaded(JSONObject dispSettings) {
+
+      displayModel_.setDisplaySettings(new DisplaySettings(dispSettings, getPreferences()));
+      // The playback control was seeded during construction, before these settings were
+      // read from disk; refresh it so a dataset's saved rate takes effect.
+      guiManager_.reloadPlaybackFPS();
+      Set<HashMap<String, Object>> axesList = dataSource_.getImageKeys();
+      //      //Hide row and column axes form the viewer
+      //      if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
+      //         axesNames.remove(MagellanMD.AXES_GRID_ROW);
+      //      }
+      //      if (axesNames.contains(MagellanMD.AXES_GRID_COL)) {
+      //         axesNames.remove(MagellanMD.AXES_GRID_COL);
+      //      }
+
+      // Walk the keys in summary-metadata channel order. getImageKeys() is a Set with no
+      // iteration-order guarantee, so discovering channels straight from it registers them
+      // in arbitrary order, which shows up as the viewer's channel scrollbar and overlays
+      // disagreeing with the Inspector (the data provider already orders its own channel
+      // list from ChNames for this reason). Only the traversal order changes here: each key
+      // is still registered exactly as before, so the scrollbars are still created.
+      for (HashMap<String, Object> axesPositions : sortByChannelOrder(axesList)) {
+         if (axesPositions.keySet().contains(TiledDataViewer.CHANNEL_AXIS)) {
+            String channel = (String) axesPositions.get(TiledDataViewer.CHANNEL_AXIS);
+            if (!displayModel_.getDisplayedChannels().contains(channel)) {
+               getGUIManager().addContrastControlsIfNeeded(channel);
+               // Make this channel option appear on scrollbars
+               edtRunnablePool_.invokeLaterWithCoalescence(
+                       new TiledDataViewer.ExpandDisplayRangeCoalescentRunnable(axesPositions));
+            }
+         }
+         displayModel_.parseNewAxesToUpdateDisplayModel(axesPositions);
+      }
+
+      //TODO: wheres the override to ignore row/column axes?
+      HashMap<String, Object> axisMins = new HashMap<String, Object>();
+      HashMap<String, Object> axisMaxs = new HashMap<String, Object>();
+      for (HashMap<String, Object> ax : axesList) {
+         for (String axis : ax.keySet()) {
+            if (!getDisplayModel().isIntegerAxis(axis)) {
+               continue; // String axis, no min or max
+            }
+            if (!axisMins.containsKey(axis)) {
+               axisMins.put(axis, ax.get(axis));
+               axisMaxs.put(axis, ax.get(axis));
+            }
+            axisMins.put(axis, Math.min((Integer) ax.get(axis), (Integer) axisMins.get(axis)));
+            axisMaxs.put(axis, Math.max((Integer) ax.get(axis), (Integer) axisMaxs.get(axis)));
+         }
+
+      }
+
+
+      //maximum scrollbar extents
+      edtRunnablePool_.invokeLaterWithCoalescence(
+              new TiledDataViewer.ExpandDisplayRangeCoalescentRunnable(axisMaxs));
+      edtRunnablePool_.invokeLaterWithCoalescence(
+              new TiledDataViewer.ExpandDisplayRangeCoalescentRunnable(axisMins));
+   }
+
+   /**
+    * Orders image keys so that channels are first seen in summary-metadata order.
+    *
+    * <p>Keys whose channel is not listed in the metadata (or that have no channel axis)
+    * sort after the listed ones, preserving the previous behaviour of discovering them
+    * from the data. Only ordering changes; no key is added or dropped.
+    *
+    * @param axesList image keys, in arbitrary order
+    * @return the same keys, ordered by channel
+    */
+   private List<HashMap<String, Object>> sortByChannelOrder(
+           Set<HashMap<String, Object>> axesList) {
+      List<HashMap<String, Object>> ordered = new ArrayList<>(axesList);
+      final List<String> chOrder = new ArrayList<>();
+      if (summaryMetadata_ != null && summaryMetadata_.has("ChNames")) {
+         try {
+            JSONArray chNames = summaryMetadata_.getJSONArray("ChNames");
+            for (int i = 0; i < chNames.length(); i++) {
+               String name = chNames.optString(i, null);
+               if (name != null && !name.isEmpty()) {
+                  chOrder.add(name);
+               }
+            }
+         } catch (JSONException e) {
+            return ordered; // No usable channel names; leave the order alone.
+         }
+      }
+      if (chOrder.isEmpty()) {
+         return ordered;
+      }
+      Collections.sort(ordered, new Comparator<HashMap<String, Object>>() {
+         @Override
+         public int compare(HashMap<String, Object> a, HashMap<String, Object> b) {
+            return Integer.compare(rank(a), rank(b));
+         }
+
+         private int rank(HashMap<String, Object> axes) {
+            Object ch = axes.get(CHANNEL_AXIS);
+            int idx = (ch instanceof String) ? chOrder.indexOf(ch) : -1;
+            return idx < 0 ? Integer.MAX_VALUE : idx;
+         }
+      });
+      return ordered;
+   }
+
+   public void channelSetActiveByCheckbox(String channelName, boolean selected) {
+      displayModel_.channelWasSetActiveByCheckbox(channelName, selected);
+      update();
+   }
+
+   public void setWindowTitle(String s) {
+      guiManager_.setWindowTitle(s);
+   }
+
+   /**
+    * Signal to viewer that a new image is available.
+    *
+    * @param axesPositions Hashmap of axis labels to positions
+    */
+   public void newImageArrived(HashMap<String, Object> axesPositions) {
+      try {
+
+         displayModel_.updateDisplayBounds();
+
+         // This will go on to update the GUI as needed
+         displayModel_.parseNewAxesToUpdateDisplayModel(axesPositions);
+
+         //expand the scrollbars with new images
+         edtRunnablePool_.invokeLaterWithCoalescence(
+                 new TiledDataViewer.ExpandDisplayRangeCoalescentRunnable(axesPositions));
+         //move scrollbars to new position
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+   }
+
+   @Override
+   public void addSetImageHook(Consumer<HashMap<String, Object>> hook) {
+      setImageHooks_.add(hook);
+   }
+
+   public void setAxisPosition(String axis, int position) {
+      HashMap<String, Object> axes = new HashMap<>();
+      // Scroller and animation coordinates are always integers, but a string-valued
+      // axis (e.g. channel) must be stored as its String value: scrollbarsMoved()
+      // casts the channel entry to String.
+      if (displayModel_ != null && !displayModel_.isIntegerAxis(axis)) {
+         axes.put(axis, displayModel_.getStringPositionFromIntegerPosition(axis, position));
+      } else {
+         axes.put(axis, position);
+      }
+      setImageEvent(axes, true);
+   }
+
+   /**
+    * Called when scrollbars move.
+    */
+   public void setImageEvent(HashMap<String, Object> axes, boolean fromHuman) {
+      if (axes != null && guiManager_ != null) {
+         for (String axis : axes.keySet()) {
+            if (!guiManager_.isScrollerAxisLocked(axis) || fromHuman) {
+               displayModel_.setAxisPosition(axis, axes.get(axis));
+            }
+         }
+      }
+      //Set channel
+      displayModel_.scrollbarsMoved(axes);
+      guiManager_.updateActiveChannelCheckboxes();
+
+      //run hooks
+      for (Consumer<HashMap<String, Object>> hook : setImageHooks_) {
+         hook.accept(axes);
+      }
+
+      update();
+   }
+
+   public void updateActiveChannelCheckboxes() {
+      guiManager_.updateActiveChannelCheckboxes();
+   }
+
+   public void onContrastUpdated() {
+      update();
+   }
+
+   public void onAnimationToggle(AxisScroller scoller, boolean animate) {
+      guiManager_.onAnimationToggle(scoller, animate);
+   }
+
+   /**
+    * Sets the rate, in frames per second, at which axes are played back.
+    *
+    * @param fps desired playback rate in frames per second
+    */
+   public void setAnimateFPS(double fps) {
+      guiManager_.setAnimateFPS(fps);
+   }
+
+   /**
+    * Returns the rate, in frames per second, at which axes are played back.
+    *
+    * @return playback rate in frames per second
+    */
+   @Override
+   public double getAnimateFPS() {
+      return guiManager_.getAnimateFPS();
+   }
+
+   @Override
+   public void addAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+      guiManager_.addAnimateFpsListener(listener);
+   }
+
+   @Override
+   public void removeAnimateFpsListener(java.util.function.DoubleConsumer listener) {
+      guiManager_.removeAnimateFpsListener(listener);
+   }
+
+   @Override
+   public void addRenderCompleteListener(Runnable listener) {
+      ViewerCanvas canvas = guiManager_.getCanvas();
+      if (canvas != null) {
+         canvas.addRenderCompleteListener(listener);
+      }
+   }
+
+   @Override
+   public void removeRenderCompleteListener(Runnable listener) {
+      ViewerCanvas canvas = guiManager_.getCanvas();
+      if (canvas != null) {
+         canvas.removeRenderCompleteListener(listener);
+      }
+   }
+
+   public void update() {
+      if (displayCalculationExecutor_ == null) {
+         return; // Not yet initialized
+      }
+      displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(
+               new DisplayImageComputationRunnable());
+   }
+
+   public ViewerCanvas getCanvas() {
+      return guiManager_.getCanvas();
+   }
+
+   public void superlockAllScrollers() {
+      guiManager_.superlockAllScrollers();
+   }
+
+   public void unlockAllScroller() {
+      guiManager_.unlockAllScroller();
+   }
+
+   public void showFolder() {
+      try {
+         File location = new File(dataSource_.getDiskLocation());
+         if (isWindows()) {
+            Runtime.getRuntime().exec("Explorer /n,/select," + location.getAbsolutePath());
+         } else if (isMac()) {
+            if (!location.isDirectory()) {
+               location = location.getParentFile();
+            }
+            Runtime.getRuntime().exec(new String[]{"open", location.getAbsolutePath()});
+         }
+      } catch (IOException ex) {
+         throw new RuntimeException(ex);
+      }
+   }
+
+   static boolean isWindows() {
+      String os = System.getProperty("os.name").toLowerCase();
+      return (os.contains("win"));
+   }
+
+   static boolean isMac() {
+      String os = System.getProperty("os.name").toLowerCase();
+      return (os.contains("mac"));
+   }
+
+   public void abortAcquisition() {
+      if (acq_ != null && !acq_.isFinished()) {
+         int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
+                 "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            acq_.abort();
+         }
+      }
+   }
+
+   public void setPausedAction(boolean paused) {
+      acq_.setPaused(paused);
+   }
+
+   public boolean isAcquisitionPaused() {
+      return acq_.isPaused();
+   }
+
+   public void setOverlay(Overlay overlay) {
+      guiManager_.displayOverlay(overlay);
+   }
+
+   /**
+    * Installs the overlay belonging to a particular render generation.
+    *
+    * @param overlay    the overlay to draw
+    * @param generation render generation this overlay was computed for
+    */
+   public void setOverlay(Overlay overlay, long generation) {
+      guiManager_.displayOverlay(overlay, generation);
+   }
+
+   /**
+    * Declares which render generation an overlayer plugin is about to draw for,
+    * since such plugins install their overlay themselves and cannot pass it
+    * through. Applied when that overlay is installed.
+    *
+    * @param generation render generation the next plugin overlay belongs to
+    */
+   public void setPendingOverlayGeneration(long generation) {
+      guiManager_.setPendingOverlayGeneration(generation);
+   }
+
+   public void redrawOverlay() {
+      // Guard against use after shutdown: displayCalculationExecutor_ is set to null when
+      // the viewer closes (shutdownMM2Resources), but overlay add/remove/activate events
+      // can still fire redrawOverlay during the close/detach cascade (and on a stale viewer
+      // reference after reopening). Without this guard those paths NPE -- mirrors update().
+      // This null-guard (and the similar ones in ImageMaker/recompute) is a targeted defence
+      // against a known limitation: the inner close() tears down viewer state on a background
+      // thread while overlay/Inspector events may still fire. The more thorough fix would be
+      // to stop dispatching display/overlay events once close() begins; until then, callers
+      // into a closing viewer must tolerate the torn-down state.
+      if (displayCalculationExecutor_ == null) {
+         return; // not initialized or already shut down
+      }
+      //this will automatically trigger overlay redrawing in a coalescent fashion
+      displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(
+            new DisplayImageComputationRunnable());
+   }
+
+   public double getMagnification() {
+      return displayModel_.getMagnification();
+   }
+
+   public double getPixelSize() {
+      //TODO: replace with pixel size read from image in case different pixel sizes
+      return pixelSizeUm_;
+   }
+
+   public void showScaleBar(boolean selected) {
+      guiManager_.showScaleBar(selected);
+   }
+
+   public void setCompositeMode(boolean selected) {
+      displayModel_.setCompositeMode(selected);
+      update();
+   }
+
+   /**
+    * Update render settings used by ImageMaker for the next render.
+    * Called by TiledDataViewerDataViewer before triggering update().
+    * Also syncs the internal DisplaySettings so getDisplaySettingsJSON() is always current.
+    */
+   public void setRenderSettings(Map<String, ChannelRenderSettings> channelSettings,
+                                  GlobalRenderSettings globalSettings,
+                                  ContrastUpdateCallback callback) {
+      // In grayscale (non-composite) mode only the currently selected channel renders.
+      // Override active flags so only the channel at the current scrollbar position is on.
+      // If the scrollbar position doesn't match any known channel name (e.g. it's the
+      // integer default 0 before the user touched the slider), fall back to the first
+      // channel so the viewer is not blank.
+      Map<String, ChannelRenderSettings> effectiveSettings = channelSettings;
+      if (!globalSettings.composite && channelSettings.size() > 1) {
+         Object currentChValue = displayModel_.getAxisPosition(CHANNEL_AXIS);
+         String selectedChannel = null;
+         if (currentChValue != null) {
+            for (String name : channelSettings.keySet()) {
+               if (name.equals(currentChValue)) {
+                  selectedChannel = name;
+                  break;
+               }
+            }
+         }
+         if (selectedChannel == null) {
+            // Pick the first channel name in iteration order.
+            Iterator<String> it = channelSettings.keySet().iterator();
+            if (it.hasNext()) {
+               selectedChannel = it.next();
+            }
+         }
+         if (selectedChannel != null) {
+            effectiveSettings = new HashMap<>(channelSettings);
+            for (Map.Entry<String, ChannelRenderSettings> e
+                  : channelSettings.entrySet()) {
+               String name = e.getKey();
+               ChannelRenderSettings rs = e.getValue();
+               boolean isSelected = name.equals(selectedChannel);
+               if (isSelected != rs.active) {
+                  effectiveSettings.put(name,
+                        new ChannelRenderSettings(rs.contrastMin, rs.contrastMax, rs.gamma,
+                              rs.color, isSelected));
+               }
+            }
+         }
+      }
+      guiManager_.setRenderSettings(effectiveSettings, globalSettings, callback);
+
+      // Keep internal DisplaySettings in sync so getDisplaySettingsJSON() is always current.
+      DisplaySettings ds = displayModel_.getDisplaySettings();
+      for (Map.Entry<String, ChannelRenderSettings> entry
+            : effectiveSettings.entrySet()) {
+         String name = entry.getKey();
+         ChannelRenderSettings rs = entry.getValue();
+         ds.setColor(name, rs.color);
+         ds.setContrastMin(name, rs.contrastMin);
+         ds.setContrastMax(name, rs.contrastMax);
+         ds.setGamma(name, rs.gamma);
+         // Use the original active flag, not the grayscale-overridden one, so that
+         // getDisplaySettingsJSON() does not serialize non-selected channels as inactive.
+         ChannelRenderSettings original = channelSettings.get(name);
+         ds.setActive(name, original != null ? original.active : rs.active);
+      }
+      ds.setAutoscale(globalSettings.autostretch);
+      ds.setCompositeMode(globalSettings.composite);
+      ds.setLogHist(globalSettings.logHistogram);
+      ds.setIgnoreOutliers(globalSettings.ignoreOutliers);
+      ds.setIgnoreOutliersPercentage(globalSettings.percentToIgnore);
+   }
+
+   /**
+    * Returns the most recent raw pixel histograms per channel, as computed by
+    * ImageMaker during the last render. Keys are channel names; values are
+    * int[] arrays with one entry per pixel value (65536 entries for 16-bit).
+    */
+   public HashMap<String, int[]> getHistograms() {
+      return guiManager_.getHistograms();
+   }
+
+   /**
+    * Returns per-component (R, G, B) raw pixel histograms for RGB channels.
+    * Only channels rendered by TiledDataViewerImageProcessorRGB appear in the result.
+    * The value array has three entries: [R histogram, G histogram, B histogram].
+    */
+   public HashMap<String, int[][]> getComponentHistograms() {
+      return guiManager_.getComponentHistograms();
+   }
+
+   /**
+    * Sets a callback that is invoked after every render completes (on the
+    * display calculation thread, before the EDT repaint). Use it to read
+    * updated histograms from getHistograms().
+    */
+   public void setPostRenderCallback(Runnable callback) {
+      postRenderCallback_ = callback;
+   }
+
+   private volatile Runnable postRenderCallback_ = null;
+
+   @Override
+   public JPanel getCanvasJPanel() {
+      return getCanvas().getCanvas();
+   }
+
+   @Override
+   public Object getAxisPosition(String axis) {
+      return displayModel_.getAxisPosition(axis);
+   }
+
+   @Override
+   public Point2D.Double getViewOffset() {
+      return displayModel_.getViewOffset();
+   }
+
+   @Override
+   public Point2D.Double getFullResSourceDataSize() {
+      return displayModel_.getFullResSourceDataSize();
+   }
+
+   @Override
+   public void setViewOffset(double newX, double newY) {
+      displayModel_.setViewOffset(newX, newY);
+   }
+
+   @Override
+   public void setFullResSourceDataSize(double width, double height) {
+      displayModel_.setFullResSourceDataSize(width, height);
+   }
+
+   @Override
+   public void setFullResSourceDataSizeAspectCorrected(double width, double height) {
+      displayModel_.setFullResSourceDataSizeAspectCorrected(width, height);
+   }
+
+   public void showTimeLabel(boolean selected) {
+      guiManager_.setShowTimeLabel(selected);
+   }
+
+   public void showZPositionLabel(boolean selected) {
+      guiManager_.setShowZPosition(selected);
+   }
+
+   public String getCurrentT() {
+      if (readTimeFunction_ == null) {
+         return "Time metadata reader undefined";
+      } else {
+         long elapsed = readTimeFunction_.apply(currentMetadata_);
+         long hours = elapsed / 60 / 60 / 1000;
+         long minutes = elapsed / 60 / 1000;
+         long seconds = elapsed / 1000;
+
+         minutes = minutes % 60;
+         seconds = seconds % 60;
+         double sFrac = (elapsed % 1000) / 1000.0;
+         String h = ("0" + hours).substring(("0" + hours).length() - 2);
+         String m = ("0" + (minutes)).substring(("0" + minutes).length() - 2);
+         String s = ("0" + (seconds)).substring(("0" + seconds).length() - 2);
+         String label = h + ":" + m + ":" + s + String.format("%.3f", sFrac).substring(1)
+               + " (H:M:S)";
+
+         return label;
+      }
+   }
+
+   /**
+    * Returns the elapsed time of the image currently displayed, formatted for the
+    * status line the way the main Micro-Manager viewer formats it: hours and minutes
+    * for long acquisitions, down to milliseconds for short ones.
+    *
+    * <p>Distinct from {@link #getCurrentT()}, which returns a fixed H:M:S form used by
+    * the on-image time overlay.
+    *
+    * @return formatted elapsed time, or an empty string when it is not available
+    */
+   public String getElapsedTimeLabel() {
+      if (readTimeFunction_ == null || currentMetadata_ == null) {
+         return "";
+      }
+      // The reader functions installed by the various plugins return 0 when the tag is
+      // missing rather than null, so a 0 result is ambiguous.  Datasets written by the
+      // Stitch plugin carry no ElapsedTime-ms tag at all.  Check for the tag directly so
+      // "no timestamp" can be distinguished from "zero elapsed time"; the caller then
+      // falls back to showing the time index.
+      if (!currentMetadata_.has(ELAPSED_TIME_TAG)) {
+         return "";
+      }
+      Long elapsed;
+      try {
+         elapsed = readTimeFunction_.apply(currentMetadata_);
+      } catch (Exception e) {
+         return ""; // Metadata for this image has no usable time stamp.
+      }
+      if (elapsed == null || elapsed < 0) {
+         return "";
+      }
+      double elapsedTimeMs = elapsed;
+      if (elapsedTimeMs > 3600000) {
+         int hrs = (int) (elapsedTimeMs / 3600000);
+         double mins = (elapsedTimeMs % (hrs * 3600000L)) / 60000.0;
+         return hrs + ":" + Math.round(mins) + "hr";
+      } else if (elapsedTimeMs > 60000) {
+         int mins = (int) (elapsedTimeMs / 60000);
+         double secs = (elapsedTimeMs % (mins * 60000L)) / 1000.0;
+         return mins + ":" + Math.round(secs) + "min";
+      } else if (elapsedTimeMs > 10000) {
+         return String.format("%.1fs", elapsedTimeMs / 1000);
+      }
+      return String.format("%.0fms", elapsedTimeMs);
+   }
+
+   public String getCurrentZPosition() {
+      if (readZFunction_ == null) {
+         return "Z metadata reader undefined";
+      } else {
+         try {
+            return readZFunction_.apply(currentMetadata_) + " \u00B5" + "m"; //micron
+         } catch (Exception e) {
+            return  "";
+         }
+      }
+   }
+
+   public void setPersistentMouseAdapter(MouseAdapter adapter) {
+      guiManager_.setPersistentMouseAdapter(adapter);
+   }
+
+   /**
+    * Returns the RGB values of the rendered display pixel at the given canvas coordinates.
+    * Returns null if no frame has been rendered or coordinates are out of bounds.
+    * Values are in the range 0–255 (display-mapped, post contrast/gamma).
+    */
+   public int[] getRenderedPixelRGB(int canvasX, int canvasY) {
+      return guiManager_.getRenderedPixelRGB(canvasX, canvasY);
+   }
+
+   @Override
+   public void setCustomCanvasMouseListener(TiledDataViewerCanvasMouseListenerInterface m) {
+      guiManager_.setCustomCanvasMouseListener(m);
+   }
+
+   @Override
+   public void resetCanvasMouseListener() {
+      guiManager_.resetCanvasMouseListener();
+   }
+
+   @Override
+   public Point2D.Double getDisplayImageSize() {
+      return displayModel_.getDisplayImageSize();
+   }
+
+   @Override
+   public void setOverlayerPlugin(TiledDataViewerOverlayerPlugin overlayer) {
+      overlayerPlugin_ = overlayer;
+   }
+
+   public GuiManager getGUIManager() {
+      return guiManager_;
+   }
+
+   public DisplayModel getDisplayModel() {
+      return displayModel_;
+   }
+
+   public TiledDataViewerDataSource getDataSource() {
+      return dataSource_;
+   }
+
+   @Override
+   public int[] getBounds() {
+      return dataSource_.getBounds();
+   }
+
+   public void readHistogramControlsStateFromGUI() {
+      guiManager_.readHistogramControlsStateFromGUI();
+   }
+
+   /**
+    * A coalescent runnable to avoid excessively frequent update of the data
+    * coords range in the UI.
+    */
+   private class ExpandDisplayRangeCoalescentRunnable
+           implements CoalescentRunnable {
+
+      private final List<HashMap<String, Object>> newIamgeEvents = new ArrayList<>();
+      private final List<String> activeChannels = new ArrayList<String>();
+
+      ExpandDisplayRangeCoalescentRunnable(HashMap<String, Object> axisPosisitons) {
+         newIamgeEvents.add(axisPosisitons);
+         if (axisPosisitons.containsKey(TiledDataViewer.CHANNEL_AXIS)) {
+            activeChannels.add((String) axisPosisitons.get(TiledDataViewer.CHANNEL_AXIS));
+         }
+      }
+
+      @Override
+      public Class<?> getCoalescenceClass() {
+         return getClass();
+      }
+
+      @Override
+      public CoalescentRunnable coalesceWith(CoalescentRunnable another) {
+         newIamgeEvents.addAll(
+                 ((ExpandDisplayRangeCoalescentRunnable) another).newIamgeEvents);
+         activeChannels.addAll(((ExpandDisplayRangeCoalescentRunnable) another).activeChannels);
+         return this;
+      }
+
+      @Override
+      public void run() {
+         guiManager_.expandDisplayedRangeToInclude(newIamgeEvents, activeChannels);
+         setImageEvent(newIamgeEvents.get(newIamgeEvents.size() - 1), false);
+         newIamgeEvents.clear();
+      }
+   }
+
+   /**
+    * Called when window is x-ed out by user.
+    */
+   public void requestToClose() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               requestToClose();
+            }
+         });
+      } else {
+         // Give the acquisition a chance to veto the close (e.g. to show a
+         // save-data dialog).  If it returns false, leave the window open.
+         if (acq_ != null && !acq_.requestToClose()) {
+            return;
+         }
+         //check to stop acquisiton?, return here if the attempt to close window unsuccesslful
+         if (acq_ != null && !acq_.isFinished()) {
+            int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
+                    "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+               acq_.abort();
+            } else {
+               return;
+            }
+         }
+
+         close();
+      }
+   }
+
+   /**
+    *
+    */
+   public void close() {
+      new Thread(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               if (acq_ != null) {
+                  //Finish acquisition on different thread to not slow EDT
+                  acq_.abort(); //it may already be aborted but call this again to be sure
+                  acq_.waitForCompletion();
+               }
+            } catch (Exception e) {
+               //not ,uch to do at this point
+               e.printStackTrace();
+            } finally {
+               //Now all resources should be released, so everything can be shut down
+
+               //make everything else close
+               guiManager_.shutdown();
+
+               displayCalculationExecutor_.shutdownNow();
+               overlayCalculationExecutor_.shutdownNow();
+
+               // Close the data source after render threads have stopped to avoid
+               // racing with in-flight read requests issued by the display executor.
+               if (dataSource_ != null) {
+                  try {
+                     dataSource_.close();
+                  } catch (Exception ignore) {
+                     // in-flight reads may fail during async teardown
+                  }
+               }
+
+               setImageHooks_ = null;
+               dataSource_ = null;
+               displayModel_ = null;
+               edtRunnablePool_ = null;
+               displayCalculationExecutor_ = null;
+               overlayCalculationExecutor_ = null;
+               acq_ = null;
+               closed_ = true;
+            }
+         }
+      }, "TiledDataViewer closing thread").start();
+   }
+
+   public JSONObject getSummaryMD() {
+      try {
+         return new JSONObject(summaryMetadata_.toString());
+      } catch (JSONException ex) {
+         return null; //this should not happen
+      }
+   }
+
+   private class DisplayImageComputationRunnable implements CoalescentRunnable {
+
+      DataViewCoords view_ = null;
+
+      public DisplayImageComputationRunnable() {
+         if (displayModel_ != null) {
+            view_ = displayModel_.copyViewCoords();
+         }
+      }
+
+      @Override
+      public Class<?> getCoalescenceClass() {
+         return this.getClass();
+      }
+
+      @Override
+      public CoalescentRunnable coalesceWith(CoalescentRunnable later) {
+         return later; //Always update with newest image 
+      }
+
+      @Override
+      public void run() {
+         if (view_ == null) {
+            return;
+         }
+         if (guiManager_ == null) {
+            return; // initialization
+         }
+         //This is where most of the calculation of creating a display image happens
+         Image img = guiManager_.makeOrGetImage(view_);
+         if (img == null) {
+            // Render was deferred (e.g. display size not yet known for a very large
+            // dataset, so the requested image would be degenerate/oversized). Skip this
+            // repaint; the viewer will re-render once the canvas is laid out.
+            return;
+         }
+         JSONObject tags = guiManager_.getLatestTags();
+         currentMetadata_ = tags;
+
+         Runnable cb = postRenderCallback_;
+         if (cb != null) {
+            try {
+               cb.run();
+            } catch (Exception e) {
+               System.err.println("TiledDataViewer: postRenderCallback threw: " + e);
+            }
+         }
+
+         HashMap<String, int[]> channelHistograms = guiManager_.getHistograms();
+         edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img,
+                 channelHistograms, view_));
+         //now send expensive overlay computation to overlay creation thread
+      }
+   }
+
+   private class CanvasRepaintRunnable implements CoalescentRunnable {
+
+      final Image img_;
+      DataViewCoords view_;
+      HashMap<String, int[]> hists_;
+
+      public CanvasRepaintRunnable(Image img, HashMap<String, int[]> hists,
+                                   DataViewCoords view) {
+         img_ = img;
+         view_ = view;
+         hists_ = hists;
+      }
+
+      @Override
+      public Class<?> getCoalescenceClass() {
+         return this.getClass();
+      }
+
+      @Override
+      public CoalescentRunnable coalesceWith(CoalescentRunnable later) {
+         return later;
+      }
+
+      @Override
+      public void run() {
+         guiManager_.displayNewImage(img_, hists_, view_, overlayerPlugin_);
+      }
+
+   }
+
+}

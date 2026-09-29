@@ -68,6 +68,7 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
 
       final JPanel jPanel1 = new JPanel();
       final NumberFormat format = NumberFormat.getInstance();
+      format.setGroupingUsed(false);
       final NumberFormatter formatter = new NumberFormatter(format);
       formatter.setValueClass(Integer.class);
       formatter.setMinimum(1);

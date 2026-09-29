@@ -899,6 +899,7 @@
                   grid-col (.getGridColumn msp)
                   default-xy (.getDefaultXYStage msp)
                   default-z(.getDefaultZStage msp)
+                  well(if (.hasProperty msp "Well") (.getProperty msp "Well") "")
                   device-positions (:axes (MultiStagePosition-to-map msp))]]
         (let [json-positions (JSONObject.
                                (into {}
@@ -909,6 +910,7 @@
                         "GridColumnIndex" grid-col
                         "DefaultXYStage" default-xy
                         "DefaultZStage" default-z
+                        "Well" well
                         "DeviceCoordinatesUm" json-positions}))))))
 
 (defn generate-axis-order [settings]
@@ -960,7 +962,7 @@
       "PixelType" (get-pixel-type)
       "Positions" (max 1 (count (:positions settings)))
       "Prefix" (if (:save settings) (:prefix settings) "")
-      "ProfileName" (.getProfileName (.profile gui))
+      "ProfileName" (if gui (.getProfileName (.profile gui)) "")
       "ROI" (JSONArray. (get-camera-roi))
       "Slices" (max 1 (count (:slices settings)))
       "SlicesFirst" (:slices-first settings)

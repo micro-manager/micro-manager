@@ -39,7 +39,9 @@ import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -57,7 +59,6 @@ import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEv
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.SummaryMetadata;
@@ -82,9 +83,8 @@ import org.micromanager.internal.utils.NumberUtils;
 
 
 /**
- * This class provides a compatibility layer between AcqEngJ and the
- * AcquisitionEngine interface. It is analogous to AcquisitionWrapperEngine.java,
- * which does the same thing for the clojure acquisition engine
+ * This class runs TestAcquisitions, acquisitions. These only take into account
+ * ZStack and channels settings, and are never saved automatically.
  *
  * <p>AcquisitionEngine implements a subset of the functionality of AcqEngJ,
  * and this class enforces those specific assumptions. These include:
@@ -301,7 +301,13 @@ public class TestAcqAdapter extends DataViewerListener implements
          }
 
          // These hooks make sure that continuousfocus is off when running a Z stack.
-         if (studio_.core().isContinuousFocusEnabled()) {
+         // Only add them when there will actually be Z motion (a Z stack or channels with
+         // Z offsets), otherwise continuous focus is unnecessarily disabled for every
+         // single-frame acquisition such as those used by the Explorer plugin.
+         boolean hasZOffsets = sequenceSettings.useChannels()
+                 && sequenceSettings.channels().stream().anyMatch(c -> c.zOffset() != 0);
+         if (studio_.core().isContinuousFocusEnabled()
+                 && (sequenceSettings.useSlices() || hasZOffsets)) {
             currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
                     AcquisitionAPI.BEFORE_HARDWARE_HOOK);
             currentAcquisition_.addHook(continuousFocusHookAfter(acquisitionSettings),
@@ -520,10 +526,36 @@ public class TestAcqAdapter extends DataViewerListener implements
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
          }
-         zStack = MDAAcqEventModules.zStack(0,
-                 acquisitionSettings.slices().size() - 1,
-                 acquisitionSettings.sliceZStepUm(),
+         zStack = MDAAcqEventModules.zStack(
+                 acquisitionSettings,
                  origin,
+                 null,
+                 chSpecs,
+                 null);
+      } else if (((acquisitionSettings.useChannels() && !chSpecs.isEmpty())
+              || acquisitionSettings.useAutofocus())
+              && !studio_.core().getFocusDevice().isEmpty()) {
+         // Mirror the single-MDA path (AcqEngJAdapter.createAcqEventIterator): when there
+         // is no Z stack but channels and/or autofocus are used, add a "fake" single-slice
+         // Z stack anchored at the CURRENT focus position (relative slice at 0.0). Without
+         // this, MDAAcqEventModules.channels sets the event's Z coordinate to the absolute
+         // zOffset (0.0 when there are no offsets), which drives the focus drive to 0.
+         // Test Acquisitions never use a position list (usePositionList is forced false in
+         // runAcquisition), so no PositionList is passed here.
+         ArrayList<Double> slices = new ArrayList<>();
+         slices.add(0.0);
+         acquisitionSettings = acquisitionSettings.copyBuilder()
+                 .useSlices(true)
+                 .slices(slices)
+                 .relativeZSlice(true)
+                 .sliceZBottomUm(0.0)
+                 .sliceZTopUm(0.0)
+                 .sliceZStepUm(0.0)
+                 .zReference(0.0).build();
+         zStack = MDAAcqEventModules.zStack(
+                 acquisitionSettings,
+                 studio_.core().getPosition(),
+                 null,
                  chSpecs,
                  null);
       }
@@ -1034,9 +1066,14 @@ public class TestAcqAdapter extends DataViewerListener implements
 
    /**
     * Will notify registered AcqSettingsListeners that the settings have changed.
+    *
+    * <p>These are the settings of a Test Acquisition, which are derived from the
+    * MDA window but not identical to it, so the event is marked as not coming
+    * from the primary engine.  That keeps the MDA window (and anything else
+    * mirroring it) from redrawing itself with our modified settings.
     */
    private void settingsChanged(SequenceSettings sequenceSettings) {
-      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(sequenceSettings));
+      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(sequenceSettings, false));
    }
 
 
@@ -1653,6 +1690,27 @@ public class TestAcqAdapter extends DataViewerListener implements
       return sequenceSettings_.comment();
    }
 
+   private boolean posListHasZDrive(PositionList posList) {
+      // assume that all positions contain the same drives
+      if (posList == null || posList.getNumberOfPositions() == 0) {
+         return false;
+      }
+      MultiStagePosition msp = posList.getPosition(0);
+      for (int i = 0; i < msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         if (sp != null && sp.is1DStagePosition()) {
+            String stageLabel = sp.getStageDeviceLabel();
+            try {
+               if (core_.getFocusDevice().equals(stageLabel)) {
+                  return true;
+               }
+            } catch (Exception e) {
+               studio_.logs().logError(e);
+            }
+         }
+      }
+      return false;
+   }
 
    ////////////////////////////////////////////
    ////////// Event handlers

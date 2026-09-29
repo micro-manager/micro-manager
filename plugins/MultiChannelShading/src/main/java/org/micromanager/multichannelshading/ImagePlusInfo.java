@@ -46,6 +46,9 @@ public class ImagePlusInfo extends ImagePlus {
    private final int binning_;
    private final Rectangle roi_;
    private final Map<ClearCLContext, ClearCLBuffer> clBuffers_;
+   // Non-null only for RGB flatfield images: per-channel normalization factors (mean/pixel).
+   // Index 0 = R, 1 = G, 2 = B; each FloatProcessor has length width*height.
+   private FloatProcessor[] rgbFlatFieldProcessors_;
 
 
    public ImagePlusInfo(ImagePlus ip, int binning, Rectangle roi) {
@@ -64,6 +67,23 @@ public class ImagePlusInfo extends ImagePlus {
       binning_ = 1;
       roi_ = new Rectangle(0, 0, ip.getWidth(), ip.getHeight());
       clBuffers_ = new HashMap<ClearCLContext, ClearCLBuffer>(1);
+   }
+
+   public boolean isRgbFlatField() {
+      return rgbFlatFieldProcessors_ != null;
+   }
+
+   /**
+    * Returns the per-channel flatfield normalization processors for RGB images.
+    * Index 0 = R, 1 = G, 2 = B.  Each FloatProcessor contains mean/pixel factors.
+    * Returns null for non-RGB flatfield images.
+    */
+   public FloatProcessor[] getRgbFlatFieldProcessors() {
+      return rgbFlatFieldProcessors_;
+   }
+
+   public void setRgbFlatFieldProcessors(FloatProcessor[] processors) {
+      rgbFlatFieldProcessors_ = processors;
    }
 
    public int getBinning() {

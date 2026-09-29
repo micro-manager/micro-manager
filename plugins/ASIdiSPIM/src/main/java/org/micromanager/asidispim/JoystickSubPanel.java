@@ -59,9 +59,9 @@ public final class JoystickSubPanel extends ListeningJPanel {
    private final Devices.Sides side_;
    private final Prefs prefs_;
    private final String instanceLabel_;
-   private final JComboBox joystickBox_;
-   private final JComboBox rightWheelBox_;
-   private final JComboBox leftWheelBox_;
+   private final JComboBox<JSAxisData> joystickBox_;
+   private final JComboBox<JSAxisData> rightWheelBox_;
+   private final JComboBox<JSAxisData> leftWheelBox_;
      
    /**
     * 
@@ -101,8 +101,8 @@ public final class JoystickSubPanel extends ListeningJPanel {
       super.add(rightWheelBox_);
    }
    
-   private JComboBox makeJoystickSelectionBox(Joystick.Keys jkey) {
-      JComboBox jcb = new JComboBox();
+   private JComboBox<JSAxisData> makeJoystickSelectionBox(Joystick.Keys jkey) {
+      JComboBox<JSAxisData> jcb = new JComboBox<>();
       StageSelectionBoxListener ssbl = new StageSelectionBoxListener(jkey , jcb);
       jcb.addActionListener(ssbl);
       jcb.addItemListener(ssbl);
@@ -127,10 +127,10 @@ public final class JoystickSubPanel extends ListeningJPanel {
    private class StageSelectionBoxListener implements ItemListener,
    ActionListener, DevicesListenerInterface {
       Joystick.Keys jkey_;
-      JComboBox cb_;
+      JComboBox<JSAxisData> cb_;
       boolean updatingList_;
 
-      public StageSelectionBoxListener(Joystick.Keys jkey, JComboBox jc) {
+      public StageSelectionBoxListener(Joystick.Keys jkey, JComboBox<JSAxisData> jc) {
          jkey_ = jkey;
          cb_ = jc;
          this.updateStageSelections();  // do initial rendering

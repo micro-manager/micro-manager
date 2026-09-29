@@ -22,6 +22,8 @@
 
 package org.micromanager.internal.positionlist.utils;
 
+import org.micromanager.PositionList;
+
 
 /**
  * Generates a Z position from XY coordinates.
@@ -39,6 +41,24 @@ public interface ZGenerator {
       @Override
       public String toString() {
          return description_;
+      }
+   }
+
+   /**
+    * Creates a ZGenerator of the requested type from a list of points.
+    *
+    * @param type interpolation method to use
+    * @param points positions (with XY and one or more 1D Z stages) to
+    *               interpolate between
+    * @return a ZGenerator instance
+    */
+   static ZGenerator create(ZGenerator.Type type, PositionList points) {
+      switch (type) {
+         case SHEPINTERPOLATE:
+            return new ZGeneratorShepard(points);
+         case AVERAGE:
+         default:
+            return new ZGeneratorAverage(points);
       }
    }
 

@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,6 +60,10 @@ public final class UserProfileAdmin {
    private static final String INDEX_FILE = "Index.json";
    private static final String OLD_INDEX_FILE = "Profiles.txt";
    private static final String WRITE_LOCK_FILE = "UserProfileWriteLock";
+   // A healthy profile is a few hundred kilobytes.  Anything past this is a symptom of settings
+   // accumulating without bound, which slows startup because the whole file is parsed before the
+   // GUI appears.  Warn (once per session per profile) rather than fail.
+   private static final long OVERSIZED_PROFILE_BYTES = 5L * 1024L * 1024L;
 
    private static final String OLD_DEFAULT_PROFILE_NAME = "Default user";
    private static final String DEFAULT_PROFILE_NAME = "Default User";
@@ -77,6 +83,7 @@ public final class UserProfileAdmin {
 
    private Index virtualIndex_ = new Index();
    private final Map<String, Profile> virtualProfiles_ = new HashMap<>();
+   private final Set<String> oversizeWarningIssued_ = new HashSet<>();
 
    private UUID currentProfileUUID_ = null;
    private DefaultUserProfile currentProfile_ = null;
@@ -574,7 +581,52 @@ public final class UserProfileAdmin {
          virtualProfiles_.put(filename, profile);
          return;
       }
-      profile.toPropertyMap().saveJSON(getModernFile(filename), true, true);
+      File file = getModernFile(filename);
+      profile.toPropertyMap().saveJSON(file, true, true);
+      warnIfProfileOversized(file, profile);
+   }
+
+   /**
+    * Logs a warning naming the settings section responsible when a profile file grows
+    * unreasonably large, so runaway growth is noticed long before it reaches the hundreds of
+    * megabytes that make startup painful.
+    *
+    * @param file    the profile file just written
+    * @param profile the profile that was written
+    */
+   private void warnIfProfileOversized(File file, Profile profile) {
+      long size = file.length();
+      if (size < OVERSIZED_PROFILE_BYTES) {
+         return;
+      }
+      synchronized (oversizeWarningIssued_) {
+         if (!oversizeWarningIssued_.add(file.getPath())) {
+            return;
+         }
+      }
+      String worstKey = "unknown";
+      int worstLength = -1;
+      try {
+         PropertyMap settings = profile.getSettings();
+         for (String key : settings.keySet()) {
+            PropertyMap section = settings.getPropertyMap(key, null);
+            if (section == null) {
+               continue;
+            }
+            int length = section.toJSON().length();
+            if (length > worstLength) {
+               worstLength = length;
+               worstKey = key;
+            }
+         }
+      } catch (RuntimeException e) {
+         // Diagnostics must never break saving the profile.
+         ReportingUtils.logError(e, "Could not determine largest profile section");
+      }
+      ReportingUtils.logError("User profile " + file.getName() + " is " + (size / (1024L * 1024L))
+            + " MB, which will slow Micro-Manager startup.  Largest settings section: "
+            + worstKey + " (" + worstLength + " chars).  Consider compacting the profile "
+            + "(see scripts/CompactProfile.bsh).");
    }
 
    private void deleteFile(String filename) throws IOException {

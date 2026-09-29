@@ -1,0 +1,74 @@
+/**
+ * Stop All Sequences Script
+ *
+ * This script stops all sequences in the current Micro-Manager configuration.
+ * It checks:
+ * 1. Stage and XYStage devices whether they can be sequenced
+ * 2. All sequenceable properties of all devices
+ *
+ * There is no API call to check if a sequence is actually running, so just stop them (which may fail).
+ *
+ * The script can be run from the Micro-Manager Script Panel.
+ */
+
+import mmcorej.DeviceType;
+import mmcorej.StrVector;
+
+// Get all loaded devices
+StrVector devices = mmc.getLoadedDevices();
+
+mm.scripter().message("Checking " + devices.size() + " devices for running sequences...");
+
+int stoppedStages = 0;
+int stoppedProperties = 0;
+
+// Iterate through all devices
+for (int i = 0; i < devices.size(); i++) {
+    String deviceName = devices.get(i);
+    DeviceType deviceType = mmc.getDeviceType(deviceName);
+
+    // Check if device is a Stage or XYStage
+    if (deviceType == DeviceType.StageDevice) { 
+        try {
+        	   // There is no API call to check if a sequence is running
+            // Just stop
+            mm.scripter().message("Stopping possibly running stage sequence on device: " + deviceName);
+            mmc.stopStageSequence(deviceName);
+            stoppedStages++;
+        } catch (Exception e) {
+            mm.scripter().message("Error stopping stage sequence for " + deviceName + ": " + e.getMessage());
+        }
+    }
+    else if (deviceType == DeviceType.XYStageDevice) {
+ 		try {
+        	   // There is no API call to check if a sequence is running
+            // Just stop
+            mm.scripter().message("Stopping possibly running XYStage sequence on device: " + deviceName);
+            mmc.stopXYStageSequence(deviceName);
+            stoppedStages++;
+        } catch (Exception e) {
+            mm.scripter().message("Error stopping stage sequence for " + deviceName + ": " + e.getMessage());
+        }
+    }
+    // Check all properties of the device for sequenceability
+    StrVector properties = mmc.getDevicePropertyNames(deviceName);
+    for (int j = 0; j < properties.size(); j++) {
+        String propertyName = properties.get(j);
+
+        try {
+            // Check if property is sequenceable
+            if (mmc.isPropertySequenceable(deviceName, propertyName)) {
+                // Check if a sequence is running for this property
+                // There is no API call to check if a sequence is running
+                // Just stop
+                mm.scripter().message("Stopping possibly running property sequence: " + deviceName + "." + propertyName);
+                mmc.stopPropertySequence(deviceName, propertyName);
+                stoppedProperties++;
+            }
+        } catch (Exception e) {
+            mm.scripter().message("Error checking/stopping property sequence for " + deviceName + "." + propertyName + ": " + e.getMessage());
+        }
+    }
+}
+
+mm.scripter().message("Complete! Stopped " + stoppedStages + " stage sequence(s) and " + stoppedProperties + " property sequence(s) that may have been running.");

@@ -29,13 +29,39 @@ import org.micromanager.acquisition.SequenceSettings;
  */
 public class DefaultAcquisitionSettingsChangedEvent implements AcquisitionSettingsChangedEvent {
    private final SequenceSettings newSettings_;
+   private final boolean isPrimaryEngine_;
 
+   /**
+    * Constructs the event for the primary acquisition engine.
+    *
+    * @param newSettings The settings that were just applied.
+    */
    public DefaultAcquisitionSettingsChangedEvent(SequenceSettings newSettings) {
+      this(newSettings, true);
+   }
+
+   /**
+    * Constructs the event, specifying which kind of engine it came from.
+    *
+    * @param newSettings     The settings that were just applied.
+    * @param isPrimaryEngine False when posted by a secondary engine, such as a
+    *                        Test Acquisition, whose settings are derived from
+    *                        the MDA window rather than being the MDA window's
+    *                        own settings.
+    */
+   public DefaultAcquisitionSettingsChangedEvent(SequenceSettings newSettings,
+                                                 boolean isPrimaryEngine) {
       newSettings_ = newSettings;
+      isPrimaryEngine_ = isPrimaryEngine;
    }
 
    @Override
    public SequenceSettings getNewSettings() {
       return newSettings_;
+   }
+
+   @Override
+   public boolean isPrimaryEngine() {
+      return isPrimaryEngine_;
    }
 }

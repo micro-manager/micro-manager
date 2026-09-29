@@ -37,31 +37,28 @@ build tools" in the installer (you can modify an existing installation).
 
 
 ### Ubuntu Quickstart
+
 These commands should bring a complete build on Ubuntu. See below sections for more detail.
 
+```sh
+sudo apt install \
+    git subversion build-essential autoconf automake libtool autoconf-archive \
+    pkg-config swig3.0 openjdk-11-jdk ant libboost-all-dev
 
-[mamba](https://mamba.readthedocs.io/) is a fast implementation of the cross platform environment manager [conda](https://docs.conda.io/en/latest/). It will
-allow for easy isolation of the micromanager dependencies and installation. The easiest way to install mamba is with the links here: https://github.com/conda-forge/miniforge#miniforge3
-
-If you don't want to install `mamba` you can replace all the `mamba` commands below with `conda`
-
-```bash
-sudo apt install git subversion build-essential autoconf automake libtool pkg-config autoconf-archive openjdk-8-jdk ant libboost-all-dev
+mkdir 3rdpartypublic
+pushd 3rdpartypublic
+svn checkout https://svn.micro-manager.org/3rdpartypublic/classext
+popd
 
 git clone https://github.com/micro-manager/micro-manager.git
 cd micro-manager
 git submodule update --init --recursive
 
-mamba create -n micro-manager -c conda-forge swig=3 openjdk=8
-mamba activate micro-manager
-
+export SWIG=/usr/bin/swig3.0
 ./autogen.sh
-./configure
-mkdir ../3rdpartypublic; pushd ../3rdpartypublic
-svn checkout https://svn.micro-manager.org/3rdpartypublic/classext
-popd
+./configure  # ./configure --help=recurse for full details
 make fetchdeps
-make -j4
+make -j
 sudo make install
 ```
 
@@ -85,7 +82,7 @@ Ubuntu: `sudo apt install build-essential`
 
 macOS: `brew install git subversion autoconf automake libtool pkg-config ant`
 
-Ubuntu: `sudo apt install git subversion build-essential autoconf automake libtool pkg-config autoconf-archive`
+Ubuntu: `sudo apt install git subversion build-essential autoconf automake libtool autoconf-archive pkg-config`
 
 (On macOS, do not confuse Apple's `/usr/bin/libtool` with GNU Libtool. We need
 the latter. Homebrew installs GNU Libtool as `glibtool`.)
@@ -99,13 +96,13 @@ SWIG 4.x currently does not work for building a correct MMCoreJ
 
 Ubuntu:
 
-The easiest way to get SWIG is via conda-forge
 ```sh
-mamba create -n micro-manager -c conda-forge swig=3
-conda activate micro-manager
+sudo apt install swig3.0
+export SWIG=/usr/bin/swig3.0
 ```
 
 Alternatively you can build it from source:
+
 ```sh
 sudo apt install libpcre3-dev
 curl -LO https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
@@ -133,20 +130,22 @@ Ubuntu: `sudo apt install libboost-all-dev`
 
 To build MMCoreJ and the Java application (Micro-Manager Studio), you will need
 a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
-(a.k.a. Java 1.8). With JDK 17, error may occur as ` 
-Unable to make field int java.awt.Color.value accessible: module java.desktop
-does not "opens java.awt" to unnamed module @38a8f1a9`.(ref issue: #1429)
+(a.k.a. Java 1.8). For running Micro-Manager, Java 11 is currently recommended.
 
-On macOS, install Temurin or Zulu JDK 8, and set `JAVA_HOME`:
+With JDK 17 and above, error may occur like `Unable to make field int
+java.awt.Color.value accessible: module java.desktop does not "opens java.awt"
+to unnamed module @38a8f1a9`.
+
+On macOS, install Temurin or Zulu JDK 11, and set `JAVA_HOME`:
 
 ```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 1.8 -F)
+export JAVA_HOME=$(/usr/libexec/java_home -v 11 -F)
 echo $JAVA_HOME  # Make sure path looks correct
 ```
 
 Building the Java components also requires Apache Ant.
 
-Ubuntu: `sudo apt install openjdk-8-jdk ant`
+Ubuntu: `sudo apt install openjdk-11-jdk ant`
 
 #### Other
 
@@ -248,7 +247,13 @@ following.
    (Java Runtime Environment) rather than a JDK). Not setting `JAVA_HOME` may
    allow `configure` to autodetect a suitable Java home.
 
-2. Find the desirable JDK home on your system. This is a directory that usually
+2. On Ubuntu, multiple versions of OpenJDK may be installed on the system. Use
+   `java -version` to see which one is active. To list the possibilities, use
+   `sudo update-java-alternatives --list`. Use the same command with `--set` to
+   switch between installations. Other distributions have similar (but
+   different) commands.
+
+3. Find the desirable JDK home on your system. This is a directory that usually
    has "jdk" and the Java version number (such as 1.8) in its name, and
    contains the directories `bin` (in which `java`, `javac`, and `jar` are
    found) and `include` (in which `jni.h` is found). Pass

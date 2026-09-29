@@ -21,6 +21,8 @@
 package org.micromanager.magellan.internal.explore;
 
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +51,7 @@ import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.explore.gui.ExploreMouseListener;
 import org.micromanager.magellan.internal.explore.gui.ExploreOverlayer;
+import org.micromanager.magellan.internal.export.ExportModeController;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.NDViewerAPI;
@@ -57,6 +60,7 @@ import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.remote.PycroManagerCompatibleUI;
+import org.micromanager.tileddataprovider.NDTiffProviderAdapter;
 
 /**
  * This class links data storage, viewer, and acquisition, acting as
@@ -90,6 +94,7 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
    private Consumer<String> logger_;
    private ChannelGroupSettings channels_;
    private final boolean useZ_;
+   private ExportModeController exportModeController_;
 
 
    public static ExploreAcqUIAndStorage create(Studio studio, String dir, String name,
@@ -325,10 +330,32 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
          display_.setOverlayerPlugin(overlayer_);
 
          exploreControlsPanel_ = new ExploreControlsPanel(acq_,
-                  overlayer_,  useZ_, channels_, acq_.getZAxes());
+                  overlayer_, useZ_, channels_, acq_.getZAxes());
          display_.addControlPanel(exploreControlsPanel_);
 
+         exportModeController_ = new ExportModeController(display_, overlayer_, mouseListener_,
+                 new NDTiffProviderAdapter(storage_),
+                 () -> {
+                    HashMap<String, Object> baseAxes = new HashMap<>();
+                    if (acq_ != null) {
+                       for (String zName : acq_.getZAxes().keySet()) {
+                          baseAxes.put(zName, display_.getAxisPosition(zName));
+                       }
+                    }
+                    return baseAxes;
+                 },
+                 () -> new java.util.ArrayList<>(channelNames_));
+         exportModeController_.installControlsPanel();
+
          display_.setCustomCanvasMouseListener(mouseListener_);
+
+         SwingUtilities.invokeLater(() -> {
+            Window w = SwingUtilities.getWindowAncestor(display_.getCanvasJPanel());
+            if (w != null) {
+               w.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                       getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            }
+         });
 
          display_.addSetImageHook(new Consumer<HashMap<String, Object>>() {
             @Override
@@ -366,7 +393,7 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
          channelNames_.add(channelName);
       }
       HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
-      Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
+      Future<?> added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
               AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
               AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
 
@@ -581,3 +608,4 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
    }
 
 }
+

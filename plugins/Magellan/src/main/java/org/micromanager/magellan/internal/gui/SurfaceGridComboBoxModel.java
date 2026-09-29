@@ -29,7 +29,8 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
  *
  * @author Henry
  */
-public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements SurfaceGridListener {
+public class SurfaceGridComboBoxModel extends DefaultComboBoxModel<Object>
+         implements SurfaceGridListener {
    
    private static final String DEFAULT_NAME = "(Current field of view)";
    

@@ -277,6 +277,7 @@ public class AsiGamepadFrame extends JFrame {
     *
     * @param loadfile absolute path and file name of load file
     */
+   @SuppressWarnings("unchecked")
    private void loadTable(File loadfile) {
       try {
 
@@ -290,10 +291,10 @@ public class AsiGamepadFrame extends JFrame {
          float fileVer =
                in.readFloat(); //not useful now, but maybe handy in future to help compatibility
 
-         Vector<?> rowData = (Vector<?>) in.readObject();
+         Vector<? extends Vector<?>> rowData = (Vector<? extends Vector<?>>) in.readObject();
          DefaultTableModel model = (DefaultTableModel) btnTable.table.getModel();
          model.setDataVector(rowData, getColumnNames(btnTable.table));
-         rowData = (Vector<?>) in.readObject();
+         rowData = (Vector<? extends Vector<?>>) in.readObject();
          model = (DefaultTableModel) axisTable.table_.getModel();
          model.setDataVector(rowData, getColumnNames(axisTable.table_));
 

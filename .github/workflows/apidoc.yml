@@ -92,6 +92,9 @@ jobs:
           path: micro-manager
           submodules: true
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
       - name: Install tools and dependencies
         run: |
           sudo apt-get update

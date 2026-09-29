@@ -11,7 +11,7 @@ AC_PROG_MKDIR_P
 
 AC_PROG_CC([cc gcc clang])
 AC_PROG_CXX([c++ g++ clang++])
-AX_CXX_COMPILE_STDCXX([14], [noext])
+AX_CXX_COMPILE_STDCXX([17], [noext])
 
 
 # Testing (googletest, googlemock)
@@ -246,7 +246,7 @@ AC_SUBST([imagejjar])
 # (This is a bit of a hack, in part since it needs to run before fetchdeps, but
 # it will have to suffice for now.)
 build_magellan=yes
-AC_CHECK_FILE([$srcdir/../3rdparty/classext/DT1.2.jar],
+AC_CHECK_FILE([$srcdir/../3rdpartypublic/classext/DT1.2.jar],
               [],
               [build_magellan=no])
 AM_CONDITIONAL([BUILD_MAGELLAN],

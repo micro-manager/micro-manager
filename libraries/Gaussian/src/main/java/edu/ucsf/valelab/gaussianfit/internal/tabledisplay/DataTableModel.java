@@ -159,7 +159,7 @@ public class DataTableModel extends AbstractTableModel {
    }
 
    @Override
-   public Class getColumnClass(int col) {
+   public Class<?> getColumnClass(int col) {
       switch (col) {
          case 1:
          case 3:

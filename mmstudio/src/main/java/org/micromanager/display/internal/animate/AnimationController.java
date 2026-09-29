@@ -86,8 +86,9 @@ public final class AnimationController<P> {
       // TODO Need to also notify of animation start/stop
    }
 
+   @SuppressWarnings({"rawtypes", "unchecked"})
    private final EventListenerSupport<Listener> listeners_ =
-         new EventListenerSupport<>(Listener.class, Listener.class.getClassLoader());
+         new EventListenerSupport(Listener.class, Listener.class.getClassLoader());
 
    private final AnimationStateDelegate<P> sequencer_;
 
@@ -110,12 +111,20 @@ public final class AnimationController<P> {
    private ScheduledFuture<?> snapBackFuture_;
    private P snapBackPosition_;
 
+   // Track pending display task to enable coalescence at high frame rates
+   private ScheduledFuture<?> pendingDisplayFuture_;
+
+   // Rate limiting for display updates to prevent overwhelming the display pipeline
+   // Even at 250 FPS camera speed, display can only update at ~60 FPS
+   private static final long MIN_DISPLAY_INTERVAL_NS = 16_000_000L; // 16ms = ~60 FPS
+   private volatile long lastDisplayFiredNs_ = 0;
+
    private boolean didJumpToNewPosition_;
 
    private PerformanceMonitor perfMon_;
 
-   public static <P> AnimationController create(AnimationStateDelegate<P> sequencer) {
-      return new AnimationController(sequencer);
+   public static <P> AnimationController<P> create(AnimationStateDelegate<P> sequencer) {
+      return new AnimationController<>(sequencer);
    }
 
    private AnimationController(AnimationStateDelegate<P> sequencer) {
@@ -127,6 +136,7 @@ public final class AnimationController<P> {
     *
     * @param listener Implementation of the Listener class to be added.
     */
+   @SuppressWarnings("rawtypes")
    public synchronized void addListener(Listener listener) {
       listeners_.addListener(listener, true);
    }
@@ -136,6 +146,7 @@ public final class AnimationController<P> {
     *
     * @param listener Listener to be removed.
     */
+   @SuppressWarnings("rawtypes")
    public synchronized void removeListener(Listener listener) {
       listeners_.removeListener(listener);
    }
@@ -148,11 +159,44 @@ public final class AnimationController<P> {
     * Permanently cease all animation and scheduled events.
     */
    public void shutdown() {
-      scheduler_.shutdown();
       stopAnimation();
+
+      // Cancel all pending scheduled tasks
+      synchronized (this) {
+         if (scheduledTickFuture_ != null) {
+            scheduledTickFuture_.cancel(true);
+            scheduledTickFuture_ = null;
+         }
+         if (newDataPositionExpiredFuture_ != null) {
+            newDataPositionExpiredFuture_.cancel(true);
+            newDataPositionExpiredFuture_ = null;
+         }
+         if (snapBackFuture_ != null) {
+            snapBackFuture_.cancel(true);
+            snapBackFuture_ = null;
+         }
+         if (pendingDisplayFuture_ != null) {
+            pendingDisplayFuture_.cancel(true);
+            pendingDisplayFuture_ = null;
+         }
+      }
+
+      scheduler_.shutdown();
       try {
-         scheduler_.awaitTermination(1, TimeUnit.HOURS);
+         // Wait up to 5 seconds for graceful shutdown
+         if (!scheduler_.awaitTermination(5, TimeUnit.SECONDS)) {
+            // Force shutdown if graceful shutdown times out
+            ReportingUtils.logMessage(
+                    "AnimationController scheduler did not terminate gracefully, forcing shutdown");
+            scheduler_.shutdownNow();
+            // Wait a bit more for forced shutdown
+            if (!scheduler_.awaitTermination(2, TimeUnit.SECONDS)) {
+               ReportingUtils.logError(
+                       "AnimationController scheduler did not terminate after forced shutdown");
+            }
+         }
       } catch (InterruptedException notUsedByUs) {
+         scheduler_.shutdownNow();
          Thread.currentThread().interrupt();
       }
       ReportingUtils.logDebugMessage("Scheduler in AnimationController was shut down");
@@ -272,18 +316,30 @@ public final class AnimationController<P> {
     * @param position Position that should be displayed.
     */
    public synchronized void forceDataPosition(final P position) {
+      // Cancel any pending display task to prevent queue backlog at high frame rates
+      if (pendingDisplayFuture_ != null && !pendingDisplayFuture_.isDone()) {
+         pendingDisplayFuture_.cancel(false);
+         pendingDisplayFuture_ = null;
+      }
       // Always call listeners from scheduler thread
       scheduler_.schedule(new Runnable() {
          @Override
+         @SuppressWarnings("unchecked")
          public void run() {
+            // Capture state while holding lock, then fire listeners without lock
+            boolean shouldFireExpired;
             synchronized (AnimationController.this) {
+               shouldFireExpired = didJumpToNewPosition_;
                if (didJumpToNewPosition_) {
                   didJumpToNewPosition_ = false;
-                  listeners_.fire().animationNewDataPositionExpired();
                }
                sequencer_.setAnimationPosition(position);
-               listeners_.fire().animationShouldDisplayDataPosition(position);
             }
+            // Fire listeners without holding lock to avoid deadlock
+            if (shouldFireExpired) {
+               listeners_.fire().animationNewDataPositionExpired();
+            }
+            listeners_.fire().animationShouldDisplayDataPosition(position);
          }
       }, 0, TimeUnit.MILLISECONDS);
    }
@@ -293,11 +349,18 @@ public final class AnimationController<P> {
     *
     * @param newPosition The new position to be displayed.
     */
+   @SuppressWarnings("unchecked")
    public synchronized void newDataPosition(final Coords newPosition) {
       // Mode may have switched since scheduling a snap-back, so cancel it here
       if (snapBackFuture_ != null) {
          snapBackFuture_.cancel(false);
          snapBackFuture_ = null;
+      }
+
+      // Cancel any pending display task to prevent queue backlog at high frame rates
+      if (pendingDisplayFuture_ != null && !pendingDisplayFuture_.isDone()) {
+         pendingDisplayFuture_.cancel(false);
+         pendingDisplayFuture_ = null;
       }
       if (didJumpToNewPosition_) {
          didJumpToNewPosition_ = false;
@@ -310,9 +373,8 @@ public final class AnimationController<P> {
                if (Thread.interrupted()) {
                   return; // Canceled
                }
-               synchronized (AnimationController.this) {
-                  listeners_.fire().animationNewDataPositionExpired();
-               }
+               // Fire listener without holding lock to avoid deadlock
+               listeners_.fire().animationNewDataPositionExpired();
             }
          }, 1000, TimeUnit.MILLISECONDS);
       }
@@ -352,35 +414,60 @@ public final class AnimationController<P> {
             snapBackFuture_ = null;
          }
          snapBackPosition_ = (P) snapBackPosition;
-         scheduler_.schedule(new Runnable() {
+
+         // Calculate delay to rate-limit display updates to ~60 FPS
+         long now = System.nanoTime();
+         long timeSinceLastFire = now - lastDisplayFiredNs_;
+         long delayNs = Math.max(0, MIN_DISPLAY_INTERVAL_NS - timeSinceLastFire);
+         long delayMs = delayNs / 1_000_000L;
+
+         pendingDisplayFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
+               // Clear pending future at start of execution
                synchronized (AnimationController.this) {
-                  listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                  listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
-                  listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
+                  pendingDisplayFuture_ = null;
                   didJumpToNewPosition_ = true;
-                  listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
+                  lastDisplayFiredNs_ = System.nanoTime();
                }
+               // Fire listeners without holding lock to avoid deadlock
+               listeners_.fire().animationAcknowledgeDataPosition(newPosition);
+               listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
+               listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
+               listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
             }
-         }, 0, TimeUnit.MILLISECONDS);
+         }, delayMs, TimeUnit.MILLISECONDS);
          snapBackFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
+               // Capture state while holding lock
+               boolean shouldFireExpired;
+               P capturedSnapBackPosition;
                synchronized (AnimationController.this) {
+                  capturedSnapBackPosition = snapBackPosition_;
+                  shouldFireExpired = false;
                   if (snapBackPosition_ != null) { // Be safe
                      if (didJumpToNewPosition_) {
                         didJumpToNewPosition_ = false;
-                        listeners_.fire().animationNewDataPositionExpired();
+                        shouldFireExpired = true;
                      }
-                     // Even if we have already moved away from the new data
-                     // position by other means (e.g. user click), we still
-                     // snap back if we are still in snap-back mode.
-                     //if (newPositionMode_ == NewPositionHandlingMode.FLASH_AND_SNAP_BACK) {
-                     listeners_.fire().animationShouldDisplayDataPosition(snapBackPosition_);
-                     //}
                      snapBackPosition_ = null;
                   }
+               }
+               // Fire listeners without holding lock to avoid deadlock
+               if (capturedSnapBackPosition != null) {
+                  if (shouldFireExpired) {
+                     listeners_.fire().animationNewDataPositionExpired();
+                  }
+                  // Even if we have already moved away from the new data
+                  // position by other means (e.g. user click), we still
+                  // snap back if we are still in snap-back mode.
+                  //if (newPositionMode_ == NewPositionHandlingMode.FLASH_AND_SNAP_BACK) {
+                  listeners_.fire().animationShouldDisplayDataPosition(capturedSnapBackPosition);
+                  //}
+               }
+               // Restart ticks and clear future if animation enabled
+               synchronized (AnimationController.this) {
                   if (animationEnabled_.get()) {
                      startTicks(tickIntervalMs_, tickIntervalMs_);
                   }
@@ -390,36 +477,59 @@ public final class AnimationController<P> {
          }, newPositionFlashDurationMs_, TimeUnit.MILLISECONDS);
 
       } else if (foundAxisToBeIgnored) {
-         scheduler_.schedule(new Runnable() {
+         // Calculate delay to rate-limit display updates to ~60 FPS
+         long now = System.nanoTime();
+         long timeSinceLastFire = now - lastDisplayFiredNs_;
+         long delayNs = Math.max(0, MIN_DISPLAY_INTERVAL_NS - timeSinceLastFire);
+         long delayMs = delayNs / 1_000_000L;
+
+         pendingDisplayFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
+               // Clear pending future and update state while holding lock
+               boolean positionChanged = !newDisplayPosition.equals(oldPosition);
                synchronized (AnimationController.this) {
-                  listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                  if (!newDisplayPosition.equals(oldPosition)) {
-                     listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
+                  pendingDisplayFuture_ = null;
+                  if (positionChanged) {
                      sequencer_.setAnimationPosition((P) newDisplayPosition);
-                     listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                      didJumpToNewPosition_ = true;
-                     listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
-                  } else {
-                     listeners_.fire().animationNewDataPositionExpired();
+                     lastDisplayFiredNs_ = System.nanoTime();
                   }
                }
-            }
-         }, 0, TimeUnit.MILLISECONDS);
-      } else { // no axis locked
-         scheduler_.schedule(new Runnable() {
-            @Override
-            public void run() {
-               synchronized (AnimationController.this) {
-                  listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
-                  sequencer_.setAnimationPosition((P) newPosition);
-                  listeners_.fire().animationShouldDisplayDataPosition(newPosition);
-                  didJumpToNewPosition_ = true;
-                  listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
+               // Fire listeners without holding lock to avoid deadlock
+               listeners_.fire().animationAcknowledgeDataPosition(newPosition);
+               if (positionChanged) {
+                  listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
+                  listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
+                  listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
+               } else {
+                  listeners_.fire().animationNewDataPositionExpired();
                }
             }
-         }, 0, TimeUnit.MILLISECONDS);
+         }, delayMs, TimeUnit.MILLISECONDS);
+      } else { // no axis locked
+         // Calculate delay to rate-limit display updates to ~60 FPS
+         long now = System.nanoTime();
+         long timeSinceLastFire = now - lastDisplayFiredNs_;
+         long delayNs = Math.max(0, MIN_DISPLAY_INTERVAL_NS - timeSinceLastFire);
+         long delayMs = delayNs / 1_000_000L;
+
+         pendingDisplayFuture_ = scheduler_.schedule(new Runnable() {
+            @Override
+            public void run() {
+               // Clear pending future and update state while holding lock
+               synchronized (AnimationController.this) {
+                  pendingDisplayFuture_ = null;
+                  sequencer_.setAnimationPosition((P) newPosition);
+                  didJumpToNewPosition_ = true;
+                  lastDisplayFiredNs_ = System.nanoTime();
+               }
+               // Fire listeners without holding lock to avoid deadlock
+               listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
+               listeners_.fire().animationShouldDisplayDataPosition(newPosition);
+               listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
+            }
+         }, delayMs, TimeUnit.MILLISECONDS);
       }
    }
 
@@ -481,13 +591,13 @@ public final class AnimationController<P> {
       }
       scheduler_.schedule(new Runnable() {
          @Override
+         @SuppressWarnings("unchecked")
          public void run() {
             if (perfMon_ != null) {
                perfMon_.sampleTimeInterval("Animation position for tick (run)");
             }
-            synchronized (AnimationController.this) {
-               listeners_.fire().animationShouldDisplayDataPosition(newPosition);
-            }
+            // Fire listener without holding lock to avoid deadlock
+            listeners_.fire().animationShouldDisplayDataPosition(newPosition);
          }
       }, 0, TimeUnit.MILLISECONDS);
    }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.micromanager.Studio;
 import org.micromanager.data.Annotation;
@@ -50,7 +51,11 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       duplicate_ = new DefaultDatastore(this.studio);
 
       if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         saver_ = new StorageMultipageTiff(studio.app().getMainWindow(),
+         JFrame frame = null;
+         if (studio != null) {
+            frame = studio.app().getMainWindow();
+         }
+         saver_ = new StorageMultipageTiff(frame,
                duplicate_,
                path_, true, true,
                StorageMultipageTiff.getShouldSplitPositions());
@@ -168,11 +173,15 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
             Thread.sleep(100);
          } catch (InterruptedException e) {
             timeOut = true;
-            studio.logs().logError(e);
+            if (studio != null) {
+               studio.logs().logError(e);
+            }
          }
       }
       if (timeOut) {
-         studio.logs().showError("Failed to save data");
+         if (studio != null) {
+            studio.logs().showError("Failed to save data");
+         }
          return null;
       }
       for (Coords coords : tmp) {
@@ -203,10 +212,14 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       try {
          get();
       } catch (ExecutionException | InterruptedException e) {
-         studio.logs().showError(e, "Failed to save to " + path_);
+         if (studio != null) {
+            studio.logs().showError(e, "Failed to save to " + path_);
+         }
       }
 
-      studio.alerts().postAlert("Finished saving", this.getClass(), path_);
+      if (studio != null) {
+         studio.alerts().postAlert("Finished saving", this.getClass(), path_);
+      }
    }
 
 

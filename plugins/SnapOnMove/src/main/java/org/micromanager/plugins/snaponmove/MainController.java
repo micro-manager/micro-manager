@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -56,7 +57,6 @@ import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * The main control code for Snap-on-Move.
@@ -70,7 +70,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 class MainController {
    private final Studio studio_;
 
-   private long pollingIntervalMs_;
+   private final AtomicLong pollingIntervalMs_ = new AtomicLong();
 
    // Criteria for monitoring and change detection.
    // Although we frequently search for matching MonitoredItem, we just
@@ -122,8 +122,8 @@ class MainController {
    MainController(Studio studio) {
       studio_ = studio;
 
-      pollingIntervalMs_ = studio_.profile().getSettings(this.getClass())
-                  .getLong(PROFILE_KEY_POLLING_INTERVAL_MS, 100L);
+      pollingIntervalMs_.set(studio_.profile().getSettings(this.getClass())
+                  .getLong(PROFILE_KEY_POLLING_INTERVAL_MS, 100L));
       useSnap_ = studio_.profile().getSettings(this.getClass()).getBoolean(USE_SNAP, true);
       useTestAcq_ = studio_.profile().getSettings(this.getClass()).getBoolean(USE_TEST_ACQ, false);
 
@@ -152,15 +152,15 @@ class MainController {
       studio_.events().registerForEvents(this);
    }
 
-   synchronized void setPollingIntervalMs(long intervalMs) {
-      pollingIntervalMs_ = intervalMs;
+   void setPollingIntervalMs(long intervalMs) {
+      pollingIntervalMs_.set(intervalMs);
 
       studio_.profile().getSettings(this.getClass()).putLong(
             PROFILE_KEY_POLLING_INTERVAL_MS, intervalMs);
    }
 
-   synchronized long getPollingIntervalMs() {
-      return pollingIntervalMs_;
+   long getPollingIntervalMs() {
+      return pollingIntervalMs_.get();
    }
 
    synchronized void setChangeCriteria(Collection<ChangeCriterion> criteria) {
@@ -237,7 +237,10 @@ class MainController {
       } else {
          monitorThread_.interrupt();
          try {
-            monitorThread_.join();
+            monitorThread_.join(1000);
+            if (monitorThread_.isAlive()) {
+               studio_.logs().logError("Snap-on-Move monitor thread failed to exit");
+            }
          } catch (InterruptedException notOurs) {
             Thread.currentThread().interrupt();
          }
@@ -312,7 +315,8 @@ class MainController {
       if (Thread.interrupted()) {
          throw new InterruptedException();
       }
-      Thread.sleep(getPollingIntervalMs());
+      long pollingIntervalMs = getPollingIntervalMs();
+      Thread.sleep(pollingIntervalMs);
       long pollingDeadlineMs = 0; // The first poll should happen immediately
       for (; ; ) {
          if (waitForEvents(pollingDeadlineMs)) {
@@ -326,7 +330,7 @@ class MainController {
          if (pollDevices()) {
             return;
          }
-         pollingDeadlineMs = System.currentTimeMillis() + getPollingIntervalMs();
+         pollingDeadlineMs = System.currentTimeMillis() + pollingIntervalMs;
       }
    }
 

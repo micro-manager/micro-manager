@@ -263,14 +263,14 @@ public class ParticleData {
                                               final Point2D_I32 startCenter,
                                               final int halfBoxSize) throws IOException {
 
-      ImageGray sub = BoofCVImageConverter.subImage(dp, cb, frame, startCenter, halfBoxSize);
+      ImageGray<?> sub = BoofCVImageConverter.subImage(dp, cb, frame, startCenter, halfBoxSize);
       if (sub == null) {
          return null;
       }
       GrayU8 mask = new GrayU8(sub.width, sub.height);
 
       int threshold = BoofCVUtils.compressedMaxEntropyThreshold(sub, 256);
-      GThresholdImageOps.threshold(sub, mask, threshold, false);
+      GThresholdImageOps.threshold((ImageGray) sub, mask, threshold, false);
 
       // Remove small particles
       mask = BinaryImageOps.erode4(mask, 1, null);

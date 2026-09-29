@@ -324,14 +324,14 @@ public class DriftCorrector {
                ij.IJ.showProgress(1);
 
                List<SpotData> correctedData = new ArrayList<SpotData>();
-               Iterator it = rowData.spotList_.iterator();
+               Iterator<SpotData> it = rowData.spotList_.iterator();
 
                int testNr = 0;
                StageMovementData smd = stagePosMA.get(0);
                int counter = 0;
                while (it.hasNext()) {
                   counter++;
-                  SpotData gs = (SpotData) it.next();
+                  SpotData gs = it.next();
                   int test;
                   if (useSlices) {
                      test = gs.getSlice();
@@ -553,12 +553,12 @@ public class DriftCorrector {
          ij.IJ.showProgress(1);
 
          List<SpotData> correctedData = new ArrayList<SpotData>();
-         Iterator it = rowData.spotList_.iterator();
+         Iterator<SpotData> it = rowData.spotList_.iterator();
 
          testNr = 0;
          StageMovementData smd = stagePos.get(0);
          while (it.hasNext()) {
-            SpotData gs = (SpotData) it.next();
+            SpotData gs = it.next();
             int test;
             if (useSlices) {
                test = gs.getSlice();

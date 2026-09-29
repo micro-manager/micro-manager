@@ -37,8 +37,8 @@ import org.micromanager.display.internal.gearmenu.DefaultImageExporter;
  * @author nico
  */
 public final class MMKeyDispatcher implements KeyEventDispatcher {
-   Class textCanvasClass = null;
-   final Class[] forbiddenClasses_;
+   Class<?> textCanvasClass = null;
+   final Class<?>[] forbiddenClasses_;
    private final Studio studio_;
 
    /**
@@ -58,7 +58,7 @@ public final class MMKeyDispatcher implements KeyEventDispatcher {
        * If there are other areas in the application in which keyevents should
        * not be processed, add those here
        */
-      Class[] forbiddenClasses = {
+      Class<?>[] forbiddenClasses = {
             java.awt.TextComponent.class,
             javax.swing.text.JTextComponent.class,
             org.fife.ui.rsyntaxtextarea.RSyntaxTextArea.class,
@@ -73,7 +73,7 @@ public final class MMKeyDispatcher implements KeyEventDispatcher {
     */
    private boolean checkSource(KeyEvent ke) {
       Object source = ke.getSource();
-      for (Class clazz : forbiddenClasses_) {
+      for (Class<?> clazz : forbiddenClasses_) {
          if (clazz != null && clazz.isInstance(source)) {
             return false;
          }

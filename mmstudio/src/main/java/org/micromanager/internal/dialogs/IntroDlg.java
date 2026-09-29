@@ -25,11 +25,8 @@ package org.micromanager.internal.dialogs;
 
 import ij.IJ;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.io.IOException;
@@ -55,7 +52,6 @@ import org.micromanager.internal.StartupSettings;
 import org.micromanager.internal.dialogs.introdialogparts.ConfigSelectionUIController;
 import org.micromanager.internal.dialogs.introdialogparts.FastInitializationUIController;
 import org.micromanager.internal.dialogs.introdialogparts.ProfileSelectionUIController;
-import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.UserProfileAdmin;
 
@@ -222,11 +218,7 @@ public final class IntroDlg extends JDialog {
       super.getContentPane().add(contentsPanel, new CC().grow().push());
       super.pack();
 
-      Dimension winSize = contentsPanel.getPreferredSize();
-      GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(0, 0);
-      Rectangle bounds = config.getBounds();
-      super.setLocation(bounds.x + bounds.width / 2 - winSize.width / 2,
-            bounds.y + bounds.height / 2 - winSize.height / 2);
+      super.setLocationRelativeTo(null);
 
       super.toFront();
       super.setVisible(true);

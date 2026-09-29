@@ -128,7 +128,12 @@ public final class ConfigGroupPad extends JScrollPane {
    public void refreshGroup(String groupName, String configName) {
       if (data_ != null) {
          data_.refreshGroup(groupName, configName);
-         data_.fireTableStructureChanged();
+         // Skip fireTableDataChanged while a cell is being edited — it would
+         // tear down the editor via removeEditor(), discarding in-progress edits.
+         // A plain repaint keeps non-editing rows up to date.
+         if (!table_.isEditing()) {
+            data_.fireTableDataChanged();
+         }
          table_.repaint();
       }
    }
@@ -402,7 +407,13 @@ public final class ConfigGroupPad extends JScrollPane {
          try {
             for (StateItem item : groupList_) {
                if (item.group.equals(groupName)) {
-                  item.config = configName;
+                  if (item.singleProp) {
+                     item.setValueFromCoreString(
+                              core_.getPropertyFromCache(item.device, item.name));
+                     item.config = item.value;
+                  } else {
+                     item.config = configName;
+                  }
                }
             }
          } catch (Exception e) {

@@ -32,6 +32,9 @@ public final class BeanshellEngine implements ScriptingEngine {
       public void run() {
          stop_ = false;
          running_ = true;
+         // Resolve classes (including those referenced by library code via the thread context
+         // class loader) through the shared plugin class loader, so scripts can see plugins.
+         setContextClassLoader(panel_.getPluginClassLoader());
          try {
             interp_.eval(script_);
          } catch (TargetError e) {

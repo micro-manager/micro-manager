@@ -101,7 +101,11 @@ public interface SummaryMetadata {
       @Override
       Builder userData(PropertyMap userData);
 
+      Builder initialScopeData(PropertyMap initialScopeData);
+
       Builder sequenceSettings(SequenceSettings sequenceSettings);
+
+      Builder multiWellPlate(MultiWellPlate plate);
 
       Builder imageWidth(Integer width);
 
@@ -341,6 +345,15 @@ public interface SummaryMetadata {
     */
    List<MultiStagePosition> getStagePositionList();
 
+
+   /**
+    * Provides information about the MultiWellPlate used in the acquisition.
+    * Can be null.
+    *
+    * @return MultiWellPlate instance.
+    */
+   MultiWellPlate getMultiWellPlate();
+
    /**
     * Deprecated.
     *
@@ -356,6 +369,18 @@ public interface SummaryMetadata {
     * @return Any general-purpose user meta data
     */
    PropertyMap getUserData();
+
+   /**
+    * Device properties at the start of the acquisition.
+    *
+    * <p>This is analogous to Metadata.getScopeData(), which contains the device
+    * properties at the time of each image capture. InitialScopeData contains
+    * the device properties at the start of the acquisition, before any
+    * acquisition-related changes.</p>
+    *
+    * @return PropertyMap with device properties in "DeviceLabel-PropertyName" format
+    */
+   PropertyMap getInitialScopeData();
 
 
    /**

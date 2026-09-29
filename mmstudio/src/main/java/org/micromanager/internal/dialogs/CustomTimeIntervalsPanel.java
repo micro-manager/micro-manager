@@ -5,10 +5,10 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +32,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 
 /**
@@ -228,6 +229,10 @@ public final class CustomTimeIntervalsPanel extends JPanel {
 
       public LogTimeDialog() {
          super();
+         java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+         if (iconUrl != null) {
+            setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+         }
          this.setModal(true);
          this.setSize(new Dimension(520, 300));
          this.setResizable(false);
@@ -410,7 +415,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          nCheck_.addActionListener(boxesListener);
          tCheck_.addActionListener(boxesListener);
 
-         aValue_ = new JFormattedTextField(NumberFormat.getNumberInstance());
+         aValue_ = new JFormattedTextField(NumberUtils.getDisplayFormat(3));
          aValue_.setFont(new Font("Arial", Font.PLAIN, 14));
          aValue_.setValue(1.0);
          aValue_.setPreferredSize(new Dimension(80, 22));
@@ -419,12 +424,12 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          aCombo_.setFont(new Font("Arial", Font.PLAIN, 14));
          row1.add(aValue_);
          row1.add(aCombo_);
-         rValue_ = new JFormattedTextField(NumberFormat.getNumberInstance());
+         rValue_ = new JFormattedTextField(NumberUtils.getDisplayFormat(3));
          rValue_.setFont(new Font("Arial", Font.PLAIN, 14));
          rValue_.setValue(2.0);
          rValue_.setPreferredSize(new Dimension(80, 22));
          row2.add(rValue_);
-         tValue_ = new JFormattedTextField(NumberFormat.getNumberInstance());
+         tValue_ = new JFormattedTextField(NumberUtils.getDisplayFormat(3));
          tValue_.setFont(new Font("Arial", Font.PLAIN, 14));
          tValue_.setValue(1000.0);
          tValue_.setPreferredSize(new Dimension(80, 22));
@@ -584,6 +589,10 @@ public final class CustomTimeIntervalsPanel extends JPanel {
 
       public LinearTimeDialog() {
          super();
+         java.net.URL iconUrl = getClass().getResource("/org/micromanager/icons/microscope.gif");
+         if (iconUrl != null) {
+            setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
+         }
          this.setModal(true);
          this.setSize(new Dimension(350, 200));
          this.setResizable(false);
@@ -626,7 +635,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
                      + "as possible");
          row2.add(intervalLabel);
 
-         interval_ = new JFormattedTextField(NumberFormat.getNumberInstance());
+         interval_ = new JFormattedTextField(NumberUtils.getDisplayFormat(3));
          interval_.setFont(new Font("Arial", Font.PLAIN, 14));
          interval_.setValue(1.0);
          interval_.setPreferredSize(new Dimension(80, 22));

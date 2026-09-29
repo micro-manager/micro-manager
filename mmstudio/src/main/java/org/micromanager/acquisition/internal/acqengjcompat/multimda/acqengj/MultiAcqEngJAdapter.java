@@ -26,8 +26,10 @@ import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -38,6 +40,7 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -53,6 +56,7 @@ import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEv
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
+import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJUtils;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MDASettingData;
 import org.micromanager.data.DataProvider;
@@ -88,6 +92,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    private String zStage_;
 
    private List<Datastore> stores_;
+   private final Set<Datastore> endedStores_ = new HashSet<>();
+   // Guards the ended-store bookkeeping and teardown in onAcquisitionEnded, which can
+   // be invoked concurrently for different stores on the EventBus posting thread.
+   private final Object endedStoresLock_ = new Object();
    private List<Pipeline> pipelines_;
    private SequenceSettings timeLapseSettings_ = null;
 
@@ -96,6 +104,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    private boolean autofocusOn_;
 
    private long nextWakeTime_ = -1;
+   private long lastFrameIndex_ = -1;
 
    private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
 
@@ -145,6 +154,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          PositionList pl = acq.getPositionList();
          if (pl == null) {
             try {
+               // No position list for this acquisition: use the current stage position,
+               // evaluated now (at run time), not when the acquisition was added. Only XY
+               // is captured here; Z comes from the acquisition's own slice settings
+               // (see createAcqEventIterator, which uses core_.getPosition() as the Z origin).
                MultiStagePosition msp = new MultiStagePosition(studio_.core().getXYStageDevice(),
                        studio_.core().getXYStagePosition().getX(),
                        studio_.core().getXYStagePosition().getY(),
@@ -163,7 +176,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          return null;
       }
       timeLapseSettings_ = basicSettings;
-      stores_ = new ArrayList<>(sequenceSettings.size());
+      synchronized (endedStoresLock_) {
+         stores_ = new ArrayList<>(sequenceSettings.size());
+         endedStores_.clear();
+      }
       pipelines_ = new ArrayList<>(sequenceSettings.size());
       for (int i = 0; i < sequenceSettings.size(); i++) {
          if (sequenceSettings.get(i).useCustomIntervals()) {
@@ -173,7 +189,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          if (sequenceSettings.get(i).acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                || sequenceSettings.get(i).acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
             // we only handle time first acquisitions (at least for now)
-            studio_.logs().showError("PLease select Time first for all acquisitions");
+            studio_.logs().showError("Please select Time first for all acquisitions");
             return null;
          }
          // Make sure computer can write to selected location and there is enough space to do so
@@ -195,7 +211,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                   ReportingUtils.showMessage("Acquisition canceled.");
                   return null;
                }
-            } else if (!this.enoughDiskSpace(root)) {
+            } else if (!this.enoughDiskSpace(root, sequenceSettings.get(i))) {
                ReportingUtils.showError(
                      "Not enough space on disk to save the requested image set; "
                            + "acquisition canceled.");
@@ -226,10 +242,13 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
             SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
                      NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                               summaryMetadataJSON.toString()));
-            summaryMetadata = summaryMetadata.copyBuilder()
-                     .sequenceSettings(sequenceSettings.get(i))
-                     .stagePositions(positionLists.get(i).getPositions())
-                     .build();
+            SummaryMetadata.Builder smb = summaryMetadata.copyBuilder()
+                     .sequenceSettings(sequenceSettings.get(i));
+            if (sequenceSettings.get(i).usePositionList()) {
+               smb.stagePositions(positionLists.get(i).getPositions())
+                       .multiWellPlate(positionLists.get(i).getPlate());
+            }
+            summaryMetadata =  smb.build();
             MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
                   sequenceSettings.get(i));
             Datastore store = acq.getDatastore();
@@ -241,6 +260,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
          zStage_ = core_.getFocusDevice();
          zStart_ = core_.getPosition(zStage_);
+         // Initialize positionMap_ (declared in the base AcqEngJAdapter). The inherited
+         // autofocusHook() writes into it and would NPE if it were left null (the base
+         // runAcquisition() that normally initializes it is overridden here).
+         positionMap_ = new HashMap<>();
          autofocusMethod_ = studio_.getAutofocusManager().getAutofocusMethod();
          autofocusOn_ = false;
          if (autofocusMethod_ != null) {
@@ -253,10 +276,25 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                   sequenceSettings.get(i)));
          }
 
-         // These hooks implement Autofocus
+         // These hooks implement Autofocus.  Mirror the single-MDA path
+         // (AcqEngJAdapter.runAcquisition): autofocus must run at BEFORE_Z_DRIVE_HOOK
+         // (after XY/other stages are set, but before the Z drive moves for the stack),
+         // and adjustZDrivesHook rewrites the event's Z to the autofocused position so
+         // the Z drive is not sent to the raw (absolute) zStack origin.
          if (basicSettings.useAutofocus()) {
             currentMultiMDA_.addHook(autofocusHook(basicSettings.skipAutofocusCount()),
-                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+                  AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
+            currentMultiMDA_.addHook(adjustZDrivesHook(),
+                  AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
+         }
+
+         // Hook to update the time of the next wake-up call, so that the "Next frame in
+         // xxx sec" alert shows a sensible countdown. Without this, getNextWakeTime()
+         // returns its initial -1 and the alert shows a large negative number.
+         if (timeLapseSettings_.useFrames()) {
+            lastFrameIndex_ = -1;
+            currentMultiMDA_.addHook(updateNextWakeHook(timeLapseSettings_),
+                  AcquisitionAPI.AFTER_HARDWARE_HOOK);
          }
 
          for (int i = 0; i < sequenceSettings.size(); i++) {
@@ -375,13 +413,47 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
+         PositionList posList = null;
          if (acquisitionSettings.relativeZSlice()) {
             origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+            if (acquisitionSettings.usePositionList()
+                     && AcqEngJUtils.posListHasZDrive(studio_, positionList)) {
+               posList = positionList;
+            }
          }
-         zStack = MDAAcqEventModules.zStack(0,
-               acquisitionSettings.slices().size() - 1,
-               acquisitionSettings.sliceZStepUm(),
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
                origin,
+               posList,
+               chSpecs,
+               tag);
+      } else if (((acquisitionSettings.useChannels() && !chSpecs.isEmpty())
+               || timeLapseSettings_.useAutofocus())
+               && !studio_.core().getFocusDevice().isEmpty()) {
+         // Mirror the single-MDA path (AcqEngJAdapter.createAcqEventIterator): when there
+         // is no Z stack but channels and/or autofocus are used, add a "fake" single-slice
+         // Z stack anchored at the CURRENT focus position (relative slice at 0.0). Without
+         // this, MDAAcqEventModules.channels sets the event's Z coordinate to the absolute
+         // zOffset (0.0 when there are no offsets), which drives the focus drive to 0.
+         PositionList posList = null;
+         if (acquisitionSettings.usePositionList()
+                  && AcqEngJUtils.posListHasZDrive(studio_, positionList)) {
+            posList = positionList;
+         }
+         ArrayList<Double> slices = new ArrayList<>();
+         slices.add(0.0);
+         acquisitionSettings = acquisitionSettings.copyBuilder()
+                                                  .useSlices(true)
+                                                  .slices(slices)
+                                                  .relativeZSlice(true)
+                                                  .sliceZBottomUm(0.0)
+                                                  .sliceZTopUm(0.0)
+                                                  .sliceZStepUm(0.0)
+                                                  .zReference(0.0).build();
+         zStack = MDAAcqEventModules.zStack(
+               acquisitionSettings,
+               studio_.core().getPosition(),
+               posList,
                chSpecs,
                tag);
       }
@@ -398,6 +470,23 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
       if (acquisitionSettings.usePositionList()) {
          positions = MDAAcqEventModules.positions(positionList, tag, core_);
+      } else if (timeLapseSettings_.useAutofocus()) {
+         // No position list, but autofocus is on. Mirror the single-MDA path
+         // (AcqEngJAdapter.createAcqEventIterator): synthesize a single dummy position so
+         // every event carries a POS_NAME tag. Without POS_NAME, autofocusHook() cannot
+         // record the autofocused Z into positionMap_, so adjustZDrivesHook() would fall
+         // back to re-reading the live Z on every BEFORE_Z_DRIVE_HOOK call - re-anchoring
+         // each slice to the current Z instead of a stable autofocus reference.
+         PositionList dummyPosList = new PositionList();
+         MultiStagePosition msp = new MultiStagePosition();
+         String zDevice = core_.getFocusDevice();
+         if (zDevice != null && !zDevice.isEmpty()) {
+            msp.add(StagePosition.create1D(zDevice, core_.getPosition(zDevice)));
+         }
+         dummyPosList.addPosition(msp);
+         positions = MDAAcqEventModules.positions(dummyPosList, tag, core_);
+         // update acquisition settings to include the (synthetic) position
+         acquisitionSettings = acquisitionSettings.copyBuilder().usePositionList(true).build();
       }
 
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions =
@@ -472,7 +561,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return sequenceSettings;
    }
 
-   private boolean enoughDiskSpace(File root) {
+   private boolean enoughDiskSpace(File root, SequenceSettings sequenceSettings) {
       // Need to find a file that exists to check space
       while (!root.exists()) {
          root = root.getParentFile();
@@ -481,7 +570,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
       }
       long usableMB = root.getUsableSpace();
-      return (1.25 * getTotalMemory()) < usableMB;
+      // Use the multi-MDA overload that takes the specific acquisition's settings.
+      // The no-arg getTotalMemory() in the superclass relies on sequenceSettings_,
+      // which is never set in this adapter.
+      return (1.25 * getTotalMemory(sequenceSettings)) < usableMB;
    }
 
    private String getSource(ChannelSpec channel) {
@@ -673,27 +765,29 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    @Override
    public boolean abortRequest() {
       if (isAcquisitionRunning()) {
-         boolean abortCancelled = false;
          String[] options = {"Abort", "Cancel"};
-         for (Datastore store : stores_) {
-            if (store != null) {
-               List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) store);
-               Component parentComponent = null;
-               if (displays != null && !displays.isEmpty()) {
-                  parentComponent = displays.get(0).getWindow();
-               }
-               int result = JOptionPane.showOptionDialog(parentComponent,
-                       "Abort current acquisition task?",
-                       "Micro-Manager",
-                       JOptionPane.DEFAULT_OPTION,
-                       JOptionPane.QUESTION_MESSAGE, null,
-                       options, options[1]);
-               if (result != 0) {
-                  abortCancelled = true;
+         // Show a single confirmation for the whole Multi-MDA (all stores are aborted
+         // together), parented to the first available display window.
+         Component parentComponent = null;
+         if (stores_ != null) {
+            for (Datastore store : stores_) {
+               if (store != null) {
+                  List<DisplayWindow> displays =
+                        studio_.displays().getDisplays((DataProvider) store);
+                  if (displays != null && !displays.isEmpty()) {
+                     parentComponent = displays.get(0).getWindow();
+                     break;
+                  }
                }
             }
          }
-         if (!abortCancelled) {
+         int result = JOptionPane.showOptionDialog(parentComponent,
+                 "Abort current acquisition task?",
+                 "Micro-Manager",
+                 JOptionPane.DEFAULT_OPTION,
+                 JOptionPane.QUESTION_MESSAGE, null,
+                 options, options[1]);
+         if (result == 0) {
             stop(true);
             return true;
          } else {
@@ -777,6 +871,40 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return nextWakeTime_;
    }
 
+   /**
+    * Hook that updates nextWakeTime_ at the start of each new time point, so the
+    * "Next frame in xxx sec" alert (MMAcquisition.setNextImageAlert) can show a sensible
+    * countdown. Mirrors AcqEngJAdapter.updateNextWakeHook.
+    *
+    * @param sequenceSettings Settings providing the time-lapse interval.
+    * @return The Hook.
+    */
+   private AcquisitionHook updateNextWakeHook(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.getMinimumStartTimeAbsolute() != null) {
+               int frameIndex = event.getTIndex() == null ? 0 : event.getTIndex();
+               if (event.getSequence() != null && event.getSequence().get(0) != null) {
+                  frameIndex = event.getSequence().get(0).getTIndex();
+               }
+               if (frameIndex > lastFrameIndex_) {
+                  lastFrameIndex_ = frameIndex;
+                  // Note that nanoTime() and currentTimeMillis() are not guaranteed to have
+                  // the same offset (0).
+                  nextWakeTime_ = System.nanoTime() / 1000000L
+                           + (long) (sequenceSettings.intervalMs());
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+         }
+      };
+   }
+
 
    //////////////////// Setters and Getters ///////////////////////////////
 
@@ -796,10 +924,12 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    }
 
    /**
-    * This is ignored by the Clojure engine, and also does not have any function
-    * in this engine.  Deprecate?  Do not rely on this to do anything.
+    * Sets the focus device label used for the Z-position restore at the end of the
+    * acquisition (see zStart_ / onAcquisitionEnded). Note that runAcquisition()
+    * overwrites this with core_.getFocusDevice() before each run, so callers should
+    * not rely on a value set here persisting across a run.
     *
-    * @param stageLabel Name of the focus drive to use.  Ignored.
+    * @param stageLabel Name of the focus drive to use.
     */
    public void setZStageDevice(String stageLabel) {
       zStage_ = stageLabel;
@@ -935,7 +1065,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       }
 
       final int totalImages = getTotalImages(sequenceSettings);
-      final long totalMB = getTotalMemory() / (1024 * 1024);
+      final long totalMB = getTotalMemory(sequenceSettings) / (1024 * 1024);
 
       double totalDurationSec = 0;
       double interval = Math.max(sequenceSettings.intervalMs(), exposurePerTimePointMs);
@@ -1098,7 +1228,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return sequenceSettings.comment();
    }
 
-
    ////////////////////////////////////////////
    ////////// Event handlers
    /////////////////////////////////////////////
@@ -1110,23 +1239,40 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
     */
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
-      if (event.getStore().equals(stores_)) {
-         // Restore original Z position and autofocus if applicable.
-         if (isFocusStageAvailable()) {
-            try {
-               core_.setPosition(zStage_, zStart_);
-               if (autofocusMethod_ != null) {
-                  autofocusMethod_.enableContinuousFocus(autofocusOn_);
-               }
-            } catch (Exception e) {
-               studio_.logs().logError(e);
-            }
+      // One AcquisitionEndedEvent fires per store. stores_ is the List of all stores
+      // for this Multi-MDA, so we must check membership (not equality with the List),
+      // and only tear down once every store has ended. Guava's EventBus dispatches on
+      // the posting thread, so this handler can run concurrently for different stores;
+      // do the ended-store bookkeeping and the "am I the last one" decision under a lock
+      // so exactly one thread performs the teardown.
+      synchronized (endedStoresLock_) {
+         if (stores_ == null || !stores_.contains(event.getStore())) {
+            return;
          }
+         endedStores_.add(event.getStore());
+         if (endedStores_.size() < stores_.size()) {
+            return;
+         }
+         // This thread observed the last store ending; clear shared state now so a
+         // concurrent invocation cannot also reach the teardown below.
          stores_ = null;
          pipelines_ = null;
          currentMultiMDA_ = null;
-         studio_.events().unregisterForEvents(this);
+         endedStores_.clear();
       }
+      // All stores have ended: restore original Z position and autofocus if applicable.
+      // Done outside the lock to avoid holding it during core/hardware calls.
+      if (isFocusStageAvailable()) {
+         try {
+            core_.setPosition(zStage_, zStart_);
+            if (autofocusMethod_ != null) {
+               autofocusMethod_.enableContinuousFocus(autofocusOn_);
+            }
+         } catch (Exception e) {
+            studio_.logs().logError(e);
+         }
+      }
+      studio_.events().unregisterForEvents(this);
    }
 
    @Subscribe

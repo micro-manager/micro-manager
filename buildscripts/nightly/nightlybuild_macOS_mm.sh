@@ -129,10 +129,11 @@ $EVAL ./configure \
    "JNI_CPPFLAGS=\"-I$MM_JDK_HOME/include -I$MM_JDK_HOME/include/darwin\"" \
    "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.8 -target 1.8\"" \
    "OPENCV_LDFLAGS=\"-framework QuartzCore -framework CoreVideo -framework CoreMedia -framework CoreGraphics -framework AVFoundation -framework Accelerate -framework Cocoa\"" \
-   "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
+   "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la $MM_DEPS_PREFIX/lib/libusb-1.0.la\"" \
    PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig \
    "LIBUSB_0_1_LDFLAGS=\"-framework IOKit -framework CoreFoundation\"" \
-   LIBUSB_0_1_LIBS=$MM_DEPS_PREFIX/lib/libusb.la \
+   "LIBUSB_0_1_LIBS=\"$MM_DEPS_PREFIX/lib/libusb.la $MM_DEPS_PREFIX/lib/libusb-1.0.la\"" \
+   "LIBDC1394_LIBS=\"$MM_DEPS_PREFIX/lib/libdc1394.la $MM_DEPS_PREFIX/lib/libusb-1.0.la\"" \
    HIDAPI_LIBS=$MM_DEPS_PREFIX/lib/libhidapi.la
 if [ "$print_config_only" = yes ]; then
    printf \\n
@@ -194,6 +195,25 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
    --map-path 'libltdl*.dylib:libgphoto2' \
    --map-path 'libgphoto2*.dylib:libgphoto2'
 echo 'Finished staging portable app' 1>&2
+
+
+# Fail if any binary has symbols that will only be looked up at load time
+# (typically a library missing from the link, hidden by -undefined
+# dynamic_lookup). Allowed files are relative to the stage directory.
+dynamic_lookup_allowed=""
+found_dynamic_lookup=no
+while IFS= read -r -d '' file; do
+   file -b "$file" | grep -q 'Mach-O' || continue
+   nm -m "$file" 2>/dev/null | grep -q 'dynamically looked up' || continue
+   case " $dynamic_lookup_allowed " in
+      *" ${file#$MM_STAGEDIR/} "*) continue ;;
+   esac
+   echo "Error: $file has dynamically looked up symbols" 1>&2
+   found_dynamic_lookup=yes
+done < <(find "$MM_STAGEDIR" -type f -print0)
+if [ "$found_dynamic_lookup" = yes ]; then
+   exit 1
+fi
 
 
 # Stage third-party JARs.

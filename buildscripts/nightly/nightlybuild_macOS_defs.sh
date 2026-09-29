@@ -10,8 +10,7 @@ MM_STAGEDIR="$MM_BUILDDIR/stage"
 # backward-compatible binaries. Omitting this will produce binaries that will
 # only run on the macOS version of the build host or newer. Also, mixing
 # different minimum versions may cause C++ linking issues.
-# 10.9 is the oldest deployment target that uses libc++ (vs libstdc++).
-MM_MACOSX_VERSION_MIN=10.9
+MM_MACOSX_VERSION_MIN=11.0
 
 # We don't use a fixed macOS SDK version, but need a fixed path to the SDK.
 MM_MACOSX_SDKROOT=$(xcode-select --print-path)/SDKs/MacOSX.sdk
@@ -24,7 +23,7 @@ MM_CXXFLAGS="$MM_CFLAGS"
 MM_LDFLAGS="-L$MM_DEPS_PREFIX/lib -F/Library/Frameworks"
 
 MM_ARCH="x86_64"
-MM_ARCH_FLAGS="-arch x86_64"
+MM_ARCH_FLAGS="-arch $MM_ARCH"
 MM_CC="clang $MM_ARCH_FLAGS"
 MM_CXX="clang++ $MM_ARCH_FLAGS"
 MM_CPP="clang -E"
@@ -41,5 +40,5 @@ MM_PARALLELMAKEFLAG=-j$(sysctl -n hw.ncpu)
 
 # Get the appropriate JAVA_HOME, requiring exactly Java 8 (should work with
 # temurin, adoptopenjdk, zulu, etc.)
-# Would pass '-a x86_64' here, but that doesn't seem to actually work.
+# Would pass '-a $MM_ARCH' here, but that doesn't seem to actually work.
 MM_JDK_HOME=$(/usr/libexec/java_home -v 1.8 -F)

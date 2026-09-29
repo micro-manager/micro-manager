@@ -26,6 +26,7 @@ public class ImagePadder {
     * @param input Image to be padded
     * @return Padded image, twice the size of the input
     */
+   @SuppressWarnings("rawtypes")
    public static ImageGray padPreibisch(ImageGray input) {
       //TODO: define input size requirements and enforce them
       int width = input.getWidth();
@@ -115,7 +116,7 @@ public class ImagePadder {
     */
    public static float[] leftHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[width];
-      int halfEdgeSize = (int) (width / 2);
+      int halfEdgeSize = width / 2;
 
       for (int i = 0; i < halfEdgeSize; i++) {
          han1DArray[i + halfEdgeSize] = (float) (0.5 * (1 - Math.cos(2 * Math.PI * i / width)));

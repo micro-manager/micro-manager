@@ -66,6 +66,7 @@ public class DragDropListener implements DropTargetListener {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public void drop(DropTargetDropEvent dtde) {
       Transferable tr = dtde.getTransferable();
       DataFlavor[] flavors = tr.getTransferDataFlavors();

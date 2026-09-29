@@ -689,7 +689,12 @@ public final class MicroscopeModel {
                if (tokens.length == 3) {
                   ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
                   if (cp != null) {
-                     cp.setPixelSizeUm(Double.parseDouble(tokens[2]));
+                     try {
+                        cp.setPixelSizeUm(Double.parseDouble(tokens[2]));
+                     } catch (NumberFormatException e) {
+                        ReportingUtils.showError("NumberFormatException: in Pixel Size config "
+                                 + tokens[1] + " Pixel size: " + tokens[2]);
+                     }
                   }
                }
             } else if (tokens[0].contentEquals(new StringBuffer()
@@ -699,7 +704,12 @@ public final class MicroscopeModel {
                   if (cp != null) {
                      DoubleVector aft = new DoubleVector(6);
                      for (int i = 0; i < 6; i++) {
-                        aft.set(i, Double.parseDouble(tokens[i + 2]));
+                        try {
+                           aft.set(i, Double.parseDouble(tokens[i + 2]));
+                        } catch (NumberFormatException e) {
+                           ReportingUtils.showError("NumberFormatException: in Pixel Size config "
+                                    + tokens[1] + " Affine transform: " + tokens[i + 2]);
+                        }
                      }
                      cp.setAffineTransform(aft);
                   } else {
@@ -713,7 +723,12 @@ public final class MicroscopeModel {
                if (tokens.length == 3) {
                   ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
                   if (cp != null) {
-                     cp.setPixelSizedxdz(Double.parseDouble(tokens[2]));
+                     try {
+                        cp.setPixelSizedxdz(Double.parseDouble(tokens[2]));
+                     } catch (NumberFormatException e) {
+                        ReportingUtils.showError("NumberFormatException: in Pixel Size config "
+                                 + tokens[1] + " PixelSizedxdz: " + tokens[2]);
+                     }
                   }
                }
             } else if (tokens[0].contentEquals(new StringBuffer()
@@ -721,7 +736,12 @@ public final class MicroscopeModel {
                if (tokens.length == 3) {
                   ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
                   if (cp != null) {
-                     cp.setPixelSizedydz(Double.parseDouble(tokens[2]));
+                     try {
+                        cp.setPixelSizedydz(Double.parseDouble(tokens[2]));
+                     } catch (NumberFormatException e) {
+                        ReportingUtils.showError("NumberFormatException: in Pixel Size config "
+                                 + tokens[1] + " PixelSizedydz: " + tokens[2]);
+                     }
                   }
                }
             } else if (tokens[0].contentEquals(new StringBuffer()
@@ -729,7 +749,12 @@ public final class MicroscopeModel {
                if (tokens.length == 3) {
                   ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
                   if (cp != null) {
-                     cp.setPixelSizeOptimalZUm(Double.parseDouble(tokens[2]));
+                     try {
+                        cp.setPixelSizeOptimalZUm(Double.parseDouble(tokens[2]));
+                     } catch (NumberFormatException e) {
+                        ReportingUtils.showError("NumberFormatException: in Pixel Size config "
+                                 + tokens[1] + " Optimal ZUm: " + tokens[2]);
+                     }
                   }
                }
             } else if (tokens[0].contentEquals(new StringBuffer()

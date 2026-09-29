@@ -56,7 +56,7 @@ public final class MathFunctions {
       // are [x,y,1] for each Point2D.Double:
 
       int i = 0;
-      for (Map.Entry pair : pointPairs.entrySet()) {
+      for (Map.Entry<?, ?> pair : pointPairs.entrySet()) {
          Point2D.Double uPt = (Point2D.Double) pair.getKey();
          Point2D.Double vPt = (Point2D.Double) pair.getValue();
 
@@ -152,7 +152,7 @@ public final class MathFunctions {
 
       int i = 0;
       // Check that affineTransform works correctly:
-      for (Map.Entry pair : pointPairs.entrySet()) {
+      for (Map.Entry<?, ?> pair : pointPairs.entrySet()) {
          Point2D.Double uPt = (Point2D.Double) pair.getKey();
          Point2D.Double vPt = (Point2D.Double) pair.getValue();
          Point2D.Double result = new Point2D.Double();

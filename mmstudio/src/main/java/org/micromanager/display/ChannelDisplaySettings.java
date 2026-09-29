@@ -2,6 +2,7 @@ package org.micromanager.display;
 
 import java.awt.Color;
 import java.util.List;
+import org.micromanager.display.internal.DefaultChannelDisplaySettings;
 
 /**
  * Stores the display settings for individual channels Coords of image to be displayed.
@@ -39,6 +40,36 @@ public interface ChannelDisplaySettings {
 
       Builder useCameraHistoRange(boolean use);
 
+      /**
+       * Sets the histogram axis range for floating point images, as pixel values.
+       *
+       * <p>Only meaningful for float images, whose axis is a real value range rather than
+       * a bit depth. Pass {@code Double.NaN} for both to clear it.
+       *
+       * <p>The default implementation ignores the values, so that builders written before
+       * the float axis existed keep compiling; they simply carry no axis range.
+       *
+       * @param min low end of the axis
+       * @param max high end of the axis
+       * @return this builder
+       */
+      default Builder floatHistoRange(double min, double max) {
+         return this;
+      }
+
+      /**
+       * Marks the float histogram axis as chosen by the user.
+       *
+       * <p>When set, the axis is left exactly as given instead of being widened to take in
+       * each newly displayed image.
+       *
+       * @param pinned true to stop the axis adapting to the data
+       * @return this builder
+       */
+      default Builder floatHistoRangePinned(boolean pinned) {
+         return this;
+      }
+
       Builder name(String name);
 
       Builder groupName(String groupName);
@@ -52,6 +83,19 @@ public interface ChannelDisplaySettings {
       Builder component(int component);
 
       Builder component(int component, ComponentDisplaySettings settings);
+
+      /**
+       * Sets the intensity scaling (min/max) for all components of this channel in one call.
+       *
+       * <p>This is a convenience alternative to calling
+       * {@link #component(int, ComponentDisplaySettings)} once per component.
+       * Only min and max are transferred; any gamma values already set on existing
+       * component settings are preserved.
+       *
+       * @param ranges per-component intensity ranges for this channel
+       * @return this builder
+       */
+      Builder intensityScaling(ChannelIntensityRanges ranges);
 
       int getNumberOfComponents();
 
@@ -87,6 +131,52 @@ public interface ChannelDisplaySettings {
    boolean useCameraRange();
 
    /**
+    * Low end of the histogram axis for floating point images.
+    *
+    * <p>The default implementation reports no axis range, so that implementations written
+    * before the float axis existed keep compiling.
+    *
+    * @return pixel value, or {@code Double.NaN} if not set
+    * @see #hasFloatHistoRange()
+    */
+   default double getFloatHistoRangeMinimum() {
+      return Double.NaN;
+   }
+
+   /**
+    * High end of the histogram axis for floating point images.
+    *
+    * @return pixel value, or {@code Double.NaN} if not set
+    * @see #hasFloatHistoRange()
+    */
+   default double getFloatHistoRangeMaximum() {
+      return Double.NaN;
+   }
+
+   /**
+    * Returns whether a float histogram axis range has been recorded.
+    *
+    * @return true if both ends are set and the high end is strictly above the low end;
+    *     an empty or inverted range counts as unset, since it cannot be drawn
+    */
+   default boolean hasFloatHistoRange() {
+      double min = getFloatHistoRangeMinimum();
+      double max = getFloatHistoRangeMaximum();
+      return !Double.isNaN(min) && !Double.isNaN(max) && max > min;
+   }
+
+   /**
+    * Returns whether the float histogram axis was chosen by the user.
+    *
+    * <p>A pinned axis is not widened to include newly displayed images.
+    *
+    * @return true if the axis should be left as-is
+    */
+   default boolean isFloatHistoRangePinned() {
+      return false;
+   }
+
+   /**
     * Indicates whether this is visible.
     *
     * @return True when this channel is visible to the user, false otherwise
@@ -117,4 +207,7 @@ public interface ChannelDisplaySettings {
 
    Builder copyBuilderWithComponentSettings(int component, ComponentDisplaySettings settings);
 
+   static Builder builder() {
+      return DefaultChannelDisplaySettings.builder();
+   }
 }

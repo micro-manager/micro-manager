@@ -175,7 +175,9 @@ public final class LabelsPage extends PagePanel {
          Device[] devs = model.getDevices();
          devices_.clear();
          for (Device dev : devs) {
-            if (dev.isStateDevice() && (dev.findProperty("Label") != null)) {
+            // Only check if device is a state device
+            // - Label property may not exist yet for newly added devices
+            if (dev.isStateDevice()) {
                devices_.add(dev);
             }
          }
@@ -339,6 +341,7 @@ public final class LabelsPage extends PagePanel {
          }
          model_.applySetupLabelsToHardware(core_);
          model_.loadDeviceDataFromHardware(core_);
+
       } catch (Exception e) {
          handleError(e.getMessage());
 

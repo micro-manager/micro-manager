@@ -1,0 +1,42 @@
+.git
+.github
+.vscode
+**/.ccache
+autom4te.cache/
+
+# Documentation and metadata
+doc/
+governance/
+MMImprovementProposals/
+doxygen/
+README.md
+CodeOfConduct.md
+*.ipynb
+
+# Ignore docker setup files except necessary scripts and drivers
+docker/
+!docker/micromanager.sh
+!docker/setup-drivers.sh
+!docker/drivers/
+
+# Autotools noise
+aclocal.m4
+compile
+config.guess
+config.log
+config.status
+config.sub
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+missing
+test-driver
+Makefile
+Makefile.in
+.deps/
+.libs/
+*.la
+*.lo
+*.o

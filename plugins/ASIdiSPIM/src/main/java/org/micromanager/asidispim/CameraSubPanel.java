@@ -65,7 +65,7 @@ public final class CameraSubPanel extends ListeningJPanel  {
    private final Studio gui_;
    private final Devices.Sides side_;
    private final String instanceLabel_;
-   private final JComboBox cameraBox_;
+   private final JComboBox<String> cameraBox_;
    private final JToggleButton camAButton_;
    private final JToggleButton camBButton_;
    private final JToggleButton camMultiButton_;
@@ -189,8 +189,8 @@ public final class CameraSubPanel extends ListeningJPanel  {
    }
    
    
-   private JComboBox makeCameraSelectionBox(int maxBoxWidth) {
-      JComboBox cameraBox = new JComboBox();
+   private JComboBox<String> makeCameraSelectionBox(int maxBoxWidth) {
+      JComboBox<String> cameraBox = new JComboBox<>();
       cameraBox.setMaximumSize(new Dimension(maxBoxWidth, 30));
       CameraSelectionBoxListener csbl = new CameraSelectionBoxListener(cameraBox);
       cameraBox.addActionListener(csbl);
@@ -207,11 +207,11 @@ public final class CameraSubPanel extends ListeningJPanel  {
     * Listener for selection boxes that attach cameras
     */
    private class CameraSelectionBoxListener implements ActionListener, DevicesListenerInterface {
-      JComboBox box_;
+      JComboBox<String> box_;
       HashMap<String, Cameras.CameraData> CameraDataHash_;
       boolean updatingList_;
-      
-      public CameraSelectionBoxListener(JComboBox box) {
+
+      public CameraSelectionBoxListener(JComboBox<String> box) {
          box_ = box;
          CameraDataHash_ = new HashMap<String, Cameras.CameraData>();
          this.updateCameraSelections();  // do initial rendering

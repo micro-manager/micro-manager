@@ -101,7 +101,7 @@ class DisplayWindowSurfaceGridTableModel extends AbstractTableModel
    }
 
    @Override
-   public Class getColumnClass(int columnIndex) {
+   public Class<?> getColumnClass(int columnIndex) {
       if (columnIndex == 0) {
          return Boolean.class;
       } else if (columnIndex == 1) {

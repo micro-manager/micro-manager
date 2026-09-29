@@ -17,7 +17,7 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 
 // final (maximum exposure in ms)
-double finalExposure = 140;
+double finalExposure = 2900;
 // Number of data points desired
 int nrExposures = 50;
 // Initial exposure in ms
@@ -81,7 +81,8 @@ double exposure = startExposure;
 for (int i = 0; i < nrExposures; ++i) {
    mmc.setExposure(exposure);
    Image image = mm.live().snap(false).get(0);
-   image = image.copyAtCoords(builder.time(i * 2).build());
+   image = image.copyAtCoords(builder.time(i * 2).build());   
+   store.putImage(image);
    image = mm.live().snap(false).get(0);
    image = image.copyAtCoords(builder.time(i * 2 + 1).build());
    store.putImage(image);

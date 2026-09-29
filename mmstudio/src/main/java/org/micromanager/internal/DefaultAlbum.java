@@ -25,6 +25,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import org.micromanager.Album;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
@@ -106,44 +107,7 @@ public final class DefaultAlbum implements Album {
       */
       if (mustCreateNew) {
          // Need to create a new album.
-
-         store_ = studio_.data().createRAMDatastore();
-
-         try {
-            SummaryMetadata.Builder smb = studio_.acquisitions()
-                  .generateSummaryMetadata().copyBuilder();
-            smb.channelGroup(studio_.core().getChannelGroup());
-            // TODO: can there be other axes than T?
-            smb.channelNames(curChannel).axisOrder(
-                  Coords.T, Coords.C, Coords.Z, Coords.P);
-            store_.setSummaryMetadata(smb.build());
-         } catch (DatastoreFrozenException | DatastoreRewriteException e) {
-            // This should never happen!
-            studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
-         }
-         studio_.displays().manage(store_);
-         DisplaySettings.Builder displaySettingsBuilder = null;
-         DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
-                           PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
-         if (displaySettings == null) {
-            displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
-                     .colorMode(DisplaySettings.ColorMode.GRAYSCALE);
-         } else {
-            displaySettingsBuilder = displaySettings.copyBuilder();
-         }
-         for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
-            displaySettingsBuilder.channel(ch,
-                  RememberedDisplaySettings.loadChannel(studio_,
-                        store_.getSummaryMetadata().getChannelGroup(),
-                        store_.getSummaryMetadata().getSafeChannelName(ch),
-                        Color.white));
-         }
-         display_ = studio_.displays().createDisplay(store_, null, displaySettingsBuilder.build());
-         display_.setWindowPositionKey(DefaultDisplayManager.ALBUM_DISPLAY);
-         display_.setCustomTitle("Album");
-         display_.setDisplaySettingsProfileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
-
-         curTime_ = null;
+         createNewAlbum(curChannel);
       }
 
       Coords newCoords = createAlbumCoords(image);
@@ -158,15 +122,6 @@ public final class DefaultAlbum implements Album {
             // This approach runs the risk that the new pipeline changes the image
             // size, which is bad and results in uncaught, unreported exceptions
             // TODO: at the very least report problems with image size to the user
-            // 
-            // When users press the Album button in the viewer, this code will 
-            // send the image through the pipeline for a second time.  That can 
-            // never be the intent of the user.  So, it would be best to have 
-            // a "use pipeline" parameter in the addImage function.  At this point,
-            // I do not want to touch the API.  As a work-around use the 
-            // MDA pipeline ratehr than the LivePipeline.  That gives the user
-            // the ability to uncouple the Live and Album pipelines (albeit in 
-            // an obscure way.
             pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
             try {
                pipeline_.insertImage(image.copyAtCoords(newCoords));
@@ -182,6 +137,64 @@ public final class DefaultAlbum implements Album {
                pipeline_.clearExceptions();
             }
          }
+      } catch (DatastoreFrozenException e) {
+         ReportingUtils.showError(e, "Album datastore is locked.");
+      } catch (DatastoreRewriteException e) {
+         // This should never happen.
+         ReportingUtils.showError(e, "Unable to add image at "
+               + newCoords
+               + " to album as another image with those coords already exists.");
+      }
+      return mustCreateNew;
+   }
+   
+   @Override
+   public boolean addImageWithoutProcessing(Image image) throws IOException {
+      boolean mustCreateNew = (store_ == null || store_.isFrozen());
+
+      // check if this image is the same size as the ones in the store
+      if (store_ != null) {
+         Image storedImage = store_.getAnyImage();
+         if (storedImage != null) {
+            if (image.getBytesPerPixel() != storedImage.getBytesPerPixel()
+                  || image.getWidth() != storedImage.getWidth()
+                  || image.getHeight() != storedImage.getHeight()
+                  || image.getNumComponents() != storedImage.getNumComponents()) {
+               mustCreateNew = true;
+            }
+         }
+      }
+
+      String curChannel = "";
+      try {
+         curChannel = studio_.core().getCurrentConfig(
+               studio_.core().getChannelGroup());
+      } catch (Exception e) {
+         studio_.logs().logError(e, "Error getting current channel name");
+      }
+      /*
+       * This code determines if the channel has changed, and opens a new
+       * new Album if so.  The motivation for this behavior is unclear, and 
+       * it certainly bothers some people (including myself, NS), so remove
+       * for now.  If the old behavior is desired by some, there can be 
+       * an option added.
+       *
+      if (store_ != null) {
+         String oldChannel = store_.getSummaryMetadata().getSafeChannelName(0);
+         if (!oldChannel.contentEquals(curChannel)) {
+            mustCreateNew = true;
+         }
+      }
+      */
+      if (mustCreateNew) {
+         // Need to create a new album.
+         createNewAlbum(curChannel);
+      }  
+
+      Coords newCoords = createAlbumCoords(image);
+
+      try {
+         store_.putImage(image.copyAtCoords(newCoords));
       } catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
       } catch (DatastoreRewriteException e) {
@@ -213,9 +226,12 @@ public final class DefaultAlbum implements Album {
                .channel(image.getCoords().getChannel())
                .t(curTime_)
                .build();
-         if (store_.getImagesMatching(matcher).size() > 0) {
-            // Have an image at this time/channel pair already.
-            curTime_++;
+         java.util.List<Image> existingImageList = store_.getImagesIgnoringAxes(matcher, "");
+         if (!existingImageList.isEmpty()) {
+            if (existingImageList.get(0) != null) {
+               // Have an image at this time/channel pair already.
+               curTime_++;
+            }
          }
       }
       return image.getCoords().copyBuilder().t(curTime_).build();
@@ -231,7 +247,57 @@ public final class DefaultAlbum implements Album {
       }
       return result;
    }
+   
+   @Override
+   public boolean addImagesWithoutProcessing(Collection<Image> images) throws IOException {
+      boolean result = false;
+      for (Image image : images) {
+         boolean tmp = addImageWithoutProcessing(image);
+         result = result || tmp;
+      }
+      return result;
+   }
 
+   private void createNewAlbum(String curChannel)throws IOException {
+      store_ = studio_.data().createRAMDatastore();
+
+      try {
+         SummaryMetadata.Builder smb = studio_.acquisitions()
+               .generateSummaryMetadata().copyBuilder();
+         smb.channelGroup(studio_.core().getChannelGroup());
+         // TODO: can there be other axes than T?
+         smb.channelNames(curChannel).axisOrder(
+               Coords.T, Coords.C, Coords.Z, Coords.P);
+         store_.setSummaryMetadata(smb.build());
+      } catch (DatastoreFrozenException | DatastoreRewriteException e) {
+         // This should never happen!
+         studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
+      }
+      studio_.displays().manage(store_);
+      DisplaySettings.Builder displaySettingsBuilder = null;
+      DisplaySettings displaySettings = studio_.displays().displaySettingsFromProfile(
+                        PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+      if (displaySettings == null) {
+         displaySettingsBuilder = studio_.displays().displaySettingsBuilder()
+                  .colorMode(DisplaySettings.ColorMode.GRAYSCALE);
+      } else {
+         displaySettingsBuilder = displaySettings.copyBuilder();
+      }
+      for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
+         displaySettingsBuilder.channel(ch,
+               RememberedDisplaySettings.loadChannel(studio_,
+                     store_.getSummaryMetadata().getChannelGroup(),
+                     store_.getSummaryMetadata().getSafeChannelName(ch),
+                     Color.white));
+      }
+      display_ = studio_.displays().createDisplay(store_, null, displaySettingsBuilder.build());
+      display_.setWindowPositionKey(DefaultDisplayManager.ALBUM_DISPLAY);
+      display_.setCustomTitle("Album");
+      display_.setDisplaySettingsProfileKey(PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+
+      curTime_ = null;
+   }
+   
    /**
     * Handle events indicating that the viewer will close.
     *

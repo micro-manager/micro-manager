@@ -40,7 +40,7 @@ public class MMPresetGroupRegistry {
 
       if (groups != null) {
          for (int i = 0; i < groups.size(); i++) {
-            ArrayList<MMProperty> affectedmmprops = new ArrayList<MMProperty>();
+            ArrayList<MMProperty<?>> affectedmmprops = new ArrayList<MMProperty<?>>();
 
             Configuration conf;
             try {

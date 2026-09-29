@@ -40,7 +40,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
@@ -97,6 +96,7 @@ import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeys;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
@@ -194,7 +194,7 @@ public final class MMStudio implements Studio {
          }
       }
       try {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+         JavaUtils.setPlatformLookAndFeel();
          new MMStudio(false, profileNameAutoStart);
       } catch (ClassNotFoundException
             | IllegalAccessException
@@ -430,6 +430,7 @@ public final class MMStudio implements Studio {
       }
 
       ui_.createScriptPanel();  // Load (but do no show) the scriptPanel
+      ui_.createStageControlFrame(); // Load (but do not show) the Stage Control Frame
       ui_.createMainWindow(); // Now create and show the main window
 
       cache_ = new MMCache(this, ui_.frame());
@@ -609,6 +610,7 @@ public final class MMStudio implements Studio {
       if (zmqServer_ == null) {
          //Make a function that passes existing instances of core and studio,
          //rather than constructing them
+         @SuppressWarnings("rawtypes")
          Function<Class, Object> instanceGrabberFunction = new Function<Class, Object>() {
             @Override
             public Object apply(Class baseClass) {
@@ -622,28 +624,12 @@ public final class MMStudio implements Studio {
             }
          };
          try {
-            // It appears that every plugin has its own ClassLoader.
-            // We need to extract all of these and pass to ZMQServer, so that it knows
-            // where to search for classes to load. If we don't do this, and just create
-            // new ClassLoaders to instantiate objects, static variables will not be shared
-            // across instances created by the two objects, leading to confusing behavior.
+            // All plugins are loaded through a single shared class loader (whose parent is
+            // Micro-Manager's own class loader). Passing that one loader to ZMQServer lets it
+            // resolve both plugin classes and Micro-Manager / core classes, and avoids the
+            // problem of static variables not being shared across multiple class loaders.
             Collection<ClassLoader> classLoaders = new HashSet<>();
-            for (Object plugin : plugins().getMenuPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-            for (Object plugin : plugins().getAutofocusPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-            for (Object plugin : plugins().getDisplayGearMenuPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-            for (Object plugin : plugins().getProcessorPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-            for (Object plugin : plugins().getOverlayPlugins().values()) {
-               classLoaders.add(plugin.getClass().getClassLoader());
-            }
-
+            classLoaders.add(pluginManager_.getPluginClassLoader());
 
             zmqServer_ = new ZMQServer(classLoaders,
                   instanceGrabberFunction,
@@ -946,6 +932,8 @@ public final class MMStudio implements Studio {
    public void autofocusNow() {
       if (afMgr_.getAutofocusMethod() != null) {
          new Thread(() -> {
+            // is it needed to suspend live mode here?
+            // Probably depends on the autofocus method
             live().setSuspended(true);
             try {
                afMgr_.getAutofocusMethod().fullFocus();
@@ -957,6 +945,27 @@ public final class MMStudio implements Studio {
       } else {
          ReportingUtils.showError("No autofocus device is selected.");
       }
+   }
+
+   public void setAutofocusEnabled(boolean enabled) {
+      if (afMgr_.getAutofocusMethod() != null) {
+         try {
+            afMgr_.getAutofocusMethod().enableContinuousFocus(enabled);
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex, "An error occurred while changing autofocus state");
+         }
+      }
+   }
+
+   public boolean isAutofocusEnabled() {
+      if (afMgr_.getAutofocusMethod() != null) {
+         try {
+            return afMgr_.getAutofocusMethod().isContinuousFocusEnabled();
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex, "An error occurred while getting autofocus state");
+         }
+      }
+      return false;
    }
 
    // //////////////////////////////////////////////////////////////////////////

@@ -59,6 +59,29 @@ public final class HistogramView extends JPanel {
 
       void histogramScalingMaxChanged(int component, long newMax);
 
+      /**
+       * Called when the user edits one end of the histogram axis.
+       *
+       * @param component component index
+       * @param newRangeMin low end of the axis, as a pixel value
+       * @param newRangeMax high end of the axis, as a pixel value
+       */
+      void histogramAxisRangeChanged(int component, double newRangeMin, double newRangeMax);
+
+      /**
+       * Called when the user sets a float scaling bound to an exact pixel value.
+       *
+       * <p>The long-valued callbacks above carry a histogram bin index, which quantizes a
+       * float bound to one of ~256 positions. This one carries the value as typed.
+       *
+       * @param component component index
+       * @param newMin low end of the scaling range, as a pixel value
+       * @param newMax high end of the scaling range, as a pixel value
+       */
+      default void histogramFloatScalingChanged(int component, double newMin,
+                                                double newMax) {
+      }
+
       void histogramGammaChanged(double newGamma);
    }
 
@@ -68,12 +91,19 @@ public final class HistogramView extends JPanel {
    // Data state
    private static class ComponentState {
       long[] graph_ = new long[0];
+      long rangeMin_ = 0;
       long rangeMax_ = 0;
       Color color_ = Color.GRAY;
       Color highlightColor_ = Color.YELLOW;
       long highlightIntensity_ = -1; // Negative = off
       long scalingMin_ = 0;
       long scalingMax_ = rangeMax_;
+      // Non-null for float images: converts bin-index longs to pixel-value strings.
+      FloatCoordinateMapper floatMapper_ = null;
+      // Optional label override for the range-max tick (e.g. "1.000" for bin-index 256).
+      String rangeMaxLabel_ = null;
+      // Optional label override for the range-min tick, drawn at the left of the axis.
+      String rangeMinLabel_ = null;
 
       float[] cachedInterpolatedLogScaledGraph_;
       Path2D.Float cachedPath_;
@@ -112,6 +142,10 @@ public final class HistogramView extends JPanel {
    private Handle handleBeingDragged_ = Handle.NONE;
    private long scalingHandleDragOriginalValue_;
    private double gammaHandleDragOriginalValue_;
+   // Hit rectangles for the two axis end labels; null until laid out during painting.
+   private Rectangle rangeMinLabelRect_;
+   private Rectangle rangeMaxLabelRect_;
+   private boolean axisRangeEditable_ = false;
 
 
    private static final int HORIZONTAL_MARGIN = 12;
@@ -119,11 +153,14 @@ public final class HistogramView extends JPanel {
    private static final int MIN_GRAPH_WIDTH = 128;
    private static final int MIN_GRAPH_HEIGHT = 32;
    private static final int LUT_HANDLE_SIZE = 10;
+   private static final int LUT_MINI_HANDLE_SIZE = 5;
    private static final int GAMMA_HANDLE_RADIUS = 5;
    private static final float INTENSITY_FONT_SIZE = 11.0f;
    private static final float OVERLAY_FONT_SIZE = 12.0f;
    private static final int OVERLAY_FONT_STYLE = Font.BOLD;
    private static final Color OVERLAY_COLOR = Color.GRAY;
+   // Axis end labels are tinted when they can be double-clicked to edit the range.
+   private static final Color EDITABLE_AXIS_LABEL_COLOR = new Color(0, 90, 180);
    private static final double GAMMA_MIN = 1e-1;
    private static final double GAMMA_MAX = 1e+1;
 
@@ -178,15 +215,11 @@ public final class HistogramView extends JPanel {
       listeners_.removeListener(listener);
    }
 
-   /**
-    * Sets which component is selected (presumable used in RGB images).
-    *
-    * @param component index of selected component.
-    */
    public void setSelectedComponent(int component) {
       Preconditions.checkElementIndex(component, componentStates_.size());
       selectedComponent_ = component;
       cachedGammaMappingPath_ = null;
+      repaint();
    }
 
    public void setComponentGraph(int component, long[] graph, long rangeMax) {
@@ -194,16 +227,22 @@ public final class HistogramView extends JPanel {
    }
 
    public void setComponentGraph(int component, long[] graph, int graphLen, long rangeMax) {
+      setComponentGraph(component, graph, graphLen, 0, rangeMax);
+   }
+
+   public void setComponentGraph(int component, long[] graph, int graphLen,
+                                  long rangeMin, long rangeMax) {
       Preconditions.checkArgument(component >= 0);
       Preconditions.checkArgument(graphLen <= graph.length);
-      Preconditions.checkArgument(rangeMax > 0);
+      Preconditions.checkArgument(rangeMax > rangeMin);
       addComponentIfNecessary(component);
       ComponentState state = componentStates_.get(component);
-      boolean rangeMaxChanged = (rangeMax != state.rangeMax_);
+      final boolean rangeChanged = (rangeMin != state.rangeMin_ || rangeMax != state.rangeMax_);
       state.graph_ = Arrays.copyOf(graph, graphLen);
+      state.rangeMin_ = rangeMin;
       state.rangeMax_ = rangeMax;
 
-      if (component == selectedComponent_ && rangeMaxChanged) {
+      if (component == selectedComponent_ && rangeChanged) {
          nullRectsAndMappingPath();
       }
       state.cachedInterpolatedLogScaledGraph_ = null;
@@ -214,14 +253,33 @@ public final class HistogramView extends JPanel {
    public void clearGraphs() {
       nullRectsAndMappingPath();
       for (ComponentState state : componentStates_) {
-         state.graph_ = null;
-         state.rangeMax_ = 0;
-         state.scalingMin_ = 0;
-         state.scalingMax_ = 0;
-         state.cachedInterpolatedLogScaledGraph_ = null;
-         state.cachedPath_ = null;
+         clearComponentState(state);
       }
       repaint();
+   }
+
+   public void clearComponentGraph(int component) {
+      if (component >= componentStates_.size()) {
+         return;
+      }
+      if (component == selectedComponent_) {
+         nullRectsAndMappingPath();
+      }
+      clearComponentState(componentStates_.get(component));
+      repaint();
+   }
+
+   private void clearComponentState(ComponentState state) {
+      state.graph_ = null;
+      state.rangeMin_ = 0;
+      state.rangeMax_ = 0;
+      state.scalingMin_ = 0;
+      state.scalingMax_ = 0;
+      state.floatMapper_ = null;
+      state.rangeMaxLabel_ = null;
+      state.rangeMinLabel_ = null;
+      state.cachedInterpolatedLogScaledGraph_ = null;
+      state.cachedPath_ = null;
    }
 
    public void setComponentColor(int component, Color color, Color highlightColor) {
@@ -229,7 +287,7 @@ public final class HistogramView extends JPanel {
       addComponentIfNecessary(component);
       ComponentState state = componentStates_.get(component);
       state.color_ = color;
-      state.highlightColor_ = color;
+      state.highlightColor_ = highlightColor;
       repaint();
    }
 
@@ -277,6 +335,53 @@ public final class HistogramView extends JPanel {
    public long getComponentScalingMax(int component) {
       Preconditions.checkElementIndex(component, componentStates_.size());
       return componentStates_.get(component).scalingMax_;
+   }
+
+   public void setComponentFloatMapper(int component, FloatCoordinateMapper mapper) {
+      Preconditions.checkArgument(component >= 0);
+      addComponentIfNecessary(component);
+      componentStates_.get(component).floatMapper_ = mapper;
+      if (component == selectedComponent_) {
+         nullRectsAndMappingPath();
+      }
+      repaint();
+   }
+
+   public void setComponentRangeMaxLabel(int component, String label) {
+      Preconditions.checkArgument(component >= 0);
+      addComponentIfNecessary(component);
+      componentStates_.get(component).rangeMaxLabel_ = label;
+      rangeMinLabelRect_ = null;
+      rangeMaxLabelRect_ = null;
+      repaint();
+   }
+
+   /**
+    * Sets the text drawn at the low end of the axis.
+    *
+    * @param component component index
+    * @param label text to draw, or null to draw nothing
+    */
+   public void setComponentRangeMinLabel(int component, String label) {
+      Preconditions.checkArgument(component >= 0);
+      addComponentIfNecessary(component);
+      componentStates_.get(component).rangeMinLabel_ = label;
+      rangeMinLabelRect_ = null;
+      rangeMaxLabelRect_ = null;
+      repaint();
+   }
+
+   /**
+    * Enables double-click editing of the two axis end labels.
+    *
+    * <p>Only meaningful for float images, where the axis is a real pixel-value range that
+    * the user may want to choose; for integer images the axis is fixed by the bit depth.
+    *
+    * @param editable whether the axis ends can be edited
+    */
+   public void setAxisRangeEditable(boolean editable) {
+      axisRangeEditable_ = editable;
+      repaint();
    }
 
    /**
@@ -363,7 +468,7 @@ public final class HistogramView extends JPanel {
    private float getScalingHandlePos(int component, boolean top) {
       ComponentState state = componentStates_.get(component);
       float intensity = top ? state.scalingMax_ : state.scalingMin_;
-      float xPos = intensityFractionToGraphXPos(intensity / state.rangeMax_);
+      float xPos = intensityFractionToGraphXPos(intensityToFraction(state, intensity));
       return (float) (top ? Math.ceil(xPos) : Math.floor(xPos));
    }
 
@@ -392,14 +497,17 @@ public final class HistogramView extends JPanel {
          Rectangle rect = getGraphRect();
          ComponentState state = componentStates_.get(component);
          long intensity = top ? state.scalingMax_ : state.scalingMin_;
-         String text = Long.toString(intensity);
+         String text = (state.floatMapper_ != null)
+               ? state.floatMapper_.formatBinIndex(intensity)
+               : Long.toString(intensity);
 
          int x = (int) getScalingHandlePos(component, top);
 
          boolean drawOnLeftOfHandle = top;
-         if (top && intensity < 0.5 * state.rangeMax_) {
+         double midpoint = 0.5 * (state.rangeMin_ + state.rangeMax_);
+         if (top && intensity < midpoint) {
             drawOnLeftOfHandle = false;
-         } else if (!top && intensity > 0.5 * state.rangeMax_) {
+         } else if (!top && intensity > midpoint) {
             drawOnLeftOfHandle = true;
          }
 
@@ -434,8 +542,8 @@ public final class HistogramView extends JPanel {
    private Rectangle getGammaHandleRect() {
       if (gammaHandleRect_ == null) {
          ComponentState state = componentStates_.get(selectedComponent_);
-         float loX = intensityFractionToGraphXPos((float) state.scalingMin_ / state.rangeMax_);
-         float hiX = intensityFractionToGraphXPos((float) state.scalingMax_ / state.rangeMax_);
+         float loX = intensityFractionToGraphXPos(intensityToFraction(state, state.scalingMin_));
+         float hiX = intensityFractionToGraphXPos(intensityToFraction(state, state.scalingMax_));
          int x = Math.round(0.5f * (loX + hiX));
          float yFrac = (float) Math.pow(0.5, gamma_);
          int y = Math.round(frequencyFractionToGraphYPos(yFrac));
@@ -444,6 +552,14 @@ public final class HistogramView extends JPanel {
          gammaHandleRect_ = new Rectangle(x - s, y - s, 2 * s, 2 * s);
       }
       return gammaHandleRect_;
+   }
+
+   private float intensityToFraction(ComponentState state, float intensity) {
+      long span = state.rangeMax_ - state.rangeMin_;
+      if (span == 0) {
+         return 0.0f;
+      }
+      return (intensity - state.rangeMin_) / (float) span;
    }
 
    private float intensityFractionToGraphXPos(float intensityFraction) {
@@ -468,8 +584,8 @@ public final class HistogramView extends JPanel {
 
    private double graphPosToGamma(float x, float y) {
       ComponentState state = componentStates_.get(selectedComponent_);
-      float loX = intensityFractionToGraphXPos((float) state.scalingMin_ / state.rangeMax_);
-      float hiX = intensityFractionToGraphXPos((float) state.scalingMax_ / state.rangeMax_);
+      float loX = intensityFractionToGraphXPos(intensityToFraction(state, state.scalingMin_));
+      float hiX = intensityFractionToGraphXPos(intensityToFraction(state, state.scalingMax_));
 
       float xFrac = (x + 0.5f - loX) / (hiX - loX);
       float yFrac = graphYPosToFrequencyFraction(y);
@@ -502,6 +618,7 @@ public final class HistogramView extends JPanel {
       drawGraphBackground(g);
       if (numComponents > 0) {
          drawRangeMaxLabel(g);
+         drawRangeMinLabel(g);
       }
 
       for (int i = 0; i < componentStates_.size(); ++i) {
@@ -525,6 +642,11 @@ public final class HistogramView extends JPanel {
       }
 
       if (numComponents > 0) {
+         for (int c = 0; c < numComponents; c++) {
+            if (c != selectedComponent_) {
+               drawScalingMiniHandles(c, g);
+            }
+         }
          drawScalingHandlesAndLabels(selectedComponent_, g);
          drawGammaMappingAndHandle(selectedComponent_, g);
       }
@@ -544,6 +666,7 @@ public final class HistogramView extends JPanel {
    }
 
    private void drawRangeMaxLabel(Graphics2D g) {
+      rangeMaxLabelRect_ = null;
       if (componentStates_.isEmpty()) {
          return;
       }
@@ -553,18 +676,68 @@ public final class HistogramView extends JPanel {
             return; // Only draw if all components have the same max
          }
       }
-      String text = Long.toString(rangeMax);
+      ComponentState first = componentStates_.get(0);
+      String text = (first.rangeMaxLabel_ != null)
+            ? first.rangeMaxLabel_
+            : Long.toString(rangeMax);
       Rectangle rect = getGraphRect();
       Point graphBottomRight = new Point(rect.x + rect.width, rect.y + rect.height);
 
       Graphics2D g2d = (Graphics2D) g.create();
       g2d.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
-      FontMetrics metrics = g.getFontMetrics();
+      // Measure with the derived font actually used to draw, so that the
+      // position and the hit rectangle match what is on screen.
+      FontMetrics metrics = g2d.getFontMetrics();
       int x = graphBottomRight.x - metrics.stringWidth(text);
       if (x <= getScalingHandlePos(selectedComponent_, false)) {
          return; // Hide when scaling lower limit handle overlaps
       }
+      if (axisRangeEditable_) {
+         g2d.setColor(EDITABLE_AXIS_LABEL_COLOR);
+      }
       g2d.drawString(text, x, graphBottomRight.y + metrics.getAscent());
+      rangeMaxLabelRect_ = new Rectangle(x, graphBottomRight.y,
+            metrics.stringWidth(text), VERTICAL_MARGIN);
+   }
+
+   private void drawRangeMinLabel(Graphics2D g) {
+      rangeMinLabelRect_ = null;
+      if (componentStates_.isEmpty()) {
+         return;
+      }
+      ComponentState first = componentStates_.get(0);
+      if (first.rangeMinLabel_ == null) {
+         return; // Only float images label the low end of the axis
+      }
+      final long rangeMin = first.rangeMin_;
+      for (ComponentState state : componentStates_) {
+         if (state.rangeMin_ != rangeMin) {
+            return; // Only draw if all components have the same min
+         }
+      }
+      String text = first.rangeMinLabel_;
+      Rectangle rect = getGraphRect();
+
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
+      // Measure with the derived font actually used to draw, so that the
+      // overlap checks and the hit rectangle match what is on screen.
+      FontMetrics metrics = g2d.getFontMetrics();
+      int x = rect.x;
+      // Keep clear of the low scaling handle and of the range-max label.
+      if (x + metrics.stringWidth(text) >= getScalingHandlePos(selectedComponent_, false)) {
+         return;
+      }
+      if (rangeMaxLabelRect_ != null
+            && x + metrics.stringWidth(text) >= rangeMaxLabelRect_.x) {
+         return;
+      }
+      if (axisRangeEditable_) {
+         g2d.setColor(EDITABLE_AXIS_LABEL_COLOR);
+      }
+      g2d.drawString(text, x, rect.y + rect.height + metrics.getAscent());
+      rangeMinLabelRect_ = new Rectangle(x, rect.y + rect.height,
+            metrics.stringWidth(text), VERTICAL_MARGIN);
    }
 
    private void drawComponentGraph(int component, Graphics2D g) {
@@ -591,9 +764,13 @@ public final class HistogramView extends JPanel {
       if (state.rangeMax_ <= 0) {
          return;
       }
+      float binCount = state.rangeMax_ + 1;
+      float loXPos = getScalingHandlePos(component, false);
+      if (loXPos < rect.x) { // Prevent from being clipped
+         loXPos = rect.x;
+      }
+      float hiXPos = getScalingHandlePos(component, true);
       int offset = 2 * component;
-      float loXPos = intensityFractionToGraphXPos((float) state.scalingMin_ / state.rangeMax_);
-      float hiXPos = intensityFractionToGraphXPos((float) state.scalingMax_ / state.rangeMax_);
 
       Graphics2D g2d = (Graphics2D) g.create();
       g2d.setClip(rect.x, rect.y, rect.width, rect.height);
@@ -601,7 +778,7 @@ public final class HistogramView extends JPanel {
       g2d.setStroke(new BasicStroke(
             1.0f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f,
-            new float[] {5.0f, 5.0f}, offset));
+            new float[] {3.0f, 3.0f}, offset));
       g2d.draw(new Line2D.Float(loXPos, rect.y, loXPos, rect.y + rect.height));
       g2d.draw(new Line2D.Float(hiXPos, rect.y, hiXPos, rect.y + rect.height));
    }
@@ -616,7 +793,7 @@ public final class HistogramView extends JPanel {
       }
       int offset = 2 * component;
       float xPos = intensityFractionToGraphXPos(
-            (float) state.highlightIntensity_ / state.rangeMax_);
+            intensityToFraction(state, state.highlightIntensity_));
       Rectangle rect = getGraphRect();
 
       Graphics2D g2d = (Graphics2D) g.create();
@@ -625,19 +802,24 @@ public final class HistogramView extends JPanel {
       g2d.setStroke(new BasicStroke(
             1.5f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f,
-            new float[] {5.0f, 5.0f}, offset));
+            new float[] {6.0f, 6.0f}, offset));
       g2d.draw(new Line2D.Float(xPos, rect.y, xPos, rect.y + rect.height));
    }
 
    private void drawScalingHandlesAndLabels(int component, Graphics2D g) {
-      drawScalingHandle(component, true, g);
-      drawScalingHandle(component, false, g);
+      drawScalingHandle(component, true, false, g);
+      drawScalingHandle(component, false, false, g);
       drawScalingLabel(component, true, g);
       drawScalingLabel(component, false, g);
    }
 
+   private void drawScalingMiniHandles(int component, Graphics2D g) {
+      drawScalingHandle(component, true, true, g);
+      drawScalingHandle(component, false, true, g);
+   }
+
    // See also: getScalingHandleRect()
-   private void drawScalingHandle(int component, boolean top, Graphics2D g) {
+   private void drawScalingHandle(int component, boolean top, boolean mini, Graphics2D g) {
       Rectangle rect = getGraphRect();
       ComponentState state = componentStates_.get(component);
       if (state.rangeMax_ <= 0) {
@@ -649,7 +831,8 @@ public final class HistogramView extends JPanel {
          return;
       }
 
-      final int s = LUT_HANDLE_SIZE * (top ? -1 : 1);
+      final int size = mini ? LUT_MINI_HANDLE_SIZE : LUT_HANDLE_SIZE;
+      final int s = size * (top ? -1 : 1);
       Path2D.Float path = new Path2D.Float(Path2D.WIND_EVEN_ODD, 3);
       path.moveTo(x, y);
       path.lineTo(x, y + s);
@@ -672,7 +855,9 @@ public final class HistogramView extends JPanel {
          return;
       }
       long intensity = top ? state.scalingMax_ : state.scalingMin_;
-      final String text = Long.toString(intensity);
+      final String text = (state.floatMapper_ != null)
+            ? state.floatMapper_.formatBinIndex(intensity)
+            : Long.toString(intensity);
 
       float x = getScalingHandlePos(component, top);
       if (x < rect.x - 1 || x > rect.x + rect.width) {
@@ -680,9 +865,10 @@ public final class HistogramView extends JPanel {
       }
 
       boolean drawOnLeftOfHandle = top;
-      if (top && intensity < 0.5 * state.rangeMax_) {
+      double midpoint2 = 0.5 * (state.rangeMin_ + state.rangeMax_);
+      if (top && intensity < midpoint2) {
          drawOnLeftOfHandle = false;
-      } else if (!top && intensity > 0.5 * state.rangeMax_) {
+      } else if (!top && intensity > midpoint2) {
          drawOnLeftOfHandle = true;
       }
 
@@ -732,7 +918,7 @@ public final class HistogramView extends JPanel {
       Graphics2D g2d = (Graphics2D) g.create();
       g2d.setColor(OVERLAY_COLOR);
       g2d.setFont(g.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
-      FontMetrics metrics = g.getFontMetrics();
+      FontMetrics metrics = g2d.getFontMetrics();
       g2d.drawString(text, graphTopRight.x - metrics.stringWidth(text) - 3,
             graphTopRight.y + metrics.getAscent());
    }
@@ -792,6 +978,8 @@ public final class HistogramView extends JPanel {
          float[] data = getComponentInterpolatedLogScaledData(component);
          float dataMax = getComponentInterpolatedLogScaledDataMax(component);
          final float dataScaling = (float) rect.height / dataMax;
+         // The bins always span the full axis: callers rebin their data onto the axis
+         // before handing it over.
          final float pixelsPerBin = (float) rect.width / data.length;
 
          if (dataMax == 0.0) {
@@ -800,16 +988,28 @@ public final class HistogramView extends JPanel {
             return null;
          }
 
+         // Find the first and last bins with non-zero count to avoid drawing
+         // a flat zero-count line at the edges of the histogram.
+         int firstNonZero = 0;
+         while (firstNonZero < data.length && data[firstNonZero] == 0.0f) {
+            firstNonZero++;
+         }
+         int lastNonZero = data.length - 1;
+         while (lastNonZero > firstNonZero && data[lastNonZero] == 0.0f) {
+            lastNonZero--;
+         }
+
          state.cachedPath_ =
                new Path2D.Float(Path2D.WIND_EVEN_ODD, 2 * data.length + 2);
-         state.cachedPath_.moveTo(0.0f, (float) rect.height);
-         for (int i = 0; i < data.length; ++i) {
+         float startX = firstNonZero * pixelsPerBin;
+         state.cachedPath_.moveTo(startX, (float) rect.height);
+         for (int i = firstNonZero; i <= lastNonZero; ++i) {
             float x = i * pixelsPerBin;
             float y = rect.height - dataScaling * data[i];
             state.cachedPath_.lineTo(x, y);                // Vertical
             state.cachedPath_.lineTo(x + pixelsPerBin, y); // Horizontal
          }
-         state.cachedPath_.lineTo((float) rect.width, (float) rect.height);
+         state.cachedPath_.lineTo((lastNonZero + 1) * pixelsPerBin, (float) rect.height);
          if (fillHistograms_) {
             state.cachedPath_.closePath();
          }
@@ -888,7 +1088,9 @@ public final class HistogramView extends JPanel {
          for (int k = startFloor + 1; k < endFloor; ++k) {
             result[i] += data[k];
          }
-         if (endFloor < width - 1) {
+         // Bound against the source length, not the output length: the two differ
+         // whenever the histogram is being resampled.
+         if (endFloor + 1 < data.length) {
             result[i] += data[endFloor + 1] * (endFloor + 1 - endBin);
          }
       }
@@ -899,8 +1101,8 @@ public final class HistogramView extends JPanel {
       if (cachedGammaMappingPath_ == null) {
          ComponentState state = componentStates_.get(component);
          Rectangle rect = getGraphRect();
-         float loX = intensityFractionToGraphXPos((float) state.scalingMin_ / state.rangeMax_);
-         float hiX = intensityFractionToGraphXPos((float) state.scalingMax_ / state.rangeMax_);
+         float loX = intensityFractionToGraphXPos(intensityToFraction(state, state.scalingMin_));
+         float hiX = intensityFractionToGraphXPos(intensityToFraction(state, state.scalingMax_));
          int width = (int) Math.floor(hiX - loX);
 
          cachedGammaMappingPath_ = new Path2D.Float();
@@ -925,7 +1127,11 @@ public final class HistogramView extends JPanel {
 
    private void mouseClicked(MouseEvent e) {
       if (e.getClickCount() == 2) {
-         if (isPointInScalingLabel(e.getPoint(), true)) {
+         if (axisRangeEditable_ && isPointInAxisRangeLabel(e.getPoint(), false)) {
+            startAxisRangeEdit(false);
+         } else if (axisRangeEditable_ && isPointInAxisRangeLabel(e.getPoint(), true)) {
+            startAxisRangeEdit(true);
+         } else if (isPointInScalingLabel(e.getPoint(), true)) {
             startScalingEdit(true);
          } else if (isPointInScalingLabel(e.getPoint(), false)) {
             startScalingEdit(false);
@@ -1012,10 +1218,73 @@ public final class HistogramView extends JPanel {
       return getGammaHandleRect().contains(p);
    }
 
+   private boolean isPointInAxisRangeLabel(Point p, boolean top) {
+      Rectangle rect = top ? rangeMaxLabelRect_ : rangeMinLabelRect_;
+      return rect != null && rect.contains(p);
+   }
+
+   /**
+    * Opens a spinner for editing one end of the axis.
+    *
+    * <p>Both ends are reported together, since the listener stores them as a pair.
+    *
+    * @param top true to edit the high end, false for the low end
+    */
+   private void startAxisRangeEdit(final boolean top) {
+      final ComponentState state = componentStates_.get(selectedComponent_);
+      final FloatCoordinateMapper mapper = state.floatMapper_;
+      if (mapper == null) {
+         return;
+      }
+      final double axisMin = mapper.getRangeMin();
+      final double axisMax = mapper.binIndexToPixelValue(mapper.getBinCount());
+      final double current = top ? axisMax : axisMin;
+      final double span = Math.abs(axisMax - axisMin);
+      // Allow a generous range around the current axis, and a step that is fine enough to
+      // be useful but not so fine that reaching a nearby value takes many clicks.
+      final double limit = Math.max(1.0, span) * 1000.0;
+      double step = span > 0.0 ? span / 100.0 : 1.0;
+      final JSpinner spinner = new JSpinner(
+            new SpinnerNumberModel(current, current - limit, current + limit, step));
+      spinner.setPreferredSize(new Dimension(110, spinner.getPreferredSize().height));
+      spinner.addChangeListener((ChangeEvent e) -> {
+         double val = ((Number) spinner.getValue()).doubleValue();
+         // Re-read the opposite end each time: it may have been updated by an earlier
+         // change from this same spinner.
+         FloatCoordinateMapper cur = componentStates_.get(selectedComponent_).floatMapper_;
+         if (cur == null) {
+            return;
+         }
+         double otherMin = cur.getRangeMin();
+         double otherMax = cur.binIndexToPixelValue(cur.getBinCount());
+         double newMin = top ? otherMin : val;
+         double newMax = top ? val : otherMax;
+         if (newMax <= newMin) {
+            return; // Ignore inverted ranges rather than fighting the user mid-edit
+         }
+         listeners_.fire().histogramAxisRangeChanged(selectedComponent_, newMin, newMax);
+      });
+      JPopupMenu popup = new JPopupMenu();
+      popup.add(spinner);
+      popup.validate();
+      Rectangle labelRect = top ? rangeMaxLabelRect_ : rangeMinLabelRect_;
+      int x = (labelRect != null ? labelRect.x : getGraphRect().x)
+            - popup.getPreferredSize().width / 2;
+      popup.show(this, x, getBounds().height);
+   }
+
    private void startScalingEdit(final boolean top) {
       final ComponentState state = componentStates_.get(selectedComponent_);
+      if (state.floatMapper_ != null) {
+         startFloatScalingEdit(top, state);
+      } else {
+         startIntegerScalingEdit(top, state);
+      }
+   }
+
+   private void startIntegerScalingEdit(final boolean top, final ComponentState state) {
       long intensity = top ? state.scalingMax_ : state.scalingMin_;
-      long min = top ? state.scalingMin_ + 1 : 0;
+      long min = top ? state.scalingMin_ + 1 : state.rangeMin_;
       long max = top ? state.rangeMax_ : state.scalingMax_ - 1;
       // TODO spinner model fails if not min <= value <= max!!!
       final JSpinner scalingSpinner = new JSpinner(
@@ -1041,11 +1310,49 @@ public final class HistogramView extends JPanel {
       popup.show(this, x, y);
    }
 
+   private void startFloatScalingEdit(final boolean top, final ComponentState state) {
+      final FloatCoordinateMapper mapper = state.floatMapper_;
+      long curBin = top ? state.scalingMax_ : state.scalingMin_;
+      long minBin = top ? state.scalingMin_ + 1 : 0;
+      long maxBin = top ? (long) mapper.getBinCount() : state.scalingMax_ - 1;
+      double curVal = mapper.binIndexToPixelValue(curBin);
+      double minVal = mapper.binIndexToPixelValue(minBin);
+      double maxVal = mapper.binIndexToPixelValue(maxBin);
+      double step = mapper.getBinWidth();
+      final JSpinner spinner = new JSpinner(
+            new SpinnerNumberModel(curVal, minVal, maxVal, step));
+      spinner.addChangeListener((ChangeEvent e) -> {
+         double val = ((Number) spinner.getValue()).doubleValue();
+         long binIdx = mapper.pixelValueToBinIndex(val);
+         // The handle is drawn at a bin index, but the stored range keeps the exact value
+         // the user typed: rounding it to a bin here would be visible on the image.
+         if (top) {
+            binIdx = Math.max(state.scalingMin_ + 1, binIdx);
+            setComponentScaling(selectedComponent_, state.scalingMin_, binIdx);
+            listeners_.fire().histogramFloatScalingChanged(selectedComponent_,
+                  mapper.binIndexToPixelValue(state.scalingMin_), val);
+         } else {
+            binIdx = Math.min(state.scalingMax_ - 1, binIdx);
+            setComponentScaling(selectedComponent_, binIdx, state.scalingMax_);
+            listeners_.fire().histogramFloatScalingChanged(selectedComponent_,
+                  val, mapper.binIndexToPixelValue(state.scalingMax_));
+         }
+      });
+      JPopupMenu popup = new JPopupMenu();
+      popup.add(spinner);
+      popup.validate();
+      int x = (int) getScalingHandlePos(selectedComponent_, top)
+            - popup.getPreferredSize().width / 2;
+      int y = top ? -popup.getPreferredSize().height : getBounds().height;
+      popup.show(this, x, y);
+   }
+
    private void jumpSetScaling(int mouseX, boolean top) {
       ComponentState state = componentStates_.get(selectedComponent_);
       long intensity = Math.round(
-            graphXPosToIntensityFraction(mouseX) * state.rangeMax_);
-      intensity = Math.max(0, Math.min(state.rangeMax_, intensity));
+            graphXPosToIntensityFraction(mouseX) * (state.rangeMax_ - state.rangeMin_)
+            + state.rangeMin_);
+      intensity = Math.max(state.rangeMin_, Math.min(state.rangeMax_, intensity));
       if (top) {
          intensity = Math.max(state.scalingMin_ + 1, intensity);
          setComponentScaling(selectedComponent_, state.scalingMin_, intensity);
@@ -1089,11 +1396,12 @@ public final class HistogramView extends JPanel {
       long intensity;
       if (getValidDragRect().contains(mousePosition)) {
          float intensityFrac = graphXPosToIntensityFraction(mousePosition.x);
-         intensity = Math.round(intensityFrac * state.rangeMax_);
+         intensity = Math.round(intensityFrac * (state.rangeMax_ - state.rangeMin_)
+               + state.rangeMin_);
       } else {
          intensity = scalingHandleDragOriginalValue_;
       }
-      intensity = Math.max(0, Math.min(state.rangeMax_, intensity));
+      intensity = Math.max(state.rangeMin_, Math.min(state.rangeMax_, intensity));
       if (top) {
          intensity = Math.max(state.scalingMin_ + 1, intensity);
          setComponentScaling(selectedComponent_, state.scalingMin_, intensity);

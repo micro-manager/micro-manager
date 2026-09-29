@@ -60,6 +60,8 @@ public interface Metadata {
       @Override
       Builder exposureMs(Double exposureMs);
 
+      Builder generateUUID();
+
       @Override
       Builder imageNumber(Long imageNumber);
 
@@ -120,9 +122,6 @@ public interface Metadata {
 
       @Override
       Builder uuid(UUID uuid);
-
-      Builder generateUUID();
-
 
       @Override
       Builder xPositionUm(Double xPositionUm);

@@ -141,7 +141,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
 
    // Returns the index at which the key was inserted
    public int insert(K key, V value) {
-      Cell<K, V> newCell = new Cell(levels_, key, value);
+      Cell<K, V> newCell = new Cell<>(levels_, key, value);
       lastInserted_.setNextInserted(newCell);
       lastInserted_ = newCell;
       int result = insertIntoLevel(levels_ - 1, newCell,

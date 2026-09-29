@@ -507,8 +507,11 @@ public final class ProfilePropertyMapView implements MutablePropertyMapView {
    }
 
    @Override
-   public <E extends Enum<E>> List<E> getStringListAsEnumList(String key,
-                                                              Class<E> enumType, E... defaults) {
+   @SafeVarargs
+   @SuppressWarnings("varargs")
+   public final <E extends Enum<E>> List<E> getStringListAsEnumList(String key,
+                                                                    Class<E> enumType,
+                                                                    E... defaults) {
       return read().getStringListAsEnumList(key, enumType, defaults);
    }
 
@@ -1054,8 +1057,9 @@ public final class ProfilePropertyMapView implements MutablePropertyMapView {
    }
 
    @Override
-   public <E extends Enum<E>> MutablePropertyMapView putEnumListAsStringList(final String key,
-                                                                             final E... values) {
+   @SafeVarargs
+   public final <E extends Enum<E>> MutablePropertyMapView putEnumListAsStringList(
+         final String key, final E... values) {
       write(new DefaultUserProfile.Editor() {
          @Override
          public PropertyMap edit(PropertyMap input) {

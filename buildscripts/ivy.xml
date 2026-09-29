@@ -20,14 +20,30 @@
       <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
       <dependency org="com.fifesoft" name="rsyntaxtextarea" rev="3.1.1"/>
+      <!-- Used on Linux only (see MMStudio.main): unlike GTKLookAndFeel, honors
+           UIManager color overrides (DaytimeNighttime dark theme), and unlike
+           Nimbus, MigLayout scales its pixel constraints to match FlatLaf's
+           detected HiDPI scale factor instead of ignoring it. -->
+      <dependency org="com.formdev" name="flatlaf" rev="3.7.1"/>
       <dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
       <dependency org="com.google.guava" name="guava" rev="17.0"/>
       <dependency org="com.google.protobuf" name="protobuf-java" rev="2.6.1"/><!-- transitive dep of TSFProto -->
-      <dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
+      <dependency org="com.miglayout" name="miglayout-swing" rev="5.3"/>
       <dependency org="net.imglib2" name="imglib2" rev="5.10.0"/>
-      <dependency org="ome" name="formats-api" rev="5.1.1"/>
-      <dependency org="ome" name="formats-common" rev="5.1.1"/>
-      <dependency org="ome" name="ome-xml" rev="5.1.1"/>
+      <!-- OME / Bio-Formats stack. Must be a single, internally consistent
+           version line. scifio (below) transitively pulls the 2016-06 schema
+           stack (formats-api 5.5.3 -> org.openmicroscopy ome-xml 5.5.4). The
+           old ome#ome-xml;5.1.1 ships a Plate class hard-coded to the
+           SPW/2015-01 namespace, which collides with the 2016-06 OME root and
+           produces invalid Plate/Screen/Well metadata. Pin everything to the
+           5.5.x line and exclude the legacy ome#* artifacts so only one
+           ome-xml is ever resolved. -->
+      <dependency org="ome" name="formats-api" rev="5.5.3">
+         <exclude org="ome" module="ome-xml"/>
+         <exclude org="ome" module="formats-common"/>
+      </dependency>
+      <dependency org="org.openmicroscopy" name="ome-xml" rev="5.5.4"/>
+      <dependency org="org.openmicroscopy" name="ome-common" rev="5.3.1"/>
       <dependency org="org.apache-extras.beanshell" name="bsh" rev="2.0b6"/>
       <dependency org="org.apache.commons" name="commons-lang3" rev="3.10"/>
       <dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
@@ -46,13 +62,18 @@
       <dependency org="org.micro-manager.pyjavaz" name="PyJavaZ" rev="1.0.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.39.2">
+      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.39.4">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
       <dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
+	 <!-- Pulls in the old standalone com.miglayout:miglayout:3.7.4 artifact,
+              which defines the same classes as miglayout-core/miglayout-swing
+              at an incompatible API version, causing AbstractMethodError 
+	      depending on classpath order. -->
+         <exclude org="com.miglayout" module="miglayout"/>
       </dependency>
-      <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.18.4">
+      <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.19.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
       <dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.46.19">
@@ -96,7 +117,11 @@
 
 
       <!-- ClearVolume dependencies -->
-      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3"/>
+      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3">
+         <!-- coremem 0.4.4 no longer available from maven.scijava.org
+         (0.4.5 wins anyway) -->
+         <exclude org="net.coremem" name="coremem"/>
+      </dependency>
       <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
       <!-- <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/> -->
       <dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
@@ -146,6 +171,20 @@
       <!-- Run-time-only dependencies -->
       <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 
+      <!-- MM-OME-BigTiff-Storage and MM-OME-Zarr-Storage are published to Maven Central.
+           Their POMs declare their own transitive dependencies (jackson-databind for both;
+           dev.zarr:zarr-java - and, via its POM, cdm-core from the Unidata resolver - for
+           Zarr), including zarr-java's AWS SDK exclusion, so nothing further needs to be
+           declared here. -->
+      <dependency conf="compile" org="org.micro-manager" name="MM-OME-BigTiff-Storage" rev="0.1.0"/>
+      <dependency org="org.micro-manager" name="MM-OME-Zarr-Storage" rev="0.1.0"/>
+      <!-- zarr-java's transitive tree (via cdm-core -> httpservices) brings guava 30.1 and
+           protobuf 3, which collide with the older versions Micro-Manager pins (guava 17.0,
+           protobuf 2.6.1) and whose newer APIs MM's own code is NOT built against (e.g.
+           CharMatcher.JAVA_LETTER_OR_DIGIT, removed after guava 20). The cdm-core classes the
+           MM Zarr backend actually touches (ucar.ma2.Array / DataType) do not reference guava,
+           so pinning MM's versions is safe at runtime. The <override> entries below (further
+           down) force those versions regardless of which transitive requests a newer one. -->
 
       <!-- Always exclude these -->
       <exclude org="com.googlecode.efficient-java-matrix-library"/>
@@ -163,6 +202,15 @@
            of our installer significantly). This exclusion can be removed if
            formats-bsd becomes necessary in the future. -->
       <exclude org="ome" module="formats-bsd"/>
+
+      <!-- Force Micro-Manager's pinned versions to win over newer ones dragged in
+           transitively by zarr-java/cdm-core (via cdm-core -> httpservices: guava 30.1,
+           protobuf 3). MM's own code is built against these older APIs (e.g.
+           CharMatcher.JAVA_LETTER_OR_DIGIT, removed after guava 20). Overrides beat Ivy's
+           default "latest revision" conflict manager and reach deep transitive edges that a
+           per-dependency <exclude> on zarr-java cannot. -->
+      <override org="com.google.guava" module="guava" rev="17.0"/>
+      <override org="com.google.protobuf" module="protobuf-java" rev="2.6.1"/>
 
    </dependencies>
 </ivy-module>

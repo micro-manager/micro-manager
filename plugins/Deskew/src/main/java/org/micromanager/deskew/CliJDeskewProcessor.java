@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij.clearcl.exceptions.OpenCLException;
 import net.haesleinhuepf.clij2.CLIJ2;
@@ -20,6 +21,10 @@ import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
 
+
+/**
+ * Implements deskewing using CliJ on the GPU.
+ */
 public class CliJDeskewProcessor implements Processor {
    private final Studio studio_;
    private final Double theta_;
@@ -40,6 +45,14 @@ public class CliJDeskewProcessor implements Processor {
    private Integer newDepth_;
    private Double newZSizeUm_;
 
+   /**
+    * Implements deskewing using CliJ on the GPU.
+    *
+    * @param studio Always present Studio object
+    * @param deskewAcqManager Parent DeskewAcqManager
+    * @param settings PropertyMap with settings
+    * @throws ParseException if angle is not a valid number
+    */
    public CliJDeskewProcessor(Studio studio, DeskewAcqManager deskewAcqManager,
                               PropertyMap settings) throws ParseException {
       studio_ = studio;
@@ -95,6 +108,9 @@ public class CliJDeskewProcessor implements Processor {
          try {
             ClearCLBuffer fullVolumeGPU = deskewAndRotateOnGPU(
                      stacks_.get(coordsNoZPossiblyNoT), image);
+            if (fullVolumeGPU == null) {
+               return;
+            }
             stacks_.remove(coordsNoZPossiblyNoT);
             if (doXYProjections_) {
                ClearCLBuffer xy = projectXYOnGPU(fullVolumeGPU);
@@ -151,7 +167,8 @@ public class CliJDeskewProcessor implements Processor {
                   ImageProcessor ip1 = resultStack.getProcessor(i + 1);
                   Image image1 = studio_.data().ij().createImage(ip1,
                            coordsNoZPossiblyNoT.copyBuilder().z(i).build(),
-                           image.getMetadata());
+                           image.getMetadata().copyBuilderWithNewUUID()
+                                    .zPositionUm(i * newZSizeUm_).build());
                   if (fullVolumeStore_ == null) {
                      String prefix = inputSummaryMetadata_.getPrefix().isEmpty()
                               ? "Untitled" : inputSummaryMetadata_.getPrefix();
@@ -178,7 +195,62 @@ public class CliJDeskewProcessor implements Processor {
       if (keepOriginals_) {
          context.outputImage(image);
       }
-      // TODO: freeze all stores at the end...
+   }
+
+   @Override
+   public void cleanup(ProcessorContext context) {
+      // TODO: shutdown processing executor?
+      if (fullVolumeStore_ != null) {
+         try {
+            fullVolumeStore_.freeze();
+            if (fullVolumeStore_.getNumImages() == 0) {
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(fullVolumeStore_);
+                  try {
+                     fullVolumeStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
+      if (xyProjectionStore_ != null) {
+         try {
+            xyProjectionStore_.freeze();
+            if (xyProjectionStore_.getNumImages() == 0) {
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(xyProjectionStore_);
+                  try {
+                     xyProjectionStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
+      if (orthogonalStore_ != null) {
+         try {
+            orthogonalStore_.freeze();
+            if (orthogonalStore_.getNumImages() == 0) {
+               SwingUtilities.invokeLater(() -> {
+                  deskewAcqManager_.closeViewerFor(orthogonalStore_);
+                  try {
+                     orthogonalStore_.close();
+                  } catch (IOException e) {
+                     studio_.logs().logError(e);
+                  }
+               });
+            }
+         } catch (IOException e) {
+            studio_.logs().logError(e);
+         }
+      }
    }
 
    private ClearCLBuffer deskewAndRotateOnGPU(ImageStack stack, Image image) {
@@ -203,6 +275,23 @@ public class CliJDeskewProcessor implements Processor {
 
       newDepth_ = newDepth;
       newZSizeUm_ = pxDepth;
+
+      // check if image fits into GPU memory
+      long maxClijImageSize = clij2_.getCLIJ().getClearCLContext().getDevice()
+               .getMaxMemoryAllocationSizeInBytes();
+      long estimatedSize = (long) newWidth * (long) newHeight * (long) newDepth
+               * (long) image.getBytesPerPixel();
+      long inputImageSize = (long) image.getHeight() * image.getWidth() * image.getBytesPerPixel()
+               * imDepth;
+      if ((estimatedSize + (2 * inputImageSize)) > maxClijImageSize) {
+         studio_.logs().showError("Deskewed image plus 2 input images are "
+                  + humanReadableBytes(estimatedSize + (2 * inputImageSize))
+                  + " bytes and exceed maximum GPU memory allocation size of "
+                  + humanReadableBytes(maxClijImageSize)
+                  + " bytes on GPU " + clij2_.getCLIJ().getGPUName() + ".\n"
+                  + "Please choose a different GPU with more memory or reduce the image size.");
+         return null;
+      }
 
       // do the clij stuff
       ImagePlus imp = new ImagePlus("test", stack);
@@ -264,6 +353,17 @@ public class CliJDeskewProcessor implements Processor {
       clij2_.release(yz);
       clij2_.release(xyXz);
       return xyXzYz;
+   }
+
+   private String humanReadableBytes(double numBytes) {
+      String[] units = {"bytes", "kilobytes", "megabytes", "gigabytes", "terabytes"};
+      int unitIndex = 0;
+      while (numBytes > 1024.0 && unitIndex < units.length - 1) {
+         numBytes /= 1024.0;
+         unitIndex++;
+      }
+      double rounded = ((long) (numBytes * 10.0)) / 10.0;
+      return rounded + " " + units[unitIndex];
    }
 
 }

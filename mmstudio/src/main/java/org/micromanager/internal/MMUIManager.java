@@ -29,8 +29,10 @@ import javax.swing.ToolTipManager;
 import mmcorej.MMCoreJ;
 import org.micromanager.PositionList;
 import org.micromanager.events.internal.DefaultGUIRefreshEvent;
+import org.micromanager.events.internal.DefaultPixelSizeChangedEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
+import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.positionlist.MMPositionListDlg;
@@ -114,6 +116,10 @@ public class MMUIManager {
       scriptPanel_ = new ScriptPanel(studio_);
    }
 
+   public void createStageControlFrame()  {
+      StageControlFrame.createStageControl(studio_);
+   }
+
    public ScriptPanel getScriptPanel() {
       return scriptPanel_;
    }
@@ -181,6 +187,9 @@ public class MMUIManager {
    }
 
    public void showScriptPanel() {
+      // Clear BeanShell's negative class cache so that plugin classes loaded after the REPL
+      // interpreter was created (plugins load on a background thread) become visible to scripts.
+      scriptPanel_.resetReplClassCache();
       scriptPanel_.setVisible(true);
    }
 
@@ -270,8 +279,16 @@ public class MMUIManager {
       ReportingUtils.logMessage("Updating GUI; config pad = "
             + updateConfigPadStructure + "; from cache = " + fromCache);
       try {
+         double pixSizeUmPre = studio_.cache().getPixelSizeUm();
          studio_.cache().refreshValues();
          studio_.getAutofocusManager().refresh();
+         double pixSizeUmPost = studio_.cache().getPixelSizeUm();
+         if (Double.compare(pixSizeUmPre, pixSizeUmPost) != 0) {
+            // Firing this event is only needed for devices that do not notify the core
+            // of changed properties.  For those devices, the core will already fire the
+            // event.  Since we have no way of knowing, better call one extra time.
+            studio_.events().post(new DefaultPixelSizeChangedEvent(pixSizeUmPost));
+         }
 
          // The rest of this function uses the cached property values.
          // If `fromCache` is false, start by updating all properties in the cache.
@@ -289,7 +306,7 @@ public class MMUIManager {
             frame_.setBinSize(binSize);
          }
 
-         frame_.updateAutofocusButton(studio_.getAutofocusManager().getAutofocusMethod() != null);
+         frame_.updateAutofocusButtons(studio_.getAutofocusManager().getAutofocusMethod() != null);
 
          ConfigGroupPad pad = frame_.getConfigPad();
          // state devices
@@ -346,14 +363,14 @@ public class MMUIManager {
             }
          }
 
-         // Rebuild stage list in XY PositinList
+         // Rebuild stage list in XY PositionList
          if (posListDlg_ != null) {
             posListDlg_.rebuildAxisList();
          }
 
          if (frame_ != null) {
             configureBinningCombo();
-            frame_.updateAutofocusButton(
+            frame_.updateAutofocusButtons(
                   studio_.getAutofocusManager().getAutofocusMethod() != null);
             // Since the load system configuration event already updated the cache,
             // we do not need to do it again.
