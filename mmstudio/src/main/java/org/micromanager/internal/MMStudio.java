@@ -43,6 +43,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
+import net.miginfocom.swing.SwingComponentWrapper;
 import org.micromanager.Album;
 import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
@@ -250,6 +251,20 @@ public final class MMStudio implements Studio {
       isProgramRunning_ = true;
 
       ThreadExceptionLogger.setUp();
+
+      if (JavaUtils.isMac()) {
+         // Work around an issue in MiG Layout 5.x and later:
+         // https://github.com/mikaelgrev/miglayout/pull/120
+         //
+         // It starves the AWT paint events so that image viewers (heavyweight
+         // ImageJ canvas) never repaint when an HTML button is on scrren (such
+         // as in the MDA dialog).
+         //
+         // Once the upstream fix is released, this workaround should be
+         // removed because it causes some real layout issues (right edge of
+         // windows get cut off).
+         SwingComponentWrapper.setVisualPaddingEnabled(false);
+      }
 
       // The Core is created as early as possible, so that we can make use of
       // the CoreLog (and also to fail early if the MMCoreJ is not available)
