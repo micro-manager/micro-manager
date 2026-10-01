@@ -461,6 +461,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             desiredSlicePeriod_.setEnabled(!doMin);
             desiredSlicePeriodLabel_.setEnabled(!doMin);
             recalculateSliceTiming(false);
+            if (!updatingTiming_) {
+               updateDurationLabels();
+            }
          }
       });
       normalPanel_.add(minSlicePeriodCB_, "span 2, wrap");
