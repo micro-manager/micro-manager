@@ -274,13 +274,29 @@ public class AutofocusPanel extends ListeningJPanel{
             Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_MINCHANGE, 1);
       movementCorrectionsPanel.add(minMovementChangeSpinner);
       movementCorrectionsPanel.add(new JLabel("\u00B5m (\u00B1)"), "left, wrap");
+
+      final JPanel lagCompensationPanel = new JPanel(new MigLayout(
+              "",
+              "[right]8[center]8[left]",
+              "[]8[]"));
+      lagCompensationPanel.setBorder(PanelUtils.makeTitledBorder(
+              "Lag compensation options"));
+
+      lagCompensationPanel.add(new JLabel("Correction distance:"));
+      final JSpinner lagDistance = pu.makeSpinnerFloat(-100, 100, 1,
+              Devices.Keys.PLUGIN,
+              Properties.Keys.PLUGIN_AUTOFOCUS_LAG_PERCENT, 0);
+      lagCompensationPanel.add(lagDistance);
+      lagCompensationPanel.add(new JLabel("%"), "left, wrap");
+
       
       
       // construct the main panel
       super.add(optionsPanel, "wrap");
       super.add(acqOptionsPanel, "flowy, split 2");
       super.add(setupOptionsPanel, "wrap");
-      super.add(movementCorrectionsPanel);
+      super.add(movementCorrectionsPanel, "flowy, split 2");
+      super.add(lagCompensationPanel, "growx");
    }  //constructor
    
    
