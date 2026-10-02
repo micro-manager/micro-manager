@@ -31,7 +31,7 @@ public final class PrioritizedEventBus {
 
       if (async) {
          executorService_ = newSingleThreadExecutor(
-               ThreadFactoryFactory.createThreadFactory("PrioritizedEventBus"));
+               ThreadFactoryFactory.createDaemonThreadFactory("PrioritizedEventBus"));
       }
 
    }
