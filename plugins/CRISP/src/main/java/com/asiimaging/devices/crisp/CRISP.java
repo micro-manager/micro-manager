@@ -256,30 +256,33 @@ public class CRISP {
       return firmwareVersionLetter;
    }
 
-   // TODO: base class for generic methods? FirmwareVersion in prop names?
-
    /**
-    * Sets firmwareVersion and firmwareVersionLetter by querying the device and parsing the String.
+    * Sets the firmware version and letter by querying the device and parsing the string.
     */
    private void setFirmwareVersion() {
       try {
+         String message;
          if (deviceType == ControllerType.TIGER) {
             final String version = core.getProperty(deviceName, "FirmwareVersion");
             firmwareVersion = Double.parseDouble(version);
+            message = "Parsed Tiger firmware version: " + firmwareVersion;
          } else { // MS2000
             final String version = core.getProperty(deviceName, "Version");
-            final String v = version.split("-")[1];
-            try {
-               firmwareVersion = Double.parseDouble(v);
-               // TODO: find a better way to deal with this in the future
+            final char last = version.charAt(version.length() - 1);
+            if (Character.isLetter(last)) {
+               // old format: "9.2p"
+               firmwareVersion = Double.parseDouble(version.substring(0, version.length() - 1));
+               firmwareVersionLetter = last;
+               message = "Parsed MS-2000 firmware version: "
+                     + firmwareVersion + firmwareVersionLetter;
+            } else {
+               // new format: "9.61"
+               firmwareVersion = Double.parseDouble(version);
                firmwareVersionLetter = 'z';
-               //System.out.println("new firmware versioning system");
-            } catch (Exception e) {
-               firmwareVersion = Double.parseDouble(v.substring(0, v.length() - 2));
-               firmwareVersionLetter = v.charAt(v.length() - 2);
-               ///System.out.println("old firmware versioning system");
+               message = "Parsed MS-2000 firmware version: " + firmwareVersion;
             }
          }
+         studio.logs().logMessage(message);
       } catch (Exception e) {
          studio.logs().showError("could not get the firmware version!");
       }
