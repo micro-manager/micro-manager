@@ -1060,27 +1060,21 @@ public class ExplorerDataSource implements TiledDataViewerDataSource, TiledDataV
          int centerX = (int) (displayImageSize.x / 2);
          int centerY = (int) (displayImageSize.y / 2);
 
-         TextRoi line1 = new TextRoi(centerX - 120, centerY - 30, "Right-click: select tile");
-         line1.setStrokeColor(Color.WHITE);
-         overlay.add(line1);
-
-         TextRoi line2 = new TextRoi(centerX - 120, centerY - 10, "Right-drag: expand selection");
-         line2.setStrokeColor(Color.WHITE);
-         overlay.add(line2);
-
-         TextRoi line3 = new TextRoi(centerX - 120, centerY + 10,
-               "Left-click: acquire selected tiles");
-         line3.setStrokeColor(Color.WHITE);
-         overlay.add(line3);
-
-         TextRoi line4 = new TextRoi(centerX - 120, centerY + 30, "Left-drag: pan view");
-         line4.setStrokeColor(Color.WHITE);
-         overlay.add(line4);
-
-         TextRoi line5 = new TextRoi(centerX - 120, centerY + 50,
-               "Ctrl+left-click: move stage to position");
-         line5.setStrokeColor(Color.WHITE);
-         overlay.add(line5);
+         String[] lines = {
+               "Right-click: select tile",
+               "Right-drag: expand selection",
+               "Left-click: acquire selected tiles",
+               "Left-drag: pan view",
+               "Mouse wheel: zoom",
+               "Ctrl+left-click: move stage to position",
+         };
+         int y = centerY + 10 - 10 * (lines.length - 1);
+         for (String text : lines) {
+            TextRoi roi = new TextRoi(centerX - 120, y, text);
+            roi.setStrokeColor(Color.WHITE);
+            overlay.add(roi);
+            y += 20;
+         }
       }
 
       if (!pendingTiles_.isEmpty()) {
