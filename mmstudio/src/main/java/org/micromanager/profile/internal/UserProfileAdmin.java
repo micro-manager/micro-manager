@@ -347,14 +347,9 @@ public final class UserProfileAdmin {
                            () -> {
                               Profile profile1;
                               profile1 = Profile.fromSettings(uProfile.toPropertyMap());
-                              try {
-                                 writeFile(filename, profile1, false);
-                              } catch (IOException e) {
-                                 if (errorHandler != null) {
-                                    errorHandler.exceptionThrown(e);
-                                 }
-                              }
+                              writeFile(filename, profile1, false);
                            },
+                           errorHandler,
                            saverExecutor_));
             }
             return uProfile;
