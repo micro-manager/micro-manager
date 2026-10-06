@@ -30,7 +30,7 @@ also use Visual Studio 2022, provided that you select "MSVC v142 - VS 2019 C++
 build tools" in the installer (you can modify an existing installation).
 
 (Instructions are to be written here. For now, please refer to the
-[wiki page](https://micro-manager.org/wiki/Building_MM_on_Windows)).
+[website](https://micro-manager.org/Building_MM_on_Windows).)
 
 
 ## Building on macOS and Linux
@@ -38,8 +38,8 @@ build tools" in the installer (you can modify an existing installation).
 
 ### Ubuntu quickstart
 
-These commands should bring a complete build on Ubuntu. See below sections for
-more detail.
+These commands should produce a complete build on Ubuntu. See the sections
+below for more detail.
 
 ```sh
 sudo apt install \
@@ -67,15 +67,15 @@ sudo make install
 You can avoid using `sudo` for `make install` if you specify the prefix when
 using `configure`.
 
-After installing you can start micromanager from the terminal with the
-`micromanager` command
+After installing, you can start Micro-Manager from the terminal with the
+`micromanager` command.
 
 
 ### Prerequisites
 
 There are several packages that are required to build and/or run
 Micro-Manager. It is usually easiest to install these using the distribution's
-package manager (on Linux) or using Homebrew (on OS X).
+package manager (on Linux) or using Homebrew (on macOS).
 
 #### macOS
 
@@ -147,9 +147,9 @@ To build MMCoreJ and the Java application (Micro-Manager Studio), you will need
 a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
 (a.k.a. Java 1.8). For running Micro-Manager, Java 11 is currently recommended.
 
-With JDK 17 and above, error may occur like `Unable to make field int
+With JDK 17 and above, errors such as `Unable to make field int
 java.awt.Color.value accessible: module java.desktop does not "opens java.awt"
-to unnamed module @38a8f1a9`.
+to unnamed module @38a8f1a9` may occur.
 
 Building the Java components also requires Apache Ant.
 
@@ -197,7 +197,8 @@ To configure for installation as an ImageJ plugin, type
 
     ./configure --enable-imagej-plugin=/path/to/ImageJ
 
-The ImageJ path should be an existing (preferably fresh) copy of ImageJ 1.48.
+The ImageJ path should be an existing (preferably fresh) copy of ImageJ 1.x.
+Official builds use the ImageJ version listed in `buildscripts/ivy.xml`.
 
 #### Configure options and external packages
 
@@ -253,23 +254,24 @@ following.
    different) commands.
 
 3. Find the desirable JDK home on your system. This is a directory that usually
-   has "jdk" and the Java version number (such as 1.8) in its name, and
+   has "jdk" and the Java version number (such as 11) in its name, and
    contains the directories `bin` (in which `java`, `javac`, and `jar` are
    found) and `include` (in which `jni.h` is found). Pass
    `--with-java=/path/to/java/home` to `configure`. For example:
 
-        ./configure --with-java=/usr/lib64/jvm/java-1.7.0-openjdk-1.7.0
-        # or, on OS X,
-        ./configure --with-java=/Library/Java/JavaVirtualMachines/1.7.0_55.jdk/Contents/Home
+        ./configure --with-java=/usr/lib/jvm/java-11-openjdk-amd64
+        # or, on macOS,
+        ./configure --with-java=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home
 
 
 ### Building only selected device adapters
 
-Hack: If you want to compile and install only specific device adapters based on
-your microscope, you can skip these unused devices by editing `configure.ac`
-and `Makefile.am` under `mmCoreAndDevices/DeviceAdapters`. For example, if you
-delete `DemoCamera` in `SUBDIRS` section of `Makefile.am` and `m4_define`
-function of `configure.ac`, building will go through without `DemoCamera`
-module. It will help you to keep simplicity and skip the device adapters failed
-to compile at your machine now( but it will be better if you feedback issues at
-the same time). Then run `./autogen.sh` and `./configure` again.
+To skip device adapters you don't need (for example, ones that fail to compile
+on your machine), remove each adapter (for example, `DemoCamera`) from:
+
+1. the `SUBDIRS` list in `mmCoreAndDevices/DeviceAdapters/Makefile.am`, and
+2. the `m4_define` list in `mmCoreAndDevices/DeviceAdapters/configure.ac`.
+
+Then rerun `./autogen.sh` and `./configure`.
+
+If an adapter fails to compile, please report it as an issue.
