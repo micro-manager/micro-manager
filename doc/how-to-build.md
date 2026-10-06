@@ -45,8 +45,10 @@ so that it runs together with the ImageJ toolbar. It is launched with the
 You will need some familiarity with the command line. Run the commands in a
 directory where you want to keep the source code.
 
-The commands below install ImageJ 1.53t. Official builds use the `ij.jar`
-version listed in `buildscripts/ivy.xml` (currently 1.53c).
+The commands below install ImageJ 1.53t, and all Micro-Manager files are then
+installed inside that ImageJ directory. Any existing (preferably fresh) copy
+of ImageJ 1.x can be used instead. Official builds use the `ij.jar` version
+listed in `buildscripts/ivy.xml` (1.53c as of this writing).
 
 #### Ubuntu 24.04
 
@@ -192,6 +194,48 @@ echo $JAVA_HOME  # Make sure path looks correct
 ```
 
 
+### Build variants
+
+These variants follow the standard build steps above, except for the
+`configure` command and the steps noted.
+
+#### Standalone (without ImageJ toolbar)
+
+Skip the ImageJ download, and configure with `--prefix` instead of
+`--enable-imagej-plugin`:
+
+```sh
+./configure --prefix="$MM_DIR"
+```
+
+This is a traditional Unix-style layout: Micro-Manager libraries (including
+device adapters) are installed into `$prefix/lib/micro-manager` and other
+files (including JARs) into `$prefix/share/micro-manager`. (If `--prefix` is
+not given, it defaults to `/usr/local`, which requires `sudo make install`.)
+
+Micro-Manager can then be launched with:
+
+```sh
+"$MM_DIR"/bin/micromanager
+```
+
+It runs without the ImageJ toolbar.
+
+#### Without Java (no GUI, for use with pymmcore-plus)
+
+To build only MMCore and the device adapters:
+
+```sh
+./configure --without-java --prefix="$MM_DIR"
+```
+
+The JDK, Ant, SWIG, the ImageJ download, the `classext` checkout, and
+`make fetchdeps` are only needed for Java, so they can be skipped. The device
+adapters are installed into `$prefix/lib/micro-manager`. To use them with
+pymmcore-plus, see the
+[pymmcore-plus installation instructions](https://pymmcore-plus.github.io/pymmcore-plus/install/#set-the-active-micro-manager-installation).
+
+
 ### Notes on prerequisites
 
 There are several packages that are required to build and/or run
@@ -236,36 +280,6 @@ To build from source, you will first need to generate the `configure` script.
 This can be done with the command
 
     ./autogen.sh
-
-#### Choosing an installation style
-
-Now, you will run `./configure`. There are many ways to configure
-Micro-Manager, but you will most likely want to choose one of two major
-installation styles: a traditional Unix-style installation and installation as
-an ImageJ plugin (recommended).
-
-The traditional Unix-style will put Micro-Manager libraries (including device
-adapters) into `$prefix/lib/micro-manager` and other files (including JARs)
-into `$prefix/share/micro-manager` (`$prefix` is `/usr/local` by default). If
-you build the Java application, a script will be installed at
-`$prefix/bin/micromanager` which can be used to start Micro-Manager, and
-Micro-Manager will run without the ImageJ toolbar.
-
-If you want to install Micro-Manager as an ImageJ plugin, you will have to
-tell `configure` where to find the target ImageJ application directory. In
-this case, all Micro-Manager files will be installed inside that ImageJ
-directory.
-
-To configure Micro-Manager for a traditional Unix-style install, type
-
-    ./configure --prefix=/where/to/install
-
-To configure for installation as an ImageJ plugin, type
-
-    ./configure --enable-imagej-plugin=/path/to/ImageJ
-
-The ImageJ path should be an existing (preferably fresh) copy of ImageJ 1.x.
-Official builds use the ImageJ version listed in `buildscripts/ivy.xml`.
 
 #### Configure options and external packages
 
