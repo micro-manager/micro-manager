@@ -33,18 +33,20 @@ build tools" in the installer (you can modify an existing installation).
 [wiki page](https://micro-manager.org/wiki/Building_MM_on_Windows)).
 
 
-## Building on Unix
+## Building on macOS and Linux
 
 
-### Ubuntu Quickstart
+### Ubuntu quickstart
 
-These commands should bring a complete build on Ubuntu. See below sections for more detail.
+These commands should bring a complete build on Ubuntu. See below sections for
+more detail.
 
 ```sh
 sudo apt install \
     git subversion build-essential autoconf automake libtool autoconf-archive \
     pkg-config swig3.0 openjdk-11-jdk ant libboost-all-dev
 
+# Java JARs not available from Maven; must be next to micro-manager/
 mkdir 3rdpartypublic
 pushd 3rdpartypublic
 svn checkout https://svn.micro-manager.org/3rdpartypublic/classext
@@ -62,46 +64,67 @@ make -j
 sudo make install
 ```
 
-You can avoid using `sudo` for `make install` if you specify the prefix when using `configure`.
+You can avoid using `sudo` for `make install` if you specify the prefix when
+using `configure`.
 
-After installing you can start micromanager from the terminal with the `micromanager` command
+After installing you can start micromanager from the terminal with the
+`micromanager` command
 
-### Getting the prerequisites
+
+### Prerequisites
 
 There are several packages that are required to build and/or run
 Micro-Manager. It is usually easiest to install these using the distribution's
 package manager (on Linux) or using Homebrew (on OS X).
 
-#### C and C++ compilers
+#### macOS
 
-macOS: Install the Xcode Command Line Tools (`xcode-select --install`).
+C and C++ compilers: Install the Xcode Command Line Tools
+(`xcode-select --install`).
 
-Ubuntu: `sudo apt install build-essential`
-
-#### Build tools
-
-macOS: `brew install git subversion autoconf automake libtool pkg-config ant`
-
-Ubuntu: `sudo apt install git subversion build-essential autoconf automake libtool autoconf-archive pkg-config`
+Build tools: `brew install git subversion autoconf automake libtool pkg-config ant`
 
 (On macOS, do not confuse Apple's `/usr/bin/libtool` with GNU Libtool. We need
 the latter. Homebrew installs GNU Libtool as `glibtool`.)
 
+Boost C++ libraries: `brew install boost`
+
+JDK: Install Temurin or Zulu JDK 11, and set `JAVA_HOME`:
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 11 -F)
+echo $JAVA_HOME  # Make sure path looks correct
+```
+
+#### Ubuntu
+
+C and C++ compilers: `sudo apt install build-essential`
+
+Build tools:
+
+```sh
+sudo apt install git subversion build-essential autoconf automake libtool autoconf-archive pkg-config
+```
+
 (Requirement for `autoconf-archive` on Ubuntu is likely a bug.)
 
-#### SWIG 3.x
-
-SWIG 4.x currently does not work for building a correct MMCoreJ
-([micro-manager/mmCoreAndDevices#37](https://github.com/micro-manager/mmCoreAndDevices/issues/37)).
-
-Ubuntu:
+SWIG 3.x:
 
 ```sh
 sudo apt install swig3.0
 export SWIG=/usr/bin/swig3.0
 ```
 
-Alternatively you can build it from source:
+Boost C++ libraries: `sudo apt install libboost-all-dev`
+
+JDK and Ant: `sudo apt install openjdk-11-jdk ant`
+
+#### Notes on prerequisites
+
+SWIG 4.x currently does not work for building a correct MMCoreJ
+([micro-manager/mmCoreAndDevices#37](https://github.com/micro-manager/mmCoreAndDevices/issues/37)).
+
+Instead of installing a SWIG 3.x package, you can build it from source:
 
 ```sh
 sudo apt install libpcre3-dev
@@ -116,17 +139,9 @@ sudo make install
 This installs `swig` in `/usr/local/bin` by default. Make sure that directory
 comes before `/usr/bin` in `PATH` while building Micro-Manager.
 
-#### Boost C++ libraries
-
 A recent version of the Boost C++ libraries is required (1.77.0 has been
 tested). If building for local use, you can install it using the package
-manager:
-
-macOS: `brew install boost`
-
-Ubuntu: `sudo apt install libboost-all-dev`
-
-#### JDK and Ant
+manager.
 
 To build MMCoreJ and the Java application (Micro-Manager Studio), you will need
 a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
@@ -136,18 +151,7 @@ With JDK 17 and above, error may occur like `Unable to make field int
 java.awt.Color.value accessible: module java.desktop does not "opens java.awt"
 to unnamed module @38a8f1a9`.
 
-On macOS, install Temurin or Zulu JDK 11, and set `JAVA_HOME`:
-
-```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 11 -F)
-echo $JAVA_HOME  # Make sure path looks correct
-```
-
 Building the Java components also requires Apache Ant.
-
-Ubuntu: `sudo apt install openjdk-11-jdk ant`
-
-#### Other
 
 Many Linux distributions split library packages into runtimes and development
 files. If you are using such a distribution, make sure to get the packages
@@ -157,28 +161,16 @@ Some device adapters require additional external libraries. (TODO Document
 these.)
 
 
-### Obtaining the source code
-
-Please see the Micro-Manager website for instructions. You will need the main
-Micro-Manager source code and the `3rdpartypublic` repository, side by side in
-the same parent directory.
-
-
 ### Configuring
+
+#### Generating the configure script
 
 To build from source, you will first need to generate the `configure` script.
 This can be done with the command
 
     ./autogen.sh
 
-Hack: If you want to compile and install only specific device adapters based on
-your microscope, you can skip these unused devices by editing `configure.ac`
-and `Makefile.am` under `mmCoreAndDevices/DeviceAdapters`. For example, if you
-delete `DemoCamera` in `SUBDIRS` section of `Makefile.am` and `m4_define`
-function of `configure.ac`, building will go through without `DemoCamera`
-module. It will help you to keep simplicity and skip the device adapters failed
-to compile at your machine now( but it will be better if you feedback issues at
-the same time). Then run `./autogen.sh` again.
+#### Choosing an installation style
 
 Now, you will run `./configure`. There are many ways to configure
 Micro-Manager, but you will most likely want to choose one of two major
@@ -207,6 +199,8 @@ To configure for installation as an ImageJ plugin, type
 
 The ImageJ path should be an existing (preferably fresh) copy of ImageJ 1.48.
 
+#### Configure options and external packages
+
 To get more information about the possible options to `configure`, type
 
     ./configure --help
@@ -215,6 +209,11 @@ You can get help on the flags controlling device-adapter-specific dependency
 libraries by typing
 
     ./configure --help=recursive
+
+As a general rule, the `--with-foo` flags to `configure` will try to autodetect
+the package, whereas the all-caps variables (`FOO`) listed at the end of
+`./configure --help` will override any automatic detection and be used
+unmodified.
 
 
 ### Building and installing
@@ -234,9 +233,9 @@ When the installation is finished, a message will be printed telling you how
 to run Micro-Manager Studio (if it was configured to be built).
 
 
-### Common configuration issues
+### Troubleshooting
 
-#### Failure to detect Java
+#### configure does not find Java
 
 If `./configure` does not find your JDK (Java Development Kit), try the
 following.
@@ -264,10 +263,13 @@ following.
         ./configure --with-java=/Library/Java/JavaVirtualMachines/1.7.0_55.jdk/Contents/Home
 
 
-#### Specifying where to find external packages
+### Building only selected device adapters
 
-As a general rule, the `--with-foo` flags to `configure` will try to autodetect
-the package, whereas the all-caps variables (`FOO`) listed at the end of
-`./configure --help` will override any automatic detection and be used
-unmodified.
-
+Hack: If you want to compile and install only specific device adapters based on
+your microscope, you can skip these unused devices by editing `configure.ac`
+and `Makefile.am` under `mmCoreAndDevices/DeviceAdapters`. For example, if you
+delete `DemoCamera` in `SUBDIRS` section of `Makefile.am` and `m4_define`
+function of `configure.ac`, building will go through without `DemoCamera`
+module. It will help you to keep simplicity and skip the device adapters failed
+to compile at your machine now( but it will be better if you feedback issues at
+the same time). Then run `./autogen.sh` and `./configure` again.
