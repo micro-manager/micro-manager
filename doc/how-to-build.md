@@ -36,15 +36,33 @@ build tools" in the installer (you can modify an existing installation).
 ## Building on macOS and Linux
 
 
-### Ubuntu quickstart
+### Standard build (launched as ImageJ plugin)
 
-These commands should produce a complete build on Ubuntu. See the sections
-below for more detail.
+The standard build installs Micro-Manager as a plugin inside a copy of ImageJ,
+so that it runs together with the ImageJ toolbar. It is launched with the
+`mmimagej` script in the installation directory.
+
+You will need some familiarity with the command line. Run the commands in a
+directory where you want to keep the source code.
+
+The commands below install ImageJ 1.53t. Official builds use the `ij.jar`
+version listed in `buildscripts/ivy.xml` (currently 1.53c).
+
+#### Ubuntu 24.04
 
 ```sh
+sudo apt update
 sudo apt install \
-    git subversion build-essential autoconf automake libtool autoconf-archive \
-    pkg-config swig3.0 openjdk-11-jdk ant libboost-all-dev
+    curl git subversion build-essential autoconf automake libtool \
+    autoconf-archive pkg-config swig3.0 openjdk-11-jdk ant libboost-all-dev
+
+# Any user-writable directory works
+MM_DIR=~/opt/micro-manager
+
+curl -LO https://wsr.imagej.net/distros/cross-platform/ij153.zip
+unzip ij153.zip
+mkdir -p "$MM_DIR"
+mv ImageJ/* "$MM_DIR"
 
 # Java JARs not available from Maven; must be next to micro-manager/
 mkdir 3rdpartypublic
@@ -53,31 +71,108 @@ svn checkout https://svn.micro-manager.org/3rdpartypublic/classext
 popd
 
 git clone https://github.com/micro-manager/micro-manager.git
-cd micro-manager
+pushd micro-manager
 git submodule update --init --recursive
-
 export SWIG=/usr/bin/swig3.0
 ./autogen.sh
-./configure  # ./configure --help=recurse for full details
-make fetchdeps
+./configure --enable-imagej-plugin="$MM_DIR"
+make fetchdeps  # Downloads Java dependencies
 make -j
-sudo make install
+make install
+popd
 ```
 
-You can avoid using `sudo` for `make install` if you specify the prefix when
-using `configure`.
+Micro-Manager can then be launched with:
 
-After installing, you can start Micro-Manager from the terminal with the
-`micromanager` command.
+```sh
+"$MM_DIR"/mmimagej
+```
 
+#### Ubuntu 26.04
 
-### Prerequisites
+Ubuntu 26.04 no longer packages SWIG 3, and SWIG 4 produces a broken MMCoreJ
+([micro-manager/mmCoreAndDevices#37](https://github.com/micro-manager/mmCoreAndDevices/issues/37)).
+So SWIG 3 is built from source. Otherwise the steps are the same as for 24.04.
 
-There are several packages that are required to build and/or run
-Micro-Manager. It is usually easiest to install these using the distribution's
-package manager (on Linux) or using Homebrew (on macOS).
+```sh
+sudo apt update
+sudo apt install \
+    curl git subversion build-essential autoconf automake libtool \
+    autoconf-archive pkg-config openjdk-11-jdk ant libboost-all-dev
+
+# SWIG 3, built with its own copy of PCRE (which Ubuntu no longer packages)
+curl -LO https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+tar xf swig-3.0.12.tar.gz
+pushd swig-3.0.12
+curl -LO https://prdownloads.sourceforge.net/pcre/pcre-8.45.tar.bz2
+./Tools/pcre-build.sh
+./configure --program-suffix=3.0
+make -j4
+sudo make install
+popd
+
+# Any user-writable directory works
+MM_DIR=~/opt/micro-manager
+
+curl -LO https://wsr.imagej.net/distros/cross-platform/ij153.zip
+unzip ij153.zip
+mkdir -p "$MM_DIR"
+mv ImageJ/* "$MM_DIR"
+
+# Java JARs not available from Maven; must be next to micro-manager/
+mkdir 3rdpartypublic
+pushd 3rdpartypublic
+svn checkout https://svn.micro-manager.org/3rdpartypublic/classext
+popd
+
+git clone https://github.com/micro-manager/micro-manager.git
+pushd micro-manager
+git submodule update --init --recursive
+export SWIG=/usr/local/bin/swig3.0
+./autogen.sh
+./configure --enable-imagej-plugin="$MM_DIR"
+make fetchdeps  # Downloads Java dependencies
+make -j
+make install
+popd
+```
+
+Micro-Manager can then be launched with:
+
+```sh
+"$MM_DIR"/mmimagej
+```
+
+#### Other Linux distributions
+
+On Debian, and on older Ubuntu versions such as 22.04, the same commands should
+work, possibly with small differences in package names or availability. If the
+`swig3.0` package is not available, build SWIG 3 from source as shown for
+Ubuntu 26.04.
+
+Other distributions (such as Fedora, Arch Linux, or openSUSE) use a different
+package manager (the tool that installs software, such as `dnf`, `pacman`, or
+`zypper`) instead of `apt`, and their packages have different names. Install
+the equivalents of the following, then follow the remaining Ubuntu steps:
+
+- C and C++ compiler toolchain
+- Git and Subversion
+- Autoconf, Automake, Libtool, and autoconf-archive
+- pkg-config
+- SWIG 3.x (build from source if not available)
+- JDK 11 and Apache Ant
+- Boost C++ libraries (development headers)
+- curl
+
+Library packages may need to be the development (`-devel` or `-dev`) variant.
+See the [notes on prerequisites](#notes-on-prerequisites) below.
 
 #### macOS
+
+There are no verified step-by-step instructions for macOS yet. The steps
+parallel the Ubuntu standard build, but with the following prerequisites
+instead of the `apt` packages. SWIG 3.x is also required (see the
+[notes on prerequisites](#notes-on-prerequisites)).
 
 C and C++ compilers: Install the Xcode Command Line Tools
 (`xcode-select --install`).
@@ -96,48 +191,18 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 11 -F)
 echo $JAVA_HOME  # Make sure path looks correct
 ```
 
-#### Ubuntu
 
-C and C++ compilers: `sudo apt install build-essential`
+### Notes on prerequisites
 
-Build tools:
-
-```sh
-sudo apt install git subversion build-essential autoconf automake libtool autoconf-archive pkg-config
-```
-
-(Requirement for `autoconf-archive` on Ubuntu is likely a bug.)
-
-SWIG 3.x:
-
-```sh
-sudo apt install swig3.0
-export SWIG=/usr/bin/swig3.0
-```
-
-Boost C++ libraries: `sudo apt install libboost-all-dev`
-
-JDK and Ant: `sudo apt install openjdk-11-jdk ant`
-
-#### Notes on prerequisites
+There are several packages that are required to build and/or run
+Micro-Manager. It is usually easiest to install these using the distribution's
+package manager (on Linux) or using Homebrew (on macOS).
 
 SWIG 4.x currently does not work for building a correct MMCoreJ
 ([micro-manager/mmCoreAndDevices#37](https://github.com/micro-manager/mmCoreAndDevices/issues/37)).
-
-Instead of installing a SWIG 3.x package, you can build it from source:
-
-```sh
-sudo apt install libpcre3-dev
-curl -LO https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
-tar xzf swig-3.0.12.tar.gz
-cd swig-3.0.12
-./configure
-make -j3
-sudo make install
-```
-
-This installs `swig` in `/usr/local/bin` by default. Make sure that directory
-comes before `/usr/bin` in `PATH` while building Micro-Manager.
+If SWIG 3.x is not available as a package, build it from source as shown for
+Ubuntu 26.04, and set the `SWIG` environment variable to its path before
+running `configure`.
 
 A recent version of the Boost C++ libraries is required (1.77.0 has been
 tested). If building for local use, you can install it using the package
@@ -155,7 +220,9 @@ Building the Java components also requires Apache Ant.
 
 Many Linux distributions split library packages into runtimes and development
 files. If you are using such a distribution, make sure to get the packages
-with the `-dev` suffix.
+with the `-dev` or `-devel` suffix.
+
+(The requirement for `autoconf-archive` on Ubuntu is likely a bug.)
 
 Some device adapters require additional external libraries. (TODO Document
 these.)
@@ -219,19 +286,10 @@ unmodified.
 
 ### Building and installing
 
-Assuming `configure` succeeded, you can now run
-
-    make fetchdeps
-    make
-
-to build.
-
-To install, type
-
-    make install
-
-When the installation is finished, a message will be printed telling you how
-to run Micro-Manager Studio (if it was configured to be built).
+After `configure` succeeds, `make fetchdeps` downloads the Java dependencies,
+`make` builds everything, and `make install` installs it. When the
+installation is finished, a message will be printed telling you how to run
+Micro-Manager Studio (if it was configured to be built).
 
 
 ### Troubleshooting
