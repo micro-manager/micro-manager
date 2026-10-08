@@ -345,7 +345,7 @@ public class XYNavigator {
       public XYStageTask(String xyStage) {
          xyStage_ = xyStage;
          executorService_ = Executors.newSingleThreadExecutor(
-               ThreadFactoryFactory.createThreadFactory("XYNavigator-" + xyStage));
+               ThreadFactoryFactory.createDaemonThreadFactory("XYNavigator-" + xyStage));
       }
 
       /**

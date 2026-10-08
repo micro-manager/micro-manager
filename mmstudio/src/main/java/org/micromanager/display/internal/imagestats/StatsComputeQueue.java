@@ -44,15 +44,15 @@ public final class StatsComputeQueue {
 
    private final ExecutorService computeExecutor_ =
          Executors.newSingleThreadExecutor(ThreadFactoryFactory
-               .createThreadFactory("Stats Compute Queue Compute"));
+               .createDaemonThreadFactory("Stats Compute Queue Compute"));
 
    private final ExecutorService bypassExecutor_ =
          Executors.newSingleThreadExecutor(ThreadFactoryFactory
-               .createThreadFactory("Stats Compute Queue Bypass"));
+               .createDaemonThreadFactory("Stats Compute Queue Bypass"));
 
    private final ExecutorService resultExecutor_ =
          Executors.newSingleThreadExecutor(ThreadFactoryFactory
-               .createThreadFactory("Stats Compute Queue Result"));
+               .createDaemonThreadFactory("Stats Compute Queue Result"));
 
    // Outstanding compute tasks by priority
    // Guarded by monitor on this

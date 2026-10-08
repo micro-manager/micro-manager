@@ -15,7 +15,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
  */
 public final class LinkageFactory {
    private final ExecutorService executor_ = Executors.newSingleThreadExecutor(
-         ThreadFactoryFactory.createThreadFactory("Linkage Executor"));
+         ThreadFactoryFactory.createDaemonThreadFactory("Linkage Executor"));
 
    static LinkageFactory create() {
       return new LinkageFactory();
