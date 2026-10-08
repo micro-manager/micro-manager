@@ -556,28 +556,12 @@ public final class StorageMultipageTiff implements Storage {
                progressBar.setProgress(count);
             }
          }
-         // shut down writing executor--pause here until all tasks have finished
-         // writing so that no attempt is made to close the dataset (and thus
-         // the FileChannel) before everything has finished writing make sure
-         // all images have finished writing if they are on separate thread
-         if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
-            writingExecutor_.shutdown();
-            try {
-               // Wait for tasks to finish.
-               int i = 0;
-               while (!writingExecutor_.awaitTermination(4, TimeUnit.SECONDS)) {
-                  ReportingUtils.logMessage(
-                        "Waiting for image stack to finish writing (" + i + ")...");
-                  i++;
-               }
-            } catch (InterruptedException e) {
-               ReportingUtils.logError("File finishing thread interrupted");
-               Thread.interrupted();
-            }
-         }
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
       } finally {
+         // Metadata errors must not let close() release channels while accepted
+         // image writes are still queued.
+         finishWritingTasks();
          if (progressBar != null) {
             final ProgressBar pb = progressBar;
             SwingUtilities.invokeLater(() -> pb.setVisible(false));
@@ -587,6 +571,33 @@ public final class StorageMultipageTiff implements Storage {
          store_.unregisterForEvents(this);
       }
       finished_ = true;
+   }
+
+   private void finishWritingTasks() {
+      if (writingExecutor_ == null) {
+         return;
+      }
+      writingExecutor_.shutdown();
+      boolean interrupted = false;
+      try {
+         int i = 0;
+         while (!writingExecutor_.isTerminated()) {
+            try {
+               if (!writingExecutor_.awaitTermination(4, TimeUnit.SECONDS)) {
+                  ReportingUtils.logMessage(
+                        "Waiting for image stack to finish writing (" + i++ + ")...");
+               }
+            } catch (InterruptedException e) {
+               // These tasks own channels that close() will release. Drain them
+               // before restoring the caller's interrupt status.
+               interrupted = true;
+            }
+         }
+      } finally {
+         if (interrupted) {
+            Thread.currentThread().interrupt();
+         }
+      }
    }
 
    public boolean isFinished() {
@@ -1018,11 +1029,12 @@ public final class StorageMultipageTiff implements Storage {
       }
       try {
          MultipageTiffReader mptReader = coordsToReader_.get(coords);
-         if (!amInWriteMode_ && lastReader_ != null && mptReader != lastReader_) {
+         if (!amInWriteMode_ && (writingExecutor_ == null || writingExecutor_.isTerminated())
+               && lastReader_ != null && mptReader != lastReader_) {
             // this could be optional.  Not doing it can result in large memory leaks.
-            // After freeze() (amInWriteMode_ == false), write-mode readers have file_ set
-            // and can reopen their channel via createFileChannel() after pause(), so it is
-            // safe to pause them here just like read-mode readers.
+            // Write-mode readers share their channels with the writer. Freezing
+            // disables new images before queued writes finish, so wait for the
+            // executor to terminate before allowing pause() to close a channel.
             lastReader_.pause();
          }
          lastReader_ = mptReader;
@@ -1053,7 +1065,9 @@ public final class StorageMultipageTiff implements Storage {
     * Remove open file descriptors.
     */
    @Override
-   public void close() {
+   public synchronized void close() {
+      amInWriteMode_ = false;
+      finishWritingTasks();
       // For files we wrote ourselves.
       if (positionToFileSet_ != null) {
          for (FileSet fileset : positionToFileSet_.values()) {
