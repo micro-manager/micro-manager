@@ -428,8 +428,8 @@ public class ExplorerManager {
 
          viewer_ = mm2Viewer_.getTiledDataViewer();
          dataSource_.setViewer(viewer_);
-         viewer_.setWindowTitle("Explorer - Right-click/drag to select, "
-               + "Left-drag to pan, Left-click to acquire");
+         viewer_.setWindowTitle("Explorer - Right-click/drag to select, Left-click to acquire, "
+               + "Left-drag to pan, Wheel to zoom, Ctrl+click to move stage");
 
          mm2Viewer_.setOverlayerPlugin(dataSource_);
          viewer_.setCustomCanvasMouseListener(dataSource_);
