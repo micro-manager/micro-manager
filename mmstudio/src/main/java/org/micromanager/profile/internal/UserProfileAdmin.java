@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.commons.lang3.event.EventListenerSupport;
@@ -35,6 +36,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
+import org.micromanager.internal.utils.FileSavingExecutor;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
@@ -74,10 +76,10 @@ public final class UserProfileAdmin {
 
    private final ProfileWriteLock writeLock_;
 
-   private final ScheduledExecutorService saverExecutor_ =
+   private final ScheduledExecutorService saverExecutor_ = FileSavingExecutor.register(
          Executors.newSingleThreadScheduledExecutor(
-               ThreadFactoryFactory.createThreadFactory(
-                     "User Profile Saver"));
+               ThreadFactoryFactory.createNonDaemonThreadFactory(
+                     "User Profile Saver")));
 
    private boolean didMigrateLegacy_ = false;
 
@@ -88,6 +90,7 @@ public final class UserProfileAdmin {
    private UUID currentProfileUUID_ = null;
    private DefaultUserProfile currentProfile_ = null;
    private boolean userProfileErrorShown_ = false;
+   private boolean shuttingDown_;
 
    private final EventListenerSupport<ChangeListener> currentProfileListeners_ =
          EventListenerSupport.create(ChangeListener.class);
@@ -190,12 +193,25 @@ public final class UserProfileAdmin {
     * calling this method.
     */
    public void shutdown() throws InterruptedException {
+      DefaultUserProfile profile;
       synchronized (UserProfileAdmin.class) {
-         if (currentProfile_ != null) {
-            currentProfile_.close();
-            currentProfile_ = null;
+         shuttingDown_ = true;
+         profile = currentProfile_;
+      }
+      // A save can invoke an error listener which accesses this administrator.
+      // Never wait for it while holding the administrator's lifecycle monitor.
+      try {
+         if (profile != null) {
+            profile.close();
          }
+      } finally {
          saverExecutor_.shutdown();
+      }
+      if (!saverExecutor_.awaitTermination(30, TimeUnit.SECONDS)) {
+         throw new IllegalStateException("Profile saving did not finish during shutdown");
+      }
+      synchronized (UserProfileAdmin.class) {
+         currentProfile_ = null;
       }
    }
 
@@ -259,6 +275,7 @@ public final class UserProfileAdmin {
          }
       }
       synchronized (UserProfileAdmin.class) {
+         Preconditions.checkState(!shuttingDown_, "Profile saving is shutting down");
          if (currentProfile_ != null) {
             try {
                currentProfile_.close();

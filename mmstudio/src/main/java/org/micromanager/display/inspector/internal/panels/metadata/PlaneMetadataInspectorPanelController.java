@@ -117,7 +117,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
 
    private static final ExecutorService background_ =
          Executors.newSingleThreadExecutor(
-               ThreadFactoryFactory.createThreadFactory(
+               ThreadFactoryFactory.createDaemonThreadFactory(
                      "PlaneMetadataInspectorPanel"));
 
    private final CoalescentEDTRunnablePool runnablePool_ =

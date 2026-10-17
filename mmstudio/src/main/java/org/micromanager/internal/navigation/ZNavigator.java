@@ -74,7 +74,7 @@ public class ZNavigator {
          stage_ = stage;
          moveMemory_ = new AtomicDouble(0.0);
          executorService_ = Executors.newSingleThreadExecutor(
-               ThreadFactoryFactory.createThreadFactory("ZNavigator-" + stage));
+               ThreadFactoryFactory.createDaemonThreadFactory("ZNavigator-" + stage));
       }
 
       public void setPosition(double pos) {

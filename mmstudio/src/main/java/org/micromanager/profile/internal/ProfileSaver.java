@@ -12,6 +12,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Mark A. Tsuchida
@@ -20,6 +21,8 @@ final class ProfileSaver {
    // Saver is created upon the first modification made to the profile
    private final ScheduledExecutorService saver_;
    private ScheduledFuture<?> scheduledSave_;
+   private final ReentrantLock writeLock_ = new ReentrantLock();
+   private boolean stopped_;
 
    private long saveIntervalSeconds_ = 30;
 
@@ -32,7 +35,7 @@ final class ProfileSaver {
       return instance;
    }
 
-   private ProfileSaver(Runnable save, ScheduledExecutorService saverExecutor) {
+   ProfileSaver(Runnable save, ScheduledExecutorService saverExecutor) {
       save_ = save;
       saver_ = saverExecutor;
    }
@@ -46,12 +49,32 @@ final class ProfileSaver {
       return saveIntervalSeconds_;
    }
 
-   public synchronized void syncToDisk() {
-      if (scheduledSave_ == null) {
-         // Save not scheduled, i.e. profile hasn't been modified.
-         return;
+   public void syncToDisk() {
+      writeLock_.lock();
+      try {
+         synchronized (this) {
+            if (stopped_ || scheduledSave_ == null) {
+               return;
+            }
+         }
+         save_.run();
+      } finally {
+         writeLock_.unlock();
       }
-      save_.run();
+   }
+
+   private void saveScheduled() {
+      writeLock_.lock();
+      try {
+         synchronized (this) {
+            if (stopped_) {
+               return;
+            }
+         }
+         save_.run();
+      } finally {
+         writeLock_.unlock();
+      }
    }
 
    @Subscribe
@@ -60,22 +83,42 @@ final class ProfileSaver {
    }
 
    private synchronized void scheduleSave() {
+      if (stopped_) {
+         return;
+      }
       if (scheduledSave_ != null) {
          scheduledSave_.cancel(false);
       }
       try {
-         scheduledSave_ = saver_.schedule(save_,
+         scheduledSave_ = saver_.schedule(this::saveScheduled,
                saveIntervalSeconds_, TimeUnit.SECONDS);
       } catch (RejectedExecutionException e) {
          // Saving has been shut down; nothing to do
       }
    }
 
-   public synchronized void stop() throws InterruptedException {
-      syncToDisk();
-      if (scheduledSave_ != null) {
-         scheduledSave_.cancel(false);
-         scheduledSave_ = null;
+   public void stop() throws InterruptedException {
+      writeLock_.lockInterruptibly();
+      try {
+         boolean saveNeeded;
+         synchronized (this) {
+            if (stopped_) {
+               return;
+            }
+            stopped_ = true;
+            saveNeeded = scheduledSave_ != null;
+            if (scheduledSave_ != null) {
+               scheduledSave_.cancel(false);
+               scheduledSave_ = null;
+            }
+         }
+         // Do not hold this monitor while reading the profile: profile changes
+         // notify scheduleSave while holding the profile's own monitor.
+         if (saveNeeded) {
+            save_.run();
+         }
+      } finally {
+         writeLock_.unlock();
       }
    }
 }
