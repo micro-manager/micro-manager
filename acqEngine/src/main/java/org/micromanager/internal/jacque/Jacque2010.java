@@ -1513,6 +1513,8 @@ public class Jacque2010 implements IAcquisitionEngine2010 {
          posJson.put("GridColumnIndex", msp.getGridColumn());
          posJson.put("DefaultXYStage", msp.getDefaultXYStage());
          posJson.put("DefaultZStage", msp.getDefaultZStage());
+         posJson.put("Well",
+               msp.hasProperty("Well") ? msp.getProperty("Well") : "");
          posJson.put("DeviceCoordinatesUm", devCoords);
          arr.put(posJson);
       }
