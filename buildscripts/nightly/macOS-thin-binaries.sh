@@ -28,7 +28,7 @@ done
 thin_binary() {
    file="$1"
    echo "Keeping only $keep_arch from $file"
-   lipo -extract_family $keep_arch "$file" -output "$file.thin"
+   lipo -extract $keep_arch "$file" -output "$file.thin"
    mv "$file.thin" "$file"
 }
 
