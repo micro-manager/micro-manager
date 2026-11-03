@@ -100,6 +100,7 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install build-essential autoconf automake libtool \
                                   autoconf-archive pkg-config doxygen
+          sudo apt-get -y install libboost-all-dev
           sudo apt-get -y install libpcre3-dev  # For SWIG-3
 
       - name: Cache SWIG-3
