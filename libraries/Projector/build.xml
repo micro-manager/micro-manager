@@ -1,3 +1,18 @@
 <project name="Projector" default="jar">
 	<import file="../javalibrarybuild.xml"/>
+
+	<!-- Spot-finding quality tests compare against the Gaussian library's fitter.
+	     Windows puts all library jars in one outdir; elsewhere each stays in its own dir. -->
+	<path id="project.test.classpath">
+		<path refid="mm.test.classpath"/>
+		<pathelement location="${outdir}/GaussianLibrary.jar"/>
+		<pathelement location="../Gaussian/GaussianLibrary.jar"/>
+	</path>
+
+	<target name="build-test-deps" unless="mm.java.disable.build">
+		<ant dir="../Gaussian" target="jar" inheritall="false"/>
+	</target>
+
+	<target name="test" depends="jar,build-test-deps,test-only" description="Run unit tests"
+		unless="mm.java.disable.build"/>
 </project>
