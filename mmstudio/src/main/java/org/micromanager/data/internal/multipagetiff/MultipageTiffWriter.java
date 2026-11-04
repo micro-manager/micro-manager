@@ -514,7 +514,7 @@ public final class MultipageTiffWriter {
       int axis1Size;
       int axis1ImagesLeft;
       int axis2ImagesLeft;
-      if (orderedAxes_.get(0).equals("z")) {
+      if (!orderedAxes_.isEmpty() && orderedAxes_.get(0).equals("z")) {
          axis1Size = numSlices_;
          axis1ImagesLeft = slicesLeft;
          axis2ImagesLeft = channelsLeft;
