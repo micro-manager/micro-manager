@@ -53,9 +53,10 @@ public class RememberedDisplaySettings {
                                    String channelGroup,
                                    String channelName,
                                    ChannelDisplaySettings cds) {
-      if (cds == null || channelName == null || channelGroup == null) {
+      if (cds == null || channelName == null) {
          return;
       }
+      channelGroup = nonNullGroup(channelGroup);
       String key = generateChannelKey(channelGroup, channelName);
       MutablePropertyMapView settings =
             studio.profile().getSettings(RememberedDisplaySettings.class);
@@ -90,6 +91,7 @@ public class RememberedDisplaySettings {
    public static ChannelDisplaySettings loadChannel(Studio studio,
                                                     String channelGroup, String channelName,
                                                     Color defaultColor) {
+      channelGroup = nonNullGroup(channelGroup);
       String key = generateChannelKey(channelGroup, channelName);
       MutablePropertyMapView settings =
             studio.profile().getSettings(RememberedDisplaySettings.class);
@@ -121,7 +123,7 @@ public class RememberedDisplaySettings {
    public static DisplaySettings loadDefaultDisplaySettings(Studio studio,
                                                             SummaryMetadata summary) {
       DisplaySettings.Builder builder = DefaultDisplaySettings.builder();
-      String channelGroup = summary.getChannelGroup();
+      String channelGroup = nonNullGroup(summary.getChannelGroup());
       List<String> channelNames = summary.getChannelNameList();
       for (int ch = 0; ch < channelNames.size(); ch++) {
          String channelName = summary.getSafeChannelName(ch);
@@ -148,7 +150,7 @@ public class RememberedDisplaySettings {
    public static DisplaySettings fixMissingInfo(
          DisplaySettings displaySettings, SummaryMetadata summary) {
       DisplaySettings.Builder builder = displaySettings.copyBuilder();
-      String channelGroup = summary.getChannelGroup();
+      String channelGroup = nonNullGroup(summary.getChannelGroup());
       List<String> channelNames = summary.getChannelNameList();
       for (int ch = 0; ch < channelNames.size(); ch++) {
          String channelName = summary.getSafeChannelName(ch);
@@ -166,6 +168,12 @@ public class RememberedDisplaySettings {
       return builder.build();
    }
 
+
+   // SummaryMetadata.getChannelGroup() is null for datasets without a group (e.g. built by
+   // scripts); "" is the "no group" value ChannelDisplaySettings uses.
+   private static String nonNullGroup(String channelGroup) {
+      return channelGroup == null ? "" : channelGroup;
+   }
 
    private static String generateChannelKey(String channelGroup, String channelName) {
       return channelGroup + ":" + channelName;
