@@ -936,8 +936,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (!currentPixelSize.equals(cachedPixelSize_)) {
          infoLabel_.setText(this.getInfoString(images));
          ijBridge_.mm2ijSetMetadata();
-         cachedPixelSize_ = images.getRequest().getImage(0).getMetadata()
-               .getPixelSizeUm();
+         cachedPixelSize_ = currentPixelSize;
       }
 
       ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
