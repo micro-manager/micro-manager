@@ -14,4 +14,5 @@ public class Terms {
    static final String PTSHUTTER = "PTShutter";
    static final String XCENTER = "XCenter";
    static final String YCENTER = "YCenter";
+   static final String USE_CENTROID = "UseCentroidSpotFinding";
 }

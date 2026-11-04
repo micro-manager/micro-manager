@@ -11,6 +11,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,8 @@ public class Calibrator {
 
    private static final double EDGE_MARGIN_FRACTION = 0.10;
    private static final double MIN_SPOT_INTENSITY = 100.0;
+   // Half-size (pixels) of the centroid window; must contain the spot core plus some margin
+   private static final int CENTROID_RADIUS = 15;
 
    private final Studio app_;
    private final CMMCore core_;
@@ -94,9 +97,64 @@ public class Calibrator {
    }
 
    /**
+    * Sub-pixel spot position: iterated intensity-weighted centroid in a square of half-size
+    * CENTROID_RADIUS, after subtracting the median of that square's border pixels.
+    * Seeded at the maximum of a lightly blurred copy. Returns null if there is no signal.
+    */
+   static Point2D.Double findCentroid(ImageProcessor proc) {
+      ImageProcessor blurImage = proc.duplicate();
+      blurImage.setRoi((Roi) null);
+      new GaussianBlur().blurGaussian(blurImage, 2, 2, 0.01);
+      Point seed = ImageUtils.findMaxPixel(blurImage);
+      if (seed.x < 0) {
+         return null;
+      }
+      final int w = proc.getWidth();
+      final int h = proc.getHeight();
+      double cx = seed.x;
+      double cy = seed.y;
+      for (int iter = 0; iter < 5; iter++) {
+         int x0 = Math.max(0, (int) Math.round(cx) - CENTROID_RADIUS);
+         int y0 = Math.max(0, (int) Math.round(cy) - CENTROID_RADIUS);
+         int x1 = Math.min(w - 1, (int) Math.round(cx) + CENTROID_RADIUS);
+         int y1 = Math.min(h - 1, (int) Math.round(cy) + CENTROID_RADIUS);
+         float[] border = new float[2 * (x1 - x0 + 1) + 2 * Math.max(0, y1 - y0 - 1)];
+         int n = 0;
+         for (int x = x0; x <= x1; x++) {
+            border[n++] = proc.getf(x, y0);
+            border[n++] = proc.getf(x, y1);
+         }
+         for (int y = y0 + 1; y < y1; y++) {
+            border[n++] = proc.getf(x0, y);
+            border[n++] = proc.getf(x1, y);
+         }
+         Arrays.sort(border, 0, n);
+         final double bg = border[n / 2];
+         double sw = 0;
+         double sx = 0;
+         double sy = 0;
+         for (int y = y0; y <= y1; y++) {
+            for (int x = x0; x <= x1; x++) {
+               double v = proc.getf(x, y) - bg;
+               if (v > 0) {
+                  sw += v;
+                  sx += v * x;
+                  sy += v * y;
+               }
+            }
+         }
+         if (sw <= 0) {
+            return null;
+         }
+         cx = sx / sw;
+         cy = sy / sw;
+      }
+      return new Point2D.Double(cx, cy);
+   }
+
+   /**
     * Display a spot using the projection device, and return its current location on the camera.
-    * Does not do sub-pixel localization, but could (just would change its return type, most other
-    * code would be OK with this)
+    * Uses the sub-pixel centroid when enabled in the settings, otherwise the blurred maximum.
     */
    private Point2D.Double measureSpotOnCamera(Point2D.Double projectionPoint) {
       if (stopRequested_.get()) {
@@ -148,7 +206,13 @@ public class Calibrator {
          if (diffImage.getMax() < MIN_SPOT_INTENSITY) {
             return null;
          }
-         Point2D.Double maxPt = findPeak(diffImage);
+         Point2D.Double maxPt = null;
+         if (settings_.getBoolean(Terms.USE_CENTROID, false)) {
+            maxPt = findCentroid(diffImage);
+         }
+         if (maxPt == null) {
+            maxPt = findPeak(diffImage);
+         }
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
          Thread.sleep(delayMs);

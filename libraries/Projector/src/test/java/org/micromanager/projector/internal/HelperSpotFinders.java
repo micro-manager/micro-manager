@@ -26,6 +26,7 @@ final class HelperSpotFinders {
    }
 
    static final String PROJECTOR = "Projector (Calibrator)";
+   static final String CENTROID = "Centroid (Calibrator)";
 
    private HelperSpotFinders() {
    }
@@ -37,7 +38,7 @@ final class HelperSpotFinders {
       list.add(named("Raw max pixel", d -> toDouble(ImageUtils.findMaxPixel(d))));
       list.add(named("Blur2+max+parabola", d -> blurredMaxParabolic(d, 2.0)));
       list.add(named("Centroid >50% of peak", d -> thresholdCentroid(d, 0.5, 15)));
-      list.add(named("Centroid bg-sub r=15", d -> backgroundCentroid(d, 15)));
+      list.add(named(CENTROID, Calibrator::findCentroid));
       list.add(named("Gauss LM r=6", d -> gaussianFit(d, 6, GaussianFit.LEVENBERGMARQUARD)));
       list.add(named("Gauss LM r=12", d -> gaussianFit(d, 12, GaussianFit.LEVENBERGMARQUARD)));
       return list;
@@ -112,32 +113,6 @@ final class HelperSpotFinders {
          }
       }
       return sw > 0 ? new Point2D.Double(sx / sw, sy / sw) : null;
-   }
-
-   /** Iterated intensity-weighted centroid after subtracting the window's border median. */
-   static Point2D.Double backgroundCentroid(FloatProcessor diff, int r) {
-      Point2D.Double c = toDouble(blurredMax(diff, 2.0));
-      for (int iter = 0; iter < 5; iter++) {
-         Rect rect = Rect.around(new Point((int) Math.round(c.x), (int) Math.round(c.y)),
-               r, diff);
-         double bg = rect.borderMedian(diff);
-         double sw = 0;
-         double sx = 0;
-         double sy = 0;
-         for (int y = rect.y0; y <= rect.y1; y++) {
-            for (int x = rect.x0; x <= rect.x1; x++) {
-               double w = Math.max(0.0, diff.getf(x, y) - bg);
-               sw += w;
-               sx += w * x;
-               sy += w * y;
-            }
-         }
-         if (sw <= 0) {
-            return null;
-         }
-         c = new Point2D.Double(sx / sw, sy / sw);
-      }
-      return c;
    }
 
    /**

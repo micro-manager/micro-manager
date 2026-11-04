@@ -212,7 +212,7 @@ public class SpotFindingQualityTest {
 
       // Sub-pixel methods must be unbiased and well below a pixel on an ideal spot.
       for (String name : new String[] {"Blur2+max+parabola", "Centroid >50% of peak",
-            "Gauss LM r=6", "Gauss LM r=12"}) {
+            HelperSpotFinders.CENTROID, "Gauss LM r=6", "Gauss LM r=12"}) {
          int m = indexOf(finders, name);
          Assert.assertEquals(name + " found all", trials, ok[m]);
          Assert.assertEquals(name + " bias x", 0.0, sumD[m][0] / ok[m], 0.05);

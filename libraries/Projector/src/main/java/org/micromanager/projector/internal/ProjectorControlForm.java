@@ -147,6 +147,7 @@ public class ProjectorControlForm extends JFrame {
    private javax.swing.JComboBox<String> channelComboBox_;
    private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
+   private javax.swing.JCheckBox centroidCheckBox_;
    private javax.swing.JTextField logDirectoryTextField_;
    private javax.swing.JSpinner pointAndShootIntervalSpinner_; // NB: mis-named
    // pointAndShootIntervalSpinner actually is the exposure time; device setSpotInterval() also
@@ -389,6 +390,7 @@ public class ProjectorControlForm extends JFrame {
     */
    public void runCalibration(boolean blocking) {
       settings_.putString(Terms.DELAY, delayField_.getText());
+      settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected());
       settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
       final String desiredShutter = (String) shutterComboBox_.getSelectedItem();
       settings_.putString(Terms.PTSHUTTER, desiredShutter);
@@ -1056,6 +1058,7 @@ public class ProjectorControlForm extends JFrame {
       channelComboBox_ = new JComboBox<>();
       shutterComboBox_ = new JComboBox<>();
       delayField_ = new JTextField();
+      centroidCheckBox_ = new JCheckBox();
       checkerBoardButton_ = new JButton();
       pointAndShootIntervalSpinner_ = new JSpinner();
       logDirectoryTextField_ = new JTextField();
@@ -1373,6 +1376,13 @@ public class ProjectorControlForm extends JFrame {
 
       delayField_.setText("0");
 
+      centroidCheckBox_.setText("Sub-pixel spot detection (centroid)");
+      centroidCheckBox_.setToolTipText("<html>Locate calibration spots with a background-"
+            + "subtracted centroid<br>instead of the maximum of a heavily blurred image</html>");
+      centroidCheckBox_.setSelected(settings_.getBoolean(Terms.USE_CENTROID, false));
+      centroidCheckBox_.addActionListener((ActionEvent evt) ->
+            settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected()));
+
       checkerBoardButton_.setText("CheckerBoard");
       checkerBoardButton_.addActionListener((ActionEvent evt) -> dev_.showCheckerBoard(16, 16));
 
@@ -1390,6 +1400,7 @@ public class ProjectorControlForm extends JFrame {
       setupTab.add(calibrateButton_);
       setupTab.add(new JLabel("Delay(ms):"), "span 2, split 2");
       setupTab.add(delayField_, "wmin 30, w 50!, wrap");
+      setupTab.add(centroidCheckBox_, "span 3, wrap");
 
       setupTab.add(new JLabel("Phototargeting shutter:"), "span 3, split 2, w 180!");
       setupTab.add(shutterComboBox_, "wmin 130, wrap");
