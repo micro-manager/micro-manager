@@ -82,16 +82,15 @@ public class Calibrator {
    }
 
    // Find the brightest spot in an ImageProcessor. The image is first blurred
-   // and then the pixel with maximum intensity is returned.
-   private static Point findPeak(ImageProcessor proc) {
+   // and then the pixel with maximum intensity is returned (pixel centers at integers).
+   static Point2D.Double findPeak(ImageProcessor proc) {
       ImageProcessor blurImage = proc.duplicate();
       blurImage.setRoi((Roi) null);
       GaussianBlur blur = new GaussianBlur();
       blur.blurGaussian(blurImage, 10, 10, 0.01);
       //showProcessor("findPeak",proc);
       Point x = ImageUtils.findMaxPixel(blurImage);
-      x.translate(1, 1);
-      return x;
+      return new Point2D.Double(x.x, x.y);
    }
 
    /**
@@ -99,7 +98,7 @@ public class Calibrator {
     * Does not do sub-pixel localization, but could (just would change its return type, most other
     * code would be OK with this)
     */
-   private Point measureSpotOnCamera(Point2D.Double projectionPoint) {
+   private Point2D.Double measureSpotOnCamera(Point2D.Double projectionPoint) {
       if (stopRequested_.get()) {
          return null;
       }
@@ -149,7 +148,7 @@ public class Calibrator {
          if (diffImage.getMax() < MIN_SPOT_INTENSITY) {
             return null;
          }
-         Point maxPt = findPeak(diffImage);
+         Point2D.Double maxPt = findPeak(diffImage);
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
          Thread.sleep(delayMs);
@@ -167,14 +166,13 @@ public class Calibrator {
     */
    private void measureAndAddToSpotMap(Map<Point2D.Double, Point2D.Double> spotMap,
          Point2D.Double ptSLM) {
-      Point ptCam = measureSpotOnCamera(ptSLM);
+      Point2D.Double ptCam = measureSpotOnCamera(ptSLM);
       if (ptCam == null) {
          throw new RuntimeException("Spot at (" + (int) ptSLM.x + ", " + (int) ptSLM.y
                + ") was not detected on camera. "
                + "Is the projector beam visible and aimed at the camera?");
       }
-      Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
-      spotMap.put(ptCamDouble, ptSLM);
+      spotMap.put(ptCam, ptSLM);
    }
 
    /**
@@ -299,10 +297,7 @@ public class Calibrator {
             double xoffset = ((i + 0.5) * gridWidth  / (nGrid + 1.0));
             double yoffset = ((j + 0.5) * gridHeight / (nGrid + 1.0));
             slmPoint[i][j] = new Point2D.Double(gridLeft + xoffset, gridTop + yoffset);
-            Point spot = measureSpotOnCamera(slmPoint[i][j]);
-            if (spot != null) {
-               camPoint[i][j] = new Point2D.Double(spot.x, spot.y);
-            }
+            camPoint[i][j] = measureSpotOnCamera(slmPoint[i][j]);
          }
       }
 

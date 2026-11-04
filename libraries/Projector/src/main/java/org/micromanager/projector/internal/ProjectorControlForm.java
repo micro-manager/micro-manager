@@ -486,7 +486,6 @@ public class ProjectorControlForm extends JFrame {
     *            to corresponding point in Projector coordinates
     */
    public void addPointToPointAndShootQueue(Point2D p2D) {
-      Point p = new Point((int) Math.round(p2D.getX()), (int) Math.round(p2D.getY()));
       // Is this needed?
       // p = mirrorIfNecessary(pointAndShootViewer_, p);
       Integer binning = null;
@@ -499,7 +498,7 @@ public class ProjectorControlForm extends JFrame {
       }
       final Point2D.Double devP = ProjectorActions.transformPoint(
             MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
-            new Point2D.Double(p.getX(), p.getY()), roi, binning);
+            new Point2D.Double(p2D.getX(), p2D.getY()), roi, binning);
       PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
       PointAndShootInfo psi = psiBuilder.projectionDevice(dev_)
             .devPoint(devP)
