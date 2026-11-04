@@ -68,7 +68,9 @@ public class NavigationInspectorPanelController extends AbstractInspectorPanelCo
       viewer_.registerForEvents(this);
       final DataProvider provider = viewer_.getDataProvider();
       for (final String axis : provider.getSummaryMetadata().getOrderedAxes()) {
-         if (provider.getSummaryMetadata().getIntendedDimensions().getIndex(axis) <= 1) {
+         // IntendedDimensions may be absent (e.g. script-built data); also use the actual extent.
+         if (Math.max(provider.getSummaryMetadata().getIntendedDimensions().getIndex(axis),
+               provider.getNextIndex(axis)) <= 1) {
             continue;
          }
          panel_.add(new JLabel(axis + ":"), new CC().split().gapAfter("10"));
@@ -92,8 +94,9 @@ public class NavigationInspectorPanelController extends AbstractInspectorPanelCo
                   if (axis.equals("position")) {
                      for (int p = 0;
                            p < provider.getSummaryMetadata().getStagePositionList().size(); p++) {
-                        if (provider.getSummaryMetadata().getStagePositionList().get(p)
-                              .getLabel().contains(axisField.getText())) {
+                        String label = provider.getSummaryMetadata().getStagePositionList()
+                              .get(p).getLabel();
+                        if (label != null && label.contains(axisField.getText())) {
                            Coords newCoords;
                            if (oldCoords != null) {
                               newCoords = oldCoords.copyBuilder().index(axis, p).build();
