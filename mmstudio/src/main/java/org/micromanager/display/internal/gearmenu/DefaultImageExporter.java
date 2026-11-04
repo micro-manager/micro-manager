@@ -50,6 +50,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayDidShowImageEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -444,22 +445,27 @@ public final class DefaultImageExporter implements ImageExporter {
    private String createImageLabel(Coords imageCoords) {
       StringBuilder sb = new StringBuilder("");
       DataProvider dp = display_.getDataProvider();;
-      List<String> channels = dp.getSummaryMetadata().getChannelNameList();
-      Coords dimensions = dp.getSummaryMetadata().getIntendedDimensions();
+      SummaryMetadata summary = dp.getSummaryMetadata();
+      Coords dimensions = summary.getIntendedDimensions();
+      // IntendedDimensions may be absent or too small; fall back to the actual data extent
+      // so that labels stay unique.
+      List<String> axes = dimensions.getAxes();
+      if (axes.isEmpty() && dp.getAxes() != null) {
+         axes = dp.getAxes();
+      }
       try {
          if (dp.hasImage(imageCoords) && useLabel_) {
             Metadata  metadata = dp.getImage(imageCoords).getMetadata();
-            for (String axis : dimensions.getAxes()) {
-               if (dimensions.getIndex(axis) > 1) {
+            for (String axis : axes) {
+               if (Math.max(dimensions.getIndex(axis), dp.getNextIndex(axis)) > 1) {
                   long index = imageCoords.getIndex(axis);
                   if (axis.equals(Coords.P)) {
-                     if (metadata.hasPositionName()) {
-                        sb.append("_")
-                              .append(metadata.getPositionName(String.format("%06d", index)));
-                     }
+                     sb.append("_").append(metadata.hasPositionName()
+                           ? metadata.getPositionName("")
+                           : String.format("P%06d", index + 1));
                   } else if (axis.equals(Coords.C) && display_.getDisplaySettings().getColorMode()
                         != DisplaySettings.ColorMode.COMPOSITE) {
-                     sb.append("_").append(channels.get(imageCoords.getC()));
+                     sb.append("_").append(summary.getSafeChannelName(imageCoords.getC()));
                   } else if (axis.equals(Coords.Z)) {
                      sb.append("_Z").append(String.format("%06d", index + 1));
                   } else if (axis.equals(Coords.T)) {
