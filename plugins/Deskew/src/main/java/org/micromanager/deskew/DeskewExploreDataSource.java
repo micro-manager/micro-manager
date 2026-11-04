@@ -60,14 +60,17 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
    // When true, tile selection and acquisition are disabled (opened dataset, not live explore).
    private volatile boolean readOnly_ = false;
 
-   // Cache for getImageKeys() — invalidated by DeskewExploreManager after putImageMultiRes.
+   // Set while the live hardware differs from the session-start state; blocks acquisition.
+   private volatile boolean settingsMismatch_ = false;
+
+   // Cache for getImageKeys() - invalidated by DeskewExploreManager after putImageMultiRes.
    private volatile Set<HashMap<String, Object>> imageKeysCache_ = null;
 
    // Current stage position in full-resolution pixel coordinates (center of FOV).
    // Null when unknown. Updated by the stage polling task in DeskewExploreManager.
    private volatile Point2D.Double stagePositionPixel_ = null;
 
-   // Tile tracking (accessed from multiple threads — use concurrent set)
+   // Tile tracking (accessed from multiple threads - use concurrent set)
    private final Set<String> acquiredTiles_ =
          Collections.newSetFromMap(new ConcurrentHashMap<>());
    // Tiles queued for acquisition but not yet displayed (shown as persistent blue overlay)
@@ -144,6 +147,16 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
       readOnly_ = readOnly;
    }
 
+   /**
+    * Records whether the hardware has drifted from the session-start values.  The selection
+    * stays visible; drawOverlay() swaps the acquire prompt for a "revert" message on it.
+    *
+    * @param mismatch true while the current hardware differs from the session-start state
+    */
+   public void setSettingsMismatch(boolean mismatch) {
+      settingsMismatch_ = mismatch;
+   }
+
    public void setAcquisitionInProgress(boolean inProgress) {
       acquisitionInProgress_ = inProgress;
       for (AcquisitionStateListener l : acqStateListeners_) {
@@ -202,10 +215,8 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
 
       if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
          // Convert stage pixel position to tile indices using effective (non-overlap) spacing
-         double overlapPercent = manager_.getOverlapPercentage();
-         int overlapPixels = (int) Math.round(tileWidth_ * overlapPercent / 100.0);
-         double effectiveTileWidth = tileWidth_ - overlapPixels;
-         double effectiveTileHeight = tileHeight_ - overlapPixels;
+         double effectiveTileWidth = manager_.effectiveTileWidth(tileWidth_);
+         double effectiveTileHeight = manager_.effectiveTileHeight(tileHeight_);
          int stageRow = (int) Math.floor(stagePixel.y / effectiveTileHeight);
          int stageCol = (int) Math.floor(stagePixel.x / effectiveTileWidth);
 
@@ -448,8 +459,8 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
    @Override
    public void mouseReleased(MouseEvent e) {
       if (javax.swing.SwingUtilities.isRightMouseButton(e) && !isRightDragging_) {
-         // Right-click without drag - start new selection (blocked in read-only mode)
-         if (!readOnly_ && tileWidth_ > 0 && tileHeight_ > 0) {
+         // Right-click without drag - start new selection.
+         if (!readOnly_ && !settingsMismatch_ && tileWidth_ > 0 && tileHeight_ > 0) {
             Point tile = getTileFromDisplayCoords(e.getX(), e.getY());
             if (tile != null) {
                selectionStart_ = tile;
@@ -464,12 +475,12 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
             if (pixelPos != null) {
                manager_.moveStageToPixelPosition(pixelPos.x, pixelPos.y);
             }
-         } else if (!readOnly_) {
-            // Left-click without drag - queue selected tiles for acquisition
+         } else if (!readOnly_ && !settingsMismatch_) {
+            // Left-click without drag - queue selected tiles for acquisition.
             List<Point> selectedTiles = getSelectedTiles();
             if (!selectedTiles.isEmpty()) {
                manager_.acquireMultipleTiles(selectedTiles);
-               // Clear selection immediately — tiles are now tracked via pendingTiles_
+               // Clear selection immediately - tiles are now tracked via pendingTiles_
                selectionStart_ = null;
                selectionEnd_ = null;
             }
@@ -497,9 +508,9 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
       int dy = dragStart_.y - current.y;
 
       if (javax.swing.SwingUtilities.isRightMouseButton(e)) {
-         // Right-drag creates and extends the selection — blocked in read-only mode.
+         // Right-drag creates and extends the selection - blocked in read-only mode.
          // Right-press already set selectionStart_ to the tile under the cursor.
-         if (!readOnly_ && selectionStart_ != null
+         if (!readOnly_ && !settingsMismatch_ && selectionStart_ != null
                  && tileWidth_ > 0 && tileHeight_ > 0) {
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
                isRightDragging_ = true;
@@ -515,7 +526,7 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
          }
       } else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
          // Left-drag pans the view. Note: panning intentionally does NOT clear any
-         // existing tile selection — a tentative single-tile selection set by a prior
+         // existing tile selection - a tentative single-tile selection set by a prior
          // right-press is left in place so the user can pan and then keep selecting.
          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
             isLeftDragging_ = true;
@@ -589,11 +600,9 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
       double fullResX = viewOffset.x + displayX / mag;
       double fullResY = viewOffset.y + displayY / mag;
 
-      // Calculate effective tile dimensions: overlap is same pixel count in X and Y
-      double overlapPercent = manager_.getOverlapPercentage();
-      int overlapPixels = (int) Math.round(tileWidth_ * overlapPercent / 100.0);
-      double effectiveTileWidth = tileWidth_ - overlapPixels;
-      double effectiveTileHeight = tileHeight_ - overlapPixels;
+      // Calculate effective tile dimensions (overlap applies per axis)
+      double effectiveTileWidth = manager_.effectiveTileWidth(tileWidth_);
+      double effectiveTileHeight = manager_.effectiveTileHeight(tileHeight_);
 
       // Convert to tile indices using effective spacing
       int col = (int) Math.floor(fullResX / effectiveTileWidth);
@@ -648,10 +657,8 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
 
       // Draw persistent blue overlay for tiles that are queued/in-progress but not yet displayed
       if (!pendingTiles_.isEmpty()) {
-         double overlapPercent = manager_.getOverlapPercentage();
-         int overlapPixels = (int) Math.round(tileWidth_ * overlapPercent / 100.0);
-         double effectiveTileWidth = tileWidth_ - overlapPixels;
-         double effectiveTileHeight = tileHeight_ - overlapPixels;
+         double effectiveTileWidth = manager_.effectiveTileWidth(tileWidth_);
+         double effectiveTileHeight = manager_.effectiveTileHeight(tileHeight_);
          for (String key : pendingTiles_) {
             String[] parts = key.split(",");
             int row = Integer.parseInt(parts[0]);
@@ -686,11 +693,8 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
          int tileCount = (maxRow - minRow + 1) * (maxCol - minCol + 1);
 
          // Draw each tile in the selection
-         // Overlap is the same pixel count in X and Y (derived from X tile width)
-         double overlapPercent = manager_.getOverlapPercentage();
-         int overlapPixels = (int) Math.round(tileWidth_ * overlapPercent / 100.0);
-         double effectiveTileWidth = tileWidth_ - overlapPixels;
-         double effectiveTileHeight = tileHeight_ - overlapPixels;
+         double effectiveTileWidth = manager_.effectiveTileWidth(tileWidth_);
+         double effectiveTileHeight = manager_.effectiveTileHeight(tileHeight_);
 
          for (int row = minRow; row <= maxRow; row++) {
             for (int col = minCol; col <= maxCol; col++) {
@@ -721,7 +725,9 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
          int textY = (int) ((centerPixelY - viewOffset.y) * magnification);
 
          String instructions;
-         if (selectionEnd_ == null) {
+         if (settingsMismatch_) {
+            instructions = "Image dimensions have changed. Revert to original to continue";
+         } else if (selectionEnd_ == null) {
             instructions = acquisitionInProgress_
                   ? "Right-drag to extend, left-click to queue"
                   : "Right-drag to extend, left-click to acquire";
@@ -745,10 +751,8 @@ public class DeskewExploreDataSource implements TiledDataViewerDataSource,
       // Draw red rectangle showing the current stage FOV position
       Point2D.Double stagePixel = stagePositionPixel_;
       if (stagePixel != null && tileWidth_ > 0 && tileHeight_ > 0) {
-         double overlapPct = manager_.getOverlapPercentage();
-         int overlapPx = (int) Math.round(tileWidth_ * overlapPct / 100.0);
-         double effW = tileWidth_ - overlapPx;
-         double effH = tileHeight_ - overlapPx;
+         double effW = manager_.effectiveTileWidth(tileWidth_);
+         double effH = manager_.effectiveTileHeight(tileHeight_);
          double tilePixelX = stagePixel.x - effW / 2.0;
          double tilePixelY = stagePixel.y - effH / 2.0;
          int dispX = (int) ((tilePixelX - viewOffset.x) * magnification);
