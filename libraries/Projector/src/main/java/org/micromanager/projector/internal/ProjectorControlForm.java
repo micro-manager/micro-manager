@@ -159,6 +159,7 @@ public class ProjectorControlForm extends JFrame {
    private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
    private javax.swing.JCheckBox centroidCheckBox_;
+   private javax.swing.JComboBox<String> calibrationPointsComboBox_;
    private javax.swing.JTextField logDirectoryTextField_;
    private javax.swing.JSpinner pointAndShootIntervalSpinner_; // NB: mis-named
    // pointAndShootIntervalSpinner actually is the exposure time; device setSpotInterval() also
@@ -428,6 +429,7 @@ public class ProjectorControlForm extends JFrame {
             SwingUtilities.invokeLater(() -> {
                calibrateButton_.setText("Calibrate");
                checkCalibrationButton_.setEnabled(true);
+               calibrationPointsComboBox_.setEnabled(true);
             });
             calibrator_ = null;
          }
@@ -442,8 +444,13 @@ public class ProjectorControlForm extends JFrame {
    private void storeCalibrationSettings() {
       settings_.putString(Terms.DELAY, delayField_.getText());
       settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected());
+      settings_.putInteger(Terms.CALIBRATION_POINTS, selectedCalibrationPoints());
       settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
       settings_.putString(Terms.PTSHUTTER, (String) shutterComboBox_.getSelectedItem());
+   }
+
+   private int selectedCalibrationPoints() {
+      return Calibrator.MIN_CALIBRATION_POINTS + calibrationPointsComboBox_.getSelectedIndex();
    }
 
    /**
@@ -1166,6 +1173,7 @@ public class ProjectorControlForm extends JFrame {
       shutterComboBox_ = new JComboBox<>();
       delayField_ = new JTextField();
       centroidCheckBox_ = new JCheckBox();
+      calibrationPointsComboBox_ = new JComboBox<>();
       checkerBoardButton_ = new JButton();
       pointAndShootIntervalSpinner_ = new JSpinner();
       logDirectoryTextField_ = new JTextField();
@@ -1425,6 +1433,7 @@ public class ProjectorControlForm extends JFrame {
                runCalibration();
                calibrateButton_.setText("Stop calibration");
                checkCalibrationButton_.setEnabled(false);
+               calibrationPointsComboBox_.setEnabled(false);
             }
          } catch (Exception e) {
             studio_.logs().showError(e);
@@ -1503,10 +1512,24 @@ public class ProjectorControlForm extends JFrame {
       centroidCheckBox_.addActionListener((ActionEvent evt) ->
             settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected()));
 
+      for (int n = Calibrator.MIN_CALIBRATION_POINTS; n <= Calibrator.MAX_CALIBRATION_POINTS;
+            n++) {
+         calibrationPointsComboBox_.addItem(n + " x " + n);
+      }
+      calibrationPointsComboBox_.setSelectedIndex(Calibrator.getCalibrationPoints(settings_)
+            - Calibrator.MIN_CALIBRATION_POINTS);
+      calibrationPointsComboBox_.setToolTipText("<html>Number of calibration spots. Fewer "
+            + "spots calibrate faster,<br>but correct less for distortion of the projected "
+            + "image</html>");
+      final JLabel calibrationPointsLabel = new JLabel("Points:");
+      calibrationPointsLabel.setToolTipText(calibrationPointsComboBox_.getToolTipText());
+      calibrationPointsComboBox_.addActionListener((ActionEvent evt) ->
+            settings_.putInteger(Terms.CALIBRATION_POINTS, selectedCalibrationPoints()));
+
       checkerBoardButton_.setText("CheckerBoard");
       checkerBoardButton_.addActionListener((ActionEvent evt) -> dev_.showCheckerBoard(16, 16));
 
-      setupTab.setLayout(new MigLayout("", "", "[40]"));
+      setupTab.setLayout(new MigLayout("", "", "[30]"));
 
       setupTab.add(centerButton);
       setupTab.add(allPixelsButton_);
@@ -1521,7 +1544,9 @@ public class ProjectorControlForm extends JFrame {
       setupTab.add(new JLabel("Delay(ms):"), "span 2, split 3");
       setupTab.add(delayField_, "wmin 30, w 50!");
       setupTab.add(checkCalibrationButton_, "gapleft push, wrap");
-      setupTab.add(centroidCheckBox_, "span 3, wrap");
+      setupTab.add(centroidCheckBox_, "span 3, split 3");
+      setupTab.add(calibrationPointsLabel, "gapleft push");
+      setupTab.add(calibrationPointsComboBox_, "wmin 80, wrap");
 
       setupTab.add(new JLabel("Phototargeting shutter:"), "span 3, split 2, w 180!");
       setupTab.add(shutterComboBox_, "wmin 130, wrap");

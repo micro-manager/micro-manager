@@ -46,11 +46,13 @@ public class CalibrationCheckResult {
    private final List<Spot> spots_ = new ArrayList<>();
    private final double pixelSizeUm_;
    private final boolean useCentroid_;
+   private final int nrCalibrationCells_;
    private final Date date_ = new Date();
 
-   CalibrationCheckResult(double pixelSizeUm, boolean useCentroid) {
+   CalibrationCheckResult(double pixelSizeUm, boolean useCentroid, int nrCalibrationCells) {
       pixelSizeUm_ = pixelSizeUm;
       useCentroid_ = useCentroid;
+      nrCalibrationCells_ = nrCalibrationCells;
    }
 
    public Date getDate() {
@@ -94,6 +96,7 @@ public class CalibrationCheckResult {
       sb.append("Spot detection: ").append(useCentroid_
             ? "sub-pixel centroid" : "maximum of blurred image")
             .append("\n");
+      sb.append("Calibration cells: ").append(nrCalibrationCells_).append("\n");
       sb.append(String.format(Locale.US, "Spots detected: %d of %d%n%n",
             detected.size(), spots_.size()));
       if (!detected.isEmpty()) {

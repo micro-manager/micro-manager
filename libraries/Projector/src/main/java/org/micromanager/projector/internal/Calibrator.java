@@ -43,6 +43,9 @@ public class Calibrator {
    private static final double MIN_SPOT_INTENSITY = 100.0;
    // Half-size (pixels) of the centroid window; must contain the spot core plus some margin
    private static final int CENTROID_RADIUS = 15;
+   static final int MIN_CALIBRATION_POINTS = 2;
+   static final int MAX_CALIBRATION_POINTS = 8;
+   static final int DEFAULT_CALIBRATION_POINTS = 8;
 
    private final Studio app_;
    private final CMMCore core_;
@@ -65,6 +68,14 @@ public class Calibrator {
 
    public void requestStop() {
       stopRequested_.set(true);
+   }
+
+   /**
+    * Number of calibration spots per side of the grid, clamped to the supported range.
+    */
+   static int getCalibrationPoints(MutablePropertyMapView settings) {
+      int n = settings.getInteger(Terms.CALIBRATION_POINTS, DEFAULT_CALIBRATION_POINTS);
+      return Math.max(MIN_CALIBRATION_POINTS, Math.min(MAX_CALIBRATION_POINTS, n));
    }
 
    /**
@@ -352,8 +363,7 @@ public class Calibrator {
       // compute a grid of SLM points inside the "overlap region"
       // nGrid is how many polygons in both X and Y
       // require (nGrid + 1)^2 spot measurements to get nGrid^2 squares
-      // TODO allow user to change nGrid
-      final int nGrid = 7;
+      final int nGrid = getCalibrationPoints(settings_) - 1;
       Point2D.Double[][] slmPoint = new Point2D.Double[1 + nGrid][1 + nGrid];
       Point2D.Double[][] camPoint = new Point2D.Double[1 + nGrid][1 + nGrid];
 
@@ -512,7 +522,7 @@ public class Calibrator {
       final Rectangle roi = core_.getROI();
       final int binning = Utils.getBinning(core_);
       CalibrationCheckResult result = new CalibrationCheckResult(core_.getPixelSizeUm(),
-            settings_.getBoolean(Terms.USE_CENTROID, false));
+            settings_.getBoolean(Terms.USE_CENTROID, false), mapping.getMap().size());
       for (Point2D.Double target : cellCenterTargets(mapping, roi, binning)) {
          if (stopRequested_.get()) {
             return null;
