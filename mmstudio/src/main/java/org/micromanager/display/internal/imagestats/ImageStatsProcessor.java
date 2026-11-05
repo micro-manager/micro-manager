@@ -413,7 +413,7 @@ public final class ImageStatsProcessor {
             new ComponentStats[nComponents];
       for (int component = 0; component < nComponents; ++component) {
          componentStats[component] = ComponentStats.builder()
-               .bitDepth(sampleBitDepth)
+               .bitDepth(metadataBitDepth)
                .histogram(histograms.get(component).toLongArray(),
                      Math.max(0, sampleBitDepth - binCountPowerOf2))
                .pixelCount(counts[component])
