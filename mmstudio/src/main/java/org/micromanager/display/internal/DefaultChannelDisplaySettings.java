@@ -60,13 +60,15 @@ public final class DefaultChannelDisplaySettings
 
       @Override
       public Builder name(String name) {
-         name_ = name;
+         name_ = name == null ? "" : name;
          return this;
       }
 
+      // Null when SummaryMetadata has no channel group (e.g. script-built datasets);
+      // equals()/hashCode() require non-null.
       @Override
       public Builder groupName(String groupName) {
-         groupName_ = groupName;
+         groupName_ = groupName == null ? "" : groupName;
          return this;
       }
 

@@ -34,6 +34,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
+import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreClosingEvent;
@@ -385,7 +386,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          if (displaySettings == null) {
             displaySettings = RememberedDisplaySettings.loadDefaultDisplaySettings(
                   studio_,
-                  store.getSummaryMetadata());
+                  store.getSummaryMetadata(),
+                  store.getNextIndex(Coords.CHANNEL));
          } else {
             displaySettings = RememberedDisplaySettings.fixMissingInfo(displaySettings,
                   store.getSummaryMetadata());

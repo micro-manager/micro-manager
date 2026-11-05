@@ -936,8 +936,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (!currentPixelSize.equals(cachedPixelSize_)) {
          infoLabel_.setText(this.getInfoString(images));
          ijBridge_.mm2ijSetMetadata();
-         cachedPixelSize_ = images.getRequest().getImage(0).getMetadata()
-               .getPixelSizeUm();
+         cachedPixelSize_ = currentPixelSize;
       }
 
       ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
@@ -1109,9 +1108,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // We update color only, but unfortunately, we get called here
             // also when other things change
             // TODO: should all channeldisplaysetting changes be remembered?
+            // Unnamed channels (no ChNames) would otherwise all share one profile key;
+            // use the same fallback name the Inspector shows.
+            String channelName = channelSettings.getName();
+            if (channelName.isEmpty()) {
+               channelName = displayController_.getDataProvider().getSummaryMetadata()
+                     .getSafeChannelName(i);
+            }
             ChannelDisplaySettings rememberedSettings =
                   RememberedDisplaySettings.loadChannel(studio_,
-                        channelSettings.getGroupName(), channelSettings.getName(), null);
+                        channelSettings.getGroupName(), channelName, null);
             if (!rememberedSettings.getColor().equals(channelSettings.getColor())) {
                // To ensure that we do not respond to the event posted by us
                // (which will result in a continuous loop), remember our event
@@ -1124,13 +1130,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
                // is not so clear the current behavior is desirable.
                channelColorEvent_ = new ChannelColorEvent(
                      channelSettings.getGroupName(),
-                     channelSettings.getName(),
+                     channelName,
                      channelSettings.getColor());
                studio_.events().post(channelColorEvent_);
             }
             RememberedDisplaySettings.storeChannel(studio_,
                   channelSettings.getGroupName(),
-                  channelSettings.getName(),
+                  channelName,
                   channelSettings);
 
             ComponentDisplaySettings componentSettings =

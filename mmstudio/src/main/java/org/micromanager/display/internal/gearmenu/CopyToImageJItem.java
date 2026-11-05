@@ -155,19 +155,22 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
    private void setCalibration(ImagePlus iPlus, DataProvider dp, Image image) {
       Calibration cal = new Calibration(iPlus);
       Double pSize = image.getMetadata().getPixelSizeUm();
-      if (pSize != null) {
+      // Without a pixel size, leave ImageJ's default (uncalibrated pixels) rather than
+      // claiming 1 micron per pixel.
+      if (pSize != null && pSize > 0.0) {
          cal.pixelWidth = pSize;
          cal.pixelHeight = pSize;
+         cal.setUnit("micron");
       }
       Double zStep = dp.getSummaryMetadata().getZStepUm();
-      if (zStep != null) {
+      if (zStep != null && zStep > 0.0) {
          cal.pixelDepth = zStep;
+         cal.setZUnit("micron");
       }
       Double waitInterval = dp.getSummaryMetadata().getWaitInterval();
       if (waitInterval != null) {
          cal.frameInterval = waitInterval / 1000.0;  // MM in ms, IJ in s
       }
-      cal.setUnit("micron");
       iPlus.setCalibration(cal);
    }
 
