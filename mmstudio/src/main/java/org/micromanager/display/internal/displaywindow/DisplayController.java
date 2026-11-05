@@ -233,7 +233,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (initialDisplaySettings == null) {
          initialDisplaySettings = RememberedDisplaySettings.loadDefaultDisplaySettings(
                studio,
-               builder.dataProvider_.getSummaryMetadata());
+               builder.dataProvider_.getSummaryMetadata(),
+               builder.dataProvider_.getNextIndex(Coords.CHANNEL));
       }
       if (initialDisplaySettings == null) {
          initialDisplaySettings = DefaultDisplaySettings.builder().build();

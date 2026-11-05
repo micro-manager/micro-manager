@@ -160,11 +160,12 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
       if (pSize != null && pSize > 0.0) {
          cal.pixelWidth = pSize;
          cal.pixelHeight = pSize;
-         Double zStep = dp.getSummaryMetadata().getZStepUm();
-         if (zStep != null) {
-            cal.pixelDepth = zStep;
-         }
          cal.setUnit("micron");
+      }
+      Double zStep = dp.getSummaryMetadata().getZStepUm();
+      if (zStep != null && zStep > 0.0) {
+         cal.pixelDepth = zStep;
+         cal.setZUnit("micron");
       }
       Double waitInterval = dp.getSummaryMetadata().getWaitInterval();
       if (waitInterval != null) {

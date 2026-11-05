@@ -447,11 +447,15 @@ public final class DefaultImageExporter implements ImageExporter {
       DataProvider dp = display_.getDataProvider();;
       SummaryMetadata summary = dp.getSummaryMetadata();
       Coords dimensions = summary.getIntendedDimensions();
-      // IntendedDimensions may be absent or too small; fall back to the actual data extent
-      // so that labels stay unique.
-      List<String> axes = dimensions.getAxes();
-      if (axes.isEmpty() && dp.getAxes() != null) {
-         axes = dp.getAxes();
+      // IntendedDimensions may be absent, omit axes, or be too small; also use the actual
+      // data axes and extent so that labels stay unique.
+      List<String> axes = new ArrayList<>(dimensions.getAxes());
+      if (dp.getAxes() != null) {
+         for (String axis : dp.getAxes()) {
+            if (!axes.contains(axis)) {
+               axes.add(axis);
+            }
+         }
       }
       try {
          if (dp.hasImage(imageCoords) && useLabel_) {

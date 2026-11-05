@@ -122,15 +122,30 @@ public class RememberedDisplaySettings {
     */
    public static DisplaySettings loadDefaultDisplaySettings(Studio studio,
                                                             SummaryMetadata summary) {
+      return loadDefaultDisplaySettings(studio, summary, 0);
+   }
+
+   /**
+    * As {@link #loadDefaultDisplaySettings(Studio, SummaryMetadata)}, but also covers
+    * channels that have data but no entry in the summary's channel names.
+    *
+    * @param studio    The Studio object
+    * @param summary   Summary metadata for the dataset used
+    * @param nChannels Number of channels in the data (e.g. getNextIndex(Coords.CHANNEL))
+    * @return DisplaySettings appropriate for each channel
+    */
+   public static DisplaySettings loadDefaultDisplaySettings(Studio studio,
+                                                            SummaryMetadata summary,
+                                                            int nChannels) {
       DisplaySettings.Builder builder = DefaultDisplaySettings.builder();
       String channelGroup = nonNullGroup(summary.getChannelGroup());
-      List<String> channelNames = summary.getChannelNameList();
-      for (int ch = 0; ch < channelNames.size(); ch++) {
+      int numChannels = Math.max(summary.getChannelNameList().size(), nChannels);
+      for (int ch = 0; ch < numChannels; ch++) {
          String channelName = summary.getSafeChannelName(ch);
          ChannelDisplaySettings cds = loadChannel(studio, channelGroup, channelName, null);
          builder.channel(ch, cds);
       }
-      if (channelNames.size() > 1) {
+      if (numChannels > 1) {
          builder.colorModeComposite();
       }
       builder.autostretch(true);
