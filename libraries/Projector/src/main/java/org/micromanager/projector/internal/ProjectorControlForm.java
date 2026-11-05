@@ -29,9 +29,11 @@ import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -46,6 +48,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -60,11 +63,15 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
@@ -138,12 +145,16 @@ public class ProjectorControlForm extends JFrame {
 
    public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
          "Projector Log File", "./MyProjector.log", true, "log");
+   private static final FileType CALIBRATION_CHECK_FILE = new FileType(
+         "PROJECTOR_CALIBRATION_CHECK_FILE", "Calibration check report",
+         "./CalibrationCheck.txt", true, "txt");
 
 
    // GUI element variables declaration
    private javax.swing.JButton allPixelsButton_;
    private javax.swing.JTabbedPane attachToMdaTabbedPane_;
    private javax.swing.JButton calibrateButton_;
+   private javax.swing.JButton checkCalibrationButton_;
    private javax.swing.JComboBox<String> channelComboBox_;
    private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
@@ -389,11 +400,7 @@ public class ProjectorControlForm extends JFrame {
     * Java Preferences.
     */
    public void runCalibration(boolean blocking) {
-      settings_.putString(Terms.DELAY, delayField_.getText());
-      settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected());
-      settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
-      final String desiredShutter = (String) shutterComboBox_.getSelectedItem();
-      settings_.putString(Terms.PTSHUTTER, desiredShutter);
+      storeCalibrationSettings();
       if (calibrator_ != null && calibrator_.isCalibrating()) {
          return;
       }
@@ -418,7 +425,10 @@ public class ProjectorControlForm extends JFrame {
             }
             studio_.alerts().postAlert("Projector Calibration", this.getClass(),
                   "Calibration " + (success ? "succeeded." : "failed."));
-            SwingUtilities.invokeLater(() -> calibrateButton_.setText("Calibrate"));
+            SwingUtilities.invokeLater(() -> {
+               calibrateButton_.setText("Calibrate");
+               checkCalibrationButton_.setEnabled(true);
+            });
             calibrator_ = null;
          }
       };
@@ -426,6 +436,102 @@ public class ProjectorControlForm extends JFrame {
          t.run();
       } else {
          t.start();
+      }
+   }
+
+   private void storeCalibrationSettings() {
+      settings_.putString(Terms.DELAY, delayField_.getText());
+      settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected());
+      settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
+      settings_.putString(Terms.PTSHUTTER, (String) shutterComboBox_.getSelectedItem());
+   }
+
+   /**
+    * Checks the current calibration by projecting spots mid-way between the calibration points
+    * and measuring where they land. Shows a report when done.
+    */
+   private void runCalibrationCheck() {
+      if (mapping_ == null) {
+         studio_.logs().showError(
+               "Please calibrate the phototargeting device first, using the Setup tab.");
+         return;
+      }
+      if (calibrator_ != null) {
+         return;
+      }
+      storeCalibrationSettings();
+      calibrator_ = new Calibrator(studio_, dev_, settings_);
+      final String originalChannel = projectorControlExecution_.prepareChannel(
+            settings_.getString(Terms.PTCHANNEL, ""));
+      final Future<CalibrationCheckResult> check = calibrator_.runCalibrationCheck(mapping_);
+      calibrateButton_.setEnabled(false);
+      checkCalibrationButton_.setText("Stop");
+      Thread t = new Thread(() -> {
+         CalibrationCheckResult result;
+         try {
+            result = check.get();
+         } catch (InterruptedException | ExecutionException ex) {
+            studio_.logs().logError(ex);
+            result = null;
+         }
+         if (originalChannel != null && !originalChannel.isEmpty()) {
+            projectorControlExecution_.returnChannel(originalChannel);
+         }
+         calibrator_ = null;
+         final CalibrationCheckResult finalResult = result;
+         SwingUtilities.invokeLater(() -> {
+            checkCalibrationButton_.setText("Check");
+            calibrateButton_.setEnabled(true);
+            if (finalResult != null) {
+               showCalibrationCheckReport(finalResult);
+            }
+         });
+      }, "Projector calibration check");
+      t.start();
+   }
+
+   private void showCalibrationCheckReport(CalibrationCheckResult result) {
+      final String report = result.toReport();
+      studio_.logs().logMessage(report);
+      JTextArea textArea = new JTextArea(report);
+      textArea.setEditable(false);
+      textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+      JScrollPane scrollPane = new JScrollPane(textArea);
+      scrollPane.setPreferredSize(new Dimension(640, 480));
+      final JDialog dialog = new JDialog(this, "Projector Calibration Check", false);
+      JButton saveButton = new JButton("Save...");
+      saveButton.addActionListener((ActionEvent evt) -> saveCalibrationCheckReport(dialog,
+            report));
+      JButton closeButton = new JButton("Close");
+      closeButton.addActionListener((ActionEvent evt) -> dialog.dispose());
+      dialog.getContentPane().setLayout(new MigLayout("fill"));
+      dialog.getContentPane().add(scrollPane, "span 2, grow, push, wrap");
+      dialog.getContentPane().add(saveButton, "tag left");
+      dialog.getContentPane().add(closeButton, "tag right");
+      dialog.pack();
+      dialog.setLocationRelativeTo(this);
+      WindowPositioning.setUpBoundsMemory(dialog, this.getClass(), "CalibrationCheckReport");
+      dialog.setVisible(true);
+   }
+
+   private void saveCalibrationCheckReport(Window parent, String report) {
+      File file = FileDialogs.save(parent, "Save calibration check report",
+            CALIBRATION_CHECK_FILE);
+      if (file == null) {
+         return;
+      }
+      if (!file.getName().contains(".")) {
+         file = new File(file.getPath() + ".txt");
+      }
+      if (file.exists() && JOptionPane.showConfirmDialog(parent,
+            "File " + file.getName() + " exists. Overwrite?", "Save calibration check report",
+            JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+         return;
+      }
+      try {
+         Files.write(file.toPath(), report.getBytes(StandardCharsets.UTF_8));
+      } catch (IOException ex) {
+         studio_.logs().showError(ex, "Failed to save calibration check report.");
       }
    }
 
@@ -1054,6 +1160,7 @@ public class ProjectorControlForm extends JFrame {
       repeatEveryFrameSpinner_ = new JSpinner();
       repeatEveryFrameUnitLabel_ = new JLabel();
       calibrateButton_ = new JButton();
+      checkCalibrationButton_ = new JButton();
       allPixelsButton_ = new JButton();
       channelComboBox_ = new JComboBox<>();
       shutterComboBox_ = new JComboBox<>();
@@ -1317,9 +1424,22 @@ public class ProjectorControlForm extends JFrame {
             } else {
                runCalibration();
                calibrateButton_.setText("Stop calibration");
+               checkCalibrationButton_.setEnabled(false);
             }
          } catch (Exception e) {
             studio_.logs().showError(e);
+         }
+      });
+
+      checkCalibrationButton_.setText("Check");
+      checkCalibrationButton_.setToolTipText("<html>Check the calibration: project spots mid-way "
+            + "between the calibration points<br>and report how far they land from "
+            + "their targets</html>");
+      checkCalibrationButton_.addActionListener((ActionEvent evt) -> {
+         if (calibrator_ != null) {
+            stopCalibration();
+         } else {
+            runCalibrationCheck();
          }
       });
 
@@ -1398,8 +1518,9 @@ public class ProjectorControlForm extends JFrame {
       setupTab.add(ySlider, "wrap");
 
       setupTab.add(calibrateButton_);
-      setupTab.add(new JLabel("Delay(ms):"), "span 2, split 2");
-      setupTab.add(delayField_, "wmin 30, w 50!, wrap");
+      setupTab.add(new JLabel("Delay(ms):"), "span 2, split 3");
+      setupTab.add(delayField_, "wmin 30, w 50!");
+      setupTab.add(checkCalibrationButton_, "gapleft push, wrap");
       setupTab.add(centroidCheckBox_, "span 3, wrap");
 
       setupTab.add(new JLabel("Phototargeting shutter:"), "span 3, split 2, w 180!");

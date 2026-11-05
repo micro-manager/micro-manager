@@ -11,6 +11,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectionDevice;
+import org.micromanager.projector.ProjectorActions;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -474,6 +476,84 @@ public class Calibrator {
          }
 
          return !stopRequested_.get();
+      });
+   }
+
+   /**
+    * Test points are the centers of the calibration cells, i.e. mid-way between calibration
+    * spots, expressed in current camera coordinates and sorted by row, then column.
+    */
+   private static List<Point2D.Double> cellCenterTargets(Mapping mapping, Rectangle roi,
+         int binning) {
+      // inverse of the ROI/binning correction in ProjectorActions.transformPoint
+      final double factor = (double) binning / (double) mapping.getBinning();
+      final Rectangle mappingRoi = mapping.getCameraROI();
+      List<Point2D.Double> targets = new ArrayList<>();
+      for (Polygon poly : mapping.getMap().keySet()) {
+         Point2D.Double c = Utils.meanPosition2D(Utils.getVertices(poly));
+         double x = c.x / factor - roi.x + mappingRoi.x;
+         double y = c.y / factor - roi.y + mappingRoi.y;
+         if (x >= 0 && x < roi.width && y >= 0 && y < roi.height) {
+            targets.add(new Point2D.Double(x, y));
+         }
+      }
+      // cell centers in one row differ in y by a fraction of the cell height
+      final double rowTolerance = roi.height / 40.0;
+      targets.sort((a, b) -> {
+         if (Math.abs(a.y - b.y) > rowTolerance) {
+            return Double.compare(a.y, b.y);
+         }
+         return Double.compare(a.x, b.x);
+      });
+      return targets;
+   }
+
+   private CalibrationCheckResult checkCalibration(Mapping mapping) throws Exception {
+      final Rectangle roi = core_.getROI();
+      final int binning = Utils.getBinning(core_);
+      CalibrationCheckResult result = new CalibrationCheckResult(core_.getPixelSizeUm(),
+            settings_.getBoolean(Terms.USE_CENTROID, false));
+      for (Point2D.Double target : cellCenterTargets(mapping, roi, binning)) {
+         if (stopRequested_.get()) {
+            return null;
+         }
+         // transformPoint modifies its input
+         Point2D.Double device = ProjectorActions.transformPoint(mapping,
+               new Point2D.Double(target.x, target.y), roi, binning);
+         result.add(target, device, measureSpotOnCamera(device));
+      }
+      return result;
+   }
+
+   /**
+    * Checks an existing calibration: projects spots, using the given mapping, at the camera
+    * positions mid-way between the calibration points and measures where they land.
+    *
+    * @return Future with the result, or null if stopped or failed
+    */
+   public Future<CalibrationCheckResult> runCalibrationCheck(Mapping mapping) {
+      return executor_.submit(() -> {
+         if (isRunning_.getAndSet(true)) {
+            return null;
+         }
+         app_.live().setSuspended(true);
+         try {
+            if (app_.live().getDisplay() == null) {
+               app_.live().snap(true);
+               Thread.sleep(1000);
+            }
+            final Roi originalROI = IJ.getImage().getRoi();
+            CalibrationCheckResult result = checkCalibration(mapping);
+            dev_.turnOff();
+            IJ.getImage().setRoi(originalROI);
+            return result;
+         } catch (Exception e) {
+            app_.logs().showError(e, "Calibration check failed.");
+            return null;
+         } finally {
+            app_.live().setSuspended(false);
+            isRunning_.set(false);
+         }
       });
    }
 
