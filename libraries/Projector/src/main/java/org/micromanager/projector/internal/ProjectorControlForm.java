@@ -160,6 +160,8 @@ public class ProjectorControlForm extends JFrame {
    private javax.swing.JTextField delayField_;
    private javax.swing.JCheckBox centroidCheckBox_;
    private javax.swing.JComboBox<String> calibrationPointsComboBox_;
+   private javax.swing.JComboBox<String> smoothingComboBox_;
+   private boolean warnedNoRawCalibration_ = false;
    private javax.swing.JTextField logDirectoryTextField_;
    private javax.swing.JSpinner pointAndShootIntervalSpinner_; // NB: mis-named
    // pointAndShootIntervalSpinner actually is the exposure time; device setSpotInterval() also
@@ -430,6 +432,7 @@ public class ProjectorControlForm extends JFrame {
                calibrateButton_.setText("Calibrate");
                checkCalibrationButton_.setEnabled(true);
                calibrationPointsComboBox_.setEnabled(true);
+               smoothingComboBox_.setEnabled(true);
             });
             calibrator_ = null;
          }
@@ -445,12 +448,42 @@ public class ProjectorControlForm extends JFrame {
       settings_.putString(Terms.DELAY, delayField_.getText());
       settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected());
       settings_.putInteger(Terms.CALIBRATION_POINTS, selectedCalibrationPoints());
+      settings_.putDouble(Terms.CALIBRATION_SMOOTHING, selectedSmoothing());
       settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
       settings_.putString(Terms.PTSHUTTER, (String) shutterComboBox_.getSelectedItem());
    }
 
    private int selectedCalibrationPoints() {
       return Calibrator.MIN_CALIBRATION_POINTS + calibrationPointsComboBox_.getSelectedIndex();
+   }
+
+   private double selectedSmoothing() {
+      return Calibrator.CALIBRATION_SMOOTHING_CHOICES[smoothingComboBox_.getSelectedIndex()];
+   }
+
+   /**
+    * Rebuilds the stored calibration from its raw spot measurements with the selected smoothing.
+    */
+   private void applySmoothingToCurrentCalibration() {
+      final Mapping current = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
+      if (current == null) {
+         return;
+      }
+      final CalibrationGrid grid = MappingStorage.loadGrid(core_, dev_,
+            settings_.toPropertyMap());
+      if (grid == null) {
+         if (!warnedNoRawCalibration_) {
+            warnedNoRawCalibration_ = true;
+            studio_.logs().showMessage("The current calibration was made before raw spot "
+                  + "positions were saved.\nThe smoothing setting will be used for the next "
+                  + "calibration.", this);
+         }
+         return;
+      }
+      mapping_ = Calibrator.rebuildMapping(current, grid, selectedSmoothing(), studio_.logs());
+      MappingStorage.saveMapping(core_, dev_, settings_, mapping_, grid);
+      studio_.logs().logMessage("Projector calibration rebuilt with smoothing "
+            + selectedSmoothing() + "; " + mapping_.getMap().size() + " cells.");
    }
 
    /**
@@ -1174,6 +1207,7 @@ public class ProjectorControlForm extends JFrame {
       delayField_ = new JTextField();
       centroidCheckBox_ = new JCheckBox();
       calibrationPointsComboBox_ = new JComboBox<>();
+      smoothingComboBox_ = new JComboBox<>();
       checkerBoardButton_ = new JButton();
       pointAndShootIntervalSpinner_ = new JSpinner();
       logDirectoryTextField_ = new JTextField();
@@ -1434,6 +1468,7 @@ public class ProjectorControlForm extends JFrame {
                calibrateButton_.setText("Stop calibration");
                checkCalibrationButton_.setEnabled(false);
                calibrationPointsComboBox_.setEnabled(false);
+               smoothingComboBox_.setEnabled(false);
             }
          } catch (Exception e) {
             studio_.logs().showError(e);
@@ -1526,6 +1561,26 @@ public class ProjectorControlForm extends JFrame {
       calibrationPointsComboBox_.addActionListener((ActionEvent evt) ->
             settings_.putInteger(Terms.CALIBRATION_POINTS, selectedCalibrationPoints()));
 
+      final double currentSmoothing = Calibrator.getCalibrationSmoothing(settings_);
+      int smoothingIndex = 0;
+      for (int k = 0; k < Calibrator.CALIBRATION_SMOOTHING_CHOICES.length; k++) {
+         double s = Calibrator.CALIBRATION_SMOOTHING_CHOICES[k];
+         smoothingComboBox_.addItem(s == 0.0 ? "Off" : String.valueOf(s));
+         if (Math.abs(s - currentSmoothing) < 1e-6) {
+            smoothingIndex = k;
+         }
+      }
+      smoothingComboBox_.setSelectedIndex(smoothingIndex);
+      smoothingComboBox_.setToolTipText("<html>Fit each calibration spot to its neighbours "
+            + "(Gaussian width in grid spacings)<br>and ignore spots that disagree with them. "
+            + "Off = use spots as measured</html>");
+      final JLabel smoothingLabel = new JLabel("Smoothing:");
+      smoothingLabel.setToolTipText(smoothingComboBox_.getToolTipText());
+      smoothingComboBox_.addActionListener((ActionEvent evt) -> {
+         settings_.putDouble(Terms.CALIBRATION_SMOOTHING, selectedSmoothing());
+         applySmoothingToCurrentCalibration();
+      });
+
       checkerBoardButton_.setText("CheckerBoard");
       checkerBoardButton_.addActionListener((ActionEvent evt) -> dev_.showCheckerBoard(16, 16));
 
@@ -1547,6 +1602,8 @@ public class ProjectorControlForm extends JFrame {
       setupTab.add(centroidCheckBox_, "span 3, split 3");
       setupTab.add(calibrationPointsLabel, "gapleft push");
       setupTab.add(calibrationPointsComboBox_, "wmin 80, wrap");
+      setupTab.add(smoothingLabel, "span 3, split 2, gapleft push");
+      setupTab.add(smoothingComboBox_, "wmin 80, wrap");
 
       setupTab.add(new JLabel("Phototargeting shutter:"), "span 3, split 2, w 180!");
       setupTab.add(shutterComboBox_, "wmin 130, wrap");

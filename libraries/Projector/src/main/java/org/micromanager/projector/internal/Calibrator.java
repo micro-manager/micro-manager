@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.micromanager.LogManager;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
 import org.micromanager.internal.utils.MathFunctions;
@@ -48,6 +50,9 @@ public class Calibrator {
    static final int DEFAULT_CALIBRATION_POINTS = 8;
    // fewer calibration cells than this are subdivided to get enough check points
    static final int MIN_CHECK_POINTS = 10;
+   static final double DEFAULT_CALIBRATION_SMOOTHING = 0.0;
+   static final double MAX_CALIBRATION_SMOOTHING = 3.0;
+   static final double[] CALIBRATION_SMOOTHING_CHOICES = {0.0, 0.5, 1.0, 1.5, 2.0};
 
    private final Studio app_;
    private final CMMCore core_;
@@ -56,6 +61,8 @@ public class Calibrator {
    private final AtomicBoolean stopRequested_;
    private final AtomicBoolean isRunning_;
    private final ExecutorService executor_;
+   // raw measurements of the last calibration, saved with the mapping
+   private CalibrationGrid lastGrid_;
 
    public Calibrator(Studio app, ProjectionDevice dev,
          MutablePropertyMapView settings) {
@@ -78,6 +85,14 @@ public class Calibrator {
    static int getCalibrationPoints(MutablePropertyMapView settings) {
       int n = settings.getInteger(Terms.CALIBRATION_POINTS, DEFAULT_CALIBRATION_POINTS);
       return Math.max(MIN_CALIBRATION_POINTS, Math.min(MAX_CALIBRATION_POINTS, n));
+   }
+
+   /**
+    * Width (in grid spacings) of the neighbourhood used to smooth calibration spots; 0 = off.
+    */
+   static double getCalibrationSmoothing(MutablePropertyMapView settings) {
+      double s = settings.getDouble(Terms.CALIBRATION_SMOOTHING, DEFAULT_CALIBRATION_SMOOTHING);
+      return Math.max(0.0, Math.min(MAX_CALIBRATION_SMOOTHING, s));
    }
 
    /**
@@ -383,6 +398,40 @@ public class Calibrator {
          return null;
       }
 
+      lastGrid_ = new CalibrationGrid(slmPoint, camPoint);
+      Map<Polygon, AffineTransform> bigMap = buildCellMap(lastGrid_,
+            getCalibrationSmoothing(settings_), app_.logs());
+      try {
+         Mapping.Builder mb = new Mapping.Builder();
+         // amazing that there is no API call for binning!
+         String binningAsString = core_.getProperty(core_.getCameraDevice(), "Binning");
+         // Hamamatsu reports 1x1.  I wish there was an api call for binning
+         int binning = Integer.parseInt(binningAsString.substring(0, 1));
+         mb.setMap(bigMap).setApproximateTransform(firstApproxAffine).setROI(roi)
+               .setBinning(binning);
+         return mb.build();
+      } catch (Exception ex) {
+         return null;
+      }
+   }
+
+   /**
+    * Smooths the measured grid (sigma in grid spacings, 0 = off), then builds one polygon cell
+    * with a local AffineTransform per grid square. Cells with suspect corners are discarded.
+    */
+   static Map<Polygon, AffineTransform> buildCellMap(CalibrationGrid grid, double sigma,
+         LogManager logs) {
+      final Point2D.Double[][] slmPoint = grid.slm;
+      final int nGrid = grid.size() - 1;
+      CalibrationSmoother.Result smoothed = CalibrationSmoother.smooth(grid.cam, sigma);
+      for (CalibrationSmoother.FlaggedSpot f : smoothed.flagged) {
+         logs.logMessage(String.format(Locale.US,
+               "Projector calibration spot (%d,%d) at camera (%.1f, %.1f) deviates %.2f px "
+               + "from its neighbours; ignored.", f.i, f.j, f.measured.x, f.measured.y,
+               f.deviation()));
+      }
+      final Point2D.Double[][] camPoint = smoothed.points;
+
       // now make a grid of (square) polygons (in camera's coordinate system)
       // and generate an affine transform for each of these square regions
       Map<Polygon, AffineTransform> bigMap = new HashMap<>();
@@ -412,22 +461,25 @@ public class Calibrator {
                      .generateAffineTransformFromPointPairs(map, srcTol, Double.MAX_VALUE);
                bigMap.put(poly, transform);
             } catch (Exception e) {
-               app_.logs().logError("Bad cell in mapping.");
+               logs.logError("Bad cell in mapping.");
             }
          }
       }
-      try {
-         Mapping.Builder mb = new Mapping.Builder();
-         // amazing that there is no API call for binning!
-         String binningAsString = core_.getProperty(core_.getCameraDevice(), "Binning");
-         // Hamamatsu reports 1x1.  I wish there was an api call for binning
-         int binning = Integer.parseInt(binningAsString.substring(0, 1));
-         mb.setMap(bigMap).setApproximateTransform(firstApproxAffine).setROI(roi)
-               .setBinning(binning);
-         return mb.build();
-      } catch (Exception ex) {
-         return null;
-      }
+      return bigMap;
+   }
+
+   /**
+    * Rebuilds a mapping from its stored raw measurements with a different smoothing, keeping
+    * the camera ROI, binning and approximate transform of the existing mapping.
+    */
+   static Mapping rebuildMapping(Mapping existing, CalibrationGrid grid, double sigma,
+         LogManager logs) {
+      return new Mapping.Builder()
+            .setMap(buildCellMap(grid, sigma, logs))
+            .setApproximateTransform(existing.getApproximateTransform())
+            .setROI(existing.getCameraROI())
+            .setBinning(existing.getBinning())
+            .build();
    }
 
    /**
@@ -472,7 +524,7 @@ public class Calibrator {
                   List<Image> snap = app_.live().snap(false);
                   snap.get(0).getHeight();
                   snap.get(0).getMetadata().getBinning();
-                  MappingStorage.saveMapping(core_, dev_, settings_, mapping);
+                  MappingStorage.saveMapping(core_, dev_, settings_, mapping, lastGrid_);
                }
                IJ.getImage().setRoi(originalROI);
             } catch (HeadlessException e) {

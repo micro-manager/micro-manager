@@ -17,4 +17,6 @@ public class Terms {
    static final String USE_CENTROID = "UseCentroidSpotFinding";
    // number of calibration spots per side of the grid
    static final String CALIBRATION_POINTS = "CalibrationPoints";
+   // sigma (grid spacings) of the neighbourhood smoothing of calibration spots; 0 = off
+   static final String CALIBRATION_SMOOTHING = "CalibrationSmoothing";
 }
