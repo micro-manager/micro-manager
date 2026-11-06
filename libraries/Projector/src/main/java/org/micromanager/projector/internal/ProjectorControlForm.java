@@ -53,6 +53,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -480,8 +481,11 @@ public class ProjectorControlForm extends JFrame {
          }
          return;
       }
-      mapping_ = Calibrator.rebuildMapping(current, grid, selectedSmoothing(), studio_.logs());
-      MappingStorage.saveMapping(core_, dev_, settings_, mapping_, grid);
+      final Point2D.Double offset = MappingStorage.loadOffset(core_, dev_,
+            settings_.toPropertyMap());
+      mapping_ = Calibrator.rebuildMapping(current, grid, selectedSmoothing(), offset,
+            studio_.logs());
+      MappingStorage.saveMapping(core_, dev_, settings_, mapping_, grid, offset);
       studio_.logs().logMessage("Projector calibration rebuilt with smoothing "
             + selectedSmoothing() + "; " + mapping_.getMap().size() + " cells.");
    }
@@ -544,14 +548,84 @@ public class ProjectorControlForm extends JFrame {
             report));
       JButton closeButton = new JButton("Close");
       closeButton.addActionListener((ActionEvent evt) -> dialog.dispose());
+
+      final Point2D.Double meanOffset = result.getMeanOffset();
+      final JButton setOffsetButton = new JButton("Set offset");
+      final JButton unsetOffsetButton = new JButton("Unset offset");
+      setOffsetButton.setToolTipText(meanOffset == null ? "No spots were detected"
+            : String.format(Locale.US, "<html>Correct the calibration for the mean offset found "
+            + "here (dx = %.2f, dy = %.2f px),<br>so that projected spots land on target. "
+            + "Run Check again to verify.</html>", meanOffset.x, meanOffset.y));
+      unsetOffsetButton.setToolTipText("Remove any offset correction from the calibration");
+      setOffsetButton.setEnabled(meanOffset != null);
+      unsetOffsetButton.setEnabled(hasOffsetCorrection());
+      setOffsetButton.addActionListener((ActionEvent evt) -> {
+         if (applyOffsetCorrection(meanOffset, false)) {
+            // the measured offset is consumed; setting it twice would double the correction
+            setOffsetButton.setEnabled(false);
+         }
+         unsetOffsetButton.setEnabled(hasOffsetCorrection());
+      });
+      unsetOffsetButton.addActionListener((ActionEvent evt) -> {
+         applyOffsetCorrection(null, true);
+         unsetOffsetButton.setEnabled(hasOffsetCorrection());
+      });
+
       dialog.getContentPane().setLayout(new MigLayout("fill"));
-      dialog.getContentPane().add(scrollPane, "span 2, grow, push, wrap");
+      dialog.getContentPane().add(scrollPane, "span 4, grow, push, wrap");
       dialog.getContentPane().add(saveButton, "tag left");
+      dialog.getContentPane().add(setOffsetButton);
+      dialog.getContentPane().add(unsetOffsetButton);
       dialog.getContentPane().add(closeButton, "tag right");
       dialog.pack();
       dialog.setLocationRelativeTo(this);
       WindowPositioning.setUpBoundsMemory(dialog, this.getClass(), "CalibrationCheckReport");
       dialog.setVisible(true);
+   }
+
+   private boolean hasOffsetCorrection() {
+      Point2D.Double o = MappingStorage.loadOffset(core_, dev_, settings_.toPropertyMap());
+      return o.x != 0.0 || o.y != 0.0;
+   }
+
+   /**
+    * Adds the measured mean offset (camera pixels at the current binning) to the offset
+    * correction of the stored calibration, or removes the correction when unset is true.
+    *
+    * @return true if the calibration was changed
+    */
+   private boolean applyOffsetCorrection(Point2D.Double measured, boolean unset) {
+      final Mapping current = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
+      if (current == null) {
+         studio_.logs().showError("No calibration found.", this);
+         return false;
+      }
+      final Point2D.Double oldOffset = MappingStorage.loadOffset(core_, dev_,
+            settings_.toPropertyMap());
+      final Point2D.Double delta;
+      if (unset) {
+         delta = new Point2D.Double(-oldOffset.x, -oldOffset.y);
+      } else {
+         int binning;
+         try {
+            binning = Utils.getBinning(core_);
+         } catch (Exception ex) {
+            studio_.logs().showError(ex, "Cannot determine camera binning.", this);
+            return false;
+         }
+         // check offsets are in current camera pixels; the mapping uses calibration pixels
+         final double factor = (double) binning / (double) current.getBinning();
+         delta = new Point2D.Double(measured.x * factor, measured.y * factor);
+      }
+      final Point2D.Double newOffset = new Point2D.Double(oldOffset.x + delta.x,
+            oldOffset.y + delta.y);
+      mapping_ = Calibrator.shiftMapping(current, delta);
+      MappingStorage.saveMapping(core_, dev_, settings_, mapping_,
+            MappingStorage.loadGrid(core_, dev_, settings_.toPropertyMap()), newOffset);
+      studio_.logs().logMessage(String.format(Locale.US,
+            "Projector calibration offset correction set to dx = %.2f px, dy = %.2f px",
+            newOffset.x, newOffset.y));
+      return true;
    }
 
    private void saveCalibrationCheckReport(Window parent, String report) {

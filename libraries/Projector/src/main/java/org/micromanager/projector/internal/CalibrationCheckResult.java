@@ -47,12 +47,32 @@ public class CalibrationCheckResult {
    private final double pixelSizeUm_;
    private final boolean useCentroid_;
    private final int nrCalibrationCells_;
+   private final Point2D.Double offsetCorrection_;
    private final Date date_ = new Date();
 
-   CalibrationCheckResult(double pixelSizeUm, boolean useCentroid, int nrCalibrationCells) {
+   CalibrationCheckResult(double pixelSizeUm, boolean useCentroid, int nrCalibrationCells,
+         Point2D.Double offsetCorrection) {
       pixelSizeUm_ = pixelSizeUm;
       useCentroid_ = useCentroid;
       nrCalibrationCells_ = nrCalibrationCells;
+      offsetCorrection_ = offsetCorrection;
+   }
+
+   /**
+    * Mean of measured - target over all detected spots, or null if no spot was detected.
+    */
+   public Point2D.Double getMeanOffset() {
+      List<Spot> detected = detectedSpots();
+      if (detected.isEmpty()) {
+         return null;
+      }
+      double sx = 0;
+      double sy = 0;
+      for (Spot s : detected) {
+         sx += s.dx();
+         sy += s.dy();
+      }
+      return new Point2D.Double(sx / detected.size(), sy / detected.size());
    }
 
    public Date getDate() {
@@ -97,6 +117,8 @@ public class CalibrationCheckResult {
             ? "sub-pixel centroid" : "maximum of blurred image")
             .append("\n");
       sb.append("Calibration cells: ").append(nrCalibrationCells_).append("\n");
+      sb.append(String.format(Locale.US, "Offset correction in use: dx = %.2f px, dy = %.2f px%n",
+            offsetCorrection_.x, offsetCorrection_.y));
       sb.append(String.format(Locale.US, "Spots detected: %d of %d%n%n",
             detected.size(), spots_.size()));
       if (!detected.isEmpty()) {

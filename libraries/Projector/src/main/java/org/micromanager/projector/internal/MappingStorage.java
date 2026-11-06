@@ -28,6 +28,8 @@ public class MappingStorage {
    private static final String RAW_SLM = "RawSlmXY";
    private static final String RAW_CAM = "RawCamXY";
    private static final String RAW_CAM_FOUND = "RawCamFound";
+   private static final String OFFSET_X = "OffsetCorrectionX";
+   private static final String OFFSET_Y = "OffsetCorrectionY";
 
    /**
     * Returns the key where we store the Calibration mapping. Each channel/camera combination is
@@ -51,16 +53,30 @@ public class MappingStorage {
    /**
     * Save the mapping for the current calibration node, together with the raw measurements it
     * was built from so that it can be rebuilt later (e.g. with different smoothing). The
-    * mapping maps each polygon cell to an AffineTransform. grid may be null.
+    * mapping maps each polygon cell to an AffineTransform. grid may be null. offset is the
+    * offset correction (camera pixels at calibration binning) already contained in mapping.
     */
    static void saveMapping(final CMMCore core, final ProjectionDevice dev,
          final MutablePropertyMapView settings, final Mapping mapping,
-         final CalibrationGrid grid) {
-      PropertyMap pMap = mapToPropertyMap(mapping);
+         final CalibrationGrid grid, final Point2D.Double offset) {
+      PropertyMap.Builder pMap = mapToPropertyMap(mapping).copyBuilder();
       if (grid != null) {
-         pMap = pMap.copyBuilder().putAll(gridToPropertyMap(grid)).build();
+         pMap.putAll(gridToPropertyMap(grid));
       }
-      settings.putPropertyMap(getCalibrationKey(core, dev), pMap);
+      pMap.putDouble(OFFSET_X, offset.x).putDouble(OFFSET_Y, offset.y);
+      settings.putPropertyMap(getCalibrationKey(core, dev), pMap.build());
+   }
+
+   /**
+    * The offset correction contained in the current calibration; (0, 0) when there is none.
+    */
+   static Point2D.Double loadOffset(final CMMCore core, final ProjectionDevice dev,
+         final PropertyMap settings) {
+      PropertyMap pMap = settings.getPropertyMap(getCalibrationKey(core, dev), null);
+      if (pMap == null) {
+         return new Point2D.Double(0, 0);
+      }
+      return new Point2D.Double(pMap.getDouble(OFFSET_X, 0.0), pMap.getDouble(OFFSET_Y, 0.0));
    }
 
    static PropertyMap gridToPropertyMap(CalibrationGrid grid) {

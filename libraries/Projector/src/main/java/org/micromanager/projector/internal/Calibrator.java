@@ -470,15 +470,40 @@ public class Calibrator {
 
    /**
     * Rebuilds a mapping from its stored raw measurements with a different smoothing, keeping
-    * the camera ROI, binning and approximate transform of the existing mapping.
+    * the camera ROI, binning and approximate transform of the existing mapping, and applying
+    * the given offset correction.
     */
    static Mapping rebuildMapping(Mapping existing, CalibrationGrid grid, double sigma,
-         LogManager logs) {
-      return new Mapping.Builder()
+         Point2D.Double offset, LogManager logs) {
+      Mapping rebuilt = new Mapping.Builder()
             .setMap(buildCellMap(grid, sigma, logs))
             .setApproximateTransform(existing.getApproximateTransform())
             .setROI(existing.getCameraROI())
             .setBinning(existing.getBinning())
+            .build();
+      return shiftMapping(rebuilt, offset);
+   }
+
+   /**
+    * Returns a mapping that targets camera position p - delta wherever the input mapping
+    * targets p, so that spots landing at p + delta (systematic error delta, in camera pixels
+    * at calibration binning) end up at p. Cell polygons are unchanged.
+    */
+   static Mapping shiftMapping(Mapping mapping, Point2D.Double delta) {
+      if (delta.x == 0.0 && delta.y == 0.0) {
+         return mapping;
+      }
+      Map<Polygon, AffineTransform> shifted = new HashMap<>();
+      for (Map.Entry<Polygon, AffineTransform> e : mapping.getMap().entrySet()) {
+         AffineTransform t = new AffineTransform(e.getValue());
+         t.translate(-delta.x, -delta.y);
+         shifted.put(e.getKey(), t);
+      }
+      return new Mapping.Builder()
+            .setMap(shifted)
+            .setApproximateTransform(mapping.getApproximateTransform())
+            .setROI(mapping.getCameraROI())
+            .setBinning(mapping.getBinning())
             .build();
    }
 
@@ -524,7 +549,8 @@ public class Calibrator {
                   List<Image> snap = app_.live().snap(false);
                   snap.get(0).getHeight();
                   snap.get(0).getMetadata().getBinning();
-                  MappingStorage.saveMapping(core_, dev_, settings_, mapping, lastGrid_);
+                  MappingStorage.saveMapping(core_, dev_, settings_, mapping, lastGrid_,
+                        new Point2D.Double(0, 0));
                }
                IJ.getImage().setRoi(originalROI);
             } catch (HeadlessException e) {
@@ -601,7 +627,8 @@ public class Calibrator {
       final Rectangle roi = core_.getROI();
       final int binning = Utils.getBinning(core_);
       CalibrationCheckResult result = new CalibrationCheckResult(core_.getPixelSizeUm(),
-            settings_.getBoolean(Terms.USE_CENTROID, false), mapping.getMap().size());
+            settings_.getBoolean(Terms.USE_CENTROID, false), mapping.getMap().size(),
+            MappingStorage.loadOffset(core_, dev_, settings_.toPropertyMap()));
       for (Point2D.Double target : checkTargets(mapping, roi, binning)) {
          if (stopRequested_.get()) {
             return null;
