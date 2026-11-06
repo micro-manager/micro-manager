@@ -61,6 +61,8 @@ public class Calibrator {
    private final AtomicBoolean stopRequested_;
    private final AtomicBoolean isRunning_;
    private final ExecutorService executor_;
+   // spot detection method, read once per run so that a run never mixes methods
+   private volatile boolean useCentroid_;
    // raw measurements of the last calibration, saved with the mapping
    private CalibrationGrid lastGrid_;
 
@@ -237,7 +239,7 @@ public class Calibrator {
             return null;
          }
          Point2D.Double maxPt = null;
-         if (settings_.getBoolean(Terms.USE_CENTROID, false)) {
+         if (useCentroid_) {
             maxPt = findCentroid(diffImage);
          }
          if (maxPt == null) {
@@ -519,6 +521,7 @@ public class Calibrator {
          app_.live().setSuspended(true);
          if (!isRunning_.get()) {
             stopRequested_.set(false);
+            useCentroid_ = settings_.getBoolean(Terms.USE_CENTROID, false);
 
             try {
                isRunning_.set(true);
@@ -600,15 +603,27 @@ public class Calibrator {
             }
          }
       }
-      // points in one row differ in y by a fraction of the (sub-)cell height
-      final double rowTolerance = roi.height / 40.0;
-      targets.sort((a, b) -> {
-         if (Math.abs(a.y - b.y) > rowTolerance) {
-            return Double.compare(a.y, b.y);
+      return sortByRows(targets, roi.height / 40.0);
+   }
+
+   /**
+    * Sorts points by row, then by x. A new row starts where the gap in y to the previous point
+    * (in y order) exceeds rowTolerance; assigning rows first keeps the ordering transitive.
+    */
+   static List<Point2D.Double> sortByRows(List<Point2D.Double> points, double rowTolerance) {
+      List<Point2D.Double> byY = new ArrayList<>(points);
+      byY.sort((a, b) -> Double.compare(a.y, b.y));
+      List<Point2D.Double> sorted = new ArrayList<>(byY.size());
+      int start = 0;
+      for (int k = 1; k <= byY.size(); k++) {
+         if (k == byY.size() || byY.get(k).y - byY.get(k - 1).y > rowTolerance) {
+            List<Point2D.Double> row = byY.subList(start, k);
+            row.sort((a, b) -> Double.compare(a.x, b.x));
+            sorted.addAll(row);
+            start = k;
          }
-         return Double.compare(a.x, b.x);
-      });
-      return targets;
+      }
+      return sorted;
    }
 
    /**
@@ -627,8 +642,8 @@ public class Calibrator {
       final Rectangle roi = core_.getROI();
       final int binning = Utils.getBinning(core_);
       CalibrationCheckResult result = new CalibrationCheckResult(core_.getPixelSizeUm(),
-            settings_.getBoolean(Terms.USE_CENTROID, false), mapping.getMap().size(),
-            MappingStorage.loadOffset(core_, dev_, settings_.toPropertyMap()));
+            useCentroid_, mapping.getMap().size(),
+            MappingStorage.loadOffset(core_, dev_, settings_.toPropertyMap()), binning);
       for (Point2D.Double target : checkTargets(mapping, roi, binning)) {
          if (stopRequested_.get()) {
             return null;
@@ -652,6 +667,7 @@ public class Calibrator {
          if (isRunning_.getAndSet(true)) {
             return null;
          }
+         useCentroid_ = settings_.getBoolean(Terms.USE_CENTROID, false);
          app_.live().setSuspended(true);
          try {
             if (app_.live().getDisplay() == null) {

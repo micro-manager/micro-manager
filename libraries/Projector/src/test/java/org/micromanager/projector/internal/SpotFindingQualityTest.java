@@ -33,20 +33,25 @@ import org.micromanager.internal.utils.imageanalysis.ImageUtils;
  * -Dprojector.calibration.data=...; the real-data test is skipped when it is absent.
  *
  * <p>Synthetic data has a known ground truth and reveals systematic bias.
+ *
+ * <p>These are diagnostics, not regression tests: the whole class is skipped unless run with
+ * -Dprojector.spotquality=true.
  */
 public class SpotFindingQualityTest {
 
+   private static final String ENABLE_PROPERTY = "projector.spotquality";
    private static final String DATA_PROPERTY = "projector.calibration.data";
-   private static final String DEFAULT_DATA_DIR = "Z:/TIRF_Data/Calibration3";
    private static final String REFERENCE_METHOD = "Gauss LM r=12";
 
    private static List<HelperCalibrationSpotData.Sample> samples_;
 
    @BeforeClass
    public static void loadData() throws Exception {
-      File dir = new File(System.getProperty(DATA_PROPERTY, DEFAULT_DATA_DIR));
-      if (dir.isDirectory()) {
-         samples_ = HelperCalibrationSpotData.load(dir);
+      Assume.assumeTrue("Spot finding diagnostics are manual only; set -D" + ENABLE_PROPERTY
+            + "=true", Boolean.getBoolean(ENABLE_PROPERTY));
+      String dataDir = System.getProperty(DATA_PROPERTY);
+      if (dataDir != null && new File(dataDir).isDirectory()) {
+         samples_ = HelperCalibrationSpotData.load(new File(dataDir));
       }
    }
 

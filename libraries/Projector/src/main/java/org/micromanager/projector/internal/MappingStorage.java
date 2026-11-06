@@ -59,12 +59,20 @@ public class MappingStorage {
    static void saveMapping(final CMMCore core, final ProjectionDevice dev,
          final MutablePropertyMapView settings, final Mapping mapping,
          final CalibrationGrid grid, final Point2D.Double offset) {
+      saveMapping(getCalibrationKey(core, dev), settings, mapping, grid, offset);
+   }
+
+   /**
+    * As saveMapping(core, dev, ...), for an explicit calibration key.
+    */
+   static void saveMapping(final String key, final MutablePropertyMapView settings,
+         final Mapping mapping, final CalibrationGrid grid, final Point2D.Double offset) {
       PropertyMap.Builder pMap = mapToPropertyMap(mapping).copyBuilder();
       if (grid != null) {
          pMap.putAll(gridToPropertyMap(grid));
       }
       pMap.putDouble(OFFSET_X, offset.x).putDouble(OFFSET_Y, offset.y);
-      settings.putPropertyMap(getCalibrationKey(core, dev), pMap.build());
+      settings.putPropertyMap(key, pMap.build());
    }
 
    /**
@@ -72,7 +80,11 @@ public class MappingStorage {
     */
    static Point2D.Double loadOffset(final CMMCore core, final ProjectionDevice dev,
          final PropertyMap settings) {
-      PropertyMap pMap = settings.getPropertyMap(getCalibrationKey(core, dev), null);
+      return loadOffset(getCalibrationKey(core, dev), settings);
+   }
+
+   static Point2D.Double loadOffset(final String key, final PropertyMap settings) {
+      PropertyMap pMap = settings.getPropertyMap(key, null);
       if (pMap == null) {
          return new Point2D.Double(0, 0);
       }
@@ -106,7 +118,11 @@ public class MappingStorage {
     */
    static CalibrationGrid loadGrid(final CMMCore core, final ProjectionDevice dev,
          final PropertyMap settings) {
-      PropertyMap pMap = settings.getPropertyMap(getCalibrationKey(core, dev), null);
+      return loadGrid(getCalibrationKey(core, dev), settings);
+   }
+
+   static CalibrationGrid loadGrid(final String key, final PropertyMap settings) {
+      PropertyMap pMap = settings.getPropertyMap(key, null);
       if (pMap == null || !pMap.containsInteger(RAW_GRID_SIZE)) {
          return null;
       }
@@ -175,11 +191,18 @@ public class MappingStorage {
     */
    public static Mapping loadMapping(final CMMCore core, final ProjectionDevice dev,
          final PropertyMap settings) {
-      PropertyMap pMap = settings.getPropertyMap(getCalibrationKey(core, dev), null);
+      return loadMapping(core, getCalibrationKey(core, dev), settings);
+   }
+
+   /**
+    * As loadMapping(core, dev, settings), for an explicit calibration key.
+    */
+   static Mapping loadMapping(final CMMCore core, final String key,
+         final PropertyMap settings) {
+      PropertyMap pMap = settings.getPropertyMap(key, null);
       if (pMap != null) {
          return mapFromPropertyMap(core, pMap);
       }
-
       return null;
    }
 

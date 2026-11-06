@@ -48,14 +48,23 @@ public class CalibrationCheckResult {
    private final boolean useCentroid_;
    private final int nrCalibrationCells_;
    private final Point2D.Double offsetCorrection_;
+   private final int cameraBinning_;
    private final Date date_ = new Date();
 
    CalibrationCheckResult(double pixelSizeUm, boolean useCentroid, int nrCalibrationCells,
-         Point2D.Double offsetCorrection) {
+         Point2D.Double offsetCorrection, int cameraBinning) {
       pixelSizeUm_ = pixelSizeUm;
       useCentroid_ = useCentroid;
       nrCalibrationCells_ = nrCalibrationCells;
       offsetCorrection_ = offsetCorrection;
+      cameraBinning_ = cameraBinning;
+   }
+
+   /**
+    * Camera binning during the check; spot positions are in pixels at this binning.
+    */
+   public int getCameraBinning() {
+      return cameraBinning_;
    }
 
    /**

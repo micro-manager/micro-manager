@@ -434,6 +434,7 @@ public class ProjectorControlForm extends JFrame {
                checkCalibrationButton_.setEnabled(true);
                calibrationPointsComboBox_.setEnabled(true);
                smoothingComboBox_.setEnabled(true);
+               centroidCheckBox_.setEnabled(true);
             });
             calibrator_ = null;
          }
@@ -495,20 +496,28 @@ public class ProjectorControlForm extends JFrame {
     * and measuring where they land. Shows a report when done.
     */
    private void runCalibrationCheck() {
-      if (mapping_ == null) {
-         studio_.logs().showError(
-               "Please calibrate the phototargeting device first, using the Setup tab.");
-         return;
-      }
       if (calibrator_ != null) {
          return;
       }
       storeCalibrationSettings();
-      calibrator_ = new Calibrator(studio_, dev_, settings_);
       final String originalChannel = projectorControlExecution_.prepareChannel(
             settings_.getString(Terms.PTCHANNEL, ""));
-      final Future<CalibrationCheckResult> check = calibrator_.runCalibrationCheck(mapping_);
+      // the targeting channel may select another camera, which has its own calibration
+      final String calibrationKey = MappingStorage.getCalibrationKey(core_, dev_);
+      final Mapping mapping = MappingStorage.loadMapping(core_, calibrationKey,
+            settings_.toPropertyMap());
+      if (mapping == null) {
+         if (originalChannel != null && !originalChannel.isEmpty()) {
+            projectorControlExecution_.returnChannel(originalChannel);
+         }
+         studio_.logs().showError(
+               "Please calibrate the phototargeting device first, using the Setup tab.");
+         return;
+      }
+      calibrator_ = new Calibrator(studio_, dev_, settings_);
+      final Future<CalibrationCheckResult> check = calibrator_.runCalibrationCheck(mapping);
       calibrateButton_.setEnabled(false);
+      centroidCheckBox_.setEnabled(false);
       checkCalibrationButton_.setText("Stop");
       Thread t = new Thread(() -> {
          CalibrationCheckResult result;
@@ -526,15 +535,17 @@ public class ProjectorControlForm extends JFrame {
          SwingUtilities.invokeLater(() -> {
             checkCalibrationButton_.setText("Check");
             calibrateButton_.setEnabled(true);
+            centroidCheckBox_.setEnabled(true);
             if (finalResult != null) {
-               showCalibrationCheckReport(finalResult);
+               showCalibrationCheckReport(finalResult, calibrationKey);
             }
          });
       }, "Projector calibration check");
       t.start();
    }
 
-   private void showCalibrationCheckReport(CalibrationCheckResult result) {
+   private void showCalibrationCheckReport(CalibrationCheckResult result,
+         String calibrationKey) {
       final String report = result.toReport();
       studio_.logs().logMessage(report);
       JTextArea textArea = new JTextArea(report);
@@ -558,17 +569,18 @@ public class ProjectorControlForm extends JFrame {
             + "Run Check again to verify.</html>", meanOffset.x, meanOffset.y));
       unsetOffsetButton.setToolTipText("Remove any offset correction from the calibration");
       setOffsetButton.setEnabled(meanOffset != null);
-      unsetOffsetButton.setEnabled(hasOffsetCorrection());
+      unsetOffsetButton.setEnabled(hasOffsetCorrection(calibrationKey));
       setOffsetButton.addActionListener((ActionEvent evt) -> {
-         if (applyOffsetCorrection(meanOffset, false)) {
+         if (applyOffsetCorrection(calibrationKey, meanOffset,
+               result.getCameraBinning(), false)) {
             // the measured offset is consumed; setting it twice would double the correction
             setOffsetButton.setEnabled(false);
          }
-         unsetOffsetButton.setEnabled(hasOffsetCorrection());
+         unsetOffsetButton.setEnabled(hasOffsetCorrection(calibrationKey));
       });
       unsetOffsetButton.addActionListener((ActionEvent evt) -> {
-         applyOffsetCorrection(null, true);
-         unsetOffsetButton.setEnabled(hasOffsetCorrection());
+         applyOffsetCorrection(calibrationKey, null, 1, true);
+         unsetOffsetButton.setEnabled(hasOffsetCorrection(calibrationKey));
       });
 
       dialog.getContentPane().setLayout(new MigLayout("fill"));
@@ -583,45 +595,44 @@ public class ProjectorControlForm extends JFrame {
       dialog.setVisible(true);
    }
 
-   private boolean hasOffsetCorrection() {
-      Point2D.Double o = MappingStorage.loadOffset(core_, dev_, settings_.toPropertyMap());
+   private boolean hasOffsetCorrection(String calibrationKey) {
+      Point2D.Double o = MappingStorage.loadOffset(calibrationKey, settings_.toPropertyMap());
       return o.x != 0.0 || o.y != 0.0;
    }
 
    /**
     * Adds the measured mean offset (camera pixels at the current binning) to the offset
-    * correction of the stored calibration, or removes the correction when unset is true.
+    * correction of the calibration stored under calibrationKey (the one that was checked), or
+    * removes the correction when unset is true.
     *
     * @return true if the calibration was changed
     */
-   private boolean applyOffsetCorrection(Point2D.Double measured, boolean unset) {
-      final Mapping current = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
+   private boolean applyOffsetCorrection(String calibrationKey, Point2D.Double measured,
+         int measuredBinning, boolean unset) {
+      final Mapping current = MappingStorage.loadMapping(core_, calibrationKey,
+            settings_.toPropertyMap());
       if (current == null) {
          studio_.logs().showError("No calibration found.", this);
          return false;
       }
-      final Point2D.Double oldOffset = MappingStorage.loadOffset(core_, dev_,
+      final Point2D.Double oldOffset = MappingStorage.loadOffset(calibrationKey,
             settings_.toPropertyMap());
       final Point2D.Double delta;
       if (unset) {
          delta = new Point2D.Double(-oldOffset.x, -oldOffset.y);
       } else {
-         int binning;
-         try {
-            binning = Utils.getBinning(core_);
-         } catch (Exception ex) {
-            studio_.logs().showError(ex, "Cannot determine camera binning.", this);
-            return false;
-         }
-         // check offsets are in current camera pixels; the mapping uses calibration pixels
-         final double factor = (double) binning / (double) current.getBinning();
+         // check offsets are in pixels at check binning; the mapping uses calibration pixels
+         final double factor = (double) measuredBinning / (double) current.getBinning();
          delta = new Point2D.Double(measured.x * factor, measured.y * factor);
       }
       final Point2D.Double newOffset = new Point2D.Double(oldOffset.x + delta.x,
             oldOffset.y + delta.y);
-      mapping_ = Calibrator.shiftMapping(current, delta);
-      MappingStorage.saveMapping(core_, dev_, settings_, mapping_,
-            MappingStorage.loadGrid(core_, dev_, settings_.toPropertyMap()), newOffset);
+      final Mapping shifted = Calibrator.shiftMapping(current, delta);
+      MappingStorage.saveMapping(calibrationKey, settings_, shifted,
+            MappingStorage.loadGrid(calibrationKey, settings_.toPropertyMap()), newOffset);
+      if (calibrationKey.equals(MappingStorage.getCalibrationKey(core_, dev_))) {
+         mapping_ = shifted;
+      }
       studio_.logs().logMessage(String.format(Locale.US,
             "Projector calibration offset correction set to dx = %.2f px, dy = %.2f px",
             newOffset.x, newOffset.y));
@@ -1543,6 +1554,7 @@ public class ProjectorControlForm extends JFrame {
                checkCalibrationButton_.setEnabled(false);
                calibrationPointsComboBox_.setEnabled(false);
                smoothingComboBox_.setEnabled(false);
+               centroidCheckBox_.setEnabled(false);
             }
          } catch (Exception e) {
             studio_.logs().showError(e);
