@@ -3,6 +3,7 @@ package org.micromanager.projector.internal;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
 import mmcorej.CMMCore;
@@ -23,6 +24,12 @@ public class MappingStorage {
    private static final String MAP_APPROXIMATE_AFFINE = "approximateAffine";
    private static final String MAP_CAMERA_ROI = "CameraROI";
    private static final String MAP_CAMERA_BINNING = "CameraBinning";
+   private static final String RAW_GRID_SIZE = "RawGridSize";
+   private static final String RAW_SLM = "RawSlmXY";
+   private static final String RAW_CAM = "RawCamXY";
+   private static final String RAW_CAM_FOUND = "RawCamFound";
+   private static final String OFFSET_X = "OffsetCorrectionX";
+   private static final String OFFSET_Y = "OffsetCorrectionY";
 
    /**
     * Returns the key where we store the Calibration mapping. Each channel/camera combination is
@@ -44,13 +51,99 @@ public class MappingStorage {
 
 
    /**
-    * Save the mapping for the current calibration node. The mapping maps each polygon cell to an
-    * AffineTransform.
+    * Save the mapping for the current calibration node, together with the raw measurements it
+    * was built from so that it can be rebuilt later (e.g. with different smoothing). The
+    * mapping maps each polygon cell to an AffineTransform. grid may be null. offset is the
+    * offset correction (camera pixels at calibration binning) already contained in mapping.
     */
    static void saveMapping(final CMMCore core, final ProjectionDevice dev,
-         final MutablePropertyMapView settings, final Mapping mapping) {
-      settings.putPropertyMap(getCalibrationKey(core, dev),
-            mapToPropertyMap(mapping));
+         final MutablePropertyMapView settings, final Mapping mapping,
+         final CalibrationGrid grid, final Point2D.Double offset) {
+      saveMapping(getCalibrationKey(core, dev), settings, mapping, grid, offset);
+   }
+
+   /**
+    * As saveMapping(core, dev, ...), for an explicit calibration key.
+    */
+   static void saveMapping(final String key, final MutablePropertyMapView settings,
+         final Mapping mapping, final CalibrationGrid grid, final Point2D.Double offset) {
+      PropertyMap.Builder pMap = mapToPropertyMap(mapping).copyBuilder();
+      if (grid != null) {
+         pMap.putAll(gridToPropertyMap(grid));
+      }
+      pMap.putDouble(OFFSET_X, offset.x).putDouble(OFFSET_Y, offset.y);
+      settings.putPropertyMap(key, pMap.build());
+   }
+
+   /**
+    * The offset correction contained in the current calibration; (0, 0) when there is none.
+    */
+   static Point2D.Double loadOffset(final CMMCore core, final ProjectionDevice dev,
+         final PropertyMap settings) {
+      return loadOffset(getCalibrationKey(core, dev), settings);
+   }
+
+   static Point2D.Double loadOffset(final String key, final PropertyMap settings) {
+      PropertyMap pMap = settings.getPropertyMap(key, null);
+      if (pMap == null) {
+         return new Point2D.Double(0, 0);
+      }
+      return new Point2D.Double(pMap.getDouble(OFFSET_X, 0.0), pMap.getDouble(OFFSET_Y, 0.0));
+   }
+
+   static PropertyMap gridToPropertyMap(CalibrationGrid grid) {
+      final int n = grid.size();
+      double[] slm = new double[2 * n * n];
+      double[] cam = new double[2 * n * n];
+      boolean[] found = new boolean[n * n];
+      for (int i = 0; i < n; i++) {
+         for (int j = 0; j < n; j++) {
+            int k = i * n + j;
+            slm[2 * k] = grid.slm[i][j].x;
+            slm[2 * k + 1] = grid.slm[i][j].y;
+            found[k] = grid.cam[i][j] != null;
+            if (found[k]) {
+               cam[2 * k] = grid.cam[i][j].x;
+               cam[2 * k + 1] = grid.cam[i][j].y;
+            }
+         }
+      }
+      return PropertyMaps.builder().putInteger(RAW_GRID_SIZE, n).putDoubleList(RAW_SLM, slm)
+            .putDoubleList(RAW_CAM, cam).putBooleanList(RAW_CAM_FOUND, found).build();
+   }
+
+   /**
+    * Loads the raw measurements stored with the current calibration, or null when there are
+    * none (calibrations made before they were stored).
+    */
+   static CalibrationGrid loadGrid(final CMMCore core, final ProjectionDevice dev,
+         final PropertyMap settings) {
+      return loadGrid(getCalibrationKey(core, dev), settings);
+   }
+
+   static CalibrationGrid loadGrid(final String key, final PropertyMap settings) {
+      PropertyMap pMap = settings.getPropertyMap(key, null);
+      if (pMap == null || !pMap.containsInteger(RAW_GRID_SIZE)) {
+         return null;
+      }
+      final int n = pMap.getInteger(RAW_GRID_SIZE, 0);
+      double[] slm = pMap.getDoubleList(RAW_SLM, (double[]) null);
+      double[] cam = pMap.getDoubleList(RAW_CAM, (double[]) null);
+      boolean[] found = pMap.getBooleanList(RAW_CAM_FOUND, (boolean[]) null);
+      if (n < 2 || slm == null || cam == null || found == null
+            || slm.length != 2 * n * n || cam.length != 2 * n * n || found.length != n * n) {
+         return null;
+      }
+      Point2D.Double[][] slmPts = new Point2D.Double[n][n];
+      Point2D.Double[][] camPts = new Point2D.Double[n][n];
+      for (int i = 0; i < n; i++) {
+         for (int j = 0; j < n; j++) {
+            int k = i * n + j;
+            slmPts[i][j] = new Point2D.Double(slm[2 * k], slm[2 * k + 1]);
+            camPts[i][j] = found[k] ? new Point2D.Double(cam[2 * k], cam[2 * k + 1]) : null;
+         }
+      }
+      return new CalibrationGrid(slmPts, camPts);
    }
 
    /**
@@ -98,11 +191,18 @@ public class MappingStorage {
     */
    public static Mapping loadMapping(final CMMCore core, final ProjectionDevice dev,
          final PropertyMap settings) {
-      PropertyMap pMap = settings.getPropertyMap(getCalibrationKey(core, dev), null);
+      return loadMapping(core, getCalibrationKey(core, dev), settings);
+   }
+
+   /**
+    * As loadMapping(core, dev, settings), for an explicit calibration key.
+    */
+   static Mapping loadMapping(final CMMCore core, final String key,
+         final PropertyMap settings) {
+      PropertyMap pMap = settings.getPropertyMap(key, null);
       if (pMap != null) {
          return mapFromPropertyMap(core, pMap);
       }
-
       return null;
    }
 

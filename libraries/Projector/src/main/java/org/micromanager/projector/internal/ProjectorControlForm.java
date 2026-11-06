@@ -29,9 +29,11 @@ import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -46,10 +48,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -60,11 +64,15 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
@@ -138,15 +146,23 @@ public class ProjectorControlForm extends JFrame {
 
    public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
          "Projector Log File", "./MyProjector.log", true, "log");
+   private static final FileType CALIBRATION_CHECK_FILE = new FileType(
+         "PROJECTOR_CALIBRATION_CHECK_FILE", "Calibration check report",
+         "./CalibrationCheck.txt", true, "txt");
 
 
    // GUI element variables declaration
    private javax.swing.JButton allPixelsButton_;
    private javax.swing.JTabbedPane attachToMdaTabbedPane_;
    private javax.swing.JButton calibrateButton_;
+   private javax.swing.JButton checkCalibrationButton_;
    private javax.swing.JComboBox<String> channelComboBox_;
    private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
+   private javax.swing.JCheckBox centroidCheckBox_;
+   private javax.swing.JComboBox<String> calibrationPointsComboBox_;
+   private javax.swing.JComboBox<String> smoothingComboBox_;
+   private boolean warnedNoRawCalibration_ = false;
    private javax.swing.JTextField logDirectoryTextField_;
    private javax.swing.JSpinner pointAndShootIntervalSpinner_; // NB: mis-named
    // pointAndShootIntervalSpinner actually is the exposure time; device setSpotInterval() also
@@ -388,10 +404,7 @@ public class ProjectorControlForm extends JFrame {
     * Java Preferences.
     */
    public void runCalibration(boolean blocking) {
-      settings_.putString(Terms.DELAY, delayField_.getText());
-      settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
-      final String desiredShutter = (String) shutterComboBox_.getSelectedItem();
-      settings_.putString(Terms.PTSHUTTER, desiredShutter);
+      storeCalibrationSettings();
       if (calibrator_ != null && calibrator_.isCalibrating()) {
          return;
       }
@@ -416,7 +429,13 @@ public class ProjectorControlForm extends JFrame {
             }
             studio_.alerts().postAlert("Projector Calibration", this.getClass(),
                   "Calibration " + (success ? "succeeded." : "failed."));
-            SwingUtilities.invokeLater(() -> calibrateButton_.setText("Calibrate"));
+            SwingUtilities.invokeLater(() -> {
+               calibrateButton_.setText("Calibrate");
+               checkCalibrationButton_.setEnabled(true);
+               calibrationPointsComboBox_.setEnabled(true);
+               smoothingComboBox_.setEnabled(true);
+               centroidCheckBox_.setEnabled(true);
+            });
             calibrator_ = null;
          }
       };
@@ -424,6 +443,220 @@ public class ProjectorControlForm extends JFrame {
          t.run();
       } else {
          t.start();
+      }
+   }
+
+   private void storeCalibrationSettings() {
+      settings_.putString(Terms.DELAY, delayField_.getText());
+      settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected());
+      settings_.putInteger(Terms.CALIBRATION_POINTS, selectedCalibrationPoints());
+      settings_.putDouble(Terms.CALIBRATION_SMOOTHING, selectedSmoothing());
+      settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
+      settings_.putString(Terms.PTSHUTTER, (String) shutterComboBox_.getSelectedItem());
+   }
+
+   private int selectedCalibrationPoints() {
+      return Calibrator.MIN_CALIBRATION_POINTS + calibrationPointsComboBox_.getSelectedIndex();
+   }
+
+   private double selectedSmoothing() {
+      return Calibrator.CALIBRATION_SMOOTHING_CHOICES[smoothingComboBox_.getSelectedIndex()];
+   }
+
+   /**
+    * Rebuilds the stored calibration from its raw spot measurements with the selected smoothing.
+    */
+   private void applySmoothingToCurrentCalibration() {
+      final Mapping current = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
+      if (current == null) {
+         return;
+      }
+      final CalibrationGrid grid = MappingStorage.loadGrid(core_, dev_,
+            settings_.toPropertyMap());
+      if (grid == null) {
+         if (!warnedNoRawCalibration_) {
+            warnedNoRawCalibration_ = true;
+            studio_.logs().showMessage("The current calibration was made before raw spot "
+                  + "positions were saved.\nThe smoothing setting will be used for the next "
+                  + "calibration.", this);
+         }
+         return;
+      }
+      final Point2D.Double offset = MappingStorage.loadOffset(core_, dev_,
+            settings_.toPropertyMap());
+      mapping_ = Calibrator.rebuildMapping(current, grid, selectedSmoothing(), offset,
+            studio_.logs());
+      MappingStorage.saveMapping(core_, dev_, settings_, mapping_, grid, offset);
+      studio_.logs().logMessage("Projector calibration rebuilt with smoothing "
+            + selectedSmoothing() + "; " + mapping_.getMap().size() + " cells.");
+   }
+
+   /**
+    * Checks the current calibration by projecting spots mid-way between the calibration points
+    * and measuring where they land. Shows a report when done.
+    */
+   private void runCalibrationCheck() {
+      if (calibrator_ != null) {
+         return;
+      }
+      storeCalibrationSettings();
+      final String originalChannel = projectorControlExecution_.prepareChannel(
+            settings_.getString(Terms.PTCHANNEL, ""));
+      // the targeting channel may select another camera, which has its own calibration
+      final String calibrationKey = MappingStorage.getCalibrationKey(core_, dev_);
+      final Mapping mapping = MappingStorage.loadMapping(core_, calibrationKey,
+            settings_.toPropertyMap());
+      if (mapping == null) {
+         if (originalChannel != null && !originalChannel.isEmpty()) {
+            projectorControlExecution_.returnChannel(originalChannel);
+         }
+         studio_.logs().showError(
+               "Please calibrate the phototargeting device first, using the Setup tab.");
+         return;
+      }
+      calibrator_ = new Calibrator(studio_, dev_, settings_);
+      final Future<CalibrationCheckResult> check = calibrator_.runCalibrationCheck(mapping);
+      calibrateButton_.setEnabled(false);
+      centroidCheckBox_.setEnabled(false);
+      checkCalibrationButton_.setText("Stop");
+      Thread t = new Thread(() -> {
+         CalibrationCheckResult result;
+         try {
+            result = check.get();
+         } catch (InterruptedException | ExecutionException ex) {
+            studio_.logs().logError(ex);
+            result = null;
+         }
+         if (originalChannel != null && !originalChannel.isEmpty()) {
+            projectorControlExecution_.returnChannel(originalChannel);
+         }
+         calibrator_ = null;
+         final CalibrationCheckResult finalResult = result;
+         SwingUtilities.invokeLater(() -> {
+            checkCalibrationButton_.setText("Check");
+            calibrateButton_.setEnabled(true);
+            centroidCheckBox_.setEnabled(true);
+            if (finalResult != null) {
+               showCalibrationCheckReport(finalResult, calibrationKey);
+            }
+         });
+      }, "Projector calibration check");
+      t.start();
+   }
+
+   private void showCalibrationCheckReport(CalibrationCheckResult result,
+         String calibrationKey) {
+      final String report = result.toReport();
+      studio_.logs().logMessage(report);
+      JTextArea textArea = new JTextArea(report);
+      textArea.setEditable(false);
+      textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+      JScrollPane scrollPane = new JScrollPane(textArea);
+      scrollPane.setPreferredSize(new Dimension(640, 480));
+      final JDialog dialog = new JDialog(this, "Projector Calibration Check", false);
+      JButton saveButton = new JButton("Save...");
+      saveButton.addActionListener((ActionEvent evt) -> saveCalibrationCheckReport(dialog,
+            report));
+      JButton closeButton = new JButton("Close");
+      closeButton.addActionListener((ActionEvent evt) -> dialog.dispose());
+
+      final Point2D.Double meanOffset = result.getMeanOffset();
+      final JButton setOffsetButton = new JButton("Set offset");
+      final JButton unsetOffsetButton = new JButton("Unset offset");
+      setOffsetButton.setToolTipText(meanOffset == null ? "No spots were detected"
+            : String.format(Locale.US, "<html>Correct the calibration for the mean offset found "
+            + "here (dx = %.2f, dy = %.2f px),<br>so that projected spots land on target. "
+            + "Run Check again to verify.</html>", meanOffset.x, meanOffset.y));
+      unsetOffsetButton.setToolTipText("Remove any offset correction from the calibration");
+      setOffsetButton.setEnabled(meanOffset != null);
+      unsetOffsetButton.setEnabled(hasOffsetCorrection(calibrationKey));
+      setOffsetButton.addActionListener((ActionEvent evt) -> {
+         if (applyOffsetCorrection(calibrationKey, meanOffset,
+               result.getCameraBinning(), false)) {
+            // the measured offset is consumed; setting it twice would double the correction
+            setOffsetButton.setEnabled(false);
+         }
+         unsetOffsetButton.setEnabled(hasOffsetCorrection(calibrationKey));
+      });
+      unsetOffsetButton.addActionListener((ActionEvent evt) -> {
+         applyOffsetCorrection(calibrationKey, null, 1, true);
+         unsetOffsetButton.setEnabled(hasOffsetCorrection(calibrationKey));
+      });
+
+      dialog.getContentPane().setLayout(new MigLayout("fill"));
+      dialog.getContentPane().add(scrollPane, "span 4, grow, push, wrap");
+      dialog.getContentPane().add(saveButton, "tag left");
+      dialog.getContentPane().add(setOffsetButton);
+      dialog.getContentPane().add(unsetOffsetButton);
+      dialog.getContentPane().add(closeButton, "tag right");
+      dialog.pack();
+      dialog.setLocationRelativeTo(this);
+      WindowPositioning.setUpBoundsMemory(dialog, this.getClass(), "CalibrationCheckReport");
+      dialog.setVisible(true);
+   }
+
+   private boolean hasOffsetCorrection(String calibrationKey) {
+      Point2D.Double o = MappingStorage.loadOffset(calibrationKey, settings_.toPropertyMap());
+      return o.x != 0.0 || o.y != 0.0;
+   }
+
+   /**
+    * Adds the measured mean offset (camera pixels at the current binning) to the offset
+    * correction of the calibration stored under calibrationKey (the one that was checked), or
+    * removes the correction when unset is true.
+    *
+    * @return true if the calibration was changed
+    */
+   private boolean applyOffsetCorrection(String calibrationKey, Point2D.Double measured,
+         int measuredBinning, boolean unset) {
+      final Mapping current = MappingStorage.loadMapping(core_, calibrationKey,
+            settings_.toPropertyMap());
+      if (current == null) {
+         studio_.logs().showError("No calibration found.", this);
+         return false;
+      }
+      final Point2D.Double oldOffset = MappingStorage.loadOffset(calibrationKey,
+            settings_.toPropertyMap());
+      final Point2D.Double delta;
+      if (unset) {
+         delta = new Point2D.Double(-oldOffset.x, -oldOffset.y);
+      } else {
+         // check offsets are in pixels at check binning; the mapping uses calibration pixels
+         final double factor = (double) measuredBinning / (double) current.getBinning();
+         delta = new Point2D.Double(measured.x * factor, measured.y * factor);
+      }
+      final Point2D.Double newOffset = new Point2D.Double(oldOffset.x + delta.x,
+            oldOffset.y + delta.y);
+      final Mapping shifted = Calibrator.shiftMapping(current, delta);
+      MappingStorage.saveMapping(calibrationKey, settings_, shifted,
+            MappingStorage.loadGrid(calibrationKey, settings_.toPropertyMap()), newOffset);
+      if (calibrationKey.equals(MappingStorage.getCalibrationKey(core_, dev_))) {
+         mapping_ = shifted;
+      }
+      studio_.logs().logMessage(String.format(Locale.US,
+            "Projector calibration offset correction set to dx = %.2f px, dy = %.2f px",
+            newOffset.x, newOffset.y));
+      return true;
+   }
+
+   private void saveCalibrationCheckReport(Window parent, String report) {
+      File file = FileDialogs.save(parent, "Save calibration check report",
+            CALIBRATION_CHECK_FILE);
+      if (file == null) {
+         return;
+      }
+      if (!file.getName().contains(".")) {
+         file = new File(file.getPath() + ".txt");
+      }
+      if (file.exists() && JOptionPane.showConfirmDialog(parent,
+            "File " + file.getName() + " exists. Overwrite?", "Save calibration check report",
+            JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+         return;
+      }
+      try {
+         Files.write(file.toPath(), report.getBytes(StandardCharsets.UTF_8));
+      } catch (IOException ex) {
+         studio_.logs().showError(ex, "Failed to save calibration check report.");
       }
    }
 
@@ -486,7 +719,6 @@ public class ProjectorControlForm extends JFrame {
     *            to corresponding point in Projector coordinates
     */
    public void addPointToPointAndShootQueue(Point2D p2D) {
-      Point p = new Point((int) Math.round(p2D.getX()), (int) Math.round(p2D.getY()));
       // Is this needed?
       // p = mirrorIfNecessary(pointAndShootViewer_, p);
       Integer binning = null;
@@ -499,7 +731,7 @@ public class ProjectorControlForm extends JFrame {
       }
       final Point2D.Double devP = ProjectorActions.transformPoint(
             MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
-            new Point2D.Double(p.getX(), p.getY()), roi, binning);
+            new Point2D.Double(p2D.getX(), p2D.getY()), roi, binning);
       PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
       PointAndShootInfo psi = psiBuilder.projectionDevice(dev_)
             .devPoint(devP)
@@ -1053,10 +1285,14 @@ public class ProjectorControlForm extends JFrame {
       repeatEveryFrameSpinner_ = new JSpinner();
       repeatEveryFrameUnitLabel_ = new JLabel();
       calibrateButton_ = new JButton();
+      checkCalibrationButton_ = new JButton();
       allPixelsButton_ = new JButton();
       channelComboBox_ = new JComboBox<>();
       shutterComboBox_ = new JComboBox<>();
       delayField_ = new JTextField();
+      centroidCheckBox_ = new JCheckBox();
+      calibrationPointsComboBox_ = new JComboBox<>();
+      smoothingComboBox_ = new JComboBox<>();
       checkerBoardButton_ = new JButton();
       pointAndShootIntervalSpinner_ = new JSpinner();
       logDirectoryTextField_ = new JTextField();
@@ -1315,9 +1551,25 @@ public class ProjectorControlForm extends JFrame {
             } else {
                runCalibration();
                calibrateButton_.setText("Stop calibration");
+               checkCalibrationButton_.setEnabled(false);
+               calibrationPointsComboBox_.setEnabled(false);
+               smoothingComboBox_.setEnabled(false);
+               centroidCheckBox_.setEnabled(false);
             }
          } catch (Exception e) {
             studio_.logs().showError(e);
+         }
+      });
+
+      checkCalibrationButton_.setText("Check");
+      checkCalibrationButton_.setToolTipText("<html>Check the calibration: project spots mid-way "
+            + "between the calibration points<br>and report how far they land from "
+            + "their targets</html>");
+      checkCalibrationButton_.addActionListener((ActionEvent evt) -> {
+         if (calibrator_ != null) {
+            stopCalibration();
+         } else {
+            runCalibrationCheck();
          }
       });
 
@@ -1374,10 +1626,51 @@ public class ProjectorControlForm extends JFrame {
 
       delayField_.setText("0");
 
+      centroidCheckBox_.setText("Sub-pixel spot detection (centroid)");
+      centroidCheckBox_.setToolTipText("<html>Locate calibration spots with a background-"
+            + "subtracted centroid<br>instead of the maximum of a heavily blurred image</html>");
+      centroidCheckBox_.setSelected(settings_.getBoolean(Terms.USE_CENTROID, false));
+      centroidCheckBox_.addActionListener((ActionEvent evt) ->
+            settings_.putBoolean(Terms.USE_CENTROID, centroidCheckBox_.isSelected()));
+
+      for (int n = Calibrator.MIN_CALIBRATION_POINTS; n <= Calibrator.MAX_CALIBRATION_POINTS;
+            n++) {
+         calibrationPointsComboBox_.addItem(n + " x " + n);
+      }
+      calibrationPointsComboBox_.setSelectedIndex(Calibrator.getCalibrationPoints(settings_)
+            - Calibrator.MIN_CALIBRATION_POINTS);
+      calibrationPointsComboBox_.setToolTipText("<html>Number of calibration spots. Fewer "
+            + "spots calibrate faster,<br>but correct less for distortion of the projected "
+            + "image</html>");
+      final JLabel calibrationPointsLabel = new JLabel("Points:");
+      calibrationPointsLabel.setToolTipText(calibrationPointsComboBox_.getToolTipText());
+      calibrationPointsComboBox_.addActionListener((ActionEvent evt) ->
+            settings_.putInteger(Terms.CALIBRATION_POINTS, selectedCalibrationPoints()));
+
+      final double currentSmoothing = Calibrator.getCalibrationSmoothing(settings_);
+      int smoothingIndex = 0;
+      for (int k = 0; k < Calibrator.CALIBRATION_SMOOTHING_CHOICES.length; k++) {
+         double s = Calibrator.CALIBRATION_SMOOTHING_CHOICES[k];
+         smoothingComboBox_.addItem(s == 0.0 ? "Off" : String.valueOf(s));
+         if (Math.abs(s - currentSmoothing) < 1e-6) {
+            smoothingIndex = k;
+         }
+      }
+      smoothingComboBox_.setSelectedIndex(smoothingIndex);
+      smoothingComboBox_.setToolTipText("<html>Fit each calibration spot to its neighbours "
+            + "(Gaussian width in grid spacings)<br>and ignore spots that disagree with them. "
+            + "Off = use spots as measured</html>");
+      final JLabel smoothingLabel = new JLabel("Smoothing:");
+      smoothingLabel.setToolTipText(smoothingComboBox_.getToolTipText());
+      smoothingComboBox_.addActionListener((ActionEvent evt) -> {
+         settings_.putDouble(Terms.CALIBRATION_SMOOTHING, selectedSmoothing());
+         applySmoothingToCurrentCalibration();
+      });
+
       checkerBoardButton_.setText("CheckerBoard");
       checkerBoardButton_.addActionListener((ActionEvent evt) -> dev_.showCheckerBoard(16, 16));
 
-      setupTab.setLayout(new MigLayout("", "", "[40]"));
+      setupTab.setLayout(new MigLayout("", "", "[30]"));
 
       setupTab.add(centerButton);
       setupTab.add(allPixelsButton_);
@@ -1389,8 +1682,14 @@ public class ProjectorControlForm extends JFrame {
       setupTab.add(ySlider, "wrap");
 
       setupTab.add(calibrateButton_);
-      setupTab.add(new JLabel("Delay(ms):"), "span 2, split 2");
-      setupTab.add(delayField_, "wmin 30, w 50!, wrap");
+      setupTab.add(new JLabel("Delay(ms):"), "span 2, split 3");
+      setupTab.add(delayField_, "wmin 30, w 50!");
+      setupTab.add(checkCalibrationButton_, "gapleft push, wrap");
+      setupTab.add(centroidCheckBox_, "span 3, split 3");
+      setupTab.add(calibrationPointsLabel, "gapleft push");
+      setupTab.add(calibrationPointsComboBox_, "wmin 80, wrap");
+      setupTab.add(smoothingLabel, "span 3, split 2, gapleft push");
+      setupTab.add(smoothingComboBox_, "wmin 80, wrap");
 
       setupTab.add(new JLabel("Phototargeting shutter:"), "span 3, split 2, w 180!");
       setupTab.add(shutterComboBox_, "wmin 130, wrap");
