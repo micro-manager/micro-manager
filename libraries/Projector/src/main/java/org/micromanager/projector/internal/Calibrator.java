@@ -46,6 +46,8 @@ public class Calibrator {
    static final int MIN_CALIBRATION_POINTS = 2;
    static final int MAX_CALIBRATION_POINTS = 8;
    static final int DEFAULT_CALIBRATION_POINTS = 8;
+   // fewer calibration cells than this are subdivided to get enough check points
+   static final int MIN_CHECK_POINTS = 10;
 
    private final Studio app_;
    private final CMMCore core_;
@@ -490,24 +492,37 @@ public class Calibrator {
    }
 
    /**
-    * Test points are the centers of the calibration cells, i.e. mid-way between calibration
-    * spots, expressed in current camera coordinates and sorted by row, then column.
+    * Test points lie between the calibration spots, expressed in current camera coordinates
+    * and sorted by row, then column. Each calibration cell contributes its center, or, when
+    * that gives fewer than MIN_CHECK_POINTS points, a k x k grid of sub-cell centers.
     */
-   private static List<Point2D.Double> cellCenterTargets(Mapping mapping, Rectangle roi,
+   private static List<Point2D.Double> checkTargets(Mapping mapping, Rectangle roi,
          int binning) {
       // inverse of the ROI/binning correction in ProjectorActions.transformPoint
       final double factor = (double) binning / (double) mapping.getBinning();
       final Rectangle mappingRoi = mapping.getCameraROI();
+      final int nCells = mapping.getMap().size();
+      int k = 1;
+      while (nCells > 0 && nCells * k * k < MIN_CHECK_POINTS) {
+         k++;
+      }
       List<Point2D.Double> targets = new ArrayList<>();
       for (Polygon poly : mapping.getMap().keySet()) {
-         Point2D.Double c = Utils.meanPosition2D(Utils.getVertices(poly));
-         double x = c.x / factor - roi.x + mappingRoi.x;
-         double y = c.y / factor - roi.y + mappingRoi.y;
-         if (x >= 0 && x < roi.width && y >= 0 && y < roi.height) {
-            targets.add(new Point2D.Double(x, y));
+         Point[] v = Utils.getVertices(poly);
+         for (int a = 0; a < k; a++) {
+            for (int b = 0; b < k; b++) {
+               Point2D.Double c = k == 1
+                     ? Utils.meanPosition2D(v)
+                     : bilinear(v, (a + 0.5) / k, (b + 0.5) / k);
+               double x = c.x / factor - roi.x + mappingRoi.x;
+               double y = c.y / factor - roi.y + mappingRoi.y;
+               if (x >= 0 && x < roi.width && y >= 0 && y < roi.height) {
+                  targets.add(new Point2D.Double(x, y));
+               }
+            }
          }
       }
-      // cell centers in one row differ in y by a fraction of the cell height
+      // points in one row differ in y by a fraction of the (sub-)cell height
       final double rowTolerance = roi.height / 40.0;
       targets.sort((a, b) -> {
          if (Math.abs(a.y - b.y) > rowTolerance) {
@@ -518,12 +533,24 @@ public class Calibrator {
       return targets;
    }
 
+   /**
+    * Bilinear interpolation in a calibration quad with vertices ordered (i,j), (i,j+1),
+    * (i+1,j+1), (i+1,j); u runs along i, w along j.
+    */
+   private static Point2D.Double bilinear(Point[] v, double u, double w) {
+      double x = (1 - u) * (1 - w) * v[0].x + (1 - u) * w * v[1].x
+            + u * w * v[2].x + u * (1 - w) * v[3].x;
+      double y = (1 - u) * (1 - w) * v[0].y + (1 - u) * w * v[1].y
+            + u * w * v[2].y + u * (1 - w) * v[3].y;
+      return new Point2D.Double(x, y);
+   }
+
    private CalibrationCheckResult checkCalibration(Mapping mapping) throws Exception {
       final Rectangle roi = core_.getROI();
       final int binning = Utils.getBinning(core_);
       CalibrationCheckResult result = new CalibrationCheckResult(core_.getPixelSizeUm(),
             settings_.getBoolean(Terms.USE_CENTROID, false), mapping.getMap().size());
-      for (Point2D.Double target : cellCenterTargets(mapping, roi, binning)) {
+      for (Point2D.Double target : checkTargets(mapping, roi, binning)) {
          if (stopRequested_.get()) {
             return null;
          }
@@ -537,7 +564,7 @@ public class Calibrator {
 
    /**
     * Checks an existing calibration: projects spots, using the given mapping, at the camera
-    * positions mid-way between the calibration points and measures where they land.
+    * positions between the calibration points and measures where they land.
     *
     * @return Future with the result, or null if stopped or failed
     */

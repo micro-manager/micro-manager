@@ -90,7 +90,7 @@ public class CalibrationCheckResult {
    public String toReport() {
       StringBuilder sb = new StringBuilder();
       final List<Spot> detected = detectedSpots();
-      sb.append("Calibration check: spots projected mid-way between calibration points\n");
+      sb.append("Calibration check: spots projected between calibration points\n");
       sb.append("Date: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date_))
             .append("\n");
       sb.append("Spot detection: ").append(useCentroid_
