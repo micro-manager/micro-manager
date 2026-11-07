@@ -1,0 +1,365 @@
+{
+  "description": "Burst with absolute z-slices [4.0, 5.0, 6.0], relativeZ=false",
+  "mockCore": {
+    "cameraDevice": "Camera",
+    "shutterDevice": "Shutter",
+    "focusDevice": "Z",
+    "xyStageDevice": "XY",
+    "autoFocusDevice": null,
+    "autoShutter": true,
+    "exposure": 10.0,
+    "positions": null,
+    "xyPositions": null,
+    "properties": null,
+    "numberOfCameraChannels": 1,
+    "cameraChannelNames": [
+      "Default"
+    ],
+    "continuousFocusEnabled": null,
+    "shutterOpen": false,
+    "imageWidth": 512,
+    "imageHeight": 512,
+    "bitDepth": 16,
+    "bytesPerPixel": 2,
+    "pixelSizeUm": 1.0,
+    "pixelSizeAffine": null,
+    "numberOfComponents": 1,
+    "stageSequenceable": null,
+    "stageSequenceMaxLength": null,
+    "continuousFocusDrives": null,
+    "propertySequencing": null
+  },
+  "initialState": {
+    "defaultZDrive": "Z",
+    "defaultXYStage": "XY",
+    "referenceZ": 0.0,
+    "initAutoShutter": true,
+    "initExposure": 10.0,
+    "initShutterState": false,
+    "initContinuousFocus": false,
+    "positionList": null,
+    "autofocusDevice": null
+  },
+  "settings": {
+    "cameraTimeout": 5000
+  },
+  "events": [
+    {
+      "frameIndex": 0,
+      "sliceIndex": 0,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 20.0,
+      "slice": 4.0,
+      "waitTimeMs": null,
+      "autofocus": false,
+      "newPosition": false,
+      "closeShutter": false,
+      "relativeZ": false,
+      "task": "burst",
+      "nextFrameIndex": null,
+      "channelName": "Ch0",
+      "burstLength": 3,
+      "camera": null,
+      "channelProperties": {},
+      "channelExposure": 20.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": [
+        {
+          "frameIndex": 0,
+          "sliceIndex": 0,
+          "channelIndex": 0,
+          "positionIndex": 0,
+          "cameraChannelIndex": 0,
+          "position": 0,
+          "exposure": 20.0,
+          "slice": 4.0,
+          "waitTimeMs": null,
+          "autofocus": false,
+          "newPosition": false,
+          "closeShutter": false,
+          "relativeZ": false,
+          "task": null,
+          "nextFrameIndex": null,
+          "channelName": "Ch0",
+          "burstLength": 0,
+          "camera": null,
+          "channelProperties": {},
+          "channelExposure": 20.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
+          "channelColor": null,
+          "burstData": null,
+          "triggerSequence": null,
+          "metadata": null,
+          "runnableCount": null,
+          "runnableActions": null
+        },
+        {
+          "frameIndex": 0,
+          "sliceIndex": 1,
+          "channelIndex": 0,
+          "positionIndex": 0,
+          "cameraChannelIndex": 0,
+          "position": 0,
+          "exposure": 20.0,
+          "slice": 5.0,
+          "waitTimeMs": null,
+          "autofocus": false,
+          "newPosition": false,
+          "closeShutter": false,
+          "relativeZ": false,
+          "task": null,
+          "nextFrameIndex": null,
+          "channelName": "Ch0",
+          "burstLength": 0,
+          "camera": null,
+          "channelProperties": {},
+          "channelExposure": 20.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
+          "channelColor": null,
+          "burstData": null,
+          "triggerSequence": null,
+          "metadata": null,
+          "runnableCount": null,
+          "runnableActions": null
+        },
+        {
+          "frameIndex": 0,
+          "sliceIndex": 2,
+          "channelIndex": 0,
+          "positionIndex": 0,
+          "cameraChannelIndex": 0,
+          "position": 0,
+          "exposure": 20.0,
+          "slice": 6.0,
+          "waitTimeMs": null,
+          "autofocus": false,
+          "newPosition": false,
+          "closeShutter": false,
+          "relativeZ": false,
+          "task": null,
+          "nextFrameIndex": null,
+          "channelName": "Ch0",
+          "burstLength": 0,
+          "camera": null,
+          "channelProperties": {},
+          "channelExposure": 20.0,
+          "channelZOffset": 0.0,
+          "channelUseZStack": true,
+          "channelUseChannel": true,
+          "channelSkipFrames": 0,
+          "channelColor": null,
+          "burstData": null,
+          "triggerSequence": null,
+          "metadata": null,
+          "runnableCount": null,
+          "runnableActions": null
+        }
+      ],
+      "triggerSequence": {
+        "properties": {},
+        "slices": [
+          4.0,
+          5.0,
+          6.0
+        ]
+      },
+      "metadata": null,
+      "runnableCount": null,
+      "runnableActions": null
+    }
+  ],
+  "expectedCalls": [
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Camera"
+      ]
+    },
+    {
+      "method": "setExposure",
+      "args": [
+        20.0
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "setPosition",
+      "args": [
+        "Z",
+        4.0
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Camera"
+      ]
+    },
+    {
+      "method": "waitForDevice",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "getAutoShutter",
+      "args": []
+    },
+    {
+      "method": "getSystemStateCache",
+      "args": []
+    },
+    {
+      "method": "setAutoShutter",
+      "args": [
+        true
+      ]
+    },
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "hasProperty",
+      "args": [
+        "Camera",
+        "ExtraTriggers"
+      ]
+    },
+    {
+      "method": "getFocusDevice",
+      "args": []
+    },
+    {
+      "method": "loadStageSequence",
+      "args": [
+        "Z",
+        [
+          4.0,
+          5.0,
+          6.0
+        ]
+      ]
+    },
+    {
+      "method": "startStageSequence",
+      "args": [
+        "Z"
+      ]
+    },
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "hasProperty",
+      "args": [
+        "Camera",
+        "OutputTriggerFirstMissing"
+      ]
+    },
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "hasProperty",
+      "args": [
+        "Camera",
+        "OutputTriggerFirstMissing"
+      ]
+    },
+    {
+      "method": "startSequenceAcquisition",
+      "args": [
+        3,
+        0.0,
+        true
+      ]
+    },
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "hasProperty",
+      "args": [
+        "Camera",
+        "OutputTriggerFirstMissing"
+      ]
+    },
+    {
+      "method": "getNumberOfCameraChannels",
+      "args": []
+    },
+    {
+      "method": "getCameraChannelName",
+      "args": [
+        0
+      ]
+    },
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "getCameraDevice",
+      "args": []
+    },
+    {
+      "method": "hasProperty",
+      "args": [
+        "Camera",
+        "OutputTriggerFirstMissing"
+      ]
+    },
+    {
+      "method": "popNextTaggedImage",
+      "args": []
+    },
+    {
+      "method": "popNextTaggedImage",
+      "args": []
+    },
+    {
+      "method": "popNextTaggedImage",
+      "args": []
+    },
+    {
+      "method": "stopSequenceAcquisition",
+      "args": []
+    },
+    {
+      "method": "isSequenceRunning",
+      "args": []
+    },
+    {
+      "method": "stopStageSequence",
+      "args": [
+        "Z"
+      ]
+    }
+  ]
+}
