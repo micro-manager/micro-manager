@@ -107,7 +107,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: swig-3.0.12
-          key: mmstudio-javadoc-swig-3.0.12
+          key: mmstudio-javadoc-swig-3.0.12-pcre-8.45
 
       - name: Build SWIG-3
         if: steps.cache-swig-3.outputs.cache-hit != 'true'
@@ -179,7 +179,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: swig-3.0.12
-          key: mmstudio-javadoc-swig-3.0.12
+          key: mmstudio-javadoc-swig-3.0.12-pcre-8.45
 
       - name: Build SWIG-3
         if: steps.cache-swig-3.outputs.cache-hit != 'true'
