@@ -101,14 +101,13 @@ jobs:
           sudo apt-get -y install build-essential autoconf automake libtool \
                                   autoconf-archive pkg-config doxygen
           sudo apt-get -y install libboost-all-dev
-          sudo apt-get -y install libpcre3-dev  # For SWIG-3
 
       - name: Cache SWIG-3
         id: cache-swig-3
         uses: actions/cache@v4
         with:
           path: swig-3.0.12
-          key: mmstudio-javadoc-swig-3.0.12
+          key: mmstudio-javadoc-swig-3.0.12-pcre-8.45
 
       - name: Build SWIG-3
         if: steps.cache-swig-3.outputs.cache-hit != 'true'
@@ -116,6 +115,8 @@ jobs:
           curl -LO http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
           tar xzf swig-3.0.12.tar.gz
           cd swig-3.0.12
+          curl -LO https://prdownloads.sourceforge.net/pcre/pcre-8.45.tar.bz2
+          ./Tools/pcre-build.sh
           ./configure
           make -j3
 
@@ -171,7 +172,6 @@ jobs:
           sudo apt-get -y install build-essential autoconf automake libtool \
                                   autoconf-archive pkg-config
           sudo apt-get -y install libboost-all-dev
-          sudo apt-get -y install libpcre3-dev  # For SWIG-3
           sudo apt-get -y install subversion
 
       - name: Cache SWIG-3
@@ -179,7 +179,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: swig-3.0.12
-          key: mmstudio-javadoc-swig-3.0.12
+          key: mmstudio-javadoc-swig-3.0.12-pcre-8.45
 
       - name: Build SWIG-3
         if: steps.cache-swig-3.outputs.cache-hit != 'true'
@@ -187,6 +187,8 @@ jobs:
           curl -LO http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
           tar xzf swig-3.0.12.tar.gz
           cd swig-3.0.12
+          curl -LO https://prdownloads.sourceforge.net/pcre/pcre-8.45.tar.bz2
+          ./Tools/pcre-build.sh
           ./configure
           make -j3
 
