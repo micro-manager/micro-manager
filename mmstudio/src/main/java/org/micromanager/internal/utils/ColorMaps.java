@@ -34,6 +34,7 @@ public final class ColorMaps {
 
    private static final ColorTable8 FIRE_MAP = makeFireColorMap();
    private static final ColorTable8 RED_HOT_MAP = makeRedHotColorMap();
+   private static final ColorTable8 INVERTED_GRAY_MAP = makeInvertedGrayColorMap();
 
    public static ColorTable8 fireColorMap() {
       return FIRE_MAP;
@@ -41,6 +42,10 @@ public final class ColorMaps {
 
    public static ColorTable8 redHotColorMap() {
       return RED_HOT_MAP;
+   }
+
+   public static ColorTable8 invertedGrayColorMap() {
+      return INVERTED_GRAY_MAP;
    }
 
    // Please don't (re)introduce the Rainbow (aka Spectrum aka Jet) color map
@@ -82,6 +87,14 @@ public final class ColorMaps {
       int[] b = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 6, 32, 58, 84, 110, 135, 161, 187, 160, 213, 255};
       return makeColorTable8(32, r, g, b);
+   }
+
+   private static ColorTable8 makeInvertedGrayColorMap() {
+      // Inverted grayscale: ramp from white (0) to black (255).
+      int[] r = {255, 0};
+      int[] g = {255, 0};
+      int[] b = {255, 0};
+      return makeColorTable8(2, r, g, b);
    }
 
    private static ColorTable8 makeColorTable8(int len, int[] r, int[] g, int[] b) {

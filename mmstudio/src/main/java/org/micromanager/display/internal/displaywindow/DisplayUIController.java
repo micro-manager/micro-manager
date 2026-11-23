@@ -1095,6 +1095,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
             case RED_HOT:
                ijBridge_.mm2ijSetColorModeLUT(ColorMaps.redHotColorMap());
                break;
+            case INVERTED_GRAYSCALE:
+               ijBridge_.mm2ijSetColorModeLUT(ColorMaps.invertedGrayColorMap());
+               break;
             case SPECTRUM:
             default:
                ijBridge_.mm2ijSetColorModeGrayscale(); // Fallback

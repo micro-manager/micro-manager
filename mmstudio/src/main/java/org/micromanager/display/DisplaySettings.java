@@ -276,7 +276,7 @@ public interface DisplaySettings {
    enum ColorMode {
       // TODO Integer indices should be implementation detail of file format
       COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
-      RED_HOT(5), @Deprecated SPECTRUM(6);
+      RED_HOT(5), @Deprecated SPECTRUM(6), INVERTED_GRAYSCALE(7);
 
       private final int index_;
 

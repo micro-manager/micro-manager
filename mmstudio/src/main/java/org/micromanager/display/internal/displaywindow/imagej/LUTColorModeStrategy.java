@@ -50,15 +50,18 @@ class LUTColorModeStrategy extends AbstractColorModeStrategy {
       byte[] g = new byte[retlen];
       byte[] b = new byte[retlen];
       for (int i = 0; i < retlen; ++i) {
-         // Linear interpolation
+         // Linear interpolation on unsigned component values. At an integral
+         // index (fraction == 0), weight p is 1 and q is 0, so the sample is
+         // reproduced exactly instead of being zeroed out.
          double j = Math.pow((double) i / (retlen - 1), gamma) * (len - 1);
          int m = (int) Math.floor(j);
-         int n = (int) Math.ceil(j);
-         double p = j - m;
-         double q = n - j;
-         r[i] = (byte) Math.round(p * rLUT_[m] + q * rLUT_[n]);
-         g[i] = (byte) Math.round(p * gLUT_[m] + q * gLUT_[n]);
-         b[i] = (byte) Math.round(p * bLUT_[m] + q * bLUT_[n]);
+         int n = Math.min(m + 1, len - 1);
+         double fraction = j - m;
+         double p = 1.0 - fraction;
+         double q = fraction;
+         r[i] = (byte) Math.round(p * (rLUT_[m] & 0xff) + q * (rLUT_[n] & 0xff));
+         g[i] = (byte) Math.round(p * (gLUT_[m] & 0xff) + q * (gLUT_[n] & 0xff));
+         b[i] = (byte) Math.round(p * (bLUT_[m] & 0xff) + q * (bLUT_[n] & 0xff));
       }
       return new LUT(8, len, r, g, b);
    }
