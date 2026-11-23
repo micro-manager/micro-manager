@@ -230,6 +230,7 @@ public class IntensityInspectorPanelController
       colorModeComboBox_.addItem(ColorModeCell.Item.HILIGHT_SAT);
       colorModeComboBox_.addItem(ColorModeCell.Item.FIRE_LUT);
       colorModeComboBox_.addItem(ColorModeCell.Item.RED_HOT_LUT);
+      colorModeComboBox_.addItem(ColorModeCell.Item.INVERTED_GRAYSCALE_LUT);
       // Prevent "Composite" from slowly flashing
       colorModeComboBox_.getModel().setSelectedItem(null);
       colorModeComboBox_.addActionListener((ActionEvent e) -> handleColorMode());
@@ -397,6 +398,9 @@ public class IntensityInspectorPanelController
                break;
             case RED_HOT_LUT:
                mode = DisplaySettings.ColorMode.RED_HOT;
+               break;
+            case INVERTED_GRAYSCALE_LUT:
+               mode = DisplaySettings.ColorMode.INVERTED_GRAYSCALE;
                break;
             default:
                throw new AssertionError(item.name());
@@ -617,6 +621,9 @@ public class IntensityInspectorPanelController
             break;
          case RED_HOT:
             colorModeComboBox_.setSelectedItem(ColorModeCell.Item.RED_HOT_LUT);
+            break;
+         case INVERTED_GRAYSCALE:
+            colorModeComboBox_.setSelectedItem(ColorModeCell.Item.INVERTED_GRAYSCALE_LUT);
             break;
          case GRAYSCALE:
          default: // Use grayscale for unknown mode

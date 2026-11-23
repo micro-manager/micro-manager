@@ -30,6 +30,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
       HILIGHT_SAT("Highlight Saturated"),
       FIRE_LUT("Fire", ColorMaps.fireColorMap()),
       RED_HOT_LUT("Red-Hot", ColorMaps.redHotColorMap()),
+      INVERTED_GRAYSCALE_LUT("Inverted Grayscale", ColorMaps.invertedGrayColorMap()),
       RGB("RGB");
 
       private final String text_;
