@@ -1,0 +1,71 @@
+{
+  "description": "Single position handled correctly, not counted as multiple positions",
+  "settings": {
+    "numFrames": 1,
+    "frames": [
+      0
+    ],
+    "slices": [],
+    "channels": [
+      {
+        "name": "Ch0",
+        "exposure": 100.0,
+        "zOffset": 0.0,
+        "useZStack": true,
+        "useChannel": true,
+        "skipFrames": 0,
+        "color": null,
+        "properties": {}
+      }
+    ],
+    "positions": [
+      0
+    ],
+    "slicesFirst": false,
+    "timeFirst": false,
+    "keepShutterOpenSlices": false,
+    "keepShutterOpenChannels": false,
+    "useAutofocus": false,
+    "autofocusSkip": 0,
+    "relativeSlices": false,
+    "intervalMs": 0.0,
+    "defaultExposure": 10.0,
+    "customIntervalsMs": []
+  },
+  "mockCore": null,
+  "runnables": null,
+  "expectedEvents": [
+    {
+      "frameIndex": 0,
+      "sliceIndex": 0,
+      "channelIndex": 0,
+      "positionIndex": 0,
+      "cameraChannelIndex": 0,
+      "position": 0,
+      "exposure": 100.0,
+      "slice": null,
+      "waitTimeMs": 0.0,
+      "autofocus": false,
+      "newPosition": true,
+      "closeShutter": true,
+      "relativeZ": false,
+      "task": "snap",
+      "nextFrameIndex": null,
+      "channelName": "Ch0",
+      "burstLength": 0,
+      "camera": null,
+      "channelProperties": {},
+      "channelExposure": 100.0,
+      "channelZOffset": 0.0,
+      "channelUseZStack": true,
+      "channelUseChannel": true,
+      "channelSkipFrames": 0,
+      "channelColor": null,
+      "burstData": null,
+      "triggerSequence": null,
+      "metadata": null,
+      "runnableCount": null,
+      "runnableActions": null
+    }
+  ]
+}
